@@ -570,58 +570,68 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       g2d.setColor(getBackground());
       Insets insets = getInsets();
       g2d.fillRect(insets.left, insets.top, bounds.width - insets.left - insets.right, bounds.height - insets.top - insets.bottom);
-      g2d.setColor(getForeground());
 
-      final String sizeString = String.valueOf(myWidth) + " x " + myHeight;
+      final String sizeString = String.format("%d x %d", myWidth, myHeight);
 
       FontMetrics fm = g2d.getFontMetrics();
       int sizeWidth = fm.stringWidth(sizeString);
-
       int fontHeight = fm.getHeight();
 
-      g2d.drawString(sizeString, bounds.width / 2 - sizeWidth / 2, bounds.height / 2 + fontHeight / 2);
+      int innerBoxWidthGap = JBUI.scale(20);
+      int innerBoxHeightGap = JBUI.scale(5);
+      int boxSize = JBUI.scale(15);
+
+      int centerX = bounds.width / 2;
+      int centerY = bounds.height / 2;
+      int innerX = centerX - sizeWidth / 2 - innerBoxWidthGap;
+      int innerY = centerY - fontHeight / 2 - innerBoxHeightGap;
+      int innerWidth = sizeWidth + innerBoxWidthGap * 2;
+      int innerHeight = fontHeight + innerBoxHeightGap * 2;
+
+      g2d.setColor(getForeground());
+      drawCenteredString(g2d, fm, fontHeight, sizeString, centerX, centerY);
 
       g2d.setColor(JBColor.GRAY);
-
-      int innerX = bounds.width / 2 - sizeWidth / 2 - 20;
-      int innerY = bounds.height / 2 - fontHeight / 2 - 5;
-      int innerWidth = sizeWidth + 40;
-      int innerHeight = fontHeight + 10;
-
       g2d.drawRect(innerX, innerY, innerWidth, innerHeight);
 
       Insets borderInsets = null;
       if (myBorder != null) borderInsets = myBorder.getBorderInsets(myComponent);
-      UIUtil.drawDottedRectangle(g2d, innerX - 15, innerY - 15, innerX - 15 + innerWidth + 30, innerY - 15 + innerHeight + 30);
-      drawInsets(g2d, fm, "border", borderInsets, 15, fontHeight, innerX, innerY, innerWidth, innerHeight);
+      UIUtil.drawDottedRectangle(g2d, innerX - boxSize, innerY - boxSize, innerX + innerWidth + boxSize, innerY + innerHeight + boxSize);
+      drawInsets(g2d, fm, "border", borderInsets, boxSize, fontHeight, innerX, innerY, innerWidth, innerHeight);
 
-      g2d.drawRect(innerX - 30, innerY - 30, innerWidth + 60, innerHeight + 60);
-      drawInsets(g2d, fm, "insets", myInsets, 30, fontHeight, innerX, innerY, innerWidth, innerHeight);
+      g2d.drawRect(innerX - boxSize * 2, innerY - boxSize * 2, innerWidth + boxSize * 4, innerHeight + boxSize * 4);
+      drawInsets(g2d, fm, "insets", myInsets, boxSize * 2, fontHeight, innerX, innerY, innerWidth, innerHeight);
     }
 
     private static void drawInsets(Graphics2D g2d, FontMetrics fm, String name, Insets insets, int offset, int fontHeight, int innerX, int innerY, int innerWidth, int innerHeight) {
       g2d.setColor(JBColor.BLACK);
-      g2d.drawString(name, innerX - offset + 5, innerY - offset + fontHeight);
+      g2d.drawString(name, innerX - offset + JBUI.scale(5), innerY - offset + fontHeight);
 
       g2d.setColor(JBColor.GRAY);
-      int dashWidth = fm.stringWidth("-");
 
-      if (insets != null) {
-        final String top = Integer.toString(insets.top);
-        final String bottom = Integer.toString(insets.bottom);
-        final String left = Integer.toString(insets.left);
-        final String right = Integer.toString(insets.right);
+      int outerX = innerX - offset;
+      int outerWidth = innerWidth + offset * 2;
+      int outerY = innerY - offset;
+      int outerHeight = innerHeight + offset * 2;
 
-        g2d.drawString(top, innerX - offset + ((innerWidth + offset * 2) / 2 - fm.stringWidth(top) / 2), innerY - offset + fontHeight);
-        g2d.drawString(bottom, innerX - offset + ((innerWidth + offset * 2) / 2 - fm.stringWidth(bottom) / 2), innerY - offset  + innerHeight + offset*2 - 8 + fontHeight / 2);
-        g2d.drawString(left, innerX - offset + 7 - fm.stringWidth(left) / 2, innerY - offset + (innerHeight + offset * 2) / 2 + fontHeight / 2);
-        g2d.drawString(right, innerX + innerWidth + offset - 7 - fm.stringWidth(right) / 2, innerY - offset + (innerHeight + offset * 2) / 2 + fontHeight / 2);
-      } else {
-        g2d.drawString("-", innerX - offset + ((innerWidth + offset * 2) / 2 - dashWidth / 2), innerY - offset + fontHeight);
-        g2d.drawString("-", innerX - offset + ((innerWidth + offset * 2) / 2 - dashWidth / 2), innerY - offset  + innerHeight + offset*2 - 8 + fontHeight / 2);
-        g2d.drawString("-", innerX - offset + 7 - dashWidth / 2, innerY - offset + (innerHeight + offset * 2) / 2 + fontHeight / 2);
-        g2d.drawString("-", innerX + innerWidth + offset - 7 - dashWidth / 2, innerY - offset + (innerHeight + offset * 2) / 2 + fontHeight / 2);
-      }
+      final String top = insets != null ? Integer.toString(insets.top) : "-";
+      final String bottom = insets != null ? Integer.toString(insets.bottom) : "-";
+      final String left = insets != null ? Integer.toString(insets.left) : "-";
+      final String right = insets != null ? Integer.toString(insets.right) : "-";
+
+      int shift = JBUI.scale(7);
+      drawCenteredString(g2d, fm, fontHeight, top,
+                         outerX + outerWidth / 2,
+                         outerY + shift);
+      drawCenteredString(g2d, fm, fontHeight, bottom,
+                         outerX + outerWidth / 2,
+                         outerY + outerHeight - shift);
+      drawCenteredString(g2d, fm, fontHeight, left,
+                         outerX + shift,
+                         outerY + outerHeight / 2);
+      drawCenteredString(g2d, fm, fontHeight, right,
+                         outerX + outerWidth - shift,
+                         outerY + outerHeight / 2);
     }
 
     @Override
@@ -633,6 +643,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     public Dimension getPreferredSize() {
       return JBUI.size(150);
     }
+  }
+
+  private static void drawCenteredString(Graphics2D g2d, FontMetrics fm, int fontHeight, String text, int x, int y) {
+    g2d.drawString(text, x - fm.stringWidth(text) / 2, y + fontHeight / 2);
   }
 
   private static class ValueCellRenderer implements TableCellRenderer {
