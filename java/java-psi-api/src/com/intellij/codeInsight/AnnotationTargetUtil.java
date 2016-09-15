@@ -61,9 +61,6 @@ public class AnnotationTargetUtil {
     }
 
     if (owner instanceof PsiModifierList) {
-      if (((PsiModifierList)owner).getNextSibling() instanceof PsiErrorElement) {
-        return TargetType.EMPTY_ARRAY;
-      }
       PsiElement element = ((PsiModifierList)owner).getParent();
       if (element instanceof PsiPackageStatement) {
         return PACKAGE_TARGETS;
