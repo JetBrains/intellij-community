@@ -33,17 +33,21 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
   val activate = findActivateScript(virtualEnvSdkPath, shell)
 
   override fun readShellEnv(): MutableMap<String, String> {
-    if (SystemInfo.isUnix) {
+    if (SystemInfo.isMac) {
       return super.readShellEnv()
     }
-    else {
+    else if (SystemInfo.isWindows) {
       if (activate != null) {
-        return readVirtualEnvOnWindows(activate);
+        return readVirtualEnvOnWindows(activate)
       }
       else {
         LOG.error("Can't find activate script for $virtualEnvSdkPath")
-        return mutableMapOf();
+        return mutableMapOf()
       }
+    }
+    else {
+      // TODO: Support shell env loading on Linux
+      return mutableMapOf()
     }
   }
 
