@@ -106,7 +106,8 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "##teamcity[testFinished name='testName|[1|]']\n" +
            "\n" +
            "##teamcity[testSuiteFinished name='|[1|]']\n" +
-           "##teamcity[testSuiteFinished name='TestB']");
+           "\n" +
+           "##teamcity[testSuiteFinished name='TestB']\n");
   }
 
   @Test
@@ -141,7 +142,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testFinished name='ATest.test2']\n" +
                                           "\n" +
-                                          "##teamcity[testSuiteFinished name='ATest']", StringUtil.convertLineSeparators(buf.toString()));
+                                          "##teamcity[testSuiteFinished name='ATest']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
   @Test
@@ -179,7 +180,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "\n" +
            "##teamcity[testFinished name='MyTest.testMe']\n" +
            "\n" +
-           "##teamcity[testSuiteFinished name='MyTest']");
+           "##teamcity[testSuiteFinished name='MyTest']\n");
   }
 
   @Test
@@ -215,7 +216,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "\n" +
            "##teamcity[testFinished name='testName|[1|]']\n" +
            "\n" +
-           "##teamcity[testSuiteFinished name='|[1|]']");
+           "##teamcity[testSuiteFinished name='|[1|]']\n");
   }
   
   @Test
@@ -257,7 +258,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "\n" +
            "##teamcity[testFinished name='testName|[0|]']\n" +
            "\n" +
-           "##teamcity[testSuiteFinished name='|[0|]']");
+           "##teamcity[testSuiteFinished name='|[0|]']\n");
   }
 
   @Test
@@ -299,7 +300,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "\n" +
            "##teamcity[testFinished name='testName|[1: with - 2.1|]']\n" +
            "\n" +
-           "##teamcity[testSuiteFinished name='|[1: with - 2.1|]']");
+           "##teamcity[testSuiteFinished name='|[1: with - 2.1|]']\n");
   }
 
   @Test
@@ -357,7 +358,8 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "##teamcity[testFinished name='ATest.test1']\n" +
            "\n" +
            "##teamcity[testSuiteFinished name='ATest']\n" +
-           "##teamcity[testSuiteFinished name='ASuite2']");
+           "\n" +
+           "##teamcity[testSuiteFinished name='ASuite2']\n");
   }
 
   private static void doTest(Description root, List<Description> tests, String expectedTree, String expectedStart) throws Exception {
@@ -415,7 +417,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
                                           "\n" +
-                                          "##teamcity[testSuiteFinished name='TestA']", StringUtil.convertLineSeparators(buf.toString()));
+                                          "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
   @Test
@@ -460,7 +462,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testFinished name='TestA.testName']\n" +
                                           "\n" +
-                                          "##teamcity[testSuiteFinished name='TestA']", StringUtil.convertLineSeparators(buf.toString()));
+                                          "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
   @Test
@@ -550,7 +552,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testFinished name='Class Configuration']\n" +
                                           "\n" +
-                                          "##teamcity[testSuiteFinished name='TestA']", StringUtil.convertLineSeparators(buf.toString()));
+                                          "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
   @Test
@@ -596,7 +598,8 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testFinished name='TestA.testName']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteFinished name='param']\n" +
-                                          "##teamcity[testSuiteFinished name='TestA']", StringUtil.convertLineSeparators(buf.toString()));
+                                          "\n" +
+                                          "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
     buf.setLength(0);
 
     //testStarted and testFinished are called by the framework
@@ -662,7 +665,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "\n" +
                                           "##teamcity[testFinished name='TestB.testName']\n" +
                                           "\n" +
-                                          "##teamcity[testSuiteFinished name='TestB']", StringUtil.convertLineSeparators(buf.toString()));
+                                          "##teamcity[testSuiteFinished name='TestB']\n", StringUtil.convertLineSeparators(buf.toString()));
   }
 
   private static JUnit4TestListener createListener(final StringBuffer buf) {
@@ -716,7 +719,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "\n" +
            "##teamcity[testFinished name='ATest.testName|[1|]']\n" +
            "\n" +
-           "##teamcity[testSuiteFinished name='testName']");
+           "##teamcity[testSuiteFinished name='testName']\n");
   }
 
   @Test
@@ -782,7 +785,8 @@ public class JUnitTreeByDescriptionHierarchyTest {
            "##teamcity[testFinished name='ATest.test']\n" +
            "\n" +
            "##teamcity[testSuiteFinished name='ATest']\n" +
-           "##teamcity[testSuiteFinished name='suite']");
+           "\n" +
+           "##teamcity[testSuiteFinished name='suite']\n");
   }
 
 

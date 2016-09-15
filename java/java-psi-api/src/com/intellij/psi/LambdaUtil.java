@@ -25,7 +25,10 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Producer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -819,6 +822,34 @@ public class LambdaUtil {
       return  (PsiCall)anEnum.add(copyCall);
     }
     return copyCall;
+  }
+
+  public static <T> T performWithSubstitutedParameterBounds(final PsiTypeParameter[] typeParameters,
+                                                            final PsiSubstitutor substitutor,
+                                                            final Producer<T> producer) {
+    try {
+      for (PsiTypeParameter parameter : typeParameters) {
+        final PsiClassType[] types = parameter.getExtendsListTypes();
+        if (types.length > 0) {
+          final List<PsiType> conjuncts = ContainerUtil.map(types, new Function<PsiClassType, PsiType>() {
+            @Override
+            public PsiType fun(PsiClassType type) {
+              return substitutor.substitute(type);
+            }
+          });
+          //don't glb to avoid flattening = Object&Interface would be preserved
+          //otherwise methods with different signatures could get same erasure
+          final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(new PsiType[conjuncts.size()]));
+          getFunctionalTypeMap().put(parameter, upperBound);
+        }
+      }
+      return producer.produce();
+    }
+    finally {
+      for (PsiTypeParameter parameter : typeParameters) {
+        getFunctionalTypeMap().remove(parameter);
+      }
+    }
   }
 
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
