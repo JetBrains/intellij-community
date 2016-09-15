@@ -196,7 +196,6 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
-    settings.setVirtualSpace(true);
     settings.setAnimatedScrolling(false);
     if (settings instanceof SettingsImpl) {
       ((SettingsImpl)settings).setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
