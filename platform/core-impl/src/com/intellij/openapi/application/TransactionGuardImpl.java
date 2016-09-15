@@ -159,7 +159,9 @@ public class TransactionGuardImpl extends TransactionGuard {
       return;
     }
 
-    assert !app.isReadAccessAllowed() : "submitTransactionAndWait should not be invoked from a read action";
+    if (app.isReadAccessAllowed()) {
+      throw new IllegalStateException("submitTransactionAndWait should not be invoked from a read action");
+    }
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final Throwable[] exception = {null};
