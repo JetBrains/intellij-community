@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TObjectIntHashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Supports the int <-> Hash and int <-> VcsRef persistent mappings.
@@ -69,8 +69,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
                            @NotNull Disposable parent) throws IOException {
     myExceptionReporter = exceptionReporter;
 
-    List<VirtualFile> roots =
-      logProviders.keySet().stream().sorted((o1, o2) -> o1.getPath().compareTo(o2.getPath())).collect(Collectors.toList());
+    List<VirtualFile> roots = StreamEx.ofKeys(logProviders).sortedBy(VirtualFile::getPath).toList();
 
     String logId = PersistentUtil.calcLogId(project, logProviders);
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
