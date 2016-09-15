@@ -42,40 +42,58 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       public void visitLambdaExpression(PsiLambdaExpression lambda) {
         super.visitLambdaExpression(lambda);
         PsiType type = lambda.getFunctionalInterfaceType();
-        if(type instanceof PsiClassType && ((PsiClassType)type).rawType().equalsToText(CommonClassNames.JAVA_UTIL_COMPARATOR)) {
-          PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-          if(body instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
-            PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-            if(args.length == 1 && MethodUtils.isCompareToCall(methodCall)) {
-              PsiExpression left = methodCall.getMethodExpression().getQualifierExpression();
-              PsiExpression right = args[0];
-              if(areEquivalent(lambda.getParameterList().getParameters(), left, right)) {
-                holder.registerProblem(lambda, "Can be replaced with Comparator.comparing", new ReplaceWithComparatorFix("comparing"));
+        PsiParameter[] parameters = lambda.getParameterList().getParameters();
+        if (parameters.length != 2 ||
+            !(type instanceof PsiClassType) ||
+            !((PsiClassType)type).rawType().equalsToText(CommonClassNames.JAVA_UTIL_COMPARATOR)) {
+          return;
+        }
+        PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
+        if (body instanceof PsiMethodCallExpression) {
+          PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
+          PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+          String methodName = null;
+          if (args.length == 1 && MethodUtils.isCompareToCall(methodCall)) {
+            PsiExpression left = methodCall.getMethodExpression().getQualifierExpression();
+            PsiExpression right = args[0];
+            if (left instanceof PsiReferenceExpression && right instanceof PsiReferenceExpression) {
+              PsiElement leftElement = ((PsiReferenceExpression)left).resolve();
+              PsiElement rightElement = ((PsiReferenceExpression)right).resolve();
+              if (leftElement == parameters[0] && rightElement == parameters[1]) {
+                methodName = "naturalOrder";
               }
-            } else {
-              PsiMethod method = methodCall.resolveMethod();
-              if(args.length == 2 && method != null && method.getName().equals("compare")) {
-                PsiClass compareClass = method.getContainingClass();
-                if(compareClass != null) {
-                  String replacementMethodName;
-                  if(CommonClassNames.JAVA_LANG_DOUBLE.equals(compareClass.getQualifiedName())) {
-                    replacementMethodName = "comparingDouble";
-                  }
-                  else if(CommonClassNames.JAVA_LANG_INTEGER.equals(compareClass.getQualifiedName())) {
-                    replacementMethodName = "comparingInt";
-                  }
-                  else if(CommonClassNames.JAVA_LANG_LONG.equals(compareClass.getQualifiedName())) {
-                    replacementMethodName = "comparingLong";
-                  }
-                  else return;
-                  if(areEquivalent(lambda.getParameterList().getParameters(), args[0], args[1])) {
-                    holder.registerProblem(lambda, "Can be replaced with Comparator." + replacementMethodName,
-                                           new ReplaceWithComparatorFix(replacementMethodName));
-                  }
-                }
+              else if (leftElement == parameters[1] && rightElement == parameters[0]) {
+                methodName = "reverseOrder";
               }
             }
+            if (methodName == null && areEquivalent(parameters, left, right)) {
+              methodName = "comparing";
+            }
+          }
+          else {
+            PsiMethod method = methodCall.resolveMethod();
+            if (args.length == 2 && method != null && method.getName().equals("compare")) {
+              PsiClass compareClass = method.getContainingClass();
+              if (compareClass != null) {
+                if (CommonClassNames.JAVA_LANG_DOUBLE.equals(compareClass.getQualifiedName())) {
+                  methodName = "comparingDouble";
+                }
+                else if (CommonClassNames.JAVA_LANG_INTEGER.equals(compareClass.getQualifiedName())) {
+                  methodName = "comparingInt";
+                }
+                else if (CommonClassNames.JAVA_LANG_LONG.equals(compareClass.getQualifiedName())) {
+                  methodName = "comparingLong";
+                }
+                else {
+                  return;
+                }
+                if (!areEquivalent(parameters, args[0], args[1])) return;
+              }
+            }
+          }
+          if (methodName != null) {
+            holder
+              .registerProblem(lambda, "Can be replaced with Comparator." + methodName, new ReplaceWithComparatorFix(methodName));
           }
         }
       }
@@ -84,18 +102,18 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
 
   private static boolean areEquivalent(PsiParameter[] parameters, PsiExpression left, PsiExpression right) {
     if (!PsiTreeUtil.processElements(left, e -> !(e instanceof PsiReferenceExpression) ||
-                                               ((PsiReferenceExpression)e).resolve() != parameters[1]) ||
+                                                ((PsiReferenceExpression)e).resolve() != parameters[1]) ||
         !PsiTreeUtil.processElements(right, e -> !(e instanceof PsiReferenceExpression) ||
-                                                ((PsiReferenceExpression)e).resolve() != parameters[0])) {
+                                                 ((PsiReferenceExpression)e).resolve() != parameters[0])) {
       return false;
     }
     PsiExpression copy = (PsiExpression)right.copy();
     PsiElement[] rightRefs = PsiTreeUtil.collectElements(copy, e -> e instanceof PsiReferenceExpression &&
-                                                                   ((PsiReferenceExpression)e).resolve() == parameters[1]);
+                                                                    ((PsiReferenceExpression)e).resolve() == parameters[1]);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(left.getProject());
     String paramName = parameters[0].getName();
-    if(paramName== null) return false;
-    for(PsiElement ref : rightRefs) {
+    if (paramName == null) return false;
+    for (PsiElement ref : rightRefs) {
       PsiElement nameElement = ((PsiReferenceExpression)ref).getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
       nameElement.replace(factory.createIdentifier(paramName));
@@ -114,14 +132,14 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName();
+      return "Replace with Comparator." + myMethodName;
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with Comparator." + myMethodName;
+      return "Simplify comparator using Comparator static methods";
     }
 
     @Override
@@ -129,6 +147,8 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       PsiElement element = descriptor.getStartElement();
       if (!(element instanceof PsiLambdaExpression)) return;
       PsiLambdaExpression lambda = (PsiLambdaExpression)element;
+      PsiParameter[] parameters = lambda.getParameterList().getParameters();
+      if (parameters.length != 2) return;
       PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       if (!(body instanceof PsiMethodCallExpression)) return;
       PsiMethodCallExpression methodCall = (PsiMethodCallExpression)body;
@@ -137,15 +157,25 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       if (MethodUtils.isCompareToCall(methodCall)) {
         methodName = "comparing";
         keyExtractor = methodCall.getMethodExpression().getQualifierExpression();
-      } else {
+        if (keyExtractor instanceof PsiReferenceExpression) {
+          PsiElement keyElement = ((PsiReferenceExpression)keyExtractor).resolve();
+          if(keyElement == parameters[0]) {
+            methodName = "naturalOrder";
+          }
+          else if(keyElement == parameters[1]) {
+            methodName = "reverseOrder";
+          }
+        }
+      }
+      else {
         PsiMethod method = methodCall.resolveMethod();
-        if(method != null && method.getName().equals("compare")) {
+        if (method != null && method.getName().equals("compare")) {
           PsiClass containingClass = method.getContainingClass();
-          if(containingClass != null) {
+          if (containingClass != null) {
             String className = containingClass.getQualifiedName();
-            if(className != null) {
+            if (className != null) {
               PsiExpression[] args = methodCall.getArgumentList().getExpressions();
-              if(args.length != 2) return;
+              if (args.length != 2) return;
               keyExtractor = args[0];
               switch (className) {
                 case CommonClassNames.JAVA_LANG_LONG:
@@ -164,37 +194,41 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
           }
         }
       }
-      if(methodName == null || keyExtractor == null) return;
+      if (methodName == null || keyExtractor == null) return;
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
-      PsiParameter parameter = lambda.getParameterList().getParameters()[0];
-      String parameterName = parameter.getName();
+      String parameterName = parameters[0].getName();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      PsiExpression replacement = factory
-        .createExpressionFromText("java.util.Comparator." + methodName + "(" + parameterName + " -> " + keyExtractor.getText() + ")",
-                                  element);
-      PsiElement result = lambda.replace(replacement);
-      normalizeLambda(((PsiMethodCallExpression)result).getArgumentList().getExpressions()[0], factory);
+      PsiElement result;
+      if (!methodName.startsWith("comparing")) {
+        result = lambda.replace(factory.createExpressionFromText("java.util.Comparator." + methodName + "()", element));
+      }
+      else {
+        String newLambda = parameterName + " -> " + keyExtractor.getText();
+        PsiExpression replacement = factory.createExpressionFromText("java.util.Comparator." + methodName + "(" + newLambda + ")", element);
+        result = lambda.replace(replacement);
+        normalizeLambda(((PsiMethodCallExpression)result).getArgumentList().getExpressions()[0], factory);
+      }
       CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
     }
 
     private static void normalizeLambda(PsiExpression expression, PsiElementFactory factory) {
-      if(!(expression instanceof PsiLambdaExpression)) return;
+      if (!(expression instanceof PsiLambdaExpression)) return;
       PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       PsiElement body = lambda.getBody();
-      if(body == null) return;
-      if(LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(factory, lambda) == lambda) {
+      if (body == null) return;
+      if (LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(factory, lambda) == lambda) {
         PsiParameter parameter = parameters[0];
         String name = parameter.getName();
         String nameCandidate = null;
-        if(name != null) {
-          if(name.length() > 1 && name.endsWith("1")) {
-            nameCandidate = name.substring(0, name.length()-1);
+        if (name != null) {
+          if (name.length() > 1 && name.endsWith("1")) {
+            nameCandidate = name.substring(0, name.length() - 1);
           }
         }
-        if(nameCandidate != null) {
+        if (nameCandidate != null) {
           String newName = JavaCodeStyleManager.getInstance(expression.getProject()).suggestUniqueVariableName(nameCandidate, lambda, true);
-          if(newName.equals(nameCandidate)) {
+          if (newName.equals(nameCandidate)) {
             Collection<PsiReferenceExpression> references = PsiTreeUtil.collectElementsOfType(body, PsiReferenceExpression.class);
             StreamEx.of(references).filter(ref -> ref.resolve() == parameter).map(PsiJavaCodeReferenceElement::getReferenceNameElement)
               .nonNull().forEach(nameElement -> nameElement.replace(factory.createIdentifier(newName)));
