@@ -465,7 +465,7 @@ public class AnnotationsHighlightUtil {
             final PsiTypeElement operand = expression.getOperand();
             final PsiClass classType = PsiUtil.resolveClassInType(operand.getType());
             if (classType != null) {
-              checkAccessibility(expression, classType, HighlightUtil.formatClass(classType));
+              checkAccessibility(operand.getInnermostComponentReferenceElement(), classType, HighlightUtil.formatClass(classType));
             }
           }
 
@@ -478,7 +478,7 @@ public class AnnotationsHighlightUtil {
             }
           }
 
-          private void checkAccessibility(PsiExpression expression, PsiMember resolve, String memberString) {
+          private void checkAccessibility(PsiJavaCodeReferenceElement expression, PsiMember resolve, String memberString) {
             if (resolve.hasModifierProperty(PsiModifier.PRIVATE) &&
                 PsiTreeUtil.isAncestor(parent, resolve, true)) {
               String description = JavaErrorMessages.message("private.symbol",
@@ -486,6 +486,7 @@ public class AnnotationsHighlightUtil {
                                                              HighlightUtil.formatClass((PsiClass)parent));
               infos[0] =
                 HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
+              HighlightUtil.registerAccessQuickFixAction(resolve, expression, infos[0], null);
             }
           }
         });

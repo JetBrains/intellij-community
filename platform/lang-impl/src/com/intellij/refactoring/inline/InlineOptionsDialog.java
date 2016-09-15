@@ -75,7 +75,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     new RadioUpDownListener(myRbInlineAll, myRbInlineThisOnly);
 
     myRbInlineThisOnly.setEnabled(myInvokedOnReference);
-    final boolean writable = myElement.isWritable();
+    final boolean writable = allowInlineAll();
     myRbInlineAll.setEnabled(writable);
     if(myInvokedOnReference) {
       if (canInlineThisOnly()) {
@@ -112,6 +112,10 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     return optionsPanel;
   }
 
+  protected boolean allowInlineAll() {
+    return myElement.isWritable();
+  }
+
   protected abstract String getNameLabelText();
   protected abstract String getBorderTitle();
   protected abstract String getInlineAllText();
@@ -133,7 +137,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     final String name = nameIdentifierOwner.getName();
     final boolean isCheapToSearch =
      name != null && searchHelper.isCheapEnoughToSearch(name, scope, null, progressManager.getProgressIndicator()) != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
-    return isCheapToSearch ? ReferencesSearch.search(nameIdentifierOwner).findAll().size() : - 1;
+    return isCheapToSearch ? ReferencesSearch.search(nameIdentifierOwner, scope).findAll().size() : - 1;
   }
 
 }

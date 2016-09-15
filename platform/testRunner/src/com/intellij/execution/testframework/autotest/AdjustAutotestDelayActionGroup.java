@@ -43,7 +43,7 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
     if (descriptor != null) {
       for (AnAction action : descriptor.getRestartActions()) {
         if (action instanceof ToggleAutoTestAction) {
-          visible = true;
+          visible = ((ToggleAutoTestAction)action).isDelayApplicable();
           break;
         }
       }

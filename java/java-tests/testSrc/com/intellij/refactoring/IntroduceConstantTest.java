@@ -48,6 +48,12 @@ public class IntroduceConstantTest extends LightCodeInsightTestCase {
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 
+  public void testFromEnumConstantInitializer2() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    new MockIntroduceConstantHandler(null).invoke(getProject(), getEditor(), getFile(), null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
   public void testEnumConstant() throws Exception {
     doTest(true);    
   }

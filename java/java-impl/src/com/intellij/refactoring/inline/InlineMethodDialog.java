@@ -52,6 +52,11 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   }
 
   @Override
+  protected boolean allowInlineAll() {
+    return true;
+  }
+
+  @Override
   protected String getNameLabelText() {
     String methodText = PsiFormatUtil.formatMethod(myMethod,
                                                    PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
@@ -72,9 +77,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
   @Override
   protected String getInlineAllText() {
     final String occurrencesString = myOccurrencesNumber > -1 ? " (" + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? ")" : "s)") : "";
-    return (myMethod.isWritable()
-            ? RefactoringBundle.message("all.invocations.and.remove.the.method")
-            : RefactoringBundle.message("all.invocations.in.project")) + occurrencesString;
+    return (RefactoringBundle.message(myMethod.isWritable() ? "all.invocations.and.remove.the.method" : "all.invocations.in.project")) + occurrencesString;
   }
 
   @Override

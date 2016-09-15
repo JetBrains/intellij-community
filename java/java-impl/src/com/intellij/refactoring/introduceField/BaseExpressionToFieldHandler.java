@@ -737,7 +737,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
         PsiMember anchorMember = finalAnchorElement instanceof PsiMember ? (PsiMember)finalAnchorElement : null;
 
-        if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass()) {
+        if (anchorMember instanceof PsiEnumConstant && destClass == anchorMember.getContainingClass() &&
+            PsiTreeUtil.isAncestor(((PsiEnumConstant)anchorMember).getArgumentList(), initializer, false)) {
           final String initialName = "Constants";
           String constantsClassName = initialName;
 

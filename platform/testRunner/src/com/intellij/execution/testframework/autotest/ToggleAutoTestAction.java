@@ -45,6 +45,10 @@ public class ToggleAutoTestAction extends ToggleAction {
     }
   }
 
+  public boolean isDelayApplicable() {
+    return true;
+  }
+
   public AbstractAutoTestManager getAutoTestManager(Project project) {
     return AutoTestManager.getInstance(project);
   }
