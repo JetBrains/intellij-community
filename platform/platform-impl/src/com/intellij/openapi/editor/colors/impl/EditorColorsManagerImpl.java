@@ -133,6 +133,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     }
     
     initEditableDefaultSchemesCopies();
+    initEditableBundledSchemesCopies();
     setGlobalSchemeInner(scheme == null ? getDefaultScheme() : scheme);
   }
 
@@ -147,14 +148,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   private void initEditableDefaultSchemesCopies() {
     for (DefaultColorsScheme defaultScheme : myDefaultColorSchemeManager.getAllSchemes()) {
       if (defaultScheme.hasEditableCopy()) {
-        String editableCopyName = defaultScheme.getEditableCopyName();
-        AbstractColorsScheme editableCopy = (AbstractColorsScheme)getScheme(editableCopyName);
-        if (editableCopy == null) {
-          editableCopy = (AbstractColorsScheme)defaultScheme.clone();
-          editableCopy.setName(editableCopyName);
-          addColorsScheme(editableCopy);
-        }
-        editableCopy.setCanBeDeleted(false);
+        createEditableCopy(defaultScheme, defaultScheme.getEditableCopyName());
       }
     }
   }
@@ -162,9 +156,27 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
       for (BundledColorSchemeEP ep : BundledColorSchemeEP.EP_NAME.getExtensions()) {
-        mySchemeManager.loadBundledScheme(ep.path + ".xml", ep, ReadOnlyColorsSchemeImpl::new);
+        mySchemeManager.loadBundledScheme(ep.path + ".xml", ep, BundledScheme::new);
       }
     }
+  }
+  
+  private void initEditableBundledSchemesCopies() {
+    for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
+      if (scheme instanceof BundledScheme) {
+        createEditableCopy((BundledScheme)scheme, ((BundledScheme)scheme).getEditableCopyName());
+      }
+    }
+  }
+
+  private void createEditableCopy(@NotNull AbstractColorsScheme initialScheme, @NotNull String editableCopyName) {
+    AbstractColorsScheme editableCopy = (AbstractColorsScheme)getScheme(editableCopyName);
+    if (editableCopy == null) {
+      editableCopy = (AbstractColorsScheme)initialScheme.clone();
+      editableCopy.setName(editableCopyName);
+      addColorsScheme(editableCopy);
+    }
+    editableCopy.setCanBeDeleted(false);
   }
 
   @Deprecated
@@ -184,11 +196,20 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     myTreeDispatcher.getMulticaster().globalSchemeChange(newScheme);
   }
 
-  static class ReadOnlyColorsSchemeImpl extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
-    public ReadOnlyColorsSchemeImpl(@NotNull Element element) {
+  static class BundledScheme extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
+    public BundledScheme(@NotNull Element element) {
       super(null);
 
       readExternal(element);
+    }
+
+    @Override
+    public boolean isVisible() {
+      return false;
+    }
+    
+    public String getEditableCopyName() {
+      return DefaultColorsScheme.EDITABLE_COPY_PREFIX + getName();
     }
   }
 
