@@ -22,6 +22,9 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
 
+/**
+ * @deprecated use 'update-from-sources' from dist.gant instead
+ */
 target('default': "Developers update") {
   //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
   String projectHome = isDefined("devIdeaHome") ? devIdeaHome : home
@@ -41,6 +44,9 @@ List<String> getExcludedPlugins() {
   return isDefined("productProperties") ? productProperties.excludedPlugins : []
 }
 
+/**
+ * @deprecated this method isn't called anymore, it's temporary left for compatibility only; modify {@link org.jetbrains.intellij.build.IdeaCommunityProperties} instead
+ */
 def layoutFull(BuildContext context) {
   binding.setVariable("productProperties", context.productProperties)
   String home = context.paths.communityHome
@@ -279,6 +285,10 @@ def layoutFull(BuildContext context) {
   return info
 }
 
+/**
+ * @deprecated this method isn't used in new build scripts (it's still used in CLion and AppCode build scripts which aren't rewritten yet and
+ * in third-party products); specify non-trivial layout of plugins in {@link org.jetbrains.intellij.build.CommunityRepositoryModules} instead
+ */
 public def layoutCommunityPlugins(String home, BuildContext buildContext = null) {
   if (!isDefined("pluginFilter") || pluginFilter.contains("android")) {
     if (buildContext == null) {
@@ -776,6 +786,10 @@ def reorder(String home, String targetDirectory) {
   }
 }
 
+/**
+ * @deprecated this method isn't used in new build scripts (it's still used in Android Studio build scripts which aren't rewritten yet);
+ * layout of Android plugin in specified in {@link org.jetbrains.intellij.build.CommunityRepositoryModules}
+ */
 def layoutAndroid(String androidHome, String androidToolsBaseHome) {
   dir("plugins") {
     layoutPlugin("android") {

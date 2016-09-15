@@ -75,6 +75,10 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
+/**
+ * @deprecated these properies aren't used in new build scripts anymore (they are still used in CLion and AppCode build scripts which aren't rewritten yet;
+ * modify {@link org.jetbrains.intellij.build.impl.VmOptionsGenerator} instead
+ */
 binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
@@ -371,6 +375,10 @@ binding.setVariable("classPathLibs", [
         "jna.jar"
 ])
 
+/**
+ * @deprecated these properies aren't used in new build scripts anymore (they are still used in CLion and AppCode build scripts which aren't rewritten yet;
+ * modify {@link org.jetbrains.intellij.build.CommunityRepositoryModules} instead
+ */
 binding.setVariable("platformApiModules", [
   "analysis-api",
   "built-in-server-api",
