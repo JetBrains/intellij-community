@@ -349,7 +349,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (parameters.getInvocationCount() >= 2) {
       JavaClassNameCompletionContributor.addAllClasses(parameters, parameters.getInvocationCount() <= 2, result.getPrefixMatcher(), element -> {
         if (!session.alreadyProcessed(element)) {
-          result.addElement(JavaClassNameCompletionContributor.highlightIfNeeded((JavaPsiClassReferenceElement)element, parameters));
+          result.addElement(JavaCompletionUtil.highlightIfNeeded(null, element, element.getObject(), parameters.getPosition()));
         }
       });
     } else {

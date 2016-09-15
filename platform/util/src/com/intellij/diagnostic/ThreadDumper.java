@@ -43,15 +43,19 @@ public class ThreadDumper {
   }
   
   @NotNull
-  public static String dumpEdtStackTrace() {
-    ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-    ThreadInfo[] threads = sort(threadMXBean.dumpAllThreads(false, false));
+  public static String dumpEdtStackTrace(ThreadInfo[] threadInfos) {
     StringWriter writer = new StringWriter();
-    if (threads.length > 0) {
-      StackTraceElement[] trace = threads[0].getStackTrace();
+    if (threadInfos.length > 0) {
+      StackTraceElement[] trace = threadInfos[0].getStackTrace();
       printStackTrace(writer, trace);
     }
     return writer.toString();
+  }
+
+  @NotNull
+  public static ThreadInfo[] getThreadInfos() {
+    ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+    return sort(threadMXBean.dumpAllThreads(false, false));
   }
 
   @NotNull

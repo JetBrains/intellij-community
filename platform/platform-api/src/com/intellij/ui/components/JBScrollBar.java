@@ -17,8 +17,6 @@ package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -72,9 +70,6 @@ public class JBScrollBar extends JScrollBar {
    */
   @SuppressWarnings("UnusedParameters")
   public static ScrollBarUI createUI(JComponent c) {
-    if (Registry.is("ide.scroll.new.layout")) {
-      return SystemInfo.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
-    }
-    return ButtonlessScrollBarUI.createNormal();
+    return SystemInfo.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
   }
 }
