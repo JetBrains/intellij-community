@@ -74,7 +74,7 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     final JTextComponent c = myTextField;
     final JBInsets i = JBInsets.create(c.getInsets());
     final int x = i.right - JBUI.scale(4) - JBUI.scale(16);
-    final int y = i.top - 3;
+    final int y = i.top - JBUI.scale(3);
     final int w = c.getWidth() - i.width() + JBUI.scale(16*2 +7*2  - 5);
     int h = c.getBounds().height - i.height() + JBUI.scale(4*2 - 3);
     if (h%2==1) h++;
