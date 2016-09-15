@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -672,5 +673,34 @@ public class ExpressionUtils {
     return nullable ?
            NullableNotNullManager.isNullable(modifierListOwner):
            NullableNotNullManager.isNotNull(modifierListOwner);
+  }
+
+  /**
+   * Returns true if the expression can be moved to earlier point in program order without possible semantic change or
+   * notable performance handicap. Examples of simple expressions are:
+   * - literal (number, char, string, class literal, true, false, null)
+   * - this
+   * - static field access
+   * - instance field access having 'this' as qualifier
+   *
+   * @param expression an expression to test
+   * @return true if the supplied expression is simple
+   */
+  @Contract("null -> false")
+  public static boolean isSimpleExpression(@Nullable PsiExpression expression) {
+    if (expression instanceof PsiLiteralExpression ||
+        expression instanceof PsiThisExpression ||
+        expression instanceof PsiClassObjectAccessExpression) {
+      return true;
+    }
+    if(expression instanceof PsiReferenceExpression) {
+      PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
+      if(qualifier == null || qualifier instanceof PsiThisExpression) return true;
+      if(qualifier instanceof PsiReferenceExpression) {
+        PsiElement resolvedQualifier = ((PsiReferenceExpression)qualifier).resolve();
+        if(resolvedQualifier instanceof PsiClass) return true;
+      }
+    }
+    return false;
   }
 }

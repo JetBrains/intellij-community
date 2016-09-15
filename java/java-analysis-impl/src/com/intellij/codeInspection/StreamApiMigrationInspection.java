@@ -208,7 +208,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                           return;
                         }
                       }
-                      if(nextReturnStatement.getReturnValue() instanceof PsiLiteralExpression) {
+                      if(ExpressionUtils.isSimpleExpression(nextReturnStatement.getReturnValue())) {
                         registerProblem(holder, isOnTheFly, statement, "findFirst", new ReplaceWithFindFirstFix());
                       }
                     }
@@ -916,7 +916,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       PsiReturnStatement nextReturnStatement = getNextReturnStatement(foreachStatement);
       if(nextReturnStatement == null) return;
       PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
-      if(!(orElseExpression instanceof PsiLiteralExpression)) return;
+      if(!ExpressionUtils.isSimpleExpression(orElseExpression)) return;
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
       StringBuilder builder = generateStream(iteratedValue, intermediateOps).append(".findFirst()");
       if (!(value instanceof PsiReferenceExpression) || ((PsiReferenceExpression)value).resolve() != tb.getVariable()) {
