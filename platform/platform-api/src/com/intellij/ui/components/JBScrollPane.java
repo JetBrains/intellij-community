@@ -433,27 +433,6 @@ public class JBScrollPane extends JScrollPane {
     protected void paintComponent(Graphics g) {
       g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
-
-      if (SystemInfo.isMac || !Registry.is("ide.scroll.track.border.paint")) return;
-      g.setColor(getForeground());
-
-      int x2 = getWidth() - 1;
-      int y2 = getHeight() - 1;
-
-      if (myPos == UPPER_LEFT_CORNER || myPos == UPPER_RIGHT_CORNER) {
-        g.drawLine(0, y2, x2, y2);
-      }
-      if (myPos == LOWER_LEFT_CORNER || myPos == LOWER_RIGHT_CORNER) {
-        g.drawLine(0, 0, x2, 0);
-      }
-
-      if (myPos == UPPER_LEFT_CORNER || myPos == LOWER_LEFT_CORNER) {
-        g.drawLine(x2, 0, x2, y2);
-      }
-
-      if (myPos == UPPER_RIGHT_CORNER || myPos == LOWER_RIGHT_CORNER) {
-        g.drawLine(0, 0, 0, y2);
-      }
     }
   }
 

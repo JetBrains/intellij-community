@@ -93,7 +93,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   boolean isBorderNeeded(JComponent c) {
-    return c.isOpaque() && Registry.is("ide.scroll.track.border.paint");
+    return false;
   }
 
   boolean isTrackClickable() {
