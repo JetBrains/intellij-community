@@ -15,8 +15,8 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
+import com.jetbrains.edu.learning.stepic.CCStepicConnector;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -59,21 +59,21 @@ public class CCPushCourse extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           for (Lesson lesson : course.getLessons()) {
             if (lesson.getId() > 0) {
-              EduStepicConnector.updateLesson(project, lesson, indicator);
+              CCStepicConnector.updateLesson(project, lesson, indicator);
             }
             else {
               final CourseInfo info = CourseInfo.fromCourse(course);
-              final int lessonId = EduStepicConnector.postLesson(project, lesson, indicator);
+              final int lessonId = CCStepicConnector.postLesson(project, lesson, indicator);
               final List<Integer> sections = info.getSections();
               final Integer sectionId = sections.get(sections.size() - 1);
-              EduStepicConnector.postUnit(project, lessonId, lesson.getIndex(), sectionId);
+              CCStepicConnector.postUnit(project, lessonId, lesson.getIndex(), sectionId);
             }
           }
         }
       });
     }
     else {
-      EduStepicConnector.postCourseWithProgress(project, course);
+      CCStepicConnector.postCourseWithProgress(project, course);
     }
     EduUsagesCollector.courseUploaded();
   }
