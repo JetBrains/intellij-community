@@ -456,9 +456,9 @@ idea.fatal.error.notification=disabled
   void buildUnpackedDistribution(String targetDirectory) {
     def jarsBuilder = new DistributionJARsBuilder(buildContext)
     jarsBuilder.buildJARs()
+    layoutShared()
 /*
     //todo[nik] uncomment this to update os-specific files (e.g. in 'bin' directory) as well
-    layoutShared()
     def propertiesFile = patchIdeaPropertiesFile()
     OsSpecificDistributionBuilder builder;
     if (SystemInfo.isWindows) {
