@@ -191,6 +191,7 @@ public class FindDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() { // doCancel disposes fields and then calls dispose
+    applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
     rememberResultsPreviewWasOpen();
     super.doCancelAction();
   }
@@ -366,6 +367,24 @@ public class FindDialog extends DialogWrapper {
             myResultsPreviewTable.setRowSelectionInterval(row + 1, row + 1);
             TableUtil.scrollSelectionToVisible(myResultsPreviewTable);
           }
+        }
+      );
+
+      makeResultsPreviewActionOverride(
+        comboBox,
+        KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0),
+        "scrollUp",
+        () -> {
+          ScrollingUtil.movePageUp(myResultsPreviewTable);
+        }
+      );
+
+      makeResultsPreviewActionOverride(
+        comboBox,
+        KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0),
+        "scrollDown",
+        () -> {
+          ScrollingUtil.movePageDown(myResultsPreviewTable);
         }
       );
 
@@ -1655,7 +1674,6 @@ public class FindDialog extends DialogWrapper {
     }
 
     if (navigations != null) {
-      applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
       doCancelAction();
       navigations.get(0).navigate(true);
       for(int i = 1; i < navigations.size(); ++i) navigations.get(i).highlightInEditor();
