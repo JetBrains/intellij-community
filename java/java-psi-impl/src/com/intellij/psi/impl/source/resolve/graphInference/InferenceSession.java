@@ -32,6 +32,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1651,36 +1652,19 @@ public class InferenceSession {
   /**
    * 18.5.4 More Specific Method Inference 
    */
-  public static boolean isMoreSpecific(PsiMethod m1,
+  public static boolean isMoreSpecific(final PsiMethod m1,
                                        final PsiMethod m2,
-                                       final PsiSubstitutor siteSubstitutor1, 
+                                       final PsiSubstitutor siteSubstitutor1,
                                        final PsiExpression[] args,
                                        final PsiElement context,
                                        final boolean varargs) {
-    final PsiTypeParameter[] typeParameters = m1.getTypeParameters();
-    try {
-      for (PsiTypeParameter parameter : typeParameters) {
-        final PsiClassType[] types = parameter.getExtendsListTypes();
-        if (types.length > 0) {
-          final List<PsiType> conjuncts = ContainerUtil.map(types, new Function<PsiClassType, PsiType>() {
-            @Override
-            public PsiType fun(PsiClassType type) {
-              return siteSubstitutor1.substitute(type);
-            }
-          });
-          //don't glb to avoid flattening = Object&Interface would be preserved
-          //otherwise methods with different signatures could get same erasure
-          final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(new PsiType[conjuncts.size()]));
-          LambdaUtil.getFunctionalTypeMap().put(parameter, upperBound);
-        }
+    return LambdaUtil.performWithSubstitutedParameterBounds(m1.getTypeParameters(), siteSubstitutor1, new Producer<Boolean>() {
+      @Nullable
+      @Override
+      public Boolean produce() {
+        return isMoreSpecificInternal(m1, m2, siteSubstitutor1, args, context, varargs);
       }
-      return isMoreSpecificInternal(m1, m2, siteSubstitutor1, args, context, varargs);
-    }
-    finally {
-      for (PsiTypeParameter parameter : typeParameters) {
-        LambdaUtil.getFunctionalTypeMap().remove(parameter);
-      }
-    }
+    });
   }
 
   private static boolean isMoreSpecificInternal(PsiMethod m1,
