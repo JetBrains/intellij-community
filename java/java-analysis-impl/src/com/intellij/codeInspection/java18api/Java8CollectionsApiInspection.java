@@ -15,15 +15,21 @@
  */
 package com.intellij.codeInspection.java18api;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +58,23 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
+      @Override
+      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        super.visitMethodCallExpression(expression);
+        PsiElement nameElement = expression.getMethodExpression().getReferenceNameElement();
+        if(nameElement != null && expression.getArgumentList().getExpressions().length == 2 &&
+          "sort".equals(nameElement.getText())) {
+          PsiMethod method = expression.resolveMethod();
+          if(method != null) {
+            PsiClass containingClass = method.getContainingClass();
+            if(containingClass != null && CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(containingClass.getQualifiedName())) {
+              holder.registerProblem(nameElement, QuickFixBundle.message("java.8.collections.api.inspection.sort.description"),
+                                     new ReplaceWithListSortFix());
+            }
+          }
+        }
+      }
+
       @Override
       public void visitConditionalExpression(PsiConditionalExpression expression) {
         final ConditionInfo conditionInfo = extractConditionInfo(expression.getCondition());
@@ -294,6 +317,39 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
 
     public boolean isInverted() {
       return myInverted;
+    }
+  }
+
+  private static class ReplaceWithListSortFix implements LocalQuickFix {
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return getFamilyName();
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return QuickFixBundle.message("java.8.collections.api.inspection.sort.fix.name");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getStartElement();
+      PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+      if(methodCallExpression != null) {
+        PsiExpression[] args = methodCallExpression.getArgumentList().getExpressions();
+        if(args.length == 2) {
+          PsiExpression list = args[0];
+          PsiExpression comparator = args[1];
+          String replacement = list.getText()+".sort("+comparator.getText()+")";
+          if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
+          methodCallExpression
+            .replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, methodCallExpression));
+        }
+      }
     }
   }
 }
