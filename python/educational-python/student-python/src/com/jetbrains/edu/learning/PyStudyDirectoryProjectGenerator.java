@@ -51,7 +51,7 @@ import java.util.Collection;
 import java.util.List;
 
 
-public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
+public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>  {
   private static final Logger LOG = Logger.getInstance(PyStudyDirectoryProjectGenerator.class.getName());
   private final StudyProjectGenerator myGenerator;
   private static final String NO_PYTHON_INTERPRETER = "<html><u>Add</u> python interpreter.</html>";
@@ -117,8 +117,8 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator imp
 
 
   @Override
-  public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                              @Nullable Object settings, @NotNull Module module) {
+  public void configureProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
+                               @NotNull PyNewProjectSettings settings, @NotNull Module module) {
     myGenerator.generateProject(project, baseDir);
     final String testHelper = "test_helper.py";
     if (baseDir.findChild(testHelper) != null) return;

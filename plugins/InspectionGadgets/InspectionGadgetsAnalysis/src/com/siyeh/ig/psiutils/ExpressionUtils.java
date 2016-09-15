@@ -600,6 +600,13 @@ public class ExpressionUtils {
 
   @Nullable
   public static PsiVariable getVariableFromNullComparison(PsiExpression expression, boolean equals) {
+    final PsiReferenceExpression referenceExpression = getReferenceExpressionFromNullComparison(expression, equals);
+    final PsiElement target = referenceExpression.resolve();
+    return target instanceof PsiVariable ? (PsiVariable)target : null;
+  }
+
+  @Nullable
+  public static PsiReferenceExpression getReferenceExpressionFromNullComparison(PsiExpression expression, boolean equals) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (!(expression instanceof PsiPolyadicExpression)) {
       return null;
@@ -620,26 +627,16 @@ public class ExpressionUtils {
     if (operands.length != 2) {
       return null;
     }
+    PsiExpression comparedToNull = null;
     if (PsiType.NULL.equals(operands[0].getType())) {
-      return getVariable(operands[1]);
+      comparedToNull = operands[1];
     }
     else if (PsiType.NULL.equals(operands[1].getType())) {
-      return getVariable(operands[0]);
+      comparedToNull = operands[0];
     }
-    return null;
-  }
+    comparedToNull = ParenthesesUtils.stripParentheses(comparedToNull);
 
-  public static PsiVariable getVariable(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiReferenceExpression)) {
-      return null;
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-    final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiVariable)) {
-      return null;
-    }
-    return (PsiVariable)target;
+    return comparedToNull instanceof PsiReferenceExpression ? (PsiReferenceExpression)comparedToNull : null;
   }
 
   public static boolean isConcatenation(PsiElement element) {

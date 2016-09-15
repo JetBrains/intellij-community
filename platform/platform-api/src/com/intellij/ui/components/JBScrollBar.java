@@ -73,8 +73,7 @@ public class JBScrollBar extends JScrollBar {
   @SuppressWarnings("UnusedParameters")
   public static ScrollBarUI createUI(JComponent c) {
     if (Registry.is("ide.scroll.new.layout")) {
-      if (!SystemInfo.isMac) return new DefaultScrollBarUI();
-      if (Registry.is("mac.scroll.new.ui")) return new MacScrollBarUI();
+      return SystemInfo.isMac ? new MacScrollBarUI() : new DefaultScrollBarUI();
     }
     return ButtonlessScrollBarUI.createNormal();
   }
