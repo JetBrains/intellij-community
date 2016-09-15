@@ -176,14 +176,16 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
-      // XXX: Requires switching from stub to AST
-      final PyAnnotation annotation = target.getAnnotation();
-      if (annotation != null) {
-        final PyExpression value = annotation.getValue();
-        if (value != null) {
-          return getType(value, new Context(context));
+      if (context.maySwitchToAST(target)) {
+        // XXX: Requires switching from stub to AST
+        final PyAnnotation annotation = target.getAnnotation();
+        if (annotation != null) {
+          final PyExpression value = annotation.getValue();
+          if (value != null) {
+            return getType(value, new Context(context));
+          }
+          return null;
         }
-        return null;
       }
       final String comment = target.getTypeCommentAnnotation();
       if (comment != null) {
