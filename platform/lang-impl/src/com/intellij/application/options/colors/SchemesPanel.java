@@ -21,9 +21,7 @@ import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
-import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
+import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.options.SchemeImportUtil;
@@ -32,6 +30,7 @@ import com.intellij.openapi.options.SchemeImporterEP;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,6 +50,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   private ComboBox<MySchemeItem> mySchemeComboBox;
 
   private JButton myDeleteButton;
+  private JButton myResetButton;
   private JButton myImportButton;
   private JLabel myHintLabel;
 
@@ -79,6 +79,12 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
           if (areSchemesLoaded()) {
             myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
           }
+          AbstractColorsScheme originalScheme =
+            selected instanceof AbstractColorsScheme ? ((AbstractColorsScheme)selected).getOriginal() : null;
+          myResetButton.setEnabled(
+            !readOnly &&
+            selectedName.startsWith(DefaultColorsScheme.EDITABLE_COPY_PREFIX) &&
+            originalScheme instanceof ReadOnlyColorsScheme);
         }
       }
     });
@@ -126,6 +132,23 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
       }
     });
     panel.add(myDeleteButton,
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
+                                     0));
+    myResetButton = new JButton(ApplicationBundle.message("color.scheme.reset"));
+    myResetButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        String selectedName = getSelectedSchemeName();
+        if (selectedName != null) {
+          if (Messages
+                .showOkCancelDialog(ApplicationBundle.message("color.scheme.reset.message"),
+                                    ApplicationBundle.message("color.scheme.reset.title"), Messages.getQuestionIcon()) == Messages.OK) {
+            myOptions.resetSchemeToOriginal(selectedName);
+          }
+        }
+      }
+    });
+    panel.add(myResetButton,
               new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
                                      0));
     myImportButton = new JButton("Import...");

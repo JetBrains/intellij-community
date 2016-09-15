@@ -143,14 +143,20 @@ public class FindUtil {
     model.setPromptOnReplace(false);
   }
 
-  public static void updateFindInFileModel(@Nullable Project project, @NotNull FindModel with) {
+  public static void updateFindInFileModel(@Nullable Project project, @NotNull FindModel with, boolean saveFindString) {
     FindModel model = FindManager.getInstance(project).getFindInFileModel();
     model.setCaseSensitive(with.isCaseSensitive());
     model.setWholeWordsOnly(with.isWholeWordsOnly());
     model.setRegularExpressions(with.isRegularExpressions());
     model.setSearchContext(with.getSearchContext());
+
+    if (saveFindString && !with.getStringToFind().isEmpty()) {
+      model.setStringToFind(with.getStringToFind());
+    }
+
     if (with.isReplaceState()) {
       model.setPreserveCase(with.isPreserveCase());
+      if (saveFindString) model.setStringToReplace(with.getStringToReplace());
     }
   }
 

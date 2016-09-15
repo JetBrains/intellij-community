@@ -27,6 +27,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -72,6 +73,8 @@ import java.util.List;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract implements EditorOptionsProvider {
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
+  
+  private static Logger LOG = Logger.getInstance("#" + ColorAndFontOptions.class.getName());
 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
@@ -244,6 +247,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     mySchemes.remove(name);
     resetSchemesCombo(null);
     mySomeSchemesDeleted = mySomeSchemesDeleted || !deletedNewlyCreated;
+  }
+  
+  
+  void resetSchemeToOriginal(@NotNull String name) {
+    MyColorScheme schemeToReset = mySchemes.get(name);
+    schemeToReset.resetToOriginal();
+    resetImpl();
+    selectScheme(name);
+    resetSchemesCombo(null);
+    ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
   }
 
   @Override
@@ -1166,6 +1179,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         }
       }
       return false;
+    }
+    
+    public void resetToOriginal() {
+      if (myParentScheme instanceof AbstractColorsScheme) {
+        AbstractColorsScheme originalScheme = ((AbstractColorsScheme)myParentScheme).getOriginal();
+        if (originalScheme != null) {
+          originalScheme.copyTo((AbstractColorsScheme)myParentScheme);
+          ((AbstractColorsScheme)myParentScheme).setSaveNeeded(true);
+        }
+      }
     }
   }
 

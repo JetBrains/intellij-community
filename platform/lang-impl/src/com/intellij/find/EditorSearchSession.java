@@ -16,6 +16,7 @@
 
 package com.intellij.find;
 
+import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
@@ -154,7 +155,7 @@ public class EditorSearchSession implements SearchSession,
         updateUIWithFindModel();
         mySearchResults.clear();
         updateResults(true);
-        FindUtil.updateFindInFileModel(getProject(), myFindModel);
+        FindUtil.updateFindInFileModel(getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
       }
     });
 

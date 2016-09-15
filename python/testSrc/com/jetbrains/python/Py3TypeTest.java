@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,6 +190,11 @@ public class Py3TypeTest extends PyTestCase {
   public void testOpenBinary() {
     doTest("FileIO[bytes]",
            "expr = open('foo', 'rb')\n");
+  }
+
+  // PY-1427
+  public void testBytesLiteral() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("bytes", "expr = b'foo'"));
   }
 
   private void doTest(final String expectedType, final String text) {

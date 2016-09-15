@@ -141,6 +141,8 @@
 
     <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"
                         serviceImplementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl"/>
+    <applicationService serviceInterface="com.intellij.reporting.FreezeLogger"
+                        serviceImplementation="com.intellij.reporting.FreezeLoggerImpl"/>
     <applicationService serviceInterface="com.intellij.featureStatistics.ProductivityFeaturesRegistry"
                         serviceImplementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl"/>
     <applicationService serviceInterface="com.intellij.util.InstanceofCheckerGenerator"

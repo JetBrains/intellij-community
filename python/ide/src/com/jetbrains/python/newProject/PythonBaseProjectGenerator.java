@@ -22,7 +22,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.remote.RemoteSdkCredentials;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.RemoteProjectSettings;
@@ -34,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 
-public class PythonBaseProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
+public class PythonBaseProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>  {
   @NotNull
   @Nls
   @Override
@@ -60,8 +59,8 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator implement
   }
 
   @Override
-  public void generateProject(@NotNull final Project project, @NotNull VirtualFile baseDir, final Object settings,
-                              @NotNull final Module module) {
+  public void configureProject(@NotNull final Project project, @NotNull VirtualFile baseDir, @NotNull final PyNewProjectSettings settings,
+                               @NotNull final Module module) {
     if (settings instanceof RemoteProjectSettings) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       assert manager != null;

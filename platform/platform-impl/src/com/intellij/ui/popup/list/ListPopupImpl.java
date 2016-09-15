@@ -543,7 +543,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
     @Override
     public Dimension getPreferredScrollableViewportSize() {
       Dimension result = super.getPreferredScrollableViewportSize();
-      result.width += JBUI.scale(14); // support possible scroll bar
       int rowCount = getVisibleRowCount();
       int size = getModel().getSize();
       if (rowCount < size) {

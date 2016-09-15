@@ -861,4 +861,15 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
       schemeName.substring(DefaultColorsScheme.EDITABLE_COPY_PREFIX.length()) : 
       schemeName; 
   }
+  
+  
+  @Nullable
+  public AbstractColorsScheme getOriginal() {
+    String originalSchemeName = getMetaProperties().getProperty(META_INFO_ORIGINAL);
+    if (originalSchemeName != null) {
+      EditorColorsScheme originalScheme = EditorColorsManager.getInstance().getScheme(originalSchemeName);
+      if (originalScheme instanceof AbstractColorsScheme) return (AbstractColorsScheme)originalScheme;
+    }
+    return null;
+  }
 }
