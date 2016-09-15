@@ -92,7 +92,7 @@ public class CvsTabbedWindow implements Disposable {
   @NotNull
   private ToolWindow getToolWindow() {
     final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS);
-    assert toolWindow != null : "VCS ToolWindow should be available at this point.";
+    assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
     return toolWindow;
   }
 

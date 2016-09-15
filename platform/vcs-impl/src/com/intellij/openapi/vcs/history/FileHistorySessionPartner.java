@@ -133,7 +133,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   @NotNull
   private static ToolWindow getToolWindow(@NotNull Project project) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.VCS);
-    assert toolWindow != null : "VCS ToolWindow should be available at this point.";
+    assert toolWindow != null : "Version Control ToolWindow should be available at this point.";
     return toolWindow;
   }
 
