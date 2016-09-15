@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,16 @@
 package com.jetbrains.python.newProject;
 
 import com.intellij.facet.ui.ValidationResult;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +34,14 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.List;
 
-public abstract class PythonProjectGenerator {
+/**
+ * This class encapsulates remote settings, so one should extend it for any python project that supports remote generation, at least
+ * Instead of {@link #generateProject(Project, VirtualFile, PyNewProjectSettings, Module)} inheritor shall use
+ * {@link #configureProject(Project, VirtualFile, PyNewProjectSettings, Module)}
+ *
+ * @param <T> project settings
+ */
+public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> implements DirectoryProjectGenerator<T> {
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   @Nullable private MouseListener myErrorLabelMouseListener;
 
@@ -43,6 +55,30 @@ public abstract class PythonProjectGenerator {
     return null;
   }
 
+  @Override
+  public final void generateProject(@NotNull final Project project,
+                                    @NotNull final VirtualFile baseDir,
+                                    @Nullable final T settings,
+                                    @NotNull final Module module) {
+    /*Instead of this method overwrite ``configureProject``*/
+
+    // If we deal with remote project -- use remote manager to configure it
+    final PythonRemoteInterpreterManager remoteManager = PythonRemoteInterpreterManager.getInstance();
+    final Sdk sdk = (settings != null ? settings.getSdk() : null);
+    if (remoteManager != null && PythonSdkType.isRemote(sdk)) {
+      remoteManager.prepareRemoteSettingsIfNeeded(module, sdk);
+    }
+    configureProject(project, baseDir, settings, module);
+  }
+
+  /**
+   * Does real work to generate project
+   */
+  protected abstract void configureProject(@NotNull final Project project,
+                                           @NotNull final VirtualFile baseDir,
+                                           @Nullable final T settings,
+                                           @NotNull final Module module);
+
   public Object getProjectSettings() {
     return new PyNewProjectSettings();
   }
@@ -55,7 +91,8 @@ public abstract class PythonProjectGenerator {
     myListeners.add(listener);
   }
 
-  public void locationChanged(@NotNull final String newLocation) {}
+  public void locationChanged(@NotNull final String newLocation) {
+  }
 
   public interface SettingsListener {
     void stateChanged();
@@ -85,5 +122,6 @@ public abstract class PythonProjectGenerator {
     return myErrorLabelMouseListener;
   }
 
-  public void createAndAddVirtualEnv(Project project, PyNewProjectSettings settings) {}
+  public void createAndAddVirtualEnv(Project project, PyNewProjectSettings settings) {
+  }
 }

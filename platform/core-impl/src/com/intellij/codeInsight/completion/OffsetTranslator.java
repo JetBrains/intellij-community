@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -41,6 +42,7 @@ public class OffsetTranslator implements Disposable {
     myOriginalFile = originalFile;
     myCopyDocument = copyDocument;
     myCopyDocument.putUserData(RANGE_TRANSLATION, this);
+    Disposer.register(originalFile.getProject(), this);
 
     final LinkedList<DocumentEvent> sinceCommit = new LinkedList<DocumentEvent>();
     originalDocument.addDocumentListener(new DocumentAdapter() {

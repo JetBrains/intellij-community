@@ -404,16 +404,8 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
         if (success) {
           assert !myApplication.isDispatchThread();
-          final Project finalProject = project;
-          final TransactionGuardImpl guard = (TransactionGuardImpl)TransactionGuard.getInstance();
-          final TransactionId transaction = guard.getModalityTransaction(task.myCreationModalityState);
-          // invokeLater can be removed once transactions are enforced
-          myApplication.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              guard.submitTransaction(finalProject, transaction, finishRunnable);
-            }
-          }, task.myCreationModalityState);
+          TransactionGuardImpl guard = (TransactionGuardImpl)TransactionGuard.getInstance();
+          guard.submitTransaction(project, guard.getModalityTransaction(task.myCreationModalityState), finishRunnable);
         }
       }
     }
