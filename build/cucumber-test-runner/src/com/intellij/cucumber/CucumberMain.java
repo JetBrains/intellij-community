@@ -46,7 +46,6 @@ public class CucumberMain {
       exitStatus = 1;
     }
     System.exit(exitStatus);
-
   }
 
   public static int run(final String[] argv, final ClassLoader classLoader) throws IOException {
