@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -206,7 +206,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
         template.addTextSegment(", ");
       }
       String name = StringUtil.notNullize(parameters[i].getName());
-      template.addVariable(name, new ConstantNode(name), new ConstantNode(name), true);
+      Expression expression = Registry.is("java.completion.argument.live.template.completion") ? new AutoPopupCompletion() : new ConstantNode(name);
+      template.addVariable(name, expression, new ConstantNode(name), true);
     }
     template.addTextSegment(argList.getText().substring(caretOffset - argRange.getStartOffset(), argList.getTextLength()));
     template.addEndVariable();
@@ -352,5 +353,25 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       }
     }
     
+  }
+
+  private static class AutoPopupCompletion extends Expression {
+    @Nullable
+    @Override
+    public Result calculateResult(ExpressionContext context) {
+      return new InvokeActionResult(() -> AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor()));
+    }
+
+    @Nullable
+    @Override
+    public Result calculateQuickResult(ExpressionContext context) {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public LookupElement[] calculateLookupItems(ExpressionContext context) {
+      return null;
+    }
   }
 }
