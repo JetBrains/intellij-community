@@ -873,9 +873,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
   public static void configureBalloonScrollPane(@NotNull JScrollPane pane, @NotNull Color fillColor) {
     pane.setOpaque(false);
     pane.getViewport().setOpaque(false);
-    if (!Registry.is("ide.scroll.new.layout")) {
-      pane.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    }
     pane.setBackground(fillColor);
     pane.getViewport().setBackground(fillColor);
     pane.getVerticalScrollBar().setBackground(fillColor);

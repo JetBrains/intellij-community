@@ -24,14 +24,12 @@ import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.VerticalLayout;
-import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,9 +158,6 @@ abstract class ShortcutDialog<T extends Shortcut> extends DialogWrapper {
     JScrollPane scroll = ScrollPaneFactory.createScrollPane(null, true);
     scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     scroll.setViewport(new GradientViewport(myConflictsContainer, JBUI.insets(5), false));
-    if (!Registry.is("ide.scroll.new.layout")) {
-      scroll.getVerticalScrollBar().setUI(ButtonlessScrollBarUI.createTransparent());
-    }
     scroll.getVerticalScrollBar().setOpaque(false);
     scroll.getViewport().setOpaque(false);
     scroll.setOpaque(false);

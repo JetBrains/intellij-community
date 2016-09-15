@@ -149,7 +149,7 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private void init(boolean setupCorners) {
-    setLayout(Registry.is("ide.scroll.new.layout") ? new Layout() : new ScrollPaneLayout());
+    setLayout(new Layout());
 
     if (setupCorners) {
       setupCorners();
