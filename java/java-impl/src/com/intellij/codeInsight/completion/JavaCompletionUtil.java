@@ -802,12 +802,12 @@ public class JavaCompletionUtil {
         }
 
         boolean insertAdditionalSemicolon = true;
-        final PsiReferenceExpression referenceExpression = PsiTreeUtil.getTopmostParentOfType(context.getFile().findElementAt(context.getStartOffset()), PsiReferenceExpression.class);
-        if (referenceExpression instanceof PsiMethodReferenceExpression && LambdaHighlightingUtil
-          .insertSemicolon(referenceExpression.getParent())) {
+        PsiElement leaf = context.getFile().findElementAt(context.getStartOffset());
+        PsiElement composite = leaf == null ? null : leaf.getParent();
+        if (composite instanceof PsiMethodReferenceExpression && LambdaHighlightingUtil.insertSemicolon(composite.getParent())) {
           insertAdditionalSemicolon = false;
-        } else if (referenceExpression != null) {
-          PsiElement parent = referenceExpression.getParent();
+        } else if (composite instanceof PsiReferenceExpression) {
+          PsiElement parent = composite.getParent();
           if (parent instanceof PsiMethodCallExpression) {
             parent = parent.getParent();
           }
