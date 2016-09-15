@@ -13,69 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.concurrency;
+package org.jetbrains.concurrency
 
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.Consumer
+import com.intellij.util.Function
 
-class RejectedPromise<T> extends Promise<T> {
-  private final Throwable error;
+import java.util.concurrent.TimeUnit
 
-  public RejectedPromise(@NotNull Throwable error) {
-    this.error = error;
+internal class RejectedPromise<T>(private val error: Throwable) : Promise<T>() {
+  override fun getState() = Promise.State.REJECTED
+
+  override fun done(done: Consumer<in T>) = this
+
+  override fun processed(fulfilled: AsyncPromise<in T>): Promise<T> {
+    fulfilled.setError(error)
+    return this
   }
 
-  @NotNull
-  @Override
-  public Promise<T> done(@NotNull Consumer<? super T> done) {
-    return this;
-  }
-
-  @NotNull
-  @Override
-  public Promise<T> processed(@NotNull AsyncPromise<? super T> fulfilled) {
-    fulfilled.setError(error);
-    return this;
-  }
-
-  @NotNull
-  @Override
-  public Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
-    if (!AsyncPromiseKt.isObsolete(rejected)) {
-      rejected.consume(error);
+  override fun rejected(rejected: Consumer<Throwable>): Promise<T> {
+    if (!isObsolete(rejected)) {
+      rejected.consume(error)
     }
-    return this;
+    return this
   }
 
-  @Override
-  public RejectedPromise<T> processed(@NotNull Consumer<? super T> processed) {
-    processed.consume(null);
-    return this;
+  override fun processed(processed: Consumer<in T>): RejectedPromise<T> {
+    processed.consume(null)
+    return this
   }
 
-  @NotNull
-  @Override
-  public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done) {
-    //noinspection unchecked
-    return (Promise<SUB_RESULT>)this;
+  @Suppress("UNCHECKED_CAST")
+  override fun <SUB_RESULT> then(done: Function<in T, out SUB_RESULT>) = this as Promise<SUB_RESULT>
+
+  @Suppress("UNCHECKED_CAST")
+  override fun <SUB_RESULT> thenAsync(done: Function<in T, Promise<SUB_RESULT>>) = this as Promise<SUB_RESULT>
+
+  override fun notify(child: AsyncPromise<in T>) {
+    child.setError(error)
   }
 
-  @NotNull
-  @Override
-  public <SUB_RESULT> Promise<SUB_RESULT> thenAsync(@NotNull Function<? super T, Promise<SUB_RESULT>> done) {
-    //noinspection unchecked
-    return (Promise<SUB_RESULT>)this;
-  }
-
-  @NotNull
-  @Override
-  public State getState() {
-    return State.REJECTED;
-  }
-
-  @Override
-  public void notify(@NotNull AsyncPromise<? super T> child) {
-    child.setError(error);
+  override fun blockingGet(timeout: Int, timeUnit: TimeUnit): T? {
+    throw error
   }
 }
