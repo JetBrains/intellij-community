@@ -9,4 +9,8 @@ public class DoubleNegation {
     boolean r4 = (<warning descr="Double negation in 'b1 != (b2 != b3)'">b1 != (b2 != b3)</warning>);
     boolean r5 = (<warning descr="Double negation in 'b1 != b2 != b3'">b1 != b2 != b3</warning>);
   }
+
+  void vm(Double a, double b) {
+    boolean r = <warning descr="Double negation in '!(a != null)'">!(a != null)</warning> || !(b != Double.NaN != false);
+  }
 }

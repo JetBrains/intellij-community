@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Bas Leijdekkers
+ * Copyright 2006-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,6 +25,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +68,7 @@ public class DoubleNegationInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement expression = descriptor.getPsiElement();
       if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
@@ -163,6 +163,9 @@ public class DoubleNegationInspection extends BaseInspection {
   }
 
   static boolean isNegation(PsiPolyadicExpression expression) {
+    for (PsiExpression operand : expression.getOperands()) {
+      if (TypeUtils.hasFloatingPointType(operand)) return false; // don't change semantics for NaNs
+    }
     return JavaTokenType.NE.equals(expression.getOperationTokenType());
   }
 }
