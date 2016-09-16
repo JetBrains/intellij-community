@@ -34,11 +34,6 @@ public class ArtifactDeploymentSourceImpl implements ArtifactDeploymentSource {
   }
 
   @Override
-  public boolean isBuildNeeded() {
-    return true;
-  }
-
-  @Override
   public File getFile() {
     final String path = getFilePath();
     return path != null ? new File(path) : null;
