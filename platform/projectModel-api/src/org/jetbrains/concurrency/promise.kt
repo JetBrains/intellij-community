@@ -36,8 +36,11 @@ val Promise<*>.isPending: Boolean
 val Promise<*>.isFulfilled: Boolean
   get() = state == Promise.State.FULFILLED
 
+internal val OBSOLETE_ERROR = createError("Obsolete")
+
 private val REJECTED: Promise<*> = RejectedPromise<Any?>(createError("rejected"))
 private val DONE: Promise<*> = DonePromise(null)
+private val CANCELLED_PROMISE = RejectedPromise<Any?>(OBSOLETE_ERROR)
 
 @Suppress("UNCHECKED_CAST")
 fun <T> resolvedPromise(): Promise<T> = DONE as Promise<T>
@@ -52,6 +55,9 @@ fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
 fun <T> rejectedPromise(error: String): Promise<T> = RejectedPromise(createError(error, true))
 
 fun <T> rejectedPromise(error: Throwable?): Promise<T> = if (error == null) rejectedPromise() else RejectedPromise(error)
+
+@Suppress("UNCHECKED_CAST")
+fun <T> cancelledPromise(): Promise<T> = CANCELLED_PROMISE as Promise<T>
 
 
 // only internal usage

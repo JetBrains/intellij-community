@@ -17,7 +17,6 @@ package org.jetbrains.debugger;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromiseKt;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.PromiseManager;
 import org.jetbrains.concurrency.Promises;
@@ -37,7 +36,7 @@ public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
       @NotNull
       @Override
       public Promise load(@NotNull VariablesHost host) {
-        return host.valueManager.isObsolete() ? AsyncPromiseKt.cancelledPromise() : host.load();
+        return host.valueManager.isObsolete() ? Promises.cancelledPromise() : host.load();
       }
     };
 

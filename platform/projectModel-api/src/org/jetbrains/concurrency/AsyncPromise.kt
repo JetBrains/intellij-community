@@ -28,8 +28,6 @@ import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
-private val OBSOLETE_ERROR = createError("Obsolete")
-
 open class AsyncPromise<T> : Promise<T>, Getter<T> {
   private val doneRef = AtomicReference<Consumer<in T>?>()
   private val rejectedRef = AtomicReference<Consumer<in Throwable>?>()
@@ -328,8 +326,3 @@ inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {
     return null
   }
 }
-
-private val cancelledPromise = RejectedPromise<Any?>(OBSOLETE_ERROR)
-
-@Suppress("UNCHECKED_CAST")
-fun <T> cancelledPromise(): Promise<T> = cancelledPromise as Promise<T>
