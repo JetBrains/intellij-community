@@ -22,18 +22,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
+import static org.jetbrains.concurrency.Promises.resolvedPromise;
+
 public interface Promise<T> {
   /**
    * @deprecated Use Promises.resolvedPromise()
    */
   @Deprecated
-  Promise<Void> DONE = Promises.resolvedPromise();
+  Promise<Void> DONE = resolvedPromise();
 
   /**
    * @deprecated Use Promises.rejectedPromise()
    */
   @Deprecated
-  Promise<Void> REJECTED = Promises.rejectedPromise();
+  Promise<Void> REJECTED = rejectedPromise();
 
   enum State {
     PENDING, FULFILLED, REJECTED
@@ -41,13 +44,7 @@ public interface Promise<T> {
 
   @NotNull
   static <T> Promise<T> resolve(T result) {
-    if (result == null) {
-      //noinspection unchecked
-      return (Promise<T>)DONE;
-    }
-    else {
-      return new DonePromise<>(result);
-    }
+    return result == null ? resolvedPromise() : new DonePromise<>(result);
   }
 
   @NotNull
@@ -72,6 +69,10 @@ public interface Promise<T> {
 
   @Nullable
   T blockingGet(int timeout, @NotNull TimeUnit timeUnit);
+
+  default T blockingGet(int timeout) {
+    return blockingGet(timeout, TimeUnit.MILLISECONDS);
+  }
 
   void notify(@NotNull AsyncPromise<? super T> child);
 }
