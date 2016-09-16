@@ -35,6 +35,31 @@ class AsyncPromiseTest {
     doHandlerTest(true)
   }
 
+  @Test
+  fun state() {
+    val promise = AsyncPromise<String>()
+    val count = AtomicInteger()
+
+    val r = {
+      promise.done { count.incrementAndGet() }
+    }
+
+    val s = {
+      promise.setResult("test")
+    }
+
+    val numThreads = 30
+    assertConcurrent(*Array(numThreads, {
+      if (it and 1 === 0) r else s
+    }))
+
+    assertThat(count.get()).isEqualTo(numThreads / 2)
+    assertThat(promise.get()).isEqualTo("test")
+
+    r()
+    assertThat(count.get()).isEqualTo((numThreads / 2) + 1)
+  }
+
   fun doHandlerTest(reject: Boolean) {
     val promise = AsyncPromise<String>()
     val count = AtomicInteger()
@@ -68,7 +93,7 @@ class AsyncPromiseTest {
   }
 }
 
-fun assertConcurrent(vararg runnables: () -> Any, maxTimeoutSeconds: Int = 5) {
+fun assertConcurrent(vararg runnables: () -> Any?, maxTimeoutSeconds: Int = 5) {
   val numThreads = runnables.size
   val exceptions = ContainerUtil.createLockFreeCopyOnWriteList<Throwable>()
   val threadPool = Executors.newFixedThreadPool(numThreads)
