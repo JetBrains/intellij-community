@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.java18api;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -179,6 +180,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
               !equivalence.expressionsAreEquivalent(value, putArguments[1])) {
             return;
           }
+          if(!ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {lambdaCandidate}).isEmpty()) return;
           PsiElement[] varRefs = PsiTreeUtil.collectElements(lambdaCandidate, e -> e instanceof PsiReferenceExpression &&
                                                                                     ((PsiReferenceExpression)e)
                                                                                       .resolve() instanceof PsiVariable);
