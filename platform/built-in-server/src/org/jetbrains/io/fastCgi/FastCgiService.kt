@@ -28,6 +28,7 @@ import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.SingleConnectionNetService
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.doneRun
+import org.jetbrains.concurrency.errorIfNotMessage
 import org.jetbrains.io.*
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -87,7 +88,7 @@ abstract class FastCgiService(project: Project) : SingleConnectionNetService(pro
       promise
         .doneRun { fastCgiRequest.writeToServerChannel(notEmptyContent, processChannel.get()!!) }
         .rejected {
-          Promise.logError(LOG, it)
+          LOG.errorIfNotMessage(it)
           handleError(fastCgiRequest, notEmptyContent)
         }
     }

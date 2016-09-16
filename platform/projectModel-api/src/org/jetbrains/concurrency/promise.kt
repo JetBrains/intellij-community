@@ -15,13 +15,15 @@
  */
 package org.jetbrains.concurrency
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.Consumer
 import com.intellij.util.Function
 import com.intellij.util.SmartList
+import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.*
-
-private val rejectedPromise = Promise.reject<Any?>("rejected")
 
 // only internal usage
 interface ObsolescentFunction<Param, Result> : Function<Param, Result>, Obsolescent
@@ -80,11 +82,10 @@ inline fun Promise<*>.rejected(node: Obsolescent, crossinline handler: (Throwabl
   override fun consume(param: Throwable) = handler(param)
 })
 
-
-fun <T> rejectedPromise(error: String): Promise<T> = Promise.reject(error)
+val REJECTED: Promise<Void> = RejectedPromise(createError("rejected", false))
 
 @Suppress("UNCHECKED_CAST")
-fun <T> rejectedPromise(): Promise<T> = rejectedPromise as Promise<T>
+fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
 
 val Promise<*>.isRejected: Boolean
   get() = state == Promise.State.REJECTED
@@ -107,7 +108,7 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   return all(promises, results)
 }
 
-fun createError(error: String, log: Boolean): RuntimeException = Promise.MessageError(error, log)
+fun createError(error: String, log: Boolean): RuntimeException = MessageError(error, log)
 
 inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {
   val result = catchError(runnable)
@@ -116,11 +117,66 @@ inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {
   }
 }
 
-inline fun runAsync(crossinline runnable: () -> Unit): Promise<*> {
-  val promise = AsyncPromise<Any?>()
+inline fun <T> runAsync(crossinline runnable: () -> T): Promise<T> {
+  val promise = AsyncPromise<T>()
   AppExecutorUtil.getAppExecutorService().execute {
-    promise.catchError { runnable() }
-    promise.setResult(null)
+    val result = try {
+      runnable()
+    }
+    catch (e: Throwable) {
+      promise.setError(e)
+      return@execute
+    }
+    promise.setResult(result)
   }
   return promise
+}
+
+fun <T> rejectedPromise(error: String): Promise<T> = rejectedPromise(createError(error, true))
+
+fun <T> rejectedPromise(error: Throwable?): Promise<T> {
+  if (error == null) {
+    @Suppress("UNCHECKED_CAST")
+    return REJECTED as Promise<T>
+  }
+  else {
+    return RejectedPromise(error)
+  }
+}
+
+@SuppressWarnings("ExceptionClassNameDoesntEndWithException")
+internal class MessageError : RuntimeException {
+  internal val log: ThreeState
+
+  constructor(error: String) : super(error) {
+    log = ThreeState.UNSURE
+  }
+
+  constructor(error: String, log: Boolean) : super(error) {
+
+    this.log = ThreeState.fromBoolean(log)
+  }
+
+  fun fillInStackTrace(): Throwable {
+    return this
+  }
+}
+
+/**
+ * Log error if not a message error
+ */
+fun Logger.errorIfNotMessage(e: Throwable): Boolean {
+  if (e is MessageError) {
+    val log = e.log
+    if (log == ThreeState.YES || (log == ThreeState.UNSURE && (ApplicationManager.getApplication()?.isUnitTestMode ?: false))) {
+      error(e)
+      return true
+    }
+  }
+  else if (e !is ProcessCanceledException) {
+    error(e)
+    return true
+  }
+
+  return false
 }

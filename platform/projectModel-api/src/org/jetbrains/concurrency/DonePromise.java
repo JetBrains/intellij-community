@@ -19,8 +19,11 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-class DonePromise<T> extends Promise<T> implements Getter<T> {
+import java.util.concurrent.TimeUnit;
+
+class DonePromise<T> implements Getter<T>, Promise<T> {
   private final T result;
 
   public DonePromise(T result) {
@@ -59,7 +62,7 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done) {
     if (done instanceof Obsolescent && ((Obsolescent)done).isObsolete()) {
-      return Promise.reject("obsolete");
+      return PromiseKt.rejectedPromise("obsolete");
     }
     else {
       return Promise.resolve(done.fun(result));
@@ -76,6 +79,12 @@ class DonePromise<T> extends Promise<T> implements Getter<T> {
   @Override
   public State getState() {
     return State.FULFILLED;
+  }
+
+  @Nullable
+  @Override
+  public T blockingGet(int timeout, @NotNull TimeUnit timeUnit) {
+    return result;
   }
 
   @Override

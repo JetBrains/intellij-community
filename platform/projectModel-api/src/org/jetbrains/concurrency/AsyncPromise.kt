@@ -19,7 +19,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Getter
 import com.intellij.util.Consumer
 import com.intellij.util.Function
+import org.jetbrains.concurrency.Promise.State
 import java.util.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = Logger.getInstance(AsyncPromise::class.java)
@@ -27,7 +31,7 @@ private val LOG = Logger.getInstance(AsyncPromise::class.java)
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 private val OBSOLETE_ERROR = Promise.createError("Obsolete")
 
-open class AsyncPromise<T> : Promise<T>(), Getter<T> {
+open class AsyncPromise<T> : Promise<T>, Getter<T> {
   private val doneRef = AtomicReference<Consumer<in T>?>()
   private val rejectedRef = AtomicReference<Consumer<in Throwable>?>()
 
@@ -195,7 +199,7 @@ open class AsyncPromise<T> : Promise<T>(), Getter<T> {
     doneRef.set(null)
 
     if (rejected == null) {
-      Promise.logError(LOG, error)
+      LOG.errorIfNotMessage(error)
     }
     else if (!isObsolete(rejected)) {
       rejected.consume(error)
@@ -216,6 +220,22 @@ open class AsyncPromise<T> : Promise<T>(), Getter<T> {
     done(processed)
     rejected { processed.consume(null) }
     return this
+  }
+
+  override fun blockingGet(timeout: Int, timeUnit: TimeUnit): T? {
+    val latch = CountDownLatch(1)
+    processed { latch.countDown() }
+    if (!latch.await(timeout.toLong(), timeUnit)) {
+      throw TimeoutException()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    if (isRejected) {
+      throw (result as Throwable)
+    }
+    else {
+      return result as T?
+    }
   }
 
   private fun <T> setHandler(ref: AtomicReference<Consumer<in T>?>, newConsumer: Consumer<in T>, targetState: State) {
@@ -314,5 +334,3 @@ private val cancelledPromise = RejectedPromise<Any?>(OBSOLETE_ERROR)
 
 @Suppress("UNCHECKED_CAST")
 fun <T> cancelledPromise(): Promise<T> = cancelledPromise as Promise<T>
-
-fun <T> rejectedPromise(error: Throwable): Promise<T> = Promise.reject(error)

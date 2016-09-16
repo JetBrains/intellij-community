@@ -20,6 +20,7 @@ import com.intellij.util.io.shutdownIfOio
 import io.netty.channel.Channel
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.errorIfNotMessage
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.CONNECTION_CLOSED_MESSAGE
@@ -61,7 +62,7 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
       messageProcessor.send(disconnectRequest)
         .rejected {
           if (it.message != CONNECTION_CLOSED_MESSAGE) {
-            Promise.logError(LOG, it)
+            LOG.errorIfNotMessage(it)
           }
         }
       // we don't wait response because 1) no response to "disconnect" message (V8 for example) 2) closed message manager just ignore any incoming messages

@@ -15,10 +15,7 @@ import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.Key
 import com.intellij.util.Consumer
 import com.intellij.util.net.NetUtils
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.AsyncValueLoader
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.isRejected
+import org.jetbrains.concurrency.*
 import javax.swing.Icon
 
 abstract class NetService @JvmOverloads protected constructor(protected val project: Project, private val consoleManager: ConsoleManager = ConsoleManager()) : Disposable {
@@ -45,7 +42,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
 
       promise.rejected {
         processHandler.destroyProcess()
-        Promise.logError(LOG, it)
+        LOG.errorIfNotMessage(it)
       }
 
       val processListener = MyProcessAdapter(processHandler)

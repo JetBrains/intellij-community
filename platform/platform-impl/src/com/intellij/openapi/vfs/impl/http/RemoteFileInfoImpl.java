@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.PromiseKt;
 
 import java.io.File;
 import java.io.IOException;
@@ -305,7 +306,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
 
         case ERROR_OCCURRED:
         default:
-          return Promise.reject("errorOccured");
+          return PromiseKt.rejectedPromise("errorOccurred");
       }
     }
   }

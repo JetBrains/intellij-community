@@ -20,7 +20,7 @@ import com.intellij.util.Function
 
 import java.util.concurrent.TimeUnit
 
-internal class RejectedPromise<T>(private val error: Throwable) : Promise<T>() {
+internal class RejectedPromise<T>(private val error: Throwable) : Promise<T> {
   override fun getState() = Promise.State.REJECTED
 
   override fun done(done: Consumer<in T>) = this
