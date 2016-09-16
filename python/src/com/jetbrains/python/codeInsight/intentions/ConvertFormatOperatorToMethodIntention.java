@@ -164,8 +164,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
             out.append(f_width);
           }
           if ("i".equals(f_conversion) || "u".equals(f_conversion)) out.append("d");
-          else if ("r".equals(f_conversion)) out.append("s"); // we want our raw string as a string
-          else if (!"s".equals(f_conversion)) out.append(f_conversion);
+          else if (!"s".equals(f_conversion) && !"r".equals(f_conversion)) out.append(f_conversion);
 
           final int lastIndexOf = out.lastIndexOf(":");
           if (lastIndexOf == out.length() - 1) {

@@ -4,7 +4,7 @@ a = "{n:d} bottles of {what} on the {where}" \
     {n:d} bottles
     of {what}
     """ \
-    r'\n/ take {howmuch!r:s} down \n/' \
+    r'\n/ take {howmuch!r} down \n/' \
     ur"pass it {how:>8}" \
     "{new_n:#d} {{that is, {percent:+3.2f}% less}} " \
     "bottles of {what:>6} on the {where}" \
