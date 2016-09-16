@@ -30,6 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -235,10 +236,21 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression 
         && binaryExpression.getOperator() == PyTokenTypes.PERC) {
       final PyStringLiteralExpression str = (PyStringLiteralExpression)binaryExpression.getLeftExpression();
-      if (!(str.getText().length() > 0 && Character.toUpperCase(str.getText().charAt(0)) == 'B')) {
-        setText(PyBundle.message("INTN.replace.with.method"));
-        return true;        
+      if ((str.getText().length() > 0 && Character.toUpperCase(str.getText().charAt(0)) == 'B')) {
+        return false;
       }
+
+      final List<PyStringFormatParser.SubstitutionChunk> chunks =
+        PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parsePercentFormat(binaryExpression.getLeftExpression().getText()));
+
+      for (PyStringFormatParser.SubstitutionChunk chunk : chunks) {
+        if ("*".equals(chunk.getWidth()) || "*".equals(chunk.getPrecision())) {
+          return false;
+        }
+      }
+      
+      setText(PyBundle.message("INTN.replace.with.method"));
+      return true;
     }
     return false;
   }
