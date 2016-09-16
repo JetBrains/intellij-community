@@ -22,7 +22,7 @@ import org.jetbrains.intellij.build.impl.PluginLayout
  * @author nik
  */
 @CompileStatic
-public abstract class ProductProperties {
+abstract class ProductProperties {
   /**
    * Base name for script files (*.bat, *.sh, *.exe), usually a shortened product name in lower case (e.g. 'idea' for IntelliJ IDEA, 'datagrip' for DataGrip)
    */
@@ -102,12 +102,6 @@ public abstract class ProductProperties {
   ProductModulesLayout productLayout = new ProductModulesLayout()
 
   /**
-   * Describes layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled with the product
-   * is specified by {@link ProductModulesLayout#bundledPluginModules}.
-   */
-  List<PluginLayout> allPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
-
-  /**
    * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built
    */
   boolean buildCrossPlatformDistribution = false
@@ -145,6 +139,11 @@ public abstract class ProductProperties {
   boolean setPluginAndIDEVersionInPluginXml = true
 
   /**
+   * If {@code true} a zip archive containing sources of all modules included into the product will be produced.
+   */
+  boolean buildSourcesArchive = false
+
+  /**
    * Path to a directory containing yjpagent*.dll, libyjpagent-linux*.so and libyjpagent.jnilib files, which will be copied to 'bin'
    * directories of Windows, Linux and Mac OS distributions. If {@code null} no agent files will be bundled.
    */
@@ -168,4 +167,11 @@ public abstract class ProductProperties {
    */
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
   }
+
+  /**
+   * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.
+   * @return name of sub-directory under projectHome/out where build artifacts will be placed, must be unique among all products built from
+   * the same sources
+   */
+  String outputDirectoryName(ApplicationInfoProperties applicationInfo) { applicationInfo.productName.toLowerCase() }
 }

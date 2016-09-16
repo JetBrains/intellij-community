@@ -69,7 +69,7 @@ public class BulkVirtualFileListenerAdapter implements BulkFileListener {
       final VFileCopyEvent ce = (VFileCopyEvent)event;
       final VirtualFile original = ce.getFile();
       final VirtualFile copy = ce.getNewParent().findChild(ce.getNewChildName());
-      if (original != null && copy != null) {
+      if (copy != null) {
         adapted.fileCopied(new VirtualFileCopyEvent(event.getRequestor(), original, copy));
       }
     }

@@ -961,7 +961,9 @@ public class RunManagerImpl extends RunManagerEx implements PersistentStateCompo
 
     addConfiguration(tempConfiguration, isConfigurationShared(tempConfiguration),
                      getBeforeRunTasks(tempConfiguration.getConfiguration()), false);
-    setSelectedConfiguration(tempConfiguration);
+    if (Registry.is("select.run.configuration.from.context")) {
+      setSelectedConfiguration(tempConfiguration);
+    }
   }
 
   @NotNull

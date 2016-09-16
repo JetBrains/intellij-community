@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -291,13 +291,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         content.add(BorderLayout.CENTER, panel);
         panel.add(Box.createVerticalStrut(10));
-        for (final Configurable current : composite.getConfigurables()) {
-          LinkLabel label = new LinkLabel(current.getDisplayName(), null) {
-            @Override
-            public void doClick() {
-              openLink(current);
-            }
-          };
+        for (Configurable current : composite.getConfigurables()) {
+          LinkLabel label = LinkLabel.create(current.getDisplayName(), () -> openLink(current));
           label.setBorder(BorderFactory.createEmptyBorder(1, 17, 3, 1));
           panel.add(label);
         }

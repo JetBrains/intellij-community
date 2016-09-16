@@ -61,10 +61,9 @@ public class MoveElementLeftRightActionHandler extends EditorWriteActionHandler 
     if (project == null) return false;
     Document document = editor.getDocument();
     if (!(document instanceof DocumentEx)) return false;
-    PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-    psiDocumentManager.commitDocument(document);
-    PsiFile file = psiDocumentManager.getPsiFile(document);
-    if (file == null || !file.isValid()) return false;
+
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null) return false;
     PsiElement[] elementList = getElementList(file, caret.getSelectionStart(), caret.getSelectionEnd());
     return elementList != null;
   }

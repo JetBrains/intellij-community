@@ -115,15 +115,7 @@ class ScrollPainter extends RegionPainter.Alpha {
   }
 
   protected void draw(Graphics2D g, int x, int y, int width, int height) {
-    if (Registry.is("ide.scroll.thumb.border.rounded")) {
-      g.drawLine(x + 1, y, x + width - 2, y);
-      g.drawLine(x + 1, y + height - 1, x + width - 2, y + height - 1);
-      g.drawLine(x, y + 1, x, y + height - 2);
-      g.drawLine(x + width - 1, y + 1, x + width - 1, y + height - 2);
-    }
-    else {
-      g.drawRect(x, y, width - 1, height - 1);
-    }
+    g.drawRect(x, y, width - 1, height - 1);
   }
 
   private static class Round extends ScrollPainter {

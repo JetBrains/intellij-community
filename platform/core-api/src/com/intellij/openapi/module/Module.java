@@ -156,6 +156,11 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    */
   @NotNull
   GlobalSearchScope getModuleTestsWithDependentsScope();
+
+  /**
+   * @param includeTests whether test source and test dependencies should be included
+   * @return a scope including production (and optionally test) source of this module and all modules and libraries it depends upon, including runtime and transitive dependencies, even if they're not exported.
+   */
   @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 }

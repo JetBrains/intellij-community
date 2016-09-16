@@ -36,7 +36,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.containers.WeakStringInterner;
 import org.jdom.Element;
@@ -50,7 +49,6 @@ import java.util.regex.Pattern;
 @State(name = "IntentionManagerSettings", storages = @Storage("intentionSettings.xml"))
 public class IntentionManagerSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings");
-  private static final Alarm ourRegisterMetaDataAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   private static class MetaDataKey extends Pair<String, String> {
     private static final StringInterner ourInterner = new WeakStringInterner();
@@ -164,7 +162,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
     final TextDescriptor description = metaData.getDescription();
-    ourRegisterMetaDataAlarm.addRequest(() -> {
+    app.executeOnPooledThread(() -> {
       try {
         SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
         if (registrar == null) return;
@@ -179,7 +177,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
       catch (IOException e) {
         LOG.error(e);
       }
-    }, 0);
+    });
   }
 
   public synchronized void unregisterMetaData(@NotNull IntentionAction intentionAction) {

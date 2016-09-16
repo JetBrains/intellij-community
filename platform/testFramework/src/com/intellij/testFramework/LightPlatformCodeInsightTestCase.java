@@ -16,7 +16,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.generation.actions.CommentByLineCommentAction;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
@@ -621,7 +620,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   protected static void lineComment() {
-    new CommentByLineCommentAction().actionPerformedImpl(getProject(), getEditor());
+    executeAction(IdeActions.ACTION_COMMENT_LINE);
   }
 
   protected static void executeAction(@NonNls @NotNull final String actionId) {

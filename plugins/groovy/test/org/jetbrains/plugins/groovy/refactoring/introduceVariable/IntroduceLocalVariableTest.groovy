@@ -32,7 +32,7 @@ class IntroduceLocalVariableTest extends GrIntentionTestCase {
 
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "intentions/introduceLocalVariable/";
+    return TestUtils.getTestDataPath() + "intentions/introduceLocalVariable/"
   }
 
   void testMethodCall1() { doTest() }
@@ -65,9 +65,9 @@ class IntroduceLocalVariableTest extends GrIntentionTestCase {
   static class MockGrIntroduceLocalVariableIntention extends GrIntroduceLocalVariableIntention {
     @Override
     protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
-      setSelection(editor, getTargetExpression(element));
+      setSelection(editor, getTargetExpression(element))
       MockSettings settings = new MockSettings(false, "varName", null, false)
-      new MockGrIntroduceVariableHandler(settings).invoke(project, editor, element.containingFile, null);
+      new MockGrIntroduceVariableHandler(settings).invoke(project, editor, element.containingFile, null)
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +38,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
@@ -59,6 +57,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
@@ -233,9 +232,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), panel);
 
-    int total = 0;
-    for (Set set : myDuplicates.values()) total+=set.size();
-    total-=myDuplicates.size();
+    int total = myDuplicates.values().stream().mapToInt(Set::size).sum() - myDuplicates.size();
     final JLabel label = new JLabel(
       "<html>Press <b>Enter</b> to preview image<br>Total images found: " + myImages.size() + ". Total duplicates found: " + total+"</html>");
     panel.add(label, BorderLayout.SOUTH);
@@ -272,27 +269,18 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
 
   private class MyRootNode extends DefaultMutableTreeNode {
     private MyRootNode() {
-      final Vector vector = new Vector();
-      for (Set<VirtualFile> files : myDuplicates.values()) {
-        vector.add(new MyDuplicatesNode(this, files));
-      }
-      children = vector;
+      children =
+        myDuplicates.values().stream().map(files -> new MyDuplicatesNode(this, files)).collect(Collectors.toCollection(Vector::new));
     }
   }
 
 
-  private class MyDuplicatesNode extends DefaultMutableTreeNode {
-    private final Set<VirtualFile> myFiles;
+  private static class MyDuplicatesNode extends DefaultMutableTreeNode {
 
     public MyDuplicatesNode(DefaultMutableTreeNode node, Set<VirtualFile> files) {
       super(files);
-      myFiles = files;
       setParent(node);
-      final Vector vector = new Vector();
-      for (VirtualFile file : files) {
-        vector.add(new MyFileNode(this, file));
-      }
-      children = vector;
+      children = files.stream().map(file -> new MyFileNode(this, file)).collect(Collectors.toCollection(Vector::new));
     }
 
     @Override
@@ -315,7 +303,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
 
   private class MyCellRenderer extends ColoredTreeCellRenderer {
     @Override
-    public void customizeCellRenderer(JTree tree,
+    public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
                                       boolean expanded,

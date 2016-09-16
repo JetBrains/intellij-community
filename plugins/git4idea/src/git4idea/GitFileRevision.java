@@ -77,6 +77,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     return null;
   }
 
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevision;
   }

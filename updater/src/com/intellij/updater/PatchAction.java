@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
 import java.io.*;
@@ -111,26 +126,14 @@ public abstract class PatchAction {
                                 myPatch.isStrict() ? ValidationResult.Option.NONE : ValidationResult.Option.IGNORE);
   }
 
-  private boolean isWritable(File toFile) {
-    try {
-      FileOutputStream s = new FileOutputStream(toFile, true);
-      FileChannel ch = s.getChannel();
-      try {
-        FileLock lock = ch.tryLock();
-        if (lock == null) return false;
-        lock.release();
-      }
-      finally {
-        ch.close();
-        s.close();
-      }
+  private static boolean isWritable(File toFile) {
+    try (FileOutputStream s = new FileOutputStream(toFile, true); FileChannel ch = s.getChannel()) {
+      FileLock lock = ch.tryLock();
+      if (lock == null) return false;
+      lock.release();
       return true;
     }
-    catch (OverlappingFileLockException e) {
-      Runner.printStackTrace(e);
-      return false;
-    }
-    catch (IOException e) {
+    catch (OverlappingFileLockException | IOException e) {
       Runner.printStackTrace(e);
       return false;
     }

@@ -79,13 +79,12 @@ public abstract class Language extends UserDataHolderBase {
     Class<? extends Language> langClass = getClass();
     Language prev = ourRegisteredLanguages.put(langClass, this);
     if (prev != null) {
-      LOG.error(new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + prev, null, prev, this));
-      return;
+      throw new ImplementationConflictException("Language of '" + langClass + "' is already registered: " + prev, null, prev, this);
     }
 
     prev = ourRegisteredIDs.put(ID, this);
     if (prev != null) {
-      LOG.error(new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + prev.getClass(), null, prev, this));
+      throw new ImplementationConflictException("Language with ID '" + ID + "' is already registered: " + prev.getClass(), null, prev, this);
     }
 
     for (String mimeType : mimeTypes) {

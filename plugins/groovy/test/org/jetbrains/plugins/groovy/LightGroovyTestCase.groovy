@@ -47,7 +47,7 @@ abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_2_1;
+    return GroovyLightProjectDescriptor.GROOVY_2_1
   }
 
   /**
@@ -62,7 +62,7 @@ abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCase {
 
 
   protected void addGroovyTransformField() {
-    myFixture.addClass('''package groovy.transform; public @interface Field{}''');
+    myFixture.addClass('''package groovy.transform; public @interface Field{}''')
   }
 
   protected void addGroovyObject() throws IOException {
@@ -75,7 +75,7 @@ public interface GroovyObject {
     groovy.lang.MetaClass getMetaClass();
     void setMetaClass(groovy.lang.MetaClass metaClass);
 }
-''');
+''')
   }
 
 

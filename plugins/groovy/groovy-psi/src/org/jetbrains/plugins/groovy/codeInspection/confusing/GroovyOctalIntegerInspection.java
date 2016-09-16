@@ -50,7 +50,7 @@ public class GroovyOctalIntegerInspection extends BaseInspection {
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitLiteralExpression(GrLiteral literal) {
+      public void visitLiteralExpression(@NotNull GrLiteral literal) {
         super.visitLiteralExpression(literal);
         @NonNls final String text = literal.getText();
         if (!text.startsWith("0")) return;

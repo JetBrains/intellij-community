@@ -122,9 +122,7 @@ public class GrStubUtils {
 
     // Foo -> java.util.List
     final String mappedFqn = getAliasMapping(element.getContainingFile()).get(referenceName);
-    final String fullText = element instanceof GrReferenceElementImpl
-                            ? ((GrReferenceElementImpl)element).getTextSkipWhiteSpaceAndComments()
-                            : element.getText();
+    final String fullText = element.getText();
 
     // alias: Foo<String> -> java.util.List<String>
     // unqualified ref: List<String> -> List<String>

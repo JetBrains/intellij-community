@@ -132,17 +132,14 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
 
   private List<CoverageSuite> collectSelectedSuites() {
     final List<CoverageSuite> suites = new ArrayList<>();
-    TreeUtil.traverse(myRootNode, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object treeNode) {
-        if (treeNode instanceof CheckedTreeNode && ((CheckedTreeNode)treeNode).isChecked()) {
-          final Object userObject = ((CheckedTreeNode)treeNode).getUserObject();
-          if (userObject instanceof CoverageSuite) {
-            suites.add((CoverageSuite)userObject);
-          }
+    TreeUtil.traverse(myRootNode, treeNode -> {
+      if (treeNode instanceof CheckedTreeNode && ((CheckedTreeNode)treeNode).isChecked()) {
+        final Object userObject = ((CheckedTreeNode)treeNode).getUserObject();
+        if (userObject instanceof CoverageSuite) {
+          suites.add((CoverageSuite)userObject);
         }
-        return true;
       }
+      return true;
     });
     return suites;
   }

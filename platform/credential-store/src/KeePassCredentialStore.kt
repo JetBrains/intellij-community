@@ -18,15 +18,15 @@ package com.intellij.credentialStore
 import com.intellij.credentialStore.kdbx.KdbxPassword
 import com.intellij.credentialStore.kdbx.KeePassDatabase
 import com.intellij.credentialStore.kdbx.loadKdbx
+import com.intellij.credentialStore.windows.WindowsCryptUtils
 import com.intellij.ide.passwordSafe.PasswordStorage
-import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.EncryptionSupport
-import com.intellij.util.delete
-import com.intellij.util.readBytes
-import com.intellij.util.writeSafe
+import com.intellij.util.io.delete
+import com.intellij.util.io.readBytes
+import com.intellij.util.io.writeSafe
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -59,7 +59,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
       for ((attributes, credentials) in keyToValue) {
         val entry = db.createEntry(attributes.serviceName)
         entry.userName = credentials.userName
-        entry.password = credentials.password?.toString(clear = false)
+        entry.password = credentials.password?.let(::SecureString)
         group.addEntry(entry)
       }
     }
@@ -110,7 +110,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     val userName = attributes.userName
     val entry = db.rootGroup.getGroup(GROUP_NAME)?.getEntry(attributes.serviceName, attributes.userName)
     if (entry != null) {
-      return Credentials(attributes.userName ?: entry.userName, entry.password)
+      return Credentials(attributes.userName ?: entry.userName, entry.password?.get())
     }
 
     if (requestor == null || userName == null) {
@@ -120,7 +120,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     // try old key - as hash
     val oldAttributes = toOldKey(requestor, userName)
     db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(oldAttributes.serviceName, oldAttributes.userName)?.let {
-      fun createCredentials() = Credentials(userName, it.password)
+      fun createCredentials() = Credentials(userName, it.password?.get())
       set(CredentialAttributes(requestor, userName), createCredentials())
       return createCredentials()
     }
@@ -133,7 +133,15 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
       db.rootGroup.getGroup(GROUP_NAME)?.removeEntry(attributes.serviceName, attributes.userName)
     }
     else {
-      db.rootGroup.getOrCreateGroup(GROUP_NAME).getOrCreateEntry(attributes.serviceName, attributes.userName ?: credentials.userName).password = credentials.password?.toString(clear = false)
+      val group = db.rootGroup.getOrCreateGroup(GROUP_NAME)
+      // should be the only credentials per service name — find without user name
+      val userName = attributes.userName ?: credentials.userName
+      var entry = group.getEntry(attributes.serviceName, if (attributes.serviceName == SERVICE_NAME_PREFIX) userName else null)
+      if (entry == null) {
+        entry = group.getOrCreateEntry(attributes.serviceName, userName)
+      }
+      entry.userName = userName
+      entry.password = credentials.password?.let(::SecureString)
     }
 
     if (db.isDirty) {
@@ -146,7 +154,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     for (entry in group.entries) {
       val title = entry.title
       if (title != null) {
-        store.set(CredentialAttributes(title, entry.userName), Credentials(entry.userName, entry.password))
+        store.set(CredentialAttributes(title, entry.userName), Credentials(entry.userName, entry.password?.get()))
       }
     }
   }

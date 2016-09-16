@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.jetbrains.idea.svn.actions.SvnMergeProvider;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnvironment {
   protected final SvnVcs myVcs;
@@ -133,13 +134,8 @@ public abstract class AbstractSvnUpdateIntegrateEnvironment implements UpdateEnv
 
     // update switched/ignored status of directories
     private void dirtyRoots() {
-      final Collection<VirtualFile> vfColl = new ArrayList<>(myContentRoots.length);
-      for (FilePath contentRoot: myContentRoots) {
-        final VirtualFile vf = contentRoot.getVirtualFile();
-        if (vf != null) {
-          vfColl.add(vf);
-        }
-      }
+      final Collection<VirtualFile> vfColl = Arrays.stream(myContentRoots).map(FilePath::getVirtualFile)
+        .filter(Objects::nonNull).collect(Collectors.toList());
       myDirtyScopeManager.filesDirty(vfColl, null);
     }
 

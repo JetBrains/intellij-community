@@ -3,6 +3,10 @@ package org.jetbrains.builtInWebServer
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.project.Project
 import com.intellij.util.Consumer
+import com.intellij.util.io.addChannelListener
+import com.intellij.util.io.closeAndShutdownEventLoop
+import com.intellij.util.io.connect
+import com.intellij.util.io.shutdownIfOio
 import com.intellij.util.net.loopbackSocketAddress
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.Channel
@@ -10,7 +14,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.catchError
 import org.jetbrains.concurrency.resolvedPromise
-import org.jetbrains.io.*
+import org.jetbrains.io.oioClientBootstrap
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class SingleConnectionNetService(project: Project) : NetService(project) {

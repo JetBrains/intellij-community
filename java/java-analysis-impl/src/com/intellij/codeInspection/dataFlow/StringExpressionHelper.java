@@ -37,7 +37,9 @@ public class StringExpressionHelper {
 
   @Nullable
   public static Pair<PsiElement, String> evaluateExpression(@NotNull PsiElement expression, @NotNull Collection<PsiElement> visited) {
-    visited.add(expression);
+    if (!visited.add(expression)) {
+      return null;
+    }
 
     if (expression instanceof PsiLiteralExpression) {
       return evaluatePsiLiteralExpression(expression);
@@ -108,10 +110,8 @@ public class StringExpressionHelper {
 
     Collection<? extends PsiElement> elements = DfaUtil.getPossibleInitializationElements(expression);
     for (PsiElement element : elements) {
-      if (!visited.contains(element)) {
-        Pair<PsiElement, String> expr = evaluateExpression(element);
-        if (expr != null) return expr;
-      }
+      Pair<PsiElement, String> expr = evaluateExpression(element);
+      if (expr != null) return expr;
     }
 
     return null;

@@ -41,21 +41,6 @@ public class AuthenticationDialog extends DialogWrapper {
     init();
   }
 
-  public AuthenticationDialog(String title, String description, final String login, final String password, final boolean rememberPassword) {
-    super(JOptionPane.getRootFrame(), true);
-    setTitle(title);
-
-    MnemonicHelper.init(getContentPane());
-    panel = new AuthenticationPanel(description, login, password, rememberPassword);
-
-    final Window window = getWindow();
-    if (window instanceof JDialog) {
-      ((JDialog) window).setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-    }
-
-    init();
-  }
-
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {

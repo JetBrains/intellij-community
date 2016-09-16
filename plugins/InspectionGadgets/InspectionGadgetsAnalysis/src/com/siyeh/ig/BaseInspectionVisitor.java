@@ -96,10 +96,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     else {
       nameIdentifier = aClass.getNameIdentifier();
     }
-    if (nameIdentifier != null && !nameIdentifier.isPhysical()) {
-      nameIdentifier = nameIdentifier.getNavigationElement();
-    }
-    if (nameIdentifier == null || !nameIdentifier.isPhysical()) {
+    if (nameIdentifier == null) {
       registerError(aClass.getContainingFile(), infos);
     }
     else {
@@ -182,9 +179,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   protected final void registerError(@NotNull PsiElement location,
                                      final ProblemHighlightType highlightType,
                                      Object... infos) {
-    if (!location.isPhysical() || location.getTextLength() == 0 && !(location instanceof PsiFile)) {
-      return;
-    }
+    assert location.getTextLength() != 0 || location instanceof PsiFile;
     final LocalQuickFix[] fixes = createAndInitFixes(infos);
     final String description = inspection.buildErrorString(infos);
     holder.registerProblem(location, description, highlightType, fixes);
@@ -197,9 +192,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   protected final void registerErrorAtOffset(@NotNull PsiElement location, int offset, int length,
                                              ProblemHighlightType highlightType,
                                              Object... infos) {
-    if (location.getTextLength() == 0 || length == 0) {
-      return;
-    }
+    assert !(location.getTextLength() == 0 || length == 0);
     final LocalQuickFix[] fixes = createAndInitFixes(infos);
     final String description = inspection.buildErrorString(infos);
     final TextRange range = new TextRange(offset, offset + length);

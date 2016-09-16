@@ -19,8 +19,6 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
@@ -144,8 +142,8 @@ public final class CompletionServiceImpl extends CompletionService{
 
     @Override
     public void stopHere() {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Completion stopped\n" + DebugUtil.currentStackTrace());
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("Completion stopped\n" + DebugUtil.currentStackTrace());
       }
       super.stopHere();
       if (myOriginal != null) {
@@ -226,16 +224,6 @@ public final class CompletionServiceImpl extends CompletionService{
   }
 
   public static CompletionPhase getCompletionPhase() {
-//    ApplicationManager.getApplication().assertIsDispatchThread();
-    CompletionPhase phase = getPhaseRaw();
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.checkCanceled();
-    }
-    return phase;
-  }
-
-  public static CompletionPhase getPhaseRaw() {
     return ourPhase;
   }
 

@@ -35,6 +35,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -75,9 +76,10 @@ import java.nio.charset.Charset;
 import java.util.*;
 
 /**
- * @author Leonid Shalupov
+ * @author traff, Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.run.PythonCommandLineState");
 
   // command line has a number of fixed groups of parameters; patchers should only operate on them and not the raw list.
 
@@ -291,11 +293,28 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     addCommonEnvironmentVariables(getInterpreterPath(project, myConfig), env);
 
+    setupVirtualEnvVariables(env, myConfig.getSdkHome());
+
     commandLine.getEnvironment().clear();
     commandLine.getEnvironment().putAll(env);
     commandLine.withParentEnvironmentType(myConfig.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
+
     buildPythonPath(project, commandLine, myConfig, isDebug);
+  }
+
+  private static void setupVirtualEnvVariables(Map<String, String> env, String sdkHome) {
+    if (PythonSdkType.isVirtualEnv(sdkHome)) {
+      PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
+      if (reader.getActivate() != null) {
+        try {
+          env.putAll(reader.readShellEnv());
+        }
+        catch (Exception e) {
+          LOG.error("Couldn't read virtualenv variables", e);
+        }
+      }
+    }
   }
 
   protected static void addCommonEnvironmentVariables(@Nullable String homePath, Map<String, String> env) {

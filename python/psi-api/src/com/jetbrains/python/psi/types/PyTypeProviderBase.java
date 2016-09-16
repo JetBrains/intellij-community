@@ -60,6 +60,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   @Override
+  @Nullable
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     return null;
   }

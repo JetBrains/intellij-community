@@ -114,7 +114,7 @@ public class PsiTestUtil {
     return vDir;
   }
 
-  public static void removeAllRoots(Module module, Sdk jdk) {
+  public static void removeAllRoots(@NotNull Module module, Sdk jdk) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       model.clear();
       model.setSdk(jdk);

@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-
 package org.jetbrains.intellij.build
 
 import org.codehaus.gant.GantBinding
-import org.jetbrains.intellij.build.impl.BuildUtils
-import org.jetbrains.jps.gant.LayoutInfo
 
 /**
  * @author nik
@@ -29,10 +24,10 @@ class IdeaCommunityBuilder {
   private final GantBinding binding
   private final BuildContext buildContext
 
-  IdeaCommunityBuilder(String home, String outputRootPath, GantBinding binding, BuildOptions options = new BuildOptions()) {
+  IdeaCommunityBuilder(String home, GantBinding binding, BuildOptions options = new BuildOptions(), String projectHome = home) {
     this.binding = binding
-    buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global, home, home,
-                                              "$outputRootPath/release", new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY,
+    buildContext = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global, home, projectHome,
+                                              new IdeaCommunityProperties(home), ProprietaryBuildTools.DUMMY,
                                               options)
   }
 
@@ -46,28 +41,23 @@ class IdeaCommunityBuilder {
   }
 
   void buildDistJars() {
-    def tasks = BuildTasks.create(buildContext)
-    tasks.cleanOutput()
-    compileModules()
-    tasks.buildSearchableOptions("resources-en", ["community-main"], [])
-    layoutAll()
+    BuildTasks.create(buildContext).compileModulesAndBuildDistributions()
+    layoutAdditionalArtifacts()
   }
 
   void buildDistributions() {
     def tasks = BuildTasks.create(buildContext)
-    tasks.cleanOutput()
-    compileModules()
-    tasks.buildSearchableOptions("resources-en", ["community-main"], [])
-
-    layoutAll(true)
+    tasks.compileModulesAndBuildDistributions()
+    layoutAdditionalArtifacts(true)
     tasks.buildUpdaterJar()
-    tasks.zipProjectSources()
   }
 
-  LayoutInfo layoutAll(boolean buildJps = false) {
-    def layouts = binding["includeFile"]("$buildContext.paths.communityHome/build/scripts/layouts.gant")
-    LayoutInfo info = layouts.layoutFull(buildContext)
+  void buildUnpackedDistribution(String targetDirectory) {
+    BuildTasks.create(buildContext).buildUnpackedDistribution(targetDirectory)
+  }
 
+  void layoutAdditionalArtifacts(boolean buildJps = false) {
+    def layouts = binding["includeFile"]("$buildContext.paths.communityHome/build/scripts/layouts.gant")
     buildContext.messages.block("Build intellij-core") {
       String coreArtifactDir = "$buildContext.paths.artifacts/core"
       buildContext.ant.mkdir(dir: coreArtifactDir)
@@ -87,8 +77,5 @@ class IdeaCommunityBuilder {
         buildContext.notifyArtifactBuilt(jpsArtifactDir)
       }
     }
-
-    BuildTasks.create(buildContext).buildDistributions()
-    return info
   }
 }

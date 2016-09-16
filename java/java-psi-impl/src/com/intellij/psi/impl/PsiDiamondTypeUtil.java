@@ -189,7 +189,10 @@ public class PsiDiamondTypeUtil {
           if (method != null && method.getContainingFile() == containingFile) {
             final PsiElement startMethodElementInCopy = fileCopy.findElementAt(method.getTextOffset());
             method = PsiTreeUtil.getParentOfType(startMethodElementInCopy, PsiMethod.class);
-            LOG.assertTrue(method != null, startMethodElementInCopy);
+            if (method == null) {
+              //lombok generated builder
+              return false;
+            }
           }
         }
       }

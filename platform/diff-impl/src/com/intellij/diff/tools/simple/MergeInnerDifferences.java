@@ -34,21 +34,6 @@ public class MergeInnerDifferences {
   }
 
   @Nullable
-  public List<TextRange> getLeft() {
-    return myLeft;
-  }
-
-  @Nullable
-  public List<TextRange> getBase() {
-    return myBase;
-  }
-
-  @Nullable
-  public List<TextRange> getRight() {
-    return myRight;
-  }
-
-  @Nullable
   public List<TextRange> get(@NotNull ThreeSide side) {
     return side.select(myLeft, myBase, myRight);
   }

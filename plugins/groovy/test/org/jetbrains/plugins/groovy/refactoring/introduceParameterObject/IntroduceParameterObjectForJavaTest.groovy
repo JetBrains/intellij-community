@@ -35,8 +35,8 @@ class IntroduceParameterObjectForJavaTest extends LightCodeInsightFixtureTestCas
   protected void doTest() {
     def psiClass = myFixture.addClass("class MyTest {\n" +
                                       "  void foo(String a, String b) {}\n" +
-                                      "}");
-    final PsiMethod method = psiClass.findMethodsByName("foo", false)[0];
+                                      "}")
+    final PsiMethod method = psiClass.findMethodsByName("foo", false)[0]
     assertNotNull method
 
     myFixture.configureByFile(getTestName(true) + ".groovy")
@@ -45,14 +45,14 @@ class IntroduceParameterObjectForJavaTest extends LightCodeInsightFixtureTestCas
 
     final JavaIntroduceParameterObjectClassDescriptor classDescriptor =
       new JavaIntroduceParameterObjectClassDescriptor("Param", "", null, false, true, null, infos.toArray(new ParameterInfoImpl[0]), method,
-                                                      false);
-    final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters();
+                                                      false)
+    final List<ParameterInfoImpl> parameters = new JavaMethodDescriptor(method).getParameters()
     IntroduceParameterObjectProcessor processor =
       new IntroduceParameterObjectProcessor<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor>(
         method, classDescriptor,
         parameters,
-        false);
-    processor.run();
+        false)
+    processor.run()
 
     myFixture.checkResultByFile(getTestName(true) + "_after.groovy")
   }

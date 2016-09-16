@@ -53,7 +53,7 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
     applyProjectState([projectNode, projectNode])
 
-    def modelsProvider = new IdeModelsProviderImpl(project);
+    def modelsProvider = new IdeModelsProviderImpl(project)
     def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
 
@@ -70,7 +70,7 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
   void 'test changes in a project layout (content roots) could be detected on Refresh'() {
 
-    String rootPath = ExternalSystemApiUtil.toCanonicalPath(project.basePath);
+    String rootPath = ExternalSystemApiUtil.toCanonicalPath(project.basePath)
 
     def contentRoots = [
       (TEST): ['src/test/resources', '/src/test/java', 'src/test/groovy'],
@@ -94,7 +94,7 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
     applyProjectState([projectNodeInitial, projectNodeRefreshed])
 
-    def modelsProvider = new IdeModelsProviderImpl(project);
+    def modelsProvider = new IdeModelsProviderImpl(project)
     def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
     def entries = modelsProvider.getOrderEntries(module)
@@ -111,13 +111,13 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
   void 'test library dependency with sources path added on subsequent refresh'() {
 
-    def libBinPath = new File(projectDir, "bin_path");
-    def libSrcPath = new File(projectDir, "source_path");
-    def libDocPath = new File(projectDir, "doc_path");
+    def libBinPath = new File(projectDir, "bin_path")
+    def libSrcPath = new File(projectDir, "source_path")
+    def libDocPath = new File(projectDir, "doc_path")
 
-    FileUtil.createDirectory(libBinPath);
-    FileUtil.createDirectory(libSrcPath);
-    FileUtil.createDirectory(libDocPath);
+    FileUtil.createDirectory(libBinPath)
+    FileUtil.createDirectory(libSrcPath)
+    FileUtil.createDirectory(libDocPath)
 
     applyProjectState([
       buildExternalProjectInfo {
@@ -134,7 +134,7 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
             lib('lib1', level: 'module', bin: [libBinPath.absolutePath], src: [libSrcPath.absolutePath],  doc: [libDocPath.absolutePath]) } } }
     ])
 
-    def modelsProvider = new IdeModelsProviderImpl(project);
+    def modelsProvider = new IdeModelsProviderImpl(project)
     def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
 
@@ -164,7 +164,7 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
   }
 
   void 'test excluded directories merge'() {
-    String rootPath = ExternalSystemApiUtil.toCanonicalPath(project.basePath);
+    String rootPath = ExternalSystemApiUtil.toCanonicalPath(project.basePath)
     def contentRoots = [
       (EXCLUDED): ['.gradle', 'build']
     ]
@@ -185,7 +185,7 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
     DataNode<ProjectData> projectNodeRefreshed = projectRootBuilder()
     applyProjectState([projectNodeInitial, projectNodeRefreshed])
 
-    def modelsProvider = new IdeModelsProviderImpl(project);
+    def modelsProvider = new IdeModelsProviderImpl(project)
     def module = modelsProvider.findIdeModule('module')
     assertNotNull(module)
     def folders = []
@@ -195,31 +195,31 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
         folders = contentEntry.excludeFolders.collect {new File(it.url).name}
       }
     }
-    assertEquals(new HashSet<>(folders), new HashSet<>([".gradle", "build", "newExclDir"]));
+    assertEquals(new HashSet<>(folders), new HashSet<>([".gradle", "build", "newExclDir"]))
   }
 
   void 'test project SDK configuration import'() {
-    String myJdkName = "My JDK";
-    String myJdkHome = IdeaTestUtil.requireRealJdkHome();
+    String myJdkName = "My JDK"
+    String myJdkHome = IdeaTestUtil.requireRealJdkHome()
 
-    List<String> allowedRoots = new ArrayList<String>();
-    allowedRoots.add(myJdkHome);
-    allowedRoots.addAll(collectRootsInside(myJdkHome));
-    VfsRootAccess.allowRootAccess(testRootDisposable, ArrayUtil.toStringArray(allowedRoots));
+    List<String> allowedRoots = new ArrayList<String>()
+    allowedRoots.add(myJdkHome)
+    allowedRoots.addAll(collectRootsInside(myJdkHome))
+    VfsRootAccess.allowRootAccess(testRootDisposable, ArrayUtil.toStringArray(allowedRoots))
 
     new WriteAction() {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(myJdkName);
+        Sdk oldJdk = ProjectJdkTable.getInstance().findJdk(myJdkName)
         if (oldJdk != null) {
-          ProjectJdkTable.getInstance().removeJdk(oldJdk);
+          ProjectJdkTable.getInstance().removeJdk(oldJdk)
         }
-        VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome));
-        Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, myJdkName);
-        assertNotNull("Cannot create JDK for " + myJdkHome, jdk);
-        ProjectJdkTable.getInstance().addJdk(jdk);
+        VirtualFile jdkHomeDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myJdkHome))
+        Sdk jdk = SdkConfigurationUtil.setupSdk(new Sdk[0], jdkHomeDir, JavaSdk.getInstance(), true, null, myJdkName)
+        assertNotNull("Cannot create JDK for " + myJdkHome, jdk)
+        ProjectJdkTable.getInstance().addJdk(jdk)
       }
-    }.execute();
+    }.execute()
 
     DataNode<ProjectData> projectNode = buildExternalProjectInfo {
       project {
@@ -228,10 +228,10 @@ class ExternalProjectServiceTest extends AbstractExternalSystemTest {
 
     applyProjectState([projectNode])
 
-    ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-    Sdk sdk = rootManager.getProjectSdk();
+    ProjectRootManager rootManager = ProjectRootManager.getInstance(project)
+    Sdk sdk = rootManager.getProjectSdk()
     assertNotNull(sdk)
-    LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
+    LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project)
     assertEquals(LanguageLevel.JDK_1_7, languageLevelExtension.languageLevel)
   }
 }

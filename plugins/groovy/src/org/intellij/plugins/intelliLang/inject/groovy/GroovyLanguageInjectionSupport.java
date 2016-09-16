@@ -92,7 +92,8 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
   }
 
   @Override
-  public boolean addInjectionInPlace(@NotNull Language language, @Nullable PsiLanguageInjectionHost psiElement) {
+  public boolean addInjectionInPlace(Language language, @Nullable PsiLanguageInjectionHost psiElement) {
+    if (language == null) return false;
     if (!isStringLiteral(psiElement)) return false;
 
 

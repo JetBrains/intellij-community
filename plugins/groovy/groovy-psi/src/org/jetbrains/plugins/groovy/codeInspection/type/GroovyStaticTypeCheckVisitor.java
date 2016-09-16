@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   }
 
   @Override
-  public void visitAssignmentExpression(GrAssignmentExpression assignment) {
+  public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
     super.visitAssignmentExpression(assignment);
   }
 
@@ -135,7 +135,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
   }
 
   @Override
-  public void visitElement(GroovyPsiElement element) {
+  public void visitElement(@NotNull GroovyPsiElement element) {
     // do nothing & disable recursion
   }
 

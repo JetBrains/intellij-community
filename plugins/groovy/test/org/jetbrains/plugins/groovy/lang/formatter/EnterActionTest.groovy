@@ -27,10 +27,10 @@ class EnterActionTest extends GroovyFormatterTestCase {
   final String basePath = TestUtils.testDataPath + 'groovy/enterAction/'
 
   void doTest() throws Throwable {
-    final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0));
-    doEnter();
-    myFixture.checkResult(data.get(1));
+    final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test")
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, data.get(0))
+    doEnter()
+    myFixture.checkResult(data.get(1))
   }
 
   private def doEnter() {

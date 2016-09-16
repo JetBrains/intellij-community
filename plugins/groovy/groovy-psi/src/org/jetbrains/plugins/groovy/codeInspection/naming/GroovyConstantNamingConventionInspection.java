@@ -80,7 +80,7 @@ public class GroovyConstantNamingConventionInspection extends ConventionInspecti
 
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitField(GrField grField) {
+    public void visitField(@NotNull GrField grField) {
       super.visitField(grField);
       if (!grField.hasModifierProperty(PsiModifier.STATIC) ||
           !grField.hasModifierProperty(PsiModifier.FINAL)) {

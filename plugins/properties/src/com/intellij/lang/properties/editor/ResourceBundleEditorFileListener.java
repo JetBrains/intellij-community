@@ -18,6 +18,7 @@ package com.intellij.lang.properties.editor;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -50,6 +51,11 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
     myEditor = editor;
     myEventsProcessor = new MyVfsEventsProcessor();
     myProject = myEditor.getResourceBundle().getProject();
+  }
+
+  public void flush() {
+    FileDocumentManager.getInstance().saveAllDocuments();
+    myEventsProcessor.flush();
   }
 
   @Override
@@ -181,6 +187,10 @@ class ResourceBundleEditorFileListener extends VirtualFileAdapter {
 
     public void queue(VirtualFileEvent event, EventType type) {
       myMergeQueue.queue(new MyUpdate(new EventWithType(type, event)));
+    }
+
+    public void flush() {
+      myMergeQueue.flush();
     }
 
     private class MyUpdate extends Update {

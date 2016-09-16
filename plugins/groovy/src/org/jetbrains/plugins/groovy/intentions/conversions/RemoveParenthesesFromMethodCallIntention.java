@@ -42,7 +42,7 @@ public class RemoveParenthesesFromMethodCallIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
     final GrMethodCallExpression expression = (GrMethodCallExpression) element;
     final StringBuilder newStatementText = new StringBuilder();
     newStatementText.append(expression.getInvokedExpression().getText()).append(' ');

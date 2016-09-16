@@ -84,7 +84,6 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   /**
    * Use RecentProjectsManagerBase
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public String getLastProjectCreationLocation() {
     return null;
@@ -93,7 +92,6 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   /**
    * Use RecentProjectsManagerBase
    */
-  @SuppressWarnings("unused")
   @Deprecated
   public void setLastProjectCreationLocation(String lastProjectLocation) {
   }
@@ -102,7 +100,6 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myBrowserPath = browserPath;
   }
 
-  @SuppressWarnings("unused")
   @Deprecated
   public boolean showTipsOnStartup() {
     return isShowTipsOnStartup();
@@ -226,14 +223,12 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myUseDefaultBrowser = value;
   }
 
-  @SuppressWarnings("unused")
   @Transient
   @Deprecated
   public boolean isConfirmExtractFiles() {
     return true;
   }
 
-  @SuppressWarnings("unused")
   @Deprecated
   public void setConfirmExtractFiles(boolean value) {
   }

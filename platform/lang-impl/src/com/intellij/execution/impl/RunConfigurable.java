@@ -903,18 +903,15 @@ class RunConfigurable extends BaseConfigurable {
       each.first.disposeUIResources();
     }
 
-    TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        if (node instanceof DefaultMutableTreeNode) {
-          final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-          final Object userObject = treeNode.getUserObject();
-          if (userObject instanceof SingleConfigurationConfigurable) {
-            ((SingleConfigurationConfigurable)userObject).disposeUIResources();
-          }
+    TreeUtil.traverseDepth(myRoot, node -> {
+      if (node instanceof DefaultMutableTreeNode) {
+        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
+        final Object userObject = treeNode.getUserObject();
+        if (userObject instanceof SingleConfigurationConfigurable) {
+          ((SingleConfigurationConfigurable)userObject).disposeUIResources();
         }
-        return true;
       }
+      return true;
     });
     myRightPanel.removeAll();
     mySplitter.dispose();

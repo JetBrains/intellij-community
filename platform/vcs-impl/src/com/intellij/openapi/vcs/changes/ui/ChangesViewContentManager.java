@@ -69,7 +69,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   private final List<Content> myAddedContents = new ArrayList<>();
   @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
 
-  public ChangesViewContentManager(final Project project, final ProjectLevelVcsManager vcsManager) {
+  public ChangesViewContentManager(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
     super(project);
     myVcsManager = vcsManager;
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);

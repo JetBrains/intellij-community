@@ -37,8 +37,7 @@ import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.*
-import com.intellij.util.io.URLUtil
+import com.intellij.util.io.*
 import com.intellij.util.net.NetUtils
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext

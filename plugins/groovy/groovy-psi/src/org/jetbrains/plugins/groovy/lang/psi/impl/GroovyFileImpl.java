@@ -60,6 +60,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -144,10 +145,15 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private static boolean processCachedDeclarations(@NotNull PsiScopeProcessor processor,
                                                    @NotNull ResolveState state,
                                                    MostlySingularMultiMap<String, ResultWithContext> cache) {
-    String name = ResolveUtil.getNameHint(processor);
-    Processor<ResultWithContext> cacheProcessor = res ->
-      processor.execute(res.getElement(), state.put(ClassHint.RESOLVE_CONTEXT, res.getFileContext()));
-    return name != null ? cache.processForKey(name, cacheProcessor) : cache.processAllValues(cacheProcessor);
+    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+      String name = ResolveUtil.getNameHint(each);
+      Processor<ResultWithContext> cacheProcessor = res -> each.execute(
+        res.getElement(), state.put(ClassHint.RESOLVE_CONTEXT, res.getFileContext())
+      );
+      boolean result = name != null ? cache.processForKey(name, cacheProcessor) : cache.processAllValues(cacheProcessor);
+      if (!result) return false;
+    }
+    return true;
   }
 
   @NotNull

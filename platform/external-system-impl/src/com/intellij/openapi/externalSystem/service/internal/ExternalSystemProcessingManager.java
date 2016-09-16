@@ -47,7 +47,7 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
 
   @NotNull private final ConcurrentMap<ExternalSystemTaskId, Long> myTasksInProgress = ContainerUtil.newConcurrentMap();
   @NotNull private final ConcurrentMap<ExternalSystemTaskId, ExternalSystemTask> myTasksDetails = ContainerUtil.newConcurrentMap();
-  @NotNull private final Alarm                                     myAlarm           = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  @NotNull private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,this);
 
   @NotNull private final ExternalSystemFacadeManager               myFacadeManager;
   @NotNull private final ExternalSystemProgressNotificationManager myProgressNotificationManager;

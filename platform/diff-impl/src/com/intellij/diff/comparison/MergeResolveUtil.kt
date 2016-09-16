@@ -23,6 +23,18 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.util.text.MergingCharSequence
 
 object MergeResolveUtil {
+  /*
+   * Here we assume, that resolve results are explicitly verified by user and can be safely undone.
+   * Thus we trade higher chances of incorrect resolve for higher chances of correct resolve.
+   *
+   * We're making an assertion, that "A-X-B" and "B-X-A" conflicts should produce equal results.
+   * This leads us to conclusion, that insertion-insertion conflicts can't be possibly resolved (if inserted fragments are different),
+   * because we don't know the right order of inserted chunks (and sorting them alphabetically or by length makes no sense).
+   *
+   * deleted-inserted conflicts can be resolved by applying both of them.
+   * deleted-deleted conflicts can be resolved by merging deleted intervals.
+   * modifications can be considered as "insertion + deletion" and resolved accordingly.
+   */
   @JvmStatic
   fun tryResolveConflict(leftText: CharSequence, baseText: CharSequence, rightText: CharSequence): CharSequence? {
     try {
@@ -53,10 +65,12 @@ private class Helper(val leftText: CharSequence, val baseText: CharSequence, val
       val changeStart2 = fragments2.getOrNull(index2)?.startOffset1 ?: -1
 
       if (changeStart1 == -1 && changeStart2 == -1) {
+        // no more changes left
         appendBase(baseText.length)
         break
       }
 
+      // skip till the next block of changes
       if (changeStart1 != -1 && changeStart2 != -1) {
         appendBase(Math.min(changeStart1, changeStart2))
       }
@@ -68,6 +82,7 @@ private class Helper(val leftText: CharSequence, val baseText: CharSequence, val
       }
 
 
+      // collect next block of changes, that intersect one another.
       var baseOffsetEnd = lastBaseOffset
       var end1 = index1
       var end2 = index2
@@ -91,14 +106,15 @@ private class Helper(val leftText: CharSequence, val baseText: CharSequence, val
       }
       assert(index1 != end1 || index2 != end2)
 
-      val inserted1 = getContent(fragments1, index1, end1, LEFT)
-      val inserted2 = getContent(fragments2, index2, end2, RIGHT)
+      val inserted1 = getInsertedContent(fragments1, index1, end1, LEFT)
+      val inserted2 = getInsertedContent(fragments2, index2, end2, RIGHT)
       index1 = end1
       index2 = end2
 
 
       // merge and apply deletions
       lastBaseOffset = baseOffsetEnd
+
 
       // merge and apply non-conflicted insertions
       if (inserted1.isEmpty() && inserted2.isEmpty()) continue
@@ -117,6 +133,7 @@ private class Helper(val leftText: CharSequence, val baseText: CharSequence, val
         continue
       }
 
+      // we faced conflicting insertions - resolve failed
       return null;
     }
 
@@ -129,7 +146,7 @@ private class Helper(val leftText: CharSequence, val baseText: CharSequence, val
     lastBaseOffset = endOffset
   }
 
-  private fun getContent(fragments: List<DiffFragment>, start: Int, end: Int, side: Side): CharSequence {
+  private fun getInsertedContent(fragments: List<DiffFragment>, start: Int, end: Int, side: Side): CharSequence {
     val text = side.select(leftText, rightText)!!
 
     val empty: CharSequence = ""

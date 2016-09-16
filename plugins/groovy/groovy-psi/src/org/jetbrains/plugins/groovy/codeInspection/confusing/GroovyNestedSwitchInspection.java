@@ -55,7 +55,7 @@ public class GroovyNestedSwitchInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitSwitchStatement(GrSwitchStatement switchStatement) {
+    public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
       super.visitSwitchStatement(switchStatement);
       final GrSwitchStatement containingSwitch = PsiTreeUtil.getParentOfType(switchStatement, GrSwitchStatement.class);
       if (containingSwitch == null) {

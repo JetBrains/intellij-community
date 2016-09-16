@@ -26,7 +26,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.ui.MouseShortcutPanel;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
@@ -313,16 +312,13 @@ public final class IdeMouseEventDispatcher {
   }
 
   private static int getScrollAmount(Component c, MouseWheelEvent me, JScrollBar scrollBar) {
-    final int scrollBarWidth = scrollBar.getWidth();
-    final int ratio = Registry.is("ide.smart.horizontal.scrolling") && scrollBarWidth > 0
-                      ? Math.max((int)Math.pow(c.getWidth() / scrollBarWidth, 2), 10) : 10; // do annoying scrolling faster if smart scrolling is on
-    return me.getUnitsToScroll() * scrollBar.getUnitIncrement() * ratio;
+    return me.getUnitsToScroll() * scrollBar.getUnitIncrement();
   }
 
   private static boolean isHorizontalScrolling(Component c, MouseEvent e) {
     if ( c != null
          && e instanceof MouseWheelEvent
-         && (!SystemInfo.isMac || isDiagramViewComponent(c.getParent()))) {
+         && isDiagramViewComponent(c.getParent())) {
       final MouseWheelEvent mwe = (MouseWheelEvent)e;
       return mwe.isShiftDown()
              && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL

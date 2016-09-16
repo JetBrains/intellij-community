@@ -38,11 +38,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.PromiseKt;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
  * @author nik
@@ -103,7 +103,7 @@ public class XBreakpointUtil {
     for (DebuggerSupport debuggerSupport : DebuggerSupport.getDebuggerSupports()) {
       panelProviders.add(debuggerSupport.getBreakpointPanelProvider());
     }
-    Collections.sort(panelProviders, (o1, o2) -> o2.getPriority() - o1.getPriority());
+    panelProviders.sort((o1, o2) -> o2.getPriority() - o1.getPriority());
     return panelProviders;
   }
 
@@ -184,6 +184,6 @@ public class XBreakpointUtil {
       }
     }
 
-    return PromiseKt.rejectedPromise();
+    return rejectedPromise();
   }
 }

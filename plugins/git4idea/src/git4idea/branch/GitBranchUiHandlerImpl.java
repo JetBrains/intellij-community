@@ -18,7 +18,6 @@ package git4idea.branch;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -153,8 +152,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                                   @NotNull String removedBranch) {
     AtomicBoolean restore = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(() -> restore.set(
-      GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, baseBranches, removedBranch)),
-      ModalityState.defaultModalityState());
+      GitBranchIsNotFullyMergedDialog.showAndGetAnswer(myProject, history, baseBranches, removedBranch)));
     return restore.get();
   }
 

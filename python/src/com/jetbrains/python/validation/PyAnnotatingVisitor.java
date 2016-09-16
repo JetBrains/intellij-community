@@ -33,6 +33,7 @@ public class PyAnnotatingVisitor implements Annotator {
   private static final Logger LOGGER = Logger.getInstance(PyAnnotatingVisitor.class.getName());
   private static final Class[] ANNOTATOR_CLASSES = new Class[] {
     AssignTargetAnnotator.class,
+    TypeAnnotationTargetAnnotator.class,
     ParameterListAnnotator.class,
     HighlightingAnnotator.class,
     ReturnAnnotator.class,

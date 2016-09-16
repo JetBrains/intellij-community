@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.grape;
+package org.jetbrains.plugins.groovy.grape
 
 
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase

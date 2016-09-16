@@ -422,7 +422,7 @@ public class PythonSdkUpdater implements StartupActivity {
           modificatorToCommit.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
         }
         modificatorToCommit.commitChanges();
-      }, ModalityState.defaultModalityState());
+      });
     }
   }
 

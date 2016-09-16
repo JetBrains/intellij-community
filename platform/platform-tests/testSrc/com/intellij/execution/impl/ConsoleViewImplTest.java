@@ -66,7 +66,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testConsolePrintsSomethingAfterDoubleClear() throws Exception {
     ConsoleViewImpl console = myConsole;
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,getTestRootDisposable());
     CountDownLatch latch = new CountDownLatch(1);
     alarm.addRequest(() -> {
       console.clear();
@@ -105,7 +105,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
 
   public void testClearAndPrintWhileAnotherClearExecution() throws Exception {
     ConsoleViewImpl console = myConsole;
-    Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,getTestRootDisposable());
     for (int i = 0; i < 100; i++) {
       // To speed up test execution, set -Dconsole.flush.delay.ms=5 to reduce ConsoleViewImpl.DEFAULT_FLUSH_DELAY
       //System.out.println("Attempt #" + i);

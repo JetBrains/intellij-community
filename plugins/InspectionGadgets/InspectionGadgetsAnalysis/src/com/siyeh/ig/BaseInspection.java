@@ -118,9 +118,10 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
 
   @Override
   @NotNull
-  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly) {
-    if (!shouldInspect(holder.getFile())) {
+  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    final PsiFile file = holder.getFile();
+    assert file.isPhysical();
+    if (!shouldInspect(file)) {
       return new PsiElementVisitor() { };
     }
     final BaseInspectionVisitor visitor = buildVisitor();

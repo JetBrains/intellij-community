@@ -154,6 +154,9 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     if (size != null) {
       bounds.setSize(size);
     }
+    if (bounds.isEmpty()) {
+      bounds.setSize(component.getPreferredSize());
+    }
     component.setBounds(bounds);
     if (maximized && frame != null) {
       frame.setExtendedState(Frame.MAXIMIZED_BOTH);

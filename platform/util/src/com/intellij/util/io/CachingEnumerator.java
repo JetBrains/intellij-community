@@ -49,6 +49,7 @@ public class CachingEnumerator<Data> implements DataEnumerator<Data> {
 
   }
 
+  @Override
   public int enumerate(@Nullable Data value) throws IOException {
     int valueHashCode =-1;
     int stripe = -1;
@@ -57,9 +58,8 @@ public class CachingEnumerator<Data> implements DataEnumerator<Data> {
       valueHashCode = myDataDescriptor.getHashCode(value);
       stripe = Math.abs(valueHashCode) & STRIPE_MASK;
 
-      Integer cachedId;
-
       myStripeLocks[stripe].lock();
+      Integer cachedId;
       try {
         cachedId = myHashcodeToIdCache[stripe].get(valueHashCode);
       }
@@ -83,9 +83,9 @@ public class CachingEnumerator<Data> implements DataEnumerator<Data> {
     int enumerate = myBase.enumerate(value);
 
     if (stripe != -1) {
-      Integer enumeratedInteger;
 
       myStripeLocks[stripe].lock();
+      Integer enumeratedInteger;
       try {
         enumeratedInteger = enumerate;
         myHashcodeToIdCache[stripe].put(valueHashCode, enumeratedInteger);
@@ -110,6 +110,7 @@ public class CachingEnumerator<Data> implements DataEnumerator<Data> {
     return Math.abs(h ^ (h >>> 7) ^ (h >>> 4)) & STRIPE_MASK;
   }
 
+  @Override
   @Nullable
   public Data valueOf(int idx) throws IOException {
     int stripe = idStripe(idx);

@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ProjectCoreUtil {
   /** @deprecated use {@link Project#DIRECTORY_STORE_FOLDER} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public static final String DIRECTORY_BASED_PROJECT_DIR = Project.DIRECTORY_STORE_FOLDER;
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {

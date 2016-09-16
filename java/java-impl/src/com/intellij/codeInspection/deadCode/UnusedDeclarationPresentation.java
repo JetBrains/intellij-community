@@ -122,6 +122,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       final int problemCount = super.getElementProblemCount(refElement);
       if (problemCount > - 1) return problemCount;
       if (!((RefElementImpl)refElement).hasSuspiciousCallers() || ((RefJavaElementImpl)refElement).isSuspiciousRecursive()) return 1;
+
+      for (RefElement element : refElement.getInReferences()) {
+        if (((UnusedDeclarationInspectionBase)myTool).isEntryPoint(element)) return 1;
+      }
+
       return 0;
     }
   }
@@ -150,11 +155,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
       refEntity = getRefManager().getRefinedElement(refEntity);
       if (!refEntity.isValid()) return;
+      RefJavaElement refElement = (RefJavaElement)refEntity;
+      if (!compareVisibilities(refElement, getTool().getSharedLocalInspectionTool())) return;
+      if (skipEntryPoints(refElement)) return;
+
       Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
       if (element == null) return;
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
-      final RefElement refElement = (RefElement)refEntity;
       final HighlightSeverity severity = getSeverity(refElement);
       final String attributeKey =
         getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
@@ -180,10 +188,11 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       descriptionElement.addContent(buf.toString());
       element.addContent(descriptionElement);
     }
+    super.exportResults(parentNode, refEntity, excludedDescriptions);
   }
 
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, InspectionTree tree) {
+  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
     boolean showFixes = false;
     for (RefEntity element : refElements) {
       if (!getIgnoredRefElements().contains(element) && element.isValid()) {
@@ -193,15 +202,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     if (showFixes) {
-      final TreePath[] paths = tree.getSelectionPaths();
+      final TreePath[] paths = tree != null ? tree.getSelectionPaths() : null;
       if (paths != null) {
-        int count = 0;
-        for (TreePath path : paths) {
-          final Object component = path.getLastPathComponent();
-          if (component instanceof ProblemDescriptionNode) {
-            count++;
-          }
-        }
+        long count = Arrays.stream(paths).map(TreePath::getLastPathComponent)
+          .filter(component -> component instanceof ProblemDescriptionNode).count();
         if (count > 0) {
           final QuickFixAction[] fixes = super.getQuickFixes(refElements, tree);
           if (fixes != null) {
@@ -451,12 +455,16 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         RefJavaElement refElement = (RefJavaElement)refEntity;
         if (!compareVisibilities(refElement, localInspectionTool)) return;
         if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && getIgnoredRefElements().contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
-          if (getTool().isEntryPoint(refElement)) return;
+          if (skipEntryPoints(refElement)) return;
           registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
         }
       }
     });
     updateProblemElements();
+  }
+
+  protected boolean skipEntryPoints(RefJavaElement refElement) {
+    return getTool().isEntryPoint(refElement);
   }
 
   @PsiModifier.ModifierConstant
@@ -675,5 +683,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     final String text = buf.toString();
     SingleInspectionProfilePanel.readHTML(htmlView, SingleInspectionProfilePanel.toHTML(htmlView, text, false));
     return ScrollPaneFactory.createScrollPane(htmlView, true);
+  }
+
+  @Override
+  public int getProblemsCount(InspectionTree tree) {
+    return 0;
   }
 }

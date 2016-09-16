@@ -15,16 +15,16 @@
  */
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-class UsedColors {
+public class UsedColors {
   private static final Key<Object/*UsedColor or UsedColor[]*/> USED_COLOR = Key.create("USED_COLOR");
 
   public static final AtomicInteger counter = new AtomicInteger();
@@ -39,10 +39,9 @@ class UsedColors {
     }
   }
 
-  static int getOrAddColorIndex(@NotNull final UserDataHolderEx context,
-                                @NotNull final String name,
-                                @NotNull RainbowHighlighter rainbowHighlighter) {
-    int colorsCount = rainbowHighlighter.getColorsCount();
+  public static int getOrAddColorIndex(@NotNull final UserDataHolderEx context,
+                                       @NotNull final String name,
+                                       int colorsCount) {
     int colorIndex;
     while (true) {
       Object data = context.getUserData(USED_COLOR);
@@ -101,6 +100,7 @@ class UsedColors {
     return Math.abs(StringHash.murmur(name, 0x55AA)) % colorsCount;
   }
 
+  @Contract(pure = true)
   private static int indexOfMin(@NotNull int[] values, int start, int end) {
     int min = Integer.MAX_VALUE;
     int minIndex = start;

@@ -20,8 +20,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Base64Converter;
+import com.intellij.util.Base64;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
 
@@ -325,7 +326,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private String getKeypass(boolean selfSigning) {
-    return selfSigning ? "keypass" : Base64Converter.decode(getKeypass());
+    return selfSigning ? "keypass" : new String(Base64.decode(getKeypass()), CharsetToolkit.UTF8_CHARSET);
   }
 
   private String getKeystore(boolean selfSigning) {
@@ -333,7 +334,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private String getStorepass(boolean selfSigning) {
-    return selfSigning ? "storepass" : Base64Converter.decode(getStorepass());
+    return selfSigning ? "storepass" : new String(Base64.decode(getStorepass()), CharsetToolkit.UTF8_CHARSET);
   }
 
   public abstract String getKeypass();

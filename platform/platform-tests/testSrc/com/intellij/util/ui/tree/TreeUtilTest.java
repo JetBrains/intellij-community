@@ -160,12 +160,9 @@ public class TreeUtilTest extends PlatformTestCase {
     node.add(new DefaultMutableTreeNode("001"));
     root.add(new DefaultMutableTreeNode("01"));
     final ArrayList order = new ArrayList();
-    TreeUtil.traverseDepth(root, new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        order.add(node.toString());
-        return true;
-      }
+    TreeUtil.traverseDepth(root, node1 -> {
+      order.add(node1.toString());
+      return true;
     });
     CHECK.compareAll(new String[]{"0", "00", "000", "001","01"}, order);
   }

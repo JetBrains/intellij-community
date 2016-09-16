@@ -21,9 +21,7 @@ import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
-import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
+import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.options.SchemeImportUtil;
@@ -32,11 +30,13 @@ import com.intellij.openapi.options.SchemeImporterEP;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,9 +47,10 @@ import java.util.List;
 public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   private final ColorAndFontOptions myOptions;
 
-  private ComboBox<String> mySchemeComboBox;
+  private ComboBox<MySchemeItem> mySchemeComboBox;
 
   private JButton myDeleteButton;
+  private JButton myResetButton;
   private JButton myImportButton;
   private JLabel myHintLabel;
 
@@ -69,14 +70,21 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     mySchemeComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        if (mySchemeComboBox.getSelectedIndex() != -1) {
-          EditorColorsScheme selected = myOptions.selectScheme((String)mySchemeComboBox.getSelectedItem());
+        String selectedName = getSelectedSchemeName();
+        if (selectedName != null) {
+          EditorColorsScheme selected = myOptions.selectScheme(selectedName);
           final boolean readOnly = ColorAndFontOptions.isReadOnly(selected);
-          myDeleteButton.setEnabled(!readOnly);
+          myDeleteButton.setEnabled(!readOnly && ColorAndFontOptions.canBeDeleted(selected));
           myHintLabel.setVisible(readOnly);
           if (areSchemesLoaded()) {
             myDispatcher.getMulticaster().schemeChanged(SchemesPanel.this);
           }
+          AbstractColorsScheme originalScheme =
+            selected instanceof AbstractColorsScheme ? ((AbstractColorsScheme)selected).getOriginal() : null;
+          myResetButton.setEnabled(
+            !readOnly &&
+            selectedName.startsWith(DefaultColorsScheme.EDITABLE_COPY_PREFIX) &&
+            originalScheme instanceof ReadOnlyColorsScheme);
         }
       }
     });
@@ -117,12 +125,30 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     myDeleteButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        if (mySchemeComboBox.getSelectedIndex() != -1) {
-          myOptions.removeScheme((String)mySchemeComboBox.getSelectedItem());
+        String selectedName = getSelectedSchemeName();
+        if (selectedName != null) {
+          myOptions.removeScheme(selectedName);
         }
       }
     });
     panel.add(myDeleteButton,
+              new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
+                                     0));
+    myResetButton = new JButton(ApplicationBundle.message("color.scheme.reset"));
+    myResetButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(@NotNull ActionEvent e) {
+        String selectedName = getSelectedSchemeName();
+        if (selectedName != null) {
+          if (Messages
+                .showOkCancelDialog(ApplicationBundle.message("color.scheme.reset.message"),
+                                    ApplicationBundle.message("color.scheme.reset.title"), Messages.getQuestionIcon()) == Messages.OK) {
+            myOptions.resetSchemeToOriginal(selectedName);
+          }
+        }
+      }
+    });
+    panel.add(myResetButton,
               new GridBagConstraints(gridx++, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new JBInsets(0, 0, 5, 5), 0,
                                      0));
     myImportButton = new JButton("Import...");
@@ -165,21 +191,18 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
 
   private void showSaveAsDialog() {
     List<String> names = ContainerUtil.newArrayList(myOptions.getSchemeNames());
-    String selectedName = myOptions.getSelectedScheme().getName();
+    String selectedName = AbstractColorsScheme.getDisplayName(myOptions.getSelectedScheme());
     SaveSchemeDialog dialog = new SaveSchemeDialog(this, ApplicationBundle.message("title.save.color.scheme.as"), names, selectedName);
     if (dialog.showAndGet()) {
       myOptions.saveSchemeAs(dialog.getSchemeName());
     }
   }
 
-  private void changeToScheme() {
-    updateDescription(false);
-  }
-
+  @Deprecated
   public boolean updateDescription(boolean modified) {
     EditorColorsScheme scheme = myOptions.getSelectedScheme();
 
-    if (modified && (ColorAndFontOptions.isReadOnly(scheme) || ColorSettingsUtil.isSharedScheme(scheme))) {
+    if (modified && ColorAndFontOptions.isReadOnly(scheme)) {
       return false;
     }
 
@@ -190,21 +213,28 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
     if (this != source) {
       setListLoaded(false);
 
-      String selectedSchemeBackup = myOptions.getSelectedScheme().getName();
+      EditorColorsScheme selectedSchemeBackup = myOptions.getSelectedScheme();
       mySchemeComboBox.removeAllItems();
 
       String[] schemeNames = myOptions.getSchemeNames();
+      MySchemeItem itemToSelect = null;
       for (String schemeName : schemeNames) {
-        mySchemeComboBox.addItem(schemeName);
+        EditorColorsScheme scheme = myOptions.getScheme(schemeName); 
+        MySchemeItem item = new MySchemeItem(scheme);
+        if (scheme == selectedSchemeBackup) itemToSelect = item;
+        mySchemeComboBox.addItem(item);
       }
 
-      mySchemeComboBox.setSelectedItem(selectedSchemeBackup);
+      mySchemeComboBox.setSelectedItem(itemToSelect);
       setListLoaded(true);
-
-      changeToScheme();
 
       myDispatcher.getMulticaster().schemeChanged(this);
     }
+  }
+  
+  @Nullable
+  private String getSelectedSchemeName() {
+    return mySchemeComboBox.getSelectedIndex() != -1 ? ((MySchemeItem)mySchemeComboBox.getSelectedItem()).getSchemeName() : null;
   }
 
   private void setListLoaded(final boolean b) {
@@ -252,4 +282,22 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
   private static boolean isImportAvailable() {
     return !SchemeImporterEP.getExtensions(EditorColorsScheme.class).isEmpty();
   }
+  
+  private final static class MySchemeItem {
+    private EditorColorsScheme myScheme;
+
+    public MySchemeItem(EditorColorsScheme scheme) {
+      myScheme = scheme;
+    }
+    
+    public String getSchemeName() {
+      return myScheme.getName();
+    }
+
+    @Override
+    public String toString() {
+      return AbstractColorsScheme.getDisplayName(myScheme);
+    }
+  }
+  
 }

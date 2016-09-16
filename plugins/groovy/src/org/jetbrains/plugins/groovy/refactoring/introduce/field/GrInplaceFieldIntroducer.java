@@ -229,6 +229,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
     return IntroduceFieldHandler.REFACTORING_NAME;
   }
 
+  @NotNull
   @Override
   protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
     return mySuggestedNames;

@@ -51,9 +51,9 @@ class ApplicationInfoProperties {
     shortCompanyName = root.company.first().@shortName ?: shortenCompanyName(companyName)
   }
 
-  public String getUpperCaseProductName() { shortProductName.toUpperCase() }
+  String getUpperCaseProductName() { shortProductName.toUpperCase() }
 
-  public String getFullVersion() {
+  String getFullVersion() {
     MessageFormat.format(fullVersionFormat, majorVersion, minorVersion, microVersion, patchVersion)
   }
 

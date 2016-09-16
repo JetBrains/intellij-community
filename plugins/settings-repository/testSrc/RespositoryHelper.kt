@@ -15,8 +15,8 @@
  */
 package org.jetbrains.settingsRepository.test
 
-import com.intellij.util.exists
-import com.intellij.util.isFile
+import com.intellij.util.io.exists
+import com.intellij.util.io.isFile
 import gnu.trove.THashSet
 import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.lib.Constants

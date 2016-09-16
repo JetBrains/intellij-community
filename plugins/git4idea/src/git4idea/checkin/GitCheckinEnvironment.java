@@ -698,7 +698,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myNextCommitAuthorDate = null;
   }
 
-  private class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
+  public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
     @NotNull private final GitVcs myVcs;
     @NotNull private JPanel myPanel;
     @NotNull private final EditorTextField myAuthorField;
@@ -727,6 +727,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myPanel.add(myAuthorField, gb.next().fillCellHorizontally().weightx(1));
       myPanel.add(myAmendComponent.getComponent(), gb.nextLine().next().coverLine());
       myPanel.add(mySignOffCheckbox, gb.nextLine().next().coverLine());
+    }
+
+    public boolean isAmend() {
+      return myAmendComponent.isAmend();
     }
 
     @NotNull
@@ -807,7 +811,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         myNextCommitAuthor = GitCommitAuthorCorrector.correct(author);
         mySettings.saveCommitAuthor(myNextCommitAuthor);
       }
-      myNextCommitAmend = myAmendComponent.isAmend();
+      myNextCommitAmend = isAmend();
       myNextCommitAuthorDate = myAuthorDate;
       mySettings.setSignOffCommit(mySignOffCheckbox.isSelected());
       myNextCommitSignOff = mySignOffCheckbox.isSelected();

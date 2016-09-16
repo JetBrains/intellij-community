@@ -43,13 +43,12 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
 class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
   private static final Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
-  private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>("Class or package") {
+  private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>("Class/package/member qualified name mask") {
     @Nullable
     @Override
     public String valueOf(Item pair) {

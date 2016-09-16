@@ -17,12 +17,6 @@ package com.intellij.openapi.ui;
 
 import javax.swing.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 12/3/11
- * Time: 6:13 PM
- */
 public class PseudoSplitter extends Splitter {
   private boolean myFirstIsFixed;
   private boolean mySecondIsFixed;
@@ -33,16 +27,6 @@ public class PseudoSplitter extends Splitter {
     super(vertical);
     myFirstIsFixed = false;
     mySecondIsFixed = false;
-  }
-
-  public PseudoSplitter(boolean vertical, float proportion) {
-    super(vertical, proportion);
-    myFirstIsFixed = true;
-  }
-
-  public PseudoSplitter(boolean vertical, float proportion, float minProp, float maxProp) {
-    super(vertical, proportion, minProp, maxProp);
-    myFirstIsFixed = true;
   }
 
   private int getSizeForComp(final JComponent component) {
@@ -62,13 +46,6 @@ public class PseudoSplitter extends Splitter {
     myFirstFixedSize = getSizeForComp(getFirstComponent());
     myFirstIsFixed = true;
     mySecondIsFixed = false;
-  }
-
-  public void fixSecond() {
-    assert getSecondComponent() != null;
-    mySecondFixedSize = getSizeForComp(getSecondComponent());
-    myFirstIsFixed = false;
-    mySecondIsFixed = true;
   }
 
   public void freeAll() {

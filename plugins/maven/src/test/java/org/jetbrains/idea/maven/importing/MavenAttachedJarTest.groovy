@@ -37,7 +37,7 @@ class MavenAttachedJarTest extends MavenDomTestCase {
         </dependency>
     </dependencies>
 
-""");
+""")
 
     def file = createProjectSubFile("m1/src/main/java/Foo.java", """
 class Foo {
@@ -80,7 +80,7 @@ class Foo {
       </plugin>
     </plugins>
   </build>
-""");
+""")
 
     importProject("""
 <groupId>test</groupId>

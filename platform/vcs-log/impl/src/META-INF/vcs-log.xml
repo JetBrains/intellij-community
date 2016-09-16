@@ -43,7 +43,6 @@
     <action class="com.intellij.vcs.log.ui.actions.ShowLongEdgesAction" id="Vcs.Log.ShowLongEdges"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowDetailsAction" id="Vcs.Log.ShowDetailsAction"/>
     <action class="com.intellij.vcs.log.ui.actions.ShowRootsColumnAction" id="Vcs.Log.ShowRootsColumnAction"/>
-    <action class="com.intellij.vcs.log.ui.actions.ShowBranchesPanelAction" id="Vcs.Log.ShowBranchesPanelAction"/>
     <action class="com.intellij.vcs.log.ui.actions.FocusTextFilterAction" id="Vcs.Log.FocusTextFilter">
       <keyboard-shortcut first-keystroke="control L" keymap="$default"/>
       <keyboard-shortcut first-keystroke="control L" keymap="Visual Studio" remove="true"/>
@@ -54,7 +53,6 @@
     <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
 
     <group id="Vcs.Log.Settings">
-      <reference id="Vcs.Log.ShowBranchesPanelAction"/>
       <reference id="Vcs.Log.ShowRootsColumnAction"/>
       <separator/>
       <reference id="Vcs.Log.CollapseAll"/>
@@ -64,7 +62,6 @@
     <group id="Vcs.Log.Toolbar.Internal">
       <reference id="Vcs.Log.ShowLongEdges"/>
       <reference id="Vcs.Log.Refresh"/>
-      <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.GoToRef"/>
       <group id="Vcs.Log.Toolbar"/>
       <separator/>
@@ -90,7 +87,6 @@
       <reference ref="Vcs.Log.QuickSettings"/>
       <reference ref="Vcs.Log.ShowDetailsAction"/>
       <reference ref="Vcs.Log.ShowRootsColumnAction"/>
-      <reference ref="Vcs.Log.ShowBranchesPanelAction"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>

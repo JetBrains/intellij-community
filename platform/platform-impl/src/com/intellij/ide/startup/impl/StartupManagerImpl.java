@@ -370,7 +370,7 @@ public class StartupManagerImpl extends StartupManagerEx {
         action.run();
       }
     };
-    if (application.isDispatchThread() && ModalityState.current() == ModalityState.NON_MODAL) {
+    if (application.isDispatchThread()) {
       runnable.run();
     }
     else {

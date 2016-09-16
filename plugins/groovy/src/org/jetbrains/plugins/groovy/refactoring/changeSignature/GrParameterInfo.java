@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
  */
 public class GrParameterInfo implements JavaParameterInfo {
   @NotNull private String myName;
-  @NotNull private String myDefaultValue;
-  @NotNull private String myDefaultInitializer;
+  @NotNull private String myDefaultValue = "";
+  @NotNull private String myDefaultInitializer = "";
   private final int myPosition;
   @Nullable private CanonicalTypes.Type myTypeWrapper;
   private boolean myUseAnySingleVariable;
@@ -51,13 +51,7 @@ public class GrParameterInfo implements JavaParameterInfo {
       myTypeWrapper = null;
     }
     final GrExpression defaultInitializer = parameter.getInitializerGroovy();
-    if (defaultInitializer != null) {
-      myDefaultInitializer = defaultInitializer.getText();
-    }
-    else {
-      myDefaultInitializer = "";
-    }
-    myDefaultValue = "";
+    if (defaultInitializer != null) setInitializer(defaultInitializer.getText());
     myUseAnySingleVariable = false;
   }
 
@@ -151,8 +145,8 @@ public class GrParameterInfo implements JavaParameterInfo {
    * for testing only
    */
   @Override
-  public void setName(@NotNull String newName) {
-    myName = newName;
+  public void setName(String newName) {
+    myName = StringUtil.notNullize(newName);
   }
 
   @Override

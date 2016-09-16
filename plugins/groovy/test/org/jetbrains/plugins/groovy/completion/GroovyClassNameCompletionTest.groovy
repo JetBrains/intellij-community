@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.completion;
+package org.jetbrains.plugins.groovy.completion
 
 
 import com.intellij.codeInsight.completion.CompletionType
@@ -30,22 +30,22 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author Maxim.Medvedev
  */
 class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
-  private boolean old;
+  private boolean old
 
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/completion/classNameCompletion";
+    return TestUtils.getTestDataPath() + "groovy/completion/classNameCompletion"
   }
 
   private void doTest() throws Exception {
-    addClassToProject("a", "FooBar");
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    addClassToProject("a", "FooBar")
+    myFixture.configureByFile(getTestName(false) + ".groovy")
     complete()
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
   private void addClassToProject(@Nullable String packageName, @NotNull String name) throws IOException {
-    myFixture.addClass("package $packageName; public class $name {}");
+    myFixture.addClass("package $packageName; public class $name {}")
   }
 
   void testInFieldDeclaration() throws Exception { doTest(); }
@@ -57,7 +57,7 @@ class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByFile(getTestName(false) + ".groovy")
     complete()
     myFixture.type('\n')
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
   void testWhenClassExistsInSamePackage() throws Exception {
@@ -67,7 +67,7 @@ class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
     def lookup = LookupManager.getActiveLookup(myFixture.editor)
     lookup.currentItem = lookup.items[1]
     myFixture.type('\n')
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
   void testInComment() throws Exception { doTest(); }
@@ -77,7 +77,7 @@ class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
   void testWhenImportExists() throws Exception { doTest(); }
 
   void testFinishByDot() throws Exception {
-    addClassToProject("a", "FooBar");
+    addClassToProject("a", "FooBar")
     myFixture.configureByText("a.groovy", "FB<caret>a")
     complete()
     myFixture.type '.'.charAt(0)
@@ -89,7 +89,7 @@ class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   void testDelegateBasicToClassName() throws Exception {
-    addClassToProject("a", "FooBarGooDoo");
+    addClassToProject("a", "FooBarGooDoo")
     myFixture.configureByText("a.groovy", "FBGD<caret>a")
     myFixture.complete(CompletionType.BASIC, 2)
     myFixture.type '.'
@@ -97,7 +97,7 @@ class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   void testDelegateBasicToClassNameAutoinsert() throws Exception {
-    addClassToProject("a", "FooBarGooDoo");
+    addClassToProject("a", "FooBarGooDoo")
     myFixture.configureByText("a.groovy", "FBGD<caret>")
     myFixture.complete(CompletionType.BASIC, 2)
     myFixture.checkResult """\

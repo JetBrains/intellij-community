@@ -77,7 +77,6 @@ public class ConfigurationUtil {
 
     Set<PsiClass> processed = ContainerUtil.newHashSet();
     boolean hasJunit4 = addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.TEST_ANNOTATION);
-    hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.TEST5_ANNOTATION);
     hasJunit4 |= addAnnotatedMethodsAnSubclasses(manager, scope, testClassFilter, found, processed, JUnitUtil.RUN_WITH);
     return hasJunit4;
   }

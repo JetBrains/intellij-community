@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -431,7 +431,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     }
 
     @Override
-    public void visitReferenceExpression(GrReferenceExpression refExpr) {
+    public void visitReferenceExpression(@NotNull GrReferenceExpression refExpr) {
       super.visitReferenceExpression(refExpr);
       final PsiElement resolved = refExpr.resolve();
       if (!(resolved instanceof GrVariable)) return;

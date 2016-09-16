@@ -57,14 +57,14 @@ public class TodoConfiguration implements PersistentStateComponent<Element>, Dis
   @NonNls private static final String ELEMENT_FILTER = "filter";
   private final MessageBus myMessageBus;
 
-  public TodoConfiguration(@NotNull MessageBus messageBus, EditorColorsManager manager) {
+  public TodoConfiguration(@NotNull MessageBus messageBus) {
     myMessageBus = messageBus;
-    manager.addEditorColorsListener(new EditorColorsListener() {
+    messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         colorSettingsChanged();
       }
-    }, this);
+    });
     resetToDefaultTodoPatterns();
   }
 

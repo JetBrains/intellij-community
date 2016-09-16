@@ -33,6 +33,11 @@ abstract class LinuxDistributionCustomizer {
   List<String> extraExecutables = []
 
   /**
+   * If {@code true} a separate *-no-jdk.tar.gz artifact without JRE will be produced
+   */
+  boolean buildTarGzWithoutBundledJre = true
+
+  /**
    * Name of the root directory inside linux .tar.gz archive
    */
   String rootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {

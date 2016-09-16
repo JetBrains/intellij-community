@@ -125,9 +125,6 @@ public class StringCompareToInspection extends BaseInspection {
         return false;
       }
       final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return false;
-      }
       if (!MethodUtils.isCompareTo(method)) {
         return false;
       }

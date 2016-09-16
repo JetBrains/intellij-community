@@ -17,7 +17,6 @@ package git4idea.update;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -112,12 +111,7 @@ public class GitRebaseOverMergeProblem {
   @NotNull
   public static Decision showDialog() {
     final Ref<Decision> decision = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        decision.set(doShowDialog());
-      }
-    }, ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(() -> decision.set(doShowDialog()));
     return decision.get();
   }
 

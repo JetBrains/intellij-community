@@ -588,6 +588,15 @@ public class PyQuickFixTest extends PyTestCase {
                      true, true);
   }
 
+  public void testRemovingUnderscoresInNumericLiterals() {
+    myFixture.configureByText(PythonFileType.INSTANCE, "1_0_0");
+
+    final IntentionAction action = myFixture.findSingleIntention(PyBundle.message("QFIX.NAME.remove.underscores.in.numeric"));
+    myFixture.launchAction(action);
+
+    myFixture.checkResult("100");
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {

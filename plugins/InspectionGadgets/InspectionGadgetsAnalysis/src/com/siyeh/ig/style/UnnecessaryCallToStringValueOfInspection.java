@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
@@ -120,7 +121,10 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
       if (arguments.length != 1) {
         return;
       }
-      final PsiExpression argument = arguments[0];
+      final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[0]);
+      if (argument == null) {
+        return;
+      }
       final PsiType argumentType = argument.getType();
       if (argumentType instanceof PsiArrayType) {
         final PsiArrayType arrayType = (PsiArrayType)argumentType;
@@ -128,10 +132,6 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
         if (PsiType.CHAR.equals(componentType)) {
           return;
         }
-      }
-      final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, "java.lang.Throwable");
-      if (ExpressionUtils.isConversionToStringNecessary(expression, throwable)) {
-        return;
       }
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
@@ -144,6 +144,28 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
       final String qualifiedName = aClass.getQualifiedName();
       if (!CommonClassNames.JAVA_LANG_STRING.equals(qualifiedName)) {
         return;
+      }
+      if (!TypeUtils.isJavaLangString(argumentType)) {
+        final boolean throwable = TypeUtils.expressionHasTypeOrSubtype(argument, "java.lang.Throwable");
+        if (ExpressionUtils.isConversionToStringNecessary(expression, throwable)) {
+          return;
+        }
+      }
+      if (argument instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
+        final PsiElement target = referenceExpression.resolve();
+        if (!(target instanceof PsiModifierListOwner) || !NullableNotNullManager.isNotNull((PsiModifierListOwner)target)) {
+          // don't warn because unwrapping when null would change semantics
+          return;
+        }
+      }
+      else if (argument instanceof PsiMethodCallExpression){
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)argument;
+        final PsiMethod method1 = methodCallExpression.resolveMethod();
+        if (method1 == null || !NullableNotNullManager.isNotNull(method1)) {
+          // don't warn because unwrapping when null would change semantics
+          return;
+        }
       }
       registerError(expression, calculateReplacementText(argument));
     }

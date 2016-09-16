@@ -81,4 +81,10 @@ public class AutoBoxing {
   interface R {
     Integer box();
   }
+
+  enum NumberedLetter {
+    A(<warning descr="Auto-boxing '3'">3</warning>);
+    NumberedLetter(Integer i) {
+    }
+  }
 }

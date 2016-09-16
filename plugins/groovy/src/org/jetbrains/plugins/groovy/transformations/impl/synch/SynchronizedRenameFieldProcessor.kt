@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.refactoring.rename.RenameGrFieldProcessor
 class SynchronizedRenameFieldProcessor : RenameGrFieldProcessor() {
 
   override fun canProcessElement(element: PsiElement): Boolean {
-    return super.canProcessElement(element) && getImplicitLockUsages(element as GrField).isNotEmpty()
+    return super.canProcessElement(element) && getImplicitLockUsages(element as GrField).any()
   }
 
   override fun renameElement(element: PsiElement,

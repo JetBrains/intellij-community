@@ -303,8 +303,12 @@ public final class PythonSdkType extends SdkType {
       });
   }
 
-  public static boolean isVirtualEnv(Sdk sdk) {
+  public static boolean isVirtualEnv(@NotNull Sdk sdk) {
     final String path = sdk.getHomePath();
+    return isVirtualEnv(path);
+  }
+
+  public static boolean isVirtualEnv(String path) {
     return path != null && getVirtualEnvRoot(path) != null;
   }
 

@@ -13,27 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -41,6 +27,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
+import org.jetbrains.jps.util.JpsPathUtil
 
 /**
  * @author nik
@@ -93,11 +80,11 @@ class DistributionJARsBuilder {
       }
     }
 
-    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(buildContext.productProperties.allPlugins) + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
+    Set<String> allProductDependencies = (productLayout.includedPluginModules + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
       JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
     }
 
-    platform = PlatformLayout.platform {
+    platform = PlatformLayout.platform(productLayout.platformLayoutCustomizer) {
       productLayout.additionalPlatformJars.entrySet().each {
         def jarName = it.key
         it.value.each {
@@ -125,16 +112,12 @@ class DistributionJARsBuilder {
       withModule("platform-resources", "resources.jar")
       withModule("colorSchemes", "resources.jar")
       withModule("platform-resources-en", productLayout.mainJarName)
-      if (allProductDependencies.contains("coverage-common")) {
+      if (allProductDependencies.contains("coverage-common") && !productLayout.bundledPluginModules.contains("coverage")) {
         withModule("coverage-common", productLayout.mainJarName)
       }
 
-      ["linux", "macosx", "win"].each {
-        withResource("lib/libpty/$it", "lib/libpty/$it")
-      }
-
       projectLibrariesUsedByPlugins.each {
-        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name)) {
+        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name) && !layout.excludedProjectLibraries.contains(it.name)) {
           withProjectLibrary(it.name)
         }
       }
@@ -156,6 +139,37 @@ class DistributionJARsBuilder {
     buildLib()
     buildPlugins()
 
+    def loadingOrderFilePath = buildContext.productProperties.productLayout.classesLoadingOrderFilePath
+    if (loadingOrderFilePath != null) {
+      reorderJARs(loadingOrderFilePath)
+    }
+  }
+
+  void reorderJARs(String loadingOrderFilePath) {
+    buildContext.messages.block("Reorder JARs") {
+      String targetDirectory = buildContext.paths.distAll
+      buildContext.messages.progress("Reordering *.jar files in $targetDirectory")
+      File ignoredJarsFile = new File(buildContext.paths.temp, "reorder-jars/required_for_dist.txt")
+      ignoredJarsFile.parentFile.mkdirs()
+      ignoredJarsFile.text = new File(buildContext.paths.distAll, "lib").list()
+        .findAll {it.endsWith(".jar") && !platform.moduleJars.containsKey(it)}
+        .join("\n")
+
+      buildContext.ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: true, failonerror: true) {
+        arg(value: loadingOrderFilePath)
+        arg(value: targetDirectory)
+        arg(value: targetDirectory)
+        arg(value: ignoredJarsFile.parent)
+        classpath {
+          buildContext.projectBuilder.moduleRuntimeClasspath(buildContext.findRequiredModule("util"), false).each {
+            pathelement(location: it)
+          }
+        }
+      }
+    }
+  }
+
+  void buildAdditionalArtifacts() {
     def productProperties = buildContext.productProperties
     if (productProperties.generateLibrariesLicensesTable) {
       buildContext.messages.block("Generate table of licenses for used third-party libraries") {
@@ -170,6 +184,11 @@ class DistributionJARsBuilder {
           module("internalUtilities")
         }
       }
+    }
+
+    if (productProperties.buildSourcesArchive) {
+      def archiveName = "${productProperties.baseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}-sources.zip"
+      BuildTasks.create(buildContext).zipSourcesOfModules(usedModules, "$buildContext.paths.artifacts/$archiveName")
     }
   }
 
@@ -214,39 +233,47 @@ class DistributionJARsBuilder {
     def ant = buildContext.ant
     def productLayout = buildContext.productProperties.productLayout
     def layoutBuilder = createLayoutBuilder()
-
-    if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
-      def pluginsToBuild = getPluginsByModules(productLayout.pluginModulesToPublish)
-      pluginsToBuild.each { plugin ->
-        def moduleOutput = buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(plugin.mainModule))
-        def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
-        if (!new File(pluginXmlPath)) {
-          buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
-        }
-        def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
-        ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
-        setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", buildContext.buildNumber)
-        layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
-      }
-    }
-
     buildPlugins(layoutBuilder, getPluginsByModules(productLayout.bundledPluginModules), "$buildContext.paths.distAll/plugins")
     usedModules.addAll(layoutBuilder.usedModules)
 
-    def pluginsToPublishDir = "$buildContext.paths.temp/plugins-to-publish"
-    def pluginsToPublish = getPluginsByModules(productLayout.pluginModulesToPublish)
-    buildPlugins(layoutBuilder, pluginsToPublish, pluginsToPublishDir)
-    pluginsToPublish.each { plugin ->
-      def directory = plugin.directoryName
-      ant.zip(destfile: "$buildContext.paths.artifacts/plugins/$directory-${buildContext.buildNumber}.zip") {
-        zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
+    buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
+      def pluginsToPublish = getPluginsByModules(productLayout.pluginModulesToPublish)
+      if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
+        pluginsToPublish.each { plugin ->
+          def moduleOutput = buildContext.projectBuilder.moduleOutput(buildContext.findRequiredModule(plugin.mainModule))
+          def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
+          if (!new File(pluginXmlPath)) {
+            buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
+          }
+          def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
+          ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
+          setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", buildContext.buildNumber,
+                                   productLayout.prepareCustomPluginRepositoryForPublishedPlugins)
+          layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
+        }
+      }
+
+      def pluginsToPublishDir = "$buildContext.paths.temp/plugins-to-publish"
+      buildPlugins(layoutBuilder, pluginsToPublish, pluginsToPublishDir)
+      def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/plugins"
+      pluginsToPublish.each { plugin ->
+        def directory = plugin.directoryName
+        String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${buildContext.buildNumber}"
+        ant.zip(destfile: "$nonBundledPluginsArtifacts/$directory${suffix}.zip") {
+          zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
+        }
+      }
+      if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
+        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, nonBundledPluginsArtifacts)
       }
     }
   }
 
   private List<PluginLayout> getPluginsByModules(Collection<String> modules) {
-    def modulesToInclude = modules as Set<String>
-    buildContext.productProperties.allPlugins.findAll { modulesToInclude.contains(it.mainModule) }
+    def allNonTrivialPlugins = buildContext.productProperties.productLayout.allNonTrivialPlugins
+    def allOptionalModules = allNonTrivialPlugins.collectMany {it.optionalModules}
+    def nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
+    (modules - allOptionalModules).collect { nonTrivialPlugins[it]?.first() ?: PluginLayout.plugin(it) }
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {
@@ -275,6 +302,7 @@ class DistributionJARsBuilder {
                   ant.patternset(refid: resourceExcluded)
                 }
                 layout.moduleExcludes.get(moduleName)?.each {
+                  //noinspection GrUnresolvedAccess
                   ant.exclude(name: "$it/**")
                 }
               }
@@ -289,11 +317,15 @@ class DistributionJARsBuilder {
         def modulesWithResources = moduleJars.values().findAll { layout.packLocalizableResourcesInCommonJar(it) }
         if (!modulesWithResources.empty) {
           jar("resources_en.jar", true) {
-            modulesWithResources.each {
-              modulePatches([it]) {
+            modulesWithResources.each { moduleName ->
+              modulePatches([moduleName]) {
                 ant.patternset(refid: resourcesIncluded)
               }
-              module(it) {
+              module(moduleName) {
+                layout.moduleExcludes.get(moduleName)?.each {
+                  //noinspection GrUnresolvedAccess
+                  ant.exclude(name: "$it/**")
+                }
                 ant.patternset(refid: resourcesIncluded)
               }
             }
@@ -304,7 +336,8 @@ class DistributionJARsBuilder {
         }
 
         //include all module libraries from the plugin modules added to IDE classpath to layout
-        moduleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }.each { moduleName ->
+        moduleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
+                             .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
             findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
@@ -319,52 +352,72 @@ class DistributionJARsBuilder {
           }
         }
       }
-      layout.resourcePaths.entrySet().each {
-        def path = FileUtil.toSystemIndependentName(new File("${layout.basePath(buildContext)}/$it.key").absolutePath)
-        dir(it.value) {
-          if (new File(path).isFile()) {
-            ant.fileset(file: path)
-          }
-          else {
-            ant.fileset(dir: path)
+      layout.resourcePaths.each {
+        def path = FileUtil.toSystemIndependentName(new File("${basePath(buildContext, it.moduleName)}/$it.resourcePath").absolutePath)
+        if (it.packToZip) {
+          zip(it.relativeOutputPath) {
+            if (new File(path).isFile()) {
+              ant.fileset(file: path)
+            }
+            else {
+              ant.fileset(dir: path)
+            }
           }
         }
-      }
-      layout.resourceArchivePaths.entrySet().each {
-        def path = "${layout.basePath(buildContext)}/$it.key"
-        zip(it.value) {
-          ant.fileset(dir: path)
+        else {
+          dir(it.relativeOutputPath) {
+            if (new File(path).isFile()) {
+              ant.fileset(file: path)
+            }
+            else {
+              ant.fileset(dir: path)
+            }
+          }
         }
       }
     }
   }
 
+  static String basePath(BuildContext buildContext, String moduleName) {
+    JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first())
+  }
+
+
   private LayoutBuilder createLayoutBuilder() {
     new LayoutBuilder(buildContext.ant, buildContext.project, COMPRESS_JARS)
   }
 
-  private void setPluginVersionAndSince(String pluginXmlPath, String buildNumber) {
+  private void setPluginVersionAndSince(String pluginXmlPath, String buildNumber, boolean setExactNumberInUntilBuild) {
     buildContext.ant.replaceregexp(file: pluginXmlPath,
-                      match: "<version>[\\d.]*</version>",
-                      replace: "<version>${buildNumber}</version>")
+                                   match: "<version>[\\d.]*</version>",
+                                   replace: "<version>${buildNumber}</version>")
     def sinceBuild = buildNumber.matches(/\d+\.\d+\.\d+/) ? buildNumber.substring(0, buildNumber.lastIndexOf('.')) : buildNumber;
     def dotIndex = buildNumber.indexOf('.')
-    def untilBuild = dotIndex > 0 ? Integer.parseInt(buildNumber.substring(0, dotIndex)) + ".*" : buildNumber
+    def untilBuild
+    if (setExactNumberInUntilBuild) {
+      untilBuild = buildNumber
+    }
+    else {
+      untilBuild = dotIndex > 0 ? Integer.parseInt(buildNumber.substring(0, dotIndex)) + ".*" : buildNumber
+    }
     buildContext.ant.replaceregexp(file: pluginXmlPath,
-                      match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"\\s*until-build=\"\\d+\\.\\d+\"",
-                      replace: "<idea-version since-build=\"${buildNumber}\" until-build=\"${untilBuild}\"")
+                                   match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"\\s*until-build=\"\\d+\\.\\d+\"",
+                                   replace: "<idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"")
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                                    match: "<idea-version\\s*since-build=\"\\d+\\.\\d+\"",
-                                   replace: "<idea-version since-build=\"${buildNumber}\"")
+                                   replace: "<idea-version since-build=\"${sinceBuild}\"")
     buildContext.ant.replaceregexp(file: pluginXmlPath,
-                      match: "<change-notes>\\s*<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
-                      replace: "<change-notes>\n<![CDATA[\nPlugin version: ${buildNumber}")
+                                   match: "<change-notes>\\s*<\\!\\[CDATA\\[\\s*Plugin version: \\\$\\{version\\}",
+                                   replace: "<change-notes>\n<![CDATA[\nPlugin version: ${buildNumber}")
     def file = new File(pluginXmlPath)
     def text = file.text
+    def anchor = text.contains("</id>") ? "</id>" : "</name>"
     if (!text.contains("<version>")) {
-      def anchor = text.contains("</id>") ? "</id>" : "</name>"
-      file.text = text.replace(anchor,
-                               "${anchor}\n  <version>${buildNumber}</version>\n  <idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>\n")
+      file.text = text.replace(anchor, "${anchor}\n  <version>${buildNumber}</version>")
+      text = file.text
+    }
+    if (!text.contains("<idea-version since-build")) {
+      file.text = text.replace(anchor, "${anchor}\n  <idea-version since-build=\"${sinceBuild}\" until-build=\"${untilBuild}\"/>")
     }
   }
 

@@ -18,14 +18,13 @@ package org.jetbrains.jsonProtocol
 import com.google.gson.stream.JsonWriter
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.containers.isNullOrEmpty
+import com.intellij.util.io.writeUtf8
 import gnu.trove.TIntArrayList
 import gnu.trove.TIntHashSet
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtf8Writer
 import org.jetbrains.io.JsonUtil
-import org.jetbrains.io.writeUtf8
-import java.io.IOException
 
 open class OutMessage() {
   val buffer: ByteBuf = ByteBufAllocator.DEFAULT.heapBuffer()
@@ -204,19 +203,16 @@ open class OutMessage() {
     beginArguments()
     writer.name(name).value(value?.toString() ?: null)
   }
+}
 
-  companion object {
-    @Throws(IOException::class)
-    fun prepareWriteRaw(message: OutMessage, name: String) {
-      message.writer.name(name).nullValue()
-      val itemBuffer = message.buffer
-      itemBuffer.writerIndex(itemBuffer.writerIndex() - "null".length)
-    }
+fun prepareWriteRaw(message: OutMessage, name: String) {
+  message.writer.name(name).nullValue()
+  val itemBuffer = message.buffer
+  itemBuffer.writerIndex(itemBuffer.writerIndex() - "null".length)
+}
 
-    fun doWriteRaw(message: OutMessage, rawValue: String) {
-      message.buffer.writeUtf8(rawValue)
-    }
-  }
+fun doWriteRaw(message: OutMessage, rawValue: String) {
+  message.buffer.writeUtf8(rawValue)
 }
 
 fun OutMessage.writeEnum(name: String, value: Enum<*>?, defaultValue: Enum<*>?) {
@@ -238,7 +234,7 @@ fun OutMessage.writeString(name: String, value: CharSequence?, defaultValue: Cha
 
 fun OutMessage.writeString(name: String, value: CharSequence) {
   beginArguments()
-  OutMessage.prepareWriteRaw(this, name)
+  prepareWriteRaw(this, name)
   JsonUtil.escape(value, buffer)
 }
 

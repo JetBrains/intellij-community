@@ -54,25 +54,25 @@ class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
   void testStubIndexMismatch() {
     ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(testRootDisposable)
 
-    VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.groovy");
-    final Project project = myFixture.getProject();
-    PsiFileImpl fooFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile);
-    final Document fooDocument = fooFile.getViewProvider().getDocument();
+    VirtualFile vFile = myFixture.getTempDirFixture().createFile("foo.groovy")
+    final Project project = myFixture.getProject()
+    PsiFileImpl fooFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile)
+    final Document fooDocument = fooFile.getViewProvider().getDocument()
     assert !JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
     new WriteCommandAction.Simple(project, fooFile) {
       void run() {
-        fooDocument.setText("class Fooxx {}");
+        fooDocument.setText("class Fooxx {}")
       }
-    }.execute();
-    PsiDocumentManager.getInstance(project).commitDocument(fooDocument);
-    fooFile.setTreeElementPointer(null);
-    DumbServiceImpl.getInstance(project).setDumb(true);
+    }.execute()
+    PsiDocumentManager.getInstance(project).commitDocument(fooDocument)
+    fooFile.setTreeElementPointer(null)
+    DumbServiceImpl.getInstance(project).setDumb(true)
     try {
-      assertOneElement(((GroovyFile) fooFile).classes);
-      assertFalse(fooFile.isContentsLoaded());
+      assertOneElement(((GroovyFile) fooFile).classes)
+      assertFalse(fooFile.isContentsLoaded())
     }
     finally {
-      DumbServiceImpl.getInstance(project).setDumb(false);
+      DumbServiceImpl.getInstance(project).setDumb(false)
     }
     assert JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
   }

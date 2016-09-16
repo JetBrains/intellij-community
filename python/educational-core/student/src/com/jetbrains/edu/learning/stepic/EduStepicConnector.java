@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -488,7 +487,7 @@ public class EduStepicConnector {
       final LoginDialog dialog = new LoginDialog();
       dialog.show();
       logged[0] = dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE;
-    }, ModalityState.defaultModalityState());
+    });
     return logged[0];
   }
 

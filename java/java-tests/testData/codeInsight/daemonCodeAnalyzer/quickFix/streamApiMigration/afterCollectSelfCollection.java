@@ -1,6 +1,5 @@
-// "Replace with collect" "true"
+// "Replace with forEach" "true"
 import java.util.*;
-import java.util.stream.Collectors;
 
 public abstract class Collect implements Collection<String>{
   class Person {
@@ -10,6 +9,6 @@ public abstract class Collect implements Collection<String>{
   }
 
   void collectNames(List<Person> persons){
-      addAll(persons.stream().map(Person::getName).collect(Collectors.toList()));
+      persons.stream().map(Person::getName).forEach(this::add);
   }
 }

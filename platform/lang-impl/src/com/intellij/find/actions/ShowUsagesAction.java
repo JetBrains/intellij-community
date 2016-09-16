@@ -813,11 +813,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   }
 
   private static int filtered(@NotNull List<Usage> usages, @NotNull UsageViewImpl usageView) {
-    int count=0;
-    for (Usage usage : usages) {
-      if (!usageView.isVisible(usage)) count++;
-    }
-    return count;
+    return (int)usages.stream().filter(usage -> !usageView.isVisible(usage)).count();
   }
 
   private static int getUsageOffset(@NotNull Usage usage) {

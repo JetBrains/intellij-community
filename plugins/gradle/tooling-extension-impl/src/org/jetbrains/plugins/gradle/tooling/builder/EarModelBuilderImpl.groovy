@@ -41,7 +41,7 @@ import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 class EarModelBuilderImpl implements ModelBuilderService {
 
   private static final String APP_DIR_PROPERTY = "appDirName"
-  private SourceSetCachedFinder mySourceSetFinder = null;
+  private SourceSetCachedFinder mySourceSetFinder = null
 
   @Override
   boolean canBuild(String modelName) {
@@ -54,7 +54,7 @@ class EarModelBuilderImpl implements ModelBuilderService {
     final EarPlugin earPlugin = project.plugins.findPlugin(EarPlugin)
     if (earPlugin == null) return null
 
-    if(mySourceSetFinder == null) mySourceSetFinder = new SourceSetCachedFinder(project);
+    if(mySourceSetFinder == null) mySourceSetFinder = new SourceSetCachedFinder(project)
 
     final String appDirName = !project.hasProperty(APP_DIR_PROPERTY) ?
                               "src/main/application" : String.valueOf(project.property(APP_DIR_PROPERTY))
@@ -95,8 +95,8 @@ class EarModelBuilderImpl implements ModelBuilderService {
           })
         }
         catch (Exception e) {
-          ErrorMessageBuilder builderError = getErrorMessageBuilder(project, e);
-          project.getLogger().error(builderError.build());
+          ErrorMessageBuilder builderError = getErrorMessageBuilder(project, e)
+          project.getLogger().error(builderError.build())
         }
 
         earModel.resources = earResources

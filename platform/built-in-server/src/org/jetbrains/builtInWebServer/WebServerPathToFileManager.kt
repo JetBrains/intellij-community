@@ -14,8 +14,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.computeOrNull
-import com.intellij.util.exists
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.io.exists
+import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 

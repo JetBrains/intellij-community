@@ -36,20 +36,8 @@ public interface Filter {
   Filter[] EMPTY_ARRAY = new Filter[0];
 
   class Result extends ResultItem {
-
-    private static final Map<TextAttributesKey, TextAttributes> GRAYED_BY_NORMAL_CACHE = ContainerUtil.newConcurrentMap(2);
-    static {
-      EditorColorsManager.getInstance().addEditorColorsListener(new EditorColorsListener() {
-        @Override
-        public void globalSchemeChange(EditorColorsScheme scheme) {
-          // invalidate cache on Appearance Theme/Editor Scheme change
-          GRAYED_BY_NORMAL_CACHE.clear();
-        }
-      }, ApplicationManager.getApplication());
-    }
-
-    protected NextAction myNextAction = NextAction.EXIT;
-    protected final List<ResultItem> myResultItems;
+    private NextAction myNextAction = NextAction.EXIT;
+    private final List<ResultItem> myResultItems;
 
     public Result(final int highlightStartOffset, final int highlightEndOffset, @Nullable final HyperlinkInfo hyperlinkInfo) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, null);
@@ -76,9 +64,7 @@ public interface Filter {
                   final int highlightEndOffset,
                   @Nullable final HyperlinkInfo hyperlinkInfo,
                   final boolean grayedHyperlink) {
-      super(highlightStartOffset, highlightEndOffset, hyperlinkInfo,
-            grayedHyperlink ? getGrayedHyperlinkAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES) : null,
-            grayedHyperlink ? getGrayedHyperlinkAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES) : null);
+      super(highlightStartOffset, highlightEndOffset, hyperlinkInfo, grayedHyperlink);
       myResultItems = null;
     }
 
@@ -155,22 +141,6 @@ public interface Filter {
     public void setNextAction(NextAction nextAction) {
       myNextAction = nextAction;
     }
-
-    @Nullable
-    private static TextAttributes getGrayedHyperlinkAttributes(@NotNull TextAttributesKey normalHyperlinkAttrsKey) {
-      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      TextAttributes grayedHyperlinkAttrs = GRAYED_BY_NORMAL_CACHE.get(normalHyperlinkAttrsKey);
-      if (grayedHyperlinkAttrs == null) {
-        TextAttributes normalHyperlinkAttrs = globalScheme.getAttributes(normalHyperlinkAttrsKey);
-        if (normalHyperlinkAttrs != null) {
-          grayedHyperlinkAttrs = normalHyperlinkAttrs.clone();
-          grayedHyperlinkAttrs.setForegroundColor(UIUtil.getInactiveTextColor());
-          grayedHyperlinkAttrs.setEffectColor(UIUtil.getInactiveTextColor());
-          GRAYED_BY_NORMAL_CACHE.put(normalHyperlinkAttrsKey, grayedHyperlinkAttrs);
-        }
-      }
-      return grayedHyperlinkAttrs;
-    }
   }
 
   enum NextAction {
@@ -178,6 +148,17 @@ public interface Filter {
   }
 
   class ResultItem {
+    private static final Map<TextAttributesKey, TextAttributes> GRAYED_BY_NORMAL_CACHE = ContainerUtil.newConcurrentMap(2);
+    static {
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+        @Override
+        public void globalSchemeChange(EditorColorsScheme scheme) {
+          // invalidate cache on Appearance Theme/Editor Scheme change
+          GRAYED_BY_NORMAL_CACHE.clear();
+        }
+      });
+    }
+
     /**
      * @deprecated use getter, the visibility of this field will be decreased.
      */
@@ -212,6 +193,15 @@ public interface Filter {
                       @Nullable final HyperlinkInfo hyperlinkInfo,
                       @Nullable final TextAttributes highlightAttributes) {
       this(highlightStartOffset, highlightEndOffset, hyperlinkInfo, highlightAttributes, null);
+    }
+
+    public ResultItem(int highlightStartOffset,
+                      int highlightEndOffset,
+                      @Nullable HyperlinkInfo hyperlinkInfo,
+                      boolean grayedHyperlink) {
+      this(highlightStartOffset, highlightEndOffset, hyperlinkInfo,
+           grayedHyperlink ? getGrayedHyperlinkAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES) : null,
+           grayedHyperlink ? getGrayedHyperlinkAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES) : null);
     }
 
     @SuppressWarnings("deprecation")
@@ -252,6 +242,22 @@ public interface Filter {
     public HyperlinkInfo getHyperlinkInfo() {
       //noinspection deprecation
       return hyperlinkInfo;
+    }
+
+    @Nullable
+    private static TextAttributes getGrayedHyperlinkAttributes(@NotNull TextAttributesKey normalHyperlinkAttrsKey) {
+      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      TextAttributes grayedHyperlinkAttrs = GRAYED_BY_NORMAL_CACHE.get(normalHyperlinkAttrsKey);
+      if (grayedHyperlinkAttrs == null) {
+        TextAttributes normalHyperlinkAttrs = globalScheme.getAttributes(normalHyperlinkAttrsKey);
+        if (normalHyperlinkAttrs != null) {
+          grayedHyperlinkAttrs = normalHyperlinkAttrs.clone();
+          grayedHyperlinkAttrs.setForegroundColor(UIUtil.getInactiveTextColor());
+          grayedHyperlinkAttrs.setEffectColor(UIUtil.getInactiveTextColor());
+          GRAYED_BY_NORMAL_CACHE.put(normalHyperlinkAttrsKey, grayedHyperlinkAttrs);
+        }
+      }
+      return grayedHyperlinkAttrs;
     }
   }
 

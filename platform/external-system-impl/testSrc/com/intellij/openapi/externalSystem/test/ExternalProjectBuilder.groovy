@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import static com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TE
 class ExternalProjectBuilder extends BuilderSupport {
   
   File projectDir
-  DataNode<ProjectData> projectNode;
+  DataNode<ProjectData> projectNode
   
   @Override
   protected void setParent(Object parent, Object child) {
@@ -105,11 +105,11 @@ class ExternalProjectBuilder extends BuilderSupport {
         return parentNode.createChild(ProjectKeys.CONTENT_ROOT, data)
       case 'folder':
         DataNode<ContentRootData> parentNode = current as DataNode
-        ContentRootData data = parentNode.data;
+        ContentRootData data = parentNode.data
         data.storePath(attributes.type, attributes.path)
         return null
         
-      default: throw new IllegalArgumentException("Unexpected entry: $name");
+      default: throw new IllegalArgumentException("Unexpected entry: $name")
     }
   }
 

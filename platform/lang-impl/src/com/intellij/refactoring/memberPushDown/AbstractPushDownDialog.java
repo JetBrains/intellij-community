@@ -32,6 +32,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class AbstractPushDownDialog<MemberInfo extends MemberInfoBase<Member>,
                                              Member extends PsiElement,
@@ -60,13 +61,9 @@ public abstract class AbstractPushDownDialog<MemberInfo extends MemberInfoBase<M
   }
 
   public ArrayList<MemberInfo> getSelectedMemberInfos() {
-    ArrayList<MemberInfo> list = new ArrayList<>(myMemberInfos.size());
-    for (MemberInfo info : myMemberInfos) {
-      if (info.isChecked() && myMemberInfoModel.isMemberEnabled(info)) {
-        list.add(info);
-      }
-    }
-    return list;
+    return myMemberInfos.stream()
+      .filter(info -> info.isChecked() && myMemberInfoModel.isMemberEnabled(info))
+      .collect(Collectors.toCollection(ArrayList::new));
   }
 
   protected String getDimensionServiceKey() {

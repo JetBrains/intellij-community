@@ -1,0 +1,12 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <name>Python Terminal</name>
+  <id>org.jetbrains.plugins.python-terminal</id>
+  <version>VERSION</version>
+  <vendor>JetBrains</vendor>
+
+  <depends>com.intellij.modules.python</depends>
+  <depends>org.jetbrains.plugins.terminal</depends>
+
+  <xi:include href="/META-INF/python-terminal-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+</idea-plugin>

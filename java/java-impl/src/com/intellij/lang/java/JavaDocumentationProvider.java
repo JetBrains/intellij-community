@@ -61,7 +61,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider;
+import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -374,7 +374,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   @Override
   public PsiComment findExistingDocComment(final PsiComment comment) {
     if (comment instanceof PsiDocComment) {
-      final PsiDocCommentOwner owner = ((PsiDocComment)comment).getOwner();
+      final PsiJavaDocumentedElement owner = ((PsiDocComment)comment).getOwner();
       if (owner != null) {
         return owner.getDocComment();
       }
@@ -395,12 +395,11 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   @Override
   public String generateDocumentationContentStub(PsiComment _comment) {
-    PsiDocCommentOwner commentOwner = ((PsiDocComment)_comment).getOwner();
-    assert commentOwner != null;
-    final Project project = commentOwner.getProject();
+    final PsiJavaDocumentedElement commentOwner = ((PsiDocComment)_comment).getOwner();
+    final Project project = _comment.getProject();
     final StringBuilder builder = new StringBuilder();
-    final CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE
-      .forLanguage(commentOwner.getLanguage());
+    final CodeDocumentationAwareCommenter commenter =
+      (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE.forLanguage(_comment.getLanguage());
     if (commentOwner instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)commentOwner;
       generateParametersTakingDocFromSuperMethods(project, builder, commenter, psiMethod);
@@ -751,7 +750,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
         if (root.getFileSystem() == JarFileSystem.getInstance()) {
           VirtualFile file = root.findFileByRelativePath(relPath);
-          List<Url> urls = file == null ? null : BuiltInWebBrowserUrlProvider.getUrls(file, project, null);
+          List<Url> urls = file == null ? null : BuiltInWebBrowserUrlProviderKt.getBuiltInServerUrls(file, project, null);
           if (!ContainerUtil.isEmpty(urls)) {
             List<String> result = new SmartList<>();
             for (Url url : urls) {

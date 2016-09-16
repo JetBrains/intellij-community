@@ -45,6 +45,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     findIn.accept(
       new JavaRecursiveElementWalkingVisitor() {
         @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+          visitElement(reference);
           final PsiElement target = reference.resolve();
 
           if (target instanceof PsiClass) {

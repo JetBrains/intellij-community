@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,17 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public abstract class EditorColorsManager {
+  public static final Topic<EditorColorsListener> TOPIC = Topic.create("EditorColorsListener", EditorColorsListener.class);
+
   @NonNls public static final String DEFAULT_SCHEME_NAME = "Default";
 
   public static EditorColorsManager getInstance() {
@@ -31,7 +35,6 @@ public abstract class EditorColorsManager {
 
   public abstract void addColorsScheme(@NotNull EditorColorsScheme scheme);
 
-  @SuppressWarnings("unused")
   @Deprecated
   public abstract void removeAllSchemes();
 
@@ -51,15 +54,24 @@ public abstract class EditorColorsManager {
   public abstract boolean isDefaultScheme(EditorColorsScheme scheme);
 
   /**
-   * @deprecated use {@link #addEditorColorsListener(EditorColorsListener, Disposable)} instead
+   * @deprecated use {@link #TOPIC} instead
    */
-  public abstract void addEditorColorsListener(@NotNull EditorColorsListener listener);
+  @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated
+  public final void addEditorColorsListener(@NotNull EditorColorsListener listener) {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(TOPIC, listener);
+  }
+
   /**
-   * @deprecated use {@link #addEditorColorsListener(EditorColorsListener, Disposable)} instead
+   * @deprecated use {@link #TOPIC} instead
    */
-  public abstract void removeEditorColorsListener(@NotNull EditorColorsListener listener);
-  public abstract void addEditorColorsListener(@NotNull EditorColorsListener listener, @NotNull Disposable disposable);
+  @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated
+  public final void addEditorColorsListener(@NotNull EditorColorsListener listener, @NotNull Disposable disposable) {
+    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(TOPIC, listener);
+  }
 
   public abstract boolean isUseOnlyMonospacedFonts();
+
   public abstract void setUseOnlyMonospacedFonts(boolean b);
 }

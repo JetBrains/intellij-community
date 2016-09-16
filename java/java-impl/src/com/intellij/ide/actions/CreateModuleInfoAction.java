@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
@@ -53,9 +52,9 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
     DataContext ctx = e.getDataContext();
     boolean available = Optional.ofNullable(LangDataKeys.IDE_VIEW.getData(ctx))
       .map(view -> getTargetDirectory(ctx, view))
-      .filter(dir -> PsiUtil.isLanguageLevel9OrHigher(dir) && JavaDirectoryService.getInstance().isSourceRoot(dir))
+      .filter(dir -> JavaDirectoryService.getInstance().isSourceRoot(dir) && PsiUtil.isLanguageLevel9OrHigher(dir))
       .map(ModuleUtilCore::findModuleForPsiElement)
-      .map(module -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, new ModulesScope(module)).isEmpty())
+      .map(module -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, module.getModuleScope(false)).isEmpty())
       .orElse(false);
     e.getPresentation().setEnabledAndVisible(available);
   }

@@ -58,10 +58,10 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
   }
 
   /**
-   * @see {@link com.intellij.openapi.ui.Messages#getInformationIcon()}
-   * @see {@link com.intellij.openapi.ui.Messages#getWarningIcon()}
-   * @see {@link com.intellij.openapi.ui.Messages#getErrorIcon()}
-   * @see {@link com.intellij.openapi.ui.Messages#getQuestionIcon()}
+   * @see Messages#getInformationIcon()
+   * @see Messages#getWarningIcon()
+   * @see Messages#getErrorIcon()
+   * @see Messages#getQuestionIcon()
    */
   public T icon(@Nullable Icon icon) {
     myIcon = icon;
@@ -109,7 +109,7 @@ public abstract class MessageDialogBuilder<T extends MessageDialogBuilder> {
       return Messages.showDialog(myProject, myMessage, myTitle, new String[]{yesText, noText}, 0, myIcon, myDoNotAskOption) == 0 ? Messages.YES : Messages.NO;
     }
 
-    public boolean is() {
+    public boolean isYes() {
       return show() == Messages.YES;
     }
   }

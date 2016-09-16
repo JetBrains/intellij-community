@@ -219,9 +219,22 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
         for (ClassPattern pattern : myPatterns) {
           final RefEntity refClass = manager.getReference(RefJavaManager.CLASS, pattern.pattern);
           if (refClass != null) {
-            for (RefMethod constructor : ((RefClass)refClass).getConstructors()) {
-              ((RefMethodImpl)constructor).setEntry(true);
-              ((RefMethodImpl)constructor).setPermanentEntry(true);
+            if (pattern.method.isEmpty()) {
+              for (RefMethod constructor : ((RefClass)refClass).getConstructors()) {
+                ((RefMethodImpl)constructor).setEntry(true);
+                ((RefMethodImpl)constructor).setPermanentEntry(true);
+              }
+            }
+            else {
+              List<RefEntity> children = refClass.getChildren();
+              if (children != null) {
+                for (RefEntity entity : children) {
+                  if (entity instanceof RefMethodImpl && entity.getName().startsWith(pattern.method + "(")) {
+                    ((RefMethodImpl)entity).setEntry(true);
+                    ((RefMethodImpl)entity).setPermanentEntry(true);
+                  }
+                }
+              }
             }
           }
         }
@@ -241,17 +254,24 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   public void addEntryPoint(@NotNull RefElement newEntryPoint, boolean isPersistent) {
     if (!newEntryPoint.isValid()) return;
     if (isPersistent) {
-      if (newEntryPoint instanceof RefImplicitConstructor || newEntryPoint instanceof RefClass) {
-        final ClassPattern classPattern = new ClassPattern();
-        classPattern.pattern = new SmartRefElementPointerImpl(newEntryPoint, true).getFQName();
-        getPatterns().add(classPattern);
+      if (newEntryPoint instanceof RefClass || newEntryPoint instanceof RefMethod) {
+        RefClass refClass = newEntryPoint instanceof RefMethod ? ((RefMethod)newEntryPoint).getOwnerClass()
+                                                               : (RefClass)newEntryPoint;
+        if (!refClass.isAnonymous()) {
+          final ClassPattern classPattern = new ClassPattern();
+          classPattern.pattern = new SmartRefElementPointerImpl(refClass, true).getFQName();
+          if (newEntryPoint instanceof RefMethod && !(newEntryPoint instanceof RefImplicitConstructor)) {
+            classPattern.method = getMethodName(newEntryPoint);
+          }
+          getPatterns().add(classPattern);
 
-        final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
-        if (this != entryPointsManager) {
-          entryPointsManager.addEntryPoint(newEntryPoint, true);
+          final EntryPointsManager entryPointsManager = getInstance(newEntryPoint.getRefManager().getProject());
+          if (this != entryPointsManager) {
+            entryPointsManager.addEntryPoint(newEntryPoint, true);
+          }
+
+          return;
         }
-
-        return;
       }
     }
 
@@ -295,6 +315,12 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
   }
 
+  private static String getMethodName(@NotNull RefElement newEntryPoint) {
+    String methodSignature = newEntryPoint.getName();
+    int indexOf = methodSignature.indexOf("(");
+    return indexOf > 0 ? methodSignature.substring(0, indexOf) : methodSignature;
+  }
+
   @Override
   public void removeEntryPoint(@NotNull RefElement anEntryPoint) {
     myTemporaryEntryPoints.remove(anEntryPoint);
@@ -322,13 +348,24 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       }
     }
 
-    if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
+    if (anEntryPoint instanceof RefMethod || anEntryPoint instanceof RefClass) {
       final RefClass aClass = anEntryPoint instanceof RefClass ? (RefClass)anEntryPoint : ((RefMethod)anEntryPoint).getOwnerClass();
       final String qualifiedName = aClass.getQualifiedName();
       for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
-        if (Comparing.equal(iterator.next().pattern, qualifiedName)) {
-          //todo if inheritance or pattern?
-          iterator.remove();
+        ClassPattern classPattern = iterator.next();
+        if (Comparing.equal(classPattern.pattern, qualifiedName)) {
+          if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
+            if (classPattern.method.isEmpty()) {
+              //todo if inheritance or pattern?
+              iterator.remove();
+            }
+          }
+          else {
+            String methodName = getMethodName(anEntryPoint);
+            if (methodName.equals(classPattern.method)) {
+              iterator.remove();
+            }
+          }
         }
       }
     }
@@ -590,7 +627,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
 
     private static Pattern createRegexp(final String pattern) {
-      final String replace = pattern.replace("*", ".*").replace(".", "\\.");
+      final String replace = pattern.replace(".", "\\.").replace("*", ".*");
       try {
         return Pattern.compile(replace);
       }

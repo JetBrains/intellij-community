@@ -38,6 +38,7 @@ import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,7 @@ public class GitFileAnnotation extends FileAnnotation {
 
   @NotNull private final List<LineInfo> myLines;
   @Nullable private List<VcsFileRevision> myRevisions;
+  @Nullable private TObjectIntHashMap<VcsRevisionNumber> myRevisionMap;
 
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
     @Override
@@ -85,6 +87,10 @@ public class GitFileAnnotation extends FileAnnotation {
     myLines = lines;
   }
 
+  public GitFileAnnotation(@NotNull GitFileAnnotation annotation) {
+    this(annotation.getProject(), annotation.getFile(), annotation.getCurrentRevision(), annotation.getLines());
+  }
+
   @Override
   public void dispose() {
   }
@@ -113,6 +119,11 @@ public class GitFileAnnotation extends FileAnnotation {
 
   public void setRevisions(@NotNull List<VcsFileRevision> revisions) {
     myRevisions = revisions;
+
+    myRevisionMap = new TObjectIntHashMap<>();
+    for (int i = 0; i < myRevisions.size(); i++) {
+      myRevisionMap.put(myRevisions.get(i).getRevisionNumber(), i);
+    }
   }
 
   @Override
@@ -130,7 +141,19 @@ public class GitFileAnnotation extends FileAnnotation {
   @Override
   public String getToolTip(int lineNumber) {
     LineInfo lineInfo = getLineInfo(lineNumber);
-    return lineInfo != null ? lineInfo.getTooltip() : null;
+    if (lineInfo == null) return null;
+
+    GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
+
+    VcsFileRevision fileRevision = null;
+    if (myRevisions != null && myRevisionMap != null &&
+        myRevisionMap.contains(revisionNumber)) {
+      fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
+    }
+
+    String commitMessage = fileRevision != null ? fileRevision.getCommitMessage() : lineInfo.getSubject();
+    return GitBundle.message("annotation.tool.tip", revisionNumber.asString(), lineInfo.getAuthor(),
+                             DateFormatUtil.formatDateTime(lineInfo.getDate()), commitMessage);
   }
 
   @Nullable
@@ -245,9 +268,8 @@ public class GitFileAnnotation extends FileAnnotation {
     }
 
     @NotNull
-    public String getTooltip() {
-      return GitBundle.message("annotation.tool.tip", myRevision.asString(), myAuthor.getName(),
-                               DateFormatUtil.formatDateTime(myDate), mySubject);
+    public String getSubject() {
+      return mySubject;
     }
   }
 
@@ -292,7 +314,21 @@ public class GitFileAnnotation extends FileAnnotation {
       @Override
       public VcsFileRevision getPreviousRevision(int lineNumber) {
         LineInfo lineInfo = getLineInfo(lineNumber);
-        return lineInfo != null ? lineInfo.getPreviousFileRevision() : null;
+        if (lineInfo == null) return null;
+
+        VcsFileRevision previousFileRevision = lineInfo.getPreviousFileRevision();
+        if (previousFileRevision != null) return previousFileRevision;
+
+        GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
+        if (myRevisions != null && myRevisionMap != null &&
+            myRevisionMap.contains(revisionNumber)) {
+          int index = myRevisionMap.get(revisionNumber);
+          if (index + 1 < myRevisions.size()) {
+            return myRevisions.get(index + 1);
+          }
+        }
+
+        return null;
       }
 
       @Nullable

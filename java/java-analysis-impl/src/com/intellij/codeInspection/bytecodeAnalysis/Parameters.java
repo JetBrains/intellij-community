@@ -32,6 +32,7 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
@@ -99,10 +100,7 @@ abstract class PResults {
     }
 
     static void checkLimit(Set<Set<Key>> sop) throws AnalyzerException {
-      int size = 0;
-      for (Set<Key> keys : sop) {
-        size += keys.size();
-      }
+      int size = sop.stream().mapToInt(Set::size).sum();
       if (size > Analysis.EQUATION_SIZE_LIMIT) {
         throw new AnalyzerException(null, "Equation size is too big");
       }
@@ -203,10 +201,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Product> components = new HashSet<>();
-      for (Set<Key> prod : condNpe.sop) {
-        components.add(new Product(Value.Top, prod));
-      }
+      Set<Product> components = condNpe.sop.stream().map(prod -> new Product(Value.Top, prod)).collect(Collectors.toSet());
       return new Equation(aKey, new Pending(components));
     }
   }
@@ -243,7 +238,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
         boolean fold = false;
         if (dfsTree.loopEnters[insnIndex]) {
           for (Conf prev : history) {
-            if (AbstractValues.isInstance(conf, prev)) {
+            if (isInstance(conf, prev)) {
               fold = true;
               break;
             }
@@ -429,10 +424,7 @@ class NullableInAnalysis extends Analysis<PResult> {
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Product> components = new HashSet<>();
-      for (Set<Key> prod : condNpe.sop) {
-        components.add(new Product(Value.Top, prod));
-      }
+      Set<Product> components = condNpe.sop.stream().map(prod -> new Product(Value.Top, prod)).collect(Collectors.toSet());
       return new Equation(aKey, new Pending(components));
     }
   }
@@ -460,7 +452,7 @@ class NullableInAnalysis extends Analysis<PResult> {
       boolean fold = false;
       if (dfsTree.loopEnters[insnIndex]) {
         for (Conf prev : history) {
-          if (AbstractValues.isInstance(conf, prev)) {
+          if (isInstance(conf, prev)) {
             fold = true;
             break;
           }

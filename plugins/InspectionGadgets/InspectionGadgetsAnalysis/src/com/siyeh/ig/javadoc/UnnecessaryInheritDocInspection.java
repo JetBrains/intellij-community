@@ -133,7 +133,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
       if (docComment == null) {
         return;
       }
-      final PsiDocCommentOwner owner = docComment.getOwner();
+      final PsiJavaDocumentedElement owner = docComment.getOwner();
       if (owner instanceof PsiField) {
         registerError(tag, WarningType.FIELD);
         return;

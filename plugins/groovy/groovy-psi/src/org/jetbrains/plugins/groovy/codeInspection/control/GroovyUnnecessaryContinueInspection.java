@@ -81,7 +81,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final PsiElement continueKeywordElement = descriptor.getPsiElement();
       final GrContinueStatement continueStatement = (GrContinueStatement) continueKeywordElement.getParent();
@@ -93,7 +93,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitContinueStatement(GrContinueStatement continueStatement) {
+    public void visitContinueStatement(@NotNull GrContinueStatement continueStatement) {
       super.visitContinueStatement(continueStatement);
       if (continueStatement.getContainingFile().getViewProvider() instanceof TemplateLanguageFileViewProvider) {
         return;

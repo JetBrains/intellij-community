@@ -468,7 +468,7 @@ public class AnnotationUtil {
       if (owner instanceof PsiClass) {
         for (PsiClass superClass : ((PsiClass)owner).getSupers()) {
           if (visited == null) visited = new THashSet<PsiModifierListOwner>();
-          if (visited.add(superClass)) annotations = ArrayUtil.mergeArrays(annotations, getAllAnnotations(superClass, true, visited));
+          if (visited.add(superClass)) annotations = ArrayUtil.mergeArrays(annotations, getAllAnnotations(superClass, true, visited, withInferred));
         }
       }
       else if (owner instanceof PsiMethod) {
@@ -484,7 +484,7 @@ public class AnnotationUtil {
             if (visited == null) visited = new THashSet<PsiModifierListOwner>();
             if (!visited.add(superMethod)) continue;
             if (!resolveHelper.isAccessible(superMethod, owner, null)) continue;
-            annotations = ArrayUtil.mergeArrays(annotations, getAllAnnotations(superMethod, true, visited));
+            annotations = ArrayUtil.mergeArrays(annotations, getAllAnnotations(superMethod, true, visited, withInferred));
           }
         }
       }
@@ -508,7 +508,7 @@ public class AnnotationUtil {
               if (!resolveHelper.isAccessible(superMethod, owner, null)) continue;
               PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
               if (index < superParameters.length) {
-                annotations = ArrayUtil.mergeArrays(annotations, getAllAnnotations(superParameters[index], true, visited));
+                annotations = ArrayUtil.mergeArrays(annotations, getAllAnnotations(superParameters[index], true, visited, withInferred));
               }
             }
           }

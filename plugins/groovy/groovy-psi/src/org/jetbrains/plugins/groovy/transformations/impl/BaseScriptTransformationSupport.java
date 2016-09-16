@@ -103,7 +103,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     final Ref<GrVariableDeclaration> ref = Ref.create();
     file.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
+      public void visitVariableDeclaration(@NotNull GrVariableDeclaration variableDeclaration) {
         super.visitVariableDeclaration(variableDeclaration);
         if (variableDeclaration.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT) != null) {
           ref.set(variableDeclaration);
@@ -111,7 +111,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
       }
 
       @Override
-      public void visitElement(GroovyPsiElement element) {
+      public void visitElement(@NotNull GroovyPsiElement element) {
         if (ref.isNull()) {
           super.visitElement(element);
         }

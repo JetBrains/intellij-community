@@ -102,11 +102,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   @Override
-  public void setOKActionEnabled(boolean isEnabled) {
-    super.setOKActionEnabled(isEnabled);
-  }
-
-  @Override
   protected JComponent createCenterPanel() {
     myTitledSeparator.setText(myAnalysisNoon);
 

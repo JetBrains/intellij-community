@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -291,11 +292,13 @@ public class JavaFxPsiUtil {
           }
         }
       }
-      final CachedValuesManager manager = CachedValuesManager.getManager(containingFile.getProject());
-      final PsiClass injectedControllerClass = manager.getCachedValue(
-        containingFile, INJECTED_CONTROLLER, () -> computeInjectedControllerClass(containingFile), true);
-      if (injectedControllerClass != null) {
-        return injectedControllerClass;
+      if (Registry.is("javafx.fxml.controller.from.loader", false)) {
+        final CachedValuesManager manager = CachedValuesManager.getManager(containingFile.getProject());
+        final PsiClass injectedControllerClass = manager.getCachedValue(
+          containingFile, INJECTED_CONTROLLER, () -> computeInjectedControllerClass(containingFile), true);
+        if (injectedControllerClass != null) {
+          return injectedControllerClass;
+        }
       }
 
       if (rootTag != null && FxmlConstants.FX_ROOT.equals(rootTag.getName())) {

@@ -17,8 +17,11 @@ package com.intellij.execution.junit;
 
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
+import com.intellij.util.PathUtil;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -38,6 +41,14 @@ public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDesc
     @Override
     public List<String> getLibraryClassesRoots() {
       return JavaSdkUtil.getJUnit4JarPaths();
+    }
+  };
+  public static final ExternalLibraryDescriptor JUNIT5 = new ExternalLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.0.0-M2", null) {
+    @NotNull
+    @Override
+    public List<String> getLibraryClassesRoots() {
+      return Arrays.asList(PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.jupiter.api.Test")),
+                           PathUtil.getJarPathForClass(ReflectionUtil.forName("org.opentest4j.AssertionFailedError")));
     }
   };
   private final String myVersion;

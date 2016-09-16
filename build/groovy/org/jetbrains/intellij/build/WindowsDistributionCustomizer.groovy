@@ -36,7 +36,16 @@ abstract class WindowsDistributionCustomizer {
    * Specify bitness of bundled JRE. If {@code null} no JRE will be bundled
    */
   JvmArchitecture bundledJreArchitecture = JvmArchitecture.x32
+
+  /**
+   * If {@code true} a Zip archive containing the installation with bundled Oracle JRE will be produced
+   */
   boolean buildZipWithBundledOracleJre = false
+
+  /**
+   * If {@code true} a Zip archive containing the installation with bundled JetBrains RE will be produced
+   */
+  boolean buildZipArchive = true
 
   /**
    * If {@code true} Windows Installer will associate *.ipr files with the IDE in Registry

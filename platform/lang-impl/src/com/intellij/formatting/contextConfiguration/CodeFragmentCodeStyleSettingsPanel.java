@@ -65,7 +65,9 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
 
   @Override
   protected void somethingChanged() {
-    mySomethingChangedCallback.run();
+    if (mySomethingChangedCallback != null) {
+      mySomethingChangedCallback.run();
+    }
   }
 
   @Override

@@ -136,6 +136,9 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement target = referenceExpression.resolve();
+      if (target instanceof PsiClass) {
+        return true;
+      }
       if (!(target instanceof PsiVariable)) {
         return false;
       }
@@ -166,6 +169,11 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiMethod method = methodCallExpression.resolveMethod();
       if (!isAllowedMethod(method)) {
+        return false;
+      }
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      if (qualifierExpression != null && !isMoveable(qualifierExpression)) {
         return false;
       }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();

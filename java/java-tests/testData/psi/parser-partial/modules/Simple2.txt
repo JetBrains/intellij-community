@@ -1,7 +1,7 @@
 PsiJavaFile:Simple2.java
-  PsiComment(C_STYLE_COMMENT)('/* comment */')
-  PsiWhiteSpace('\n')
   PsiJavaModule:X
+    PsiComment(C_STYLE_COMMENT)('/* comment */')
+    PsiWhiteSpace('\n')
     PsiKeyword:module('module')
     PsiWhiteSpace(' ')
     PsiJavaModuleReference

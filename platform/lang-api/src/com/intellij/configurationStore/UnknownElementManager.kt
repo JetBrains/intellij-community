@@ -80,6 +80,6 @@ class UnknownElementCollector {
       }
     }
 
-    return unknownElements?.let { UnknownElementWriter(it) } ?: UnknownElementWriter.EMPTY
+    return unknownElements?.let(::UnknownElementWriter) ?: UnknownElementWriter.EMPTY
   }
 }

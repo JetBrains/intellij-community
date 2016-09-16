@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 
 class GrDocResolveTest extends GroovyResolveTestCase {
 

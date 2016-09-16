@@ -2044,7 +2044,7 @@ public class JBTabsImpl extends JComponent
         imgG2d.dispose();
       }
 
-      g2d.drawImage(img, x, y, width, height, null);
+      UIUtil.drawImage(g2d, img, x, y, width, height, null);
 
       label.setInactiveStateImage(img);
     }

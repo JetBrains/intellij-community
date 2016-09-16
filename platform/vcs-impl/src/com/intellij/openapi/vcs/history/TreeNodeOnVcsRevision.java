@@ -61,6 +61,7 @@ class TreeNodeOnVcsRevision extends DefaultMutableTreeNode implements VcsFileRev
     return myRevision.loadContent();
   }
 
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevision.getRevisionNumber();
   }

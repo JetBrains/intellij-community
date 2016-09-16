@@ -80,7 +80,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
   public Options FIELD_OPTIONS = new Options("none", "");
   public boolean IGNORE_DEPRECATED;
   public boolean IGNORE_JAVADOC_PERIOD = true;
-  @SuppressWarnings("unused") @Deprecated
+  @Deprecated
   public boolean IGNORE_DUPLICATED_THROWS;
   public boolean IGNORE_POINT_TO_ITSELF;
 

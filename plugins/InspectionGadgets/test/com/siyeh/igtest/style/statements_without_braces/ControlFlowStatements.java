@@ -36,4 +36,13 @@ class T {
         else System.out.println(0);
     else System.out.println("no");
   }
+
+  void fff(String[] a) {
+    if (a.length == 0) {
+      System.out.println();
+    }
+    else if (a.length > 10) {
+      System.out.println();
+    }
+  }
 }

@@ -32,7 +32,7 @@ abstract class AbstractIndentingBackspaceHandler extends BackspaceHandlerDelegat
   @Override
   public void beforeCharDeleted(char c, PsiFile file, Editor editor) {
     myEnabled = false;
-    if (!StringUtil.isWhiteSpace(c)) {
+    if (editor.isColumnMode() || !StringUtil.isWhiteSpace(c)) {
       return;
     }
     SmartBackspaceMode mode = getBackspaceMode(file.getLanguage());

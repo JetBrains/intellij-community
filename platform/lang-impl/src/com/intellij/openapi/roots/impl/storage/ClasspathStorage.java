@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.application.options.PathMacrosCollector;
+import com.intellij.configurationStore.StateStorageBase;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -24,7 +25,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
-import com.intellij.openapi.components.impl.stores.StateStorageBase;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageManagerListener;
 import com.intellij.openapi.components.impl.stores.StorageUtil;

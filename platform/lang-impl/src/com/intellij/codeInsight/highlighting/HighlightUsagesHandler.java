@@ -400,7 +400,6 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
   /**
    * @deprecated Use {@link #collectRangesToHighlight}
    */
-  @SuppressWarnings("unused")
   @NotNull
   @Deprecated
   public static List<TextRange> getRangesToHighlight(@NotNull PsiReference ref) {

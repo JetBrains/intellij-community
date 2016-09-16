@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,13 +147,13 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder problemsHolder, boolean onTheFly) {
     return new GroovyPsiElementVisitor(new GroovyElementVisitor() {
       @Override
-      public void visitClosure(GrClosableBlock closure) {
+      public void visitClosure(@NotNull GrClosableBlock closure) {
         super.visitClosure(closure);
         check(closure, problemsHolder, ReturnStatus.getReturnStatus(closure));
       }
 
       @Override
-      public void visitMethod(GrMethod method) {
+      public void visitMethod(@NotNull GrMethod method) {
         super.visitMethod(method);
 
         final GrOpenBlock block = method.getBlock();

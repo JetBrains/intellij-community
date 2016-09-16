@@ -533,7 +533,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    final CodeStyleSettings parentSettings = new CodeStyleSettings();
+    CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, parentSettings));
 
     myUnknownElementWriter.write(element, getCustomSettingsValues(), CustomCodeStyleSettings::getTagName, settings -> {
@@ -544,16 +544,16 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       settings.writeExternal(element, parentCustomSettings);
     });
 
-    final FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(new FileType[myAdditionalIndentOptions.keySet().size()]);
-    Arrays.sort(fileTypes, (o1, o2) -> o1.getDefaultExtension().compareTo(o2.getDefaultExtension()));
-
-    for (FileType fileType : fileTypes) {
-      final IndentOptions indentOptions = myAdditionalIndentOptions.get(fileType);
-      Element additionalIndentOptions = new Element(ADDITIONAL_INDENT_OPTIONS);
-      indentOptions.serialize(additionalIndentOptions, getDefaultIndentOptions(fileType)) ;
-      additionalIndentOptions.setAttribute(FILETYPE,fileType.getDefaultExtension());
-      if (!additionalIndentOptions.getChildren().isEmpty()) {
-        element.addContent(additionalIndentOptions);
+    if (!myAdditionalIndentOptions.isEmpty()) {
+      FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(new FileType[myAdditionalIndentOptions.keySet().size()]);
+      Arrays.sort(fileTypes, (o1, o2) -> o1.getDefaultExtension().compareTo(o2.getDefaultExtension()));
+      for (FileType fileType : fileTypes) {
+        Element additionalIndentOptions = new Element(ADDITIONAL_INDENT_OPTIONS);
+        myAdditionalIndentOptions.get(fileType).serialize(additionalIndentOptions, getDefaultIndentOptions(fileType));
+        additionalIndentOptions.setAttribute(FILETYPE, fileType.getDefaultExtension());
+        if (!additionalIndentOptions.getChildren().isEmpty()) {
+          element.addContent(additionalIndentOptions);
+        }
       }
     }
     

@@ -34,7 +34,7 @@ public class ForcedCompilationTest extends JpsBuildTestCase {
     JpsModule main = addModule("main", srcRoot);
     JpsModule dep = addModule("dep", PathUtil.getParentPath(b));
     main.getDependenciesList().addModuleDependency(dep);
-    rebuildAll();
+    rebuildAllModules();
 
     change(b, "public class B{ public B(int i){} }");
     doBuild(CompileScopeTestBuilder.recompile().module(dep)).assertSuccessful();
@@ -44,10 +44,10 @@ public class ForcedCompilationTest extends JpsBuildTestCase {
   public void testClearModuleOutputOnForcedCompilation() {
     String srcRoot = PathUtil.getParentPath(createFile("src/A.java", "class A{ }"));
     JpsModule main = addModule("main", srcRoot);
-    rebuildAll();
+    rebuildAllModules();
 
     File b = new File(createFile(getModuleOutputRelativePath(main) + "/a.txt", "qwerty"));
-    makeAll();
+    buildAllModules();
     assertExists(b);
 
     doBuild(CompileScopeTestBuilder.recompile().module(main)).assertSuccessful();
@@ -61,10 +61,10 @@ public class ForcedCompilationTest extends JpsBuildTestCase {
     JpsJavaModuleExtension m2Ext = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(m2);
     m2Ext.setOutputUrl(m1Ext.getOutputUrl());
     m2Ext.setTestOutputUrl(m1Ext.getOutputUrl());
-    rebuildAll();
+    rebuildAllModules();
 
     File b = new File(createFile(getModuleOutputRelativePath(m1) + "/a.txt", "qwerty"));
-    makeAll();
+    buildAllModules();
     assertExists(b);
     assertExists(new File(getOrCreateProjectDir(), getModuleOutputRelativePath(m1) + "/A.class"));
     assertExists(new File(getOrCreateProjectDir(), getModuleOutputRelativePath(m1) + "/B.class"));

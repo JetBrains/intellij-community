@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,19 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrTypeDefinitionStub;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
+
+import java.util.List;
 
 /**
  * Created by Max Medvedev on 09/04/14
@@ -53,5 +61,18 @@ public class GrTraitTypeDefinitionImpl extends GrTypeDefinitionImpl implements G
   @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitTraitDefinition(this);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
+    List<PsiClass> classes = GrTraitUtil.getSelfTypeClasses(this);
+    for (PsiClass clazz : classes) {
+      if (!clazz.processDeclarations(processor, state, lastParent, place)) return false;
+    }
+    return true;
   }
 }

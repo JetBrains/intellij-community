@@ -179,10 +179,18 @@ public class ProgressIndicatorUtils {
               final ReadTask.Continuation continuation = runUnderProgress(progressIndicator, readTask);
               continued = continuation != null;
               if (continuation != null) {
-                application.invokeLater(() -> {
-                  application.removeApplicationListener(listener);
-                  if (!progressIndicator.isCanceled()) {
-                    continuation.getAction().run();
+                application.invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    application.removeApplicationListener(listener);
+                    if (!progressIndicator.isCanceled()) {
+                      continuation.getAction().run();
+                    }
+                  }
+
+                  @Override
+                  public String toString() {
+                    return "continuation of " + readTask;
                   }
                 }, continuation.getModalityState());
               }

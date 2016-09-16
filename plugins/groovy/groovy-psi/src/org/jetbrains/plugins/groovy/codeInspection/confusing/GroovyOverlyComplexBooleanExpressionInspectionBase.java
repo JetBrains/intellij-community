@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class GroovyOverlyComplexBooleanExpressionInspectionBase extends BaseInsp
     }
 
     @Override
-    public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(@NotNull GrParenthesizedExpression expression) {
       super.visitParenthesizedExpression(expression);
       checkExpression(expression);
     }

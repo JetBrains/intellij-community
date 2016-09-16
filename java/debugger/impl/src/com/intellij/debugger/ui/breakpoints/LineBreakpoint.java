@@ -190,9 +190,10 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     if (isAnonymousClass(classType)) {
       if ((method.isConstructor() && loc.codeIndex() == 0) || method.isBridge()) return false;
     }
+    SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
+    if (position == null) return false;
+
     return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
-      SourcePosition position = debugProcess.getPositionManager().getSourcePosition(loc);
-      if (position == null) return false;
       JavaLineBreakpointType type = getXBreakpointType();
       if (type == null) return true;
       return type.matchesPosition(this, position);

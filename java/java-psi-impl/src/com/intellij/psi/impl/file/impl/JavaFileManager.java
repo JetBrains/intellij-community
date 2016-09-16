@@ -41,5 +41,5 @@ public interface JavaFileManager {
   Collection<String> getNonTrivialPackagePrefixes();
 
   @NotNull
-  Collection<PsiJavaModule> findModules(@NotNull String moduleName);
+  Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope);
 }

@@ -127,7 +127,7 @@ class Car {}
     configure text
     def oldPreselectSetting = myEditor.settings.preselectRename
     try {
-      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable())
       final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted())
 
       assertNotNull(element)
@@ -135,7 +135,7 @@ class Car {}
       VariableInplaceRenameHandler handler = new VariableInplaceRenameHandler()
 
 
-      handler.doRename(element, editor, null);
+      handler.doRename(element, editor, null)
       
       LookupEx lookup = LookupManager.getActiveLookup(editor)
       assertNotNull(lookup)

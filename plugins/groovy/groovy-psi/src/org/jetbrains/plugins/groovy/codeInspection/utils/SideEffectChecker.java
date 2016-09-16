@@ -50,8 +50,7 @@ public class SideEffectChecker {
     }
 
     @Override
-    public void visitAssignmentExpression(
-        @NotNull GrAssignmentExpression expression) {
+    public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
       if (mayHaveSideEffects) {
         return;
       }
@@ -60,8 +59,7 @@ public class SideEffectChecker {
     }
 
     @Override
-    public void visitMethodCallExpression(
-        @NotNull GrMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull GrMethodCallExpression expression) {
       if (mayHaveSideEffects) {
         return;
       }
@@ -79,8 +77,7 @@ public class SideEffectChecker {
     }
 
     @Override
-    public void visitUnaryExpression(
-        @NotNull GrUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
       if (mayHaveSideEffects) {
         return;
       }

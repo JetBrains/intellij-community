@@ -269,13 +269,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
           final TextWithImports expressionToEvaluate = getLogMessage();
           try {
+            SourcePosition position = ContextUtil.getSourcePosition(context);
+            PsiElement element = ContextUtil.getContextElement(context, position);
             ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, new EvaluatingComputable<ExpressionEvaluator>() {
               @Override
               public ExpressionEvaluator compute() throws EvaluateException {
-                return EvaluatorBuilderImpl.build(expressionToEvaluate,
-                                                  ContextUtil.getContextElement(context),
-                                                  ContextUtil.getSourcePosition(context),
-                                                  myProject);
+                return EvaluatorBuilderImpl.build(expressionToEvaluate, element, position, myProject);
               }
             });
             final Value eval = evaluator.evaluate(context);
@@ -356,11 +355,11 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     }
 
     try {
-      final Project project = context.getProject();
+      Project project = context.getProject();
+      SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
       ExpressionEvaluator evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<ExpressionEvaluator>() {
         @Override
         public ExpressionEvaluator compute() throws EvaluateException {
-          final SourcePosition contextSourcePosition = ContextUtil.getSourcePosition(context);
           // IMPORTANT: calculate context psi element basing on the location where the exception
           // has been hit, not on the location where it was set. (For line breakpoints these locations are the same, however,
           // for method, exception and field breakpoints these locations differ)

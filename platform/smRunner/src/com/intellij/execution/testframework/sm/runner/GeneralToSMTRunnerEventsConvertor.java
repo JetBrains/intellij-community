@@ -203,6 +203,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         // creates test
         testProxy = new SMTestProxy(testName, false, locationUrl);
         testProxy.setConfig(isConfig);
+        if (myTreeBuildBeforeStart) testProxy.setTreeBuildBeforeStart();
 
         if (myLocator != null) {
           testProxy.setLocator(myLocator);
@@ -242,6 +243,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       if (newSuite == null) {
         //new suite
         newSuite = new SMTestProxy(suiteName, true, locationUrl, parentSuite.isPreservePresentableName());
+        if (myTreeBuildBeforeStart)newSuite.setTreeBuildBeforeStart();
 
         if (myLocator != null) {
           newSuite.setLocator(myLocator);

@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 abstract class ExtractClosureTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    return "${TestUtils.testDataPath}groovy/refactoring/extractMethod/";
+    return "${TestUtils.testDataPath}groovy/refactoring/extractMethod/"
   }
 
   protected void doTest(String before, String after, List<Integer> toRemove = [], List<Integer> notToUseAsParams = [], boolean forceReturn = true) {

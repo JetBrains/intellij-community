@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve;
+package org.jetbrains.plugins.groovy.lang.resolve
 
 
 import com.intellij.psi.PsiElement
@@ -26,23 +26,23 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class StaticCheckTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.testDataPath + "resolve/static/";
+    return TestUtils.testDataPath + "resolve/static/"
   }
 
   protected void doTest(boolean staticOk) {
-    final GroovyResolveResult resolveResult = advancedResolve("a.groovy");
-    assertNotNull(resolveResult);
-    final PsiElement element = resolveResult.element;
-    assertNotNull(element);
-    assertEquals(staticOk, resolveResult.staticsOK);
+    final GroovyResolveResult resolveResult = advancedResolve("a.groovy")
+    assertNotNull(resolveResult)
+    final PsiElement element = resolveResult.element
+    assertNotNull(element)
+    assertEquals(staticOk, resolveResult.staticsOK)
   }
 
   void testPropInStaticInnerClass() {
-    doTest(false);
+    doTest(false)
   }
 
   void testThisInStaticInnerClass() {
-    doTest(true);
+    doTest(true)
   }
 
   void testWithInsideTheClass() {

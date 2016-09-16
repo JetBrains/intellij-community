@@ -30,9 +30,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.*
 import com.intellij.testFramework.Assertions.assertThat
 import com.intellij.util.PathUtil
-import com.intellij.util.readText
-import com.intellij.util.systemIndependentPath
-import com.intellij.util.write
+import com.intellij.util.io.readText
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.write
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule

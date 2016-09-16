@@ -194,7 +194,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       finally {
         token.finish();
       }
-    }, indicator.getModalityState());
+    });
 
     final List<String> downloadedResources = new LinkedList<>();
     final List<String> resourceUrls = new LinkedList<>();
@@ -206,7 +206,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       resourceUrls.add(dtdUrl);
       downloadedResources.add(resPath);
 
-      VirtualFile virtualFile = findFileByPath(resPath, dtdUrl, indicator);
+      VirtualFile virtualFile = findFileByPath(resPath, dtdUrl);
 
       Set<String> linksToProcess = new HashSet<>();
       Set<String> processedLinks = new HashSet<>();
@@ -245,7 +245,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
         if (resourcePath == null) break;
 
-        virtualFile = findFileByPath(resourcePath, absoluteUrl ? s : null, indicator);
+        virtualFile = findFileByPath(resourcePath, absoluteUrl ? s : null);
         downloadedResources.add(resourcePath);
 
         if (absoluteUrl) {
@@ -268,14 +268,14 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     }
   }
 
-  private static VirtualFile findFileByPath(final String resPath, @Nullable final String dtdUrl, ProgressIndicator indicator) {
+  private static VirtualFile findFileByPath(final String resPath, @Nullable final String dtdUrl) {
     final Ref<VirtualFile> ref = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> ApplicationManager.getApplication().runWriteAction(() -> {
       ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/')));
       if (dtdUrl != null) {
         ExternalResourceManager.getInstance().addResource(dtdUrl, resPath);
       }
-    }), indicator.getModalityState());
+    }));
     return ref.get();
   }
 

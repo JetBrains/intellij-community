@@ -79,7 +79,9 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
                                      ClassWriter writer,
                                      InstrumentationClassFinder finder) {
     try {
-      if (NotNullVerifyingInstrumenter.processClassFile((FailSafeClassReader)reader, writer)) {
+      final ProjectDescriptor pd = context.getProjectDescriptor();
+      final String notNullAnnotation = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(pd.getProject()).getNotNullAnnotation();
+      if (NotNullVerifyingInstrumenter.processClassFile((FailSafeClassReader)reader, writer, notNullAnnotation)) {
         return new BinaryContent(writer.toByteArray());
       }
     }

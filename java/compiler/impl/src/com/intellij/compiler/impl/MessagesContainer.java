@@ -84,13 +84,7 @@ public class MessagesContainer {
       Collection<CompilerMessage> collection = myMessages.get(category);
       return collection != null ? collection.size() : 0;
     }
-    int count = 0;
-    for (Collection<CompilerMessage> collection : myMessages.values()) {
-      if (collection != null) {
-        count += collection.size();
-      }
-    }
-    return count;
+    return myMessages.values().stream().filter(Objects::nonNull).mapToInt(Collection::size).sum();
   }
 
 }

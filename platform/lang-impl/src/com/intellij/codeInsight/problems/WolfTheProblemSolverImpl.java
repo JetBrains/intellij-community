@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,12 +226,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     synchronized (myCheckingQueue) {
       files = new ArrayList<>(myCheckingQueue);
     }
-    long progressLimit = 0;
-    for (VirtualFile file : files) {
-      if (file.isValid()) {
-        progressLimit += file.getLength(); // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
-      }
-    }
+    // (rough approx number of PSI elements = file length/2) * (visitor count = 2 usually)
+    long progressLimit = files.stream().filter(VirtualFile::isValid).mapToLong(VirtualFile::getLength).sum();
     pass.setProgressLimit(progressLimit);
     for (final VirtualFile virtualFile : files) {
       progress.checkCanceled();
@@ -288,7 +284,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     catch (ProcessCanceledException e) {
       if (error.get() != null) {
         ProblemImpl problem = new ProblemImpl(file, error.get(), hasErrorElement.get());
-        reportProblems(file, Collections.<Problem>singleton(problem));
+        reportProblems(file, Collections.singleton(problem));
       }
       return false;
     }
@@ -443,13 +439,10 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
                                   final int column,
                                   @NotNull final String[] message) {
     if (virtualFile == null || virtualFile.isDirectory() || virtualFile.getFileType().isBinary()) return null;
-    HighlightInfo info = ApplicationManager.getApplication().runReadAction(new Computable<HighlightInfo>() {
-      @Override
-      public HighlightInfo compute() {
-        TextRange textRange = getTextRange(virtualFile, line, column);
-        String description = StringUtil.join(message, "\n");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
-      }
+    HighlightInfo info = ApplicationManager.getApplication().runReadAction((Computable<HighlightInfo>)() -> {
+      TextRange textRange = getTextRange(virtualFile, line, column);
+      String description = StringUtil.join(message, "\n");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
     });
     if (info == null) return null;
     return new ProblemImpl(virtualFile, info, false);

@@ -2676,7 +2676,7 @@ public class StringUtil extends StringUtilRt {
       String context =
         String.valueOf(last(s.subSequence(0, slashRIndex), 10, true)) + first(s.subSequence(slashRIndex, s.length()), 10, true);
       context = escapeStringCharacters(context);
-      LOG.error("Wrong line separators: '" + context + "' at offset " + slashRIndex);
+      throw new AssertionError("Wrong line separators: '" + context + "' at offset " + slashRIndex);
     }
   }
 
@@ -3147,7 +3147,7 @@ public class StringUtil extends StringUtilRt {
   public static LineSeparator detectSeparators(@NotNull CharSequence text) {
     int index = indexOfAny(text, "\n\r");
     if (index == -1) return null;
-    LineSeparator lineSeparator = findStartingLineSeparator(text, index);
+    LineSeparator lineSeparator = getLineSeparatorAt(text, index);
     if (lineSeparator == null) {
       throw new AssertionError();
     }
@@ -3155,13 +3155,13 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Nullable
-  public static LineSeparator findStartingLineSeparator(@NotNull CharSequence text, int startIndex) {
-    if (startIndex < 0 || startIndex >= text.length()) {
+  public static LineSeparator getLineSeparatorAt(@NotNull CharSequence text, int index) {
+    if (index < 0 || index >= text.length()) {
       return null;
     }
-    char ch = text.charAt(startIndex);
+    char ch = text.charAt(index);
     if (ch == '\r') {
-      return startIndex + 1 < text.length() && text.charAt(startIndex + 1) == '\n' ? LineSeparator.CRLF : LineSeparator.CR;
+      return index + 1 < text.length() && text.charAt(index + 1) == '\n' ? LineSeparator.CRLF : LineSeparator.CR;
     }
     return ch == '\n' ? LineSeparator.LF : null;
   }
@@ -3400,7 +3400,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
-  @SuppressWarnings("unused")
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }

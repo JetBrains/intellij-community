@@ -23,8 +23,6 @@ import org.junit.Test
 import java.math.BigInteger
 import java.util.*
 
-private const val TEST_SERVICE_NAME = "IntelliJ Platform Test"
-
 // part of specific tests in the IcsCredentialTest
 class FileCredentialStoreTest {
   // we don't use in memory fs to check real file io
@@ -39,11 +37,13 @@ class FileCredentialStoreTest {
     val baseDir = tempDirManager.newPath()
     var provider = KeePassCredentialStore(baseDirectory = baseDir)
 
+    val serviceName = UUID.randomUUID().toString()
+
     assertThat(baseDir).doesNotExist()
     val random = Random()
     for (i in 0..9) {
       val accountName = BigInteger(8 * 16, random).toString()
-      provider.set(CredentialAttributes(TEST_SERVICE_NAME, accountName), Credentials(accountName, BigInteger(8 * 16, random).toString()))
+      provider.set(CredentialAttributes(serviceName, accountName), Credentials(accountName, BigInteger(8 * 16, random).toString()))
     }
 
     provider.save()
@@ -60,11 +60,13 @@ class FileCredentialStoreTest {
 
   @Test
   fun test() {
+    val serviceName = UUID.randomUUID().toString()
+
     val baseDir = tempDirManager.newPath()
     var provider = KeePassCredentialStore(baseDirectory = baseDir)
 
     assertThat(baseDir).doesNotExist()
-    val fooAttributes = CredentialAttributes(TEST_SERVICE_NAME, "foo")
+    val fooAttributes = CredentialAttributes(serviceName, "foo")
     assertThat(provider.get(fooAttributes)).isNull()
 
     provider.setPassword(fooAttributes, "pass")
@@ -79,10 +81,10 @@ class FileCredentialStoreTest {
     assertThat(pdbFile).isRegularFile()
     assertThat(pdbPwdFile).isRegularFile()
 
-    val amAttributes = CredentialAttributes(TEST_SERVICE_NAME, "am")
+    val amAttributes = CredentialAttributes(serviceName, "am")
     provider.setPassword(amAttributes, "pass2")
 
-    assertThat(provider.getPassword(fooAttributes)).isEqualTo("pass")
+    assertThat(provider.getPassword(fooAttributes)).isNull()
     assertThat(provider.getPassword(amAttributes)).isEqualTo("pass2")
 
     provider.setPassword(fooAttributes, null)

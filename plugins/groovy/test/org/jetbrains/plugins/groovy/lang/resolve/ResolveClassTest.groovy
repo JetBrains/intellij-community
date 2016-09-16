@@ -26,81 +26,81 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class ResolveClassTest extends GroovyResolveTestCase {
   @Override
   protected String getBasePath() {
-    return TestUtils.testDataPath + "resolve/class/";
+    return TestUtils.testDataPath + "resolve/class/"
   }
 
   void testInnerJavaClass() throws Exception {
-    doTest("B.groovy");
+    doTest("B.groovy")
   }
 
   void testSamePackage() throws Exception {
-    doTest("B.groovy");
+    doTest("B.groovy")
   }
 
   void testImplicitImport() throws Exception {
-    doTest("B.groovy");
+    doTest("B.groovy")
   }
 
   void testOnDemandImport() throws Exception {
-    doTest("B.groovy");
+    doTest("B.groovy")
   }
 
   void testSimpleImport() throws Exception {
-    doTest("B.groovy");
+    doTest("B.groovy")
   }
 
   void testQualifiedName() throws Exception {
-    doTest("B.groovy");
+    doTest("B.groovy")
   }
 
   void testImportAlias() throws Exception {
-    doTest("B.groovy");
+    doTest("B.groovy")
   }
 
   void testQualifiedRefExpr() throws Exception {
-    doTest("A.groovy");
+    doTest("A.groovy")
   }
 
   void testGrvy102() throws Exception {
-    doTest("Test.groovy");
+    doTest("Test.groovy")
   }
 
   void testClassVsProperty() throws Exception {
-    doTest("Test.groovy");
+    doTest("Test.groovy")
   }
 
   void testGrvy901() throws Exception {
-    doTest("Test.groovy");
+    doTest("Test.groovy")
   }
 
   void testGrvy641() throws Exception {
     PsiReference ref = configureByFile("grvy641/A.groovy")
     PsiClass resolved = assertInstanceOf(ref.resolve(), PsiClass)
     if (!"List".equals(resolved.qualifiedName)) {
-      println(myFixture.file.virtualFile.parent.children as List);
+      println(myFixture.file.virtualFile.parent.children as List)
       println JavaPsiFacade.getInstance(project).findClass("List", ref.resolveScope)
-      fail(resolved.qualifiedName);
+      fail(resolved.qualifiedName)
     }
   }
 
   void testGrvy1139() throws Exception {
-    PsiReference ref = configureByFile("grvy1139/p/User.groovy");
-    assertNull(ref.resolve());
+    PsiReference ref = configureByFile("grvy1139/p/User.groovy")
+    assertNull(ref.resolve())
   }
 
   void testGrvy1420() throws Exception {
-    PsiReference ref = configureByFile("grvy1420/Test.groovy");
-    assertNull(ref.resolve());
+    PsiReference ref = configureByFile("grvy1420/Test.groovy")
+    assertNull(ref.resolve())
   }
 
   void testGrvy1420_1() throws Exception {
-    PsiReference ref = configureByFile("grvy1420_1/Test.groovy");
-    assertNull(ref.resolve());
+    PsiReference ref = configureByFile("grvy1420_1/Test.groovy")
+    assertNull(ref.resolve())
   }
 
   void testGrvy1461() throws Exception {
-    PsiReference ref = configureByFile("grvy1461/AssertionUtils.groovy");
-    assertNotNull(ref.resolve());
+    PsiReference ref = configureByFile("grvy1461/AssertionUtils.groovy")
+    assertNotNull(ref.resolve())
   }
 
   void _testImportStaticFromJavaUtil() throws Throwable { doTest(); }
@@ -118,36 +118,36 @@ class ResolveClassTest extends GroovyResolveTestCase {
   void testInnerClassOfClassInSubClass1() { assertNull(resolve()) }
 
   void testAliasedImportVsImplicitImport() throws Exception {
-    PsiReference ref = configureByFile("aliasedImportVsImplicitImport/Test.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiClass.class);
-    assertEquals("java.util.ArrayList", ((PsiClass)resolved).qualifiedName);
+    PsiReference ref = configureByFile("aliasedImportVsImplicitImport/Test.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiClass.class)
+    assertEquals("java.util.ArrayList", ((PsiClass)resolved).qualifiedName)
   }
 
   void testNotQualifiedStaticImport() throws Exception {
-    myFixture.addFileToProject("foo/A.groovy", "package foo \nclass Foo{ }");
-    PsiReference ref = configureByFile("notQualifiedStaticImport/Test.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiClass.class);
+    myFixture.addFileToProject("foo/A.groovy", "package foo \nclass Foo{ }")
+    PsiReference ref = configureByFile("notQualifiedStaticImport/Test.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiClass.class)
   }
 
   void testEnumVsProperty() throws Exception {
-    PsiReference ref = configureByFile("enumVsProperty/Test.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiField.class);
+    PsiReference ref = configureByFile("enumVsProperty/Test.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf(resolved, PsiField.class)
   }
 
   void testTwoStaticImports() throws Exception {
-    final PsiReference ref = configureByFile("twoStaticImports/Test.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertNotNull(resolved);
+    final PsiReference ref = configureByFile("twoStaticImports/Test.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertNotNull(resolved)
   }
 
   void testAliasedImportedClassFromDefaultPackage() throws Exception {
-    myFixture.addClass("class Foo{}");
-    final PsiReference ref = configureByFile("aliasedImportedClassFromDefaultPackage/Test.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertNotNull(resolved);
+    myFixture.addClass("class Foo{}")
+    final PsiReference ref = configureByFile("aliasedImportedClassFromDefaultPackage/Test.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertNotNull(resolved)
   }
 
   void testQualifiedRefToInnerClass() {
@@ -157,7 +157,7 @@ class ResolveClassTest extends GroovyResolveTestCase {
   }
 
   void testClassVsPropertyGetter() {
-    doTest();
+    doTest()
   }
 
   void testPackageVsProperty1() {
@@ -171,10 +171,10 @@ class Referenced {
 class X {
   def referenced = 3
 }
-""");
-    final PsiReference ref = configureByFile("packageVsProperty1/Test.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf resolved, GrAccessorMethod;
+""")
+    final PsiReference ref = configureByFile("packageVsProperty1/Test.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf resolved, GrAccessorMethod
   }
 
   void testPackageVsProperty2() {
@@ -188,10 +188,10 @@ class Referenced {
 class X {
   def referenced = 3
 }
-""");
-    final PsiReference ref = configureByFile("packageVsProperty2/Test.groovy");
-    final PsiElement resolved = ref.resolve();
-    assertInstanceOf resolved, GrAccessorMethod;
+""")
+    final PsiReference ref = configureByFile("packageVsProperty2/Test.groovy")
+    final PsiElement resolved = ref.resolve()
+    assertInstanceOf resolved, GrAccessorMethod
   }
 
   void testLowerCaseClassName() {
@@ -208,7 +208,7 @@ interface Super {
 
   def foo(Inner i);
 }"""
-    assertInstanceOf resolve("A.groovy"), PsiClass;
+    assertInstanceOf resolve("A.groovy"), PsiClass
   }
 
   void testPreferImportsToInheritance() {

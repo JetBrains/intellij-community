@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +35,6 @@ import java.util.List;
 public class VcsIntegrationEnablerTest extends VcsRootPlatformTest {
 
   private VirtualFile myTestRoot;
-
 
   public void setUp() throws Exception {
     super.setUp();
@@ -93,13 +91,9 @@ public class VcsIntegrationEnablerTest extends VcsRootPlatformTest {
     List<String> vcsRootsList = ContainerUtil.newArrayList(vcs_roots);
     //default
     if (vcsRootsList.isEmpty()) {
-      vcsRootsList.addAll(ContainerUtil.map(vcsRoots, new Function<VcsRoot, String>() {
-
-        @Override
-        public String fun(VcsRoot root) {
-          assert root.getPath() != null;
-          return root.getPath().getPath();
-        }
+      vcsRootsList.addAll(ContainerUtil.map(vcsRoots, root -> {
+        assert root.getPath() != null;
+        return root.getPath().getPath();
       }));
     }
     new TestIntegrationEnabler(myVcs).enable(vcsRoots);
@@ -117,18 +111,14 @@ public class VcsIntegrationEnablerTest extends VcsRootPlatformTest {
 
   void assertVcsRoots(@NotNull Collection<String> expectedVcsRoots) {
     List<VirtualFile> actualRoots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcsWithoutFiltering(myVcs);
-    VcsTestUtil.assertEqualCollections(expectedVcsRoots, getPaths(actualRoots));
+    VcsTestUtil.assertEqualCollections(expectedVcsRoots, ContainerUtil.map(actualRoots, VirtualFile::getPath));
   }
 
   private Collection<VcsRoot> given(@NotNull String... roots) {
-    return ContainerUtil.map(roots, new Function<String, VcsRoot>() {
-
-      @Override
-      public VcsRoot fun(String s) {
-        String path = VcsTestUtil.toAbsolute(s, myProject);
-        LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-        return new VcsRoot(myVcs, VcsUtil.getVirtualFile(path));
-      }
+    return ContainerUtil.map(roots, s -> {
+      String path = VcsTestUtil.toAbsolute(s, myProject);
+      LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      return new VcsRoot(myVcs, VcsUtil.getVirtualFile(path));
     });
   }
 
@@ -137,22 +127,11 @@ public class VcsIntegrationEnablerTest extends VcsRootPlatformTest {
   }
 
   @NotNull
-  public static Collection<String> getPaths(@NotNull List<VirtualFile> virtualFiles) {
-    return ContainerUtil.map(virtualFiles, new Function<VirtualFile, String>() {
-
-      @Override
-      public String fun(VirtualFile virtualFile) {
-        return virtualFile.getPath();
-      }
-    });
-  }
-
-  @NotNull
   private String getPresentationForRoot(@NotNull String root) {
     return FileUtil.toSystemDependentName(VcsTestUtil.toAbsolute(root, myProject));
   }
 
-  private static class TestIntegrationEnabler extends VcsIntegrationEnabler<MockAbstractVcs> {
+  private static class TestIntegrationEnabler extends VcsIntegrationEnabler {
 
     protected TestIntegrationEnabler(@NotNull MockAbstractVcs vcs) {
       super(vcs);
@@ -161,7 +140,7 @@ public class VcsIntegrationEnablerTest extends VcsRootPlatformTest {
     @Override
     protected boolean initOrNotifyError(@NotNull final VirtualFile projectDir) {
       File file = new File(projectDir.getPath(), ".mock");
-      VcsNotifier.getInstance(myVcs.getProject()).notifySuccess("Created mock repository in " + projectDir.getPresentableUrl());
+      VcsNotifier.getInstance(myProject).notifySuccess("Created mock repository in " + projectDir.getPresentableUrl());
       myFilesToDelete.add(file);
       return file.mkdir();
     }

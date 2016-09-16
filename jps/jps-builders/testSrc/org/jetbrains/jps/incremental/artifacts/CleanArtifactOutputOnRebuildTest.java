@@ -35,7 +35,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     createFileInArtifactOutput(a, "b.txt");
     assertOutput(a, fs().file("a.txt").file("b.txt"));
 
-    rebuildAll();
+    rebuildAllModulesAndArtifacts();
     assertOutput(a, fs().file("a.txt"));
   }
 
@@ -44,7 +44,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     JpsArtifact a = addArtifact(root().fileCopy(createFile("a.txt")));
     buildArtifacts(a);
     createFileInArtifactOutput(a, "b.txt");
-    rebuildAll();
+    rebuildAllModulesAndArtifacts();
     assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
@@ -53,7 +53,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     addModule("m", a.getOutputPath() + "/src");
     buildArtifacts(a);
     createFileInArtifactOutput(a, "b.txt");
-    rebuildAll();
+    rebuildAllModulesAndArtifacts();
     assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
@@ -67,7 +67,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().file("a.txt"));
 
     createFile("res/b.txt");
-    rebuildAll();
+    rebuildAllModulesAndArtifacts();
     assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
@@ -77,7 +77,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     buildArtifacts(a, included);
     createFileInArtifactOutput(included, "b.txt");
     assertOutput(included, fs().file("a.txt").file("b.txt"));
-    rebuildAll();
+    rebuildAllModulesAndArtifacts();
     assertOutput(included, fs().file("a.txt"));
   }
 
@@ -89,7 +89,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     createFileInModuleOutput(m, "b.txt");
     assertOutput(m, fs().file("A.class").file("b.txt"));
 
-    rebuildAll();
+    rebuildAllModulesAndArtifacts();
     assertOutput(m, fs().file("A.class"));
   }
 }

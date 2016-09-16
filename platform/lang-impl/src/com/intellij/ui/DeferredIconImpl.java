@@ -70,7 +70,7 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
 
   @Override
   public Icon scale(final float scaleFactor) {
-    if (scaleFactor != myScale) {
+    if (scaleFactor != myScale && myDelegateIcon instanceof ScalableIcon) {
       myDelegateIcon = ((ScalableIcon)myDelegateIcon).scale(myScale = scaleFactor);
     }
     return this;

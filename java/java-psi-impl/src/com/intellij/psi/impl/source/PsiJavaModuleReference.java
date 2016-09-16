@@ -16,11 +16,15 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,12 +32,7 @@ import java.util.Collection;
 
 public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleReferenceElement> {
   public PsiJavaModuleReference(@NotNull PsiJavaModuleReferenceElement element) {
-    super(element);
-  }
-
-  @Override
-  protected TextRange calculateDefaultRangeInElement() {
-    return new TextRange(0, getElement().getTextLength());
+    super(element, new TextRange(0, element.getTextLength()), false);
   }
 
   @NotNull
@@ -65,17 +64,33 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     @Override
     public ResolveResult[] resolve(@NotNull PsiJavaModuleReference reference, boolean incompleteCode) {
       Project project = reference.getProject();
-      JavaFileManager service = ServiceManager.getService(project, JavaFileManager.class);
-      Collection<PsiJavaModule> modules = service.findModules(reference.getCanonicalText());
-      if (!modules.isEmpty()) {
-        ResolveResult[] result = new ResolveResult[modules.size()];
-        int i = 0;
-        for (PsiJavaModule module : modules) result[i++] = new PsiElementResolveResult(module);
-        return result;
+
+      GlobalSearchScope scope = null;
+      if (!incompleteCode) {
+        VirtualFile file = reference.getElement().getContainingFile().getVirtualFile();
+        if (file != null) {
+          Module module = FileIndexFacade.getInstance(project).getModuleForFile(file);
+          if (module != null) {
+            scope = module.getModuleWithDependenciesAndLibrariesScope(false);
+          }
+        }
       }
       else {
-        return ResolveResult.EMPTY_ARRAY;
+        scope = GlobalSearchScope.allScope(project);
       }
+
+      if (scope != null) {
+        JavaFileManager service = ServiceManager.getService(project, JavaFileManager.class);
+        Collection<PsiJavaModule> modules = service.findModules(reference.getCanonicalText(), scope);
+        if (!modules.isEmpty()) {
+          ResolveResult[] result = new ResolveResult[modules.size()];
+          int i = 0;
+          for (PsiJavaModule module : modules) result[i++] = new PsiElementResolveResult(module);
+          return result;
+        }
+      }
+
+      return ResolveResult.EMPTY_ARRAY;
     }
   }
 }

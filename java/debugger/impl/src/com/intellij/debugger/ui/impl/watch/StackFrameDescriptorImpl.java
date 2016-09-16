@@ -78,17 +78,16 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       }
       myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex, myLocation.method());
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
+      mySourcePosition = ContextUtil.getSourcePosition(this);
       ApplicationManager.getApplication().runReadAction(() -> {
-        mySourcePosition = ContextUtil.getSourcePosition(this);
-        final PsiFile file = mySourcePosition != null? mySourcePosition.getFile() : null;
+        PsiFile file = mySourcePosition != null ? mySourcePosition.getFile() : null;
         if (file == null) {
           myIsInLibraryContent = true;
         }
         else {
           myBackgroundColor = FileColorManager.getInstance(file.getProject()).getFileColor(file);
-
-          final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getDebugProcess().getProject()).getFileIndex();
-          final VirtualFile vFile = file.getVirtualFile();
+          ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(getDebugProcess().getProject()).getFileIndex();
+          VirtualFile vFile = file.getVirtualFile();
           myIsInLibraryContent = vFile != null && (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile));
         }
       });

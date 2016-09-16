@@ -792,16 +792,18 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
                       );
 
     String libraryPath = getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar";
+    String librarySrcPath = getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar";
     Module m2m = ModuleManager.getInstance(myProject).findModuleByName("m2");
     List<OrderEntry> modules2 = new ArrayList<>();
     ModuleRootManager.getInstance(m2m).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(
       new CommonProcessors.CollectProcessor<>(modules2));
     GlobalSearchScope scope2 = LibraryScopeCache.getInstance(myProject).getLibraryScope(modules2);
-    assertSearchScope(scope2,
-                      getProjectPath() + "/m2/src/main/java",
-                      getProjectPath() + "/m2/src/test/java",
-                      libraryPath
-    );
+
+    List<String> expectedPaths = ContainerUtil.newArrayList(getProjectPath() + "/m2/src/main/java", getProjectPath() + "/m2/src/test/java", libraryPath);
+    if (new File(librarySrcPath).exists()) {
+      expectedPaths.add(librarySrcPath);
+    }
+    assertSearchScope(scope2, ArrayUtil.toStringArray(expectedPaths));
   }
 
   public void testDoNotIncludeConflictingTransitiveDependenciesInTheClasspath() throws Exception {

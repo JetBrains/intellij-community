@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
@@ -58,16 +59,8 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
   }
 
   @Override
-  public PsiDocCommentOwner getOwner() {
-    final PsiElement parent = getParent();
-    if (parent instanceof PsiDocCommentOwner) {
-      final PsiDocCommentOwner owner = (PsiDocCommentOwner)parent;
-      if (owner.getDocComment() == this) {
-        return owner;
-      }
-    }
-
-    return null;
+  public PsiJavaDocumentedElement getOwner() {
+    return PsiImplUtil.findDocCommentOwner(this);
   }
 
   @Override

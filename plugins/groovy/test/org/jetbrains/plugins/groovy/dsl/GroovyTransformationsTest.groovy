@@ -30,7 +30,7 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
   static def descriptor = new DefaultLightProjectDescriptor() {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovy1_7LibraryHome(), TestUtils.GROOVY_JAR_17);
+      PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovy1_7LibraryHome(), TestUtils.GROOVY_JAR_17)
     }
   }
 
@@ -49,7 +49,7 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
 
   @NotNull
   @Override protected LightProjectDescriptor getProjectDescriptor() {
-    return descriptor;
+    return descriptor
   }
 
   void testDelegateAnnotation() throws Throwable { doPlainTest() }

@@ -727,23 +727,20 @@ public class CustomizableActionsPanel {
     @Override
     protected void doOKAction() {
       final ActionManager actionManager = ActionManager.getInstance();
-      TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(Object node) {
-          if (node instanceof DefaultMutableTreeNode) {
-            final DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
-            final Object userObject = mutableNode.getUserObject();
-            if (userObject instanceof Pair) {
-              String actionId = (String)((Pair)userObject).first;
-              final AnAction action = actionManager.getAction(actionId);
-              Icon icon = (Icon)((Pair)userObject).second;
-              action.getTemplatePresentation().setIcon(icon);
-              action.setDefaultIcon(icon == null);
-              editToolbarIcon(actionId, mutableNode);
-            }
+      TreeUtil.traverseDepth((TreeNode)myTree.getModel().getRoot(), node -> {
+        if (node instanceof DefaultMutableTreeNode) {
+          final DefaultMutableTreeNode mutableNode = (DefaultMutableTreeNode)node;
+          final Object userObject = mutableNode.getUserObject();
+          if (userObject instanceof Pair) {
+            String actionId = (String)((Pair)userObject).first;
+            final AnAction action = actionManager.getAction(actionId);
+            Icon icon = (Icon)((Pair)userObject).second;
+            action.getTemplatePresentation().setIcon(icon);
+            action.setDefaultIcon(icon == null);
+            editToolbarIcon(actionId, mutableNode);
           }
-          return true;
         }
+        return true;
       });
       super.doOKAction();
       CustomActionsSchema.setCustomizationSchemaForCurrentProjects();

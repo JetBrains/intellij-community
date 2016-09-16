@@ -228,6 +228,10 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testIgnoreLambdaVoidValueIncompatibilitiesPreferringMethodWithFunctionalTypeToNonFunctionalType() throws Exception {
+    doTest(false);
+  }
+
   private void doTest() {
     doTest(true);
   }

@@ -37,7 +37,7 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
-    PsiMethod method = canInsertSuper(project, editor, file);
+    PsiMethod method = canInsertSuper(editor, file);
     try {
       PsiMethod template = (PsiMethod)method.copy();
 
@@ -65,9 +65,7 @@ public class GenerateSuperMethodCallHandler implements CodeInsightActionHandler 
     return true;
   }
 
-  public static PsiMethod canInsertSuper(Project project, Editor editor, PsiFile file) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
+  public static PsiMethod canInsertSuper(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;

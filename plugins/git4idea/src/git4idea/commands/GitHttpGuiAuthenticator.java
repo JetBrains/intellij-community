@@ -15,9 +15,9 @@
  */
 package git4idea.commands;
 
+import com.intellij.credentialStore.CredentialPromptDialog;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
-import com.intellij.ide.passwordSafe.ui.PasswordSafePromptDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -99,8 +99,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     }
 
     myPasswordKey = getUnifiedUrl(url);
-    String password = PasswordSafePromptDialog.askPassword(myProject, myTitle, "Enter the password for " + getDisplayableUrl(url),
-                                                           PASS_REQUESTER, myPasswordKey, false, null);
+    String password = CredentialPromptDialog.askPassword(myProject, myTitle, "Password for " + getDisplayableUrl(url),
+                                                         CredentialAttributes(PASS_REQUESTER, myPasswordKey));
     LOG.debug("askPassword. Password was asked and returned: " + (password == null ? "NULL" : password.isEmpty() ? "EMPTY" : "NOT EMPTY"));
     if (password == null) {
       myWasCancelled = true;

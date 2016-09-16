@@ -415,9 +415,9 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
 
   @NotNull
   private static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner element) {
-    return CachedValuesManager.getCachedValue(element,
-                                              () -> CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(element, true, null),
-                                                                                      PsiModificationTracker.MODIFICATION_COUNT));
+    return CachedValuesManager.getCachedValue(element, () ->
+      CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(element, true, null, false),
+                                        PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private static AllowedValues parseBeanInfo(@NotNull PsiModifierListOwner owner, @NotNull PsiManager manager) {

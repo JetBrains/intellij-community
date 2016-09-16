@@ -40,7 +40,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ConstantFunction;
-import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -612,10 +611,8 @@ public class ExpectedHighlightingData {
   }
 
   /** @deprecated use {@link #registerHighlightingType(String, ExpectedHighlightingSet)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   protected final Map<String, ExpectedHighlightingSet> highlightingTypes = myHighlightingTypes;
 
   /** @deprecated use {@link #registerHighlightingType(String, ExpectedHighlightingSet)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   protected void initAdditionalHighlightingTypes() { }
 }

@@ -137,7 +137,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
       if (arg == returnValue) {
         return null;
       }
-      if (returnValue != null) {
+      if (returnValue != null && processed.add(returnValue)) {
         return getTitleValue(returnValue, processed);
       }
       Property propertyArgument = getPropertyArgument((PsiMethodCallExpression)arg);
@@ -147,8 +147,11 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     }
     if (arg instanceof PsiReferenceExpression) {
       PsiElement result = ((PsiReferenceExpression)arg).resolve();
-      if (result instanceof PsiVariable && processed.add(result) && ((PsiVariable)result).hasModifierProperty(PsiModifier.FINAL)) {
-        return getTitleValue(((PsiVariable) result).getInitializer(), processed);
+      if (result instanceof PsiVariable && ((PsiVariable)result).hasModifierProperty(PsiModifier.FINAL)) {
+        PsiExpression initializer = ((PsiVariable)result).getInitializer();
+        if (processed.add(initializer)) {
+          return getTitleValue(initializer, processed);
+        }
       }
     }
     return null;

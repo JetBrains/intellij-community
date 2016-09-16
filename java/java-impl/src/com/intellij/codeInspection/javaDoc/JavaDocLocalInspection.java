@@ -335,7 +335,7 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
       PsiElement parent = element == null ? null : element.getParent();
       if (!(parent instanceof PsiDocComment)) return null;
       final PsiDocComment docComment = (PsiDocComment)parent;
-      final PsiDocCommentOwner owner = docComment.getOwner();
+      final PsiJavaDocumentedElement owner = docComment.getOwner();
       if (!(owner instanceof PsiMethod)) return null;
       PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
       PsiParameter myParam = ContainerUtil.find(parameters, psiParameter -> myName.equals(psiParameter.getName()));

@@ -126,13 +126,8 @@ public abstract class SourcePosition implements Navigatable{
       if (myModificationStamp != myFile.getModificationStamp()) {
         return true;
       }
-      final PsiElement psiElement = myPsiElementRef != null ? myPsiElementRef.get() : null;
-      return psiElement != null && !ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return psiElement.isValid();
-        }
-      });
+      PsiElement psiElement = myPsiElementRef != null ? myPsiElementRef.get() : null;
+      return psiElement != null && !ApplicationManager.getApplication().runReadAction((Computable<Boolean>)psiElement::isValid);
     }
 
     @Override
@@ -238,6 +233,10 @@ public abstract class SourcePosition implements Navigatable{
         public PsiElement compute() {
           PsiElement rootElement = psiFile;
 
+          if (!psiFile.isValid()) {
+            return null;
+          }
+
           List<PsiFile> allFiles = psiFile.getViewProvider().getAllFiles();
           if (allFiles.size() > 1) { // jsp & gsp
             PsiClassOwner owner = ContainerUtil.findInstance(allFiles, PsiClassOwner.class);
@@ -333,18 +332,14 @@ public abstract class SourcePosition implements Navigatable{
     return new SourcePositionCache(psiFile) {
       @Override
       protected PsiElement calcPsiElement() {
-        ApplicationManager.getApplication().assertReadAccessAllowed();
-        return pointer.getElement();
+        return ApplicationManager.getApplication().runReadAction((Computable<PsiElement>)pointer::getElement);
       }
 
       @Override
       protected int calcOffset() {
-        return ApplicationManager.getApplication().runReadAction(new Computable<Integer>() {
-          @Override
-          public Integer compute() {
+        return ApplicationManager.getApplication().runReadAction((Computable<Integer>)() -> {
             PsiElement elem = pointer.getElement();
             return elem != null ? elem.getTextOffset() : -1;
-          }
         });
       }
     };

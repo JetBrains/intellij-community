@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class WatchersPanel extends JPanel{
     }
 
     public Comparator<WatcherInfo> getComparator() {
-      return (o, o1) -> o.getUser().compareTo(o1.getUser());
+      return Comparator.comparing(WatcherInfo::getUser);
     }
   };
 
@@ -51,7 +51,7 @@ public class WatchersPanel extends JPanel{
     }
 
     public Comparator<WatcherInfo> getComparator() {
-      return (o, o1) -> o.getActions().compareTo(o1.getActions());
+      return Comparator.comparing(WatcherInfo::getActions);
     }
   };
 
@@ -61,7 +61,7 @@ public class WatchersPanel extends JPanel{
     }
 
     public Comparator<WatcherInfo> getComparator() {
-      return (o, o1) -> o.getFile().compareTo(o1.getFile());
+      return Comparator.comparing(WatcherInfo::getFile);
     }
   };
 

@@ -26,11 +26,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,10 +55,8 @@ public class PyDocReference extends PyReferenceImpl {
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     ResolveResult[] results = super.multiResolve(incompleteCode);
     if (results.length == 0) {
-      PsiFile file = myElement.getContainingFile();
       final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myElement.getProject());
       final PsiLanguageInjectionHost host = languageManager.getInjectionHost(myElement);
-      if (host != null) file = host.getContainingFile();
       final String referencedName = myElement.getReferencedName();
       if (referencedName == null) return ResolveResult.EMPTY_ARRAY;
 
@@ -75,18 +75,18 @@ public class PyDocReference extends PyReferenceImpl {
             }
           }
         }
+        final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
+        final ScopeOwner scopeOwner = getHostScopeOwner();
+        if (scopeOwner != null) {
+          final PsiFile topLevel = scopeOwner.getContainingFile();
+          PyResolveUtil.scopeCrawlUp(processor, scopeOwner, referencedName, topLevel);
+          final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, scopeOwner, topLevel);
+          if (resultList.size() > 0) {
+            final List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
+            return ret.toArray(new RatedResolveResult[ret.size()]);
+          }
+        }
       }
-
-      final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
-
-      if (file instanceof ScopeOwner)
-        PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)file, referencedName, file);
-      final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, file, file);
-      if (resultList.size() > 0) {
-        List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
-        return ret.toArray(new RatedResolveResult[ret.size()]);
-      }
-
     }
     return results;
   }
@@ -94,22 +94,32 @@ public class PyDocReference extends PyReferenceImpl {
   @NotNull
   public Object[] getVariants() {
     final ArrayList<Object> ret = Lists.newArrayList(super.getVariants());
-    PsiFile file = myElement.getContainingFile();
-    final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myElement.getProject());
-    final PsiLanguageInjectionHost host = languageManager.getInjectionHost(myElement);
-    if (host != null) file = host.getContainingFile();
-
     final PsiElement originalElement = CompletionUtil.getOriginalElement(myElement);
     final PyQualifiedExpression element = originalElement instanceof PyQualifiedExpression ?
                                           (PyQualifiedExpression)originalElement : myElement;
 
-    // include our own names
-    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(element);
-    if (file instanceof ScopeOwner)
-      PyResolveUtil.scopeCrawlUp(processor, (ScopeOwner)file, null, null);
-
-    ret.addAll(processor.getResultList());
-
+    final ScopeOwner scopeOwner = getHostScopeOwner();
+    if (scopeOwner != null) {
+      final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(element);
+      PyResolveUtil.scopeCrawlUp(processor, scopeOwner, null, null);
+      ret.addAll(processor.getResultList());
+    }
     return ret.toArray();
+  }
+
+
+  @Nullable
+  private ScopeOwner getHostScopeOwner() {
+    final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myElement.getProject());
+    final PsiLanguageInjectionHost host = languageManager.getInjectionHost(myElement);
+    if (host != null) {
+      final PsiFile file = host.getContainingFile();
+      ScopeOwner result = ScopeUtil.getScopeOwner(host);
+      if (result == null && file instanceof ScopeOwner) {
+        result = (ScopeOwner)file;
+      }
+      return result;
+    }
+    return null;
   }
 }

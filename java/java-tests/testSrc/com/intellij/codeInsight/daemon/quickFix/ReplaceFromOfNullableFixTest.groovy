@@ -32,12 +32,12 @@ class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTestCase {
   }
 
   void test() throws Exception {
-     doAllTests();
+     doAllTests()
    }
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceFromOfNullable";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceFromOfNullable"
   }
 
   static void addGuavaOptional(Disposable parent) {
@@ -47,7 +47,7 @@ class ReplaceFromOfNullableFixTest extends LightQuickFixParameterizedTestCase {
         .createChildDirectory(this, "google")
         .createChildDirectory(this, "common")
         .createChildDirectory(this, "base")
-        .createChildData(this, "Optional.java");
+        .createChildData(this, "Optional.java")
       VfsUtil.saveText(optional, """
 package com.google.common.base;
 public abstract class Optional<T> {
