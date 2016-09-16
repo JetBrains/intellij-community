@@ -16,18 +16,28 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 /**
  * Highlights incorrect return statements: 'return' and 'yield' outside functions
  */
 public class ReturnAnnotator extends PyAnnotator {
   public void visitPyReturnStatement(final PyReturnStatement node) {
-    PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
+    final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
     if (function == null) {
       getHolder().createErrorAnnotation(node, "'return' outside of function");
+    }
+    if (function != null && node.getExpression() != null) {
+      final PyType returnType = TypeEvalContext.codeAnalysis(function.getProject(), function.getContainingFile()).getReturnType(function);
+
+      if (returnType != null && PyNames.FAKE_ASYNC_GENERATOR.equals(returnType.getName())) {
+        getHolder().createErrorAnnotation(node, "non-empty 'return' inside asynchronous generator");
+      }
     }
   }
 

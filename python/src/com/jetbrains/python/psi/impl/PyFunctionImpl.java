@@ -187,7 +187,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType type = getReturnType(context);
-    return isAsync() && isAsyncAllowed() ? createCoroutineType(type) : type;
+    return isAsync() && isAsyncAllowed() ? createCoroutineType(type, context) : type;
   }
 
   @Nullable
@@ -375,10 +375,22 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Nullable
-  private PyType createCoroutineType(@Nullable PyType returnType) {
+  private PyType createCoroutineType(@Nullable PyType returnType, @NotNull TypeEvalContext context) {
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
-    final PyClass generator = cache.getClass(PyNames.FAKE_COROUTINE);
-    return generator != null ? new PyCollectionTypeImpl(generator, false, Collections.singletonList(returnType)) : null;
+
+    if (returnType instanceof PyCollectionType && PyNames.FAKE_GENERATOR.equals(returnType.getName())) {
+      final PyClass asyncGenerator = cache.getClass(PyNames.FAKE_ASYNC_GENERATOR);
+      final List<PyType> generatorElementTypes = ((PyCollectionType)returnType).getElementTypes(context);
+
+      if (asyncGenerator == null || generatorElementTypes.isEmpty()) {
+        return null;
+      }
+
+      return new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(generatorElementTypes.get(0), null));
+    }
+
+    final PyClass coroutine = cache.getClass(PyNames.FAKE_COROUTINE);
+    return coroutine != null ? new PyCollectionTypeImpl(coroutine, false, Collections.singletonList(returnType)) : null;
   }
 
   public PyFunction asMethod() {

@@ -197,6 +197,66 @@ public class Py3TypeTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("bytes", "expr = b'foo'"));
   }
 
+  // PY-20770
+  public void testAsyncGenerator() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("__asyncgenerator[int, Any]",
+                                                              "async def asyncgen():\n" +
+                                                              "    yield 42\n" +
+                                                              "expr = asyncgen()"));
+  }
+
+  // PY-20770
+  public void testAsyncGeneratorDunderAiter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("AsyncIterator[int]",
+                                                              "async def asyncgen():\n" +
+                                                              "    yield 42\n" +
+                                                              "expr = asyncgen().__aiter__()"));
+  }
+
+  // PY-20770
+  public void testAsyncGeneratorDunderAnext() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("Awaitable[int]",
+                                                              "async def asyncgen():\n" +
+                                                              "    yield 42\n" +
+                                                              "expr = asyncgen().__anext__()"));
+  }
+
+  // PY-20770
+  public void testAsyncGeneratorAwaitOnDunderAnext() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("int",
+                                                              "async def asyncgen():\n" +
+                                                              "    yield 42\n" +
+                                                              "async def asyncusage()\n" +
+                                                              "    expr = await asyncgen().__anext__()"));
+  }
+
+  // PY-20770
+  public void testAsyncGeneratorAsend() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("Awaitable[int]",
+                                                              "async def asyncgen():\n" +
+                                                              "    yield 42\n" +
+                                                              "expr = asyncgen().asend(\"hello\")"));
+  }
+
+  // PY-20770
+  public void testAsyncGeneratorAwaitOnAsend() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("int",
+                                                              "async def asyncgen():\n" +
+                                                              "    yield 42\n" +
+                                                              "async def asyncusage():\n" +
+                                                              "    expr = await asyncgen().asend(\"hello\")"));
+  }
+
+  // PY-20770
+  public void testIteratedAsyncGeneratorElement() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("int",
+                                                              "async def asyncgen():\n" +
+                                                              "    yield 10\n" +
+                                                              "async def run():\n" +
+                                                              "    async for i in asyncgen():\n" +
+                                                              "        expr = i"));
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
