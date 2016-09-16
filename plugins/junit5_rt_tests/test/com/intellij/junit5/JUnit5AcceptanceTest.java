@@ -15,6 +15,8 @@
  */
 package com.intellij.junit5;
 
+import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.junit.JUnit5Framework;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -22,6 +24,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.testIntegration.TestFramework;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,6 +67,17 @@ class JUnit5AcceptanceTest {
     EdtTestUtil.runInEdtAndWait(() -> {
       PsiClass aClass = myFixture.addClass("interface MyTest {@org.junit.jupiter.api.Test default void method() {}}");
       assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+    });
+  }
+
+  @Test
+  void testFrameworkDetection() {
+    TestRunnerUtil.replaceIdeEventQueueSafely();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiClass aClass = myFixture.addClass("class MyTest {@org.junit.jupiter.api.Test void method() {}}");
+      assertNotNull(aClass);
+      TestFramework framework = TestFrameworks.detectFramework(aClass);
+      assertTrue(framework instanceof JUnit5Framework, framework.getName());
     });
   }
 }

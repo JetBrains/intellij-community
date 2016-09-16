@@ -66,6 +66,7 @@ public class JUnitUtil {
   private static final Collection<String> TEST_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST_ANNOTATION,
                                                                                                         TEST5_ANNOTATION,
                                                                                                         TEST5_FACTORY_ANNOTATION));
+private static final Collection<String> TEST5_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION));
 
   private static final List<String> INSTANCE_CONFIGS = Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME);
   private static final List<String> INSTANCE_5_CONFIGS = Arrays.asList(BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME);
@@ -185,11 +186,25 @@ public class JUnitUtil {
     if (modifierList == null) return false;
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
 
-    if (!PsiClassUtil.isRunnableClass(psiClass, !isJUnit5(modifierList), checkAbstract)) return false;
+    if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
       ProgressManager.checkCanceled();
       if (isTestAnnotated(method)) return true;
+    }
+
+    return false;
+  }
+
+  public static boolean isJUnit5TestClass(final PsiClass psiClass, boolean checkAbstract) {
+    final PsiModifierList modifierList = psiClass.getModifierList();
+    if (modifierList == null) return false;
+
+    if (!PsiClassUtil.isRunnableClass(psiClass, false, checkAbstract)) return false;
+
+    for (final PsiMethod method : psiClass.getAllMethods()) {
+      ProgressManager.checkCanceled();
+      if (AnnotationUtil.isAnnotated(method, TEST5_ANNOTATIONS)) return true;
     }
 
     return false;
