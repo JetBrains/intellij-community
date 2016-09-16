@@ -293,7 +293,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       File file = getProjectsTreeFile();
       try {
         if (file.exists()) {
-          myProjectsTree = MavenProjectsTree.read(file);
+          myProjectsTree = MavenProjectsTree.read(myProject, file);
         }
       }
       catch (IOException e) {
@@ -301,7 +301,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       }
     }
 
-    if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree();
+    if (myProjectsTree == null) myProjectsTree = new MavenProjectsTree(myProject);
     applyStateToTree();
     myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster());
   }
@@ -708,9 +708,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   @Nullable
   private static VirtualFile findPomFile(@NotNull Module module, @NotNull MavenModelsProvider modelsProvider) {
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
-      final VirtualFile virtualFile = root.findChild(MavenConstants.POM_XML);
-      if (virtualFile != null) {
-        return virtualFile;
+      for (VirtualFile child : root.getChildren()) {
+        if (MavenUtil.isPomFileName(child.getName())) return child;
       }
     }
     return null;
@@ -1194,10 +1193,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private List<VirtualFile> collectAllAvailablePomFiles() {
     List<VirtualFile> result = new ArrayList<>(getFileToModuleMapping(new MavenDefaultModelsProvider(myProject)).keySet());
-
-    VirtualFile pom = myProject.getBaseDir().findChild(MavenConstants.POM_XML);
-    if (pom != null) result.add(pom);
-
+    for (VirtualFile child : myProject.getBaseDir().getChildren()) {
+      if (MavenUtil.isPomFileName(child.getName())) {
+        result.add(child);
+      }
+    }
     return result;
   }
 

@@ -37,6 +37,7 @@ import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.project.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
 import org.jetbrains.idea.maven.server.embedder.MavenExecutionResult;
@@ -57,9 +58,11 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   public final static boolean USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING = System.getProperty("idea.maven3.use.compat.resolver") != null;
   private final static String MAVEN_VERSION = System.getProperty(MAVEN_EMBEDDER_VERSION);
+  protected final MavenServerSettings myServerSettings;
 
   protected Maven3ServerEmbedder(MavenServerSettings settings) {
-    initLog4J(settings);
+    myServerSettings = settings;
+    initLog4J(myServerSettings);
   }
 
   private static void initLog4J(MavenServerSettings settings) {
@@ -197,6 +200,12 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
     project.setArtifacts(result.getArtifacts());
     executionResults.add(new MavenExecutionResult(project, exceptions));
+  }
+
+  @Override
+  @Nullable
+  public MavenModel readModel(File file) throws RemoteException {
+    return null;
   }
 
   @NotNull

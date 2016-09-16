@@ -256,8 +256,10 @@ public class MavenResourceCompilerConfigurationGenerator {
       try {
         manifest.write(outputStream);
         MavenDomProjectModel domModel = MavenDomUtil.getMavenDomProjectModel(module.getProject(), mavenProject.getFile());
-        final String resolvedText = MavenPropertyResolver.resolve(outputStream.toString(CharsetToolkit.UTF8), domModel);
-        resourceConfig.manifest = Base64.getEncoder().encodeToString(resolvedText.getBytes(StandardCharsets.UTF_8));
+        if(domModel != null) {
+          final String resolvedText = MavenPropertyResolver.resolve(outputStream.toString(CharsetToolkit.UTF8), domModel);
+          resourceConfig.manifest = Base64.getEncoder().encodeToString(resolvedText.getBytes(StandardCharsets.UTF_8));
+        }
       }
       finally {
         StreamUtil.closeStream(outputStream);

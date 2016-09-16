@@ -364,7 +364,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   @Override
   public void commit() {
-    ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(() -> {
+    ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
       processExternalArtifactDependencies();
       for (Library.ModifiableModel each : myModifiableLibraryModels.values()) {
         each.commit();

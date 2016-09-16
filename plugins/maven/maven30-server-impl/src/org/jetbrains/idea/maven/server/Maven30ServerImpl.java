@@ -33,9 +33,10 @@ public class Maven30ServerImpl extends MavenRemoteObject implements MavenServer 
     }
   }
 
-  public MavenServerEmbedder createEmbedder(MavenServerSettings settings) throws RemoteException {
+  @Override
+  public MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     try {
-      Maven30ServerEmbedderImpl result = new Maven30ServerEmbedderImpl(settings);
+      Maven30ServerEmbedderImpl result = new Maven30ServerEmbedderImpl(settings.getSettings());
       UnicastRemoteObject.exportObject(result, 0);
       return result;
     }
