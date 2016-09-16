@@ -62,7 +62,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
@@ -101,7 +100,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Map<String, WindowedDecorator> myId2WindowedDecorator = new HashMap<>();
   private final Map<String, StripeButton> myId2StripeButton = new HashMap<>();
   private final Map<String, FocusWatcher> myId2FocusWatcher = new HashMap<>();
-  private final Set<String> myDumbAwareIds = Collections.synchronizedSet(ContainerUtil.<String>newTroveSet());
 
   private final EditorComponentFocusWatcher myEditorComponentFocusWatcher = new EditorComponentFocusWatcher();
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener = new MyToolWindowPropertyChangeListener();
@@ -395,27 +393,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     execute(commandsList);
 
-    final DumbService.DumbModeListener dumbModeListener = new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-        disableStripeButtons();
-      }
-
-      @Override
-      public void exitDumbMode() {
-        for (final String id : getToolWindowIds()) {
-          getStripeButton(id).setEnabled(true);
-        }
-      }
-    };
-    myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, dumbModeListener);
-
-    StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
-      registerToolWindowsFromBeans();
-      if (DumbService.getInstance(myProject).isDumb()) {
-        disableStripeButtons();
-      }
-    });
+    StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> registerToolWindowsFromBeans());
 
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof KeyEvent) {
@@ -426,20 +404,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
       return false;
     }, myProject);
-  }
-
-  private void disableStripeButtons() {
-    for (final String id : getToolWindowIds()) {
-      if (!myDumbAwareIds.contains(id)) {
-        if (isToolWindowVisible(id)) {
-          hideToolWindow(id, true);
-        }
-        StripeButton button = getStripeButton(id);
-        if (button != null) {
-          button.setEnabled(false);
-        }
-      }
-    }
   }
 
   private static JComponent createEditorComponent(@NotNull Project project) {
@@ -742,9 +706,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
-    if (DumbService.getInstance(myProject).isDumb() && !myDumbAwareIds.contains(id)) {
-      return;
-    }
 
     List<FinalizableCommand> commandList = new ArrayList<>();
     activateToolWindowImpl(id, commandList, forced, autoFocusContents);
@@ -1025,10 +986,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return;
     }
 
-    if (DumbService.getInstance(myProject).isDumb() && !myDumbAwareIds.contains(id)) {
-      return;
-    }
-
     toBeShownInfo.setVisible(true);
     final InternalDecorator decorator = getInternalDecorator(id);
 
@@ -1190,7 +1147,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     // Create decorator
 
     ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
-    InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow);
+    InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow, canWorkInDumbMode);
     ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow);
     myId2InternalDecorator.put(id, decorator);
     decorator.addInternalDecoratorListener(myInternalDecoratorListener);
@@ -1203,13 +1160,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myId2StripeButton.put(id, button);
     List<FinalizableCommand> commandsList = new ArrayList<>();
     appendAddButtonCmd(button, info, commandsList);
-
-    if (canWorkInDumbMode) {
-      myDumbAwareIds.add(id);
-    }
-    else if (DumbService.getInstance(getProject()).isDumb()) {
-      button.setEnabled(false);
-    }
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the autohide
