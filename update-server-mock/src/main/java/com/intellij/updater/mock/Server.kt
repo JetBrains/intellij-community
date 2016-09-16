@@ -127,4 +127,8 @@ private class CountingOutputStream(private val stream: OutputStream) : OutputStr
     stream.write(b, off, len)
     count += len
   }
+
+  override fun flush() = stream.flush()
+
+  override fun close() = stream.close()
 }
