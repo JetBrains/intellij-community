@@ -146,21 +146,10 @@ fun <T> rejectedPromise(error: Throwable?): Promise<T> {
 }
 
 @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
-internal class MessageError : RuntimeException {
-  internal val log: ThreeState
+internal class MessageError(error: String, log: Boolean) : RuntimeException(error) {
+  internal val log = ThreeState.fromBoolean(log)
 
-  constructor(error: String) : super(error) {
-    log = ThreeState.UNSURE
-  }
-
-  constructor(error: String, log: Boolean) : super(error) {
-
-    this.log = ThreeState.fromBoolean(log)
-  }
-
-  fun fillInStackTrace(): Throwable {
-    return this
-  }
+  fun fillInStackTrace() = this
 }
 
 /**

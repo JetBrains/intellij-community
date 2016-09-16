@@ -24,6 +24,11 @@ import java.util.concurrent.TimeUnit;
 
 public interface Promise<T> {
   Promise<Void> DONE = new DonePromise<>(null);
+
+  /**
+   * @deprecated Use Promises.rejectedPromise
+   */
+  @Deprecated
   Promise<Void> REJECTED = Promises.rejectedPromise();
 
   enum State {

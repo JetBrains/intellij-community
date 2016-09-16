@@ -39,7 +39,7 @@ abstract class ObjectValueBase<VALUE_LOADER : ValueManager>(type: ValueType) : V
 
   override val valueString: String? = null
 
-  override fun getIndexedProperties(from: Int, to: Int, bucketThreshold: Int, consumer: IndexedVariablesConsumer, componentType: ValueType?): Promise<*> = Promise.REJECTED
+  override fun getIndexedProperties(from: Int, to: Int, bucketThreshold: Int, consumer: IndexedVariablesConsumer, componentType: ValueType?): Promise<*> = rejectedPromise<Any?>()
 
   @Suppress("UNCHECKED_CAST")
   override val variablesHost: VariablesHost<ValueManager>
