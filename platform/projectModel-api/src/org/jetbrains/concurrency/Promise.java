@@ -15,7 +15,6 @@
  */
 package org.jetbrains.concurrency;
 
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
@@ -27,11 +26,6 @@ import java.util.concurrent.TimeUnit;
 public interface Promise<T> {
   Promise<Void> DONE = new DonePromise<>(null);
   Promise<Void> REJECTED = PromiseKt.getREJECTED();
-
-  @NotNull
-  static RuntimeException createError(@NotNull String error) {
-    return new MessageError(error);
-  }
 
   enum State {
     PENDING, FULFILLED, REJECTED
@@ -46,14 +40,6 @@ public interface Promise<T> {
     else {
       return new DonePromise<>(result);
     }
-  }
-
-  @NotNull
-  static Promise<Void> wrapAsVoid(@NotNull ActionCallback asyncResult) {
-    final AsyncPromise<Void> promise = new AsyncPromise<>();
-    asyncResult.doWhenDone(() -> promise.setResult(null)).doWhenRejected(
-      error -> promise.setError(createError(error == null ? "Internal error" : error)));
-    return promise;
   }
 
   @NotNull

@@ -18,6 +18,7 @@ package org.jetbrains.concurrency
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Consumer
 import com.intellij.util.Function
 import com.intellij.util.SmartList
@@ -108,7 +109,7 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   return all(promises, results)
 }
 
-fun createError(error: String, log: Boolean): RuntimeException = MessageError(error, log)
+fun createError(error: String, log: Boolean = false): RuntimeException = MessageError(error, log)
 
 inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {
   val result = catchError(runnable)
@@ -179,4 +180,10 @@ fun Logger.errorIfNotMessage(e: Throwable): Boolean {
   }
 
   return false
+}
+
+fun ActionCallback.toPromise(): Promise<Void> {
+  val promise = AsyncPromise<Void>()
+  doWhenDone { promise.setResult(null) }.doWhenRejected { error -> promise.setError(createError(error ?: "Internal error")) }
+  return promise
 }

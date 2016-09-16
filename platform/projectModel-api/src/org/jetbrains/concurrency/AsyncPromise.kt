@@ -28,8 +28,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 private val LOG = Logger.getInstance(AsyncPromise::class.java)
 
-@SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-private val OBSOLETE_ERROR = Promise.createError("Obsolete")
+private val OBSOLETE_ERROR = createError("Obsolete")
 
 open class AsyncPromise<T> : Promise<T>, Getter<T> {
   private val doneRef = AtomicReference<Consumer<in T>?>()
@@ -182,7 +181,7 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
     }
   }
 
-  fun setError(error: String) = setError(Promise.createError(error))
+  fun setError(error: String) = setError(createError(error))
 
   fun cancel() {
     setError(OBSOLETE_ERROR)
