@@ -171,7 +171,7 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
 
     this.result = result
 
-    val done = getAndClearHandler(doneRef)
+    val done = doneRef.getAndSet(null)
     rejectedRef.set(null)
 
     if (done != null && !isObsolete(done)) {
@@ -192,7 +192,7 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
 
     result = error
 
-    val rejected = getAndClearHandler(rejectedRef)
+    val rejected = rejectedRef.getAndSet(null)
     doneRef.set(null)
 
     if (rejected == null) {
@@ -202,15 +202,6 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
       rejected.consume(error)
     }
     return true
-  }
-
-  private fun <T> getAndClearHandler(ref: AtomicReference<Consumer<in T>?>): Consumer<in T>? {
-    var handler: Consumer<in T>?
-    do {
-      handler = ref.get()
-    }
-    while (!ref.compareAndSet(handler, null))
-    return handler
   }
 
   override fun processed(processed: Consumer<in T>): Promise<T> {
@@ -271,7 +262,7 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
     }
 
     if (state == targetState) {
-      getAndClearHandler(ref)?.let {
+      ref.getAndSet(null)?.let {
         @Suppress("UNCHECKED_CAST")
         it.consume(result as T?)
       }
