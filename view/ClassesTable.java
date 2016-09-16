@@ -39,6 +39,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public static final DataKey<XDebugSession> DEBUG_SESSION_KEY = DataKey.create("ClassesTable.DebugSession");
   public static final DataKey<InstancesProvider> NEW_INSTANCES_PROVIDER_KEY =
       DataKey.create("ClassesTable.NewInstances");
+
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
   private static final int COUNT_COLUMN_MAX_WIDTH = 100;
@@ -90,8 +91,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     setShowGrid(false);
     setIntercellSpacing(new JBDimension(0, 0));
 
-    setDefaultRenderer(ReferenceType.class, new MyClassTableCellRenderer());
-    setDefaultRenderer(Long.class, new MyNumberTableCellRenderer());
+    setDefaultRenderer(ReferenceType.class, new MyClassColumnRenderer());
+    setDefaultRenderer(Long.class, new MyCountColumnRenderer());
+    setDefaultRenderer(DiffValue.class, new MyDiffColumnRenderer());
 
     TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
     sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {
@@ -129,8 +131,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   @Nullable
   ReferenceType getClassByName(@NotNull String name) {
-    for(ReferenceType ref : myElems) {
-      if(name.equals(ref.name())) {
+    for (ReferenceType ref : myElems) {
+      if (name.equals(ref.name())) {
         return ref;
       }
     }
@@ -147,7 +149,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       myFilteringPattern = pattern;
       myMatcher = NameUtil.buildMatcher("*" + pattern).build();
       getRowSorter().allRowsChanged();
-      if(getSelectedClass() == null && getRowCount() > 0) {
+      if (getSelectedClass() == null && getRowCount() > 0) {
         getSelectionModel().setSelectionInterval(0, 0);
       }
     }
@@ -255,10 +257,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
               return myCounts.getOrDefault(myElems.get(ix), myUnknownValue).myCurrentCount;
             }
           },
-          new AbstractTableColumnDescriptor("Diff", Long.class) {
+          new AbstractTableColumnDescriptor("Diff", DiffValue.class) {
             @Override
             public Object getValue(int ix) {
-              return myCounts.getOrDefault(myElems.get(ix), myUnknownValue).diff();
+              return myCounts.getOrDefault(myElems.get(ix), myUnknownValue);
             }
           }
       });
@@ -319,7 +321,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     }
   }
 
-  private static class DiffValue {
+  private static class DiffValue implements Comparable<DiffValue> {
     private long myOldCount;
 
     private long myCurrentCount;
@@ -347,51 +349,16 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       return myCurrentCount - myOldCount;
     }
 
+    @Override
+    public int compareTo(@NotNull DiffValue o) {
+      return Long.compare(diff(), o.diff());
+    }
   }
 
-  private class MyNumberTableCellRenderer extends ColoredTableCellRenderer {
-
+  private abstract class MyTableCellRenderer extends ColoredTableCellRenderer {
     @Override
-    protected void customizeCellRenderer(JTable table, @Nullable Object value,
-                                         boolean isSelected, boolean hasFocus, int row, int column) {
-      if (value == null) {
-        return;
-      }
-
-      TrackingType trackingType = getTrackingType(row);
-      if (!isSelected && trackingType != null) {
-        JBColor color = myParent.isTrackingActive(myElems.get(convertRowIndexToModel(row)))
-            ? trackingType.color()
-            : TrackingType.inactiveColor();
-        setBackground(UIUtil.toAlpha(color, 20));
-      }
-
-      long val = (long) value;
-      setTextAlign(SwingConstants.RIGHT);
-      if (column == DiffViewTableModel.COUNT_COLUMN_INDEX) {
-        renderCount(val);
-      } else {
-        renderDiff(val);
-      }
-    }
-
-    private void renderDiff(long diff) {
-      append(String.format("%s%d", diff > 0 ? "+" : "", diff));
-    }
-
-    private void renderCount(long count) {
-      append(String.valueOf(count));
-
-    }
-
-  }
-
-  private class MyClassTableCellRenderer extends ColoredTableCellRenderer {
-
-    @Override
-    protected void customizeCellRenderer(JTable table, @Nullable Object value,
-                                         boolean isSelected, boolean hasFocus, int row, int column) {
-      String presentation = value == null ? "null" : ((ReferenceType) value).name();
+    protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean isSelected,
+                                         boolean hasFocus, int row, int column) {
       TrackingType trackingType = getTrackingType(row);
       if (trackingType != null && !isSelected) {
         JBColor color = myParent.isTrackingActive(myElems.get(convertRowIndexToModel(row)))
@@ -400,8 +367,21 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         setBackground(UIUtil.toAlpha(color, 20));
       }
 
+      if (value != null) {
+        addText(table, value, isSelected, hasFocus, row, column);
+      }
+    }
+
+    protected abstract void addText(JTable table, @NotNull Object value, boolean isSelected,
+                                    boolean hasFocus, int row, int column);
+  }
+
+  private class MyClassColumnRenderer extends MyTableCellRenderer {
+    @Override
+    protected void addText(JTable table, @NotNull Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      String presentation = ((ReferenceType) value).name();
       append(" ");
-      if (value != null && isSelected) {
+      if (isSelected) {
         FList<TextRange> textRanges = myMatcher.matchingFragments(presentation);
         if (textRanges != null) {
           SimpleTextAttributes attributes = new SimpleTextAttributes(getBackground(), getForeground(), null,
@@ -412,10 +392,23 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       } else {
         append(String.format("%s", presentation), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
+    }
+  }
 
-      if (trackingType != null) {
-        append(String.format(" (%s)", trackingType.description()));
-      }
+  private class MyCountColumnRenderer extends MyTableCellRenderer {
+    @Override
+    protected void addText(JTable table, @NotNull Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      setTextAlign(SwingConstants.RIGHT);
+      append(value.toString());
+    }
+  }
+
+  private class MyDiffColumnRenderer extends MyTableCellRenderer {
+    @Override
+    protected void addText(JTable table, @NotNull Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+      setTextAlign(SwingConstants.RIGHT);
+      long diff = ((DiffValue) value).diff();
+      append(String.format("%s%d", diff > 0 ? "+" : "", diff));
     }
   }
 }
