@@ -10,4 +10,3 @@ public class HashBasedTrackingAction extends InstancesTrackingActionBase {
     return TrackingType.HASH;
   }
 }
-
