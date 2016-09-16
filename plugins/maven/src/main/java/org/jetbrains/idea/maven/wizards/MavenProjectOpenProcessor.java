@@ -39,7 +39,7 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenPro
 
   @Nullable
   public String[] getSupportedExtensions() {
-    return new String[]{MavenConstants.POM_XML};
+    return MavenConstants.POM_NAMES;
   }
 
   public boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {

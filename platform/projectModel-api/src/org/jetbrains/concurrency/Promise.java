@@ -23,10 +23,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.TimeUnit;
 
 public interface Promise<T> {
-  Promise<Void> DONE = new DonePromise<>(null);
+  /**
+   * @deprecated Use Promises.resolvedPromise()
+   */
+  @Deprecated
+  Promise<Void> DONE = Promises.resolvedPromise();
 
   /**
-   * @deprecated Use Promises.rejectedPromise
+   * @deprecated Use Promises.rejectedPromise()
    */
   @Deprecated
   Promise<Void> REJECTED = Promises.rejectedPromise();
@@ -37,13 +41,7 @@ public interface Promise<T> {
 
   @NotNull
   static <T> Promise<T> resolve(T result) {
-    if (result == null) {
-      //noinspection unchecked
-      return (Promise<T>)DONE;
-    }
-    else {
-      return new DonePromise<>(result);
-    }
+    return result == null ? Promises.resolvedPromise() : new DonePromise<>(result);
   }
 
   @NotNull
@@ -68,6 +66,10 @@ public interface Promise<T> {
 
   @Nullable
   T blockingGet(int timeout, @NotNull TimeUnit timeUnit);
+
+  default T blockingGet(int timeout) {
+    return blockingGet(timeout, TimeUnit.MILLISECONDS);
+  }
 
   void notify(@NotNull AsyncPromise<? super T> child);
 }

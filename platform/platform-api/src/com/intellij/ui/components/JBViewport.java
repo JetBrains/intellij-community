@@ -188,7 +188,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private static boolean isAlignmentNeeded(JComponent view, boolean horizontal) {
     return (!SystemInfo.isMac || horizontal && Registry.is("mac.scroll.horizontal.gap")) &&
-           (view instanceof JList || view instanceof JTree || Registry.is("ide.scroll.align.component"));
+           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && Registry.is("ide.scroll.align.component")));
   }
 
   static Insets getViewInsets(JComponent view) {

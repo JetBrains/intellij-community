@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.impl;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -91,6 +92,8 @@ class ReadMostlyRWLock {
       if (tryReadLock(status)) {
         return;
       }
+
+      ProgressManager.checkCanceled();
 
       if (iter > SPIN_TO_WAIT_FOR_LOCK) {
         status.blocked = true;

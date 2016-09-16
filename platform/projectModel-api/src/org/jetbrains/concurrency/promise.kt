@@ -27,6 +27,39 @@ import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.*
 
+val Promise<*>.isRejected: Boolean
+  get() = state == Promise.State.REJECTED
+
+val Promise<*>.isPending: Boolean
+  get() = state == Promise.State.PENDING
+
+val Promise<*>.isFulfilled: Boolean
+  get() = state == Promise.State.FULFILLED
+
+internal val OBSOLETE_ERROR = createError("Obsolete")
+
+private val REJECTED: Promise<*> = RejectedPromise<Any?>(createError("rejected"))
+private val DONE: Promise<*> = DonePromise(null)
+private val CANCELLED_PROMISE = RejectedPromise<Any?>(OBSOLETE_ERROR)
+
+@Suppress("UNCHECKED_CAST")
+fun <T> resolvedPromise(): Promise<T> = DONE as Promise<T>
+
+fun nullPromise(): Promise<*> = DONE
+
+fun <T> resolvedPromise(result: T): Promise<T> = if (result == null) resolvedPromise() else DonePromise(result)
+
+@Suppress("UNCHECKED_CAST")
+fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
+
+fun <T> rejectedPromise(error: String): Promise<T> = RejectedPromise(createError(error, true))
+
+fun <T> rejectedPromise(error: Throwable?): Promise<T> = if (error == null) rejectedPromise() else RejectedPromise(error)
+
+@Suppress("UNCHECKED_CAST")
+fun <T> cancelledPromise(): Promise<T> = CANCELLED_PROMISE as Promise<T>
+
+
 // only internal usage
 interface ObsolescentFunction<Param, Result> : Function<Param, Result>, Obsolescent
 
@@ -55,13 +88,13 @@ inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Un
 })
 
 @Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = (this as Promise<Any?>).done { handler() }
+inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = done({ handler() })
 
 @Suppress("UNCHECKED_CAST")
-inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then { handler() }
+inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then({ handler() })
 
 @Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.processedRun(crossinline handler: () -> Unit): Promise<*> = (this as Promise<Any?>).processed { handler() }
+inline fun Promise<*>.processedRun(crossinline handler: () -> Unit): Promise<*> = (this as Promise<Any?>).processed({ handler() })
 
 
 inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = thenAsync(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
@@ -82,20 +115,6 @@ inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>
 inline fun Promise<*>.rejected(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = rejected(object : ObsolescentConsumer<Throwable>(node) {
   override fun consume(param: Throwable) = handler(param)
 })
-
-val REJECTED: Promise<Void> = RejectedPromise(createError("rejected", false))
-
-@Suppress("UNCHECKED_CAST")
-fun <T> rejectedPromise(): Promise<T> = REJECTED as Promise<T>
-
-val Promise<*>.isRejected: Boolean
-  get() = state == Promise.State.REJECTED
-
-val Promise<*>.isPending: Boolean
-  get() = state == Promise.State.PENDING
-
-val Promise<*>.isFulfilled: Boolean
-  get() = state == Promise.State.FULFILLED
 
 fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   if (promises.isEmpty()) {
@@ -133,18 +152,6 @@ inline fun <T> runAsync(crossinline runnable: () -> T): Promise<T> {
   return promise
 }
 
-fun <T> rejectedPromise(error: String): Promise<T> = rejectedPromise(createError(error, true))
-
-fun <T> rejectedPromise(error: Throwable?): Promise<T> {
-  if (error == null) {
-    @Suppress("UNCHECKED_CAST")
-    return REJECTED as Promise<T>
-  }
-  else {
-    return RejectedPromise(error)
-  }
-}
-
 @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
 internal class MessageError(error: String, log: Boolean) : RuntimeException(error) {
   internal val log = ThreeState.fromBoolean(log)
@@ -177,15 +184,12 @@ fun ActionCallback.toPromise(): Promise<Void> {
   return promise
 }
 
-fun resolvedPromise(): Promise<*> = Promise.DONE
-
-fun <T> resolvedPromise(result: T) = Promise.resolve(result)
-
-fun all(promises: Collection<Promise<*>>) = if (promises.size == 1) promises.first() else all(promises, null)
+fun all(promises: Collection<Promise<*>>): Promise<*> = if (promises.size == 1) promises.first() else all(promises, null)
 
 fun <T> all(promises: Collection<Promise<*>>, totalResult: T?): Promise<T> {
   if (promises.isEmpty()) {
-    return resolvedPromise(null)
+    @Suppress("UNCHECKED_CAST")
+    return DONE as Promise<T>
   }
 
   val totalPromise = AsyncPromise<T>()
@@ -209,7 +213,8 @@ private class CountDownConsumer<T>(@Volatile private var countDown: Int, private
 
 fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
   if (promises.isEmpty()) {
-    return resolvedPromise(null)
+    @Suppress("UNCHECKED_CAST")
+    return DONE as Promise<T>
   }
   else if (promises.size == 1) {
     return promises.first()

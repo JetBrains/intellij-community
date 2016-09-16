@@ -30,7 +30,6 @@ import com.intellij.util.ArrayUtil;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -58,14 +57,26 @@ public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
         VirtualFile[] roots = model.getContentRoots();
         VirtualFile root;
         if (roots.length == 0) {
-          root = module.getModuleFile().getParent();
-          model.addContentEntry(root);
+          VirtualFile moduleFile = module.getModuleFile();
+          if (moduleFile != null) {
+            root = moduleFile.getParent();
+            model.addContentEntry(root);
+          }
+          else {
+            return;
+          }
         }
         else {
           root = roots[0];
         }
 
-        VirtualFile existingPom = root.findChild(MavenConstants.POM_XML);
+        VirtualFile existingPom = null;
+        for (VirtualFile child : root.getChildren()) {
+          if (child.getName().startsWith("pom.")) {
+            existingPom = child;
+          }
+        }
+
         if (existingPom != null) {
           MavenProjectsManager.getInstance(module.getProject()).addManagedFilesOrUnignore(Collections.singletonList(existingPom));
         }

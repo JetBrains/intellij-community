@@ -49,6 +49,7 @@ class DonePromise<T> implements Getter<T>, Promise<T> {
     return this;
   }
 
+  @NotNull
   @Override
   public Promise<T> processed(@NotNull Consumer<? super T> processed) {
     done(processed);

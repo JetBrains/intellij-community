@@ -43,10 +43,10 @@ internal class RejectedPromise<T>(private val error: Throwable) : Promise<T> {
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <SUB_RESULT> then(done: Function<in T, out SUB_RESULT>) = this as Promise<SUB_RESULT>
+  override fun <SUB_RESULT> then(handler: Function<in T, out SUB_RESULT>) = this as Promise<SUB_RESULT>
 
   @Suppress("UNCHECKED_CAST")
-  override fun <SUB_RESULT> thenAsync(done: Function<in T, Promise<SUB_RESULT>>) = this as Promise<SUB_RESULT>
+  override fun <SUB_RESULT> thenAsync(handler: Function<in T, Promise<SUB_RESULT>>) = this as Promise<SUB_RESULT>
 
   override fun notify(child: AsyncPromise<in T>) {
     child.setError(error)

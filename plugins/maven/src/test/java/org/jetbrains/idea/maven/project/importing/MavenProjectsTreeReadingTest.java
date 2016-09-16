@@ -1869,7 +1869,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
 
     File f = new File(myDir, "tree.dat");
     myTree.save(f);
-    MavenProjectsTree read = MavenProjectsTree.read(f);
+    MavenProjectsTree read = MavenProjectsTree.read(myProject, f);
 
     List<MavenProject> roots = read.getRootProjects();
     assertEquals(1, roots.size());

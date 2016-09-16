@@ -531,7 +531,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   private static void patchHiDPI(UIDefaults defaults) {
     Object prevScaleVal = defaults.get("hidpi.scaleFactor");
-    float prevScale = prevScaleVal != null ? (Float)prevScaleVal : JBUI.scale(1f);
+    // used to normalize previously patched values
+    float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
     if (prevScale == JBUI.scale(1f) && prevScaleVal != null) return;
 

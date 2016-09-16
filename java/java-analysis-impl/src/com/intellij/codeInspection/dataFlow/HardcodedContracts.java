@@ -74,6 +74,11 @@ public class HardcodedContracts {
         constraints[0] = FALSE_VALUE;
         return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
       }
+      if ("notNull".equals(methodName) && paramCount > 0) {
+        MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
+        constraints[0] = NULL_VALUE;
+        return Collections.singletonList(new MethodContract(constraints, THROW_EXCEPTION));
+      }
     }
     else if ("junit.framework.Assert".equals(className) ||
              "org.junit.Assert".equals(className) ||

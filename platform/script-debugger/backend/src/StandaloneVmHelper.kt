@@ -21,12 +21,11 @@ import io.netty.channel.Channel
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.errorIfNotMessage
-import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.concurrency.nullPromise
 import org.jetbrains.jsonProtocol.Request
 import org.jetbrains.rpc.CONNECTION_CLOSED_MESSAGE
 import org.jetbrains.rpc.LOG
 import org.jetbrains.rpc.MessageProcessor
-import org.jetbrains.concurrency.Promise as OJCPromise
 
 open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: MessageProcessor, channel: Channel) : AttachStateManager {
   private @Volatile var channel: Channel? = channel
@@ -49,7 +48,7 @@ open class StandaloneVmHelper(private val vm: Vm, private val messageProcessor: 
     get() = channel != null
 
   override fun detach(): Promise<*> {
-    val currentChannel = channel ?: return resolvedPromise()
+    val currentChannel = channel ?: return nullPromise()
 
     messageProcessor.cancelWaitingRequests()
     val disconnectRequest = (vm as? VmEx)?.createDisconnectRequest()

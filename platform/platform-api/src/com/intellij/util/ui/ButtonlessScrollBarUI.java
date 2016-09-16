@@ -719,7 +719,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
         bounds.width -= vertical ? 1 : 0;
         bounds.height -= vertical ? 0 : 1;
       }
-      else if (Registry.is("ide.scroll.thumb.small.if.opaque")) {
+      else {
         bounds.x += 1;
         bounds.y += 1;
         bounds.width -= 2;

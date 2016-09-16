@@ -111,7 +111,7 @@ public class ProjectUtil {
     }
 
     if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        virtualFile.isDirectory() && virtualFile.findChild(Project.DIRECTORY_STORE_FOLDER) != null) {
+        virtualFile.isDirectory() && new File(path, Project.DIRECTORY_STORE_FOLDER).exists()) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
 

@@ -50,12 +50,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
@@ -226,6 +224,19 @@ public class MavenUtil {
   public static File getPluginSystemDir(String folder) {
     // PathManager.getSystemPath() may return relative path
     return new File(PathManager.getSystemPath(), "Maven" + "/" + folder).getAbsoluteFile();
+  }
+
+  public static File getBaseDir(VirtualFile file) {
+    File baseDir = VfsUtilCore.virtualToIoFile(file.isDirectory() || file.getParent() == null ? file : file.getParent());
+    File dir = baseDir;
+    do {
+      if (new File(dir, ".mvn").isDirectory()) {
+        baseDir = dir;
+        break;
+      }
+    }
+    while ((dir = dir.getParentFile()) != null);
+    return baseDir;
   }
 
   public static VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
@@ -940,5 +951,11 @@ public class MavenUtil {
 
   public static String getIdeaVersionToPassToMavenProcess() {
     return ApplicationInfoImpl.getShadowInstance().getMajorVersion() + "." + ApplicationInfoImpl.getShadowInstance().getMinorVersion();
+  }
+
+  public static boolean isPomFileName(String fileName) {
+    return fileName.equals(MavenConstants.POM_XML) ||
+           fileName.endsWith(".pom") || fileName.startsWith("pom.") ||
+           fileName.equals(MavenConstants.SUPER_POM_XML);
   }
 }

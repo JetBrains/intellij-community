@@ -316,7 +316,7 @@ public class RepositoryAttachHandler {
     boolean cancelled = false;
     final Collection<MavenArtifact> result = new LinkedHashSet<>();
     MavenEmbeddersManager manager = MavenProjectsManager.getInstance(project).getEmbeddersManager();
-    MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD);
+    MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_DOWNLOAD, null, null);
     try {
       final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(project).getGeneralSettings();
       embedder.customizeForResolve(

@@ -185,9 +185,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
       ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
     }
 
-    IconLoader.setFilter(Registry.is("color.blindness.daltonization")
-                         ? DaltonizationFilter.get(COLOR_BLINDNESS)
-                         : MatrixFilter.get(COLOR_BLINDNESS));
+    IconLoader.setFilter(MatrixFilter.get(COLOR_BLINDNESS));
   }
 
   /**

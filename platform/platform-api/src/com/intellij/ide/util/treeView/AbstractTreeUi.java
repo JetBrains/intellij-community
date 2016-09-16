@@ -1560,7 +1560,7 @@ public class AbstractTreeUi {
                       @Override
                       public Promise<?> run() {
                         expand(element, null);
-                        return Promise.DONE;
+                        return Promises.resolvedPromise();
                       }
                     }, pass, node);
                   }
@@ -1688,7 +1688,7 @@ public class AbstractTreeUi {
       @Override
       public Promise<?> run() {
         if (pass.isExpired()) return Promises.<Void>rejectedPromise();
-        if (childNodes.isEmpty()) return Promise.DONE;
+        if (childNodes.isEmpty()) return Promises.resolvedPromise();
 
 
         List<Promise<?>> promises = new SmartList<>();
