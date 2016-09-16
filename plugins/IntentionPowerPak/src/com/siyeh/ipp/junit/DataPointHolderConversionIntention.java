@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ipp.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
@@ -46,6 +47,8 @@ public class DataPointHolderConversionIntention extends PsiElementBaseIntentionA
     final PsiElement holder = element.getParent();
     PsiModifierListOwner createdElement =
       holder instanceof PsiField ? convertToMethod((PsiField)holder) : convertToField((PsiMethod)holder);
+
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     final PsiModifierListOwner oldElement = (PsiModifierListOwner)holder;
     final PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(oldElement, DATA_POINT_FQN, DATA_POINTS_FQN);

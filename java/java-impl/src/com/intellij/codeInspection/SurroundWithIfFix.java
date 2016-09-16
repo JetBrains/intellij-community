@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     PsiElement anchorStatement = RefactoringUtil.getParentStatement(element, false);
     LOG.assertTrue(anchorStatement != null);
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     if (anchorStatement.getParent() instanceof PsiLambdaExpression) {
       final PsiElement body = ((PsiLambdaExpression)RefactoringUtil.expandExpressionLambdaToCodeBlock(anchorStatement)).getBody();
       LOG.assertTrue(body instanceof PsiCodeBlock);

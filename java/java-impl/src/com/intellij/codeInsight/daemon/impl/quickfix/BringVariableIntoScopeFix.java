@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -28,8 +29,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
 
 /**
  * @author ven
@@ -99,6 +98,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
     LOG.assertTrue(myOutOfScopeVariable != null);
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PsiManager manager = file.getManager();
     myOutOfScopeVariable.normalizeDeclaration();
     PsiUtil.setModifierProperty(myOutOfScopeVariable, PsiModifier.FINAL, false);

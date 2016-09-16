@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -126,6 +127,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
                          @Nullable("is null when called from inspection") Editor editor,
                          @NotNull PsiElement startElement,
                          @NotNull PsiElement endElement) {
+        if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
         startElement.replace(getModifiedExpression((PsiExpression)getStartElement()));
       }
 

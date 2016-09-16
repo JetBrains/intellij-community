@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -116,7 +117,7 @@ public class DfaOptionalSupport {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression
         methodCallExpression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-      if (methodCallExpression != null) {
+      if (methodCallExpression != null && FileModificationService.getInstance().preparePsiElementForWrite(methodCallExpression)) {
         final PsiElement ofNullableExprName =
           ((PsiMethodCallExpression)JavaPsiFacade.getElementFactory(project)
             .createExpressionFromText("Optional." + myTargetMethodName + "(null)", null)).getMethodExpression();
