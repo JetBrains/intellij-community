@@ -22,21 +22,18 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.jetbrains.concurrency.Promises.rejectedPromise;
-import static org.jetbrains.concurrency.Promises.resolvedPromise;
-
 public interface Promise<T> {
   /**
    * @deprecated Use Promises.resolvedPromise()
    */
   @Deprecated
-  Promise<Void> DONE = resolvedPromise();
+  Promise<Void> DONE = Promises.resolvedPromise();
 
   /**
    * @deprecated Use Promises.rejectedPromise()
    */
   @Deprecated
-  Promise<Void> REJECTED = rejectedPromise();
+  Promise<Void> REJECTED = Promises.rejectedPromise();
 
   enum State {
     PENDING, FULFILLED, REJECTED
@@ -44,7 +41,7 @@ public interface Promise<T> {
 
   @NotNull
   static <T> Promise<T> resolve(T result) {
-    return result == null ? resolvedPromise() : new DonePromise<>(result);
+    return result == null ? Promises.resolvedPromise() : new DonePromise<>(result);
   }
 
   @NotNull
