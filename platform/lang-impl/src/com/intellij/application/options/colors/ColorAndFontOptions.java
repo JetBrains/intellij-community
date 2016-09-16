@@ -232,8 +232,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   public void removeScheme(String name) {
     if (mySelectedScheme.getName().equals(name)) {
-      //noinspection HardCodedStringLiteral
-      selectScheme("Default");
+      selectDefaultScheme();
     }
 
     boolean deletedNewlyCreated = false;
@@ -247,6 +246,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     mySchemes.remove(name);
     resetSchemesCombo(null);
     mySomeSchemesDeleted = mySomeSchemesDeleted || !deletedNewlyCreated;
+  }
+
+
+  private void selectDefaultScheme() {
+    DefaultColorsScheme defaultScheme =
+      (DefaultColorsScheme)EditorColorsManager.getInstance().getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
+    selectScheme(defaultScheme.getEditableCopyName());
   }
   
   
