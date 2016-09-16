@@ -565,9 +565,6 @@
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor"
                             id="liveTemplates" order="first"/>
 
-    <completion.skip implementation="com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor$Skipper"
-                     id="skipLiveTemplate"/>
-
     <applicationService serviceInterface="com.intellij.execution.console.ConsoleFoldingSettings"
                         serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
     <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>
