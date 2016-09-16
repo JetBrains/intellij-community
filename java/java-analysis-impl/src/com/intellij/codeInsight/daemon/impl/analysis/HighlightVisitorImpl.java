@@ -52,10 +52,7 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -152,9 +149,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   private void registerReferencesFromInjectedFragments(@NotNull PsiElement element) {
-    InjectedLanguageManager.getInstance(myFile.getProject()).enumerateEx(element, myFile, false,
-                                                                         (injectedPsi, places) -> injectedPsi.accept(REGISTER_REFERENCES_VISITOR)
-    );
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myFile.getProject());
+    manager.enumerateEx(element, myFile, false, (injectedPsi, places) -> injectedPsi.accept(REGISTER_REFERENCES_VISITOR));
   }
 
   @Override
@@ -167,15 +163,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myLanguageLevel = PsiUtil.getLanguageLevel(file);
       myJavaSdkVersion = notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
       if (updateWholeFile) {
-        Project project = file.getProject();
-        DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
-        FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress == null) throw new IllegalStateException("Must be run under progress");
         RefCountHolder refCountHolder = RefCountHolder.get(file);
         myRefCountHolder = refCountHolder;
+        Project project = file.getProject();
         Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        TextRange dirtyScope = notNull(document == null ? null : fileStatusMap.getFileDirtyScope(document, Pass.UPDATE_ALL), file.getTextRange());
+        TextRange dirtyScope = Optional.ofNullable(document)
+          .map(doc -> DaemonCodeAnalyzerEx.getInstanceEx(project).getFileStatusMap().getFileDirtyScope(doc, Pass.UPDATE_ALL))
+          .orElse(file.getTextRange());
         success = refCountHolder.analyze(file, dirtyScope, progress, () -> {
           highlight.run();
           progress.checkCanceled();
