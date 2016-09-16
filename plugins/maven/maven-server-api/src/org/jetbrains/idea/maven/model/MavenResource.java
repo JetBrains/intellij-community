@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MavenResource implements Serializable {
@@ -29,8 +30,8 @@ public class MavenResource implements Serializable {
     myDirectory = directory;
     myFiltered = filtered;
     myTargetPath = targetPath;
-    myIncludes = includes;
-    myExcludes = excludes;
+    myIncludes = new ArrayList<String>(includes);
+    myExcludes = new ArrayList<String>(excludes);
   }
 
   public String getDirectory() {
@@ -62,8 +63,8 @@ public class MavenResource implements Serializable {
 
     if (myFiltered != that.myFiltered) return false;
     if (myDirectory != null ? !myDirectory.equals(that.myDirectory) : that.myDirectory != null) return false;
-    if (myExcludes != null ? !myExcludes.equals(that.myExcludes) : that.myExcludes != null) return false;
-    if (myIncludes != null ? !myIncludes.equals(that.myIncludes) : that.myIncludes != null) return false;
+    if (!myExcludes.equals(that.myExcludes)) return false;
+    if (!myIncludes.equals(that.myIncludes)) return false;
     if (myTargetPath != null ? !myTargetPath.equals(that.myTargetPath) : that.myTargetPath != null) return false;
 
     return true;
@@ -74,8 +75,8 @@ public class MavenResource implements Serializable {
     int result = myDirectory != null ? myDirectory.hashCode() : 0;
     result = 31 * result + (myFiltered ? 1 : 0);
     result = 31 * result + (myTargetPath != null ? myTargetPath.hashCode() : 0);
-    result = 31 * result + (myIncludes != null ? myIncludes.hashCode() : 0);
-    result = 31 * result + (myExcludes != null ? myExcludes.hashCode() : 0);
+    result = 31 * result + myIncludes.hashCode();
+    result = 31 * result + myExcludes.hashCode();
     return result;
   }
 }

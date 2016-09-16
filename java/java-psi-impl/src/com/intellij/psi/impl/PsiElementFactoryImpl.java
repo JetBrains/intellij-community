@@ -251,7 +251,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     }
 
     final String canonicalText = returnType.getCanonicalText(true);
-    final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public " + canonicalText + " " + name + "() {} }");
+    final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public " + canonicalText + " " + name + "() {\n} }");
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length < 1) {
       throw new IncorrectOperationException("Class was not created. Method name: " + name + "; return type: " + canonicalText);

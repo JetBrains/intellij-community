@@ -17,7 +17,7 @@ package org.jetbrains.rpc
 
 import com.intellij.openapi.diagnostic.Logger
 import io.netty.buffer.ByteBuf
-import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.createError
 import org.jetbrains.jsonProtocol.Request
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -63,5 +63,5 @@ interface RequestCallback<SUCCESS_RESPONSE> {
 
   fun onError(error: Throwable)
 
-  fun onError(error: String) = onError(Promise.createError(error))
+  fun onError(error: String) = onError(createError(error))
 }

@@ -18,8 +18,8 @@ package org.jetbrains.debugger
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueGroup
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.done
+import org.jetbrains.concurrency.errorIfNotMessage
 import org.jetbrains.debugger.values.FunctionValue
 import org.jetbrains.rpc.LOG
 import java.util.*
@@ -39,7 +39,7 @@ internal class FunctionScopesValueGroup(private val functionValue: FunctionValue
           }
         }
       .rejected {
-        Promise.logError(LOG, it)
+        LOG.errorIfNotMessage(it)
         node.setErrorMessage(it.message!!)
       }
   }

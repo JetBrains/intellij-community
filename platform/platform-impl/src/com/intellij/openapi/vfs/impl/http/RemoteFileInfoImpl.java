@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
+
 /**
  * @author nik
  */
@@ -305,7 +307,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
 
         case ERROR_OCCURRED:
         default:
-          return Promise.reject("errorOccured");
+          return rejectedPromise("errorOccurred");
       }
     }
   }

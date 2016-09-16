@@ -18,10 +18,12 @@ package org.jetbrains.concurrency
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lang.CompoundRuntimeException
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 
 class AsyncPromiseTest {
@@ -33,6 +35,53 @@ class AsyncPromiseTest {
   @Test
   fun rejected() {
     doHandlerTest(true)
+  }
+
+  @Test
+  fun state() {
+    val promise = AsyncPromise<String>()
+    val count = AtomicInteger()
+
+    val r = {
+      promise.done { count.incrementAndGet() }
+    }
+
+    val s = {
+      promise.setResult("test")
+    }
+
+    val numThreads = 30
+    assertConcurrent(*Array(numThreads, {
+      if (it and 1 === 0) r else s
+    }))
+
+    assertThat(count.get()).isEqualTo(numThreads / 2)
+    assertThat(promise.get()).isEqualTo("test")
+
+    r()
+    assertThat(count.get()).isEqualTo((numThreads / 2) + 1)
+  }
+
+  @Test
+  fun blockingGet() {
+    val promise = AsyncPromise<String>()
+    assertConcurrent(
+        { assertThat(promise.blockingGet(100)).isEqualTo("test") },
+        {
+          Thread.sleep(80)
+          promise.setResult("test")
+        })
+  }
+
+  @Test
+  fun blockingGet2() {
+    val promise = AsyncPromise<String>()
+    assertConcurrent(
+        { assertThatThrownBy { promise.blockingGet(50) }.isInstanceOf(TimeoutException::class.java) },
+        {
+          Thread.sleep(80)
+          promise.setResult("test")
+        })
   }
 
   fun doHandlerTest(reject: Boolean) {
@@ -68,7 +117,7 @@ class AsyncPromiseTest {
   }
 }
 
-fun assertConcurrent(vararg runnables: () -> Any, maxTimeoutSeconds: Int = 5) {
+fun assertConcurrent(vararg runnables: () -> Any?, maxTimeoutSeconds: Int = 5) {
   val numThreads = runnables.size
   val exceptions = ContainerUtil.createLockFreeCopyOnWriteList<Throwable>()
   val threadPool = Executors.newFixedThreadPool(numThreads)

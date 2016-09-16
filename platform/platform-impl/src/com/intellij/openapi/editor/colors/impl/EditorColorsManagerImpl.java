@@ -314,6 +314,17 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   @Override
   public EditorColorsScheme getGlobalScheme() {
     EditorColorsScheme scheme = mySchemeManager.getCurrentScheme();
+    String editableCopyName = null;
+    if (scheme instanceof DefaultColorsScheme && ((DefaultColorsScheme)scheme).hasEditableCopy()) {
+      editableCopyName = ((DefaultColorsScheme)scheme).getEditableCopyName();
+    }
+    else if (scheme instanceof BundledScheme) {
+      editableCopyName = ((BundledScheme)scheme).getEditableCopyName();
+    }
+    if (editableCopyName != null) {
+      EditorColorsScheme editableCopy = getScheme(editableCopyName);
+      if (editableCopy != null) return editableCopy;
+    }
     return scheme == null ? getDefaultScheme() : scheme;
   }
 

@@ -21,8 +21,6 @@ import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * @author Eugene Zhuravlev
  *         Date: Aug 24, 2010
@@ -30,12 +28,12 @@ import java.util.List;
 public class LowMemoryWatcher {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcher");
 
-  private static final List<Runnable> ourListeners = new WeakList<Runnable>();
+  private static final WeakList<Runnable> ourListeners = new WeakList<Runnable>();
   private final Runnable myRunnable;
 
   static void onLowMemorySignalReceived() {
     LOG.info("Low memory signal received.");
-    for (Runnable watcher : ourListeners) {
+    for (Runnable watcher : ourListeners.toStrongList()) {
       try {
         watcher.run();
       }

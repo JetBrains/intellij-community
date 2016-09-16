@@ -49,6 +49,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testRepeatable() { doTest8(); }
   public void testEnumValues() { doTest8(); }
   public void testReceiverParameters() { doTest8(); }
+  public void testAnnotationOverIncompleteCode() { doTest(); }
 
   private void doTest() {
     setLanguageLevel(LanguageLevel.JDK_1_7);

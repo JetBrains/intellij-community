@@ -127,7 +127,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
     RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.DARCULA : ScrollPainter.Thumb.DEFAULT;
-    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, Registry.is("ide.scroll.thumb.small.if.opaque"));
+    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, true);
   }
 
   void onThumbMove() {

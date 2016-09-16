@@ -15,6 +15,9 @@
  */
 package com.intellij.junit5;
 
+import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.execution.junit.JUnit5Framework;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -22,10 +25,18 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.intellij.testIntegration.TestFramework;
+import one.util.streamex.StreamEx;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -64,6 +75,36 @@ class JUnit5AcceptanceTest {
     EdtTestUtil.runInEdtAndWait(() -> {
       PsiClass aClass = myFixture.addClass("interface MyTest {@org.junit.jupiter.api.Test default void method() {}}");
       assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+    });
+  }
+
+  @Test
+  void testFrameworkDetection() {
+    TestRunnerUtil.replaceIdeEventQueueSafely();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiClass aClass = myFixture.addClass("class MyTest {@org.junit.jupiter.api.Test void method() {}}");
+      assertNotNull(aClass);
+      TestFramework framework = TestFrameworks.detectFramework(aClass);
+      assertTrue(framework instanceof JUnit5Framework, framework.getName());
+    });
+  }
+
+  @Test
+  void methodPresentations() {
+    TestRunnerUtil.replaceIdeEventQueueSafely();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      PsiClass aClass = myFixture.addClass("class MyTest {" +
+                                           "  @org.junit.jupiter.api.Test void method() {}" +
+                                           "  @org.junit.jupiter.api.Test void method(a.TestInfo info) {}" +
+                                           "  @org.junit.Test void method1() {}" +
+                                           "  @org.junit.Test void method1(a.TestInfo info) {}" +
+                                           "}");
+      assertNotNull(aClass);
+
+      Stream<String> expectedData = Arrays.stream(new String[]{"method", "method(a.TestInfo)", "method1", "method1"});
+      StreamEx.of(aClass.getMethods())
+        .zipWith(expectedData)
+        .forEach(e -> assertEquals(e.getValue(), JUnitConfiguration.Data.getMethodPresentation(e.getKey())));
     });
   }
 }

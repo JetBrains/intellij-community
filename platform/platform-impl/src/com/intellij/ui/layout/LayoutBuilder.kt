@@ -36,6 +36,6 @@ class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = 
   }
 
   inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
-    LayoutBuilder(`$`, buttonGroup).init()
+    LayoutBuilder(`$`, ButtonGroup()).init()
   }
 }

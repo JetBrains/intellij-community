@@ -21,5 +21,6 @@
     <orderEntry type="library" name="opentest4j" level="project" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="execution-impl" scope="TEST" />
+    <orderEntry type="module" module-name="junit" scope="TEST" />
   </component>
 </module>

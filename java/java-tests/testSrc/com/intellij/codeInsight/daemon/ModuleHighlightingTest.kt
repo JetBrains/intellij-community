@@ -40,8 +40,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   }
 
   fun testWrongFileName() {
-    myFixture.configureByText("M.java", """/* ... */ <error descr="Module declaration should be in a file named 'module-info.java'">module M</error> { }""")
-    myFixture.checkHighlighting()
+    highlight("M.java", """/* ... */ <error descr="Module declaration should be in a file named 'module-info.java'">module M</error> { }""")
   }
 
   fun testFileDuplicate() {
@@ -50,9 +49,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   }
 
   fun testWrongFileLocation() {
-    val file = addFile("pkg/module-info.java", """<warning descr="Module declaration should be located in a module's source root">module M</warning> { }""")
-    myFixture.configureFromExistingVirtualFile(file)
-    myFixture.checkHighlighting()
+    highlight("pkg/module-info.java", """<warning descr="Module declaration should be located in a module's source root">module M</warning> { }""")
   }
 
   fun testDuplicateStatements() {
@@ -152,8 +149,10 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   //<editor-fold desc="Helpers.">
   private fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN) = VfsTestUtil.createFile(module.root(), path, text)
 
-  private fun highlight(text: String, filter: Boolean = false) {
-    myFixture.configureByText("module-info.java", text)
+  private fun highlight(text: String, filter: Boolean = false) = highlight("module-info.java", text, filter)
+
+  private fun highlight(path: String, text: String, filter: Boolean = false) {
+    myFixture.configureFromExistingVirtualFile(addFile(path, text))
     if (filter) {
       (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter { it.name != PsiJavaModule.MODULE_INFO_FILE }
     }

@@ -222,7 +222,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
     return classes.size() > 1;
   }
 
-  private static PsiElement[] collectLocationElements(LinkedHashSet<String> classes, DataContext dataContext) {
+  private PsiElement[] collectLocationElements(LinkedHashSet<String> classes, DataContext dataContext) {
     final Location<?>[] locations = Location.DATA_KEYS.getData(dataContext);
     if (locations != null) {
       List<PsiElement> elements = new ArrayList<>();
@@ -238,11 +238,11 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
     return null;
   }
 
-  public static String getQName(PsiElement psiMember) {
+  public String getQName(PsiElement psiMember) {
     return getQName(psiMember, null);
   }
 
-  public static String getQName(PsiElement psiMember, Location location) {
+  public String getQName(PsiElement psiMember, Location location) {
     if (psiMember instanceof PsiClass) {
       return ClassUtil.getJVMClassName((PsiClass)psiMember);
     }
@@ -252,11 +252,15 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends Module
                                        : location instanceof PsiMemberParameterizedLocation ? ((PsiMemberParameterizedLocation)location).getContainingClass() 
                                                                                             : ((PsiMember)psiMember).getContainingClass();
       assert containingClass != null;
-      return ClassUtil.getJVMClassName(containingClass) + "," + ((PsiMember)psiMember).getName();
+      return ClassUtil.getJVMClassName(containingClass) + "," + getMethodPresentation((PsiMember)psiMember);
     } else if (psiMember instanceof PsiPackage) {
       return ((PsiPackage)psiMember).getQualifiedName();
     }
     assert false;
     return null;
+  }
+
+  protected String getMethodPresentation(PsiMember psiMember) {
+    return psiMember.getName();
   }
 }

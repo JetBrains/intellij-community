@@ -460,7 +460,10 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
   }
 
-  public MavenEmbedderWrapper createEmbedder(final Project project, final boolean alwaysOnline) {
+  public MavenEmbedderWrapper createEmbedder(final Project project,
+                                             final boolean alwaysOnline,
+                                             @Nullable String workingDirectory,
+                                             @Nullable String multiModuleProjectDirectory) {
     return new MavenEmbedderWrapper(this) {
       @NotNull
       @Override
@@ -472,8 +475,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         }
 
         settings.setProjectJdk(MavenUtil.getSdkPath(ProjectRootManager.getInstance(project).getProjectSdk()));
-
-        return MavenServerManager.this.getOrCreateWrappee().createEmbedder(settings);
+        return MavenServerManager.this.getOrCreateWrappee()
+          .createEmbedder(new MavenEmbedderSettings(settings, workingDirectory, multiModuleProjectDirectory));
       }
     };
   }

@@ -762,8 +762,11 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() + "." : "";
 
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-      final SuggestedNameInfo suggestedNameInfo = codeStyleManager
-        .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, itemToAdd.getType(), false);
+      SuggestedNameInfo suggestedNameInfo =
+        codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, itemToAdd.getType(), false);
+      if (suggestedNameInfo.names.length == 0) {
+        suggestedNameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, "item", null, itemToAdd.getType(), false);
+      }
       String varName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, methodCallExpression, false).names[0];
 
       PsiExpression forEachBody =

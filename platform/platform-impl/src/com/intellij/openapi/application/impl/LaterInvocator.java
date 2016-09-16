@@ -299,7 +299,7 @@ public class LaterInvocator {
 
   public static Object[] getCurrentModalEntitiesForProject(Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ourModalEntities.isEmpty()) {
+    if (project == null || !ourModalEntities.isEmpty()) {
       return ArrayUtil.toObjectArray(ourModalEntities);
     }
     return ArrayUtil.toObjectArray(projectToModalEntities.get(project));

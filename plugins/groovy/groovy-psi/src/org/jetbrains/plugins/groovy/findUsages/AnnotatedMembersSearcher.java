@@ -126,7 +126,7 @@ public class AnnotatedMembersSearcher implements QueryExecutor<PsiModifierListOw
             PsiModifierList list = candidate.getModifierList();
             if (list != null) {
               for (PsiAnnotation annotation : list.getAnnotations()) {
-                if (annotationFQN.equals(annotation.getQualifiedName()) && !consumer.process(candidate)) {
+                if ((p.isApproximate() || annotationFQN.equals(annotation.getQualifiedName())) && !consumer.process(candidate)) {
                   return false;
                 }
               }

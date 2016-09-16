@@ -24,6 +24,7 @@ import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsSavingComponent
 import com.intellij.openapi.diagnostic.catchAndLog
+import org.jetbrains.concurrency.runAsync
 
 class PasswordSafeImpl(/* public - backward compatibility */val settings: PasswordSafeSettings) : PasswordSafe(), SettingsSavingComponent {
   private @Volatile var currentProvider: PasswordStorage
@@ -94,6 +95,9 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
       set(attributes, credentials)
     }
   }
+
+  // maybe in the future we will use native async, so, this method added here instead "if need, just use runAsync in your code"
+  override fun getAsync(attributes: CredentialAttributes) = runAsync { get(attributes) }
 
   override fun save() {
     (currentProvider as? KeePassCredentialStore)?.let { it.save() }

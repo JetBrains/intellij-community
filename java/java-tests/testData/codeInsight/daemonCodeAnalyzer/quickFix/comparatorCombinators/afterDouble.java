@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Main {
   void sort(List<Person> persons) {
-    persons.sort(Comparator.comparingDouble(p -> p.getName().length()));
+    persons.sort(Comparator.comparingDouble(person -> person.getName().length()));
   }
 
   interface Person {

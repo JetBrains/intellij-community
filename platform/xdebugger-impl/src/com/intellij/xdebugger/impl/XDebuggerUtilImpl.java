@@ -77,12 +77,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.PromiseKt;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.*;
+
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
  * @author nik
@@ -271,7 +272,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             Promise.resolve((XLineBreakpoint)breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
           return;
         }
-        result.setResult(PromiseKt.<XLineBreakpoint>rejectedPromise());
+        result.setResult(rejectedPromise());
       }
     }.execute().getResultObject();
   }
@@ -431,7 +432,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(final XBreakpointType<B, ?> type) {
-    return (o1, o2) -> type.getDisplayText(o1).compareTo(type.getDisplayText(o2));
+    return Comparator.comparing(type::getDisplayText);
   }
 
   @Override
