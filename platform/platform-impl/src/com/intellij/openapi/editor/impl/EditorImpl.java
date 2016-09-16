@@ -7115,12 +7115,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       super.setupCorners();
       setBorder(new TablessBorder());
     }
-
-    @Override
-    protected boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
-      ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
-      return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
-    }
   }
 
   private class TablessBorder extends SideBorder {
