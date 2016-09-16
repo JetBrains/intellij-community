@@ -948,13 +948,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpoint(getScriptName(), 7);
         toggleBreakpoint(getScriptName(), 11);
         final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
-        debuggerSettings.watchReturnValues = true;
+        debuggerSettings.setWatchReturnValues(true);
       }
 
       @Override
       public void doFinally() {
         final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
-        debuggerSettings.watchReturnValues = false;
+        debuggerSettings.setWatchReturnValues(false);
       }
 
       @Override

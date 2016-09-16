@@ -27,15 +27,18 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.containers.HashSet;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
+import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,6 +49,7 @@ public class PyStackFrame extends XStackFrame {
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
   public static final String DOUBLE_UNDERSCORE = "__";
+  public static final HashSet<String> HIDE_TYPES = new HashSet<>(Arrays.asList("function", "type", "classobj", "module"));
 
   private Project myProject;
   private final PyFrameAccessor myDebugProcess;
@@ -143,16 +147,23 @@ public class PyStackFrame extends XStackFrame {
       node.addChildren(XValueChildrenList.EMPTY, true);
       return;
     }
-
+    final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
     XValueChildrenList filteredChildren = new XValueChildrenList();
     final HashMap<String, XValue> returnedValues = new HashMap<>();
     final HashMap<String, XValue> specialValues = new HashMap<>();
     final HashMap<String, XValue> ipythonHidden = new HashMap<>();
+
     for (int i = 0; i < children.size(); i++) {
       XValue value = children.getValue(i);
       String name = children.getName(i);
+      if (debuggerSettings.isSimplifiedView() && (value instanceof PyDebugValue) &&
+          (HIDE_TYPES.contains(((PyDebugValue)value).getType()))) {
+        continue;
+      }
       if ((value instanceof PyDebugValue) && ((PyDebugValue)value).isReturnedVal()) {
-        returnedValues.put(name, value);
+        if (debuggerSettings.isWatchReturnValues()) {
+          returnedValues.put(name, value);
+        }
       }
       else if ((value instanceof PyDebugValue) && ((PyDebugValue)value).isIPythonHidden()) {
         ipythonHidden.put(name, value);

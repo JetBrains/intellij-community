@@ -306,7 +306,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void init() {
     getSession().rebuildViews();
     registerBreakpoints();
-    setShowReturnValues(PyDebuggerSettings.getInstance().watchReturnValues);
+    setShowReturnValues(PyDebuggerSettings.getInstance().isWatchReturnValues());
   }
 
   @Override
@@ -428,6 +428,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
                                         @NotNull DefaultActionGroup settings) {
     super.registerAdditionalActions(leftToolbar, topToolbar, settings);
     settings.add(new WatchReturnValuesAction(this));
+    settings.add(new SimplifiedView(this));
   }
 
   private static class WatchReturnValuesAction extends ToggleAction {
@@ -437,7 +438,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
     public WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
       super("", "Enables watching executed functions return values", null);
-      myWatchesReturnValues = PyDebuggerSettings.getInstance().watchReturnValues;
+      myWatchesReturnValues = PyDebuggerSettings.getInstance().isWatchReturnValues();
       myProcess = debugProcess;
       myText = "Show Return Values";
     }
@@ -458,11 +459,45 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     @Override
     public void setSelected(AnActionEvent e, boolean watch) {
       myWatchesReturnValues = watch;
-      PyDebuggerSettings.getInstance().watchReturnValues = watch;
+      PyDebuggerSettings.getInstance().setWatchReturnValues(watch);
       final Project project = e.getProject();
       if (project != null) {
         myProcess.setShowReturnValues(myWatchesReturnValues);
+        myProcess.getSession().rebuildViews();
       }
+    }
+  }
+
+  private static class SimplifiedView extends ToggleAction {
+    private volatile boolean mySimplifiedView;
+    private final PyDebugProcess myProcess;
+    private final String myText;
+
+    public SimplifiedView(@NotNull PyDebugProcess debugProcess) {
+      super("", "Disables watching classes, functions and modules objects", null);
+      mySimplifiedView = PyDebuggerSettings.getInstance().isSimplifiedView();
+      myProcess = debugProcess;
+      myText = "Simplified Variables View";
+    }
+
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
+      super.update(e);
+      final Presentation presentation = e.getPresentation();
+      presentation.setEnabled(true);
+      presentation.setText(myText);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return mySimplifiedView;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean hide) {
+      mySimplifiedView = hide;
+      PyDebuggerSettings.getInstance().setSimplifiedView(hide);
+      myProcess.getSession().rebuildViews();
     }
   }
 
