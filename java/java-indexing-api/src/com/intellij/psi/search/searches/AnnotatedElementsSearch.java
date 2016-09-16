@@ -34,7 +34,7 @@ public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierL
     private final boolean myApproximate;
 
     public Parameters(final PsiClass annotationClass, final SearchScope scope, Class<? extends PsiModifierListOwner>... types) {
-      this(annotationClass, scope, true, types);
+      this(annotationClass, scope, false, types);
     }
 
     public Parameters(final PsiClass annotationClass, final SearchScope scope, boolean approximate, Class<? extends PsiModifierListOwner>... types) {

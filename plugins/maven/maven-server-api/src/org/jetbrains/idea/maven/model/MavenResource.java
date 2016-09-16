@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MavenResource implements Serializable {
@@ -30,8 +31,8 @@ public class MavenResource implements Serializable {
     myDirectory = directory;
     myFiltered = filtered;
     myTargetPath = targetPath;
-    myIncludes = new ArrayList<String>(includes);
-    myExcludes = new ArrayList<String>(excludes);
+    myIncludes = includes == null ? Collections.<String>emptyList() : new ArrayList<String>(includes);
+    myExcludes = excludes == null ? Collections.<String>emptyList() : new ArrayList<String>(excludes);
   }
 
   public String getDirectory() {
