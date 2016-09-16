@@ -21,17 +21,17 @@ import java.util.regex.Pattern;
 
 public class PatternHyperlinkFormat {
   private final Pattern myPattern;
-  private final boolean myZeroBasedLine;
-  private final boolean myZeroBasedColumn;
+  private final boolean myZeroBasedLineNumbering;
+  private final boolean myZeroBasedColumnNumbering;
   private final PatternHyperlinkPart[] myLinkParts;
 
   public PatternHyperlinkFormat(@NotNull Pattern pattern,
-                                boolean zeroBasedLine,
-                                boolean zeroBasedColumn,
+                                boolean zeroBasedLineNumbering,
+                                boolean zeroBasedColumnNumbering,
                                 @NotNull PatternHyperlinkPart... linkParts) {
     myPattern = pattern;
-    myZeroBasedLine = zeroBasedLine;
-    myZeroBasedColumn = zeroBasedColumn;
+    myZeroBasedLineNumbering = zeroBasedLineNumbering;
+    myZeroBasedColumnNumbering = zeroBasedColumnNumbering;
     myLinkParts = linkParts;
   }
 
@@ -40,12 +40,12 @@ public class PatternHyperlinkFormat {
     return myPattern;
   }
 
-  public boolean isZeroBasedLine() {
-    return myZeroBasedLine;
+  public boolean isZeroBasedLineNumbering() {
+    return myZeroBasedLineNumbering;
   }
 
-  public boolean isZeroBasedColumn() {
-    return myZeroBasedColumn;
+  public boolean isZeroBasedColumnNumbering() {
+    return myZeroBasedColumnNumbering;
   }
 
   @NotNull
