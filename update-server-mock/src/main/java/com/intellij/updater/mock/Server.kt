@@ -100,7 +100,7 @@ private class AccessLogFilter : Filter() {
 
   override fun doFilter(ex: HttpExchange, chain: Chain) {
     val out = CountingOutputStream(ex.responseBody)
-    ex.setStreams(ex.requestBody, out)
+    ex.setStreams(null, out)
 
     try {
       chain.doFilter(ex)
