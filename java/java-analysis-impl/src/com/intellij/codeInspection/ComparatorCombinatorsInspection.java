@@ -246,11 +246,14 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
           }
         }
         if (nameCandidate != null) {
-          String newName = codeStyleManager.suggestUniqueVariableName(nameCandidate, lambda, true).names[0];
-          Collection<PsiReferenceExpression> references = PsiTreeUtil.collectElementsOfType(body, PsiReferenceExpression.class);
-          StreamEx.of(references).filter(ref -> ref.resolve() == parameter).map(PsiJavaCodeReferenceElement::getReferenceNameElement)
-            .nonNull().forEach(nameElement -> nameElement.replace(factory.createIdentifier(newName)));
-          parameter.setName(newName);
+          String[] names = codeStyleManager.suggestUniqueVariableName(nameCandidate, lambda, true).names;
+          if (names.length > 0) {
+            String newName = names[0];
+            Collection<PsiReferenceExpression> references = PsiTreeUtil.collectElementsOfType(body, PsiReferenceExpression.class);
+            StreamEx.of(references).filter(ref -> ref.resolve() == parameter).map(PsiJavaCodeReferenceElement::getReferenceNameElement)
+              .nonNull().forEach(nameElement -> nameElement.replace(factory.createIdentifier(newName)));
+            parameter.setName(newName);
+          }
         }
       }
     }
