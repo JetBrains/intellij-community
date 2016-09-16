@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,21 +26,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * @author nik
- */
-public class JUnitExternalLibraryResolver extends ExternalLibraryResolver {
-  private static final Set<String> JUNIT4_ANNOTATIONS = ContainerUtil.set(
-    "Test", "Ignore", "RunWith", "Before", "BeforeClass", "After", "AfterClass"
+public class JUnit5ExternalLibraryResolver extends ExternalLibraryResolver {
+  private static final Set<String> JUNIT5_ANNOTATIONS = ContainerUtil.set(
+    "Test", "Disabled", "TestFactory", "BeforeEach", "BeforeAll", "AfterEach", "AfterAll", "DisplayName", "Nested"
   );
   @Nullable
   @Override
   public ExternalClassResolveResult resolveClass(@NotNull String shortClassName, @NotNull ThreeState isAnnotation, @NotNull Module contextModule) {
-    if ("TestCase".equals(shortClassName)) {
-      return new ExternalClassResolveResult("junit.framework.TestCase", JUnitExternalLibraryDescriptor.JUNIT3);
-    }
-    if (isAnnotation == ThreeState.YES && JUNIT4_ANNOTATIONS.contains(shortClassName)) {
-      return new ExternalClassResolveResult("org.junit." + shortClassName, JUnitExternalLibraryDescriptor.JUNIT4);
+    if (isAnnotation == ThreeState.YES && JUNIT5_ANNOTATIONS.contains(shortClassName)) {
+      return new ExternalClassResolveResult("org.junit.jupiter.api." + shortClassName, JUnitExternalLibraryDescriptor.JUNIT5);
     }
     return null;
   }
@@ -48,11 +42,8 @@ public class JUnitExternalLibraryResolver extends ExternalLibraryResolver {
   @Nullable
   @Override
   public ExternalLibraryDescriptor resolvePackage(@NotNull String packageName) {
-    if (packageName.equals("org.junit")) {
-      return JUnitExternalLibraryDescriptor.JUNIT4;
-    }
-    if (packageName.equals("junit.framework")) {
-      return JUnitExternalLibraryDescriptor.JUNIT3;
+    if (packageName.equals("org.junit.jupiter") || packageName.equals("org.junit")) {
+      return JUnitExternalLibraryDescriptor.JUNIT5;
     }
     return null;
   }

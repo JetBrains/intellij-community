@@ -26,19 +26,18 @@ import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.ThrowableRunnable;
 import one.util.streamex.StreamEx;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class JUnit5AcceptanceTest {
 
@@ -60,8 +59,7 @@ class JUnit5AcceptanceTest {
 
   @Test
   void testFactoryMethods() {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(() -> {
+    doTest(() -> {
       PsiClass aClass = myFixture.addClass("class MyTest {@org.junit.jupiter.api.TestFactory java.util.List<org.junit.jupiter.api.DynamicTest> tests() {return null;}}");
       PsiMethod factoryMethod = aClass.getMethods()[0];
       assertNotNull(factoryMethod);
@@ -71,8 +69,7 @@ class JUnit5AcceptanceTest {
 
   @Test
   void testDefaultMethodInInterface() {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(() -> {
+    doTest(() -> {
       PsiClass aClass = myFixture.addClass("interface MyTest {@org.junit.jupiter.api.Test default void method() {}}");
       assertTrue(JUnitUtil.isTestClass(aClass, false, false));
     });
@@ -80,8 +77,7 @@ class JUnit5AcceptanceTest {
 
   @Test
   void testFrameworkDetection() {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(() -> {
+    doTest(() -> {
       PsiClass aClass = myFixture.addClass("class MyTest {@org.junit.jupiter.api.Test void method() {}}");
       assertNotNull(aClass);
       TestFramework framework = TestFrameworks.detectFramework(aClass);
@@ -91,8 +87,7 @@ class JUnit5AcceptanceTest {
 
   @Test
   void methodPresentations() {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(() -> {
+    doTest(() -> {
       PsiClass aClass = myFixture.addClass("class MyTest {" +
                                            "  @org.junit.jupiter.api.Test void method() {}" +
                                            "  @org.junit.jupiter.api.Test void method(a.TestInfo info) {}" +
@@ -106,5 +101,35 @@ class JUnit5AcceptanceTest {
         .zipWith(expectedData)
         .forEach(e -> assertEquals(e.getValue(), JUnitConfiguration.Data.getMethodPresentation(e.getKey())));
     });
+  }
+
+  @Test
+  void junit5LibraryAdjustments() {
+    doTest(() -> {
+      myFixture.configureByText("MyTest.java", "class MyTest {@org.<error descr=\"Cannot resolve symbol 'junit'\">junit</error>.jupiter.api.Te<caret>st void method() {}}");
+      myFixture.testHighlighting(false, false, false);
+      final Set<String> frameworks = myFixture.getAllQuickFixes().stream()
+        .map(action -> action.getText())
+        .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
+      assertAll("Detected frameworks: " + frameworks.toString(),
+                () -> assertTrue(frameworks.contains("Add 'JUnit5' to classpath")),
+                () -> assertTrue(frameworks.contains("Add 'JUnit4' to classpath")));
+
+      myFixture.configureByText("MyTest.java", "class MyTest {@<error descr=\"Cannot resolve symbol 'DisplayName'\">DisplayName</error> void method() {}}");
+      myFixture.testHighlighting(false, false, false);
+
+      Set<String> displayNameFrameworks = myFixture.getAllQuickFixes().stream()
+        .map(action -> action.getText())
+        .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
+      assertAll("Detected frameworks: " + displayNameFrameworks.toString(),
+                () -> assertTrue (displayNameFrameworks.contains("Add 'JUnit5' to classpath")),
+                () -> assertFalse(displayNameFrameworks.contains("Add 'JUnit4' to classpath")));
+
+    });
+  }
+
+  private static void doTest(ThrowableRunnable<Throwable> run) {
+    TestRunnerUtil.replaceIdeEventQueueSafely();
+    EdtTestUtil.runInEdtAndWait(run);
   }
 }
