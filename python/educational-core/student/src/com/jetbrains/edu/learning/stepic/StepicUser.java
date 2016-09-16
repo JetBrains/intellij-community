@@ -93,7 +93,7 @@ public class StepicUser {
     this.myRefreshToken = refreshToken;
   }
 
-  public void setupTokenInfo(StepicWrappers.TokenInfo tokenInfo) {
+  public void setupTokenInfo(@NotNull final StepicWrappers.TokenInfo tokenInfo) {
     myAccessToken = tokenInfo.getAccessToken();
     myRefreshToken = tokenInfo.getRefreshToken();
   }

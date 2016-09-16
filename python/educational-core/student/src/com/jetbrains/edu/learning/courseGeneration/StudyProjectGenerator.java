@@ -59,6 +59,7 @@ public class StudyProjectGenerator {
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   @Nullable public StepicUser myUser;
   private List<CourseInfo> myCourses = new ArrayList<>();
+  private List<Integer> myEnrolledCoursesIds = new ArrayList<>();
   protected CourseInfo mySelectedCourseInfo;
 
   public void setCourses(List<CourseInfo> courses) {
@@ -67,6 +68,15 @@ public class StudyProjectGenerator {
 
   public boolean isLoggedIn() {
     return myUser != null && !StringUtil.isEmptyOrSpaces(myUser.getPassword()) && !StringUtil.isEmptyOrSpaces(myUser.getEmail());
+  }
+
+  public void setEnrolledCoursesIds(@NotNull final List<Integer> coursesIds) {
+    myEnrolledCoursesIds = coursesIds;
+  }
+
+  @NotNull
+  public List<Integer> getEnrolledCoursesIds() {
+    return myEnrolledCoursesIds;
   }
 
   public void setSelectedCourse(@NotNull final CourseInfo courseName) {

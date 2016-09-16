@@ -50,9 +50,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.edu.learning.stepic.EduStepicConnector.getStep;
@@ -524,4 +522,27 @@ public class EduAdaptiveStepicConnector {
                       "    check_samples(samples=" + new GsonBuilder().create().toJson(samples) + ")";
     task.addTestsTexts("tests.py", testText);
   }
+
+  @NotNull
+  public static List<Integer> getEnrolledCoursesIds(StepicUser stepicUser) {
+    try {
+      final URI enrolledCoursesUri = new URIBuilder(EduStepicNames.COURSES).addParameter("enrolled", "true").build();
+      final List<CourseInfo> courses = EduStepicAuthorizedClient.getFromStepic(enrolledCoursesUri.toString(),
+                                                                               StepicWrappers.CoursesContainer.class,
+                                                                               stepicUser).courses;
+      final ArrayList<Integer> ids = new ArrayList<>();
+      for (CourseInfo course : courses) {
+        ids.add(course.getId());
+      }
+      return ids;
+    }
+    catch (IOException e) {
+      LOG.warn(e.getMessage());
+    }
+    catch (URISyntaxException e) {
+      LOG.warn(e.getMessage());
+    }
+    return Collections.emptyList();
+  }
+
 }

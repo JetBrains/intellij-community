@@ -6,7 +6,6 @@ import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.ssl.CertificateManager;
@@ -52,10 +51,13 @@ public class EduStepicAuthorizedClient {
     if (ourClient != null) {
       return ourClient;
     }
-    ourClient = initializeClient(project);
+    final StepicUser stepicUser = StudyTaskManager.getInstance(project).getUser();
+    ourClient = initializeClient(stepicUser);
     if (ourClient == null) {
-      if (login(project)) {
-        ourClient = initializeClient(project);
+      final StepicUser user = login(stepicUser);
+      if (user != null) {
+        StudyTaskManager.getInstance(project).setUser(user);
+        ourClient = initializeClient(stepicUser);
       }
     }
     return ourClient;
@@ -65,11 +67,37 @@ public class EduStepicAuthorizedClient {
     return EduStepicClient.getFromStepic(link, container, getHttpClient(project));
   }
 
+  /*
+   * This method should be used only in project generation while project is not available.
+   * Make sure you saved stepic user in task manager after using this method.
+   */
+  @NotNull
+  public static CloseableHttpClient getHttpClient(@NotNull final StepicUser stepicUser) {
+    if (ourClient != null) {
+      return ourClient;
+    }
+    ourClient = initializeClient(stepicUser);
+    if (ourClient == null) {
+      final StepicUser user = login(stepicUser);
+      if (user != null) {
+        ourClient = initializeClient(stepicUser);
+      }
+    }
+    return ourClient;
+  }
+
+   /*
+   * This method should be used only in project generation while project is not available.
+   * Make sure you saved stepic user in task manager after using this method.
+   */
+  public static <T> T getFromStepic(String link, final Class<T> container, @NotNull final StepicUser stepicUser) throws IOException {
+    return EduStepicClient.getFromStepic(link, container, getHttpClient(stepicUser));
+  }
+
   @Nullable
-  private static CloseableHttpClient initializeClient(@NotNull final Project project) {
+  private static CloseableHttpClient initializeClient(@NotNull final StepicUser stepicUser) {
     final List<BasicHeader> headers = new ArrayList<>();
-    final StepicUser currentUser = StudyTaskManager.getInstance(project).getUser();
-    final String accessToken = currentUser.getAccessToken();
+    final String accessToken = stepicUser.getAccessToken();
     if (accessToken != null && !accessToken.isEmpty()) {
       headers.add(new BasicHeader("Authorization", "Bearer " + accessToken));
       headers.add(new BasicHeader("Content-type", EduStepicNames.CONTENT_TYPE_APP_JSON));
@@ -117,8 +145,7 @@ public class EduStepicAuthorizedClient {
     return builder;
   }
 
-  private static boolean login(@NotNull final Project project) {
-    final StepicUser user = StudyTaskManager.getInstance(project).getUser();
+  private static StepicUser login(@NotNull final StepicUser user) {
     final String login =  user.getEmail();
     final String refreshToken = user.getRefreshToken();
     if (StringUtil.isEmptyOrSpaces(login)) {
@@ -127,29 +154,29 @@ public class EduStepicAuthorizedClient {
     else {
       if (StringUtil.isNotEmpty(refreshToken)) {
         final StepicWrappers.TokenInfo tokenInfo = login(refreshToken);
-        user.setupTokenInfo(tokenInfo);
+        if (tokenInfo != null) {
+          user.setupTokenInfo(tokenInfo);
+        }
       }
       else {
         final StepicUser stepicUser = login(login, user.getPassword());
         if (stepicUser == null) {
           return showLoginDialog();
         }
-        else {
-          StudyTaskManager.getInstance(project).setUser(stepicUser);
-        }
+        return stepicUser;
       }
     }
-    return true;
+    return null;
   }
 
-  private static boolean showLoginDialog() {
-    final boolean[] logged = {false};
+  private static StepicUser showLoginDialog() {
+    final StepicUser[] stepicUser = new StepicUser[1];
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final LoginDialog dialog = new LoginDialog();
       dialog.show();
-      logged[0] = dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE;
+      stepicUser[0] = dialog.getStepicUser();
     });
-    return logged[0];
+    return stepicUser[0];
   }
 
   public static StepicUser login(@NotNull final String email, @NotNull final String password) {
@@ -167,7 +194,9 @@ public class EduStepicAuthorizedClient {
     if (currentUser != null) {
       user.setId(currentUser.getId());
     }
-    user.setupTokenInfo(tokenInfo);
+    if (tokenInfo != null) {
+      user.setupTokenInfo(tokenInfo);
+    }
     return user;
   }
 

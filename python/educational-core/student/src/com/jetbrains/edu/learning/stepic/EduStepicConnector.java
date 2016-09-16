@@ -37,12 +37,12 @@ public class EduStepicConnector {
   private EduStepicConnector() {
   }
 
-  public static boolean enrollToCourse(final int courseId) {
+  public static boolean enrollToCourse(final int courseId, final StepicUser stepicUser) {
     HttpPost post = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.ENROLLMENTS);
     try {
       final StepicWrappers.EnrollmentWrapper enrollment = new StepicWrappers.EnrollmentWrapper(String.valueOf(courseId));
       post.setEntity(new StringEntity(new GsonBuilder().create().toJson(enrollment)));
-      final CloseableHttpClient client = EduStepicClient.getHttpClient();
+      final CloseableHttpClient client = EduStepicAuthorizedClient.getHttpClient(stepicUser);
       CloseableHttpResponse response = client.execute(post);
       StatusLine line = response.getStatusLine();
       return line.getStatusCode() == HttpStatus.SC_CREATED;

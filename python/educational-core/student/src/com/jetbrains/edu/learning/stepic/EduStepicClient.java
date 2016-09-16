@@ -51,7 +51,7 @@ public class EduStepicClient {
   }
 
   public static <T> T getFromStepic(String link, final Class<T> container) throws IOException {
-    return getFromStepic(link, container, ourClient);
+    return getFromStepic(link, container, getHttpClient());
   }
 
   static <T> T getFromStepic(String link, final Class<T> container, @NotNull final CloseableHttpClient client) throws IOException {

@@ -177,12 +177,13 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   @Override
   public BooleanFunction<PythonProjectGenerator> beforeProjectGenerated(@Nullable Sdk sdk) {
     return generator -> {
+      final List<Integer> enrolledCoursesIds = myGenerator.getEnrolledCoursesIds();
       final CourseInfo course = (CourseInfo)mySettingsPanel.getCoursesComboBox().getSelectedItem();
       if (course == null) return true;
-      if (course.isAdaptive()) {
+      if (course.isAdaptive() && !enrolledCoursesIds.contains(course.getId())) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId()));
+          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId(), myGenerator.myUser));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
 
       }
