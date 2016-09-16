@@ -15,12 +15,10 @@
  */
 package com.intellij.tests.gui.test
 
-import com.intellij.tests.gui.BelongsToTestGroups
 import com.intellij.tests.gui.fixtures.DialogFixtures.CreateDialogFixture
 import com.intellij.tests.gui.fixtures.EditorFixture
 import com.intellij.tests.gui.fixtures.JBPopupFixture
 import com.intellij.tests.gui.framework.GuiTestCase
-import com.intellij.tests.gui.framework.TestGroup
 import com.intellij.tests.gui.framework.clickListItem
 import com.intellij.tests.gui.framework.createNewProject
 import org.junit.Ignore
@@ -31,7 +29,6 @@ import javax.swing.text.JTextComponent
 /**
  * Created by karashevich on 18/06/16.
  */
-@BelongsToTestGroups(TestGroup.PROJECT)
 class JavaProjectTest: GuiTestCase() {
 
   @Test

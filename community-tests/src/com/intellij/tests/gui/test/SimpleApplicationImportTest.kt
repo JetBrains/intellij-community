@@ -15,16 +15,13 @@
  */
 package com.intellij.tests.gui.test
 
-import com.intellij.tests.gui.BelongsToTestGroups
 import com.intellij.tests.gui.framework.GuiTestCase
 import com.intellij.tests.gui.framework.IdeGuiTest
-import com.intellij.tests.gui.framework.TestGroup
 import org.junit.Test
 
 /**
  * Created by karashevich on 21/06/16.
  */
-@BelongsToTestGroups(TestGroup.PROJECT)
 class SimpleApplicationImportTest: GuiTestCase() {
 
   @Test @IdeGuiTest

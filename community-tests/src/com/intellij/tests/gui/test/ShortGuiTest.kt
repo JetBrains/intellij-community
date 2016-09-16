@@ -15,10 +15,8 @@
  */
 package com.intellij.tests.gui.test
 
-import com.intellij.tests.gui.BelongsToTestGroups
 import com.intellij.tests.gui.fixtures.WelcomeFrameFixture
 import com.intellij.tests.gui.framework.GuiTestCase
-import com.intellij.tests.gui.framework.TestGroup
 import com.intellij.tests.gui.framework.createNewProject
 import org.junit.Assert
 import org.junit.Test
@@ -26,7 +24,6 @@ import org.junit.Test
 /**
  * Created by karashevich on 18/06/16.
  */
-@BelongsToTestGroups(TestGroup.PROJECT)
 class ShortGuiTest: GuiTestCase() {
 
   @Test

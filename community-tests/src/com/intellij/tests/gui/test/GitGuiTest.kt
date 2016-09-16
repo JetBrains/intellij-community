@@ -19,11 +19,9 @@ import com.intellij.dvcs.ui.CloneDvcsDialog
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.tests.gui.BelongsToTestGroups
 import com.intellij.tests.gui.fixtures.*
 import com.intellij.tests.gui.framework.GuiTestCase
 import com.intellij.tests.gui.framework.GuiTests
-import com.intellij.tests.gui.framework.TestGroup
 import com.intellij.ui.EditorComboBox
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
@@ -33,7 +31,6 @@ import org.junit.Test
 /**
  * Created by karashevich on 18/06/16.
  */
-@BelongsToTestGroups(TestGroup.PROJECT)
 class GitGuiTest : GuiTestCase() {
 
   @Test
