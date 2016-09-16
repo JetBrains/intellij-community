@@ -137,7 +137,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    */
   public synchronized void close() {
     if (this.myClient != null) {
-      new Task.Backgroundable(myProject, "Close console communication", true) {
+      new Task.Backgroundable(myProject, "Close Console Communication", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -326,7 +326,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     if (waitingForInput) {
       return "Unable to get description: waiting for input.";
     }
-    return myClient.execute(GET_DESCRIPTION, new Object[]{text}).toString();
+    return myClient.execute(GET_DESCRIPTION, new Object[]{text}, 5000).toString();
   }
 
   /**

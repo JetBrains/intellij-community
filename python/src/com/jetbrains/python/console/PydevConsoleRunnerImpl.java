@@ -913,8 +913,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProcessHandler != null) {
-          UIUtil.invokeLaterIfNeeded(() -> closeCommunication());
+          UIUtil.invokeAndWaitIfNeeded((Runnable)() -> closeCommunication());
 
+          boolean processStopped = myProcessHandler.waitFor(5000L);
+          if (!processStopped && myProcessHandler.canKillProcess()) {
+            myProcessHandler.killProcess();
+          }
           myProcessHandler.waitFor();
         }
 
