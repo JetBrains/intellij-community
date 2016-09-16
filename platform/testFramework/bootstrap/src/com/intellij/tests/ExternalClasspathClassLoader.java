@@ -29,6 +29,10 @@ import java.util.LinkedHashSet;
  * @author max
  */
 public class ExternalClasspathClassLoader extends URLClassLoader {
+  static {
+    registerAsParallelCapable();
+  }
+
   private ExternalClasspathClassLoader(URL[] urls) {
     super(urls, Thread.currentThread().getContextClassLoader());
   }

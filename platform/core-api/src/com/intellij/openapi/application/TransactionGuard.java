@@ -125,8 +125,8 @@ public abstract class TransactionGuard {
   public abstract void submitTransactionLater(@NotNull Disposable parentDisposable, @NotNull Runnable transaction);
 
   /**
-   * Schedules a transaction and waits for it to be completed. Fails if invoked on UI thread inside an incompatible transaction,
-   * or inside a read action on non-UI thread.
+   * Schedules a transaction and waits for it to be completed. Logs an error if invoked on UI thread inside an incompatible transaction,
+   * throws {@link IllegalStateException} inside a read action on non-UI thread.
    * @see #submitTransaction(Disposable, TransactionId, Runnable)
    * @throws ProcessCanceledException if current thread is interrupted
    */

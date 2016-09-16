@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Function;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,7 +202,7 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   }
 
   private static void paintTriangle(@NotNull Graphics g, @Nullable Color color, @Nullable Color borderColor, int x1, int x2, int y) {
-    int size = 4;
+    int size = JBUI.scale(4);
 
     final int[] xPoints = new int[]{x1, x1, x2};
     final int[] yPoints = new int[]{y - size, y + size, y};

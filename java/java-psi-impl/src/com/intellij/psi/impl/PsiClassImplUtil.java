@@ -467,7 +467,7 @@ public class PsiClassImplUtil {
                                                     @NotNull LanguageLevel languageLevel,
                                                     boolean isRaw,
                                                     @NotNull GlobalSearchScope resolveScope) {
-    if (last instanceof PsiTypeParameterList || last instanceof PsiModifierList && !(last.getNextSibling() instanceof PsiErrorElement)) {
+    if (last instanceof PsiTypeParameterList || last instanceof PsiModifierList && aClass.getModifierList() == last) {
       return true;
     }
     if (visited != null && visited.contains(aClass)) return true;

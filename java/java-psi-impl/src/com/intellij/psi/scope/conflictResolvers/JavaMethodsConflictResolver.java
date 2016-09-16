@@ -32,6 +32,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
@@ -40,10 +41,7 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -140,12 +138,22 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   private static void checkPotentiallyCompatibleMethods(@NotNull List<CandidateInfo> conflicts) {
+    List<CandidateInfo> partiallyApplicable = new ArrayList<CandidateInfo>();
     for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
       CandidateInfo conflict = iterator.next();
-      if (conflict instanceof MethodCandidateInfo && 
-          !((MethodCandidateInfo)conflict).isPotentiallyCompatible()) {
-        iterator.remove();
+      if (conflict instanceof MethodCandidateInfo) {
+        ThreeState compatible = ((MethodCandidateInfo)conflict).isPotentiallyCompatible();
+        if (compatible == ThreeState.NO) {
+          iterator.remove();
+        }
+        else if (compatible == ThreeState.UNSURE) {
+          partiallyApplicable.add(conflict);
+        }
       }
+    }
+
+    if (conflicts.size() > partiallyApplicable.size()) {
+      conflicts.removeAll(partiallyApplicable);
     }
   }
 

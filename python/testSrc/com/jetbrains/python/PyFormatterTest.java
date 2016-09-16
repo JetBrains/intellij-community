@@ -673,4 +673,8 @@ public class PyFormatterTest extends PyTestCase {
     getCommonCodeStyleSettings().SPACE_AFTER_COMMA = false;
     doTest();
   }
+
+  public void testVariableAnnotations() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
 }

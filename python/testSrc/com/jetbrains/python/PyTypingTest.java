@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -711,7 +712,30 @@ public class PyTypingTest extends PyTestCase {
            "    sublist = x[0]\n" +
            "    expr = sublist[0]\n");
   }
-  
+
+  public void testLocalVariableAnnotation() {
+    doTest("int",
+           "def f():\n" +
+           "    x: int = undefined()\n" +
+           "    expr = x");
+  }
+
+  public void testInstanceAttributeAnnotation() {
+    doTest("int",
+           "class C:\n" +
+           "    attr: int\n" +
+           "    \n" +
+           "expr = C().attr");
+  }
+
+  public void testIllegalAnnotationTargets() {
+    doTest("Tuple[Any, int, Any, Any]", 
+           "(w, _): Tuple[int, Any]\n" +
+           "((x)): int\n" +
+           "y: bool = z = undefined()\n" +
+           "expr = (w, x, y, z)\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

@@ -88,15 +88,11 @@ public class BaseQuoteHandler extends SimpleTokenSetQuoteHandler implements Mult
   }
 
   private static int getLiteralStartOffset(CharSequence text, int start) {
-    char c = Character.toUpperCase(text.charAt(start));
-    if (c == 'U' || c == 'B') {
-      start++;
-      c = Character.toUpperCase(text.charAt(start));
+    int index = start;
+    while (index < start + 2 && "URBF".indexOf(Character.toUpperCase(text.charAt(index))) >= 0) {
+      index++;
     }
-    if (c == 'R') {
-      start++;
-    }
-    return start;
+    return index;
   }
 
   @Override
