@@ -46,7 +46,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.reference.SoftReference;
@@ -283,7 +282,6 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     String presentableUrl = myFile.getPresentableUrl();
     if (myFile.isDirectory()) return presentableUrl;
 
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(myFile);
 
     if (psiFile == null) return presentableUrl;
