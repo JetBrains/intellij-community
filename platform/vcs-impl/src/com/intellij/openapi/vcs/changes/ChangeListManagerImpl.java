@@ -19,7 +19,7 @@ import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -64,10 +64,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * @author max
- */
-public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
+@State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, PersistentStateComponent<Element> {
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
   private static final String EXCLUDED_CONVERTED_TO_IGNORED_OPTION = "EXCLUDED_CONVERTED_TO_IGNORED";
 
@@ -1203,16 +1201,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         syncUpdateRequired ? InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE : InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE;
 
       invokeAfterUpdate(() -> {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            synchronized (myDataLock) {
-              List<Change> newChanges = findChanges(allProcessedFiles);
-              foundChanges.set(newChanges);
+        ApplicationManager.getApplication().runReadAction(() -> {
+          synchronized (myDataLock) {
+            List<Change> newChanges = findChanges(allProcessedFiles);
+            foundChanges.set(newChanges);
 
-              if (moveRequired && !newChanges.isEmpty()) {
-                moveChangesTo(list, newChanges.toArray(new Change[newChanges.size()]));
-              }
+            if (moveRequired && !newChanges.isEmpty()) {
+              moveChangesTo(list, newChanges.toArray(new Change[newChanges.size()]));
             }
           }
         });
@@ -1331,36 +1326,42 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public void readExternal(Element element) throws InvalidDataException {
-    if (!myProject.isDefault()) {
-      synchronized (myDataLock) {
-        myIgnoredIdeaLevel.clear();
-        new ChangeListManagerSerialization(myIgnoredIdeaLevel, myWorker).readExternal(element);
-        if (!myWorker.isEmpty() && getDefaultChangeList() == null) {
-          setDefaultChangeList(myWorker.getListsCopy().get(0));
-        }
-      }
-      myExcludedConvertedToIgnored = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION));
-      myConflictTracker.loadState(element);
+  public void loadState(Element element) {
+    if (myProject.isDefault()) {
+      return;
     }
+
+    synchronized (myDataLock) {
+      myIgnoredIdeaLevel.clear();
+      new ChangeListManagerSerialization(myIgnoredIdeaLevel, myWorker).readExternal(element);
+      if (!myWorker.isEmpty() && getDefaultChangeList() == null) {
+        setDefaultChangeList(myWorker.getListsCopy().get(0));
+      }
+    }
+    myExcludedConvertedToIgnored = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION));
+    myConflictTracker.loadState(element);
   }
 
+  @Nullable
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    if (!myProject.isDefault()) {
-      final IgnoredFilesComponent ignoredFilesComponent;
-      final ChangeListWorker worker;
-      synchronized (myDataLock) {
-        ignoredFilesComponent = new IgnoredFilesComponent(myIgnoredIdeaLevel);
-        worker = myWorker.copy();
-      }
-      new ChangeListManagerSerialization(ignoredFilesComponent, worker).writeExternal(element);
-      if (myExcludedConvertedToIgnored) {
-        JDOMExternalizerUtil.writeField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION, String.valueOf(true));
-      }
-      myConflictTracker.saveState(element);
+  public Element getState() {
+    Element element = new Element("state");
+    if (myProject.isDefault()) {
+      return element;
     }
+
+    final IgnoredFilesComponent ignoredFilesComponent;
+    final ChangeListWorker worker;
+    synchronized (myDataLock) {
+      ignoredFilesComponent = new IgnoredFilesComponent(myIgnoredIdeaLevel);
+      worker = myWorker.copy();
+    }
+    new ChangeListManagerSerialization(ignoredFilesComponent, worker).writeExternal(element);
+    if (myExcludedConvertedToIgnored) {
+      JDOMExternalizerUtil.writeField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION, String.valueOf(true));
+    }
+    myConflictTracker.saveState(element);
+    return element;
   }
 
   // used in TeamCity
