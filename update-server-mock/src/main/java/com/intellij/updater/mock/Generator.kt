@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.updater.mock
+package com.intellij.updater.mock
 
 class Generator {
   private val patch = this.javaClass.classLoader.getResourceAsStream("patch/patch.jar").use { it.readBytes() }

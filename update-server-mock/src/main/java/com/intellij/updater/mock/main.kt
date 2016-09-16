@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.updater.mock
+package com.intellij.updater.mock
 
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
-
-class GeneratorTest {
-  @Test fun generateXml() {
-    val xml = Generator().generateXml("IC", "163.11.22", false)
-    assertThat(xml).contains("patch from=\"163.11.22\"").contains("status=\"release\"")
+fun main(args: Array<String>) {
+  if (args.size != 1) {
+    println("usage: java -jar update-server-mock <port>")
+    System.exit(1)
   }
 
-  @Test fun generatePatch() {
-    val patch = Generator().generatePatch()
-    assertThat(patch).isNotEmpty()
-  }
+  val port = args[0].toInt()
+  val generator = Generator()
+  Server(port, generator).start()
 }

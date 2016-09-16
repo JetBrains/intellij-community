@@ -16,7 +16,7 @@ dependencies {
 
 jar {
   manifest {
-    attributes "Main-Class" : "org.jetbrains.updater.mock.MainKt"
+    attributes "Main-Class" : "com.intellij.updater.mock.MainKt"
   }
   from {
     configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }

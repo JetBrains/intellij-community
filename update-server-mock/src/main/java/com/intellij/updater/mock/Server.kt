@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.updater.mock
+package com.intellij.updater.mock
 
 import com.sun.net.httpserver.Filter
 import com.sun.net.httpserver.HttpExchange
