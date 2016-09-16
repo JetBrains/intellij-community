@@ -77,15 +77,17 @@ public class PatternBasedFileHyperlinkRawDataFinder implements FileHyperlinkRawD
         hyperlinkEndInd = tryExtendHyperlinkEnd(hyperlinkFreezed, hyperlinkEndInd, matcher.start(i), matcher.end(i));
       }
     }
-    if (path == null || lineNumber == UNKNOWN || columnNumber == UNKNOWN || hyperlinkStartInd == -1) {
+    if (path == null || lineNumber == UNKNOWN || hyperlinkStartInd == -1) {
       return Collections.emptyList();
     }
-    if (!format.isZeroBasedLine()) {
+    if (!format.isZeroBasedLineNumbering()) {
       lineNumber--;
     }
-    if (!format.isZeroBasedColumn()) {
+    if (!format.isZeroBasedColumnNumbering()) {
       columnNumber--;
     }
+    lineNumber = Math.max(lineNumber, -1);
+    columnNumber = Math.max(columnNumber, -1);
     FileHyperlinkRawData data = new FileHyperlinkRawData(path, lineNumber, columnNumber,
                                                          hyperlinkStartInd, hyperlinkEndInd);
     return Collections.singletonList(data);

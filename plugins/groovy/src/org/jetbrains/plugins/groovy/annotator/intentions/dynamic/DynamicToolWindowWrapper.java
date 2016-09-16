@@ -158,8 +158,6 @@ public class DynamicToolWindowWrapper {
   }
 
   private void rebuildTreeView(DefaultMutableTreeNode root, boolean expandAll) {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
     myTreeTablePanel.removeAll();
 
     final JScrollPane treeTable = createTable(root);

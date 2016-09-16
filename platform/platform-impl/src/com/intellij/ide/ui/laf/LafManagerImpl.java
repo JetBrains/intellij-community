@@ -537,7 +537,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     if (prevScale == JBUI.scale(1f) && prevScaleVal != null) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
-                                           "Tree.rightChildIndent");
+                                           "Tree.rightChildIndent",
+                                           "Tree.rowHeight");
     for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
       Object value = entry.getValue();
       String key = entry.getKey().toString();

@@ -371,15 +371,66 @@ public class VarArgTest {
         .assertInlays("booleans...->isCheck")
   }
 
+  fun `test if any param matches inline all`() {
+    setup("""
+public class VarArgTest {
+  
+  public void main() {
+    check(10, 1000);
+  }
+
+  public void check(int x, int paramNameLength) {
+  }
+
+}
+""")
+
+    onLineStartingWith("check(")
+        .assertInlays("x->10", "paramNameLength->1000")
+  }
+
+  fun `test inline common name pair if more that 2 args`() {
+    setup("""
+public class VarArgTest {
+  
+  public void main() {
+    String s = "su";
+    check(10, 1000, s);
+  }
+
+  public void check(int beginIndex, int endIndex, String params) {
+  }
+
+}
+""")
+
+    onLineStartingWith("check(")
+        .assertInlays("beginIndex->10", "endIndex->1000")
+  }
+
+  fun `test inline common name pair if more that 2 args xxx`() {
+    setup("""
+public class VarArgTest {
+  
+  public void main() {
+    check(10, 1000, "su");
+  }
+
+  public void check(int beginIndex, int endIndex, String x) {
+  }
+
+}
+""")
+
+    onLineStartingWith("check(")
+        .assertInlays("beginIndex->10", "endIndex->1000", """x->"su"""" )
+  }
+
+
   private fun onLineStartingWith(text: String): InlayAssert {
     val range = getLineRangeStartingWith(text)
     val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(range.startOffset, range.endOffset)
     return InlayAssert(myFixture.file, inlays)
-  }
-  
-  private fun getInlays(range: TextRange): List<Inlay> {
-    val inlays = myFixture.editor.inlayModel
-    return inlays.getInlineElementsInRange(range.startOffset, range.endOffset)
   }
   
   private fun getLineRangeStartingWith(text: String): TextRange {

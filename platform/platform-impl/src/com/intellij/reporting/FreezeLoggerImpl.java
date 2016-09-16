@@ -27,6 +27,7 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 
 public class FreezeLoggerImpl extends FreezeLogger {
@@ -37,7 +38,7 @@ public class FreezeLoggerImpl extends FreezeLogger {
   
   @Override
   public void runUnderPerformanceMonitor(@Nullable Project project, @NotNull Runnable action) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isUnderDebug() || ApplicationManager.getApplication().isUnitTestMode()) {
       action.run();
       return;
     }
@@ -81,6 +82,10 @@ public class FreezeLoggerImpl extends FreezeLogger {
     else {
       LOG.error(msg, dumps);
     }
+  }
+  
+  private static boolean isUnderDebug() {
+    return ManagementFactory.getRuntimeMXBean().getInputArguments().toString().contains("jdwp");
   }
   
 }

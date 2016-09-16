@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -138,6 +139,13 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
   }
 
   public void showHint(@NotNull QuickEvaluateHandler handler, @NotNull Editor editor, @NotNull Point point, @NotNull ValueHintType type) {
+    PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> doShowHint(handler, editor, point, type));
+  }
+
+  private void doShowHint(@NotNull QuickEvaluateHandler handler,
+                          @NotNull Editor editor,
+                          @NotNull Point point,
+                          @NotNull ValueHintType type) {
     myAlarm.cancelAllRequests();
     if (editor.isDisposed() || !handler.canShowHint(myProject)) {
       return;
