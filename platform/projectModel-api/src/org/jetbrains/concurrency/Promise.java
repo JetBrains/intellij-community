@@ -27,13 +27,13 @@ public interface Promise<T> {
    * @deprecated Use Promises.resolvedPromise()
    */
   @Deprecated
-  Promise<Void> DONE = Promises.resolvedPromise();
+  Promise<Void> DONE = new DonePromise(null);
 
   /**
    * @deprecated Use Promises.rejectedPromise()
    */
   @Deprecated
-  Promise<Void> REJECTED = Promises.rejectedPromise();
+  Promise<Void> REJECTED = new RejectedPromise(new MessageError("rejected", false));
 
   enum State {
     PENDING, FULFILLED, REJECTED
