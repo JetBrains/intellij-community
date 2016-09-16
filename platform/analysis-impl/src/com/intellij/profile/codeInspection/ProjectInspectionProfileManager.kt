@@ -80,7 +80,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   private var state = State()
 
-  private val initialLoadSchemesFuture: Promise<*>
+  private val initialLoadSchemesFuture: Promise<Any?>
 
   private val skipDefaultsSerializationFilter = object : SkipDefaultValuesSerializationFilters(State()) {
     override fun accepts(accessor: Accessor, bean: Any, beanValue: Any?): Boolean {

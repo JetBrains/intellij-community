@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromiseKt;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.PromiseManager;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.debugger.values.ValueManager;
 
 import java.util.List;
@@ -83,6 +84,6 @@ public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
   public Promise<?> clearCaches() {
     cacheStamp = -1;
     VARIABLES_LOADER.reset(this);
-    return Promise.DONE;
+    return Promises.resolvedPromise();
   }
 }

@@ -23,10 +23,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.TimeUnit;
 
 public interface Promise<T> {
-  Promise<Void> DONE = new DonePromise<>(null);
+  /**
+   * @deprecated Use Promises.resolvedPromise()
+   */
+  @Deprecated
+  Promise<Void> DONE = Promises.resolvedPromise();
 
   /**
-   * @deprecated Use Promises.rejectedPromise
+   * @deprecated Use Promises.rejectedPromise()
    */
   @Deprecated
   Promise<Void> REJECTED = Promises.rejectedPromise();
