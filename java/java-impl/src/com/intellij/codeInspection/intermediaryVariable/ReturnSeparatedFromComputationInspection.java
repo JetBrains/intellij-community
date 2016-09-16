@@ -37,7 +37,7 @@ import java.util.*;
  * @author Pavel.Dolgov
  */
 public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + ReturnSeparatedFromComputationInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(ReturnSeparatedFromComputationInspection.class);
 
   @NotNull
   @Override
@@ -89,20 +89,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       return ((PsiMethod)returnFrom).getReturnType();
     }
     if (returnFrom instanceof PsiLambdaExpression) {
-      return getNonParametrizedReturnType((PsiLambdaExpression)returnFrom);
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiType getNonParametrizedReturnType(PsiLambdaExpression lambdaExpression) {
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(lambdaExpression.getFunctionalInterfaceType());
-    if (interfaceMethod != null) {
-      final PsiType returnType = interfaceMethod.getReturnType();
-      if (returnType instanceof PsiPrimitiveType ||
-          returnType instanceof PsiClassType && ((PsiClassType)returnType).getParameterCount() == 0) {
-        return returnType;
-      }
+      return LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)returnFrom);
     }
     return null;
   }
