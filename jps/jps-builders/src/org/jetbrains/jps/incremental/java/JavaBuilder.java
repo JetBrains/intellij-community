@@ -50,7 +50,10 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaModuleIndex;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.LanguageLevel;
 import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -754,7 +757,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
     final int targetLanguageLevel = JpsJavaSdkType.parseVersion(langLevel);
     if (shouldUseReleaseOption(context, compilerSdkVersion, chunkSdkVersion, targetLanguageLevel)) {
-      options.add("-release");
+      options.add(getReleaseOptionName());
       options.add(String.valueOf(targetLanguageLevel));
       return;
     }
@@ -818,6 +821,26 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
+  // todo: after java9 release the method can be deleted
+  @NotNull
+  private static String getReleaseOptionName() {
+    final String versionString = System.getProperty("java.runtime.version", null); // should look kind of "9-ea+136"
+    if (versionString != null) {
+      final int start = versionString.indexOf("+");
+      if (start > 0) {
+        try {
+          final int minorVersion = Integer.parseInt(versionString.substring(start + 1));
+          if (minorVersion < 135) {
+            return "-release";
+          }
+        }
+        catch (Throwable ignored) {
+        }
+      }
+    }
+    return "--release";
+  }
+  
   private static String getLanguageLevel(JpsModule module) {
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
     return level != null ? level.getComplianceOption() : null;
