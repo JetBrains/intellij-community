@@ -16,10 +16,7 @@
 package org.jetbrains.debugger.values
 
 import com.intellij.util.SmartList
-import org.jetbrains.concurrency.Obsolescent
-import org.jetbrains.concurrency.ObsolescentFunction
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.all
+import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.EvaluateContext
 import org.jetbrains.debugger.Variable
 import org.jetbrains.debugger.VariablesHost
@@ -68,15 +65,14 @@ fun getSpecifiedProperties(variables: List<Variable>, names: List<String>, evalu
   }
 
   if (getterCount == 0) {
-    return Promise.resolve(properties)
+    return resolvedPromise(properties)
   }
   else {
     val promises = SmartList<Promise<*>>()
     for (variable in properties) {
       if (variable.value == null) {
-        val valueModifier = variable.valueModifier
-        assert(valueModifier != null)
-        promises.add(valueModifier!!.evaluateGet(variable, evaluateContext))
+        val valueModifier = variable.valueModifier!!
+        promises.add(valueModifier.evaluateGet(variable, evaluateContext))
       }
     }
     return all(promises, properties)
