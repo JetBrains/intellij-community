@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInspection.java18api;
 
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -25,6 +27,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,6 +35,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,67 +124,128 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
         }
       }
 
-      private PsiMethodCallExpression tryExtractMapGetCall(PsiReferenceExpression target, PsiElement element) {
-        if(element instanceof PsiDeclarationStatement) {
-          PsiDeclarationStatement declaration = (PsiDeclarationStatement)element;
-          PsiElement[] elements = declaration.getDeclaredElements();
-          if(elements.length > 0) {
-            PsiElement lastDeclaration = elements[elements.length - 1];
-            if(lastDeclaration instanceof PsiLocalVariable && lastDeclaration == target.resolve()) {
-              PsiLocalVariable var = (PsiLocalVariable)lastDeclaration;
-              PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(var.getInitializer());
-              if (initializer instanceof PsiMethodCallExpression &&
-                  isJavaUtilMapMethodWithName((PsiMethodCallExpression)initializer, "get")) {
-                return (PsiMethodCallExpression)initializer;
-              }
-            }
-          }
-        }
-        if(element instanceof PsiExpressionStatement) {
-          PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
-          if(expression instanceof PsiAssignmentExpression) {
-            PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
-            PsiExpression lValue = assignment.getLExpression();
-            if (lValue instanceof PsiReferenceExpression &&
-                EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(target, lValue)) {
-              PsiExpression rValue = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
-              if (rValue instanceof PsiMethodCallExpression &&
-                  isJavaUtilMapMethodWithName((PsiMethodCallExpression)rValue, "get")) {
-                return (PsiMethodCallExpression)rValue;
-              }
-            }
-          }
-        }
-        return null;
-      }
-
       private void handleGetWithVariable(ProblemsHolder holder, PsiIfStatement statement) {
         if(statement.getElseBranch() != null) return;
         PsiExpression condition = statement.getCondition();
-        if(!(condition instanceof PsiBinaryExpression)) return;
-        PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
-        if(!binOp.getOperationTokenType().equals(JavaTokenType.EQEQ)) return;
-        PsiExpression value = getValueComparedWithNull(binOp);
-        if(!(value instanceof PsiReferenceExpression)) return;
+        PsiReferenceExpression value = getReferenceComparedWithNull(condition);
+        if (value == null) return;
         PsiElement previous = PsiTreeUtil.skipSiblingsBackward(statement, PsiWhiteSpace.class, PsiComment.class);
-        PsiMethodCallExpression getCall = tryExtractMapGetCall((PsiReferenceExpression)value, previous);
+        PsiMethodCallExpression getCall = tryExtractMapGetCall(value, previous);
         if(getCall == null) return;
         PsiExpression[] getArguments = getCall.getArgumentList().getExpressions();
         if(getArguments.length != 1) return;
         PsiStatement thenBranch = ControlFlowUtils.stripBraces(statement.getThenBranch());
-        if(thenBranch instanceof PsiExpressionStatement) {
-          PsiExpression expression = ((PsiExpressionStatement)thenBranch).getExpression();
-          if(expression instanceof PsiAssignmentExpression) {
-            PsiExpression lValue = ((PsiAssignmentExpression)expression).getLExpression();
-            PsiExpression rValue = ((PsiAssignmentExpression)expression).getRExpression();
-            if (ExpressionUtils.isSimpleExpression(rValue) && EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(lValue, value)) {
-              holder.registerProblem(getCall, QuickFixBundle.message("java.8.collections.api.inspection.description"),
-                                     new ReplaceWithGetOrDefaultFix());
+        PsiAssignmentExpression assignment = getAssignment(thenBranch);
+        EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+        if(assignment != null) {
+          /*
+            value = map.get(key);
+            if(value == null) {
+              value = ...
             }
+           */
+          if (ExpressionUtils.isSimpleExpression(assignment.getRExpression()) &&
+              equivalence.expressionsAreEquivalent(assignment.getLExpression(), value)) {
+            holder.registerProblem(condition, QuickFixBundle.message("java.8.collections.api.inspection.description"),
+                                   new ReplaceWithGetOrDefaultFix("getOrDefault"));
           }
+        } else if(thenBranch instanceof PsiBlockStatement) {
+          /*
+            value = map.get(key);
+            if(value == null) {
+              value = ...
+              map.put(key, value);
+            }
+           */
+          PsiExpression key = getArguments[0];
+          PsiStatement[] statements = ((PsiBlockStatement)thenBranch).getCodeBlock().getStatements();
+          if(statements.length != 2) return;
+          assignment = getAssignment(statements[0]);
+          if(assignment == null) return;
+          PsiExpression lambdaCandidate = assignment.getRExpression();
+          if (lambdaCandidate == null ||
+              !equivalence.expressionsAreEquivalent(assignment.getLExpression(), value) ||
+              !(statements[1] instanceof PsiExpressionStatement)) {
+            return;
+          }
+          PsiExpression expression = ((PsiExpressionStatement)statements[1]).getExpression();
+          if(!(expression instanceof PsiMethodCallExpression)) return;
+          PsiMethodCallExpression putCall = (PsiMethodCallExpression)expression;
+          if(!isJavaUtilMapMethodWithName(putCall, "put")) return;
+          PsiExpression[] putArguments = putCall.getArgumentList().getExpressions();
+          if (putArguments.length != 2 ||
+              !equivalence.expressionsAreEquivalent(putCall.getMethodExpression().getQualifierExpression(),
+                                                    getCall.getMethodExpression().getQualifierExpression()) ||
+              !equivalence.expressionsAreEquivalent(key, putArguments[0]) ||
+              !equivalence.expressionsAreEquivalent(value, putArguments[1])) {
+            return;
+          }
+          if(!ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {lambdaCandidate}).isEmpty()) return;
+          PsiElement[] varRefs = PsiTreeUtil.collectElements(lambdaCandidate, e -> e instanceof PsiReferenceExpression &&
+                                                                                    ((PsiReferenceExpression)e)
+                                                                                      .resolve() instanceof PsiVariable);
+          if (!StreamEx.of(varRefs).select(PsiReferenceExpression.class).map(PsiReferenceExpression::resolve).select(PsiVariable.class)
+            .allMatch(var -> HighlightControlFlowUtil.isEffectivelyFinal(var, lambdaCandidate, null))) {
+            return;
+          }
+          holder.registerProblem(condition, QuickFixBundle.message("java.8.collections.api.inspection.description"),
+                                 new ReplaceWithGetOrDefaultFix("computeIfAbsent"));
         }
       }
     };
+  }
+
+  @Nullable
+  private static PsiReferenceExpression getReferenceComparedWithNull(PsiExpression condition) {
+    if(!(condition instanceof PsiBinaryExpression)) return null;
+    PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
+    if(!binOp.getOperationTokenType().equals(JavaTokenType.EQEQ)) return null;
+    PsiExpression value = getValueComparedWithNull(binOp);
+    if(!(value instanceof PsiReferenceExpression)) return null;
+    return (PsiReferenceExpression)value;
+  }
+
+  @Contract("null -> null")
+  private static PsiAssignmentExpression getAssignment(PsiElement element) {
+    if(element instanceof PsiExpressionStatement) {
+      element = ((PsiExpressionStatement)element).getExpression();
+    }
+    if (element instanceof PsiAssignmentExpression) {
+      return (PsiAssignmentExpression)element;
+    }
+    return null;
+  }
+
+  @Nullable
+  @Contract("_, null -> null")
+  static PsiMethodCallExpression tryExtractMapGetCall(PsiReferenceExpression target, PsiElement element) {
+    if(element instanceof PsiDeclarationStatement) {
+      PsiDeclarationStatement declaration = (PsiDeclarationStatement)element;
+      PsiElement[] elements = declaration.getDeclaredElements();
+      if(elements.length > 0) {
+        PsiElement lastDeclaration = elements[elements.length - 1];
+        if(lastDeclaration instanceof PsiLocalVariable && lastDeclaration == target.resolve()) {
+          PsiLocalVariable var = (PsiLocalVariable)lastDeclaration;
+          PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(var.getInitializer());
+          if (initializer instanceof PsiMethodCallExpression &&
+              isJavaUtilMapMethodWithName((PsiMethodCallExpression)initializer, "get")) {
+            return (PsiMethodCallExpression)initializer;
+          }
+        }
+      }
+    }
+    PsiAssignmentExpression assignment = getAssignment(element);
+    if(assignment != null) {
+      PsiExpression lValue = assignment.getLExpression();
+      if (lValue instanceof PsiReferenceExpression &&
+          EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(target, lValue)) {
+        PsiExpression rValue = PsiUtil.skipParenthesizedExprDown(assignment.getRExpression());
+        if (rValue instanceof PsiMethodCallExpression && isJavaUtilMapMethodWithName((PsiMethodCallExpression)rValue, "get")) {
+          return (PsiMethodCallExpression)rValue;
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -399,45 +464,65 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
   }
 
   private static class ReplaceWithGetOrDefaultFix implements LocalQuickFix {
+    private final String myMethodName;
+
+    ReplaceWithGetOrDefaultFix(String methodName) {
+      myMethodName = methodName;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName();
+      return QuickFixBundle.message("java.8.collections.api.inspection.fix.text", myMethodName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with 'getOrDefault' method call";
+      return QuickFixBundle.message("java.8.collections.api.inspection.get.fix.family.name");
     }
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if (!(element instanceof PsiMethodCallExpression)) return;
-      PsiMethodCallExpression getCall = (PsiMethodCallExpression)element;
-      if(!isJavaUtilMapMethodWithName(getCall, "get")) return;
-      PsiStatement statement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
-      PsiElement ifStatement = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class, PsiComment.class);
-      if (!(ifStatement instanceof PsiIfStatement)) return;
+      PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
+      if(ifStatement == null) return;
+      PsiReferenceExpression value = getReferenceComparedWithNull(ifStatement.getCondition());
+      if(value == null) return;
+      PsiElement statement = PsiTreeUtil.skipSiblingsBackward(ifStatement, PsiWhiteSpace.class, PsiComment.class);
+      PsiMethodCallExpression getCall = tryExtractMapGetCall(value, statement);
+      if(getCall == null || !isJavaUtilMapMethodWithName(getCall, "get")) return;
       PsiElement nameElement = getCall.getMethodExpression().getReferenceNameElement();
       if(nameElement == null) return;
       PsiExpression[] args = getCall.getArgumentList().getExpressions();
       if(args.length != 1) return;
-      PsiStatement thenBranch = ControlFlowUtils.stripBraces(((PsiIfStatement)ifStatement).getThenBranch());
-      if(!(thenBranch instanceof PsiExpressionStatement)) return;
-      PsiExpression expression = ((PsiExpressionStatement)thenBranch).getExpression();
-      if(!(expression instanceof PsiAssignmentExpression)) return;
-      PsiExpression defaultValue = ((PsiAssignmentExpression)expression).getRExpression();
-      if(!ExpressionUtils.isSimpleExpression(defaultValue)) return;
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
+      PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
       Collection<PsiComment> comments = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(ifStatement, PsiComment.class),
-                                                                comment -> (PsiComment)comment.copy());
+                                                          comment -> (PsiComment)comment.copy());
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      nameElement.replace(factory.createIdentifier("getOrDefault"));
-      getCall.getArgumentList().add(defaultValue);
+      if(thenBranch instanceof PsiExpressionStatement) {
+        PsiExpression expression = ((PsiExpressionStatement)thenBranch).getExpression();
+        if (!(expression instanceof PsiAssignmentExpression)) return;
+        PsiExpression defaultValue = ((PsiAssignmentExpression)expression).getRExpression();
+        if (!ExpressionUtils.isSimpleExpression(defaultValue)) return;
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
+        nameElement.replace(factory.createIdentifier("getOrDefault"));
+        getCall.getArgumentList().add(defaultValue);
+      } else if(thenBranch instanceof PsiBlockStatement) {
+        PsiStatement[] statements = ((PsiBlockStatement)thenBranch).getCodeBlock().getStatements();
+        if(statements.length != 2) return;
+        PsiAssignmentExpression assignment = getAssignment(statements[0]);
+        if(assignment == null) return;
+        PsiExpression lambdaCandidate = assignment.getRExpression();
+        if(lambdaCandidate == null) return;
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
+        nameElement.replace(factory.createIdentifier("computeIfAbsent"));
+        String varName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("k", lambdaCandidate, true);
+        PsiExpression lambda = factory.createExpressionFromText(varName + " -> " + lambdaCandidate.getText(), lambdaCandidate);
+        getCall.getArgumentList().add(lambda);
+      } else return;
       ifStatement.delete();
       comments.forEach(comment -> statement.getParent().addBefore(comment, statement));
     }

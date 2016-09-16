@@ -56,7 +56,7 @@ public abstract class TemplateLineStartEndHandler extends EditorActionHandler {
     if (templateState != null && !templateState.isFinished()) {
       final TextRange range = templateState.getCurrentVariableRange();
       final int caretOffset = editor.getCaretModel().getOffset();
-      if (range != null && range.containsOffset(caretOffset)) {
+      if (range != null && shouldStayInsideVariable(range, caretOffset)) {
         int selectionOffset = editor.getSelectionModel().getLeadSelectionOffset();
         int offsetToMove = myIsHomeHandler ? range.getStartOffset() : range.getEndOffset();
         editor.getCaretModel().moveToOffset(offsetToMove);
@@ -71,5 +71,10 @@ public abstract class TemplateLineStartEndHandler extends EditorActionHandler {
       }
     }
     myOriginalHandler.execute(editor, caret, dataContext);
+  }
+
+  private boolean shouldStayInsideVariable(TextRange varRange, int caretOffset) {
+    return varRange.containsOffset(caretOffset) &&
+           caretOffset != (myIsHomeHandler ? varRange.getStartOffset() : varRange.getEndOffset());
   }
 }

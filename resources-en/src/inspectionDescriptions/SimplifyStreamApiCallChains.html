@@ -13,6 +13,8 @@ It allows to avoid creating redundant temporary objects when traversing a collec
   <li><code>Collections.singletonList().stream()</code> &rarr; <code>Stream.of()</code></li>
   <li><code>Collections.emptyList().stream()</code> &rarr; <code>Stream.empty()</code></li>
   <li><code>Collections.emptySet().stream()</code> &rarr; <code>Stream.empty()</code></li>
+  <li><code>Stream.filter().findFirst().isPresent()</code> &rarr; <code>Stream.anyMatch()</code></li>
+  <li><code>Stream.filter().findAny().isPresent()</code> &rarr; <code>Stream.anyMatch()</code></li>
   <li><code>Stream.collect(Collectors.counting())</code> &rarr; <code>Stream.count()</code></li>
   <li><code>Stream.collect(Collectors.maxBy())</code> &rarr; <code>Stream.max()</code></li>
   <li><code>Stream.collect(Collectors.minBy())</code> &rarr; <code>Stream.min()</code></li>
