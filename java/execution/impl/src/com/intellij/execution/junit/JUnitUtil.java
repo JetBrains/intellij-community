@@ -81,6 +81,7 @@ public class JUnitUtil {
   
   @NonNls public static final String PARAMETERIZED_CLASS_NAME = "org.junit.runners.Parameterized";
   @NonNls public static final String SUITE_CLASS_NAME = "org.junit.runners.Suite";
+  public static final String JUNIT5_NESTED = "org.junit.jupiter.api.Nested";
 
   public static boolean isSuiteMethod(@NotNull PsiMethod psiMethod) {
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
@@ -200,11 +201,19 @@ public class JUnitUtil {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
 
+    if (psiClass.getContainingClass() != null && AnnotationUtil.isAnnotated(psiClass, JUNIT5_NESTED, false)) {
+      return true;
+    }
+
     if (!PsiClassUtil.isRunnableClass(psiClass, false, checkAbstract)) return false;
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
       ProgressManager.checkCanceled();
       if (AnnotationUtil.isAnnotated(method, TEST5_ANNOTATIONS)) return true;
+    }
+
+    for (PsiClass aClass : psiClass.getInnerClasses()) {
+      if (AnnotationUtil.isAnnotated(aClass, JUNIT5_NESTED, false)) return true;
     }
 
     return false;

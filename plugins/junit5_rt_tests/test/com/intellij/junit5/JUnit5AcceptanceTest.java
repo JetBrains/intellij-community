@@ -21,15 +21,8 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.TestRunnerUtil;
-import com.intellij.testFramework.fixtures.*;
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.util.ThrowableRunnable;
 import one.util.streamex.StreamEx;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -39,23 +32,7 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class JUnit5AcceptanceTest {
-
-  private JavaCodeInsightTestFixture myFixture;
-
-  @BeforeEach
-  void setUp() throws Exception {
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
-    myFixture.setUp();
-  }
-
-  @AfterEach
-  void tearDown() throws Exception {
-    myFixture.tearDown();
-  }
+class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
 
   @Test
   void testFactoryMethods() {
@@ -126,10 +103,5 @@ class JUnit5AcceptanceTest {
                 () -> assertFalse(displayNameFrameworks.contains("Add 'JUnit4' to classpath")));
 
     });
-  }
-
-  private static void doTest(ThrowableRunnable<Throwable> run) {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(run);
   }
 }
