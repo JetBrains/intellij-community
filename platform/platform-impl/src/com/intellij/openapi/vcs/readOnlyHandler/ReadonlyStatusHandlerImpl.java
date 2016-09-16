@@ -24,7 +24,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -96,6 +95,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
     
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      processFiles(new ArrayList<>(Arrays.asList(fileInfos)), null);
       return createResultStatus(files);
     }
 
