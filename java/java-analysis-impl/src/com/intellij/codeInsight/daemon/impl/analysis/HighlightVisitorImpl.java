@@ -1637,7 +1637,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitRequiresStatement(PsiRequiresStatement statement) {
     super.visitRequiresStatement(statement);
-    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
       PsiJavaModule container = (PsiJavaModule)statement.getParent();
       PsiJavaModuleReferenceElement ref = statement.getReferenceElement();
       if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkModuleReference(ref, container));
@@ -1647,7 +1647,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitExportsStatement(PsiExportsStatement statement) {
     super.visitExportsStatement(statement);
-    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
       PsiJavaModule container = (PsiJavaModule)statement.getParent();
       PsiJavaCodeReferenceElement ref = statement.getPackageReference();
       if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkPackageReference(ref));
@@ -1658,7 +1658,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitUsesStatement(PsiUsesStatement statement) {
     super.visitUsesStatement(statement);
-    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
       if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkServiceReference(statement.getClassReference()));
     }
   }
@@ -1666,7 +1666,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitProvidesStatement(PsiProvidesStatement statement) {
     super.visitProvidesStatement(statement);
-    if (PsiUtil.isLanguageLevel9OrHigher(myFile)) {
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
       PsiJavaCodeReferenceElement intRef = statement.getInterfaceReference(), implRef = statement.getImplementationReference();
       if (!myHolder.hasErrorResults()) myHolder.add(ModuleHighlightUtil.checkServiceImplementation(implRef, intRef));
     }
