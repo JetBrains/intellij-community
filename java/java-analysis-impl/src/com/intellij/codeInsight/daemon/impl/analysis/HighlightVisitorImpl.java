@@ -559,15 +559,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiMethodCallExpression expression = (PsiMethodCallExpression)parent;
       if (expression.getArgumentList() == list) {
         PsiReferenceExpression referenceExpression = expression.getMethodExpression();
-        JavaResolveResult result;
-        JavaResolveResult[] results;
-        try {
-          results = resolveOptimised(referenceExpression);
-          result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-        }
-        catch (IndexNotReadyException e) {
-          return;
-        }
+        JavaResolveResult[] results = resolveOptimised(referenceExpression);
+        if (results == null) return;
+        JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
         PsiElement resolved = result.getElement();
 
         if ((!result.isAccessible() || !result.isStaticsScopeCorrect()) &&
@@ -1041,13 +1035,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   private JavaResolveResult doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult result;
-    try {
-      result = resolveOptimised(ref);
-    }
-    catch (IndexNotReadyException e) {
-      return null;
-    }
+    JavaResolveResult result = resolveOptimised(ref);
+    if (result == null) return null;
 
     PsiElement resolved = result.getElement();
     PsiElement parent = ref.getParent();
@@ -1175,34 +1164,35 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return result;
   }
 
-  @NotNull
-  private JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult result;
-    if (ref instanceof PsiReferenceExpressionImpl) {
-      JavaResolveResult[] results = JavaResolveUtil.resolveWithContainingFile(ref,
-                                                                              PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE,
-                                                                              true, true,
-                                                                              myFile);
-      result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+  private @Nullable JavaResolveResult resolveOptimised(@NotNull PsiJavaCodeReferenceElement ref) {
+    try {
+      if (ref instanceof PsiReferenceExpressionImpl) {
+        PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
+        JavaResolveResult[] results = JavaResolveUtil.resolveWithContainingFile(ref, resolver, true, true, myFile);
+        return results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+      }
+      else {
+        return ref.advancedResolve(true);
+      }
     }
-    else {
-      result = ref.advancedResolve(true);
+    catch (IndexNotReadyException e) {
+      return null;
     }
-    return result;
   }
 
-  @NotNull
-  private JavaResolveResult[] resolveOptimised(@NotNull PsiReferenceExpression expression) {
-    JavaResolveResult[] results;
-    if (expression instanceof PsiReferenceExpressionImpl) {
-      results = JavaResolveUtil.resolveWithContainingFile(expression,
-                                                          PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE, true, true,
-                                                          myFile);
+  private @Nullable JavaResolveResult[] resolveOptimised(@NotNull PsiReferenceExpression expression) {
+    try {
+      if (expression instanceof PsiReferenceExpressionImpl) {
+        PsiReferenceExpressionImpl.OurGenericsResolver resolver = PsiReferenceExpressionImpl.OurGenericsResolver.INSTANCE;
+        return JavaResolveUtil.resolveWithContainingFile(expression, resolver, true, true, myFile);
+      }
+      else {
+        return expression.multiResolve(true);
+      }
     }
-    else {
-      results = expression.multiResolve(true);
+    catch (IndexNotReadyException e) {
+      return null;
     }
-    return results;
   }
 
   @Override
@@ -1214,15 +1204,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (myHolder.hasErrorResults()) return;
     }
 
-    JavaResolveResult result;
-    JavaResolveResult[] results;
-    try {
-      results = resolveOptimised(expression);
-      result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-    }
-    catch (IndexNotReadyException e) {
-      return;
-    }
+    JavaResolveResult[] results = resolveOptimised(expression);
+    if (results == null) return;
+    JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
 
     PsiElement resolved = result.getElement();
     if (resolved instanceof PsiVariable && resolved.getContainingFile() == expression.getContainingFile()) {
