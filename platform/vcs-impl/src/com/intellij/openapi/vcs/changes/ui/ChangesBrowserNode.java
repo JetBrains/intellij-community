@@ -25,10 +25,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,6 +39,10 @@ import java.util.stream.StreamSupport;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
+
+  public static final Convertor<TreePath, String> TO_TEXT_CONVERTER =
+    path -> ((ChangesBrowserNode)path.getLastPathComponent()).getTextPresentation();
+
   private SimpleTextAttributes myAttributes;
 
   protected int myCount = -1;

@@ -68,7 +68,7 @@ private val defaultImportStatements = defaultImports.map {
 }
 
 private fun initConsole(project: Project) {
-  val console = LanguageConsoleImpl(project, TITLE, GroovyLanguage.INSTANCE)
+  val console = LanguageConsoleImpl(project, TITLE, GroovyLanguage)
   val action = ConsoleExecuteAction(console, createExecuteHandler(project))
   action.registerCustomShortcutSet(action.shortcutSet, console.consoleEditor.component)
   ConsoleHistoryController(MyConsoleRootType, null, console).install()

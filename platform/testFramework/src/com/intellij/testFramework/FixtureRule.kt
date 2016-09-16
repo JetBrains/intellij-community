@@ -35,7 +35,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.containers.forEachGuaranteed
-import com.intellij.util.systemIndependentPath
+import com.intellij.util.io.systemIndependentPath
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestRule
 import org.junit.runner.Description

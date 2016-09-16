@@ -23,7 +23,7 @@ class SynchronizedImplicitUsageProvider : ImplicitUsageProvider {
 
   override fun isImplicitUsage(element: PsiElement) = false
 
-  override fun isImplicitRead(element: PsiElement) = element is GrField && getImplicitLockUsages(element).isNotEmpty()
+  override fun isImplicitRead(element: PsiElement) = element is GrField && getImplicitLockUsages(element).any()
 
   override fun isImplicitWrite(element: PsiElement) = false
 }

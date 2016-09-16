@@ -13,29 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-
-
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
+
+import java.util.function.Consumer
 
 /**
  * @author nik
@@ -73,6 +58,14 @@ class ProductModulesLayout {
   List<String> pluginModulesToPublish = []
 
   /**
+   * Describes non-trivial layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
+   * with the product is specified by {@link #bundledPluginModules}. There is no need to specify layout for plugins where it's trivial,
+   * i.e. for plugins which include an output of a single module and its module libraries, it's enough to specify module names of such plugins
+   * in {@link #bundledPluginModules}.
+   */
+  List<PluginLayout> allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
+
+  /**
    * Names of the project libraries which JARs' contents should be extracted into {@link #mainJarName} JAR.
    */
   List<String> projectLibrariesToUnpackIntoMainJar = []
@@ -82,12 +75,17 @@ class ProductModulesLayout {
    */
   MultiValuesMap<String, String> additionalPlatformJars = new MultiValuesMap<>(true)
 
-  /** Module name to entries which should be excluded from its output.
+  /**
+   * Module name to entries which should be excluded from its output.
    * <strong>This is a temporary property added to keep layout of some products. If some directory from a module shouldn't be included into the
    * product JAR it's strongly recommended to move that directory outside of the module source roots.</strong>
    */
   MultiValuesMap<String, String> moduleExcludes = new MultiValuesMap<>(true)
 
+  /**
+   * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
+   */
+  Consumer<PlatformLayout> platformLayoutCustomizer = {} as Consumer<PlatformLayout>
   /**
    * Name of the module which classpath will be used to build searchable options index
    */
@@ -104,12 +102,25 @@ class ProductModulesLayout {
   List<String> licenseFilesToBuildSearchableOptions = []
 
   /**
-   * @param allPlugins descriptions of layout of all plugins which may be included into the product
+   * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #pluginModulesToPublish} plugins.
+   * This descriptor and the plugin *.zip files need to be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file.
+   */
+  boolean prepareCustomPluginRepositoryForPublishedPlugins = false
+
+  /**
+   * Specifies path to a text file containing list of classes in order they are loaded by the product. Entries in the produces *.jar files
+   * will be reordered accordingly to reduct IDE startup time. If {@code null} no reordering will be performed.
+   */
+  String classesLoadingOrderFilePath = null
+
+  /**
    * @return list of all modules which output is included into the plugin's JARs
    */
-  List<String> getIncludedPluginModules(List<PluginLayout> allPlugins) {
+  List<String> getIncludedPluginModules() {
     Set<String> enabledPluginModules = getEnabledPluginModules()
-    allPlugins.findAll { enabledPluginModules.contains(it.mainModule) }.collectMany { it.getActualModules(enabledPluginModules).values() }
+    def modulesFromNonTrivialPlugins = allNonTrivialPlugins.findAll { enabledPluginModules.contains(it.mainModule) }.
+      collectMany { it.getActualModules(enabledPluginModules).values() }
+    (enabledPluginModules + modulesFromNonTrivialPlugins) as List<String>
   }
 
   List<String> getIncludedPlatformModules() {

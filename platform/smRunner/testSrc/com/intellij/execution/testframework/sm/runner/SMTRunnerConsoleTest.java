@@ -394,11 +394,11 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
-    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg");
+    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
-    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 ", "\nignored msg");
+    assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 ", "\nignored msg\n");
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
@@ -406,10 +406,10 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test2", "stderr1 ", false));
     myEventsProcessor.onTestIgnored(new TestIgnoredEvent("my_test2", "ignored msg", null));
 
-    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg");
+    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "stderr1 ", "\nignored msg\n");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
     mockPrinter2.onNewAvailable(myTest2);
-    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 ", "\nignored msg");
+    assertAllOutputs(mockPrinter2, "stdout1 ", "stderr1 ", "\nignored msg\n");
   }
 
   public void testProcessor_OnIgnored_WithStacktrace() {
@@ -421,14 +421,14 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
     assertAllOutputs(myMockResettablePrinter, "stdout1 ",
                      "\nmethod1:1\nmethod2:2\nstderr1 ",
-                     "\nignored2 msg");
+                     "\nignored2 msg\n");
 
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1,
                      "stdout1 ",
                      "stderr1 \nmethod1:1\nmethod2:2\n",
-                     "\nignored2 msg");
+                     "\nignored2 msg\n");
 
     //other output order
     final SMTestProxy myTest2 = startTestWithPrinter("my_test2");
@@ -439,13 +439,13 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     assertAllOutputs(myMockResettablePrinter,
                      "stdout1 ",
                      "stderr1 \nmethod1:1\nmethod2:2\n",
-                     "\nignored msg");
+                     "\nignored msg\n");
     final MockPrinter mockPrinter2 = new MockPrinter(true);
     mockPrinter2.onNewAvailable(myTest2);
     assertAllOutputs(mockPrinter2,
                      "stdout1 ",
                      "stderr1 \nmethod1:1\nmethod2:2\n",
-                     "\nignored msg");
+                     "\nignored msg\n");
   }
 
   public void testOnUncapturedOutput_BeforeProcessStarted() {

@@ -44,10 +44,10 @@ class GroovyMapAttributeTest extends LightCodeInsightFixtureTestCase {
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
+      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/")
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
+      modifiableModel.commit()
     }
   }
 
@@ -55,7 +55,7 @@ class GroovyMapAttributeTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText("a.groovy", fileText)
     def res = myFixture.completeBasic()
 
-    assertNotNull res;
+    assertNotNull res
 
     Set<String> variants = new HashSet<String>()
 
@@ -421,7 +421,7 @@ class Test {
     field(ss<caret>)
   }
 }
-""", true);
+""", true)
   }
 
   void testCompletionVariableClosureParam() {
@@ -435,7 +435,7 @@ class Test {
     variable(ss<caret>)
   }
 }
-""", true);
+""", true)
   }
 
   void testCompletionReturnMethod() {

@@ -158,7 +158,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
         @NotNull
         @Override
         public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {
-          return Collections.singletonList(myLibAdditionalSrcDir);
+          return myProject == project ? Collections.singletonList(myLibAdditionalSrcDir) : Collections.emptyList();
         }
       }, getTestRootDisposable());
 

@@ -63,7 +63,7 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof GrConditionalExpression)) return;
       final GrConditionalExpression expression = (GrConditionalExpression)element;
@@ -81,7 +81,7 @@ public class GroovyConditionalWithIdenticalBranchesInspection extends BaseInspec
   private static class Visitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(GrConditionalExpression expression) {
+    public void visitConditionalExpression(@NotNull GrConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final GrExpression thenBranch = expression.getThenBranch();
       final GrExpression elseBranch = expression.getElseBranch();

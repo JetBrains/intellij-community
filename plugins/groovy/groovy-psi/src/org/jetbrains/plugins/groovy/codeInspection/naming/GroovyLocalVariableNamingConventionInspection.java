@@ -82,7 +82,7 @@ public class GroovyLocalVariableNamingConventionInspection extends ConventionIns
 
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitVariable(GrVariable grVariable) {
+    public void visitVariable(@NotNull GrVariable grVariable) {
       super.visitVariable(grVariable);
       if (grVariable instanceof GrField || grVariable instanceof GrParameter) {
         return;
@@ -95,7 +95,7 @@ public class GroovyLocalVariableNamingConventionInspection extends ConventionIns
     }
 
     @Override
-    public void visitParameter(GrParameter grParameter) {
+    public void visitParameter(@NotNull GrParameter grParameter) {
       super.visitParameter(grParameter);
       final String name = grParameter.getName();
       final PsiElement scope = grParameter.getDeclarationScope();

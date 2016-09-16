@@ -48,6 +48,7 @@ public class PyStringLiteralLexer extends LexerBase {
 
   private boolean myIsRaw;
   private boolean myIsTriple;
+  private boolean myIsFormatted;
   private final IElementType myOriginalLiteralToken;
   private boolean mySeenEscapedSpacesOnly;
 
@@ -74,6 +75,9 @@ public class PyStringLiteralLexer extends LexerBase {
     int offset = skipRawPrefix(buffer, i);
     if (offset > i) myIsRaw = true;
     i = offset;
+    offset = skipFormattedPrefix(buffer, i);
+    if (offset > i) myIsFormatted = true;
+    i = offset;
     i = skipEncodingPrefix(buffer, i);
     offset = skipRawPrefix(buffer, i);
     if (offset > i) myIsRaw = true;
@@ -88,6 +92,14 @@ public class PyStringLiteralLexer extends LexerBase {
 
     // calculate myEnd at last
     myEnd = locateToken(myStart);
+  }
+
+  public static int skipFormattedPrefix(CharSequence text, int startOffset) {
+    char c = Character.toUpperCase(text.charAt(startOffset));
+    if (c == 'F') {
+      startOffset++;
+    }
+    return startOffset;
   }
 
   public static int skipRawPrefix(CharSequence text, int startOffset) {

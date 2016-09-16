@@ -1,5 +1,3 @@
-package redundant_method_override;
-
 import java.util.ArrayList;
 
 public class RedundantMethodOverride extends S {
@@ -88,8 +86,19 @@ class C extends B {
 }
 class MyList extends ArrayList {
   @Override
-  protected void removeRange(int fromIndex, int toIndex) {
+  protected void <warning descr="Method 'removeRange()' is identical to its super method">removeRange</warning>(int fromIndex, int toIndex) {
     super.removeRange(fromIndex, toIndex);
+  }
+
+  void m() {
+    removeRange(0, 1);
+    new MyList2().removeRange(0, 0);
+  }
+}
+class MyList2 extends ArrayList {
+  @Override
+  protected void removeRange(int a, int b) {
+    super.removeRange(a, b);
   }
 }
 ////////////////

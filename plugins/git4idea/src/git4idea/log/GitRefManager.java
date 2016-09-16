@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.*;
@@ -78,7 +79,7 @@ public class GitRefManager implements VcsLogRefManager {
 
   @NotNull
   @Override
-  public List<RefGroup> group(Collection<VcsRef> refs) {
+  public List<RefGroup> groupForBranchFilter(@NotNull Collection<VcsRef> refs) {
     List<RefGroup> simpleGroups = ContainerUtil.newArrayList();
     List<VcsRef> localBranches = ContainerUtil.newArrayList();
     List<VcsRef> trackedBranches = ContainerUtil.newArrayList();
@@ -133,6 +134,58 @@ public class GitRefManager implements VcsLogRefManager {
       result.add(new RemoteRefGroup(remote, branches));
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public List<RefGroup> groupForTable(@NotNull Collection<VcsRef> references) {
+    List<VcsRef> sortedReferences = ContainerUtil.sorted(references, myLabelsComparator);
+    Set<Map.Entry<VcsRefType, Collection<VcsRef>>> groupedRefs = ContainerUtil.groupBy(sortedReferences, VcsRef::getType).entrySet();
+    Map.Entry<VcsRefType, Collection<VcsRef>> firstGroup = ContainerUtil.getFirstItem(groupedRefs);
+    List<RefGroup> groups = ContainerUtil.newArrayList();
+    if (firstGroup == null) return groups;
+
+    if (firstGroup.getKey().equals(HEAD)) {
+      VcsRef head = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(head.getRoot());
+      if (repository == null) {
+        LOG.warn("No repository for root: " + head.getRoot());
+      }
+      else {
+        if (!repository.isOnBranch()) {
+          groups.add(new TableRefGroup("!", Collections.singletonList(head)));
+          sortedReferences = sortedReferences.subList(1, sortedReferences.size());
+        }
+      }
+      firstGroup = ContainerUtil.find(groupedRefs, entry -> !entry.getKey().equals(HEAD));
+    }
+    if (firstGroup == null) return groups;
+
+    VcsRef firstRef = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(firstGroup.getValue()));
+    VcsRefType firstRefType = firstGroup.getKey();
+    String name = firstRefType.isBranch() && !firstRefType.equals(HEAD) ? firstRef.getName() : "";
+
+    if (firstRefType.equals(LOCAL_BRANCH)) {
+      GitRepository repository = myRepositoryManager.getRepositoryForRoot(firstRef.getRoot());
+      if (repository == null) {
+        LOG.warn("No repository for root: " + firstRef.getRoot());
+      }
+      else {
+        GitBranchTrackInfo trackInfo =
+          ContainerUtil.find(repository.getBranchTrackInfos(), info -> info.getLocalBranch().getName().equals(firstRef.getName()));
+        if (trackInfo != null) {
+          VcsRef trackedRef = ContainerUtil
+            .find(references, ref -> ref.getType().equals(REMOTE_BRANCH) && ref.getName().equals(trackInfo.getRemoteBranch().getName()));
+          if (trackedRef != null) {
+            name = trackInfo.getRemote().getName() + "&" + firstRef.getName();
+          }
+        }
+      }
+    }
+
+    groups.add(new TableRefGroup(name, sortedReferences));
+
+    return groups;
   }
 
   @Override
@@ -306,6 +359,39 @@ public class GitRefManager implements VcsLogRefManager {
     @Override
     public Color getBgColor() {
       return VcsLogStandardColors.Refs.BRANCH_REF;
+    }
+  }
+
+  private static class TableRefGroup implements RefGroup {
+    @NotNull private final String myName;
+    @NotNull private final List<VcsRef> myRefs;
+
+    private TableRefGroup(@NotNull String name, @NotNull List<VcsRef> refs) {
+      myName = name;
+      myRefs = refs;
+    }
+
+    @Override
+    public boolean isExpanded() {
+      return false;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @NotNull
+    @Override
+    public List<VcsRef> getRefs() {
+      return myRefs;
+    }
+
+    @NotNull
+    @Override
+    public Color getBgColor() {
+      return myRefs.get(0).getType().getBackgroundColor();
     }
   }
 

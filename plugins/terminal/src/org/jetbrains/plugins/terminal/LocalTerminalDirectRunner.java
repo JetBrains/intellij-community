@@ -102,8 +102,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
 
+    String[] command = getCommand();
+
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
-      customizer.setupEnvironment(myProject, envs);
+      command = customizer.customizeCommandAndEnvironment(myProject, command, envs);
 
       if (directory == null) {
         directory = customizer.getDefaultFolder();
@@ -111,7 +113,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
 
     try {
-      return PtyProcess.exec(getCommand(), envs, directory != null ? directory : currentProjectFolder());
+      return PtyProcess.exec(command, envs, directory != null ? directory : currentProjectFolder());
     }
     catch (IOException e) {
       throw new ExecutionException(e);
@@ -184,9 +186,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
           if (hasLoginArgument(shellName) && SystemInfo.isMac) {
             result.add("--login");
           }
-          else {
-            result.add("-i");
-          }
+          result.add("-i");
         }
 
         result.addAll(command);

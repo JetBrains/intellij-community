@@ -1,4 +1,4 @@
-package org.jetbrains.settingsRepository
+package org.jetbrains.settingsRepository.test
 
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.OneTimeString
@@ -7,6 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.transport.CredentialItem
 import org.eclipse.jgit.transport.URIish
+import org.jetbrains.settingsRepository.IcsCredentialsStore
 import org.jetbrains.settingsRepository.git.JGitCredentialsProvider
 import org.junit.ClassRule
 import org.junit.Test

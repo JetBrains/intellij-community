@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,15 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.search.IndexPattern;
 import com.intellij.psi.search.IndexPatternProvider;
 
+import java.util.Arrays;
+
 public class IndexPatternUtil {
   public static IndexPatternProvider[] getIndexPatternProviders() {
     return Extensions.getExtensions(IndexPatternProvider.EP_NAME);
   }
 
   public static int getIndexPatternCount() {
-    int patternsCount = 0;
-    for(IndexPatternProvider provider: getIndexPatternProviders()) {
-      patternsCount += provider.getIndexPatterns().length;
-    }
-    return patternsCount;
+    return Arrays.stream(getIndexPatternProviders()).mapToInt(provider -> provider.getIndexPatterns().length).sum();
   }
 
   public static IndexPattern[] getIndexPatterns() {

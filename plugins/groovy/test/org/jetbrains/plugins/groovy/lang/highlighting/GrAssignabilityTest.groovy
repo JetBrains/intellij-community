@@ -32,24 +32,24 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
 
   void testDefaultMapConstructorNamedArgs() {
     addBigDecimal()
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+    doTest(new GroovyConstructorNamedArgumentsInspection())
   }
 
   void testDefaultMapConstructorNamedArgsError() {
     addBigDecimal()
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+    doTest(new GroovyConstructorNamedArgumentsInspection())
   }
 
   void testDefaultMapConstructorWhenDefConstructorExists() {
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+    doTest(new GroovyConstructorNamedArgumentsInspection())
   }
 
   void testUnresolvedMethodCallWithTwoDeclarations() {
-    doTest();
+    doTest()
   }
 
   void testConstructor() {
-    doTest(new GroovyConstructorNamedArgumentsInspection());
+    doTest(new GroovyConstructorNamedArgumentsInspection())
   }
 
   void testEverythingAssignableToString() { doTest(); }
@@ -71,16 +71,16 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
   void _testPutIncorrectValueToMap() { doTest(); } //incorrect test
 
   void testTupleTypeAssignments() {
-    addBigDecimal();
-    doTest();
+    addBigDecimal()
+    doTest()
   }
 
   void testSignatureIsNotApplicableToList() {
-    doTest();
+    doTest()
   }
 
   void testInheritConstructorsAnnotation() {
-    doTest();
+    doTest()
   }
 
   void testCollectionAssignments() { doTest(); }
@@ -94,77 +94,77 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
   void testMapParamWithNoArgs() { doTest(); }
 
   void testInheritInterfaceInDelegate() {
-    doTest();
+    doTest()
   }
 
   void testThisTypeInStaticContext() {
-    doTest();
+    doTest()
   }
 
   void testAnonymousClassArgList() {
-    doTest();
+    doTest()
   }
 
   void testTupleConstructorAttributes() {
-    doTest();
+    doTest()
   }
 
   void testCanonicalConstructorApplicability() {
-    myFixture.addClass("package groovy.transform; public @interface Canonical {}");
-    doTest();
+    myFixture.addClass("package groovy.transform; public @interface Canonical {}")
+    doTest()
   }
 
   void testStringAssignableToChar() {
-    doTest();
+    doTest()
   }
 
 
   void testCurrying() {
-    doTest();
+    doTest()
   }
 
   void testAnotherCurrying() {
-    doTest();
+    doTest()
   }
 
   void testResultOfIncUsed() {
-    doTest(new GroovyResultOfIncrementOrDecrementUsedInspection());
+    doTest(new GroovyResultOfIncrementOrDecrementUsedInspection())
   }
 
   void testNativeMapAssignability() {
-    doTest();
+    doTest()
   }
 
   void testTwoLevelGrMap() {
-    doTest();
+    doTest()
   }
 
   void testPassingCollectionSubtractionIntoGenericMethod() {
-    doTest(new GrUnresolvedAccessInspection());
+    doTest(new GrUnresolvedAccessInspection())
   }
 
   void testImplicitEnumCoercion() {
-    doTest();
+    doTest()
   }
 
   void testUnknownVarInArgList() {
-    doTest();
+    doTest()
   }
 
   void testCallableProperty() {
-    doTest();
+    doTest()
   }
 
   void testEnumConstantConstructors() {
-    doTest();
+    doTest()
   }
 
   void testLiteralConstructorUsages() {
-    doTest();
+    doTest()
   }
 
   void testSpreadArguments() {
-    doTest();
+    doTest()
   }
 
   void testDiamondTypeInferenceSOE() {
@@ -182,7 +182,7 @@ class A {
             }
         }.run()
     }
-}''', true, false, false);
+}''', true, false, false)
   }
 
   void testNonInferrableArgsOfDefParams() {

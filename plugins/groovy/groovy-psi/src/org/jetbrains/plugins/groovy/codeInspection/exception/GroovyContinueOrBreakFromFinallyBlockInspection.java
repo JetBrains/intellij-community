@@ -56,7 +56,7 @@ public class GroovyContinueOrBreakFromFinallyBlockInspection extends BaseInspect
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitContinueStatement(GrContinueStatement continueStatement) {
+    public void visitContinueStatement(@NotNull GrContinueStatement continueStatement) {
 
       super.visitContinueStatement(continueStatement);
       if (!ControlFlowUtils.isInFinallyBlock(continueStatement)) {
@@ -73,7 +73,7 @@ public class GroovyContinueOrBreakFromFinallyBlockInspection extends BaseInspect
     }
 
     @Override
-    public void visitBreakStatement(GrBreakStatement breakStatement) {
+    public void visitBreakStatement(@NotNull GrBreakStatement breakStatement) {
 
       super.visitBreakStatement(breakStatement);
       if (!ControlFlowUtils.isInFinallyBlock(breakStatement)) {

@@ -17,13 +17,12 @@ package com.intellij.credentialStore.kdbx
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.SmartList
-import com.intellij.util.inputStreamIfExists
+import com.intellij.util.io.inputStreamIfExists
 import com.intellij.util.loadElement
 import org.bouncycastle.crypto.engines.Salsa20Engine
 import org.bouncycastle.crypto.params.KeyParameter
 import org.bouncycastle.crypto.params.ParametersWithIV
 import org.jdom.Element
-import org.linguafranca.pwdb.kdbx.KdbxSerializer
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Path

@@ -198,4 +198,12 @@ public class TooBroadScope
         long end = System.currentTimeMillis();
         System.out.println("elapsed: " + (end - start));
     }
+
+    void m(HashMap<Integer, String> src) {
+        ArrayList<String> strings = new ArrayList<>(src.values());
+        src.clear();
+        for (String s : strings) {
+            System.out.println(s);
+        }
+    }
 }

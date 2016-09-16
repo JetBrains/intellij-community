@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 
@@ -33,13 +32,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 4/4/12
- * Time: 5:51 PM
- * To change this template use File | Settings | File Templates.
- */
 public class BreakpointEditor {
   public JPanel getMainPanel() {
     return myMainPanel;
@@ -49,12 +41,9 @@ public class BreakpointEditor {
     AnAction action = ActionManager.getInstance().getAction(XDebuggerActions.VIEW_BREAKPOINTS);
     String shortcutText = action != null ? KeymapUtil.getFirstKeyboardShortcutText(action) : null;
     String text = shortcutText != null ? "More (" + shortcutText + ")" : "More";
-    myShowMoreOptionsLink = new LinkLabel(text, null, new LinkListener() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        if (myDelegate != null) {
-          myDelegate.more();
-        }
+    myShowMoreOptionsLink = LinkLabel.create(text, () -> {
+      if (myDelegate != null) {
+        myDelegate.more();
       }
     });
   }

@@ -126,6 +126,7 @@ public abstract class ProfilesComboBox extends ComboBox<InspectionProfileImpl> {
     }
     findFirstGlobalProfile();
     setSelectedIndex(0);
+    resort();
   }
 
   void removeProfile(InspectionProfileImpl profile) {

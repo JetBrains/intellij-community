@@ -16,7 +16,6 @@
 package git4idea.stash;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
@@ -72,7 +71,7 @@ public class GitShelveUtils {
       public void run() {
         markUnshelvedFilesNonUndoable(project, changes);
       }
-    }, ModalityState.defaultModalityState());
+    });
   }
 
   @CalledInAwt

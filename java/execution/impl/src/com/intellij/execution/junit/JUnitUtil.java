@@ -43,6 +43,7 @@ public class JUnitUtil {
   @NonNls private static final String TESTSUITE_CLASS = "junit.framework.TestSuite";
   @NonNls public static final String TEST_ANNOTATION = "org.junit.Test";
   @NonNls public static final String TEST5_ANNOTATION = "org.junit.jupiter.api.Test";
+  @NonNls public static final String TEST5_FACTORY_ANNOTATION = "org.junit.jupiter.api.TestFactory";
   @NonNls public static final String IGNORE_ANNOTATION = "org.junit.Ignore";
   @NonNls public static final String RUN_WITH = "org.junit.runner.RunWith";
   @NonNls public static final String DATA_POINT = "org.junit.experimental.theories.DataPoint";
@@ -62,7 +63,10 @@ public class JUnitUtil {
   public static final String BEFORE_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.BeforeAll";
   public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.AfterAll";
 
-  private static final Collection<String> TEST_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST_ANNOTATION, TEST5_ANNOTATION));
+  private static final Collection<String> TEST_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST_ANNOTATION,
+                                                                                                        TEST5_ANNOTATION,
+                                                                                                        TEST5_FACTORY_ANNOTATION));
+  public static final Collection<String> TEST5_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST5_ANNOTATION, TEST5_FACTORY_ANNOTATION));
 
   private static final List<String> INSTANCE_CONFIGS = Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME);
   private static final List<String> INSTANCE_5_CONFIGS = Arrays.asList(BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME);
@@ -182,11 +186,25 @@ public class JUnitUtil {
     if (modifierList == null) return false;
     if (AnnotationUtil.isAnnotated(psiClass, RUN_WITH, true)) return true;
 
-    if (!PsiClassUtil.isRunnableClass(psiClass, !isJUnit5(modifierList), checkAbstract)) return false;
+    if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
       ProgressManager.checkCanceled();
       if (isTestAnnotated(method)) return true;
+    }
+
+    return false;
+  }
+
+  public static boolean isJUnit5TestClass(final PsiClass psiClass, boolean checkAbstract) {
+    final PsiModifierList modifierList = psiClass.getModifierList();
+    if (modifierList == null) return false;
+
+    if (!PsiClassUtil.isRunnableClass(psiClass, false, checkAbstract)) return false;
+
+    for (final PsiMethod method : psiClass.getAllMethods()) {
+      ProgressManager.checkCanceled();
+      if (AnnotationUtil.isAnnotated(method, TEST5_ANNOTATIONS)) return true;
     }
 
     return false;

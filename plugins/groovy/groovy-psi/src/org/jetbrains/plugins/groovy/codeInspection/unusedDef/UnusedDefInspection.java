@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
@@ -143,7 +141,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
 
     owner.accept(new GroovyRecursiveElementVisitor() {
       @Override
-      public void visitVariable(GrVariable variable) {
+      public void visitVariable(@NotNull GrVariable variable) {
         if (checked.contains(variable) || variable.getInitializerGroovy() != null) return;
 
         if (ReferencesSearch.search(variable, variable.getUseScope()).findFirst() == null) {

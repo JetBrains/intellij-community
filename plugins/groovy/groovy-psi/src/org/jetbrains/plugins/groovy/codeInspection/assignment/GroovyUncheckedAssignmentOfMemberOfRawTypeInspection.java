@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
 
   private static class Visitor extends BaseInspectionVisitor {
     @Override
-    public void visitReturnStatement(GrReturnStatement returnStatement) {
+    public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
       final GrExpression value = returnStatement.getReturnValue();
       if (value != null) {
         final PsiType type = value.getType();
@@ -104,7 +104,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
     }
 
     @Override
-    public void visitNamedArgument(GrNamedArgument argument) {
+    public void visitNamedArgument(@NotNull GrNamedArgument argument) {
       final GrArgumentLabel label = argument.getLabel();
       if (label != null) {
         PsiType expectedType = label.getExpectedArgumentType();
@@ -126,7 +126,7 @@ public class GroovyUncheckedAssignmentOfMemberOfRawTypeInspection extends BaseIn
     }
 
     @Override
-    public void visitVariable(GrVariable variable) {
+    public void visitVariable(@NotNull GrVariable variable) {
       PsiType varType = variable.getType();
       GrExpression initializer = variable.getInitializerGroovy();
       if (initializer != null) {

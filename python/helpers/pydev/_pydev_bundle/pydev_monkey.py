@@ -32,7 +32,7 @@ def _get_pydevd_args():
 def _get_python_c_args(host, port, indC, args):
     return ("import sys; sys.path.append(r'%s'); import pydevd; "
             "pydevd.settrace(host='%s', port=%s, suspend=False, trace_only_current_thread=False, patch_multiprocessing=True); "
-            "sys.original_argv = %s; print(sys.argv); %s"
+            "sys.original_argv = %s; %s"
             ) % (
                pydev_src_dir,
                host,

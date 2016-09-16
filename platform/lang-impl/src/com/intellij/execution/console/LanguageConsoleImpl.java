@@ -27,6 +27,8 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -45,10 +47,8 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -108,7 +108,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     public void focusGained(Editor editor) {
       myCurrentEditor = (EditorEx)editor;
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
-        FileDocumentManager.getInstance().saveAllDocuments(); // PY-12487
+        TransactionGuard.submitTransaction(LanguageConsoleImpl.this, () -> FileDocumentManager.getInstance().saveAllDocuments()); // PY-12487
       }
     }
 
@@ -196,18 +196,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   private void setHistoryScrollBarVisible(boolean visible) {
     JScrollBar prev = myHistoryViewer.getScrollPane().getHorizontalScrollBar();
-    if (Registry.is("ide.scroll.new.layout")) {
-      prev.setEnabled(visible);
-      return;
-    }
-    JScrollBar next;
-    if (visible) {
-      next = ((EmptyScrollBar)prev).original;
-    }
-    else {
-      next = new EmptyScrollBar(prev);
-    }
-    myHistoryViewer.getScrollPane().setHorizontalScrollBar(next);
+    prev.setEnabled(visible);
   }
 
   private void setupComponents() {
@@ -262,12 +251,9 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   private void setPromptInner(@Nullable final String prompt) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (!myConsoleEditor.isDisposed()) {
-          myConsoleEditor.setPrefixTextAndAttributes(prompt, myPromptAttributes.getAttributes());
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      if (!myConsoleEditor.isDisposed()) {
+        myConsoleEditor.setPrefixTextAndAttributes(prompt, myPromptAttributes.getAttributes());
       }
     });
   }
@@ -453,18 +439,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    Object data = super.getData(dataId);
-    if (data != null) {
-      return data;
-    }
-    else if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-      return myConsoleEditor;
-    }
-    else if (getProject().isInitialized()) {
-      Caret caret = myConsoleEditor.getCaretModel().getCurrentCaret();
-      return FileEditorManagerEx.getInstanceEx(getProject()).getData(dataId, myConsoleEditor, caret);
-    }
-    return null;
+    return super.getData(dataId);
   }
 
   private void installEditorFactoryListener() {
@@ -555,12 +530,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     @NotNull
     public PsiFile getFile() {
-      return ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-        @Override
-        public PsiFile compute() {
-          return PsiUtilCore.getPsiFile(project, virtualFile);
-        }
-      });
+      return ReadAction.compute(() -> PsiUtilCore.getPsiFile(project, virtualFile));
     }
 
     @NotNull
@@ -591,11 +561,25 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       EditorSettings editorSettings = editor.getSettings();
       editorSettings.setAdditionalLinesCount(1);
       editorSettings.setAdditionalColumnsCount(1);
+
+      DataManager.registerDataProvider(editor.getComponent(), (dataId) -> getEditorData(editor, dataId));
     }
 
     @NotNull
     PsiFile getFileSafe() {
       return file == null || !file.isValid() ? file = getFile() : file;
+    }
+
+    @Nullable
+    protected Object getEditorData(@NotNull EditorEx editor, String dataId) {
+      if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
+        return editor;
+      }
+      else if (project.isInitialized()) {
+        Caret caret = editor.getCaretModel().getCurrentCaret();
+        return FileEditorManagerEx.getInstanceEx(project).getData(dataId, editor, caret);
+      }
+      return null;
     }
   }
 

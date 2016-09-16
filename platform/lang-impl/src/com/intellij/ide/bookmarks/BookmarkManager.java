@@ -82,12 +82,13 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
                          EditorColorsManager colorsManager,
                          EditorFactory editorFactory) {
     super(project);
-    colorsManager.addEditorColorsListener(new EditorColorsListener() {
+
+    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         colorsChanged();
       }
-    }, project);
+    });
     myBus = bus;
     EditorEventMulticaster multicaster = editorFactory.getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);

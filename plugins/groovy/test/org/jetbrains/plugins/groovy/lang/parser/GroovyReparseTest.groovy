@@ -27,20 +27,20 @@ class GroovyReparseTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "reparse/";
+    return TestUtils.getTestDataPath() + "reparse/"
   }
 
   void checkReparse(String text, String type) {
-    myFixture.configureByText("a.groovy", text);
+    myFixture.configureByText("a.groovy", text)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    final String psiBefore = DebugUtil.psiToString(myFixture.getFile(), false);
+    final String psiBefore = DebugUtil.psiToString(myFixture.getFile(), false)
 
-    myFixture.type(type);
+    myFixture.type(type)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
-    final String psiAfter = DebugUtil.psiToString(myFixture.getFile(), false);
+    final String psiAfter = DebugUtil.psiToString(myFixture.getFile(), false)
 
-    myFixture.configureByText("a.txt", psiBefore.trim() + "\n---\n" + psiAfter.trim());
-    myFixture.checkResultByFile(getTestName(false) + ".txt");
+    myFixture.configureByText("a.txt", psiBefore.trim() + "\n---\n" + psiAfter.trim())
+    myFixture.checkResultByFile(getTestName(false) + ".txt")
   }
 
   void testCodeBlockReparse() throws IOException {

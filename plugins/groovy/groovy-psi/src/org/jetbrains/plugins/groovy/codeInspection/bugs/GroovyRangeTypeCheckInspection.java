@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
 
       return new GroovyFix() {
         @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+        protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
           for (GroovyFix fix : fixes) {
             fix.applyFix(project, descriptor);
           }
@@ -129,7 +129,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
 
   private static class MyVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitRangeExpression(GrRangeExpression range) {
+    public void visitRangeExpression(@NotNull GrRangeExpression range) {
       super.visitRangeExpression(range);
       final PsiType type = range.getType();
       if (!(type instanceof GrRangeType)) return;

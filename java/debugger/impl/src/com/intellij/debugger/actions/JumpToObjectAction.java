@@ -133,17 +133,17 @@ public class JumpToObjectAction extends DebuggerAction{
         }
         final Location location = lambdaLocation != null ? lambdaLocation : ContainerUtil.getFirstItem(clsType.allLineLocations());
         if (location != null) {
+          SourcePosition position = debugProcess.getPositionManager().getSourcePosition(location);
           return ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
             @Override
             public SourcePosition compute() {
-              SourcePosition position = debugProcess.getPositionManager().getSourcePosition(location);
               // adjust position for non-anonymous classes
               if (clsType.name().indexOf('$') < 0) {
-                final PsiClass classAt = JVMNameUtil.getClassAt(position);
+                PsiClass classAt = JVMNameUtil.getClassAt(position);
                 if (classAt != null) {
-                  final SourcePosition classPosition = SourcePosition.createFromElement(classAt);
+                  SourcePosition classPosition = SourcePosition.createFromElement(classAt);
                   if (classPosition != null) {
-                    position = classPosition;
+                    return classPosition;
                   }
                 }
               }

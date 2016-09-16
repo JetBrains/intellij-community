@@ -19,87 +19,85 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.util.EmptyRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class CallbackData {
-  private final static Logger LOG = Logger.getInstance("com.intellij.openapi.vcs.changes.CallbackData");
-  private final Runnable myCallback;
-  private final Runnable myWrapperStarter;
+import java.util.function.Consumer;
 
-  CallbackData(@NotNull final Runnable callback, @Nullable final Runnable wrapperStarter) {
+class CallbackData {
+  private final static Logger LOG = Logger.getInstance(CallbackData.class);
+
+  @NotNull private final Runnable myCallback;
+  @NotNull private final Runnable myWrapperStarter;
+
+  CallbackData(@NotNull Runnable callback, @NotNull Runnable wrapperStarter) {
     myCallback = callback;
     myWrapperStarter = wrapperStarter;
   }
 
+  @NotNull
   public Runnable getCallback() {
     return myCallback;
   }
 
+  @NotNull
   public Runnable getWrapperStarter() {
     return myWrapperStarter;
   }
 
-  public static CallbackData create(@NotNull final Runnable afterUpdate, final String title, final ModalityState state,
-                                    final InvokeAfterUpdateMode mode, @NotNull final Project project) {
-    if (mode.isSilently()) {
-      return new CallbackData(new Runnable() {
-        public void run() {
-          if (mode.isCallbackOnAwt()) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                LOG.debug("invokeAfterUpdate: silent wrapper called for project: " + project.getName());
-                if (project.isDisposed()) return;
-                afterUpdate.run();
-              }
-            });
-          }
-          else {
-            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                if (!project.isDisposed()) afterUpdate.run();
-              }
-            });
-          }
-        }
-      }, null);
+  @NotNull
+  public static CallbackData create(@NotNull Project project,
+                                    @NotNull InvokeAfterUpdateMode mode,
+                                    @NotNull Runnable afterUpdate,
+                                    @Nullable String title,
+                                    @Nullable ModalityState state) {
+    return mode.isSilent() ? createSilent(project, mode, afterUpdate) : createInteractive(project, mode, afterUpdate, title, state);
+  }
+
+  @NotNull
+  private static CallbackData createSilent(@NotNull Project project, @NotNull InvokeAfterUpdateMode mode, @NotNull Runnable afterUpdate) {
+    Consumer<Runnable> callbackCaller = mode.isCallbackOnAwt()
+                                        ? ApplicationManager.getApplication()::invokeLater
+                                        : ApplicationManager.getApplication()::executeOnPooledThread;
+    Runnable callback = () -> {
+      logUpdateFinished(project, mode);
+      if (!project.isDisposed()) afterUpdate.run();
+    };
+    return new CallbackData(() -> callbackCaller.accept(callback), EmptyRunnable.INSTANCE);
+  }
+
+  @NotNull
+  private static CallbackData createInteractive(@NotNull Project project,
+                                                @NotNull InvokeAfterUpdateMode mode,
+                                                @NotNull Runnable afterUpdate,
+                                                String title,
+                                                @Nullable ModalityState state) {
+    Task task = mode.isSynchronous()
+                ? new Waiter(project, afterUpdate, title, mode.isCancellable())
+                : new FictiveBackgroundable(project, afterUpdate, title, mode.isCancellable(), state);
+    Runnable callback = () -> {
+      logUpdateFinished(project, mode);
+      setDone(task);
+    };
+    return new CallbackData(callback, () -> ProgressManager.getInstance().run(task));
+  }
+
+  private static void setDone(@NotNull Task task) {
+    if (task instanceof Waiter) {
+      ((Waiter)task).done();
+    }
+    else if (task instanceof FictiveBackgroundable) {
+      ((FictiveBackgroundable)task).done();
     }
     else {
-      if (mode.isSynchronous()) {
-        final Waiter waiter = new Waiter(project, afterUpdate,
-                                         VcsBundle.message("change.list.manager.wait.lists.synchronization", title), mode.isCancellable());
-        return new CallbackData(
-          new Runnable() {
-            public void run() {
-              LOG.debug("invokeAfterUpdate: NOT silent SYNCHRONOUS wrapper called for project: " + project.getName());
-              waiter.done();
-            }
-          }, new Runnable() {
-          public void run() {
-            ProgressManager.getInstance().run(waiter);
-          }
-        }
-        );
-      }
-      else {
-        final FictiveBackgroundable fictiveBackgroundable =
-          new FictiveBackgroundable(project, afterUpdate, mode.isCancellable(), title, state);
-        return new CallbackData(
-          new Runnable() {
-            public void run() {
-              LOG.debug("invokeAfterUpdate: NOT silent wrapper called for project: " + project.getName());
-              fictiveBackgroundable.done();
-            }
-          }, new Runnable() {
-          public void run() {
-            ProgressManager.getInstance().run(fictiveBackgroundable);
-          }
-        }
-        );
-      }
+      throw new IllegalArgumentException("Unknown task type " + task.getClass());
     }
+  }
+
+  private static void logUpdateFinished(@NotNull Project project, @NotNull InvokeAfterUpdateMode mode) {
+    LOG.debug(mode + " changes update finished for project " + project.getName());
   }
 }

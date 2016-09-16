@@ -37,22 +37,22 @@ class ExtractMethodTest extends LightGroovyTestCase {
   final String basePath = TestUtils.testDataPath + 'groovy/refactoring/extractMethod/'
 
   private void doAntiTest(String errorMessage) {
-    GroovyExtractMethodHandler handler = configureFromText(readInput()[0], "testMethod");
+    GroovyExtractMethodHandler handler = configureFromText(readInput()[0], "testMethod")
     try {
-      handler.invoke(project, myFixture.editor, myFixture.file, null);
-      assertTrue(false);
+      handler.invoke(project, myFixture.editor, myFixture.file, null)
+      assertTrue(false)
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals(errorMessage, e.localizedMessage);
+      assertEquals(errorMessage, e.localizedMessage)
     }
   }
 
   private List<String> readInput() {
-    return TestUtils.readInput(testDataPath + getTestName(true) + ".test");
+    return TestUtils.readInput(testDataPath + getTestName(true) + ".test")
   }
 
   private void doTest(String name = 'testMethod') {
-    final List<String> data = readInput();
+    final List<String> data = readInput()
     final String before = data[0]
     def after = StringUtil.trimEnd(data[1], '\n')
 
@@ -60,11 +60,11 @@ class ExtractMethodTest extends LightGroovyTestCase {
   }
 
   private void doTest(String name = 'testMethod', String before, String after) {
-    GroovyExtractMethodHandler handler = configureFromText(before, name);
+    GroovyExtractMethodHandler handler = configureFromText(before, name)
     try {
-      handler.invoke(project, myFixture.editor, myFixture.file, null);
-      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-      myFixture.checkResult(after);
+      handler.invoke(project, myFixture.editor, myFixture.file, null)
+      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+      myFixture.checkResult(after)
     }
     catch (ConflictsInTestsException e) {
       ApplicationManager.application.runWriteAction {
@@ -79,28 +79,28 @@ class ExtractMethodTest extends LightGroovyTestCase {
   private GroovyExtractMethodHandler configureFromText(String fileText, final String name) {
     final caret = fileText.indexOf(TestUtils.CARET_MARKER)
     if (caret >= 0) {
-      myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
+      myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText)
     }
     else {
-      int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER);
-      fileText = TestUtils.removeBeginMarker(fileText);
-      int endOffset = fileText.indexOf(TestUtils.END_MARKER);
-      fileText = TestUtils.removeEndMarker(fileText);
-      myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
-      myFixture.editor.selectionModel.setSelection(startOffset, endOffset);
+      int startOffset = fileText.indexOf(TestUtils.BEGIN_MARKER)
+      fileText = TestUtils.removeBeginMarker(fileText)
+      int endOffset = fileText.indexOf(TestUtils.END_MARKER)
+      fileText = TestUtils.removeEndMarker(fileText)
+      myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText)
+      myFixture.editor.selectionModel.setSelection(startOffset, endOffset)
     }
 
     return new GroovyExtractMethodHandler() {
       @Override
       protected ExtractMethodInfoHelper getSettings(@NotNull InitialInfo initialInfo, PsiClass owner) {
-        final ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(initialInfo, name, owner, true);
-        final PsiType type = helper.getOutputType();
+        final ExtractMethodInfoHelper helper = new ExtractMethodInfoHelper(initialInfo, name, owner, true)
+        final PsiType type = helper.getOutputType()
         if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || PsiType.VOID.equals(type)) {
-          helper.setSpecifyType(false);
+          helper.setSpecifyType(false)
         }
-        return helper;
+        return helper
       }
-    };
+    }
   }
 
   void testClos_em() throws Throwable { doTest(); }

@@ -18,7 +18,6 @@ package com.intellij.codeInspection.ui;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -27,7 +26,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.IdeBorderFactory;
@@ -62,7 +60,6 @@ public class InspectionResultsViewUtil {
       final PsiFile containingFile = containingElement.getContainingFile();
       if (containingFile != null) {
         final VirtualFile file = containingFile.getVirtualFile();
-        WriteAction.run(() -> PsiDocumentManager.getInstance(containingFile.getProject()).commitAllDocuments());
         final Document document = FileDocumentManager.getInstance().getDocument(file);
         if (document != null && document.getLineCount() > lineNumber - 1) {
           return new OpenFileDescriptor(containingElement.getProject(),

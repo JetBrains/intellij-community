@@ -552,7 +552,7 @@ public class PyNames {
     return !isReserved(name) && isIdentifierString(name);
   }
 
-  public static boolean isIdentifierString(String name) {
+  public static boolean isIdentifierString(@NotNull @NonNls String name) {
     return IDENTIFIER_PATTERN.matcher(name).matches();
   }
 

@@ -49,8 +49,4 @@ public interface VcsLogUiProperties {
   boolean isHighlighterEnabled(@NotNull String id);
 
   void enableHighlighter(@NotNull String id, boolean value);
-
-  boolean isShowBranchesPanel();
-
-  void setShowBranchesPanel(boolean show);
 }

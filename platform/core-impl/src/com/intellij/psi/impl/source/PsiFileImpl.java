@@ -1112,7 +1112,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
-        myManager.dropResolveCaches();
+        if (!myManager.isDisposed()) {
+          myManager.dropResolveCaches();
+        }
 
         final VirtualFile vFile = getVirtualFile();
         if (vFile != null && vFile.isValid()) {

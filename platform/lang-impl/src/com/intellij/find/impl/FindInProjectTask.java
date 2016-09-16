@@ -88,7 +88,7 @@ class FindInProjectTask {
   private final Condition<VirtualFile> myFileMask;
   private final ProgressIndicator myProgress;
   @Nullable private final Module myModule;
-  private final Set<VirtualFile> myLargeFiles = ContainerUtil.newTroveSet();
+  private final Set<VirtualFile> myLargeFiles = Collections.synchronizedSet(ContainerUtil.newTroveSet());
   private final Set<VirtualFile> myFilesToScanInitially;
   private final AtomicBoolean myWarningShown = new AtomicBoolean();
   private final AtomicLong myTotalFilesSize = new AtomicLong();

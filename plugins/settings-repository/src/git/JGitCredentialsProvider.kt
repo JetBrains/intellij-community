@@ -19,10 +19,10 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.isFulfilled
-import com.intellij.credentialStore.macOs.isMacOsCredentialStoreSupported
+import com.intellij.credentialStore.isMacOsCredentialStoreSupported
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.util.nullize
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.transport.CredentialItem
@@ -124,7 +124,7 @@ class JGitCredentialsProvider(private val credentialsStore: Lazy<IcsCredentialsS
       }
     }
 
-    return credentials != null
+    return credentials.isFulfilled()
   }
 
   override fun reset(uri: URIish) {

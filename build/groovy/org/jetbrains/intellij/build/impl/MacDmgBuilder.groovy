@@ -19,7 +19,6 @@ import com.intellij.util.PathUtilRt
 import org.apache.tools.ant.types.Path
 import org.apache.tools.ant.util.SplitClassLoader
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.MacHostProperties
 
@@ -43,13 +42,13 @@ class MacDmgBuilder {
     this.remoteDir = remoteDir
   }
 
-  public static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties,
+  static void signBinaryFiles(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties,
                                      String macDistPath) {
     def dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
     dmgBuilder.doSignBinaryFiles(macDistPath)
   }
 
-  public static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath) {
+  static void signAndBuildDmg(BuildContext buildContext, MacDistributionCustomizer customizer, MacHostProperties macHostProperties, String macZipPath) {
     MacDmgBuilder dmgBuilder = createInstance(buildContext, customizer, macHostProperties)
     def jreArchivePath = buildContext.bundledJreManager.findMacJreArchive()
     if (jreArchivePath != null) {
@@ -220,7 +219,7 @@ class MacDmgBuilder {
 
     def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER";
     Path pathSsh = new Path(ant.project)
-    pathSsh.createPathElement().setLocation(new File("$communityLib/jsch-0.1.53.jar"))
+    pathSsh.createPathElement().setLocation(new File("$communityLib/jsch-0.1.54.jar"))
     pathSsh.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-jsch.jar"))
     ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
                                                                     ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))

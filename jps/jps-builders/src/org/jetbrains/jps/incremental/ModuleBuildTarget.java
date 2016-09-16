@@ -52,6 +52,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ * Describes step of compilation process which produces JVM *.class files from files in production/test source roots of a Java module. These
+ * targets are built by {@link ModuleLevelBuilder} and they are the only targets which can have circular dependencies on each other.
+ *
  * @author nik
  */
 public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> {

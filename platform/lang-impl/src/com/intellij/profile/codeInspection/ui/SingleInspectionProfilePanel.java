@@ -1135,20 +1135,18 @@ public class SingleInspectionProfilePanel extends JPanel {
     final ModifiableModel selectedProfile = getProfile();
 
     ProfileManager profileManager = selectedProfile.isProjectLevel() ? myProjectProfileManager : InspectionProfileManager.getInstance();
+    InspectionProfile parentProfile = selectedProfile.getParentProfile();
+
+    if (parentProfile.getProfileManager().getProfile(parentProfile.getName(), false) == parentProfile) {
+      parentProfile.getProfileManager().deleteProfile(parentProfile.getName());
+    }
     if (selectedProfile.getProfileManager() != profileManager) {
-      if (selectedProfile.getProfileManager().getProfile(selectedProfile.getName(), false) == myProfile.getParentProfile()) {
-        selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());
-      }
       copyUsedSeveritiesIfUndefined(selectedProfile, profileManager);
       selectedProfile.setProfileManager(profileManager);
     } else {
-      if (selectedProfile.getProfileManager().getProfile(selectedProfile.getName(), false) == myProfile.getParentProfile()) {
-        selectedProfile.getProfileManager().deleteProfile(selectedProfile.getName());
-      }
       selectedProfile.getProfileManager().updateProfile(selectedProfile);
     }
 
-    InspectionProfile parentProfile = selectedProfile.getParentProfile();
     selectedProfile.commit();
     myProfile = (InspectionProfileImpl)parentProfile.getModifiableModel();
     setSelectedProfileModified(false);

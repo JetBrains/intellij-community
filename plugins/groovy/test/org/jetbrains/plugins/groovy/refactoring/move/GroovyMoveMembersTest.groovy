@@ -41,7 +41,7 @@ class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
   }*/
 
   void testWeirdDeclaration() throws Exception {
-    doTest("A", "B", 0);
+    doTest("A", "B", 0)
   }
 
   //this test is incorrect
@@ -50,67 +50,67 @@ class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
   }*/
 
   void testScr11871() throws Exception {
-    doTest("pack1.A", "pack1.B", 0);
+    doTest("pack1.A", "pack1.B", 0)
   }
 
   void testOuterClassTypeParameters() throws Exception {
-    doTest("pack1.A", "pack2.B", 0);
+    doTest("pack1.A", "pack2.B", 0)
   }
 
   void testscr40064() throws Exception {
-    doTest("Test", "Test1", 0);
+    doTest("Test", "Test1", 0)
   }
 
   void testscr40947() throws Exception {
-    doTest("A", "Test", 0, 1);
+    doTest("A", "Test", 0, 1)
   }
 
   void testIDEADEV11416() throws Exception {
-    doTest("Y", "X", 0);
+    doTest("Y", "X", 0)
   }
 
   void testTwoMethods() throws Exception {
-    doTest("pack1.A", "pack1.C", 0, 1, 2);
+    doTest("pack1.A", "pack1.C", 0, 1, 2)
   }
 
   void testIDEADEV12448() throws Exception {
-    doTest("B", "A", 0);
+    doTest("B", "A", 0)
   }
 
   void testFieldForwardRef() throws Exception {
-    doTest("A", "Constants", 0);
+    doTest("A", "Constants", 0)
   }
 
   void testStaticImport() throws Exception {
-    doTest("C", "B", 0);
+    doTest("C", "B", 0)
   }
 
   void testOtherPackageImport() throws Exception {
-    doTest("pack1.ClassWithStaticMethod", "pack2.OtherClass", 1);
+    doTest("pack1.ClassWithStaticMethod", "pack2.OtherClass", 1)
   }
 
   void testEnumConstant() throws Exception {
-    doTest("B", "A", 0);
+    doTest("B", "A", 0)
   }
 
   void testAliasedImported() {
-    doTest("A", "B", 0);
+    doTest("A", "B", 0)
   }
 
   void testDoc() {
-    doTest("A", "B", 0, 1);
+    doTest("A", "B", 0, 1)
   }
 
   private void doTest(final String sourceClassName, final String targetClassName, final int... memberIndices) {
-    final VirtualFile actualDir = myFixture.copyDirectoryToProject(getTestName(true) + "/before", "");
-    final VirtualFile expectedDir = LocalFileSystem.instance.findFileByPath(testDataPath + getTestName(true) + "/after");
+    final VirtualFile actualDir = myFixture.copyDirectoryToProject(getTestName(true) + "/before", "")
+    final VirtualFile expectedDir = LocalFileSystem.instance.findFileByPath(testDataPath + getTestName(true) + "/after")
     //final File expectedDir = new File(getTestDataPath() + getTestName(true) + "/after");
-    performAction(sourceClassName, targetClassName, memberIndices);
+    performAction(sourceClassName, targetClassName, memberIndices)
     try {
-      PlatformTestUtil.assertDirectoriesEqual(expectedDir, actualDir);
+      PlatformTestUtil.assertDirectoriesEqual(expectedDir, actualDir)
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException(e)
     }
   }
 
@@ -118,45 +118,45 @@ class GroovyMoveMembersTest extends LightCodeInsightFixtureTestCase {
     final scope = ProjectScope.getProjectScope(myFixture.project)
     final facade = myFixture.javaFacade
 
-    GrTypeDefinition sourceClass = (GrTypeDefinition)facade.findClass(sourceClassName, scope);
-    assertNotNull("Class $sourceClassName not found", sourceClass);
+    GrTypeDefinition sourceClass = (GrTypeDefinition)facade.findClass(sourceClassName, scope)
+    assertNotNull("Class $sourceClassName not found", sourceClass)
 
-    GrTypeDefinition targetClass = (GrTypeDefinition)facade.findClass(targetClassName, scope);
-    assertNotNull("Class $targetClassName not found", targetClass);
+    GrTypeDefinition targetClass = (GrTypeDefinition)facade.findClass(targetClassName, scope)
+    assertNotNull("Class $targetClassName not found", targetClass)
 
-    PsiElement[] children = sourceClass.body.children;
-    ArrayList<PsiMember> members = new ArrayList<PsiMember>();
+    PsiElement[] children = sourceClass.body.children
+    ArrayList<PsiMember> members = new ArrayList<PsiMember>()
     for (PsiElement child : children) {
       if (child instanceof PsiMember) {
-        members.add(((PsiMember)child));
+        members.add(((PsiMember)child))
       }
       if (child instanceof GrVariableDeclaration) {
-        final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)child;
-        Collections.addAll(members, variableDeclaration.members);
+        final GrVariableDeclaration variableDeclaration = (GrVariableDeclaration)child
+        Collections.addAll(members, variableDeclaration.members)
       }
     }
 
-    LinkedHashSet<PsiMember> memberSet = new LinkedHashSet<PsiMember>();
+    LinkedHashSet<PsiMember> memberSet = new LinkedHashSet<PsiMember>()
     for (int index : memberIndices) {
-      PsiMember member = members.get(index);
-      assertTrue(member.hasModifierProperty(PsiModifier.STATIC));
-      memberSet.add(member);
+      PsiMember member = members.get(index)
+      assertTrue(member.hasModifierProperty(PsiModifier.STATIC))
+      memberSet.add(member)
     }
 
-    final MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.qualifiedName, memberSet);
-    options.memberVisibility = null;
-    new MoveMembersProcessor(myFixture.project, null, options).run();
+    final MockMoveMembersOptions options = new MockMoveMembersOptions(targetClass.qualifiedName, memberSet)
+    options.memberVisibility = null
+    new MoveMembersProcessor(myFixture.project, null, options).run()
     doPostponedFormatting(project)
   }
 
   private static class MockMoveMembersOptions implements MoveMembersOptions {
-    final PsiMember[] selectedMembers;
-    final String targetClassName;
-    String memberVisibility = PsiModifier.PUBLIC;
+    final PsiMember[] selectedMembers
+    final String targetClassName
+    String memberVisibility = PsiModifier.PUBLIC
 
     MockMoveMembersOptions(String targetClassName, PsiMember[] selectedMembers) {
-      this.selectedMembers = selectedMembers;
-      this.targetClassName = targetClassName;
+      this.selectedMembers = selectedMembers
+      this.targetClassName = targetClassName
     }
 
     MockMoveMembersOptions(String targetClassName, Collection<PsiMember> memberSet) {

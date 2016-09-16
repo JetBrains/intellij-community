@@ -78,7 +78,7 @@ public class GroovyClassNamingConventionInspection extends ConventionInspection 
 
   private class NamingConventionsVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitClassDefinition(GrClassDefinition classDefinition) {
+    public void visitClassDefinition(@NotNull GrClassDefinition classDefinition) {
       super.visitClassDefinition(classDefinition);
       final String name = classDefinition.getName();
       if (name == null) {

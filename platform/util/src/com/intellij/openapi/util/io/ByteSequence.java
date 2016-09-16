@@ -60,7 +60,7 @@ public class ByteSequence {
 
     final byte[] thisBytes = myBytes;
     final byte[] thatBytes = sequence.myBytes;
-    for (int i = 0, j = myOffset, k = sequence.myOffset; i < len; i++) {
+    for (int i = 0, j = myOffset, k = sequence.myOffset; i < len; i++, j++, k++) {
       if (thisBytes[j] != thatBytes[k]) {
         return false;
       }
@@ -75,7 +75,7 @@ public class ByteSequence {
     final byte[] thisBytes = myBytes;
 
     int result = 1;
-    for (int i = 0, j = myOffset; i < len; i++) {
+    for (int i = 0, j = myOffset; i < len; i++, j++) {
       result = result * 31 + thisBytes[j];
     }
     return result;

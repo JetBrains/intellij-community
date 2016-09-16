@@ -79,7 +79,7 @@ public class ChangelistConflictTracker {
     myCheckSet = new HashSet<>();
 
     final Application application = ApplicationManager.getApplication();
-    final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, myProject);
+    final ZipperUpdater zipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.SWING_THREAD, project);
     final Runnable runnable = () -> {
       if (application.isDisposed() || myProject.isDisposed() || !myProject.isOpen()) {
         return;

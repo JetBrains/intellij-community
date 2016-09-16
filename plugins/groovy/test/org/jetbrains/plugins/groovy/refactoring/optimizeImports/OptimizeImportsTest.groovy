@@ -48,95 +48,95 @@ class OptimizeImportsTest extends LightGroovyTestCase {
   }
 
   void testNewline() {
-    doTest();
+    doTest()
   }
 
   void testAliased() {
-    doTest();
+    doTest()
   }
 
   void testSimpleOptimize() {
-    doTest();
+    doTest()
   }
 
   void testCommented() {
-    doTest();
+    doTest()
   }
 
   void testOptimizeExists() {
-    doTest();
+    doTest()
   }
 
   void testOptimizeAlias() {
-    doTest();
+    doTest()
   }
 
   void testFoldImports() {
-    doTest();
+    doTest()
   }
 
   void testFoldImports2() {
-    doTest();
+    doTest()
   }
 
   void testUntypedCall() {
-    doTest();
+    doTest()
   }
 
   void testFoldImports3() {
-    doTest();
+    doTest()
   }
 
   void testFoldImports4() {
-    doTest();
+    doTest()
   }
 
   void testFoldImports5() {
-    doTest();
+    doTest()
   }
 
   void testFixPoint() {
-    doTest();
+    doTest()
   }
 
   void testPreserveImportAnnotations() { doTest(); }
 
   void testUtilListMasked() {
-    myFixture.addClass("package java.awt; public class List {}");
-    doTest();
+    myFixture.addClass("package java.awt; public class List {}")
+    doTest()
   }
 
   void testExtraLineFeed() {
-    myFixture.addClass("package groovy.io; public class EncodingAwareBufferedWriter {}");
-    myFixture.addClass("package groovy.io; public class PlatformLineWriter {}");
-    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/bar.groovy"));
-    doOptimizeImports();
-    doOptimizeImports();
-    myFixture.checkResultByFile(getTestName(false) + ".groovy");
+    myFixture.addClass("package groovy.io; public class EncodingAwareBufferedWriter {}")
+    myFixture.addClass("package groovy.io; public class PlatformLineWriter {}")
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/bar.groovy"))
+    doOptimizeImports()
+    doOptimizeImports()
+    myFixture.checkResultByFile(getTestName(false) + ".groovy")
   }
 
   void testSemicolons() {
-    doTest();
+    doTest()
   }
 
   void testSameFile() {
-    doTest();
+    doTest()
   }
 
   void testSamePackage() {
-    myFixture.addClass("package foo; public class Bar {}");
-    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"));
-    doOptimizeImports();
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.addClass("package foo; public class Bar {}")
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"))
+    doOptimizeImports()
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
   void testQualifiedUsage() {
-    myFixture.addClass("package foo; public class Bar {}");
-    doTest();
+    myFixture.addClass("package foo; public class Bar {}")
+    doTest()
   }
 
   void testFileHeader() {
-    doTest();
+    doTest()
   }
 
   void testRemoveImplicitlyImported() { doTest(); }
@@ -162,18 +162,18 @@ class OptimizeImportsTest extends LightGroovyTestCase {
   void testDontRemoveRedImports9() { doTest(); }
 
   void testRemoveSamePackaged() {
-    myFixture.addClass("package foo.bar; public class Aaaa {}");
-    myFixture.addClass("package foo.bar; public class Bbbb {}");
-    myFixture.addClass("package foo.bar; public class Zzzz {}");
-    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"));
-    doOptimizeImports();
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.addClass("package foo.bar; public class Aaaa {}")
+    myFixture.addClass("package foo.bar; public class Bbbb {}")
+    myFixture.addClass("package foo.bar; public class Zzzz {}")
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject(getTestName(false) + ".groovy", "foo/Foo.groovy"))
+    doOptimizeImports()
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
   void testJustWrongImport() throws Exception {
-    myFixture.configureByText("a.groovy", "import a.b.c.d; final d c;");
-    doOptimizeImports();
-    myFixture.checkResult("import a.b.c.d; final d c;");
+    myFixture.configureByText("a.groovy", "import a.b.c.d; final d c;")
+    doOptimizeImports()
+    myFixture.checkResult("import a.b.c.d; final d c;")
   }
 
   void testCleanBeforeJavadoc() throws Exception {
@@ -183,7 +183,7 @@ class OptimizeImportsTest extends LightGroovyTestCase {
  * some javadoc
  */
 class Fooxx<caret>{
-}""");
+}""")
     myFixture.type ' '
     myFixture.doHighlighting()
 //    doOptimizeImports();
@@ -191,35 +191,35 @@ class Fooxx<caret>{
  * some javadoc
  */
 class Fooxx <caret>{
-}""");
+}""")
   }
 
   private void doTest() {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone()
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings)
-    settings.getCustomSettings(GroovyCodeStyleSettings.class).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
+    settings.getCustomSettings(GroovyCodeStyleSettings.class).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3
     try {
-      myFixture.configureByFile(getTestName(false) + ".groovy");
+      myFixture.configureByFile(getTestName(false) + ".groovy")
 
-      doOptimizeImports();
-      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
-      myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+      doOptimizeImports()
+      PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
+      myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
     }
     finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
+      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings()
     }
   }
 
   private void doOptimizeImports() {
-    GroovyImportOptimizer optimizer = new GroovyImportOptimizer();
-    final Runnable runnable = optimizer.processFile(myFixture.file);
+    GroovyImportOptimizer optimizer = new GroovyImportOptimizer()
+    final Runnable runnable = optimizer.processFile(myFixture.file)
 
     CommandProcessor.instance.executeCommand(project, new Runnable() {
       @Override
       void run() {
-        ApplicationManager.application.runWriteAction(runnable);
+        ApplicationManager.application.runWriteAction(runnable)
       }
-    }, "Optimize imports", null);
+    }, "Optimize imports", null)
   }
 
   void testOptimizeOnTheFly() {
@@ -249,14 +249,14 @@ class Fooxx <caret>{
   void testUnusedImportsForImportsOnDemand() {
     myFixture.enableInspections(new GroovyAccessibilityInspection())
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy")
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
   void testSorting() {
-    myFixture.addClass("package foo; public class Foo{}");
-    myFixture.addClass("package foo; public class Bar{public static void foo0(){}}");
-    myFixture.addClass("package java.test; public class Test{public static void foo(){}}");
-    myFixture.addClass("package java.test2; public class Test2{public static void foo2(){}}");
+    myFixture.addClass("package foo; public class Foo{}")
+    myFixture.addClass("package foo; public class Bar{public static void foo0(){}}")
+    myFixture.addClass("package java.test; public class Test{public static void foo(){}}")
+    myFixture.addClass("package java.test2; public class Test2{public static void foo2(){}}")
     myFixture.addClass("package test; public class Alias{public static void test(){}}")
     myFixture.addClass("package test; public class Alias2{public static void test2(){}}")
 

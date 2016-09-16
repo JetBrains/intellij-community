@@ -38,7 +38,7 @@ public class SshConnectionPool implements ConnectionPoolI {
   private SshConnectionPool() {
     myPool = new HashMap<>();
     myLock = new Object();
-    myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, ApplicationManager.getApplication());
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
     myAlarm.addRequest(new Runnable() {
       public void run() {
         controlPoolState();

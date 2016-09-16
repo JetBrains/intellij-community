@@ -18,8 +18,8 @@ package com.intellij.diagnostic.errordialog;
 import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class PluginConflictDialog extends DialogWrapper {
-  public static final int WIDTH = 510;
+  public static final int WIDTH = 450;
 
   @NotNull
   private final List<PluginId> myConflictingPlugins;
@@ -56,10 +56,9 @@ public class PluginConflictDialog extends DialogWrapper {
 
   private JBLabel myBottomMessageLabel;
 
-  public PluginConflictDialog(@NotNull Component parent,
-                              @NotNull List<PluginId> conflictingPlugins,
+  public PluginConflictDialog(@NotNull List<PluginId> conflictingPlugins,
                               boolean isConflictWithPlatform) {
-    super(parent, false);
+    super(false);
 
     myConflictingPlugins = conflictingPlugins;
     myIsConflictWithPlatform = isConflictWithPlatform;
@@ -74,6 +73,7 @@ public class PluginConflictDialog extends DialogWrapper {
     $$$setupUI$$$();
     setTitle(DiagnosticBundle.message("error.dialog.conflict.plugin.title"));
     init();
+    setCrossClosesWindow(false);
 
     myTopMessageLabel.setText(getTopMessageText(conflictingPlugins, isConflictWithPlatform));
     myBottomMessageLabel.setText(DiagnosticBundle.message("error.dialog.conflict.plugin.footer"));
@@ -218,13 +218,19 @@ public class PluginConflictDialog extends DialogWrapper {
 
   @NotNull
   @Override
+  protected Action[] createActions() {
+    return new Action[]{getOKAction()};
+  }
+
+  @NotNull
+  @Override
   protected Action getOKAction() {
     return new DisableAction();
   }
 
   private class DisableAction extends DialogWrapperAction {
     protected DisableAction() {
-      super(DiagnosticBundle.message("error.dialog.disable.plugin.action.disable"));
+      super(DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart"));
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
 
@@ -236,7 +242,7 @@ public class PluginConflictDialog extends DialogWrapper {
         }
       }
       close(OK_EXIT_CODE);
-      PluginManagerConfigurable.shutdownOrRestartApp("");
+      ApplicationManagerEx.getApplicationEx().restart(true);
     }
   }
 }

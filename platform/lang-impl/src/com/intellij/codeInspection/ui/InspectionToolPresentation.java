@@ -114,4 +114,8 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   default boolean isDummy() {
     return false;
   }
+
+  default int getProblemsCount(InspectionTree tree) {
+    return tree.getSelectedDescriptors().length;
+  }
 }

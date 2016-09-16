@@ -41,19 +41,19 @@ public class LoadingDecorator {
   boolean myStartRequest;
 
 
-  public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs) {
+  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs) {
     this(content, parent, startDelayMs, false);
   }
 
-  public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs, boolean useMinimumSize) {
+  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs, boolean useMinimumSize) {
     this(content, parent, startDelayMs, useMinimumSize, new AsyncProcessIcon.Big("Loading"));
   }
 
-  public LoadingDecorator(JComponent content, Disposable parent, int startDelayMs, boolean useMinimumSize, @NotNull AsyncProcessIcon icon) {
+  public LoadingDecorator(JComponent content, @NotNull Disposable parent, int startDelayMs, boolean useMinimumSize, @NotNull AsyncProcessIcon icon) {
     myPane = new MyLayeredPane(useMinimumSize ? content : null);
     myLoadingLayer = new LoadingLayer(icon);
     myDelay = startDelayMs;
-    myStartAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, parent);
+    myStartAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parent);
 
     setLoadingText("Loading...");
 

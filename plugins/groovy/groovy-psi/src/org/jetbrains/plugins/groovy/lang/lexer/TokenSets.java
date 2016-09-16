@@ -280,7 +280,8 @@ public abstract class TokenSets {
                                                              GroovyElementTypes.COMPOSITE_RSHIFT_SIGN,
                                                              GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN);
   public static final TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(GroovyTokenTypes.mIDENT, GroovyTokenTypes.kDEF,
-                                                                                    GroovyTokenTypes.kIN, GroovyTokenTypes.kAS);
+                                                                                    GroovyTokenTypes.kIN, GroovyTokenTypes.kAS,
+                                                                                    GroovyTokenTypes.kTRAIT);
 
   public static final TokenSet BLOCK_SET = TokenSet.create(GroovyElementTypes.CLOSABLE_BLOCK, GroovyElementTypes.BLOCK_STATEMENT,
                                                            GroovyElementTypes.CONSTRUCTOR_BODY, GroovyElementTypes.OPEN_BLOCK,

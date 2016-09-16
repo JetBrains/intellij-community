@@ -188,8 +188,8 @@ public class UIUtil {
     drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
-  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 50);
-  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 30);
+  private static final GrayFilter DEFAULT_GRAY_FILTER = new GrayFilter(true, 70);
+  private static final GrayFilter DARCULA_GRAY_FILTER = new GrayFilter(true, 20);
 
   public static GrayFilter getGrayFilter() {
     return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
@@ -1779,6 +1779,15 @@ public class UIUtil {
     }
   }
 
+  /**
+   * Creates a HiDPI-aware BufferedImage in device scale.
+   *
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   *
+   * @return a HiDPI-aware BufferedImage in device scale
+   */
   @NotNull
   public static BufferedImage createImage(int width, int height, int type) {
     if (isRetina()) {
@@ -1788,6 +1797,16 @@ public class UIUtil {
     return new BufferedImage(width, height, type);
   }
 
+  /**
+   * Creates a HiDPI-aware BufferedImage in the graphics scale.
+   *
+   * @param g the graphics of the referent scale
+   * @param width the width in user coordinate space
+   * @param height the height in user coordinate space
+   * @param type the type of the image
+   *
+   * @return a HiDPI-aware BufferedImage in the graphics scale
+   */
   @NotNull
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
     if (isRetina(g)) {
@@ -2236,8 +2255,7 @@ public class UIUtil {
   }
 
   /**
-   * @deprecated
-   * @use JBColor.border()
+   * @deprecated use {@link JBColor#border()}
    */
   public static Color getBorderColor() {
     return isUnderDarcula() ? Gray._50 : BORDER_COLOR;

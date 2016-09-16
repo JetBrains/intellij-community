@@ -33,20 +33,17 @@ package org.jetbrains.intellij.build.pycharm
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 /**
  * @author nik
  */
 abstract class PyCharmPropertiesBase extends ProductProperties {
-  PyCharmPropertiesBase(String home) {
+  PyCharmPropertiesBase() {
     baseFileName = "pycharm"
     reassignAltClickToMultipleCarets = true
     productLayout.mainJarName = "pycharm.jar"
     productLayout.additionalPlatformJars.put("pycharm-pydev.jar", "python-pydev")
-    additionalDirectoriesWithLicenses = ["$home/python/license"]
   }
 
   @Override
@@ -56,9 +53,9 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     tasks.zipSourcesOfModules(["python-openapi", "python-psi-api"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
 
     context.ant.copy(todir: "$targetDirectory/helpers") {
-      fileset(dir: "$context.paths.projectHome/community/python/helpers")
+      fileset(dir: "$context.paths.communityHome/python/helpers")
     }
-    context.ant.copy(todir: "$targetDirectory/help") {
+    context.ant.copy(todir: "$targetDirectory/help", failonerror: false) {
       fileset(dir: "$context.paths.projectHome/python/help") {
         include(name: "*.pdf")
       }

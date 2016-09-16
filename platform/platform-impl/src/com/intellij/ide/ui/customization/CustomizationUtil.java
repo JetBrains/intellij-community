@@ -133,33 +133,30 @@ public class CustomizationUtil {
     final JTree defaultTree = new Tree(new DefaultTreeModel(root));
 
     final List<ActionUrl> actions = new ArrayList<>();
-    TreeUtil.traverseDepth((TreeNode)tree.getModel().getRoot(), new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-        Object userObject = treeNode.getUserObject();
-        if (treeNode.isLeaf() && !(userObject instanceof Group)) {
-          return true;
-        }
-        ActionUrl url = getActionUrl(new TreePath(treeNode.getPath()), 0);
-        String groupName = ((Group)userObject).getName();
-        url.getGroupPath().add(groupName);
-        final TreePath treePath = getTreePath(defaultTree, url);
-        if (treePath != null) {
-          final DefaultMutableTreeNode visited = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-          final ActionUrl[] defaultUserObjects = getChildUserObjects(visited, url);
-          final ActionUrl[] currentUserObjects = getChildUserObjects(treeNode, url);
-          computeDiff(defaultUserObjects, currentUserObjects, actions);
-        } else {
-          //customizations at the new place
-          url.getGroupPath().remove(url.getParentGroup());
-          if (actions.contains(url)){
-            url.getGroupPath().add(groupName);
-            actions.addAll(schema.getChildActions(url));
-          }
-        }
+    TreeUtil.traverseDepth((TreeNode)tree.getModel().getRoot(), node -> {
+      DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
+      Object userObject = treeNode.getUserObject();
+      if (treeNode.isLeaf() && !(userObject instanceof Group)) {
         return true;
       }
+      ActionUrl url = getActionUrl(new TreePath(treeNode.getPath()), 0);
+      String groupName = ((Group)userObject).getName();
+      url.getGroupPath().add(groupName);
+      final TreePath treePath = getTreePath(defaultTree, url);
+      if (treePath != null) {
+        final DefaultMutableTreeNode visited = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+        final ActionUrl[] defaultUserObjects = getChildUserObjects(visited, url);
+        final ActionUrl[] currentUserObjects = getChildUserObjects(treeNode, url);
+        computeDiff(defaultUserObjects, currentUserObjects, actions);
+      } else {
+        //customizations at the new place
+        url.getGroupPath().remove(url.getParentGroup());
+        if (actions.contains(url)){
+          url.getGroupPath().add(groupName);
+          actions.addAll(schema.getChildActions(url));
+        }
+      }
+      return true;
     });
     schema.setActions(actions);
   }

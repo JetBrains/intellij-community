@@ -38,10 +38,10 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
+      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/")
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
+      modifiableModel.commit()
     }
   }
 
@@ -85,7 +85,7 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
     myFixture.configureByFile(getTestName(false) + ".groovy")
     myFixture.completeBasic()
     myFixture.type('\n')
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
   void testPrintlnSpace() { checkCompletion 'print<caret>', 'l ', "println <caret>" }
@@ -252,7 +252,7 @@ use\
   }
 
   void testGStringConcatenationCompletion() {
-    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence");
+    myFixture.testCompletionVariants(getTestName(false) + ".groovy", "substring", "substring", "subSequence")
   }
 
   void testCompleteClassClashingWithGroovyUtilTuple() {
@@ -272,7 +272,7 @@ use\
     new WriteCommandAction(myFixture.project, file) {
       @Override
       protected void run(@NotNull Result result) throws Throwable {
-        lookup.finishLookup('\n' as char);
+        lookup.finishLookup('\n' as char)
       }
     }.execute()
 

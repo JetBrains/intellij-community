@@ -91,12 +91,13 @@ public class SearchResults implements DocumentListener {
 
   private final Stack<Pair<FindModel, FindResult>> myCursorPositions = new Stack<>();
 
-  private final SelectionManager mySelectionManager = new SelectionManager(this);
+  private final SelectionManager mySelectionManager;
 
   public SearchResults(Editor editor, Project project) {
     myEditor = editor;
     myProject = project;
     myEditor.getDocument().addDocumentListener(this);
+    mySelectionManager = new SelectionManager(this); // important to initialize last for accessing other fields
   }
 
   public void setNotFoundState(boolean isForward) {

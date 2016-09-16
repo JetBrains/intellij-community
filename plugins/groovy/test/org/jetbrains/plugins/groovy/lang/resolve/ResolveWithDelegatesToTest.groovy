@@ -26,7 +26,7 @@ class ResolveWithDelegatesToTest extends LightGroovyTestCase {
 
   @Override
   void setUp() throws Exception {
-    super.setUp();
+    super.setUp()
 
     myFixture.addClass('''\
 package groovy.lang;

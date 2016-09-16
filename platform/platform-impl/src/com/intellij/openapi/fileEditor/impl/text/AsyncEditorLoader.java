@@ -26,24 +26,23 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class AsyncEditorLoader {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader pool",2);
   private static final Key<AsyncEditorLoader> ASYNC_LOADER = Key.create("ASYNC_LOADER");
-  private static boolean ourCreatingAsyncEditor;
   @NotNull private final Editor myEditor;
   @NotNull private final Project myProject;
   @NotNull private final TextEditorImpl myTextEditor;
@@ -52,6 +51,7 @@ public class AsyncEditorLoader {
   private boolean myLoaded;
   private final List<Runnable> myDelayedActions = new ArrayList<>();
   private TextEditorState myDelayedState;
+  private final CompletableFuture<?> myLoadingFinished = new CompletableFuture<>();
 
   AsyncEditorLoader(@NotNull TextEditorImpl textEditor, @NotNull TextEditorComponent component, @NotNull TextEditorProvider provider) {
     myProvider = provider;
@@ -65,7 +65,8 @@ public class AsyncEditorLoader {
     myEditorComponent.getContentPanel().setVisible(false);
   }
 
-  void scheduleBackgroundLoading(boolean firstTime) {
+  @NotNull
+  Future<?> scheduleBackgroundLoading(boolean firstTime) {
     ReadTask task = new ReadTask() {
       PsiDocumentManager pdm = PsiDocumentManager.getInstance(myProject);
       long startStamp = myEditor.getDocument().getModificationStamp();
@@ -73,35 +74,44 @@ public class AsyncEditorLoader {
       @Override
       public Continuation runBackgroundProcess(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
         return pdm.commitAndRunReadAction(() -> {
-          if (Disposer.isDisposed(myTextEditor)) return null;
+          if (myEditorComponent.isDisposed()) {
+            loadingFinished();
+            return null;
+          }
 
           Runnable applyResults = myTextEditor.loadEditorInBackground();
           return new Continuation(() -> {
-            if (Disposer.isDisposed(myTextEditor)) return;
-
             if (startStamp != myEditor.getDocument().getModificationStamp()) {
               onCanceled(indicator);
               return;
             }
 
-            applyResults.run();
-            loadingFinished();
+            try {
+              applyResults.run();
+            }
+            finally {
+              loadingFinished();
+            }
           }, ModalityState.any());
         });
       }
 
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
-        if (!Disposer.isDisposed(myTextEditor) && !myProject.isDisposed()) {
+        if (!myEditorComponent.isDisposed() && !myProject.isDisposed()) {
           scheduleBackgroundLoading(false);
+        }
+        else {
+          loadingFinished();
         }
       }
     };
 
     if (!firstTime || !loadImmediately(task)) {
       myEditorComponent.startLoading();
-      ProgressIndicatorUtils.scheduleWithWriteActionPriority(ourExecutor, task);
+      ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ProgressIndicatorBase(), ourExecutor, task);
     }
+    return myLoadingFinished;
   }
 
   /**
@@ -112,29 +122,26 @@ public class AsyncEditorLoader {
    * 4. freeze EDT a bit and hope that for small editors it'll suffice and for big ones show "Loading" after that.
    * This strategy seems to produce minimal blinking annoyance.
    */
-  private boolean loadImmediately(ReadTask task) {
+  private boolean loadImmediately(@NotNull ReadTask task) {
     if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments() ||
         ApplicationManager.getApplication().isWriteAccessAllowed()) {
       return false; // cannot perform commitAndRunReadAction in parallel to EDT waiting
     }
 
-    Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    Ref<ReadTask.Continuation> continuationRef = Ref.create();
     ProgressIndicatorBase indicator = new ProgressIndicatorBase();
-    ourExecutor.submit(() -> {
-      try {
-        ProgressIndicatorUtils.runWithWriteActionPriority(() -> continuationRef.set(task.runBackgroundProcess(indicator)),
-                                                          indicator);
-      }
-      finally {
-        semaphore.up();
-      }
+    Future<ReadTask.Continuation> future = ourExecutor.submit(() -> {
+      Ref<ReadTask.Continuation> continuationRef = Ref.create();
+      ProgressIndicatorUtils.runWithWriteActionPriority(() -> continuationRef.set(task.runBackgroundProcess(indicator)), indicator);
+      return continuationRef.get();
     });
-    ReadTask.Continuation applyImmediately = semaphore.waitFor(200) ? continuationRef.get() : null;
-    if (applyImmediately != null) {
-      applyImmediately.getAction().run();
-      return true;
+    try {
+      ReadTask.Continuation applyImmediately = future.get(200, TimeUnit.MILLISECONDS);
+      if (applyImmediately != null) {
+        applyImmediately.getAction().run();
+        return true;
+      }
+    }
+    catch (Exception ignored) {
     }
 
     indicator.cancel();
@@ -142,8 +149,10 @@ public class AsyncEditorLoader {
   }
 
   private void loadingFinished() {
-    myLoaded = true;
+    myLoadingFinished.complete(null);
     myEditor.putUserData(ASYNC_LOADER, null);
+    myLoaded = true;
+    if (myEditorComponent.isDisposed()) return;
     myEditorComponent.stopLoading();
     myEditorComponent.getContentPanel().setVisible(true);
 
@@ -154,7 +163,7 @@ public class AsyncEditorLoader {
       myDelayedState = null;
     }
 
-    for (Runnable runnable : ObjectUtils.assertNotNull(myDelayedActions)) {
+    for (Runnable runnable : myDelayedActions) {
       myEditor.getScrollingModel().disableAnimation();
       runnable.run();
     }
@@ -170,7 +179,8 @@ public class AsyncEditorLoader {
     AsyncEditorLoader loader = editor.getUserData(ASYNC_LOADER);
     if (loader == null) {
       runnable.run();
-    } else {
+    }
+    else {
       loader.myDelayedActions.add(runnable);
     }
   }

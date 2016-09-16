@@ -216,7 +216,11 @@ class RefCountHolder {
     synchronized (myLocalRefsMap) {
       array = myLocalRefsMap.get(element);
     }
-    if (!array.isEmpty() && !isParameterUsedRecursively(element, array)) return true;
+    if (!array.isEmpty() && !isParameterUsedRecursively(element, array)) {
+      for (PsiReference reference : array) {
+        if (reference.isReferenceTo(element)) return true;
+      }
+    }
 
     Boolean usedStatus = myDclsUsedMap.get(PsiAnchor.create(element));
     return usedStatus == Boolean.TRUE;

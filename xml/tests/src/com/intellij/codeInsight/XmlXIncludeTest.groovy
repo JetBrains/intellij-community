@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight
 
-import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
@@ -29,27 +29,27 @@ import com.intellij.openapi.application.WriteAction
  * @author mike
  */
 class XmlXIncludeTest extends LightCodeInsightFixtureTestCase {
-  private static final String BASE_PATH = "/psi/xi";
+  private static final String BASE_PATH = "/psi/xi"
 
   void testBasicXi() throws Exception {
-    configure();
-    assertSubtagNames("before", "include1", "after");
+    configure()
+    assertSubtagNames("before", "include1", "after")
   }
 
   void testXpointerXi1() throws Exception {
-    configure();
-    assertSubtagNames("before", "foo", "bar", "after");
+    configure()
+    assertSubtagNames("before", "foo", "bar", "after")
   }
 
   void testXmlBase() throws Exception {
     myFixture.copyDirectoryToProject("xmlBase", "xmlBase")
-    myFixture.enableInspections(XmlPathReferenceInspection.class);
-    myFixture.testHighlighting("xmlBase/XmlBase.xml");
+    myFixture.enableInspections(XmlPathReferenceInspection.class)
+    myFixture.testHighlighting("xmlBase/XmlBase.xml")
   }
 
   @Override
   protected String getBasePath() {
-    return "/xml/tests/testData/" + BASE_PATH;
+    return "/xml/tests/testData/" + BASE_PATH
   }
 
   private void assertSubtagNames(String... expectedNames) {
@@ -59,11 +59,11 @@ class XmlXIncludeTest extends LightCodeInsightFixtureTestCase {
     assertEquals(
       "subtags are different",
       StringUtil.join(expectedNames, "\n"), StringUtil.join(names, "\n")
-    );
+    )
   }
 
   private void configure() throws Exception {
-    myFixture.configureByFiles(getName() + ".xml", "/include1.xml");
+    myFixture.configureByFiles(getName() + ".xml", "/include1.xml")
   }
 
   void testModifyingIncludedFile() {

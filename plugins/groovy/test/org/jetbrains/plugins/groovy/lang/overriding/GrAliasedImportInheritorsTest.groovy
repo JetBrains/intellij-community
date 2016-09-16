@@ -51,9 +51,11 @@ public interface MyInterface<T> {}
     myFixture.addFileToProject 'a.groovy', """\
 import pckg.MyInterface as Roo
 
-class MyClass implements Roo<String> {}
-enum MyEnum implements Roo<Integer> {}
-trait MyTrait implements Roo<Long> {}
+class MyClass implements Roo<
+String> {}
+enum MyEnum implements Roo<? extends Integer> {}
+trait MyTrait implements Roo<Long
+> {}
 new Roo<Double>() {}
 """
     def inheritors = DirectClassInheritorsSearch.search(iface).findAll()

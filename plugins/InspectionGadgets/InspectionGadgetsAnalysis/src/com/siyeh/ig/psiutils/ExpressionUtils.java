@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-20164 Bas Leijdekkers
+ * Copyright 2005-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -504,25 +505,18 @@ public class ExpressionUtils {
         return true;
       }
       final PsiExpression[] operands = polyadicExpression.getOperands();
-      int index = -1;
+      boolean expressionSeen = false;
       for (int i = 0, length = operands.length; i < length; i++) {
         final PsiExpression operand = operands[i];
         if (PsiTreeUtil.isAncestor(operand, expression, false)) {
-          index = i;
-          break;
+          if (i > 0) return true;
+          expressionSeen = true;
+        }
+        else if ((!expressionSeen || i == 1) && TypeUtils.isJavaLangString(operand.getType())) {
+          return false;
         }
       }
-      if (index > 0) {
-        if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, operands[index - 1].getType())) {
-          return true;
-        }
-      } else if (operands.length > 1) {
-        if (!TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_STRING, operands[index + 1].getType())) {
-          return true;
-        }
-      } else {
-        return true;
-      }
+      return true;
     } else if (parent instanceof PsiExpressionList) {
       final PsiExpressionList expressionList = (PsiExpressionList)parent;
       final PsiElement grandParent = expressionList.getParent();
@@ -606,6 +600,13 @@ public class ExpressionUtils {
 
   @Nullable
   public static PsiVariable getVariableFromNullComparison(PsiExpression expression, boolean equals) {
+    final PsiReferenceExpression referenceExpression = getReferenceExpressionFromNullComparison(expression, equals);
+    final PsiElement target = referenceExpression.resolve();
+    return target instanceof PsiVariable ? (PsiVariable)target : null;
+  }
+
+  @Nullable
+  public static PsiReferenceExpression getReferenceExpressionFromNullComparison(PsiExpression expression, boolean equals) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (!(expression instanceof PsiPolyadicExpression)) {
       return null;
@@ -626,26 +627,16 @@ public class ExpressionUtils {
     if (operands.length != 2) {
       return null;
     }
+    PsiExpression comparedToNull = null;
     if (PsiType.NULL.equals(operands[0].getType())) {
-      return getVariable(operands[1]);
+      comparedToNull = operands[1];
     }
     else if (PsiType.NULL.equals(operands[1].getType())) {
-      return getVariable(operands[0]);
+      comparedToNull = operands[0];
     }
-    return null;
-  }
+    comparedToNull = ParenthesesUtils.stripParentheses(comparedToNull);
 
-  public static PsiVariable getVariable(@Nullable PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (!(expression instanceof PsiReferenceExpression)) {
-      return null;
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-    final PsiElement target = referenceExpression.resolve();
-    if (!(target instanceof PsiVariable)) {
-      return null;
-    }
-    return (PsiVariable)target;
+    return comparedToNull instanceof PsiReferenceExpression ? (PsiReferenceExpression)comparedToNull : null;
   }
 
   public static boolean isConcatenation(PsiElement element) {
@@ -679,5 +670,34 @@ public class ExpressionUtils {
     return nullable ?
            NullableNotNullManager.isNullable(modifierListOwner):
            NullableNotNullManager.isNotNull(modifierListOwner);
+  }
+
+  /**
+   * Returns true if the expression can be moved to earlier point in program order without possible semantic change or
+   * notable performance handicap. Examples of simple expressions are:
+   * - literal (number, char, string, class literal, true, false, null)
+   * - this
+   * - static field access
+   * - instance field access having 'this' as qualifier
+   *
+   * @param expression an expression to test
+   * @return true if the supplied expression is simple
+   */
+  @Contract("null -> false")
+  public static boolean isSimpleExpression(@Nullable PsiExpression expression) {
+    if (expression instanceof PsiLiteralExpression ||
+        expression instanceof PsiThisExpression ||
+        expression instanceof PsiClassObjectAccessExpression) {
+      return true;
+    }
+    if(expression instanceof PsiReferenceExpression) {
+      PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
+      if(qualifier == null || qualifier instanceof PsiThisExpression) return true;
+      if(qualifier instanceof PsiReferenceExpression) {
+        PsiElement resolvedQualifier = ((PsiReferenceExpression)qualifier).resolve();
+        if(resolvedQualifier instanceof PsiClass) return true;
+      }
+    }
+    return false;
   }
 }

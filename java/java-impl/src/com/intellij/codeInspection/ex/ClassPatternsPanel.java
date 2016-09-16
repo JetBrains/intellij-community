@@ -24,14 +24,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.InputValidatorEx;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
@@ -51,7 +50,6 @@ class ClassPatternsPanel extends JPanel {
     super(new BorderLayout());
     myModifiedPatterns = patterns;
     myTable = createTableForPatterns();
-    final String addPatternMessage = "Add Class Name Pattern";
     final String addClassMessage = "Add Class";
     final ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTable)
       .setAddAction(new AnActionButtonRunnable() {
@@ -69,18 +67,6 @@ class ClassPatternsPanel extends JPanel {
         }
       })
       .setAddActionName(addClassMessage)
-      .setAddIcon(IconUtil.getAddClassIcon())
-      .addExtraAction(new AnActionButton(addPatternMessage, IconUtil.getAddPatternIcon()) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          final PsiNameHelper nameHelper = PsiNameHelper.getInstance(e.getProject());
-          String selectedPattern = Messages.showInputDialog("Pattern:", "Class Name Pattern", Messages.getQuestionIcon(), null,
-                                                            new ClassPatternValidator(nameHelper));
-          if (selectedPattern != null) {
-            insertRow(selectedPattern);
-          }
-        }
-      })
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
@@ -93,10 +79,11 @@ class ClassPatternsPanel extends JPanel {
         public boolean isEnabled(AnActionEvent e) {
           return myTable.getSelectedRow() >= 0;
         }
-      })
-      .setButtonComparator(addClassMessage, addPatternMessage, "Remove");
+      });
     add(SeparatorFactory.createSeparator("Mark code as entry point if qualified name matches", null), BorderLayout.NORTH);
     add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
+    add(new MultiLineLabel("Leave method blank to represent constructors\n" +
+                           "Any * will match against one ore more characters in the qualified name (including dots)"), BorderLayout.SOUTH);
     setPreferredSize(new JBDimension(-1, 250));
   }
 
@@ -124,7 +111,7 @@ class ClassPatternsPanel extends JPanel {
                                                      int row,
                                                      int column) {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        if (!hasFocus && !isSelected && value instanceof String && ((String)value).isEmpty()) {
+        if (value instanceof String && ((String)value).isEmpty()) {
           setText("constructors");
           setForeground(UIUtil.getInactiveTextColor());
         }

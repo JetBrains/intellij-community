@@ -34,8 +34,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -70,6 +70,17 @@ public class ResourceBundlePropertiesUpdateManager {
         myKeysOrder.add(key);
       }
     }
+  }
+
+  public void insertAfter(@NotNull String key, @NotNull String value, @NotNull String anchor) {
+    if (myAlphaSorted || !myOrdered) {
+      throw new IllegalStateException("Can't insert new properties by anchor while resource bundle is alpha-sorted");
+    }
+     final PropertiesFile file = myResourceBundle.getDefaultPropertiesFile();
+    final IProperty anchorProperty = file.findPropertyByKey(anchor);
+    file.addPropertyAfter(key, value, anchorProperty);
+    final int anchorIndex = myKeysOrder.indexOf(anchor);
+    myKeysOrder.add(anchorIndex + 1, key);
   }
 
   public void insertOrUpdateTranslation(String key, String value, final PropertiesFile propertiesFile) throws IncorrectOperationException {
@@ -214,8 +225,11 @@ public class ResourceBundlePropertiesUpdateManager {
     }
   }
 
-  @TestOnly
   public boolean isAlphaSorted() {
     return myAlphaSorted;
+  }
+
+  public boolean isSorted() {
+    return myOrdered;
   }
 }

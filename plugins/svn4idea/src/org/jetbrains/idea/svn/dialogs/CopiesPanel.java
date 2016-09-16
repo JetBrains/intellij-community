@@ -186,9 +186,6 @@ public class CopiesPanel {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(holderPanel);
     registerHelp(pane);
     myHolder = pane;
-    final JScrollBar vBar = pane.getVerticalScrollBar();
-    vBar.setBlockIncrement(vBar.getBlockIncrement() * 5);
-    vBar.setUnitIncrement(vBar.getUnitIncrement() * 5);
     myHolder.setBorder(null);
     setFocusableForLinks(myRefreshLabel);
     refreshOnPooled.consume(true);

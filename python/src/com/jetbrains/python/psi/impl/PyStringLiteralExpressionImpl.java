@@ -135,6 +135,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     int startOffset = 0;
     startOffset = PyStringLiteralLexer.skipEncodingPrefix(text, startOffset);
     startOffset = PyStringLiteralLexer.skipRawPrefix(text, startOffset);
+    startOffset = PyStringLiteralLexer.skipFormattedPrefix(text, startOffset);
     startOffset = PyStringLiteralLexer.skipEncodingPrefix(text, startOffset);
     startOffset = PyStringLiteralLexer.skipRawPrefix(text, startOffset);
     return startOffset;

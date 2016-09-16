@@ -155,6 +155,7 @@ public class IdeEventQueue extends EventQueue {
     });
 
     addDispatcher(new WindowsAltSuppressor(), null);
+    addDispatcher(new EditingCanceller(), null);
 
     abracadabraDaberBoreh();
   }
@@ -261,7 +262,6 @@ public class IdeEventQueue extends EventQueue {
   }
 
   /** @deprecated use {@link #addActivityListener(Runnable, Disposable)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public void addActivityListener(@NotNull final Runnable runnable) {
     synchronized (myLock) {
       myActivityListeners.add(runnable);
@@ -418,7 +418,9 @@ public class IdeEventQueue extends EventQueue {
   @Nullable
   static AccessToken startActivity(AWTEvent e) {
     if (ourTransactionGuard == null && appIsLoaded()) {
-      ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
+      if (ApplicationManager.getApplication() != null && !ApplicationManager.getApplication().isDisposed()) {
+        ourTransactionGuard = (TransactionGuardImpl)TransactionGuard.getInstance();
+      }
     }
     return ourTransactionGuard == null
            ? null
@@ -1108,6 +1110,27 @@ public class IdeEventQueue extends EventQueue {
       }
 
       return !dispatch;
+    }
+  }
+
+  //We have to stop editing with <ESC> (if any) and consume the event to prevent any further processing (dialog closing etc.)
+  private static class EditingCanceller implements EventDispatcher {
+    @Override
+    public boolean dispatch(AWTEvent e) {
+      if (e instanceof KeyEvent && e.getID() == KeyEvent.KEY_PRESSED && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ESCAPE) {
+        final Component owner = UIUtil.findParentByCondition(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner(),
+                                                             component -> component instanceof JTable || component instanceof JTree);
+
+        if (owner instanceof JTable && ((JTable)owner).isEditing()) {
+          ((JTable)owner).editingCanceled(null);
+          return true;
+        }
+        if (owner instanceof JTree && ((JTree)owner).isEditing()) {
+          ((JTree)owner).cancelEditing();
+          return true;
+        }
+      }
+      return false;
     }
   }
 

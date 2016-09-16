@@ -165,11 +165,11 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   }
 
   private static String getName(final PsiClass psiClass, final LookupElement item, boolean diamond, @NotNull PsiSubstitutor substitutor) {
-    if (item instanceof JavaPsiClassReferenceElement) {
-      String forced = ((JavaPsiClassReferenceElement)item).getForcedPresentableName();
-      if (forced != null) {
-        return forced;
-      }
+    String forced = item instanceof JavaPsiClassReferenceElement ? ((JavaPsiClassReferenceElement)item).getForcedPresentableName() :
+                    item instanceof PsiTypeLookupItem ? ((PsiTypeLookupItem)item).getForcedPresentableName() :
+                    null;
+    if (forced != null) {
+      return forced;
     }
 
     String name = PsiUtilCore.getName(psiClass);

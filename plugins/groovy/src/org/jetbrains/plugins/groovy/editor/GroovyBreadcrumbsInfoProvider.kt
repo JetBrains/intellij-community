@@ -24,6 +24,8 @@ import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember
@@ -32,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 class GroovyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
 
   private companion object {
-    val ourLanguages: Array<Language> = arrayOf(GroovyLanguage.INSTANCE)
+    val ourLanguages: Array<Language> = arrayOf(GroovyLanguage)
   }
 
   override fun getLanguages() = ourLanguages
@@ -47,7 +49,7 @@ class GroovyBreadcrumbsInfoProvider : BreadcrumbsInfoProvider() {
 
   override fun getElementInfo(e: PsiElement) = when (e) {
     is GrVariableDeclaration -> e.variables.single().name
-    is GrClosableBlock -> "{}"
+    is GrClosableBlock -> (((e.parent as? GrMethodCall)?.invokedExpression as? GrReferenceExpression)?.referenceName ?: "") + "{}"
     is GrAnonymousClassDefinition -> "new ${e.baseClassReferenceGroovy.referenceName}"
     is GrMethod -> "${e.name}()"
     is GrMember -> e.name!!

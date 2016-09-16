@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,7 +106,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitOpenBlock(GrOpenBlock block) {
+  public void visitOpenBlock(@NotNull GrOpenBlock block) {
     final PsiElement parent = block.getParent();
     final PsiElement lbrace = block.getLBrace();
     if (lbrace != null && parent instanceof GrMethod) {
@@ -127,7 +127,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitFile(GroovyFileBase file) {
+  public void visitFile(@NotNull GroovyFileBase file) {
     super.visitFile(file);
     final GrStatement[] statements = file.getStatements();
     if (statements.length > 0) {
@@ -224,7 +224,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitClosure(GrClosableBlock closure) {
+  public void visitClosure(@NotNull GrClosableBlock closure) {
     //do not go inside closures except gstring injections
     if (closure.getParent() instanceof GrStringInjection) {
       for (GrParameter parameter : closure.getAllParameters()) {
@@ -250,7 +250,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitBreakStatement(GrBreakStatement breakStatement) {
+  public void visitBreakStatement(@NotNull GrBreakStatement breakStatement) {
     super.visitBreakStatement(breakStatement);
     GrStatement target = breakStatement.resolveLabel();
     if (target == null) target = breakStatement.findTargetStatement();
@@ -264,7 +264,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitContinueStatement(GrContinueStatement continueStatement) {
+  public void visitContinueStatement(@NotNull GrContinueStatement continueStatement) {
     super.visitContinueStatement(continueStatement);
     GrStatement target = continueStatement.resolveLabel();
     if (target == null) target = continueStatement.findTargetStatement();
@@ -281,7 +281,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReturnStatement(GrReturnStatement returnStatement) {
+  public void visitReturnStatement(@NotNull GrReturnStatement returnStatement) {
     boolean isNodeNeeded = myHead == null || myHead.getElement() != returnStatement;
     final GrExpression value = returnStatement.getReturnValue();
     if (value != null) value.accept(this);
@@ -298,7 +298,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitAssertStatement(GrAssertStatement assertStatement) {
+  public void visitAssertStatement(@NotNull GrAssertStatement assertStatement) {
     final InstructionImpl assertInstruction = startNode(assertStatement);
 
     final GrExpression assertion = assertStatement.getAssertion();
@@ -334,7 +334,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitThrowStatement(GrThrowStatement throwStatement) {
+  public void visitThrowStatement(@NotNull GrThrowStatement throwStatement) {
     final GrExpression exception = throwStatement.getException();
     if (exception == null) return;
 
@@ -402,14 +402,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
+  public void visitLabeledStatement(@NotNull GrLabeledStatement labeledStatement) {
     final InstructionImpl instruction = startNode(labeledStatement);
     super.visitLabeledStatement(labeledStatement);
     finishNode(instruction);
   }
 
   @Override
-  public void visitAssignmentExpression(GrAssignmentExpression expression) {
+  public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
     GrExpression lValue = expression.getLValue();
     if (expression.getOperationTokenType() != GroovyTokenTypes.mASSIGN) {
       if (lValue instanceof GrReferenceExpression && myPolicy.isReferenceAccepted((GrReferenceExpression)lValue)) {
@@ -428,13 +428,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
+  public void visitParenthesizedExpression(@NotNull GrParenthesizedExpression expression) {
     final GrExpression operand = expression.getOperand();
     if (operand != null) operand.accept(this);
   }
 
   @Override
-  public void visitUnaryExpression(GrUnaryExpression expression) {
+  public void visitUnaryExpression(@NotNull GrUnaryExpression expression) {
     final GrExpression operand = expression.getOperand();
     if (operand == null) return;
 
@@ -501,13 +501,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitInstanceofExpression(GrInstanceOfExpression expression) {
+  public void visitInstanceofExpression(@NotNull GrInstanceOfExpression expression) {
     expression.getOperand().accept(this);
     processInstanceOf(expression);
   }
 
   @Override
-  public void visitReferenceExpression(GrReferenceExpression refExpr) {
+  public void visitReferenceExpression(@NotNull GrReferenceExpression refExpr) {
     super.visitReferenceExpression(refExpr);
 
     if (myPolicy.isReferenceAccepted(refExpr)) {
@@ -534,31 +534,31 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
+  public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
     super.visitMethodCallExpression(methodCallExpression);
     visitCall(methodCallExpression);
   }
 
   @Override
-  public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+  public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
     super.visitApplicationStatement(applicationStatement);
     visitCall(applicationStatement);
   }
 
   @Override
-  public void visitConstructorInvocation(GrConstructorInvocation invocation) {
+  public void visitConstructorInvocation(@NotNull GrConstructorInvocation invocation) {
     super.visitConstructorInvocation(invocation);
     visitCall(invocation);
   }
 
   @Override
-  public void visitNewExpression(GrNewExpression newExpression) {
+  public void visitNewExpression(@NotNull GrNewExpression newExpression) {
     super.visitNewExpression(newExpression);
     visitCall(newExpression);
   }
 
   @Override
-  public void visitBinaryExpression(GrBinaryExpression expression) {
+  public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
     final GrExpression left = expression.getLeftOperand();
     final GrExpression right = expression.getRightOperand();
     final IElementType opType = expression.getOperationTokenType();
@@ -661,7 +661,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitIfStatement(GrIfStatement ifStatement) {
+  public void visitIfStatement(@NotNull GrIfStatement ifStatement) {
     InstructionImpl ifInstruction = startNode(ifStatement);
 
     final GrCondition condition = ifStatement.getCondition();
@@ -733,7 +733,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitForStatement(GrForStatement forStatement) {
+  public void visitForStatement(@NotNull GrForStatement forStatement) {
     final GrForClause clause = forStatement.getClause();
 
     processForLoopInitializer(clause);
@@ -857,7 +857,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitWhileStatement(GrWhileStatement whileStatement) {
+  public void visitWhileStatement(@NotNull GrWhileStatement whileStatement) {
     final InstructionImpl instruction = startNode(whileStatement);
     final GrCondition condition = whileStatement.getCondition();
     if (condition != null) {
@@ -881,7 +881,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitSwitchStatement(GrSwitchStatement switchStatement) {
+  public void visitSwitchStatement(@NotNull GrSwitchStatement switchStatement) {
     final GrCondition condition = switchStatement.getCondition();
     if (condition != null) {
       condition.accept(this);
@@ -899,7 +899,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitConditionalExpression(GrConditionalExpression expression) {
+  public void visitConditionalExpression(@NotNull GrConditionalExpression expression) {
     GrExpression condition = expression.getCondition();
     GrExpression thenBranch = expression.getThenBranch();
     GrExpression elseBranch = expression.getElseBranch();
@@ -923,7 +923,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitElvisExpression(GrElvisExpression expression) {
+  public void visitElvisExpression(@NotNull GrElvisExpression expression) {
     GrExpression condition = expression.getCondition();
     GrExpression elseBranch = expression.getElseBranch();
 
@@ -978,7 +978,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitCaseSection(GrCaseSection caseSection) {
+  public void visitCaseSection(@NotNull GrCaseSection caseSection) {
     for (GrCaseLabel label : caseSection.getCaseLabels()) {
       GrExpression value = label.getValue();
       if (value != null) {
@@ -1005,7 +1005,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitTryStatement(GrTryCatchStatement tryCatchStatement) {
+  public void visitTryStatement(@NotNull GrTryCatchStatement tryCatchStatement) {
     final GrOpenBlock tryBlock = tryCatchStatement.getTryBlock();
     final GrCatchClause[] catchClauses = tryCatchStatement.getCatchClauses();
     final GrFinallyClause finallyClause = tryCatchStatement.getFinallyClause();
@@ -1158,26 +1158,26 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitField(GrField field) {
+  public void visitField(@NotNull GrField field) {
   }
 
   @Override
-  public void visitParameter(GrParameter parameter) {
+  public void visitParameter(@NotNull GrParameter parameter) {
     if (parameter.getParent() instanceof GrForClause) {
       visitVariable(parameter);
     }
   }
 
   @Override
-  public void visitMethod(GrMethod method) {
+  public void visitMethod(@NotNull GrMethod method) {
   }
 
   @Override
-  public void visitClassInitializer(GrClassInitializer initializer) {
+  public void visitClassInitializer(@NotNull GrClassInitializer initializer) {
   }
 
   @Override
-  public void visitTypeDefinition(final GrTypeDefinition typeDefinition) {
+  public void visitTypeDefinition(@NotNull final GrTypeDefinition typeDefinition) {
     if (!(typeDefinition instanceof GrAnonymousClassDefinition)) return;
 
     final Set<ReadWriteVariableInstruction> vars = collectUsedVariableWithoutInitialization(typeDefinition);
@@ -1200,7 +1200,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
 
       @Override
-      public void visitField(GrField field) {
+      public void visitField(@NotNull GrField field) {
         GrExpression initializer = field.getInitializerGroovy();
         if (initializer != null) {
           Instruction[] flow = new ControlFlowBuilder(field.getProject()).buildControlFlow(initializer);
@@ -1209,7 +1209,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
 
       @Override
-      public void visitMethod(GrMethod method) {
+      public void visitMethod(@NotNull GrMethod method) {
         GrOpenBlock block = method.getBlock();
         if (block != null) {
           collectVars(block.getControlFlow());
@@ -1217,7 +1217,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
 
       @Override
-      public void visitClassInitializer(GrClassInitializer initializer) {
+      public void visitClassInitializer(@NotNull GrClassInitializer initializer) {
         GrOpenBlock block = initializer.getBlock();
         collectVars(block.getControlFlow());
       }
@@ -1226,7 +1226,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitVariable(GrVariable variable) {
+  public void visitVariable(@NotNull GrVariable variable) {
     super.visitVariable(variable);
 
     if (myPolicy.isVariableInitialized(variable)) {
@@ -1245,7 +1245,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitElement(GroovyPsiElement element) {
+  public void visitElement(@NotNull GroovyPsiElement element) {
     ProgressManager.checkCanceled();
     super.visitElement(element);
   }

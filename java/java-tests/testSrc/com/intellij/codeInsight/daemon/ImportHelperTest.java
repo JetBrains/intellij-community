@@ -20,9 +20,9 @@ import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
-import com.intellij.codeInsight.generation.actions.CommentByBlockCommentAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -136,12 +136,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
           settings.IMPORT_LAYOUT_TABLE.copyFrom(table);
           CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
-          try {
-            JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
-          }
-          finally {
-            CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-          }
+          JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
 
           assertOrder(file, "java.awt.*", CommonClassNames.JAVA_UTIL_MAP, "static java.lang.Math.max", "static java.lang.Math.min", "static javax.swing.SwingConstants.CENTER");
 
@@ -174,29 +169,20 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting/reimportConflictingClasses";
+  @NonNls private static final String BASE_PATH = "/codeInsight/importHelper/";
   @WrapInCommand
   public void testReimportConflictingClasses() throws Exception {
-    configureByFile(BASE_PATH+"/x/Usage.java", BASE_PATH);
+    String path = BASE_PATH + getTestName(true);
+    configureByFile(path + "/x/Usage.java", path);
     assertEmpty(highlightErrors());
 
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
     settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
-    try {
-      new WriteCommandAction.Simple(getProject()) {
-        @Override
-        protected void run() throws Throwable {
-          JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile());
-        }
-      }.execute().throwException();
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
+    WriteCommandAction.runWriteCommandAction(getProject(),
+                                             () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 
-
-    @NonNls String fullPath = getTestDataPath() + BASE_PATH + "/x/Usage_afterOptimize.txt";
+    @NonNls String fullPath = getTestDataPath() + path + "/x/Usage_afterOptimize.txt";
     final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     String text = LoadTextUtil.loadText(vFile).toString();
     assertEquals(text, getFile().getText());
@@ -320,8 +306,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
 
       assertEmpty(((PsiJavaFile)getFile()).getImportList().getAllImportStatements());
 
-      CommentByBlockCommentAction action = new CommentByBlockCommentAction();
-      action.actionPerformedImpl(getProject(), getEditor());
+      EditorTestUtil.executeAction(getEditor(), IdeActions.ACTION_COMMENT_BLOCK);
 
       assertEmpty(highlightErrors());
 
@@ -484,4 +469,19 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
      assertFalse(fix.isAvailable(getProject(), getEditor(), getFile()));
    }
 
+   public void testConflictBetweenRegularAndStaticClassesInImportList() throws Exception {
+     String path = BASE_PATH + getTestName(true);
+     configureByFile(path + "/foo/A.java", path);
+     assertEmpty(highlightErrors());
+
+     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
+     settings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+     settings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
+     settings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
+
+     CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
+     WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
+
+     assertEmpty(highlightErrors());
+   }
 }

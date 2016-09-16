@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.provider.commit;
 import com.intellij.dvcs.AmendComponent;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -210,7 +209,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
         );
       }
     };
-    ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(runnable);
     return choice[0] == Messages.OK;
   }
 
@@ -314,12 +313,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   /**
    * Commit options for hg
    */
-  private class HgCommitAdditionalComponent implements RefreshableOnComponent {
+  public class HgCommitAdditionalComponent implements RefreshableOnComponent {
     @NotNull private final JPanel myPanel;
     @NotNull private final AmendComponent myAmend;
     @NotNull private final JCheckBox myCommitSubrepos;
 
-    public HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
+    HgCommitAdditionalComponent(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       HgVcs vcs = assertNotNull(HgVcs.getInstance(myProject));
 
       myAmend = new MyAmendComponent(project, getRepositoryManager(project), panel, "Amend Commit (QRefresh)");
@@ -354,7 +353,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     @Override
     public void saveState() {
-      myNextCommitAmend = myAmend.isAmend();
+      myNextCommitAmend = isAmend();
       myShouldCommitSubrepos = myCommitSubrepos.isSelected();
     }
 
@@ -367,6 +366,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     @Override
     public JComponent getComponent() {
       return myPanel;
+    }
+
+    public boolean isAmend() {
+      return myAmend.isAmend();
     }
 
     private class MyAmendComponent extends AmendComponent {

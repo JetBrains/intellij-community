@@ -38,7 +38,7 @@ public abstract class AbstractAllInPackageConfigurationProducer extends JUnitCon
     PsiPackage psiPackage = JavaRuntimeConfigurationProducerBase.checkPackage(context.getPsiLocation());
     if (psiPackage == null) return false;
     sourceElement.set(psiPackage);
-    if (!LocationUtil.isJarAttached(context.getLocation(), psiPackage, JUnitUtil.TESTCASE_CLASS)) return false;
+    if (!LocationUtil.isJarAttached(context.getLocation(), psiPackage, JUnitUtil.TESTCASE_CLASS, JUnitUtil.TEST5_ANNOTATION)) return false;
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     data.PACKAGE_NAME = psiPackage.getQualifiedName();
     data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;

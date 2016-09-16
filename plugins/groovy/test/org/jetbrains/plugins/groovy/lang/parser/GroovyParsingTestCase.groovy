@@ -30,27 +30,27 @@ abstract class GroovyParsingTestCase extends LightCodeInsightFixtureTestCase {
   }
 
   void doTest() {
-    doTest(getTestName(true).replace('$', '/') + ".test");
+    doTest(getTestName(true).replace('$', '/') + ".test")
   }
 
   protected void doTest(String fileName) {
     String path = testDataPath + "/" + fileName
-    def (String input) = TestUtils.readInput(path);
-    checkParsing(input, fileName);
+    def (String input) = TestUtils.readInput(path)
+    checkParsing(input, fileName)
   }
 
   protected void checkParsing(String input, String path) {
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input);
-    final String psiTree = DebugUtil.psiToString(psiFile, false);
-    final String prefix = input + '\n-----\n';
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input)
+    final String psiTree = DebugUtil.psiToString(psiFile, false)
+    final String prefix = input + '\n-----\n'
     myFixture.configureByText('test.txt', prefix + psiTree.trim())
     myFixture.checkResultByFile(path, false)
   }
 
   protected checkParsingByText(String input, String output) {
-    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input);
-    final String psiTree = DebugUtil.psiToString(psiFile, false);
-    final String prefix = input.trim() + '\n-----\n';
-    assertEquals(prefix + output.trim(), prefix + psiTree.trim());
+    final PsiFile psiFile = TestUtils.createPseudoPhysicalGroovyFile(project, input)
+    final String psiTree = DebugUtil.psiToString(psiFile, false)
+    final String prefix = input.trim() + '\n-----\n'
+    assertEquals(prefix + output.trim(), prefix + psiTree.trim())
   }
 }

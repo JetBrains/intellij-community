@@ -126,7 +126,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
             artifactState.getPropertiesList().add(propertiesState);
           }
         }
-        Collections.sort(artifactState.getPropertiesList(), (o1, o2) -> o1.getId().compareTo(o2.getId()));
+        Collections.sort(artifactState.getPropertiesList(), Comparator.comparing(ArtifactPropertiesState::getId));
       }
       state.getArtifacts().add(artifactState);
     }

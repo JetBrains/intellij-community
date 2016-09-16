@@ -26,6 +26,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.sanselan.ImageWriteException;
 import org.apache.sanselan.common.BinaryConstants;
@@ -174,13 +176,7 @@ public abstract class AppIcon {
         Image appImage = (Image)getAppMethod("getDockIconImage").invoke(app);
 
         if (appImage == null) return null;
-
-        int width = appImage.getWidth(null);
-        int height = appImage.getHeight(null);
-        BufferedImage img = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = img.createGraphics();
-        g2d.drawImage(appImage, null, null);
-        myAppImage = img;
+        myAppImage = ImageUtil.toBufferedImage(appImage);
       }
       catch (NoSuchMethodException e) {
         return null;
@@ -261,7 +257,12 @@ public abstract class AppIcon {
       if (visible) {
         Icon okIcon = AllIcons.Mac.AppIconOk512;
 
-        int x = img.myImg.getWidth() - okIcon.getIconWidth();
+        int myImgWidth = img.myImg.getWidth();
+        if (myImgWidth != 128) {
+          okIcon = IconUtil.scale(okIcon, myImgWidth / 128);
+        }
+
+        int x = myImgWidth - okIcon.getIconWidth();
         int y = 0;
 
         okIcon.paintIcon(JOptionPane.getRootFrame(), img.myG2d, x, y);
@@ -335,10 +336,11 @@ public abstract class AppIcon {
     private AppImage createAppImage() {
       BufferedImage appImage = getAppImage();
       assert appImage != null;
-      BufferedImage current = UIUtil.createImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+      @SuppressWarnings("UndesirableClassUsage")
+      BufferedImage current = new BufferedImage(appImage.getWidth(), appImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
       Graphics2D g = current.createGraphics();
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g.drawImage(appImage, null, null);
+      UIUtil.drawImage(g, appImage, 0, 0, null);
       return new AppImage(current, g);
     }
 

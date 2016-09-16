@@ -17,10 +17,9 @@ package com.intellij;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.ZipUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -42,13 +41,11 @@ import java.util.zip.ZipOutputStream;
 public class InternalTestDiscoveryListener implements TestListener, Closeable {
   private final String myModuleName;
   private final String myTracesDirectory;
-  private List<String> myCompletedMethodNames = new ArrayList<>();
-  private final Alarm myProcessTracesAlarm;
+  private final List<String> myCompletedMethodNames = new ArrayList<>();
   private Object myDiscoveryIndex;
   private Class<?> myDiscoveryIndexClass;
 
   public InternalTestDiscoveryListener() {
-    myProcessTracesAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, null);
     myTracesDirectory = System.getProperty("org.jetbrains.instrumentation.trace.dir");
     myModuleName = System.getProperty("org.jetbrains.instrumentation.main.module");
     System.out.println(getClass().getSimpleName() + " instantiated with module='" + myModuleName + "' , directory='" + myTracesDirectory + "'");
@@ -94,9 +91,10 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
     if (myCompletedMethodNames.size() > 50) {
       final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
       myCompletedMethodNames.clear();
-      myProcessTracesAlarm.addRequest(() -> {
+      AppExecutorUtil.getAppExecutorService().execute(
+      () -> {
         flushCurrentTraces(fullTestNames);
-      }, 0);
+      });
     }
   }
 
@@ -150,9 +148,6 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
     myCompletedMethodNames.clear();
     flushCurrentTraces(fullTestNames);
     zipOutput(myTracesDirectory);
-    myProcessTracesAlarm.addRequest(() -> {
-      Disposer.dispose(myProcessTracesAlarm);
-    }, 0);
   }
 
   private static void zipOutput(String tracesDirectory) {

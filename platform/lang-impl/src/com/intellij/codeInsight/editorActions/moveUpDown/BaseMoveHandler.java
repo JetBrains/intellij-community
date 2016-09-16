@@ -47,6 +47,7 @@ public abstract class BaseMoveHandler extends EditorWriteActionHandler {
     assert project != null;
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = editor.getDocument();
+    documentManager.commitDocument(document);
     PsiFile file = getRoot(documentManager.getPsiFile(document), editor);
 
     if (file != null) {

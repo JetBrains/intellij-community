@@ -82,11 +82,13 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     public void run() {
       try {
         if (myStorage instanceof MemoryIndexStorage) {
-          getWriteLock().lock();
-          try {
-            ((MemoryIndexStorage<Key, Value>)myStorage).clearCaches();
-          } finally {
-            getWriteLock().unlock();
+          Lock writeLock = getWriteLock();
+          if (writeLock.tryLock()) {
+            try {
+              ((MemoryIndexStorage<Key, Value>)myStorage).clearCaches();
+            } finally {
+              writeLock.unlock();
+            }
           }
         }
         flush();

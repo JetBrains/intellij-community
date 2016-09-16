@@ -38,9 +38,10 @@ public abstract class UpdaterTestCase {
 
   @Before
   public void setUp() throws Exception {
-    Runner.initLogger();
-
     FileUtil.copyDir(PathManagerEx.findFileUnderCommunityHome("updater/testData"), getDataDir());
+
+    Runner.checkCaseSensitivity(getDataDir().getPath());
+    Runner.initLogger();
 
     boolean windowsLineEnds = new File(getDataDir(), "Readme.txt").length() == 7132;
     CHECKSUMS = new CheckSums(windowsLineEnds);

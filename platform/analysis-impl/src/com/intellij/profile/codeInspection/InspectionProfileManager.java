@@ -37,11 +37,9 @@ public interface InspectionProfileManager extends ProfileManager, SeverityProvid
   }
 
   @Deprecated
-  @SuppressWarnings("unused")
   void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
   @Deprecated
-  @SuppressWarnings("unused")
   void removeProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
   void fireProfileChanged(@Nullable Profile profile);
@@ -50,7 +48,6 @@ public interface InspectionProfileManager extends ProfileManager, SeverityProvid
 
   void setRootProfile(@Nullable String name);
 
-  @SuppressWarnings("unused")
   @NotNull
   @Deprecated
   default Profile getRootProfile() {

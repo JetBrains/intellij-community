@@ -250,7 +250,7 @@ class A implements T {
   private def generateImplementation(PsiMethod method) {
     WriteCommandAction.runWriteCommandAction project, {
       GrTypeDefinition clazz = (myFixture.file as PsiClassOwner).classes[0] as GrTypeDefinition
-      OverrideImplementUtil.overrideOrImplement(clazz, method);
+      OverrideImplementUtil.overrideOrImplement(clazz, method)
       PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting()
     }
     myFixture.editor.selectionModel.removeSelection()

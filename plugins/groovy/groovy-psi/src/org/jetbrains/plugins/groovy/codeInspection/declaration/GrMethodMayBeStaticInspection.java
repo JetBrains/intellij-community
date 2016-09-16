@@ -17,14 +17,12 @@ package org.jetbrains.plugins.groovy.codeInspection.declaration;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -65,7 +63,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitMethod(GrMethod method) {
+      public void visitMethod(@NotNull GrMethod method) {
         if (checkMethod(method)) {
           final GrModifierFix modifierFix = new GrModifierFix(method, PsiModifier.STATIC, false, true, descriptor -> {
             final PsiElement element = descriptor.getPsiElement();
@@ -142,14 +140,14 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
     private boolean myHaveInstanceRefs = false;
 
     @Override
-    public void visitElement(GroovyPsiElement element) {
+    public void visitElement(@NotNull GroovyPsiElement element) {
       if (myHaveInstanceRefs) return;
 
       super.visitElement(element);
     }
 
     @Override
-    public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
+    public void visitReferenceExpression(@NotNull GrReferenceExpression referenceExpression) {
       if (myHaveInstanceRefs) return;
 
       if (PsiUtil.isSuperReference(referenceExpression)) {
@@ -190,7 +188,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
     }
 
     @Override
-    public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+    public void visitCodeReferenceElement(@NotNull GrCodeReferenceElement refElement) {
       super.visitCodeReferenceElement(refElement);
 
       if (myHaveInstanceRefs) return;

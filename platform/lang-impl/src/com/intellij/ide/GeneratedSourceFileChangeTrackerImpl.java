@@ -52,7 +52,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
     super(project);
     myDocumentManager = documentManager;
     myEditorNotifications = editorNotifications;
-    myCheckingQueue = new MergingUpdateQueue("Checking for changes in generated sources", 500, false, null, project, null, Alarm.ThreadToUse.SHARED_THREAD);
+    myCheckingQueue = new MergingUpdateQueue("Checking for changes in generated sources", 500, false, null, project, null, Alarm.ThreadToUse.POOLED_THREAD);
   }
 
   @Override

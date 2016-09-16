@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="jgoodies-common">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jgoodies-common-1.2.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

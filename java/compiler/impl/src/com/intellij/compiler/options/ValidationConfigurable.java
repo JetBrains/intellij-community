@@ -135,7 +135,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   public void reset() {
     myValidateBox.setSelected(myConfiguration.VALIDATE_ON_BUILD);
     final List<Compiler> validators = getValidators();
-    Collections.sort(validators, (o1, o2) -> o1.getDescription().compareTo(o2.getDescription()));
+    Collections.sort(validators, Comparator.comparing(Compiler::getDescription));
     myValidators.setElements(validators, false);
     myValidators.markElements(getMarkedValidators());
     myExcludedConfigurable.reset();

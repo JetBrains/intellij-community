@@ -68,11 +68,12 @@ public abstract class FileBasedIndex implements BaseComponent {
   // note: upsource implementation requires access to Project here, please don't remove
   public abstract VirtualFile findFileById(Project project, int id);
 
-  public void requestRebuild(ID<?, ?> indexId) {
+  public void requestRebuild(@NotNull ID<?, ?> indexId) {
     requestRebuild(indexId, new Throwable());
   }
 
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
@@ -127,7 +128,7 @@ public abstract class FileBasedIndex implements BaseComponent {
    */
   public abstract <K> void ensureUpToDate(@NotNull ID<K, ?> indexId, @Nullable Project project, @Nullable GlobalSearchScope filter);
 
-  public abstract void requestRebuild(ID<?, ?> indexId, Throwable throwable);
+  public abstract void requestRebuild(@NotNull ID<?, ?> indexId, Throwable throwable);
 
   public abstract <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e);
 
@@ -174,18 +175,17 @@ public abstract class FileBasedIndex implements BaseComponent {
     });
   }
 
+  @FunctionalInterface
   public interface ValueProcessor<V> {
     /**
      * @param value a value to process
      * @param file the file the value came from
      * @return false if no further processing is needed, true otherwise
      */
-    boolean process(VirtualFile file, V value);
+    boolean process(@NotNull VirtualFile file, V value);
   }
 
-  /**
-  * Author: dmitrylomov
-  */
+  @FunctionalInterface
   public interface InputFilter {
     boolean acceptInput(@NotNull VirtualFile file);
   }

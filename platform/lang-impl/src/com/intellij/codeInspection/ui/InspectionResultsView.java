@@ -254,12 +254,16 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       @Override
       public void profileChanged(Profile profile) {
         if (profile == profileManager.getCurrentProfile()) {
-          myTree.revalidate();
-          myTree.repaint();
-          syncRightPanel();
+          InspectionResultsView.this.profileChanged();
         }
       }
     }, this);
+  }
+
+  public void profileChanged() {
+    myTree.revalidate();
+    myTree.repaint();
+    syncRightPanel();
   }
 
   private void initTreeListeners() {

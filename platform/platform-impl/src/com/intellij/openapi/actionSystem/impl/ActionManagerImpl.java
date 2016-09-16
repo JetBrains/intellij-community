@@ -482,20 +482,25 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private AnAction getActionImpl(String id, boolean canReturnStub) {
+    AnAction action;
     synchronized (myLock) {
-      AnAction action = myId2Action.get(id);
-      if (!canReturnStub && action instanceof ActionStub) {
-        action = convert((ActionStub)action);
+      action = myId2Action.get(id);
+      if (canReturnStub || !(action instanceof ActionStub)) {
+        return action;
+      }
+    }
+    AnAction converted = convertStub((ActionStub)action);
+    synchronized (myLock) {
+      action = myId2Action.get(id);
+      if (action instanceof ActionStub) {
+        action = replaceStub((ActionStub)action, converted);
       }
       return action;
     }
   }
 
-  /**
-   * Converts action's stub to normal action.
-   */
   @NotNull
-  private AnAction convert(@NotNull ActionStub stub) {
+  private AnAction replaceStub(@NotNull ActionStub stub, AnAction anAction) {
     LOG.assertTrue(myAction2Id.containsKey(stub));
     myAction2Id.remove(stub);
 
@@ -505,7 +510,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     LOG.assertTrue(action != null);
     LOG.assertTrue(action.equals(stub));
 
-    AnAction anAction = convertStub(stub);
     myAction2Id.put(anAction, stub.getId());
 
     return addToMap(stub.getId(), anAction, stub.getPluginId(), stub.getProjectType());

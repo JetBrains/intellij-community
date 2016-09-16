@@ -24,6 +24,8 @@
  */
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInsight.AnnotationTargetUtil;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -33,6 +35,9 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +47,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @State(name = "EntryPointsManager")
 public class EntryPointsManagerImpl extends EntryPointsManagerBase implements PersistentStateComponent<Element> {
@@ -55,7 +61,11 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     final List<String> writeList = new ArrayList<>(myWriteAnnotations);
 
     final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Mark as entry point if annotated by", true);
-    final JPanel writeAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(writeList, "Mark field as implicitly write if annotated by", false);
+    Condition<PsiClass> applicableToField = psiClass -> {
+      Set<PsiAnnotation.TargetType> annotationTargets = AnnotationTargetUtil.getAnnotationTargets(psiClass);
+      return annotationTargets != null && annotationTargets.contains(PsiAnnotation.TargetType.FIELD);
+    };
+    final JPanel writtenAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(writeList, "Mark field as implicitly written if annotated by", false, applicableToField);
     new DialogWrapper(myProject) {
       {
         init();
@@ -66,7 +76,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
       protected JComponent createCenterPanel() {
         final JPanel panel = new JPanel(new VerticalFlowLayout());
         panel.add(listPanel);
-        panel.add(writeAnnotationsPanel);
+        panel.add(writtenAnnotationsPanel);
         return panel;
       }
 
@@ -90,7 +100,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureAnnotationsButton() {
-    final JButton configureAnnotations = new JButton("Configure annotations...");
+    final JButton configureAnnotations = new JButton("Annotations...");
     configureAnnotations.setHorizontalAlignment(SwingConstants.LEFT);
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
@@ -102,7 +112,7 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureClassPatternsButton() {
-    final JButton configureClassPatterns = new JButton("Configure code patterns...");
+    final JButton configureClassPatterns = new JButton("Code patterns...");
     configureClassPatterns.setHorizontalAlignment(SwingConstants.LEFT);
     configureClassPatterns.addActionListener(new ActionListener() {
       @Override

@@ -285,14 +285,11 @@ public abstract class InspectionRVContentProvider {
             if (!HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME.equals(toolWrapper.getShortName())) {
               for (RefElementNode parentNode : parentNodes) {
                 final List<ProblemDescriptionNode> nodes = new ArrayList<>();
-                TreeUtil.traverse(parentNode, new TreeUtil.Traverse() {
-                  @Override
-                  public boolean accept(final Object node) {
-                    if (node instanceof ProblemDescriptionNode) {
-                      nodes.add((ProblemDescriptionNode)node);
-                    }
-                    return true;
+                TreeUtil.traverse(parentNode, node -> {
+                  if (node instanceof ProblemDescriptionNode) {
+                    nodes.add((ProblemDescriptionNode)node);
                   }
+                  return true;
                 });
                 if (nodes.isEmpty()) continue;
                 parentNode.removeAllChildren();
@@ -322,27 +319,24 @@ public abstract class InspectionRVContentProvider {
       final RefElementNode currentNode = firstLevel.get() ? nodeToBeAdded : container.createNode(presentation);
       final RefEntityContainer finalContainer = container;
       final RefElementNode finalPrevNode = prevNode;
-      TreeUtil.traverseDepth(parentNode, new TreeUtil.Traverse() {
-        @Override
-        public boolean accept(Object node) {
-          if (node instanceof RefElementNode) {
-            final RefElementNode refElementNode = (RefElementNode)node;
-            final RefEntity userObject = finalContainer.getRefEntity();
-            final RefEntity object = refElementNode.getElement();
-            if (userObject != null && object != null && (userObject.getClass().equals(object.getClass())) && finalContainer.areEqual(object, userObject)) {
-              if (firstLevel.get()) {
-                result.set(refElementNode);
-                return false;
-              }
-              else {
-                refElementNode.insertByOrder(finalPrevNode, false);
-                result.set(nodeToBeAdded);
-                return false;
-              }
+      TreeUtil.traverseDepth(parentNode, node -> {
+        if (node instanceof RefElementNode) {
+          final RefElementNode refElementNode = (RefElementNode)node;
+          final RefEntity userObject = finalContainer.getRefEntity();
+          final RefEntity object = refElementNode.getElement();
+          if (userObject != null && object != null && (userObject.getClass().equals(object.getClass())) && finalContainer.areEqual(object, userObject)) {
+            if (firstLevel.get()) {
+              result.set(refElementNode);
+              return false;
+            }
+            else {
+              refElementNode.insertByOrder(finalPrevNode, false);
+              result.set(nodeToBeAdded);
+              return false;
             }
           }
-          return true;
         }
+        return true;
       });
       if(!result.isNull()) return result.get();
 

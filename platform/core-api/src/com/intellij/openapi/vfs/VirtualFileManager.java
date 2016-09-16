@@ -100,8 +100,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * This method is useful when the file was created externally and you need to find <code>{@link VirtualFile}</code>
    * corresponding to it.<p>
    * <p/>
-   * This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * If this method is invoked not from Swing event dispatch thread, then it must not happen inside a read action.
    *
    * @param url the URL
    * @return <code>{@link VirtualFile}</code> if the file was found, <code>null</code> otherwise

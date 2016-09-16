@@ -264,42 +264,42 @@ print new Foo(1)
   }
 
   void doTest() {
-    final String testFile = getTestName(true).replace('$', '/') + ".test";
-    final List<String> list = TestUtils.readInput(TestUtils.absoluteTestDataPath + "groovy/refactoring/rename/" + testFile);
+    final String testFile = getTestName(true).replace('$', '/') + ".test"
+    final List<String> list = TestUtils.readInput(TestUtils.absoluteTestDataPath + "groovy/refactoring/rename/" + testFile)
 
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, list.get(0));
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, list.get(0))
 
-    PsiReference ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset);
-    final PsiElement resolved = ref == null ? null : ref.resolve();
+    PsiReference ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
+    final PsiElement resolved = ref == null ? null : ref.resolve()
     if (resolved instanceof PsiMethod && !(resolved instanceof GrAccessorMethod)) {
-      PsiMethod method = (PsiMethod)resolved;
-      String name = method.name;
-      String newName = createNewNameForMethod(name);
-      myFixture.renameElementAtCaret(newName);
+      PsiMethod method = (PsiMethod)resolved
+      String name = method.name
+      String newName = createNewNameForMethod(name)
+      myFixture.renameElementAtCaret(newName)
     } else if (resolved instanceof GrAccessorMethod) {
-      GrField field = ((GrAccessorMethod)resolved).property;
-      RenameProcessor processor = new RenameProcessor(myFixture.project, field, "newName", true, true);
-      processor.addElement(resolved, createNewNameForMethod(((GrAccessorMethod)resolved).name));
-      processor.run();
+      GrField field = ((GrAccessorMethod)resolved).property
+      RenameProcessor processor = new RenameProcessor(myFixture.project, field, "newName", true, true)
+      processor.addElement(resolved, createNewNameForMethod(((GrAccessorMethod)resolved).name))
+      processor.run()
     } else {
-      myFixture.renameElementAtCaret("newName");
+      myFixture.renameElementAtCaret("newName")
     }
-    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
-    myFixture.checkResult(list.get(1));
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+    myFixture.checkResult(list.get(1))
   }
 
   private static String createNewNameForMethod(final String name) {
-    String newName = "newName";
+    String newName = "newName"
     if (name.startsWith("get")) {
-      newName = "get" + StringUtil.capitalize(newName);
+      newName = "get" + StringUtil.capitalize(newName)
     }
     else if (name.startsWith("is")) {
-      newName = "is" + StringUtil.capitalize(newName);
+      newName = "is" + StringUtil.capitalize(newName)
     }
     else if (name.startsWith("set")) {
-      newName = "set" + StringUtil.capitalize(newName);
+      newName = "set" + StringUtil.capitalize(newName)
     }
-    return newName;
+    return newName
   }
 
   void testRecursivePathRename() {
@@ -418,15 +418,15 @@ foo = 4"""
   }
 
   void testInplaceRename() {
-   doInplaceRenameTest();
+   doInplaceRenameTest()
   }
 
   void testInplaceRenameWithGetter() {
-   doInplaceRenameTest();
+   doInplaceRenameTest()
   }
 
   void testInplaceRenameWithStaticField() {
-   doInplaceRenameTest();
+   doInplaceRenameTest()
   }
 
   void testInplaceRenameOfClosureImplicitParameter(){
@@ -474,7 +474,7 @@ class Foo {
       myFixture.renameElement myFixture.findClass("Foo").methods[0], "'newName'"
     } catch (ConflictsInTestsException e) {
       assertEquals "<b><code>'newName'</code></b> is not a correct identifier to use in <b><code>new Foo().foo</code></b>", e.message
-      return;
+      return
     }
     assertTrue false
   }
@@ -509,7 +509,7 @@ class Test {
       }
   }
 }""")
-    new PropertyRenameHandler().invoke(project, [myFixture.findClass('Book').fields[0]] as PsiElement[], null);
+    new PropertyRenameHandler().invoke(project, [myFixture.findClass('Book').fields[0]] as PsiElement[], null)
     myFixture.checkResult """
 class Book {
     String s
@@ -529,9 +529,9 @@ class Test {
 
   private def doInplaceRenameTest() {
     String prefix = "/${getTestName(false)}"
-    myFixture.configureByFile prefix + ".groovy";
+    myFixture.configureByFile prefix + ".groovy"
     WriteCommandAction.runWriteCommandAction project, {
-      CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", myFixture);
+      CodeInsightTestUtil.doInlineRename(new GrVariableInplaceRenameHandler(), "foo", myFixture)
     }
     myFixture.checkResultByFile prefix + "_after.groovy"
   }
@@ -560,7 +560,7 @@ new X().foo()
 
     def method = (file.classes[0] as GrTypeDefinition).codeMethods[0]
 
-    myFixture.renameElement(method, 'f oo');
+    myFixture.renameElement(method, 'f oo')
 
     myFixture.checkResult('''\
 class X {
@@ -590,7 +590,7 @@ class Java {
 }''')
 
     try {
-      myFixture.renameElement(method, 'f oo');
+      myFixture.renameElement(method, 'f oo')
       assert false
     }
     catch (ConflictsInTestsException ignored) {

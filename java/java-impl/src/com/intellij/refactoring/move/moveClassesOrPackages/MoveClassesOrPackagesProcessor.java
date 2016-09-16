@@ -49,7 +49,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -73,6 +72,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   protected @NotNull final MoveDestination myMoveDestination;
   protected NonCodeUsageInfo[] myNonCodeUsages;
   private boolean myOpenInEditor;
+  private MultiMap<PsiElement, String> myConflicts;
 
   public MoveClassesOrPackagesProcessor(Project project,
                                         PsiElement[] elements,
@@ -159,7 +159,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   protected UsageInfo[] findUsages() {
     final List<UsageInfo> allUsages = new ArrayList<>();
     final List<UsageInfo> usagesToSkip = new ArrayList<>();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    myConflicts = new MultiMap<>();
     for (PsiElement element : myElementsToMove) {
       String newName = getNewQName(element);
       if (newName == null) continue;
@@ -179,17 +179,11 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), conflicts,
+    myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), myConflicts,
                                              allUsages.toArray(new UsageInfo[allUsages.size()]));
     final UsageInfo[] usageInfos = allUsages.toArray(new UsageInfo[allUsages.size()]);
-    detectPackageLocalsMoved(usageInfos, conflicts);
-    detectPackageLocalsUsed(conflicts);
-    if (!conflicts.isEmpty()) {
-      for (PsiElement element : conflicts.keySet()) {
-        allUsages.add(new ConflictsUsageInfo(element, conflicts.get(element)));
-      }
-    }
-
+    detectPackageLocalsMoved(usageInfos, myConflicts);
+    detectPackageLocalsUsed(myConflicts);
     allUsages.removeAll(usagesToSkip);
     return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(new UsageInfo[allUsages.size()]));
   }
@@ -204,19 +198,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   public void setOpenInEditor(boolean openInEditor) {
     myOpenInEditor = openInEditor;
-  }
-
-  protected static class ConflictsUsageInfo extends UsageInfo {
-    private final Collection<String> myConflicts;
-
-    public ConflictsUsageInfo(PsiElement pseudoElement, Collection<String> conflicts) {
-      super(pseudoElement);
-      myConflicts = conflicts;
-    }
-
-    public Collection<String> getConflicts() {
-      return myConflicts;
-    }
   }
 
   @Nullable
@@ -244,21 +225,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final UsageInfo[] usages = refUsages.get();
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    ArrayList<UsageInfo> filteredUsages = new ArrayList<>();
-    for (UsageInfo usage : usages) {
-      if (usage instanceof ConflictsUsageInfo) {
-        final ConflictsUsageInfo info = (ConflictsUsageInfo)usage;
-        final PsiElement element = info.getElement();
-        conflicts.putValues(element, info.getConflicts());
-      }
-      else {
-        filteredUsages.add(usage);
-      }
-    }
-
-    refUsages.set(filteredUsages.toArray(new UsageInfo[filteredUsages.size()]));
-    return showConflicts(conflicts, usages);
+    return showConflicts(myConflicts, usages);
   }
 
   private boolean isInsideMoved(PsiElement place) {
@@ -295,8 +262,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         if (!movedClasses.contains(aClass)) {
           movedClasses.add(aClass);
         }
-        String visibility = VisibilityUtil.getVisibilityModifier(aClass.getModifierList());
-        if (PsiModifier.PACKAGE_LOCAL.equals(visibility)) {
+        if (aClass != null && aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
           if (PsiTreeUtil.getParentOfType(element, PsiImportStatement.class) != null) continue;
           PsiElement container = ConflictsUtil.getContainer(element);
           HashSet<PsiElement> reported = reportedClassToContainers.get(aClass);

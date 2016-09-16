@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -81,6 +82,7 @@ public class ComparableVcsRevisionOnOperation implements VcsFileRevision {
     return myOperation.isLoaded();
   }
 
+  @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return getRevision();
   }

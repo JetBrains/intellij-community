@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
     }
 
     PsiDocComment docComment = (PsiDocComment)comment;
-    PsiDocCommentOwner owner = docComment.getOwner();
+    PsiJavaDocumentedElement owner = docComment.getOwner();
     if (owner == null) {
       return;
     }
@@ -155,13 +155,13 @@ public class JavaDocCommentFixer implements DocCommentFixer {
   }
 
   /**
-   * This fixer is based on existing javadoc inspections - there are two of them. One detects invalid references (to unexisted
+   * This fixer is based on existing javadoc inspections - there are two of them. One detects invalid references (to nonexistent
    * method parameter or non-declared checked exception). Another one handles all other cases (parameter documentation is missing;
    * parameter doesn't have a description etc). This method handles result of the second exception
    * 
    * @param problems  detected problems
    * @param comment   target comment to fix
-   * @param document  target document which contains text of the commen being fixed
+   * @param document  target document which contains text of the comment being fixed
    * @param project   current project
    */
   @SuppressWarnings("unchecked")
@@ -253,7 +253,7 @@ public class JavaDocCommentFixer implements DocCommentFixer {
 
     //region Calculate desired parameters order
     List<String> ordered = new ArrayList<>();
-    PsiDocCommentOwner owner = comment.getOwner();
+    PsiJavaDocumentedElement owner = comment.getOwner();
     if ((owner instanceof PsiMethod)) {
       PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
       for (PsiParameter parameter : parameters) {

@@ -1194,7 +1194,6 @@ public class FileUtil extends FileUtilRt {
   }
 
   /** @deprecated use {@link #sanitizeFileName(String, boolean)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public static String sanitizeName(@NotNull String name) {
     return sanitizeFileName(name, false);
   }
@@ -1209,7 +1208,9 @@ public class FileUtil extends FileUtilRt {
       char c = name.charAt(i);
       boolean appendReplacement = true;
       if (c > 0 && c < 255) {
-        if (strict ? Character.isLetterOrDigit(c) || c == '_' : Character.isJavaIdentifierPart(c) || c == ' ' || c == '@' || c == '-') {
+        if (strict
+            ? (Character.isLetterOrDigit(c) || (c == '_'))
+            : (Character.isJavaIdentifierPart(c) || (c == ' ') || (c == '@') || (c == '-'))) {
           continue;
         }
       }

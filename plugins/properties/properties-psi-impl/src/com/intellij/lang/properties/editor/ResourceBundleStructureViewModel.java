@@ -35,12 +35,12 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
   private final GroupByWordPrefixes myByWordPrefixesGrouper;
   private final ResourceBundleFileStructureViewElement myRoot;
 
-  public ResourceBundleStructureViewModel(ResourceBundle root, PropertiesAnchorizer anchorizer) {
+  public ResourceBundleStructureViewModel(ResourceBundle root) {
     myResourceBundle = root;
     String separator = PropertiesSeparatorManager.getInstance(root.getProject()).
       getSeparator(myResourceBundle);
     myByWordPrefixesGrouper = new GroupByWordPrefixes(separator);
-    myRoot = new ResourceBundleFileStructureViewElement(myResourceBundle, anchorizer);
+    myRoot = new ResourceBundleFileStructureViewElement(myResourceBundle);
   }
 
   public void setSeparator(String separator) {

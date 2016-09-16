@@ -33,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleView, PythonConsoleView> implements PyCodeExecutor {
 
+  public static final String DEBUG_CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))";
+
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView) {
     super(consoleView, new PythonConsoleView(project, "Python Console", sdk));
 
@@ -70,6 +72,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
 
     if (!primary && !isPrimaryConsoleEnabled()) {
       PythonConsoleView console = getPydevConsoleView();
+      console.showStartMessageForFirstExecution(DEBUG_CONSOLE_START_COMMAND);
 
       IdeFocusManager.findInstance().requestFocus(console.getConsoleEditor().getContentComponent(), true);
     }

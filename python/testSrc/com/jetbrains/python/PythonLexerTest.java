@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -313,6 +313,86 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:SPACE", "Py:LINE_BREAK",
            "Py:RBRACKET", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:STATEMENT_BREAK");
+  }
+
+  // PY-18973
+  public void testUnderscoresInHexInteger() {
+    doTest("0xCAFE_F00D", "Py:INTEGER_LITERAL", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-18973
+  public void testUnderscoresInOctInteger() {
+    doTest("0o1_23","Py:INTEGER_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("01_23", "Py:INTEGER_LITERAL", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-18973
+  public void testUnderscoresInBinInteger() {
+    doTest("0b_0011_1111_0100_1110", "Py:INTEGER_LITERAL", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-18973
+  public void testUnderscoresInDecimalInteger() {
+    doTest("10_000_000", "Py:INTEGER_LITERAL", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-18973
+  public void testUnderscoresInPointFloat() {
+    doTest("10_00.00_23", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-18973
+  public void testUnderscoresInExponentFloat() {
+    doTest("10_00.00_23e1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.00_23E1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.e1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.E1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+
+    doTest("10_00.00_23e+1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.00_23E+1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.e+1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.E+1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+
+    doTest("10_00.00_23e-1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.00_23E-1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.e-1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.E-1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+
+
+    doTest("10_0000_23e1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_0000_23E1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00e1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00E1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+
+    doTest("10_0000_23e+1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_0000_23E+1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00e+1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00E+1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+
+    doTest("10_0000_23e-1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_0000_23E-1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00e-1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00E-1_2", "Py:FLOAT_LITERAL", "Py:STATEMENT_BREAK");
+  }
+
+  // PY-18973
+  public void testUnderscoresInImagNumber() {
+    doTest("10_00.00_23j", "Py:IMAGINARY_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.00_23J", "Py:IMAGINARY_LITERAL", "Py:STATEMENT_BREAK");
+
+    doTest("10_00.00_23e1_2j", "Py:IMAGINARY_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_00.00_23e1_2J", "Py:IMAGINARY_LITERAL", "Py:STATEMENT_BREAK");
+
+    doTest("10_000_000j", "Py:IMAGINARY_LITERAL", "Py:STATEMENT_BREAK");
+    doTest("10_000_000J", "Py:IMAGINARY_LITERAL", "Py:STATEMENT_BREAK");
+  }
+
+  public void testFStringLiterals() {
+    doTest("s = f'{x}'", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+    doTest("s = rf\"{x}\"", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+    doTest("s = fr'''{x}\n'''", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+    doTest("s = f\"\"\"{x}\n\"\"\"", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
   }
 
   private static void doTest(String text, String... expectedTokens) {

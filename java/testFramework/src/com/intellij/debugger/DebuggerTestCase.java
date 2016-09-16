@@ -40,7 +40,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
@@ -174,7 +173,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       catch (ExecutionException e) {
         LOG.error(e);
       }
-    }, ModalityState.defaultModalityState());
+    });
     myDebugProcess = myDebuggerSession.getProcess();
 
     myDebugProcess.addProcessListener(new ProcessAdapter() {

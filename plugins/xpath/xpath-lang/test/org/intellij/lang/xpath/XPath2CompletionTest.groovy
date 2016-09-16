@@ -18,25 +18,25 @@ package org.intellij.lang.xpath
 class XPath2CompletionTest extends TestBase {
 
   void testCastInsert() throws Throwable {
-    TestNamespaceContext.install(getTestRootDisposable());
+    TestNamespaceContext.install(getTestRootDisposable())
     configure()
     assert myFixture.lookupElementStrings.containsAll("xs:anyAtomicType", "xs:untypedAtomic", "xs:anyURI")
   }
 
   private void configure() {
-    final String name = getTestFileName();
-    myFixture.configureByFile(name + ".xpath2");
-    myFixture.completeBasic();
+    final String name = getTestFileName()
+    myFixture.configureByFile(name + ".xpath2")
+    myFixture.completeBasic()
   }
 
   void testTreatInsert() throws Throwable {
     configure()
-    myFixture.type('\n');
-    myFixture.checkResultByFile(getTestFileName() + "_after.xpath2");
+    myFixture.type('\n')
+    myFixture.checkResultByFile(getTestFileName() + "_after.xpath2")
   }
 
   @Override
   protected String getSubPath() {
-    return "xpath2/completion";
+    return "xpath2/completion"
   }
 }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.dgm
 
+import com.intellij.psi.PsiModifier
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
@@ -36,5 +37,18 @@ class ResolveDGMMethod21Test extends GroovyResolveTestCase {
     def parameterList = resolved.staticMethod.parameterList.parameters
     assert parameterList.size() == 1
     assert parameterList[0].type.canonicalText == 'java.util.Collection<T>'
+  }
+
+  void testEach() {
+    def resolved = resolveByText('''\
+void foo(Iterator<Object> iterator) {
+  iterator.ea<caret>ch {}
+}
+''', GrGdkMethod)
+    def staticMethod = resolved.staticMethod
+    assert staticMethod.hasModifierProperty(PsiModifier.PUBLIC)
+    def parameterList = staticMethod.parameterList.parameters
+    assert parameterList.size() == 2
+    assert parameterList.first().type.canonicalText == 'T'
   }
 }

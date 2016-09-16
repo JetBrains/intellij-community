@@ -43,7 +43,7 @@ import groovy.transform.Immutable
  */
 @CompileStatic
 @Immutable
-public class MacHostProperties {
+class MacHostProperties {
   /**
    * Mac host host name.
    */

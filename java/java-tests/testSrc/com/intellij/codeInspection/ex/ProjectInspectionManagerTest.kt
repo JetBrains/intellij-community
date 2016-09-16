@@ -28,9 +28,9 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.Assertions.assertThat
-import com.intellij.util.delete
-import com.intellij.util.readText
-import com.intellij.util.write
+import com.intellij.util.io.delete
+import com.intellij.util.io.readText
+import com.intellij.util.io.write
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test

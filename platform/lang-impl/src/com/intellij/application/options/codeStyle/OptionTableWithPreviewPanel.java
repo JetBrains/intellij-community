@@ -946,6 +946,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);
+    ((DefaultTreeModel)treeModel).nodeChanged(root);
   }
 
   @Override

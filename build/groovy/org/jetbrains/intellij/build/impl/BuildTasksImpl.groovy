@@ -17,13 +17,20 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.function.Function
 
 /**
  * @author nik
@@ -73,7 +80,9 @@ class BuildTasksImpl extends BuildTasks {
               zipfileset(dir: root.file.absolutePath, prefix: root.properties.packagePrefix.replace('.', '/'), erroronmissingdir: false)
           }
           module.getSourceRoots(JavaResourceRootType.RESOURCE).each { root ->
-            buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false)
+            buildContext.ant.zipfileset(dir: root.file.absolutePath, prefix: root.properties.relativeOutputPath, erroronmissingdir: false) {
+              exclude(name: "**/*.png")
+            }
           }
         }
       }
@@ -184,79 +193,54 @@ idea.fatal.error.notification=disabled
     def targetFile = new File(buildContext.paths.temp, sourceFile.name)
     def date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
-                                ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date])
+                                ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber])
     return targetFile
   }
 
   void layoutShared() {
-    new File(buildContext.paths.distAll, "build.txt").text = buildContext.fullBuildNumber
-    buildContext.ant.copy(todir: "$buildContext.paths.distAll/bin") {
-      fileset(dir: "$buildContext.paths.communityHome/bin") {
-        include(name: "*.*")
-        exclude(name: "idea.properties")
+    buildContext.messages.block("Copy files shared among all distributions") {
+      new File(buildContext.paths.distAll, "build.txt").text = buildContext.fullBuildNumber
+      buildContext.ant.copy(todir: "$buildContext.paths.distAll/bin") {
+        fileset(dir: "$buildContext.paths.communityHome/bin") {
+          include(name: "*.*")
+          exclude(name: "idea.properties")
+        }
       }
-    }
-    buildContext.ant.copy(todir: "$buildContext.paths.distAll/license") {
-      fileset(dir: "$buildContext.paths.communityHome/license")
-      buildContext.productProperties.additionalDirectoriesWithLicenses.each {
-        fileset(dir: it)
+      buildContext.ant.copy(todir: "$buildContext.paths.distAll/license") {
+        fileset(dir: "$buildContext.paths.communityHome/license")
+        buildContext.productProperties.additionalDirectoriesWithLicenses.each {
+          fileset(dir: it)
+        }
       }
-    }
 
-    buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
+      buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
+    }
   }
 
   @Override
   void buildDistributions() {
-    buildContext.messages.block("Copy files shared among all distributions") {
-      layoutShared()
-    }
-    def propertiesFile = patchIdeaPropertiesFile()
+    layoutShared()
 
-    WindowsDistributionBuilder windowsBuilder = null
-    LinuxDistributionBuilder linuxBuilder = null
-    MacDistributionBuilder macBuilder = null
-    runInParallel([new BuildTaskRunnable("win") {
-      @Override
-      void run(BuildContext buildContext) {
-        def windowsDistributionCustomizer = buildContext.windowsDistributionCustomizer
-        if (windowsDistributionCustomizer != null) {
-          buildContext.executeStep("Build Windows distribution", BuildOptions.WINDOWS_DISTRIBUTION_STEP, {
-            windowsBuilder = new WindowsDistributionBuilder(buildContext, windowsDistributionCustomizer)
-            windowsBuilder.layoutWin(propertiesFile)
-          })
-        }
-      }
-    }, new BuildTaskRunnable("linux") {
-      @Override
-      void run(BuildContext buildContext) {
-        def linuxDistributionCustomizer = buildContext.linuxDistributionCustomizer
-        if (linuxDistributionCustomizer != null) {
-          buildContext.executeStep("Build Linux distribution", BuildOptions.LINUX_DISTRIBUTION_STEP) {
-            linuxBuilder = new LinuxDistributionBuilder(buildContext, linuxDistributionCustomizer)
-            linuxBuilder.layoutUnix(propertiesFile)
-          }
-        }
-      }
-    }, new BuildTaskRunnable("mac") {
-      @Override
-      void run(BuildContext buildContext) {
-        def macDistributionCustomizer = buildContext.macDistributionCustomizer
-        if (macDistributionCustomizer != null) {
-          buildContext.executeStep("Build Mac OS distribution", BuildOptions.MAC_DISTRIBUTION_STEP) {
-            macBuilder = new MacDistributionBuilder(buildContext, macDistributionCustomizer)
-            macBuilder.layoutMac(propertiesFile)
-          }
-        }
-      }
-    }
-    ])
+    def propertiesFile = patchIdeaPropertiesFile()
+    List<BuildTaskRunnable<String>> tasks = [
+      createDistributionForOsTask("win", { BuildContext context ->
+        context.windowsDistributionCustomizer?.with {new WindowsDistributionBuilder(context, it, propertiesFile)}
+      }),
+      createDistributionForOsTask("linux", { BuildContext context ->
+        context.linuxDistributionCustomizer?.with {new LinuxDistributionBuilder(context, it, propertiesFile)}
+      }),
+      createDistributionForOsTask("mac", { BuildContext context ->
+        context.macDistributionCustomizer?.with {new MacDistributionBuilder(context, it, propertiesFile)}
+      })
+    ]
+
+    List<String> paths = runInParallel(tasks).findAll {it != null}
 
     if (buildContext.productProperties.buildCrossPlatformDistribution) {
-      if (windowsBuilder != null && linuxBuilder != null && macBuilder != null) {
+      if (paths.size() == 3) {
         buildContext.executeStep("Build cross-platform distribution", BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP) {
           def crossPlatformBuilder = new CrossPlatformDistributionBuilder(buildContext)
-          crossPlatformBuilder.buildCrossPlatformZip(windowsBuilder.winDistPath, linuxBuilder.unixDistPath, macBuilder.macDistPath)
+          crossPlatformBuilder.buildCrossPlatformZip(paths[0], paths[1], paths[2])
         }
       }
       else {
@@ -265,16 +249,31 @@ idea.fatal.error.notification=disabled
     }
   }
 
+  private static BuildTaskRunnable<String> createDistributionForOsTask(String taskName, Function<BuildContext, OsSpecificDistributionBuilder> factory) {
+    new BuildTaskRunnable<String>(taskName) {
+      @Override
+      String run(BuildContext context) {
+        def builder = factory.apply(context)
+        if (context.shouldBuildDistributionForOS(builder.osTargetId)) {
+          return context.messages.block("Build $builder.osName Distribution") {
+            def distDirectory = builder.copyFilesForOsDistribution()
+            builder.buildArtifacts(distDirectory)
+            distDirectory
+          }
+        }
+        return null
+      }
+    }
+  }
+
   @Override
   void compileModulesAndBuildDistributions() {
     checkProductProperties()
-    checkProductLayout()
-    cleanOutput()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
-    def pluginModules = buildContext.productProperties.productLayout.getIncludedPluginModules(buildContext.productProperties.allPlugins)
-    compileModules(pluginModules + distributionJARsBuilder.getPlatformModules())
+    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules)
     buildContext.messages.block("Build platform and plugin JARs") {
       distributionJARsBuilder.buildJARs()
+      distributionJARsBuilder.buildAdditionalArtifacts()
     }
     if (buildContext.productProperties.scrambleMainJar) {
       if (buildContext.proprietaryBuildTools.scrambleTool != null) {
@@ -288,6 +287,7 @@ idea.fatal.error.notification=disabled
   }
 
   private void checkProductProperties() {
+    checkProductLayout()
     def properties = buildContext.productProperties
     checkPaths(properties.brandingResourcePaths, "productProperties.brandingResourcePaths")
     checkPaths(properties.additionalIDEPropertiesFilePaths, "productProperties.additionalIDEPropertiesFilePaths")
@@ -308,17 +308,18 @@ idea.fatal.error.notification=disabled
 
   private void checkProductLayout() {
     ProductModulesLayout layout = buildContext.productProperties.productLayout
-    List<PluginLayout> allPlugins = buildContext.productProperties.allPlugins
-    def allPluginModules = allPlugins.collectMany { [it.mainModule] + it.optionalModules } as Set<String>
+    List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
+    def optionalModules = nonTrivialPlugins.collectMany { it.optionalModules } as Set<String>
     checkPaths(layout.licenseFilesToBuildSearchableOptions, "productProperties.productLayout.licenseFilesToBuildSearchableOptions")
-    checkPluginModules(layout.bundledPluginModules, "bundledPluginModules", allPluginModules)
-    checkPluginModules(layout.pluginModulesToPublish, "pluginModulesToPublish", allPluginModules)
+    checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", optionalModules)
+    checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
 
     checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
     checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
+    checkModules([layout.mainModule], "productProperties.productLayout.mainModule")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
-    allPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
+    nonTrivialPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
       checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
       checkModules(plugin.moduleExcludes.keySet(), "'$plugin.mainModule' plugin")
       checkProjectLibraries(plugin.includedProjectLibraries, "'$plugin.mainModule' plugin")
@@ -328,23 +329,24 @@ idea.fatal.error.notification=disabled
   private void checkModules(Collection<String> modules, String fieldName) {
     def unknownModules = modules.findAll {buildContext.findModule(it) == null}
     if (!unknownModules.empty) {
-      buildContext.messages.error("The following modules from $fieldName aren't found in the project.")
+      buildContext.messages.error("The following modules from $fieldName aren't found in the project: $unknownModules")
     }
   }
 
   private void checkProjectLibraries(Collection<String> names, String fieldName) {
     def unknownLibraries = names.findAll {buildContext.project.libraryCollection.findLibrary(it) == null}
     if (!unknownLibraries.empty) {
-      buildContext.messages.error("The following libraries from $fieldName aren't found in the project.")
+      buildContext.messages.error("The following libraries from $fieldName aren't found in the project: $unknownLibraries")
     }
   }
 
-  private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> allPluginModules) {
-    def unknownBundledPluginModules = pluginModules.findAll { !allPluginModules.contains(it) }
+  private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> optionalModules) {
+    checkModules(pluginModules, fieldName)
+    def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
-        "The following modules from productProperties.productLayout.$fieldName aren't found in the registered plugins: $unknownBundledPluginModules. " +
-        "Make sure that the plugin layouts are specified in productProperties.productLayout.allPlugins and you refer to either main plugin module or an optional module."
+        "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules " +
+        "in productProperties.productLayout.allNonTrivialPlugins: $unknownBundledPluginModules. "
       )
     }
   }
@@ -356,21 +358,6 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  @Override
-  void cleanOutput() {
-    buildContext.messages.block("Clean output") {
-      def outputPath = buildContext.paths.buildOutputRoot
-      buildContext.messages.progress("Cleaning output directory $outputPath")
-      new File(outputPath).listFiles()?.each {
-        if (buildContext instanceof BuildContextImpl && buildContext.outputDirectoriesToKeep.contains(it.name)) {
-          buildContext.messages.info("Skipped cleaning for $it.absolutePath")
-        }
-        else {
-          FileUtil.delete(it)
-        }
-      }
-    }
-  }
 
   @Override
   void compileProjectAndTests(List<String> includingTestsInModules = []) {
@@ -387,6 +374,8 @@ idea.fatal.error.notification=disabled
       buildContext.messages.info("Compilation skipped, the compiled classes from '${buildContext.options.pathToCompiledClassesArchive}' will be used")
       return
     }
+
+    ensureKotlinCompilerAddedToClassPath()
 
     buildContext.projectBuilder.cleanOutput()
     if (moduleNames == null) {
@@ -406,49 +395,52 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private void runInParallel(List<BuildTaskRunnable> tasks) {
-    if (!buildContext.options.runBuildStepsInParallel) {
-      tasks.each {
-        it.run(buildContext)
-      }
+  private void ensureKotlinCompilerAddedToClassPath() {
+    try {
+      Class.forName("org.jetbrains.kotlin.jps.build.KotlinBuilder")
       return
     }
+    catch (ClassNotFoundException ignored) {}
 
-    List<Thread> threads = []
-    List<BuildMessages> messages = []
-    List<Throwable> errors = Collections.synchronizedList([])
-    tasks.each { task ->
-      def childContext = buildContext.forkForParallelTask(task.taskName)
-      def thread = new Thread("Thread for build task '$task.taskName'") {
-        @Override
-        void run() {
+    def kotlinPluginLibPath = "$buildContext.paths.communityHome/build/kotlinc/plugin/Kotlin/lib"
+    if (new File(kotlinPluginLibPath).exists()) {
+      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar"].each {
+        BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", buildContext.ant)
+      }
+    }
+    else {
+      buildContext.messages.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run download_kotlin.gant script to download them")
+    }
+  }
+
+  private <V> List<V> runInParallel(List<BuildTaskRunnable<V>> tasks) {
+    if (!buildContext.options.runBuildStepsInParallel) {
+      return tasks.collect {
+        it.run(buildContext)
+      }
+    }
+
+    List<V> results = buildContext.messages.block("Run parallel tasks") {
+      buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
+      def executorService = Executors.newCachedThreadPool()
+      List<Future<V>> futures = tasks.collect { task ->
+        def childContext = buildContext.forkForParallelTask(task.taskName)
+        executorService.submit({
           def start = System.currentTimeMillis()
           childContext.messages.onForkStarted()
           try {
-            task.run(childContext)
-          }
-          catch (Throwable t) {
-            errors << t
+            return task.run(childContext)
           }
           finally {
             buildContext.messages.info("'$task.taskName' task finished in ${StringUtil.formatDuration(System.currentTimeMillis() - start)}")
             childContext.messages.onForkFinished()
           }
-        }
+        } as Callable<V>)
       }
-      threads << thread
-      messages << childContext.messages
-    }
-    buildContext.messages.block("Run parallel tasks") {
-      buildContext.messages.info("Started ${tasks.size()} tasks in parallel: ${tasks.collect { it.taskName }}")
-      threads.each { it.start() }
-      threads.each { it.join() }
+      futures.collect { it.get() }
     }
     buildContext.messages.onAllForksFinished()
-    if (!errors.empty) {
-      errors.subList(1, errors.size()).each { it.printStackTrace() }
-      throw errors.first()
-    }
+    results
   }
 
   @Override
@@ -460,13 +452,42 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private abstract static class BuildTaskRunnable {
+  @Override
+  void buildUnpackedDistribution(String targetDirectory) {
+    def jarsBuilder = new DistributionJARsBuilder(buildContext)
+    jarsBuilder.buildJARs()
+    layoutShared()
+/*
+    //todo[nik] uncomment this to update os-specific files (e.g. in 'bin' directory) as well
+    def propertiesFile = patchIdeaPropertiesFile()
+    OsSpecificDistributionBuilder builder;
+    if (SystemInfo.isWindows) {
+      builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile)
+    }
+    else if (SystemInfo.isLinux) {
+      builder = new LinuxDistributionBuilder(buildContext, buildContext.linuxDistributionCustomizer, propertiesFile)
+    }
+    else if (SystemInfo.isMac) {
+      builder = new MacDistributionBuilder(buildContext, buildContext.macDistributionCustomizer, propertiesFile)
+    }
+    else {
+      buildContext.messages.error("Update from source isn't supported for '$SystemInfo.OS_NAME'")
+      return
+    }
+    def osSpecificDistPath = builder.copyFilesForOsDistribution()
+*/
+    buildContext.ant.copy(todir: targetDirectory) {
+      fileset(dir: buildContext.paths.distAll)
+    }
+  }
+
+  private abstract static class BuildTaskRunnable<V> {
     final String taskName
 
     BuildTaskRunnable(String name) {
       taskName = name
     }
 
-    abstract void run(BuildContext context)
+    abstract V run(BuildContext context)
   }
 }

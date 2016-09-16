@@ -57,8 +57,7 @@ public class GroovyPublicFieldAccessedInSynchronizedContextInspection
       extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceExpression(
-        @NotNull GrReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull GrReferenceExpression expression) {
       final PsiElement element = expression.resolve();
       if (!(element instanceof PsiField)) {
         return;

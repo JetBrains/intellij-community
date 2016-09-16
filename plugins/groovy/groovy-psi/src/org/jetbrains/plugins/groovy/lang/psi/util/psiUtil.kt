@@ -16,11 +16,9 @@
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOLON
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter

@@ -87,6 +87,12 @@ public class JUnit4Framework extends JavaTestFramework {
   @Override
   @Nullable
   protected PsiMethod findOrCreateSetUpMethod(PsiClass clazz) throws IncorrectOperationException {
+    String beforeClassAnnotationName = JUnitUtil.BEFORE_CLASS_ANNOTATION_NAME;
+    String beforeAnnotationName = JUnitUtil.BEFORE_ANNOTATION_NAME;
+    return findOrCreateSetUpMethod(clazz, beforeClassAnnotationName, beforeAnnotationName);
+  }
+
+  private PsiMethod findOrCreateSetUpMethod(PsiClass clazz, String beforeClassAnnotationName, String beforeAnnotationName) {
     PsiMethod method = findSetUpMethod(clazz);
     if (method != null) return method;
 
@@ -96,14 +102,14 @@ public class JUnit4Framework extends JavaTestFramework {
     method = createSetUpPatternMethod(factory);
     PsiMethod existingMethod = clazz.findMethodBySignature(method, false);
     if (existingMethod != null) {
-      if (AnnotationUtil.isAnnotated(existingMethod, JUnitUtil.BEFORE_CLASS_ANNOTATION_NAME, false)) return existingMethod;
+      if (AnnotationUtil.isAnnotated(existingMethod, beforeClassAnnotationName, false)) return existingMethod;
       int exit = ApplicationManager.getApplication().isUnitTestMode() ?
                  Messages.OK :
-                       Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @Before. Annotate?",
-                                                   CommonBundle.getWarningTitle(),
-                                                   Messages.getWarningIcon());
+                 Messages.showOkCancelDialog("Method setUp already exist but is not annotated as @Before. Annotate?",
+                                             CommonBundle.getWarningTitle(),
+                                             Messages.getWarningIcon());
       if (exit == Messages.OK) {
-        new AddAnnotationFix(JUnitUtil.BEFORE_ANNOTATION_NAME, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
+        new AddAnnotationFix(beforeAnnotationName, existingMethod).invoke(existingMethod.getProject(), null, existingMethod.getContainingFile());
         return existingMethod;
       }
     }

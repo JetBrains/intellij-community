@@ -25,6 +25,7 @@ import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.CourseCreatorPythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -37,7 +38,7 @@ import java.io.File;
 import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.OUR_COURSES_DIR;
 
 
-public class PyCCProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
+public class PyCCProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>  {
   private static final Logger LOG = Logger.getInstance(PyCCProjectGenerator.class);
   private CCNewProjectPanel mySettingsPanel;
 
@@ -55,8 +56,8 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   }
 
   @Override
-  public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                              @Nullable Object settings, @NotNull Module module) {
+  public void configureProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
+                               @NotNull PyNewProjectSettings settings, @NotNull Module module) {
     generateProject(project, baseDir, mySettingsPanel);
   }
 

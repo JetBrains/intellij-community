@@ -47,7 +47,7 @@ class MavenPropertyInActivationSectionTest extends MavenDomTestCase {
   <properties>
     <aaa>\${env.GLASSFISH_HOME_123}</aaa>
   </properties>
-""");
+""")
 
 
     assert getReference(myProjectPom, "env.GLASSFISH_HOME_123", 1).resolve() != null

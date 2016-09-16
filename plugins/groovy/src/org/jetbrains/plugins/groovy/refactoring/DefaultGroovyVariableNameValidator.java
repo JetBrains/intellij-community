@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -79,7 +80,7 @@ public class DefaultGroovyVariableNameValidator implements NameValidator {
 
     scope.accept(new GroovyRecursiveElementVisitor(){
       @Override
-      public void visitVariable(GrVariable variable) {
+      public void visitVariable(@NotNull GrVariable variable) {
         if (includeFields || !(variable instanceof PsiField)) {
           mySet.add(variable.getName());
         }
@@ -87,14 +88,14 @@ public class DefaultGroovyVariableNameValidator implements NameValidator {
       }
 
       @Override
-      public void visitClosure(GrClosableBlock closure) {
+      public void visitClosure(@NotNull GrClosableBlock closure) {
         if (checkIntoInner) {
           super.visitClosure(closure);
         }
       }
 
       @Override
-      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+      public void visitTypeDefinition(@NotNull GrTypeDefinition typeDefinition) {
         if (checkIntoInner && !typeDefinition.hasModifierProperty(PsiModifier.STATIC) ) {
           super.visitTypeDefinition(typeDefinition);
         }

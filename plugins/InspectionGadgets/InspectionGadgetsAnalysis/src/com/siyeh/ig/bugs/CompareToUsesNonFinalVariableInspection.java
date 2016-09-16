@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -57,8 +57,7 @@ public class CompareToUsesNonFinalVariableInspection extends BaseInspection {
   private static class CompareToUsesNonFinalVariableVisitor extends NonFinalFieldsVisitor {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      if (MethodUtils.isCompareTo(method) && 
-          InheritanceUtil.isInheritor(method.getContainingClass(), false, CommonClassNames.JAVA_LANG_COMPARABLE)) {
+      if (MethodUtils.isCompareTo(method)) {
         checkUsedNonFinalFields(method);
       }
     }

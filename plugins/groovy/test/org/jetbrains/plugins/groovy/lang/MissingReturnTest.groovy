@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang;
+package org.jetbrains.plugins.groovy.lang
 
 
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
@@ -27,7 +27,7 @@ class MissingReturnTest extends LightGroovyTestCase {
 
   @Override
   protected String getBasePath() {
-    return "${TestUtils.testDataPath}highlighting/missingReturn";
+    return "${TestUtils.testDataPath}highlighting/missingReturn"
   }
 
   void testMissingReturnWithLastLoop() throws Throwable { doTest(); }
@@ -327,8 +327,8 @@ void foo() {
   }
 
   private void doTest() {
-    myFixture.enableInspections(new MissingReturnInspection());
-    myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");
+    myFixture.enableInspections(new MissingReturnInspection())
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy")
   }
 
 }

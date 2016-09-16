@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.compiler
+
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.server.BuildManager
@@ -28,8 +28,6 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.compiler.CompilerMessage
-import com.intellij.openapi.compiler.CompilerMessageCategory
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
@@ -48,6 +46,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.config.GroovyFacetUtil
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+
 /**
  * @author peter
  */
@@ -57,6 +56,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
     super.setUp()
     Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest").info(testStartMessage)
     addGroovyLibrary(myModule)
+  }
+
+  @Override
+  protected boolean shouldRunTest() {
+    return false
   }
 
   void testPlainGroovy() throws Throwable {
@@ -97,11 +101,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
     setFileText(file, barText)
     make()
     assertOutput("Foo", "239")
-  }
-
-  protected static void shouldFail(Closure<List<CompilerMessage>> action) {
-    def messages = action()
-    assert messages.find { it.category == CompilerMessageCategory.ERROR }
   }
 
   void testRenameToJava() throws Throwable {

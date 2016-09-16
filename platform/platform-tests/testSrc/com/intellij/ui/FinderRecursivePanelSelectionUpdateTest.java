@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,16 +60,16 @@ public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCa
   @SuppressWarnings("InnerClassMayBeStatic")
   private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
 
-    private JBList myList;
+    private JBList<String> myList;
 
     private StringFinderRecursivePanel(Project project) {
       super(project, "fooPanel");
-      init();
+      initPanel();
     }
 
     public StringFinderRecursivePanel(StringFinderRecursivePanel panel) {
       super(panel);
-      init();
+      initPanel();
     }
 
     @NotNull
@@ -96,9 +96,9 @@ public class FinderRecursivePanelSelectionUpdateTest extends LightPlatformTestCa
     }
 
     @Override
-    protected JBList createList() {
+    protected JBList<String> createList() {
       myList = super.createList();
-      ((CollectionListModel)myList.getModel()).replaceAll(getListItems());
+      ((CollectionListModel<String>)myList.getModel()).replaceAll(getListItems());
       return myList;
     }
 

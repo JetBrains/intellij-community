@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesHighlighter;
-import com.intellij.lang.properties.editor.inspections.InspectedPropertyNodeInfo;
+import com.intellij.lang.properties.editor.inspections.InspectedPropertyProblems;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorProblemDescriptor;
 import com.intellij.lang.properties.editor.inspections.ResourceBundleEditorRenderer;
 import com.intellij.navigation.ItemPresentation;
@@ -41,8 +41,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   private static final TextAttributesKey GROUP_KEY;
 
   public static final String PROPERTY_GROUP_KEY_TEXT = "<property>";
-
-  private final @NotNull PropertiesAnchorizer.PropertyAnchor myAnchor;
+  private final IProperty myProperty;
   private String myPresentableName;
 
 
@@ -52,20 +51,20 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
     GROUP_KEY = TextAttributesKey.createTextAttributesKey("GROUP_KEY", groupKeyTextAttributes);
   }
 
-  private volatile InspectedPropertyNodeInfo myInspectedPropertyNodeInfo;
+  private volatile InspectedPropertyProblems myInspectedPropertyProblems;
 
-  public ResourceBundlePropertyStructureViewElement(final @NotNull PropertiesAnchorizer.PropertyAnchor anchor) {
-    myAnchor = anchor;
+  public ResourceBundlePropertyStructureViewElement(IProperty property) {
+    myProperty = property;
   }
 
   public IProperty getProperty() {
-    return getValue().getRepresentative();
+    return myProperty;
   }
 
   @NotNull
   @Override
   public IProperty[] getProperties() {
-    return new IProperty[] {getProperty()};
+    return new IProperty[] {myProperty};
   }
 
   @Nullable
@@ -79,8 +78,8 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
   }
 
   @Override
-  public PropertiesAnchorizer.PropertyAnchor getValue() {
-    return myAnchor;
+  public IProperty getValue() {
+    return getProperty();
   }
 
   @Override
@@ -91,11 +90,11 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
   @NotNull
   public Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] getProblemDescriptors() {
-    return myInspectedPropertyNodeInfo == null ? new Pair[0] : myInspectedPropertyNodeInfo.getDescriptors();
+    return myInspectedPropertyProblems == null ? new Pair[0] : myInspectedPropertyProblems.getDescriptors();
   }
 
-  public void setInspectedPropertyNodeInfo(InspectedPropertyNodeInfo inspectedPropertyNodeInfo) {
-    myInspectedPropertyNodeInfo = inspectedPropertyNodeInfo;
+  public void setInspectedPropertyProblems(InspectedPropertyProblems inspectedPropertyProblems) {
+    myInspectedPropertyProblems = inspectedPropertyProblems;
   }
 
   @Override
@@ -124,8 +123,8 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
           (myPresentableName != null && myPresentableName.isEmpty()) ? GROUP_KEY : PropertiesHighlighter.PROPERTY_KEY;
         final TextAttributes baseAttrs = colorsScheme.getAttributes(baseAttrKey);
         if (getProperty().getPsiElement().isValid()) {
-          if (myInspectedPropertyNodeInfo != null) {
-            TextAttributes highlightingAttributes = myInspectedPropertyNodeInfo.getTextAttributes(colorsScheme);
+          if (myInspectedPropertyProblems != null) {
+            TextAttributes highlightingAttributes = myInspectedPropertyProblems.getTextAttributes(colorsScheme);
             if (highlightingAttributes != null) {
               return TextAttributes.merge(baseAttrs, highlightingAttributes);
             }

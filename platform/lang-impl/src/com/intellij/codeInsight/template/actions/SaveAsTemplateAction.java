@@ -39,6 +39,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.impl.RangeMarkerTree;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -47,8 +49,7 @@ import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SaveAsTemplateAction extends AnAction {
 
@@ -96,7 +97,6 @@ public class SaveAsTemplateAction extends AnAction {
           for (PsiReference reference : element.getReferences()) {
             if (!(reference instanceof PsiQualifiedReference) || ((PsiQualifiedReference)reference).getQualifier() == null) {
               String canonicalText = reference.getCanonicalText();
-              LOG.assertTrue(canonicalText != null, reference.getClass());
               TextRange referenceRange = reference.getRangeInElement();
               final TextRange elementTextRange = element.getTextRange();
               LOG.assertTrue(elementTextRange != null, elementTextRange);
@@ -121,8 +121,24 @@ public class SaveAsTemplateAction extends AnAction {
           }
         }
 
-        for (Map.Entry<RangeMarker, String> entry : rangeToText.entrySet()) {
-          document.replaceString(entry.getKey().getStartOffset(), entry.getKey().getEndOffset(), entry.getValue());
+        List<RangeMarker> markers = new ArrayList<>();
+        for (RangeMarker m1 : rangeToText.keySet()) {
+          boolean nested = false;
+          for (RangeMarker m2 : rangeToText.keySet()) {
+            if (m1 != m2 && m2.getStartOffset() <= m1.getStartOffset() && m1.getEndOffset() <= m2.getEndOffset()) {
+              nested = true;
+              break;
+            }
+          }
+
+          if (!nested) {
+            markers.add(m1);
+          }
+        }
+
+        for (RangeMarker marker : markers) {
+          final String value = rangeToText.get(marker);
+          document.replaceString(marker.getStartOffset(), marker.getEndOffset(), value);
         }
       }
     }.execute();

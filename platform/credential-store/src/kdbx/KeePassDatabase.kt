@@ -4,7 +4,6 @@ import com.intellij.util.get
 import com.intellij.util.getOrCreate
 import org.jdom.Element
 import org.jdom.xpath.XPath
-import org.linguafranca.pwdb.kdbx.KdbxSerializer
 import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.time.LocalDateTime

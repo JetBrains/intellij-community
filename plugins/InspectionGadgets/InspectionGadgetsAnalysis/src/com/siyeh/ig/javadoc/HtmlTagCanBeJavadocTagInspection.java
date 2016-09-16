@@ -117,7 +117,8 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
       if (out.length() == "{@code".length() && endOffset - startOffset > 0 && !Character.isWhitespace(text.charAt(startOffset))) {
         out.append(' ');
       }
-      out.append(text, startOffset, endOffset);
+      final String s = text.substring(startOffset, endOffset);
+      out.append(StringUtil.unescapeXml(s));
     }
   }
 

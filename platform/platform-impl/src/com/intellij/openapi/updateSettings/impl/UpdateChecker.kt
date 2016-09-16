@@ -40,10 +40,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
@@ -56,7 +54,6 @@ import org.apache.http.client.utils.URIBuilder
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
-import java.net.URL
 import java.util.*
 
 /**
@@ -83,9 +80,6 @@ object UpdateChecker {
 
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl
-
-  private val patchesUrl: String
-    get() = System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl
 
   /**
    * For scheduled update checks.
@@ -480,72 +474,6 @@ object UpdateChecker {
   @JvmStatic
   @Suppress("unused", "UNUSED_PARAMETER")
   fun getInstallationUID(c: PropertiesComponent) = PermanentInstallationID.get()
-
-  @JvmStatic
-  @Throws(IOException::class)
-  fun installPlatformUpdate(patch: PatchInfo, toBuild: BuildNumber, forceHttps: Boolean) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<Boolean, IOException> {
-      val indicator = ProgressManager.getInstance().progressIndicator
-      downloadAndInstallPatch(patch, toBuild, forceHttps, indicator)
-      true
-    }, IdeBundle.message("update.downloading.patch.progress.title"), true, null)
-  }
-
-  private fun downloadAndInstallPatch(patch: PatchInfo, toBuild: BuildNumber, forceHttps: Boolean, indicator: ProgressIndicator) {
-    val productCode = ApplicationInfo.getInstance().build.productCode
-    val fromBuildNumber = patch.fromBuild.asStringWithoutProductCode()
-    val toBuildNumber = toBuild.asStringWithoutProductCode()
-
-    var bundledJdk = ""
-    val jdkRedist = System.getProperty("idea.java.redist")
-    if (jdkRedist != null && jdkRedist.lastIndexOf("NoJavaDistribution") >= 0) {
-      bundledJdk = "-no-jdk"
-    }
-
-    val osSuffix = "-" + patch.osSuffix
-
-    val fileName = "$productCode-$fromBuildNumber-$toBuildNumber-patch$bundledJdk$osSuffix.jar"
-
-    var baseUrl = patchesUrl
-    if (!baseUrl.endsWith('/')) baseUrl += '/'
-
-    val url = URL(URL(baseUrl), fileName).toString()
-    val tempFile = HttpRequests.request(url)
-        .gzip(false)
-        .forceHttps(forceHttps)
-        .connect { request -> request.saveToFile(FileUtil.createTempFile("ij.platform.", ".patch", true), indicator) }
-
-    val patchFileName = ("jetbrains.patch.jar." + PlatformUtils.getPlatformPrefix()).toLowerCase(Locale.ENGLISH)
-    val patchFile = File(FileUtil.getTempDirectory(), patchFileName)
-    FileUtil.copy(tempFile, patchFile)
-    FileUtil.delete(tempFile)
-  }
-
-  @JvmStatic
-  fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
-    var installed = false
-
-    val disabledToUpdate = disabledToUpdatePlugins
-    for (downloader in downloaders) {
-      if (downloader.pluginId in disabledToUpdate) {
-        continue
-      }
-      try {
-        if (downloader.prepareToInstall(indicator)) {
-          val descriptor = downloader.descriptor
-          if (descriptor != null) {
-            downloader.install()
-            installed = true
-          }
-        }
-      }
-      catch (e: IOException) {
-        LOG.info(e)
-      }
-    }
-
-    return installed
-  }
 
   @JvmStatic
   val disabledToUpdatePlugins: Set<String>

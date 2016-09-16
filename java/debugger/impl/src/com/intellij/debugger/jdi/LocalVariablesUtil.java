@@ -321,11 +321,11 @@ public class LocalVariablesUtil {
 
   @NotNull
   private static MultiMap<Integer, String> calcNames(@NotNull final StackFrameContext context, final int firstLocalsSlot) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
-      @Override
-      public MultiMap<Integer, String> compute() {
-        SourcePosition position = ContextUtil.getSourcePosition(context);
-        if (position != null) {
+    SourcePosition position = ContextUtil.getSourcePosition(context);
+    if (position != null) {
+      return ApplicationManager.getApplication().runReadAction(new Computable<MultiMap<Integer, String>>() {
+        @Override
+        public MultiMap<Integer, String> compute() {
           PsiElement element = position.getElementAt();
           PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
           if (method != null) {
@@ -346,10 +346,11 @@ public class LocalVariablesUtil {
             }
             return res;
           }
+          return MultiMap.empty();
         }
-        return MultiMap.empty();
-      }
-    });
+      });
+    }
+    return MultiMap.empty();
   }
 
   /**
@@ -483,11 +484,7 @@ public class LocalVariablesUtil {
   }
 
   private static int getParametersStackSize(PsiElement method) {
-    int startSlot = 0;
-    for (PsiParameter parameter : DebuggerUtilsEx.getParameters(method)) {
-      startSlot += getTypeSlotSize(parameter.getType());
-    }
-    return startSlot;
+    return Arrays.stream(DebuggerUtilsEx.getParameters(method)).mapToInt(parameter -> getTypeSlotSize(parameter.getType())).sum();
   }
 
   private static int getTypeSlotSize(PsiType varType) {
@@ -502,11 +499,7 @@ public class LocalVariablesUtil {
   }
 
   private static int getFirstLocalsSlot(com.sun.jdi.Method method) {
-    int firstLocalVariableSlot = getFirstArgsSlot(method);
-    for (String type : method.argumentTypeNames()) {
-      firstLocalVariableSlot += getTypeSlotSize(type);
-    }
-    return firstLocalVariableSlot;
+    return getFirstArgsSlot(method) + method.argumentTypeNames().stream().mapToInt(LocalVariablesUtil::getTypeSlotSize).sum();
   }
 
   private static int getTypeSlotSize(String name) {

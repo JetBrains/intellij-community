@@ -369,7 +369,7 @@ class InlineToAnonymousConstructorProcessor {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement psiElement = expression.resolve();
-        if (psiElement instanceof PsiParameter) {
+        if (psiElement instanceof PsiParameter && ((PsiParameter)psiElement).getDeclarationScope() == myConstructor) {
           parameterReferences.add(Pair.create(expression, (PsiParameter)psiElement));
         }
         else if ((psiElement instanceof PsiField || psiElement instanceof PsiMethod) &&

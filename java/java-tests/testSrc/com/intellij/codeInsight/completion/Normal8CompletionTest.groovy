@@ -27,8 +27,8 @@ class Normal8CompletionTest extends LightFixtureCompletionTestCase {
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/completion/normal/"
 
   void testSelfStaticsOnly() {
-    configureByFile("SelfStaticsOnly.java");
-    assertStringItems("ba", "bar");
+    configureByFile("SelfStaticsOnly.java")
+    assertStringItems("ba", "bar")
   }
 
   void testFinishWithColon() {
@@ -259,4 +259,10 @@ class Test88 {
   void testNoCollectorsInComment() { doAntiTest() }
 
   void testNoContinueInsideLambdaInLoop() { doAntiTest(); }
+
+  void testNoSemicolonAfterVoidMethodInLambda() {
+    configureByTestName()
+    myFixture.type('l\t')
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
 }

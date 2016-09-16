@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.vcs.changes.conflicts;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -27,7 +28,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeList;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBCheckBox;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -41,11 +44,16 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class MoveChangesDialog extends DialogWrapper {
+  private static final String MOVE_CHANGES_CURRENT_ONLY = "move.changes.current.only";
   private final ChangesTreeList<Change> myTreeList;
+  private final List<Change> myChanges;
+  private final Collection<Change> mySelected;
+  private JBCheckBox myCheckBox;
 
-  public MoveChangesDialog(final Project project, Collection<Change> selected, final Set<ChangeList> changeLists, String title) {
+  public MoveChangesDialog(final Project project, Collection<Change> selected, final Set<ChangeList> changeLists, VirtualFile current) {
     super(project, true);
-    setTitle(title);
+    mySelected = selected;
+    setTitle("Move Changes to Active Changelist");
     myTreeList = new ChangesTreeList<Change>(project, selected, true, false, null, null) {
 
       @Override
@@ -68,13 +76,36 @@ public class MoveChangesDialog extends DialogWrapper {
         return null;
       }
     };
-    ArrayList<Change> changes = new ArrayList<>();
+
+    myChanges = new ArrayList<>();
     for (ChangeList list : changeLists) {
-      changes.addAll(list.getChanges());
+      myChanges.addAll(list.getChanges());
     }
-    myTreeList.setChangesToDisplay(changes);
+    myTreeList.setChangesToDisplay(myChanges, current);
+
+    myCheckBox = new JBCheckBox("Select current file only");
+    myCheckBox.setMnemonic('c');
+    myCheckBox.addActionListener(e -> setSelected(myCheckBox.isSelected()));
+
+    boolean selectCurrent = PropertiesComponent.getInstance().getBoolean(MOVE_CHANGES_CURRENT_ONLY);
+    myCheckBox.setSelected(selectCurrent);
+    setSelected(selectCurrent);
 
     init();
+  }
+
+  private void setSelected(boolean selected) {
+    myTreeList.excludeChanges(myChanges);
+    if (selected) {
+      Change selection = myTreeList.getLeadSelection();
+      if (selection != null) {
+        myTreeList.includeChange(selection);
+      }
+    }
+    else {
+      myTreeList.includeChanges(mySelected);
+    }
+    PropertiesComponent.getInstance().setValue(MOVE_CHANGES_CURRENT_ONLY, selected);
   }
 
   @Override
@@ -102,4 +133,33 @@ public class MoveChangesDialog extends DialogWrapper {
   public boolean isOKActionEnabled() {
     return !getIncludedChanges().isEmpty();
   }
+
+  @Override
+  protected JComponent createSouthPanel() {
+    JComponent panel = super.createSouthPanel();
+    return addDoNotShowCheckBox(panel, myCheckBox);
+  }
+  /*
+
+  @NotNull
+  @Override
+  protected Action[] createLeftSideActions() {
+    return new Action[] {
+      new AbstractAction("Select &Current") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          ChangesBrowserNode<Change> component = (ChangesBrowserNode<Change>)myTreeList.getSelectionPath().getLastPathComponent();
+          myTreeList.excludeChanges(myChanges);
+        }
+      },
+
+      new AbstractAction("Select &All") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          myTreeList.includeChanges(myChanges);
+        }
+      }
+    };
+  }
+  */
 }

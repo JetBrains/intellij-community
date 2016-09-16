@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="com.intellij.ide.FileIconPatcher">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.ide.FileIconProvider">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.ide.HelpIdProvider">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+  <item name="com.intellij.ide.StartupProgress">
+    <annotation name="java.lang.FunctionalInterface" />
+  </item>
+</root>

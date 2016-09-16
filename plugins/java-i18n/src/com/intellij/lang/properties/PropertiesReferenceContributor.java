@@ -17,17 +17,18 @@ package com.intellij.lang.properties;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.util.ProcessingContext;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
 import static com.intellij.patterns.PsiJavaPatterns.psiNameValuePair;
@@ -36,6 +37,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiNameValuePair;
  * @author peter
  */
 public class PropertiesReferenceContributor extends PsiReferenceContributor{
+  private static final Logger LOG = Logger.getInstance(PropertiesReferenceContributor.class);
 
   private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider() {
     public boolean isSoft() {
@@ -63,24 +65,26 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
         if (field.getInitializer() != element || !field.hasModifierProperty(PsiModifier.FINAL)) {
           return PsiReference.EMPTY_ARRAY;
         }
-        Set<PsiReference> references = new THashSet<>(TObjectHashingStrategy.IDENTITY);
-        for (PsiMethod method : PsiTreeUtil.findChildrenOfType(element.getContainingFile(), PsiMethod.class)) {
-          for (PsiParameter parameter : method.getParameterList().getParameters()) {
-            final PsiModifierList modifierList = parameter.getModifierList();
-            if (modifierList != null) {
-              final PsiAnnotation annotation = modifierList.findAnnotation(AnnotationUtil.PROPERTY_KEY);
-              if (annotation != null) {
-                for (PsiNameValuePair pair : annotation.getParameterList().getAttributes()) {
-                  if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(pair.getName())) {
-                    final PsiAnnotationMemberValue value = pair.getValue();
-                    if (value instanceof PsiReferenceExpression && ((PsiReferenceExpression)value).resolve() == field) {
-                      Collections.addAll(references, myUnderlying.getReferencesByElement(element, context));
-                    }
+        List<PsiReference> references = new ArrayList<>();
+        final PsiClass propertyKeyAnnotation =
+          JavaPsiFacade.getInstance(element.getProject()).findClass(AnnotationUtil.PROPERTY_KEY, element.getResolveScope());
+        if (propertyKeyAnnotation != null) {
+          AnnotatedElementsSearch.searchPsiParameters(propertyKeyAnnotation, new LocalSearchScope(element.getContainingFile()))
+            .forEach(parameter -> {
+              final PsiModifierList list = parameter.getModifierList();
+              LOG.assertTrue(list != null);
+              final PsiAnnotation annotation = list.findAnnotation(AnnotationUtil.PROPERTY_KEY);
+              LOG.assertTrue(annotation != null);
+              for (PsiNameValuePair pair : annotation.getParameterList().getAttributes()) {
+                if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(pair.getName())) {
+                  final PsiAnnotationMemberValue value = pair.getValue();
+                  if (value instanceof PsiReferenceExpression && ((PsiReferenceExpression)value).resolve() == field) {
+                    Collections.addAll(references, myUnderlying.getReferencesByElement(element, context));
                   }
                 }
               }
-            }
-          }
+              return true;
+            });
         }
         return references.toArray(new PsiReference[references.size()]);
       }

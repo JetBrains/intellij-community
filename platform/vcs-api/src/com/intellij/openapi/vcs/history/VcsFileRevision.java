@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.util.Date;
 
 public interface VcsFileRevision extends VcsFileContent, VcsRevisionDescription {
   VcsFileRevision NULL = new VcsFileRevision() {
+    @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return VcsRevisionNumber.NULL;
     }

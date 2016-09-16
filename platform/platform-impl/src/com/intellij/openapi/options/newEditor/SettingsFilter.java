@@ -116,7 +116,13 @@ abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNode> {
 
   String getFilterText() {
     String text = mySearch.getText();
-    return text == null ? "" : text.trim();
+    if (text != null) {
+      text = text.trim();
+      if (1 < text.length()) {
+        return text;
+      }
+    }
+    return "";
   }
 
   void setHoldingFilter(boolean holding) {

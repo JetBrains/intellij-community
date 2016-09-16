@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -132,21 +130,14 @@ public class GrClassReferenceType extends PsiClassType {
     return myReferenceElement.getCanonicalText();
   }
 
-  @NotNull
-  @Override
-  public String getInternalCanonicalText() {
-    return getCanonicalText();
-  }
-
   @Override
   public boolean isValid() {
     return myReferenceElement.isValid();
   }
 
   @Override
-  public boolean equalsToText(@NotNull @NonNls String text) {
-    return text.endsWith(getPresentableText()) && //optimization
-        text.equals(getCanonicalText());
+  public boolean equalsToText(@NotNull String text) {
+    return text.endsWith(getPresentableText()) /*optimization*/ && text.equals(getCanonicalText());
   }
 
   @Override

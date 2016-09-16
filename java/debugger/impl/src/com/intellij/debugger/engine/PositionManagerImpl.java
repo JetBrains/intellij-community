@@ -30,7 +30,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author lex
@@ -150,8 +150,10 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       lineNumber = -1;
     }
 
+    String qName = location.declaringType().name();
+
     // replace file with alternative
-    String altFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), project);
+    String altFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(qName, project);
     if (altFileUrl != null) {
       VirtualFile altFile = VirtualFileManager.getInstance().findFileByUrl(altFileUrl);
       if (altFile != null) {
@@ -172,10 +174,9 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     if (sourcePosition == null && (psiFile instanceof PsiCompiledElement || lineNumber < 0)) {
       String methodSignature = method.signature();
       String methodName = method.name();
-      if (methodSignature != null && methodName != null && location.declaringType() != null) {
-        MethodFinder finder = new MethodFinder(location.declaringType().name(), methodName, methodSignature);
-        psiFile.accept(finder);
-        PsiMethod compiledMethod = finder.getCompiledMethod();
+      if (methodSignature != null && methodName != null) {
+        PsiClass psiClass = findPsiClassByName(qName, null);
+        PsiMethod compiledMethod = findMethod(psiClass != null ? psiClass : psiFile, qName, methodName, methodSignature);
         if (compiledMethod != null) {
           sourcePosition = SourcePosition.createFromElement(compiledMethod);
           if (lineNumber >= 0) {
@@ -355,22 +356,11 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
     final String originalQName = refType.name();
 
-    PsiClass psiClass = null;
+    Ref<PsiFile> altSource = new Ref<>();
+    PsiClass psiClass = findPsiClassByName(originalQName, c -> altSource.set(findAlternativeJreSourceFile(c)));
 
-    // first check alternative jre if any
-    Sdk alternativeJre = myDebugProcess.getSession().getAlternativeJre();
-    if (alternativeJre != null) {
-        psiClass = findClass(project, originalQName, AlternativeJreClassFinder.getSearchScope(alternativeJre));
-        if (psiClass instanceof ClsClassImpl) { //try to find sources
-          PsiFile psiSource = findSourceFile((ClsClassImpl)psiClass, alternativeJre);
-          if (psiSource != null) {
-            return psiSource;
-          }
-        }
-    }
-
-    if (psiClass == null) {
-      psiClass = findClass(project, originalQName, myDebugProcess.getSearchScope());
+    if (!altSource.isNull()) {
+      return altSource.get();
     }
 
     if (psiClass != null) {
@@ -405,6 +395,23 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return null;
   }
 
+  private PsiClass findPsiClassByName(String originalQName, @Nullable Consumer<ClsClassImpl> altClsProcessor) {
+    PsiClass psiClass = null;
+    // first check alternative jre if any
+    Sdk alternativeJre = myDebugProcess.getSession().getAlternativeJre();
+    if (alternativeJre != null) {
+      psiClass = findClass(myDebugProcess.getProject(), originalQName, AlternativeJreClassFinder.getSearchScope(alternativeJre));
+      if (psiClass instanceof ClsClassImpl && altClsProcessor != null) { //try to find sources
+        altClsProcessor.accept((ClsClassImpl)psiClass);
+      }
+    }
+
+    if (psiClass == null) {
+      psiClass = findClass(myDebugProcess.getProject(), originalQName, myDebugProcess.getSearchScope());
+    }
+    return psiClass;
+  }
+
   @Nullable
   private static PsiClass findClass(Project project, String originalQName, GlobalSearchScope searchScope) {
     PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope); // try to lookup original name first
@@ -418,17 +425,20 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   @Nullable
-  private static PsiFile findSourceFile(ClsClassImpl psiClass, Sdk alternativeJre) {
+  private PsiFile findAlternativeJreSourceFile(ClsClassImpl psiClass) {
     String sourceFileName = psiClass.getSourceFileName();
     String packageName = ((PsiClassOwner)psiClass.getContainingFile()).getPackageName();
     String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
+    Sdk alternativeJre = myDebugProcess.getSession().getAlternativeJre();
 
-    for (VirtualFile file : AlternativeJreClassFinder.getSourceRoots(alternativeJre)) {
-      VirtualFile source = file.findFileByRelativePath(relativePath);
-      if (source != null && source.isValid()) {
-        PsiFile psiSource = psiClass.getManager().findFile(source);
-        if (psiSource instanceof PsiClassOwner) {
-          return psiSource;
+    if (alternativeJre != null) {
+      for (VirtualFile file : AlternativeJreClassFinder.getSourceRoots(alternativeJre)) {
+        VirtualFile source = file.findFileByRelativePath(relativePath);
+        if (source != null && source.isValid()) {
+          PsiFile psiSource = psiClass.getManager().findFile(source);
+          if (psiSource instanceof PsiClassOwner) {
+            return psiSource;
+          }
         }
       }
     }
@@ -450,43 +460,36 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
   }
 
   private List<ReferenceType> getClassReferences(@NotNull final PsiClass psiClass, SourcePosition position) {
-    final Ref<String> baseClassNameRef = new Ref<>(null);
-    final Ref<PsiClass> classAtPositionRef = new Ref<>(null);
-    final Ref<Boolean> isLocalOrAnonymous = new Ref<>(Boolean.FALSE);
-    final Ref<Integer> requiredDepth = new Ref<>(0);
-    ApplicationManager.getApplication().runReadAction(() -> {
-      classAtPositionRef.set(psiClass);
-      String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
-      if (className == null) {
-        isLocalOrAnonymous.set(Boolean.TRUE);
-        final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
-        if (topLevelClass != null) {
-          final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
-          if (parentClassName != null) {
-            requiredDepth.set(getNestingDepth(psiClass));
-            baseClassNameRef.set(parentClassName);
-          }
-        }
-        else {
-          final StringBuilder sb = new StringBuilder();
-          PsiTreeUtil.treeWalkUp(psiClass, null, (element, element2) -> {
-            sb.append('\n').append(element);
-            return true;
-          });
-          LOG.info("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    boolean isLocalOrAnonymous = false;
+    int requiredDepth = 0;
+
+    String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
+    if (className == null) {
+      isLocalOrAnonymous = true;
+      final PsiClass topLevelClass = JVMNameUtil.getTopLevelParentClass(psiClass);
+      if (topLevelClass != null) {
+        final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
+        if (parentClassName != null) {
+          requiredDepth = getNestingDepth(psiClass);
+          className = parentClassName;
         }
       }
       else {
-        baseClassNameRef.set(className);
+        final StringBuilder sb = new StringBuilder();
+        PsiTreeUtil.treeWalkUp(psiClass, null, (element, element2) -> {
+          sb.append('\n').append(element);
+          return true;
+        });
+        LOG.info("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
       }
-    });
+    }
 
-    final String className = baseClassNameRef.get();
     if (className == null) {
       return Collections.emptyList();
     }
 
-    if (!isLocalOrAnonymous.get()) {
+    if (!isLocalOrAnonymous) {
       return myDebugProcess.getVirtualMachineProxy().classesByName(className);
     }
     
@@ -494,7 +497,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(className);
     final List<ReferenceType> result = new ArrayList<>(outers.size());
     for (ReferenceType outer : outers) {
-      final ReferenceType nested = findNested(outer, 0, classAtPositionRef.get(), requiredDepth.get(), position);
+      final ReferenceType nested = findNested(outer, 0, psiClass, requiredDepth, position);
       if (nested != null) {
         result.add(nested);
       }
@@ -544,6 +547,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
   @Nullable
   private ReferenceType findNested(final ReferenceType fromClass, final int currentDepth, final PsiClass classToFind, final int requiredDepth, final SourcePosition position) {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     final VirtualMachineProxyImpl vmProxy = myDebugProcess.getVirtualMachineProxy();
     if (fromClass.isPrepared()) {
       try {
@@ -592,27 +596,22 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           // Example of such line:
           // list.add(new Runnable(){......
           // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
-          final int finalRangeEnd = rangeEnd;
-          return ApplicationManager.getApplication().runReadAction(new NullableComputable<ReferenceType>() {
-            public ReferenceType compute() {
-              if (!classToFind.isValid()) {
-                return null;
+          if (!classToFind.isValid()) {
+            return null;
+          }
+          Set<PsiClass> lineClasses = getLineClasses(position.getFile(), rangeEnd);
+          if (lineClasses.size() > 1) {
+            // if there's more than one class on the line - try to match by name
+            for (PsiClass aClass : lineClasses) {
+              if (classToFind.equals(aClass)) {
+                return fromClass;
               }
-              Set<PsiClass> lineClasses = getLineClasses(position.getFile(), finalRangeEnd);
-              if (lineClasses.size() > 1) {
-                // if there's more than one class on the line - try to match by name
-                for (PsiClass aClass : lineClasses) {
-                  if (classToFind.equals(aClass)) {
-                    return fromClass;
-                  }
-                }
-              }
-              else if (!lineClasses.isEmpty()){
-                return classToFind.equals(lineClasses.iterator().next())? fromClass : null;
-              }
-              return null;
             }
-          });
+          }
+          else if (!lineClasses.isEmpty()){
+            return classToFind.equals(lineClasses.iterator().next())? fromClass : null;
+          }
+          return null;
         }
       }
       catch (AbsentInformationException ignored) {
@@ -621,7 +620,14 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return null;
   }
 
-  //don't use JavaRecursiveElementWalkingVisitor because getNextSibling() works slowly for compiled elements 
+  @Nullable
+  public PsiMethod findMethod(PsiElement container, String className, String methodName, String methodSignature) {
+    MethodFinder finder = new MethodFinder(className, methodName, methodSignature);
+    container.accept(finder);
+    return finder.getCompiledMethod();
+  }
+
+  //don't use JavaRecursiveElementWalkingVisitor because getNextSibling() works slowly for compiled elements
   private class MethodFinder extends JavaRecursiveElementVisitor {
     private final String myClassName;
     private PsiClass myCompiledClass;
@@ -636,37 +642,45 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     }
 
     @Override public void visitClass(PsiClass aClass) {
-      final List<ReferenceType> allClasses = getClassReferences(aClass, SourcePosition.createFromElement(aClass));
-      for (ReferenceType referenceType : allClasses) {
-        if (referenceType.name().equals(myClassName)) {
-          myCompiledClass = aClass;
+      if (myCompiledMethod == null) {
+        final List<ReferenceType> allClasses = getClassReferences(aClass, SourcePosition.createFromElement(aClass));
+        for (ReferenceType referenceType : allClasses) {
+          if (referenceType.name().equals(myClassName)) {
+            myCompiledClass = aClass;
+          }
         }
-      }
 
-      aClass.acceptChildren(this);
+        aClass.acceptChildren(this);
+      }
     }
 
     @Override public void visitMethod(PsiMethod method) {
-      try {
-        String methodName = JVMNameUtil.getJVMMethodName(method);
-        PsiClass containingClass = method.getContainingClass();
+      if (myCompiledMethod == null) {
+        try {
+          String methodName = JVMNameUtil.getJVMMethodName(method);
+          PsiClass containingClass = method.getContainingClass();
 
-        if(containingClass != null &&
-           containingClass.equals(myCompiledClass) &&
-           methodName.equals(myMethodName) &&
-           JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(myMethodSignature)) {
-          myCompiledMethod = method;
+          if (containingClass != null &&
+              containingClass.equals(myCompiledClass) &&
+              methodName.equals(myMethodName) &&
+              JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(myMethodSignature)) {
+            myCompiledMethod = method;
+          }
+        }
+        catch (EvaluateException e) {
+          LOG.debug(e);
         }
       }
-      catch (EvaluateException e) {
-        LOG.debug(e);
+    }
+
+    @Override
+    public void visitElement(PsiElement element) {
+      if (myCompiledMethod == null) {
+        super.visitElement(element);
       }
     }
 
-    public PsiClass getCompiledClass() {
-      return myCompiledClass;
-    }
-
+    @Nullable
     public PsiMethod getCompiledMethod() {
       return myCompiledMethod;
     }

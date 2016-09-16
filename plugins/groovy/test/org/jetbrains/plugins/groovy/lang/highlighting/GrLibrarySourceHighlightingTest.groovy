@@ -38,10 +38,10 @@ class GrLibrarySourceHighlightingTest extends GrHighlightingTestBase {
       final lib = JarFileSystem.instance.refreshAndFindFileByPath("$absoluteBasePath/some-library.jar!/")
       final src = LocalFileSystem.instance.refreshAndFindFileByPath("$absoluteBasePath/src/")
 
-      final modifiableModel = model.moduleLibraryTable.createLibrary("some-library").modifiableModel;
+      final modifiableModel = model.moduleLibraryTable.createLibrary("some-library").modifiableModel
       modifiableModel.addRoot lib, OrderRootType.CLASSES
       modifiableModel.addRoot src, OrderRootType.SOURCES
-      modifiableModel.commit();
+      modifiableModel.commit()
     }
   }
 

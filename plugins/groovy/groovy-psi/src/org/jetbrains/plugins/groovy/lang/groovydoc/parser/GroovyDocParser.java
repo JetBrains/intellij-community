@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser;
 
-import com.intellij.lang.PsiParser;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing.GroovyDocParsing;
@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.parser.parsing.GroovyDocParsi
 public class GroovyDocParser implements PsiParser {
   @Override
   @NotNull
-  public ASTNode parse(IElementType root, PsiBuilder builder) {
+  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     PsiBuilder.Marker rootMarker = builder.mark();
     new GroovyDocParsing().parse(builder);
     rootMarker.done(root);

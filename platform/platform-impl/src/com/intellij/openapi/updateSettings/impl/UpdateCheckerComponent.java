@@ -28,6 +28,8 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.BuildNumber;
@@ -56,6 +58,7 @@ public class UpdateCheckerComponent implements ApplicationComponent {
     updateDefaultChannel();
     checkSecureConnection(app);
     scheduleOnStartCheck(app);
+    cleanupPatch();
   }
 
   private void updateDefaultChannel() {
@@ -115,6 +118,15 @@ public class UpdateCheckerComponent implements ApplicationComponent {
         }
       }
     });
+  }
+
+  private static void cleanupPatch() {
+    new Task.Backgroundable(null, IdeBundle.message("update.cleaning.patch.progress"), false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        UpdateInstaller.cleanupPatch();
+      }
+    }.queue();
   }
 
   private void queueNextCheck(long interval) {

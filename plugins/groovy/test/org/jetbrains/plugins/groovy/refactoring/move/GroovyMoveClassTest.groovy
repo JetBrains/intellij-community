@@ -31,108 +31,108 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class GroovyMoveClassTest extends GroovyMoveTestBase {
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "refactoring/move/moveClass/";
+    return TestUtils.getTestDataPath() + "refactoring/move/moveClass/"
   }
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
+    super.setUp()
     final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject())
-    FileTemplate temp = templateManager.getTemplate("GroovyClass.groovyForTest");
-    if (temp != null) templateManager.removeTemplate(temp);
+    FileTemplate temp = templateManager.getTemplate("GroovyClass.groovyForTest")
+    if (temp != null) templateManager.removeTemplate(temp)
 
-    temp = templateManager.addTemplate("GroovyClass.groovyForTest", "groovy");
+    temp = templateManager.addTemplate("GroovyClass.groovyForTest", "groovy")
     temp.text = '''\
 #if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}
 #end
 class ${NAME} {
-}''';
+}'''
 
-    temp = templateManager.getTemplate(GroovyTemplates.GROOVY_CLASS);
-    if (temp != null) templateManager.removeTemplate(temp);
+    temp = templateManager.getTemplate(GroovyTemplates.GROOVY_CLASS)
+    if (temp != null) templateManager.removeTemplate(temp)
 
-    temp = templateManager.addTemplate(GroovyTemplates.GROOVY_CLASS, "groovy");
+    temp = templateManager.addTemplate(GroovyTemplates.GROOVY_CLASS, "groovy")
     temp.text = '''\
 #if ( $PACKAGE_NAME != \"\" )package ${PACKAGE_NAME}
 #end
 class ${NAME} {
-}''';
+}'''
   }
 
   @Override
   protected void tearDown() throws Exception {
-    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject());
-    FileTemplate temp = templateManager.getTemplate(GroovyTemplates.GROOVY_CLASS);
-    templateManager.removeTemplate(temp);
+    final FileTemplateManager templateManager = FileTemplateManager.getInstance(getProject())
+    FileTemplate temp = templateManager.getTemplate(GroovyTemplates.GROOVY_CLASS)
+    templateManager.removeTemplate(temp)
 
-    temp = templateManager.getTemplate("GroovyClass.groovyForTest");
-    templateManager.removeTemplate(temp);
-    super.tearDown();
+    temp = templateManager.getTemplate("GroovyClass.groovyForTest")
+    templateManager.removeTemplate(temp)
+    super.tearDown()
   }
 
   void testMoveMultiple1() throws Exception {
-    doTest("pack2", "pack1.Class1", "pack1.Class2");
+    doTest("pack2", "pack1.Class1", "pack1.Class2")
   }
 
   void testSecondaryClass() throws Exception {
-    doTest("pack1", "pack1.Class2");
+    doTest("pack1", "pack1.Class2")
   }
 
   void testStringsAndComments() throws Exception {
-    doTest("pack2", "pack1.Class1");
+    doTest("pack2", "pack1.Class1")
   }
 
   void testStringsAndComments2() throws Exception {
-    doTest("pack2", "pack1.AClass");
+    doTest("pack2", "pack1.AClass")
   }
 
   void testLocalClass() throws Exception {
-    doTest("pack2", "pack1.A");
+    doTest("pack2", "pack1.A")
   }
 
   void testClassAndSecondary() throws Exception {
-    doTest("pack2", "pack1.Class1", "pack1.Class2");
+    doTest("pack2", "pack1.Class1", "pack1.Class2")
   }
 
   void testIdeadev27996() throws Exception {
-    doTest("pack2", "pack1.X");
+    doTest("pack2", "pack1.X")
   }
 
   void testScript() throws Exception {
-    doTest("pack2", "pack1.Xx");
+    doTest("pack2", "pack1.Xx")
   }
 
   void testTwoClasses() {
-    doTest("p2", "p1.C1", "p1.C2");
+    doTest("p2", "p1.C1", "p1.C2")
   }
 
   void testStaticImport() {
-    doTest("p2", "p1.C1");
+    doTest("p2", "p1.C1")
   }
 
   void testAliasImported() {
-    doTest("p2", "p1.C1");
+    doTest("p2", "p1.C1")
   }
 
   boolean perform(VirtualFile root, String newPackageName, String... classNames) {
-    final PsiClass[] classes = new PsiClass[classNames.length];
+    final PsiClass[] classes = new PsiClass[classNames.length]
     for (int i = 0; i < classes.length; i++) {
-      String className = classNames[i];
-      classes[i] = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject()));
-      assertNotNull("Class " + className + " not found", classes[i]);
+      String className = classNames[i]
+      classes[i] = JavaPsiFacade.getInstance(getProject()).findClass(className, GlobalSearchScope.allScope(getProject()))
+      assertNotNull("Class " + className + " not found", classes[i])
     }
 
-    PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(newPackageName);
-    assertNotNull("Package " + newPackageName + " not found", aPackage);
-    final PsiDirectory[] dirs = aPackage.getDirectories();
+    PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(newPackageName)
+    assertNotNull("Package " + newPackageName + " not found", aPackage)
+    final PsiDirectory[] dirs = aPackage.getDirectories()
 
-    final PsiDirectory dir = dirs[dirs.length - 1];
+    final PsiDirectory dir = dirs[dirs.length - 1]
     final SingleSourceRootMoveDestination moveDestination =
-      new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(dir)), dir);
-    new MoveClassesOrPackagesProcessor(getProject(), classes, moveDestination, true, true, null).run();
+      new SingleSourceRootMoveDestination(PackageWrapper.create(JavaDirectoryService.getInstance().getPackage(dir)), dir)
+    new MoveClassesOrPackagesProcessor(getProject(), classes, moveDestination, true, true, null).run()
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    FileDocumentManager.getInstance().saveAllDocuments();
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments()
+    FileDocumentManager.getInstance().saveAllDocuments()
 
     return true
   }

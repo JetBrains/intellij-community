@@ -139,7 +139,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
         return myFactory.createIndentCalculator(NORMAL, IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).matchesRule(
-        position -> position.before().isAt(BlockComment)
+        position -> position.before().isAt(BlockComment) && position.before().isAt(Whitespace) && position.isAtMultiline()
       )) {
         return myFactory.createIndentCalculator(NONE, position -> position.findStartOf(BlockComment));
       }
@@ -150,7 +150,7 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
       }
       else {
         SemanticEditorPosition position = getPosition(editor, offset);
-        position = position.before().beforeOptional(LineComment).beforeOptional(Whitespace);
+        position = position.before().beforeOptionalMix(LineComment, BlockComment, Whitespace);
         if (position.isAt(RightParenthesis)) {
           int offsetAfterParen = position.getStartOffset() + 1;
           position.beforeParentheses(LeftParenthesis, RightParenthesis);

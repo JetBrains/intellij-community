@@ -31,19 +31,13 @@ public class Bottom extends PsiType {
   @NotNull
   @Override
   public String getPresentableText() {
-    return "_";
+    return getCanonicalText();
   }
 
   @NotNull
   @Override
   public String getCanonicalText() {
     return "_";
-  }
-
-  @NotNull
-  @Override
-  public String getInternalCanonicalText() {
-    return getCanonicalText();
   }
 
   @Override

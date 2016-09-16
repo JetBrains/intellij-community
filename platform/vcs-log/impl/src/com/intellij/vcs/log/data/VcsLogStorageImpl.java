@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -32,6 +33,7 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TObjectIntHashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +42,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Supports the int <-> Hash and int <-> VcsRef persistent mappings.
@@ -60,6 +61,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private final PersistentEnumeratorBase<CommitId> myCommitIdEnumerator;
   @NotNull private final PersistentEnumeratorBase<VcsRef> myRefsEnumerator;
   @NotNull private final Consumer<Exception> myExceptionReporter;
+  private volatile boolean myDisposed = false;
 
   public VcsLogStorageImpl(@NotNull Project project,
                            @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -67,8 +69,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
                            @NotNull Disposable parent) throws IOException {
     myExceptionReporter = exceptionReporter;
 
-    List<VirtualFile> roots =
-      logProviders.keySet().stream().sorted((o1, o2) -> o1.getPath().compareTo(o2.getPath())).collect(Collectors.toList());
+    List<VirtualFile> roots = StreamEx.ofKeys(logProviders).sortedBy(VirtualFile::getPath).toList();
 
     String logId = PersistentUtil.calcLogId(project, logProviders);
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
@@ -94,6 +95,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
+    checkDisposed();
     try {
       return getOrPut(hash, root);
     }
@@ -106,6 +108,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @Override
   @Nullable
   public CommitId getCommitId(int commitIndex) {
+    checkDisposed();
     try {
       CommitId commitId = doGetCommitId(commitIndex);
       if (commitId == null) {
@@ -122,6 +125,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @Override
   @Nullable
   public CommitId findCommitId(@NotNull final Condition<CommitId> condition) {
+    checkDisposed();
     try {
       final Ref<CommitId> hashRef = Ref.create();
       myCommitIdEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
@@ -144,6 +148,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
   @Override
   public int getRefIndex(@NotNull VcsRef ref) {
+    checkDisposed();
     try {
       return myRefsEnumerator.enumerate(ref);
     }
@@ -156,6 +161,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @Nullable
   @Override
   public VcsRef getVcsRef(int refIndex) {
+    checkDisposed();
     try {
       return myRefsEnumerator.valueOf(refIndex);
     }
@@ -166,6 +172,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   public void flush() {
+    checkDisposed();
     myCommitIdEnumerator.force();
     myRefsEnumerator.force();
   }
@@ -173,12 +180,17 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @Override
   public void dispose() {
     try {
+      myDisposed = true;
       myCommitIdEnumerator.close();
       myRefsEnumerator.close();
     }
     catch (IOException e) {
       LOG.warn(e);
     }
+  }
+
+  private void checkDisposed() {
+    if (myDisposed) throw new ProcessCanceledException();
   }
 
   private static class MyCommitIdKeyDescriptor implements KeyDescriptor<CommitId> {

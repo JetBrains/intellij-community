@@ -1005,4 +1005,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testMembersContainedInCapturedWildcardType() throws Exception {
     doTest();
   }
+
+  public void testTypeParameterBoundsWithSubstitutionWhenMethodHierarchyIsChecked() throws Exception {
+    doTest();
+  }
 }

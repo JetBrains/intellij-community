@@ -68,7 +68,7 @@ public abstract class BranchPopupBuilder {
       Collection<VcsRef> refs = entry.getValue();
       VcsLogProvider provider = dataPack.getLogProviders().get(root);
       VcsLogRefManager refManager = provider.getReferenceManager();
-      List<RefGroup> refGroups = refManager.group(refs);
+      List<RefGroup> refGroups = refManager.groupForBranchFilter(refs);
 
       putActionsForReferences(refGroups, filteredGroups);
     }

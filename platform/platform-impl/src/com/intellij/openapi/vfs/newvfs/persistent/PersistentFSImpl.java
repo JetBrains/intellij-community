@@ -64,12 +64,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   @SuppressWarnings({"FieldCanBeLocal", "unused"})
-  private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(() -> clearIdCache());
+  private final LowMemoryWatcher myWatcher = LowMemoryWatcher.register(this::clearIdCache);
   private volatile int myStructureModificationCount;
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
     myEventBus = bus;
-    ShutDownTracker.getInstance().registerShutdownTask(() -> performShutdown());
+    ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
   }
 
   @Override
@@ -267,6 +267,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                                  @NotNull VirtualFile file,
                                                  @NotNull NewVirtualFileSystem fs,
                                                  @NotNull FileAttributes attributes) {
+    assert id > 0 : id;
     String name = file.getName();
     if (!name.isEmpty()) {
       if (namesEqual(fs, name, FSRecords.getNameSequence(id))) return false; // TODO: Handle root attributes change.
@@ -517,7 +518,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         return FileUtil.loadBytes(contentStream, (int)length);
       }
       catch (IOException e) {
-        throw FSRecords.handleError(e);
+        FSRecords.handleError(e);
+        return ArrayUtil.EMPTY_BYTE_ARRAY;
       }
     }
   }
@@ -761,12 +763,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
 
     if (parentToChildrenEventsChanges != null) {
-      parentToChildrenEventsChanges.forEachEntry(new TObjectObjectProcedure<VirtualFile, List<VFileEvent>>() {
-        @Override
-        public boolean execute(VirtualFile parent, List<VFileEvent> childrenEvents) {
-          applyChildrenChangeEvents(parent, childrenEvents);
-          return true;
-        }
+      parentToChildrenEventsChanges.forEachEntry((parent, childrenEvents) -> {
+        applyChildrenChangeEvents(parent, childrenEvents);
+        return true;
       });
       parentToChildrenEventsChanges.clear();
     }
@@ -777,13 +776,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private void applyChildrenChangeEvents(@NotNull VirtualFile parent, @NotNull List<VFileEvent> events) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
     TIntArrayList childrenIdsUpdated = new TIntArrayList();
-    List<VirtualFile> childrenToBeUpdated = new SmartList<>();
 
     final int parentId = getFileId(parent);
     assert parentId != 0;
     TIntHashSet parentChildrenIds = new TIntHashSet(FSRecords.list(parentId));
     boolean hasRemovedChildren = false;
 
+    List<VirtualFile> childrenToBeUpdated = new SmartList<>();
     for (VFileEvent event : events) {
       if (event instanceof VFileCreateEvent) {
         String name = ((VFileCreateEvent)event).getChildName();

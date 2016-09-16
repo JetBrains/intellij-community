@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -37,7 +38,6 @@ import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,8 +59,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.newIdentityTroveSet();
   @NotNull private final VirtualFileManager myVirtualFileManager;
   @NotNull private final MessageBus myBus;
-  private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? (Comparator<String>)(url1, url2) -> url1.compareTo(url2)
-                                                                                                : (Comparator<String>)(url1, url2) -> url1.compareToIgnoreCase(url2);
+  private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? String::compareTo : String::compareToIgnoreCase;
 
   VirtualFilePointerManagerImpl(@NotNull VirtualFileManager virtualFileManager,
                                 @NotNull MessageBus bus,
@@ -274,8 +273,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     for (Map.Entry<VirtualFilePointerListener, FilePointerPartNode> entry : myPointers.entrySet()) {
       FilePointerPartNode root = entry.getValue();
       List<FilePointerPartNode> left = new ArrayList<>();
-      List<VirtualFilePointerImpl> pointers = new ArrayList<>();
       root.addPointersUnder(null, false, "", left);
+      List<VirtualFilePointerImpl> pointers = new ArrayList<>();
       for (FilePointerPartNode node : left) {
         node.addAllPointersTo(pointers);
       }
@@ -531,6 +530,13 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     }
   }
 
+  @Override
+  public long getModificationCount() {
+    // depend on PersistentFS.getInstance().getStructureModificationCount() because com.intellij.openapi.vfs.impl.FilePointerPartNode.update is
+    // depend on its own modcount because we need to change both before and after VFS changes
+    return super.getModificationCount() + PersistentFS.getInstance().getStructureModificationCount();
+  }
+
   private static class DelegatingDisposable implements Disposable {
     private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances =
       ContainerUtil.newConcurrentMap(ContainerUtil.<Disposable>identityStrategy());
@@ -560,14 +566,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     public void dispose() {
       ourInstances.remove(myParent);
       synchronized (this) {
-        myCounts.forEachEntry(new TObjectIntProcedure<VirtualFilePointerImpl>() {
-          @Override
-          public boolean execute(VirtualFilePointerImpl pointer, int disposeCount) {
-            int after = pointer.myNode.incrementUsageCount(-disposeCount + 1);
-            LOG.assertTrue(after > 0, after);
-            pointer.dispose();
-            return true;
-          }
+        myCounts.forEachEntry((pointer, disposeCount) -> {
+          int after = pointer.myNode.incrementUsageCount(-disposeCount + 1);
+          LOG.assertTrue(after > 0, after);
+          pointer.dispose();
+          return true;
         });
       }
     }

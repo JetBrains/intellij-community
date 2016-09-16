@@ -53,7 +53,7 @@ public class RenameFix extends GroovyFix {
   }
 
   @Override
-  public void doFix(final Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement nameIdentifier = descriptor.getPsiElement();
     final PsiElement elementToRename = nameIdentifier.getParent();
     if (targetName == null) {

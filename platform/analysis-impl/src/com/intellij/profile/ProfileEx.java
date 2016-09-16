@@ -35,7 +35,6 @@ public abstract class ProfileEx implements Profile {
   @NotNull
   protected String myName;
 
-  @SuppressWarnings("unused")
   @OptionTag("myLocal")
   // exists only to preserve compatibility
   private boolean myLocal;

@@ -24,8 +24,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -144,9 +144,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     bounds.y += layeredPane.getHeight();
 
     final Dimension preferredScrollPaneSize = myListScrollPane.getPreferredSize();
-    if (myList.getModel().getSize() == 0) {
-      preferredScrollPaneSize.height = UIManager.getFont("Label.font").getSize();
-    }
+    int lastVisibleRow = Math.min(myList.getVisibleRowCount(), myList.getModel().getSize()) - 1;
+    Rectangle visibleBounds = lastVisibleRow < 0 ? null : myList.getCellBounds(0, lastVisibleRow);
+    preferredScrollPaneSize.height = visibleBounds != null ? visibleBounds.height : UIManager.getFont("Label.font").getSize();
 
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
 
@@ -154,9 +154,16 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     Rectangle original = new Rectangle(preferredBounds);
 
     ScreenUtil.fitToScreen(preferredBounds);
-    if (original.width > preferredBounds.width) {
-      int height = myListScrollPane.getHorizontalScrollBar().getPreferredSize().height;
+    JScrollBar hsb = myListScrollPane.getHorizontalScrollBar();
+    if (original.width > preferredBounds.width && (!SystemInfo.isMac || hsb.isOpaque())) {
+      int height = hsb.getPreferredSize().height;
+      preferredBounds.y -= height;
       preferredBounds.height += height;
+    }
+    if (original.y > preferredBounds.y) {
+      int height = original.y - preferredBounds.y;
+      preferredBounds.y += height;
+      preferredBounds.height -= height;
     }
 
     myListScrollPane.setVisible(true);

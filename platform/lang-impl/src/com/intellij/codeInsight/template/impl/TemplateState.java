@@ -122,8 +122,13 @@ public class TemplateState implements Disposable {
     myLookupListener = new LookupAdapter() {
       @Override
       public void itemSelected(LookupEvent event) {
-        if (isCaretOutsideCurrentSegment() && !isCaretInsideNextVariable()) {
-          gotoEnd(true);
+        if (isCaretOutsideCurrentSegment()) {
+          if (isCaretInsideNextVariable()) {
+            nextTab();
+          }
+          else {
+            gotoEnd(true);
+          }
         }
       }
     };

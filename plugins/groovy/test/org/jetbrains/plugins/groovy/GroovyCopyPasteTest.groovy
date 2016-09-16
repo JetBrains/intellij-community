@@ -27,18 +27,18 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
+    super.setUp()
 
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    myAddImportsOld = settings.ADD_IMPORTS_ON_PASTE;
-    settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES;
+    CodeInsightSettings settings = CodeInsightSettings.getInstance()
+    myAddImportsOld = settings.ADD_IMPORTS_ON_PASTE
+    settings.ADD_IMPORTS_ON_PASTE = CodeInsightSettings.YES
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    settings.ADD_IMPORTS_ON_PASTE = myAddImportsOld;
-    super.tearDown();
+    CodeInsightSettings settings = CodeInsightSettings.getInstance()
+    settings.ADD_IMPORTS_ON_PASTE = myAddImportsOld
+    super.tearDown()
   }
   
   private void doTest(String fromText, String toText, String expected) {

@@ -44,7 +44,7 @@ class MavenIdeaPluginTest extends MavenDomTestCase {
 """)
 
     def module = getModule("project")
-    assert module != null;
+    assert module != null
 
     assert !ModuleRootManager.getInstance(module).sdkInherited
     assert ModuleRootManager.getInstance(module).sdk == null

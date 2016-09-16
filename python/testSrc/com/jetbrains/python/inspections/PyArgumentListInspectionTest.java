@@ -95,6 +95,16 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-19412
+  public void testReassignedViaClassMethodInAnotherModule() {
+    final String folderPath = "inspections/PyArgumentListInspection/ReassignedViaClassMethodInAnotherModule/";
+
+    myFixture.copyDirectoryToProject(folderPath, "");
+    myFixture.configureFromTempProjectFile("b.py");
+    myFixture.enableInspections(PyArgumentListInspection.class);
+    myFixture.checkHighlighting(true, false, false);
+  }
+
   // PY-2294
   public void testTuples() {
     doTest();

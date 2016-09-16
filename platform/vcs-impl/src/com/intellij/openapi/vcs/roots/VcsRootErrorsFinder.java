@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,16 +87,6 @@ public class VcsRootErrorsFinder {
       }
     }
     return false;
-  }
-
-  @NotNull
-  public static Collection<VirtualFile> vcsRootsToVirtualFiles(@NotNull Collection<VcsRoot> vcsRoots) {
-    return ContainerUtil.map(vcsRoots, new Function<VcsRoot, VirtualFile>() {
-      @Override
-      public VirtualFile fun(VcsRoot root) {
-        return root.getPath();
-      }
-    });
   }
 
   private List<String> mappingsToPathsWithSelectedVcs(@NotNull List<VcsDirectoryMapping> mappings) {

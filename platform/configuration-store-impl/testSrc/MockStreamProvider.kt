@@ -1,7 +1,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
-import com.intellij.util.*
+import com.intellij.util.io.*
 import java.io.InputStream
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path

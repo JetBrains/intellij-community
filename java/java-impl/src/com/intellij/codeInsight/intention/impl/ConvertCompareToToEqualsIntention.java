@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +80,7 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
     PsiMethodCallExpression compareToExpression = null;
     boolean hasZero = false;
     for (PsiExpression psiExpression : binaryExpression.getOperands()) {
-      if (compareToExpression == null && detectCompareTo(psiExpression)) {
+      if (compareToExpression == null && MethodUtils.isCompareToCall(psiExpression)) {
         compareToExpression = (PsiMethodCallExpression)psiExpression;
         continue;
       }
@@ -93,36 +93,6 @@ public class ConvertCompareToToEqualsIntention extends BaseElementAtCaretIntenti
     }
     getQualifierAndParameter(compareToExpression);
     return new ResolveResult(binaryExpression, compareToExpression, isEqEq);
-  }
-
-  private static boolean detectCompareTo(final @NotNull PsiExpression expression) {
-    if (!(expression instanceof PsiMethodCallExpression)) {
-      return false;
-    }
-    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-    if (methodCallExpression.getMethodExpression().getQualifierExpression() == null) {
-      return false;
-    }
-    final PsiMethod psiMethod = methodCallExpression.resolveMethod();
-    if (psiMethod == null || !"compareTo".equals(psiMethod.getName()) || psiMethod.getParameterList().getParametersCount() != 1) {
-      return false;
-    }
-    if (methodCallExpression.getArgumentList().getExpressions().length != 1) {
-      return false;
-    }
-    final PsiClass containingClass = psiMethod.getContainingClass();
-    if (containingClass == null) {
-      return false;
-    }
-    final PsiClass javaLangComparable = JavaPsiFacade.getInstance(expression.getProject()).findClass(CommonClassNames.JAVA_LANG_COMPARABLE, GlobalSearchScope.allScope(
-      expression.getProject()));
-    if (javaLangComparable == null) {
-      return false;
-    }
-    if (!containingClass.isInheritor(javaLangComparable, true)) {
-      return false;
-    }
-    return true;
   }
 
   private static boolean detectZero(final @NotNull PsiExpression expression) {

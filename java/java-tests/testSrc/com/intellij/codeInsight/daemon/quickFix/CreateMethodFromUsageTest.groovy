@@ -44,7 +44,7 @@ class SomeOuterClassWithLongName {
     }
 }
 """
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable);
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
     doAction("Create method 'addSubGroup'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
     //skip void return type
@@ -53,9 +53,9 @@ class SomeOuterClassWithLongName {
     // parameter type
     assert LookupManager.getActiveLookup(editor)?.currentItem?.lookupString?.endsWith('Group')
 
-    EditorActionManager actionManager = EditorActionManager.getInstance();
-    final DataContext dataContext = DataManager.getInstance().getDataContext();
-    actionManager.getActionHandler(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM).execute(getEditor(), dataContext);
+    EditorActionManager actionManager = EditorActionManager.getInstance()
+    final DataContext dataContext = DataManager.getInstance().getDataContext()
+    actionManager.getActionHandler(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM).execute(getEditor(), dataContext)
 
     // parameter name, skip it
     assert LookupManager.getActiveLookup(editor)?.currentItem?.lookupString == 'child'
@@ -94,7 +94,7 @@ class Usage {
 
 }
 """
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable);
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
     doAction("Create method 'getInstance'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
     // parameter type
@@ -114,7 +114,7 @@ class Usage {
 
 }
 """
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable);
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
     doAction("Create method 'getInstance'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
 
@@ -140,7 +140,7 @@ class A {
     }
 }
 """
-    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable);
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
     doAction("Create method 'foo'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
 
@@ -173,7 +173,7 @@ class A {
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/createMethodFromUsage";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/createMethodFromUsage"
   }
 
 }

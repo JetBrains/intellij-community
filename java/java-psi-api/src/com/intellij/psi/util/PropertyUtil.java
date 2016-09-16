@@ -499,7 +499,6 @@ public class PropertyUtil {
   }
 
   /** @deprecated use {@link NullableNotNullManager#copyNullableOrNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
   public static void annotateWithNullableStuff(@NotNull PsiModifierListOwner field,
                                                @NotNull PsiModifierListOwner listOwner) throws IncorrectOperationException {
     NullableNotNullManager.getInstance(field.getProject()).copyNullableOrNotNullAnnotation(field, listOwner);

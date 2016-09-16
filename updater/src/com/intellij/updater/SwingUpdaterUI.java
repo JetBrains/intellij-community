@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.updater;
 
 import javax.swing.*;
@@ -18,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@SuppressWarnings({"UseJBColor", "UndesirableClassUsage", "UseDPIAwareInsets", "SSBasedInspection"})
 public class SwingUpdaterUI implements UpdaterUI {
   private static final int RESULT_REQUIRES_RESTART = 42;
 
@@ -26,10 +42,8 @@ public class SwingUpdaterUI implements UpdaterUI {
   private static final EmptyBorder BUTTONS_BORDER = new EmptyBorder(5, 0, 0, 0);
 
   private static final String TITLE = "Update";
-
   private static final String CANCEL_BUTTON_TITLE = "Cancel";
   private static final String EXIT_BUTTON_TITLE = "Exit";
-
   private static final String PROCEED_BUTTON_TITLE = "Proceed";
 
   private final InstallOperation myOperation;
@@ -39,14 +53,13 @@ public class SwingUpdaterUI implements UpdaterUI {
   private final JLabel myProcessStatus;
   private final JTextArea myConsole;
   private final JPanel myConsolePane;
-
   private final JButton myCancelButton;
+  private final JFrame myFrame;
 
-  private final ConcurrentLinkedQueue<UpdateRequest> myQueue = new ConcurrentLinkedQueue<>();
+  private final Queue<UpdateRequest> myQueue = new ConcurrentLinkedQueue<>();
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
   private final AtomicBoolean isRunning = new AtomicBoolean(false);
   private final AtomicBoolean hasError = new AtomicBoolean(false);
-  private final JFrame myFrame;
   private boolean myApplied;
 
   public SwingUpdaterUI(InstallOperation operation) {
@@ -69,18 +82,14 @@ public class SwingUpdaterUI implements UpdaterUI {
     myConsolePane.setBorder(BUTTONS_BORDER);
     myConsolePane.setVisible(false);
 
-    myCancelButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        doCancel();
-      }
-    });
+    myCancelButton.addActionListener(e -> doCancel());
 
     myFrame = new JFrame();
     myFrame.setTitle(TITLE);
 
     myFrame.setLayout(new BorderLayout());
     myFrame.getRootPane().setBorder(FRAME_BORDER);
-    myFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+    myFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
     myFrame.addWindowListener(new WindowAdapter() {
       @Override
@@ -115,12 +124,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     myFrame.setVisible(true);
 
-    myQueue.add(new UpdateRequest() {
-      @Override
-      public void perform() {
-        doPerform();
-      }
-    });
+    myQueue.add(() -> doPerform());
 
     startRequestDispatching();
   }
@@ -132,7 +136,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   @Override
   public boolean showWarning(String message) {
-    Object[] choices = new Object[] { "Retry", "Exit" };
+    Object[] choices = {"Retry", "Exit"};
     int choice = JOptionPane.showOptionDialog(null, message, "Warning", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, choices, choices[0]);
     return choice == 0;
   }
@@ -141,6 +145,7 @@ public class SwingUpdaterUI implements UpdaterUI {
     new Thread(() -> {
       while (true) {
         try {
+          //noinspection BusyWait
           Thread.sleep(100);
         }
         catch (InterruptedException e) {
@@ -165,9 +170,8 @@ public class SwingUpdaterUI implements UpdaterUI {
 
   private void doCancel() {
     if (isRunning.get()) {
-      int result = JOptionPane.showConfirmDialog(myFrame,
-                                                 "The patch has not been applied yet.\nAre you sure you want to abort the operation?",
-                                                 TITLE, JOptionPane.YES_NO_OPTION);
+      String message = "The patch has not been applied yet.\nAre you sure you want to abort the operation?";
+      int result = JOptionPane.showConfirmDialog(myFrame, message, TITLE, JOptionPane.YES_NO_OPTION);
       if (result == JOptionPane.YES_OPTION) {
         isCancelled.set(true);
         myCancelButton.setEnabled(false);
@@ -200,7 +204,8 @@ public class SwingUpdaterUI implements UpdaterUI {
           setProgress(100);
           myCancelButton.setText(EXIT_BUTTON_TITLE);
           myCancelButton.setEnabled(true);
-        } else {
+        }
+        else {
           exit();
         }
       }
@@ -227,7 +232,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
         final JDialog dialog = new JDialog(myFrame, TITLE, true);
         dialog.setLayout(new BorderLayout());
-        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         JPanel buttonsPanel = new JPanel();
         buttonsPanel.setBorder(BUTTONS_BORDER);
@@ -306,144 +311,67 @@ public class SwingUpdaterUI implements UpdaterUI {
     return result;
   }
 
-  public void startProcess(final String title) {
-    myQueue.add(new UpdateRequest() {
-      public void perform() {
-        myProcessStatus.setText(title);
-        myProcessProgress.setIndeterminate(false);
-        myProcessProgress.setValue(0);
-      }
+  @Override
+  public void startProcess(String title) {
+    myQueue.add(() -> {
+      myProcessStatus.setText(title);
+      myProcessProgress.setIndeterminate(false);
+      myProcessProgress.setValue(0);
     });
   }
 
-  public void setProgress(final int percentage) {
-    myQueue.add(new UpdateRequest() {
-      public void perform() {
-        myProcessProgress.setIndeterminate(false);
-        myProcessProgress.setValue(percentage);
-      }
+  @Override
+  public void setProgress(int percentage) {
+    myQueue.add(() -> {
+      myProcessProgress.setIndeterminate(false);
+      myProcessProgress.setValue(percentage);
     });
   }
 
+  @Override
   public void setProgressIndeterminate() {
-    myQueue.add(new UpdateRequest() {
-      public void perform() {
-        myProcessProgress.setIndeterminate(true);
-      }
-    });
+    myQueue.add(() -> myProcessProgress.setIndeterminate(true));
   }
 
-  public void setStatus(final String status) {
-  }
+  @Override
+  public void setStatus(String status) { }
 
-  public void showError(final Throwable e) {
+  @Override
+  public void showError(Throwable e) {
     hasError.set(true);
 
-    myQueue.add(new UpdateRequest() {
-      public void perform() {
-        StringWriter w = new StringWriter();
-        if (!myConsolePane.isVisible()) {
-          w.write("Temp. directory: ");
-          w.write(System.getProperty("java.io.tmpdir"));
-          w.write("\n\n");
-        }
-        e.printStackTrace(new PrintWriter(w));
-        w.append("\n");
-        myConsole.append(w.getBuffer().toString());
-        if (!myConsolePane.isVisible()) {
-          myConsole.setCaretPosition(0);
-          myConsolePane.setVisible(true);
-          myConsolePane.setPreferredSize(new Dimension(10, 200));
-          myFrame.pack();
-        }
+    myQueue.add(() -> {
+      StringWriter w = new StringWriter();
+      if (!myConsolePane.isVisible()) {
+        w.write("Temp. directory: ");
+        w.write(System.getProperty("java.io.tmpdir"));
+        w.write("\n\n");
+      }
+      e.printStackTrace(new PrintWriter(w));
+      w.append("\n");
+      myConsole.append(w.getBuffer().toString());
+      if (!myConsolePane.isVisible()) {
+        myConsole.setCaretPosition(0);
+        myConsolePane.setVisible(true);
+        myConsolePane.setPreferredSize(new Dimension(10, 200));
+        myFrame.pack();
       }
     });
   }
 
+  @Override
   public void checkCancelled() throws OperationCancelledException {
     if (isCancelled.get()) throw new OperationCancelledException();
   }
 
+  @FunctionalInterface
   public interface InstallOperation {
     boolean execute(UpdaterUI ui) throws OperationCancelledException;
   }
 
+  @FunctionalInterface
   private interface UpdateRequest {
     void perform();
-  }
-
-  public static void main(String[] args) {
-    new SwingUpdaterUI(new InstallOperation() {
-      public boolean execute(UpdaterUI ui) throws OperationCancelledException {
-        ui.startProcess("Process1");
-        ui.checkCancelled();
-        for (int i = 0; i < 200; i++) {
-          ui.setStatus("i = " + i);
-          ui.checkCancelled();
-          try {
-            Thread.sleep(10);
-          }
-          catch (InterruptedException e) {
-            throw new RuntimeException(e);
-          }
-          ui.setProgress((i + 1) * 100 / 200);
-        }
-
-        ui.showError(new Throwable());
-
-        ui.startProcess("Process3");
-        ui.checkCancelled();
-        ui.setProgressIndeterminate();
-        try {
-          for (int i = 0; i < 200; i++) {
-            ui.setStatus("i = " + i);
-            ui.checkCancelled();
-            try {
-              Thread.sleep(10);
-            }
-            catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-            ui.setProgress((i + 1) * 100 / 200);
-            if (i == 100) {
-              List<ValidationResult> vr = new ArrayList<>();
-              vr.add(new ValidationResult(ValidationResult.Kind.ERROR,
-                                          "foo/bar",
-                                          ValidationResult.Action.CREATE,
-                                          "Hello",
-                                          ValidationResult.Option.REPLACE,
-                                          ValidationResult.Option.KEEP));
-              vr.add(new ValidationResult(ValidationResult.Kind.CONFLICT,
-                                          "foo/bar/baz",
-                                          ValidationResult.Action.DELETE,
-                                          "World",
-                                          ValidationResult.Option.DELETE,
-                                          ValidationResult.Option.KEEP));
-              vr.add(new ValidationResult(ValidationResult.Kind.INFO,
-                                          "xxx",
-                                          ValidationResult.Action.NO_ACTION,
-                                          "bla-bla",
-                                          ValidationResult.Option.IGNORE));
-              ui.askUser(vr);
-            }
-          }
-        }
-        finally {
-          ui.startProcess("Process2");
-          for (int i = 0; i < 200; i++) {
-            ui.setStatus("i = " + i);
-            try {
-              Thread.sleep(10);
-            }
-            catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-            ui.setProgress((i + 1) * 100 / 200);
-          }
-        }
-        return true;
-      }
-    });
   }
 
   private static class MyTableModel extends AbstractTableModel {
@@ -549,13 +477,14 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      MyTableModel tableModel = (MyTableModel)table.getModel();
-      DefaultComboBoxModel comboModel = new DefaultComboBoxModel();
+      DefaultComboBoxModel<ValidationResult.Option> comboModel = new DefaultComboBoxModel<>();
 
-      for (ValidationResult.Option each : tableModel.getOptions(row)) {
+      for (ValidationResult.Option each : ((MyTableModel)table.getModel()).getOptions(row)) {
         comboModel.addElement(each);
       }
-      ((JComboBox)editorComponent).setModel(comboModel);
+
+      @SuppressWarnings("unchecked") JComboBox<ValidationResult.Option> comboBox = (JComboBox<ValidationResult.Option>)editorComponent;
+      comboBox.setModel(comboModel);
 
       return super.getTableCellEditorComponent(table, value, isSelected, row, column);
     }
@@ -569,14 +498,14 @@ public class SwingUpdaterUI implements UpdaterUI {
         MyTableModel tableModel = (MyTableModel)table.getModel();
         Color color = table.getBackground();
 
-        switch (tableModel.getKind(row)) {
-          case ERROR:
-            color = new Color(255, 175, 175);
-            break;
-          case CONFLICT:
-            color = new Color(255, 240, 240);
-            break;
+        ValidationResult.Kind kind = tableModel.getKind(row);
+        if (kind == ValidationResult.Kind.ERROR) {
+          color = new Color(255, 175, 175);
         }
+        else if (kind == ValidationResult.Kind.CONFLICT) {
+          color = new Color(255, 240, 240);
+        }
+
         result.setBackground(color);
       }
       return result;

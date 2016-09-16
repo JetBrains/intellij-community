@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,19 +46,19 @@ public class GrEqualsBetweenInconvertibleTypesInspection extends BaseInspection 
 
   private static class MyVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
+    public void visitMethodCallExpression(@NotNull GrMethodCallExpression methodCallExpression) {
       super.visitMethodCallExpression(methodCallExpression);
       processMethodCall(methodCallExpression);
     }
 
     @Override
-    public void visitApplicationStatement(GrApplicationStatement applicationStatement) {
+    public void visitApplicationStatement(@NotNull GrApplicationStatement applicationStatement) {
       super.visitApplicationStatement(applicationStatement);
       processMethodCall(applicationStatement);
     }
 
     @Override
-    public void visitBinaryExpression(GrBinaryExpression expression) {
+    public void visitBinaryExpression(@NotNull GrBinaryExpression expression) {
       super.visitBinaryExpression(expression);
       if (expression.getOperationTokenType() != GroovyTokenTypes.mEQUAL) return;
       if (expression.getRightOperand() == null) return;

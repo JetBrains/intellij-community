@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 public abstract class GroovyFix implements LocalQuickFix {
   public static final GroovyFix EMPTY_FIX = new GroovyFix() {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
     }
 
     @NotNull
@@ -72,7 +72,7 @@ public abstract class GroovyFix implements LocalQuickFix {
     }
   }
 
-  protected abstract void doFix(Project project, ProblemDescriptor descriptor)
+  protected abstract void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
       throws IncorrectOperationException;
 
   protected static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {

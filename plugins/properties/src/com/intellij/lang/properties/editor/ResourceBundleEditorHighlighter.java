@@ -122,7 +122,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
                 }
               }
             }
-            node.setInspectedPropertyNodeInfo(allDescriptors.isEmpty() ? null : new InspectedPropertyNodeInfo(allDescriptors.toArray(new Pair[allDescriptors.size()]), highlightTypes));
+            node.setInspectedPropertyProblems(allDescriptors.isEmpty() ? null : new InspectedPropertyProblems(allDescriptors.toArray(new Pair[allDescriptors.size()]), highlightTypes));
             return false;
           }
         };

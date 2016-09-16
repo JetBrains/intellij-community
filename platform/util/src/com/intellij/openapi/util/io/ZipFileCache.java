@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.zip.ZipFile;
 
 /** @deprecated use {@link ZipFile#ZipFile(String)} and {@link ZipFile#close()} instead (to be removed in IDEA 17) */
-@SuppressWarnings("unused")
 public class ZipFileCache {
   @NotNull
   public static ZipFile acquire(@NotNull String path) throws IOException {

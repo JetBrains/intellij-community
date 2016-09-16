@@ -29,7 +29,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
  */
 @CompileStatic
 class JdkUtils {
-  public static void defineJdk(JpsGlobal global, String jdkName, String jdkHomePath) {
+  static void defineJdk(JpsGlobal global, String jdkName, String jdkHomePath) {
     def sdk = JpsJavaExtensionService.instance.addJavaSdk(global, jdkName, jdkHomePath)
     def toolsJar = new File(jdkHomePath, "lib/tools.jar")
     if (toolsJar.exists()) {
@@ -37,7 +37,7 @@ class JdkUtils {
     }
   }
 
-  public static String computeJdkHome(BuildMessages messages, String propertyName, String defaultDir, String envVarName) {
+  static String computeJdkHome(BuildMessages messages, String propertyName, String defaultDir, String envVarName) {
     String jdkDir = System.getProperty(propertyName)
     if (jdkDir != null) {
       return jdkDir

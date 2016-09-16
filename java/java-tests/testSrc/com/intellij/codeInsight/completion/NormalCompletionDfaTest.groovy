@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.completion
 
-import com.intellij.JavaTestUtil;
+import com.intellij.JavaTestUtil
 
 /**
  * @author peter
@@ -23,7 +23,7 @@ import com.intellij.JavaTestUtil;
 class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
   }
   
   void testCastInstanceofedQualifier() { doTest(); }

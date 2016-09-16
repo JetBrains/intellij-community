@@ -30,10 +30,15 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author Vladimir Kondratyev
@@ -44,6 +49,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   @NotNull private final TextEditorComponent myComponent;
   @NotNull protected final VirtualFile myFile;
   private final AsyncEditorLoader myAsyncLoader;
+  private final Future<?> myLoadingFinished;
 
   TextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file, final TextEditorProvider provider) {
     myProject = project;
@@ -51,7 +57,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myChangeSupport = new PropertyChangeSupport(this);
     myComponent = createEditorComponent(project, file);
     myAsyncLoader = new AsyncEditorLoader(this, myComponent, provider);
-    myAsyncLoader.scheduleBackgroundLoading(true);
+    myLoadingFinished = myAsyncLoader.scheduleBackgroundLoading(true);
   }
 
   @NotNull
@@ -185,5 +191,15 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   @Override
   public String toString() {
     return "Editor: "+myComponent.getFile();
+  }
+
+  @TestOnly
+  public void waitForLoaded(long timeout, @NotNull TimeUnit unit) throws TimeoutException {
+    try {
+      myLoadingFinished.get(timeout, unit);
+    }
+    catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

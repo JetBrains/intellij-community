@@ -1,8 +1,8 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.testFramework.file
-import com.intellij.util.directoryStreamIfExists
-import com.intellij.util.readBytes
+import com.intellij.util.io.directoryStreamIfExists
+import com.intellij.util.io.readBytes
 import org.jetbrains.settingsRepository.SyncType
 import org.junit.Test
 

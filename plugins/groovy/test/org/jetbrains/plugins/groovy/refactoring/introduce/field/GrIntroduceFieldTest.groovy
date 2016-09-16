@@ -37,59 +37,59 @@ import static org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntrodu
 class GrIntroduceFieldTest extends LightGroovyTestCase {
   @Override
   protected String getBasePath() {
-    "${TestUtils.testDataPath}refactoring/introduceField/";
+    "${TestUtils.testDataPath}refactoring/introduceField/"
   }
 
   void testSimple() {
-    doTest(false, false, false, CUR_METHOD, false, null);
+    doTest(false, false, false, CUR_METHOD, false, null)
   }
 
   void testDeclareFinal() {
-    doTest(false, false, true, FIELD_DECLARATION, false, null);
+    doTest(false, false, true, FIELD_DECLARATION, false, null)
   }
 
   void testCreateConstructor() {
-    doTest(false, false, true, CONSTRUCTOR, true, null);
+    doTest(false, false, true, CONSTRUCTOR, true, null)
   }
 
   void testManyConstructors() {
-    doTest(false, false, true, CONSTRUCTOR, true, null);
+    doTest(false, false, true, CONSTRUCTOR, true, null)
   }
 
   void testDontReplaceStaticOccurrences() {
-    doTest(false, false, true, FIELD_DECLARATION, true, null);
+    doTest(false, false, true, FIELD_DECLARATION, true, null)
   }
 
   void testQualifyUsages() {
-    doTest(false, false, true, FIELD_DECLARATION, true, null);
+    doTest(false, false, true, FIELD_DECLARATION, true, null)
   }
 
   void testReplaceLocalVar() {
-    doTest(false, true, false, CUR_METHOD, true, null);
+    doTest(false, true, false, CUR_METHOD, true, null)
   }
 
   void testIntroduceLocalVarByDeclaration() {
-    doTest(false, true, false, FIELD_DECLARATION, true, null);
+    doTest(false, true, false, FIELD_DECLARATION, true, null)
   }
 
   void testReplaceExpressionWithAssignment() {
-    doTest(false, false, false, CUR_METHOD, false, null);
+    doTest(false, false, false, CUR_METHOD, false, null)
   }
 
   void testAnonymousClass() {
-    doTest(false, false, false, CUR_METHOD, false, null);
+    doTest(false, false, false, CUR_METHOD, false, null)
   }
 
   void testAnonymous2() {
-    doTest(false, false, false, CONSTRUCTOR, false, null);
+    doTest(false, false, false, CONSTRUCTOR, false, null)
   }
 
   void testAnonymous3() {
-    doTest(false, false, false, CONSTRUCTOR, false, null);
+    doTest(false, false, false, CONSTRUCTOR, false, null)
   }
 
   void testInitializeInCurrentMethod() {
-    doTest(false, true, true, CUR_METHOD, false, null);
+    doTest(false, true, true, CUR_METHOD, false, null)
   }
 
   void testScriptBody() {
@@ -650,7 +650,7 @@ println(<selection>a + b</selection>)
                       @Nullable final String selectedType = null) {
     myFixture.configureByFile("${getTestName(false)}.groovy")
     performRefactoring(selectedType, isStatic, removeLocal, declareFinal, initIn, replaceAll)
-    myFixture.checkResultByFile("${getTestName(false)}_after.groovy");
+    myFixture.checkResultByFile("${getTestName(false)}_after.groovy")
   }
 
   private void doTest(@NotNull final String textBefore,
@@ -663,7 +663,7 @@ println(<selection>a + b</selection>)
                       @Nullable final String selectedType = null) {
     myFixture.configureByText("_.groovy", textBefore)
     performRefactoring(selectedType, isStatic, removeLocal, declareFinal, initIn, replaceAll)
-    myFixture.checkResult(textAfter);
+    myFixture.checkResult(textAfter)
   }
 
   private void performRefactoring(String selectedType, boolean isStatic, boolean removeLocal, boolean declareFinal, GrIntroduceFieldSettings.Init initIn, boolean replaceAll) {
@@ -671,8 +671,8 @@ println(<selection>a + b</selection>)
     def accessToken = WriteAction.start()
     try {
       final IntroduceFieldTestHandler handler = new IntroduceFieldTestHandler(isStatic, removeLocal, declareFinal, initIn, replaceAll, type)
-      handler.invoke(project, myFixture.editor, myFixture.file, null);
-      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
+      handler.invoke(project, myFixture.editor, myFixture.file, null)
+      PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
     }
     finally {
       accessToken.finish()

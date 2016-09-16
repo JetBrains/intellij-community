@@ -342,7 +342,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       runnable.run();
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(runnable, ModalityState.defaultModalityState());
+      ApplicationManager.getApplication().invokeAndWait(runnable);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,7 @@ public class Gens extends ValuesExtractionResultImpl {
     if (averageMutationCount > 0) {
       // with mutation
 
-      int commonMutagen = 0;
-
-      for (Value value : myValues) {
-        commonMutagen += value.getMutagenFactor();
-      }
+      int commonMutagen = myValues.stream().mapToInt(Value::getMutagenFactor).sum();
 
       for (Value value : myValues) {
         if (Utils.getRandomLess(commonMutagen) < value.getMutagenFactor() * averageMutationCount) {
@@ -52,7 +48,6 @@ public class Gens extends ValuesExtractionResultImpl {
   }
 
   public Gens dropToInitial() {
-    final ArrayList<Value> values = new ArrayList<>();
     for (Value value : myValues) {
       final Object[] possibleValues = value.getPossibleValues();
       if (possibleValues.length > 0) {

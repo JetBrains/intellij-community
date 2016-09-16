@@ -32,7 +32,7 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   @Override
   public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
     Launcher launcher = LauncherFactory.create();
-    JUnit5TestExecutionListener listener = new JUnit5TestExecutionListener(System.out);
+    JUnit5TestExecutionListener listener = new JUnit5TestExecutionListener();
     launcher.registerTestExecutionListeners(listener);
     final String[] packageNameRef = new String[1];
     final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);

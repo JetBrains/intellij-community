@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class ActionsTreeUtil {
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final List<IdeaPluginDescriptor> plugins = new ArrayList<>();
     Collections.addAll(plugins, PluginManagerCore.getPlugins());
-    Collections.sort(plugins, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+    Collections.sort(plugins, Comparator.comparing(IdeaPluginDescriptor::getName));
 
     List<PluginId> collected = new ArrayList<>();
     for (IdeaPluginDescriptor plugin : plugins) {
@@ -507,9 +507,16 @@ public class ActionsTreeUtil {
       if (filter == null) return true;
       if (action == null) return false;
       final String insensitiveFilter = filter.toLowerCase();
-      for (String text : new String[]{action.getTemplatePresentation().getText(),
-                                      action.getTemplatePresentation().getDescription(),
-                                      action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action)}) {
+      ArrayList<String> options = new ArrayList<>();
+      options.add(action.getTemplatePresentation().getText());
+      options.add(action.getTemplatePresentation().getDescription());
+      String id = action instanceof ActionStub ? ((ActionStub)action).getId() : ActionManager.getInstance().getId(action);
+      if (id != null) {
+        options.add(id);
+        options.addAll(AbbreviationManager.getInstance().getAbbreviations(id));
+      }
+
+      for (String text : options) {
         if (text != null) {
           final String lowerText = text.toLowerCase();
 

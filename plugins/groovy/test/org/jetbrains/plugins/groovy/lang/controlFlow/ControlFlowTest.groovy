@@ -62,19 +62,19 @@ class ControlFlowTest extends LightCodeInsightFixtureTestCase {
 
   void testSwitch5() { doTest(); }
 
-  void testNestedSwitch1() { doTest() };
+  void testNestedSwitch1() { doTest() }
 
-  void testNestedSwitch2() { doTest() };
+  void testNestedSwitch2() { doTest() }
 
-  void testNestedSwitch3() { doTest() };
+  void testNestedSwitch3() { doTest() }
 
-  void testNestedSwitch4() { doTest() };
+  void testNestedSwitch4() { doTest() }
 
-  void testSwitchWithinFor() { doTest() };
+  void testSwitchWithinFor() { doTest() }
 
-  void testSwitchWithinLabeledFor() { doTest() };
+  void testSwitchWithinLabeledFor() { doTest() }
 
-  void testForWithinSwitchWithinFor() { doTest() };
+  void testForWithinSwitchWithinFor() { doTest() }
 
   void testThrow1() { doTest(); }
 
@@ -147,18 +147,18 @@ class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   void testUnfinishedAssignment() { doTest() }
 
   void doTest() {
-    final List<String> input = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
+    final List<String> input = TestUtils.readInput(testDataPath + getTestName(true) + ".test")
 
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, input.get(0));
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, input.get(0))
 
-    final GroovyFile file = (GroovyFile)myFixture.file;
-    final SelectionModel model = myFixture.editor.selectionModel;
-    final PsiElement start = file.findElementAt(model.hasSelection() ? model.selectionStart : 0);
-    final PsiElement end = file.findElementAt(model.hasSelection() ? model.selectionEnd - 1 : file.textLength - 1);
-    final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner, false);
-    final Instruction[] instructions = new ControlFlowBuilder(project).buildControlFlow(owner);
-    final String cf = ControlFlowUtils.dumpControlFlow(instructions);
-    assertEquals(input.get(1).trim(), cf.trim());
+    final GroovyFile file = (GroovyFile)myFixture.file
+    final SelectionModel model = myFixture.editor.selectionModel
+    final PsiElement start = file.findElementAt(model.hasSelection() ? model.selectionStart : 0)
+    final PsiElement end = file.findElementAt(model.hasSelection() ? model.selectionEnd - 1 : file.textLength - 1)
+    final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner, false)
+    final Instruction[] instructions = new ControlFlowBuilder(project).buildControlFlow(owner)
+    final String cf = ControlFlowUtils.dumpControlFlow(instructions)
+    assertEquals(input.get(1).trim(), cf.trim())
   }
 
 }

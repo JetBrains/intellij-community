@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
+import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 
 public class GroovyTrivialConditionalInspection extends BaseInspection {
 
@@ -87,7 +87,7 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
         throws IncorrectOperationException {
       final GrConditionalExpression expression = (GrConditionalExpression) descriptor.getPsiElement();
       final String newExpression = calculateReplacementExpression(expression);
@@ -99,7 +99,7 @@ public class GroovyTrivialConditionalInspection extends BaseInspection {
       extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(GrConditionalExpression exp) {
+    public void visitConditionalExpression(@NotNull GrConditionalExpression exp) {
       super.visitConditionalExpression(exp);
       final GrExpression condition = exp.getCondition();
       final PsiType type = condition.getType();

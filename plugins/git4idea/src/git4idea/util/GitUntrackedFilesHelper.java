@@ -18,7 +18,6 @@ package git4idea.util;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -147,7 +146,7 @@ public class GitUntrackedFilesHelper {
         DialogManager.show(dialog);
         rollback.set(dialog.isOK());
       }
-    }, ModalityState.defaultModalityState());
+    });
     return rollback.get();
   }
 

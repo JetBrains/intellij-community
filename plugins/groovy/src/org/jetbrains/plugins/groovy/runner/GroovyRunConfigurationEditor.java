@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 
 package org.jetbrains.plugins.groovy.runner;
 
+import com.intellij.application.options.ModulesComboBox;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.application.options.ModulesComboBox;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.PanelWithAnchor;
@@ -76,7 +76,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   }
 
   @Override
-  public void resetEditorFrom(GroovyScriptRunConfiguration configuration) {
+  public void resetEditorFrom(@NotNull GroovyScriptRunConfiguration configuration) {
     myVMParameters.setDialogCaption("VM Options");
     myVMParameters.setText(configuration.getVMParameters());
 
@@ -96,7 +96,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   }
 
   @Override
-  public void applyEditorTo(GroovyScriptRunConfiguration configuration) throws ConfigurationException {
+  public void applyEditorTo(@NotNull GroovyScriptRunConfiguration configuration) throws ConfigurationException {
     configuration.setModule(myModulesBox.getSelectedModule());
     configuration.setVMParameters(myVMParameters.getText());
     configuration.setDebugEnabled(myDebugCB.isSelected());

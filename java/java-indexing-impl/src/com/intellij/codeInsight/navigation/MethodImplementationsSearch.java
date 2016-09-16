@@ -46,7 +46,6 @@ public class MethodImplementationsSearch implements QueryExecutor<PsiElement, De
            FunctionalExpressionSearch.search(psiMethod, searchScope).forEach((Processor<PsiFunctionalExpression>)consumer::process);
   }
 
-  @SuppressWarnings("unused")
   public static void getOverridingMethods(PsiMethod method, List<PsiMethod> list, SearchScope scope) {
     processOverridingMethods(method, scope, new CommonProcessors.CollectProcessor<>(list));
   }

@@ -84,7 +84,7 @@ public class GrPackageInspection extends BaseInspection {
   protected BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitFile(GroovyFileBase file) {
+      public void visitFile(@NotNull GroovyFileBase file) {
         if (!(file instanceof GroovyFile)) return;
 
         if (!myCheckScripts && file.isScript()) return;

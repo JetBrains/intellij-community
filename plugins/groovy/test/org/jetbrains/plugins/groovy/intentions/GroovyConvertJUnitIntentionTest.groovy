@@ -93,17 +93,17 @@ public class Assert {
   public static void assertNotSame(java.lang.Object expected, java.lang.Object actual) { }
 }
 """)
-    myFixture.configureByText("A.groovy", before);
+    myFixture.configureByText("A.groovy", before)
 
-    String hint = GroovyIntentionsBundle.message("convert.junit.assertion.to.assert.statement.intention.name");
-    final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint);
+    String hint = GroovyIntentionsBundle.message("convert.junit.assertion.to.assert.statement.intention.name")
+    final List<IntentionAction> list = myFixture.filterAvailableIntentions(hint)
     if (after == null) {
-      assertEmpty(list);
-      return;
+      assertEmpty(list)
+      return
     }
 
-    myFixture.launchAction(assertOneElement(list));
-    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
+    myFixture.launchAction(assertOneElement(list))
+    PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting()
 
     myFixture.checkResult(after)
   }

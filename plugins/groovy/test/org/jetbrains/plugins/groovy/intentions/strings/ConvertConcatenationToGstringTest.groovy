@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.intentions.strings;
+package org.jetbrains.plugins.groovy.intentions.strings
 
 
 import com.intellij.openapi.module.Module
@@ -42,36 +42,36 @@ class ConvertConcatenationToGstringTest extends GrIntentionTestCase {
   final LightProjectDescriptor projectDescriptor = new DefaultLightProjectDescriptor() {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel;
-      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/");
-      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES);
-      modifiableModel.commit();
+      final Library.ModifiableModel modifiableModel = model.moduleLibraryTable.createLibrary("GROOVY").modifiableModel
+      final VirtualFile groovyJar = JarFileSystem.instance.refreshAndFindFileByPath(TestUtils.mockGroovy1_7LibraryName + "!/")
+      modifiableModel.addRoot(groovyJar, OrderRootType.CLASSES)
+      modifiableModel.commit()
     }
   }
   
   final String basePath = TestUtils.testDataPath + 'intentions/convertConcatenationToGstring/'
 
   void testSimpleCase() {
-    doTest(true);
+    doTest(true)
   }
 
   void testVeryComplicatedCase() {
-    doTest(true);
+    doTest(true)
   }
 
   void testQuotes() {
-    doTest(true);
+    doTest(true)
   }
 
   void testQuotes2() {
-    doTest(true);
+    doTest(true)
   }
 
   void testQuotesInMultilineString() {
-    doTest(true);
+    doTest(true)
   }
 
   void testDot() {
-    doTest(true);
+    doTest(true)
   }
 }

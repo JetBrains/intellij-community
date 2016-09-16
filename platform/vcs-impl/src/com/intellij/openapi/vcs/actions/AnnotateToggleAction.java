@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -101,9 +102,10 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       });
     });
 
-    fileAnnotation.setReloader(() -> {
+    fileAnnotation.setReloader(newFileAnnotation -> {
       if (editor.getGutter().isAnnotationsShown()) {
-        doAnnotate(editor, project, currentFile, fileAnnotation, vcs, upToDateLineNumberProvider);
+        assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
+        doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumberProvider);
       }
     });
 
@@ -214,7 +216,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       Map<VcsRevisionNumber, String> authorsMap = authorsMappingProvider.getAuthors();
 
       Map<String, Color> authorColors = new HashMap<>();
-      for (String author : ContainerUtil.newTreeSet(authorsMap.values())) {
+      for (String author : ContainerUtil.sorted(authorsMap.values(), Comparing::compare)) {
         int index = authorColors.size();
         Color color = authorsColorPalette.get(index % authorsColorPalette.size());
         authorColors.put(author, color);

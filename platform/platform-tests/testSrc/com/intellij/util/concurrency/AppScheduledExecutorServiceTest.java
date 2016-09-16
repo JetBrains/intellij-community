@@ -75,9 +75,9 @@ public class AppScheduledExecutorServiceTest extends TestCase {
 
     TimeoutUtil.sleep(delay/2);
     long elapsed = System.currentTimeMillis() - start; // can be > delay/2 on overloaded agent
-    assertEquals(elapsed > delay, f1.isDone());
-    assertEquals(elapsed > delay, f2.isDone());
-    assertEquals(elapsed > delay, f3.isDone());
+    assertEquals(String.valueOf(f1.isDone()), elapsed > delay, f1.isDone());
+    assertEquals(String.valueOf(f2.isDone()), elapsed > delay, f2.isDone());
+    assertEquals(String.valueOf(f3.isDone()), elapsed > delay, f3.isDone());
     assertTrue(f4.isDone());
 
     TimeoutUtil.sleep(delay/2+500);

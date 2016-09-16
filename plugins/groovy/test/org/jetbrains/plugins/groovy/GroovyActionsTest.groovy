@@ -24,10 +24,10 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
 
-  final String basePath = TestUtils.testDataPath + 'groovy/actions/';
+  final String basePath = TestUtils.testDataPath + 'groovy/actions/'
 
   void testSelectWordBeforeMethod() {
-    doTestForSelectWord 1;
+    doTestForSelectWord 1
   }
 
   void testSWInGString() { doTestSelectWordUpTo 5 }
@@ -226,20 +226,20 @@ class A {
   }
 
   private void doTestForSelectWord(int count, String input, String expected) {
-    myFixture.configureByText("a.groovy", input);
+    myFixture.configureByText("a.groovy", input)
     selectWord(count)
-    myFixture.checkResult(expected);
+    myFixture.checkResult(expected)
   }
 
   private void doTestForSelectWord(int count) {
-    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.configureByFile(getTestName(false) + ".groovy")
     selectWord(count)
-    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
   private void doTestSelectWordUpTo(int count) {
     def testName = getTestName(false)
-    myFixture.configureByFile "${testName}_0.groovy";
+    myFixture.configureByFile "${testName}_0.groovy"
     myFixture.editor.settings.camelWords = true
     count.times {
       performEditorAction IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET
@@ -248,9 +248,9 @@ class A {
   }
 
   private def selectWord(int count) {
-    myFixture.editor.settings.camelWords = true;
+    myFixture.editor.settings.camelWords = true
     for (int i = 0; i < count; i++) {
-      performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
+      performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET)
     }
   }
 

@@ -294,7 +294,7 @@ class Test {
     }
 }
 '''
-    importClass();
+    importClass()
     myFixture.checkResult '''import java.util.Collection;
 
 class Test {
@@ -313,7 +313,7 @@ class Test {
     }
 }
 '''
-    importClass();
+    importClass()
     myFixture.checkResult '''import java.util.Collections;
 
 class Test {
@@ -448,7 +448,7 @@ package com.rocket.test;
 
 
   void "test keep methods formatting on add import"() {
-    settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true
 
     myFixture.configureByText 'Tq.java', '''
 class Tq {
@@ -486,16 +486,16 @@ class Tq {
 
   @Override
   void setUp() throws Exception {
-    super.setUp();
+    super.setUp()
     settings = new CodeStyleSettings()
-    CodeStyleSettingsManager.getInstance(myFixture.project).setTemporarySettings(settings);
+    CodeStyleSettingsManager.getInstance(myFixture.project).setTemporarySettings(settings)
   }
 
   @Override
   void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(myFixture.project).dropTemporarySettings();
+    CodeStyleSettingsManager.getInstance(myFixture.project).dropTemporarySettings()
     settings = null
-    super.tearDown();
+    super.tearDown()
   }
 
   private def importClass() {
@@ -569,7 +569,7 @@ public class Foo {
   }
 
   void "test remember chosen variants"() {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable());
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable())
     myFixture.addClass 'package foo; public class Log {}'
     myFixture.addClass 'package bar; public class Log {}'
 

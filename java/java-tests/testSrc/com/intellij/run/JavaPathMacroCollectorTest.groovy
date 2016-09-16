@@ -16,8 +16,8 @@
 package com.intellij.run
 
 import com.intellij.application.options.PathMacrosCollector
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 class JavaPathMacroCollectorTest extends LightCodeInsightFixtureTestCase {
   void testJunitConfiguration() {

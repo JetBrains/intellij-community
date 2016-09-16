@@ -265,9 +265,7 @@ public enum EffectPainter implements RegionPainter<Paint> {
       Long key = color.getRGB() ^ ((long)height << 32);
       BufferedImage image = myCache.get(key);
       if (image == null || UIUtil.isRetina(g) != (image instanceof JBHiDPIScaledImage)) {
-        int period = getPeriod(height);
-        image = UIUtil.createImageForGraphics(g, period << 8, height, BufferedImage.TYPE_INT_ARGB);
-        paintImage(image.createGraphics(), color, image.getWidth(), image.getHeight(), period);
+        image = createImage(g, color, height);
         myCache.put(key, image);
       }
       return image;
@@ -275,8 +273,9 @@ public enum EffectPainter implements RegionPainter<Paint> {
 
     BufferedImage createImage(Graphics2D g, Paint paint, int height) {
       int period = getPeriod(height);
-      BufferedImage image = UIUtil.createImageForGraphics(g, period << 1, height, BufferedImage.TYPE_INT_ARGB);
-      paintImage(image.createGraphics(), paint, image.getWidth(), image.getHeight(), period);
+      int width = period << (paint instanceof Color ? 8 : 1);
+      BufferedImage image = UIUtil.createImageForGraphics(g, width, height, BufferedImage.TYPE_INT_ARGB);
+      paintImage(image.createGraphics(), paint, width, height, period);
       return image;
     }
 

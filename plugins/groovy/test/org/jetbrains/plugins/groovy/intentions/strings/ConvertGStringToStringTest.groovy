@@ -28,19 +28,19 @@ class ConvertGStringToStringTest extends GrIntentionTestCase {
   final String basePath = TestUtils.testDataPath + "intentions/convertGStringToString/"
 
   void testSimpleCase() {
-    doTest(INTENTION_NAME, true);
+    doTest(INTENTION_NAME, true)
   }
 
   void testComplicatedCase() {
-    doTest(INTENTION_NAME, true);
+    doTest(INTENTION_NAME, true)
   }
 
   void testEscaping() {
-    doTest(INTENTION_NAME, true);
+    doTest(INTENTION_NAME, true)
   }
 
   void testSlashBeforeNewLine() {
-    doTest(INTENTION_NAME, true);
+    doTest(INTENTION_NAME, true)
   }
 
   void testGStringWithComplicatedInjection() {

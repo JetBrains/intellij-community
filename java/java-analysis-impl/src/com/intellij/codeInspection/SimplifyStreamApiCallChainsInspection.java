@@ -16,6 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -29,14 +30,17 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.MessageFormat;
+import java.util.Arrays;
+
 /**
  * @author Pavel.Dolgov
  */
 public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance("#" + SimplifyStreamApiCallChainsInspection.class.getName());
+
   private static final String FOR_EACH_METHOD = "forEach";
   private static final String FOR_EACH_ORDERED_METHOD = "forEachOrdered";
-  private static final String COUNT_METHOD = "count";
-  private static final String SIZE_METHOD = "size";
   private static final String STREAM_METHOD = "stream";
   private static final String EMPTY_METHOD = "empty";
   private static final String AS_LIST_METHOD = "asList";
@@ -46,6 +50,11 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   private static final String SINGLETON_LIST_METHOD = "singletonList";
   private static final String SINGLETON_METHOD = "singleton";
   private static final String COLLECT_METHOD = "collect";
+  private static final String IS_PRESENT_METHOD = "isPresent";
+  private static final String FIND_ANY_METHOD = "findAny";
+  private static final String FIND_FIRST_METHOD = "findFirst";
+  private static final String FILTER_METHOD = "filter";
+  private static final String ANY_MATCH_METHOD = "anyMatch";
 
   private static final String COUNTING_COLLECTOR = "counting";
   private static final String MIN_BY_COLLECTOR = "minBy";
@@ -73,106 +82,131 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
         final PsiMethod method = methodCall.resolveMethod();
         if (isCallOf(method, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
-          final PsiMethodCallExpression qualifierCall = getQualifierMethodCall(methodCall);
-          if (qualifierCall == null) return;
-          final PsiMethod qualifier = qualifierCall.resolveMethod();
-          ReplaceCollectionStreamFix fix = null;
-          if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_ARRAYS, AS_LIST_METHOD, 1)) {
-            if (hasSingleArrayArgument(qualifierCall)) {
-              fix = new ArraysAsListSingleArrayFix();
-            }
-            else {
-              fix = new ReplaceWithStreamOfFix("Arrays.asList()");
-            }
-          }
-          else if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTIONS, SINGLETON_LIST_METHOD, 1)) {
-            if (!hasSingleArrayArgument(qualifierCall)) {
-              fix = new ReplaceSingletonWithStreamOfFix("Collections.singletonList()");
-            }
-          }
-          else if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTIONS, SINGLETON_METHOD, 1)) {
-            if (!hasSingleArrayArgument(qualifierCall)) {
-              fix = new ReplaceSingletonWithStreamOfFix("Collections.singleton()");
-            }
-          }
-          else if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTIONS, EMPTY_LIST_METHOD, 0)) {
-            fix = new ReplaceWithStreamEmptyFix(EMPTY_LIST_METHOD);
-          }
-          else if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTIONS, EMPTY_SET_METHOD, 0)) {
-            fix = new ReplaceWithStreamEmptyFix(EMPTY_SET_METHOD);
-          }
-          if (fix != null) {
-            holder.registerProblem(methodCall, null, fix.getMessage(), fix);
-          }
+          handleCollectionStream(methodCall);
         }
         else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, COLLECT_METHOD, 1)) {
-          PsiElement parameter = methodCall.getArgumentList().getExpressions()[0];
-          if(parameter instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
-            PsiMethod collectorMethod = collectorCall.resolveMethod();
-            ReplaceCollectorFix fix = null;
-            if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, COUNTING_COLLECTOR, 0)) {
-              fix = new ReplaceCollectorFix(COUNTING_COLLECTOR, "count()", false);
-            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MIN_BY_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(MIN_BY_COLLECTOR, "min({1})", true);
-            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MAX_BY_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(MAX_BY_COLLECTOR, "max({1})", true);
-            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MAPPING_COLLECTOR, 2)) {
-              fix = new ReplaceCollectorFix(MAPPING_COLLECTOR, "map({1}).collect({2})", false);
-            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "reduce({1})", true);
-            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 2)) {
-              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "reduce({1}, {2})", false);
-            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 3)) {
-              fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "map({2}).reduce({1}, {3})", false);
-            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_INT_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(SUMMING_INT_COLLECTOR, "mapToInt({1}).sum()", false);
-            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_LONG_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(SUMMING_LONG_COLLECTOR, "mapToLong({1}).sum()", false);
-            } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_DOUBLE_COLLECTOR, 1)) {
-              fix = new ReplaceCollectorFix(SUMMING_DOUBLE_COLLECTOR, "mapToDouble({1}).sum()", false);
-            }
-            if (fix != null &&
-                collectorCall.getArgumentList().getExpressions().length == collectorMethod.getParameterList().getParametersCount()) {
-              TextRange range = methodCall.getTextRange();
-              PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
-              if(nameElement != null) {
-                range = new TextRange(nameElement.getTextOffset(), range.getEndOffset());
+          handleStreamCollect(methodCall);
+        }
+        else if (isCallOf(method, CommonClassNames.JAVA_UTIL_OPTIONAL, IS_PRESENT_METHOD, 0)) {
+          handleOptionalIsPresent(methodCall);
+        }
+        else {
+          handleStreamForEach(methodCall, method);
+        }
+      }
+
+      private void handleOptionalIsPresent(PsiMethodCallExpression methodCall) {
+        PsiExpression optionalQualifier = methodCall.getMethodExpression().getQualifierExpression();
+        if(optionalQualifier instanceof PsiMethodCallExpression) {
+          PsiMethod optionalProducer = ((PsiMethodCallExpression)optionalQualifier).resolveMethod();
+          if (isCallOf(optionalProducer, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FIND_FIRST_METHOD, 0) ||
+              isCallOf(optionalProducer, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FIND_ANY_METHOD, 0)) {
+            PsiExpression streamQualifier = ((PsiMethodCallExpression)optionalQualifier).getMethodExpression().getQualifierExpression();
+            if(streamQualifier instanceof PsiMethodCallExpression) {
+              PsiMethod streamMethod = ((PsiMethodCallExpression)streamQualifier).resolveMethod();
+              if(isCallOf(streamMethod, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FILTER_METHOD, 1)) {
+                ReplaceOptionalIsPresentChainFix fix = new ReplaceOptionalIsPresentChainFix(optionalProducer.getName());
+                holder
+                  .registerProblem(methodCall, getCallChainRange(methodCall, (PsiMethodCallExpression)streamQualifier), fix.getMessage(),
+                                   new SimplifyCallChainFix(fix));
               }
-              holder.registerProblem(methodCall, range.shiftRight(-methodCall.getTextOffset()), fix.getMessage(), fix);
             }
           }
         }
+      }
+
+      private void handleStreamForEach(PsiMethodCallExpression methodCall, PsiMethod method) {
+        final String name;
+        if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FOR_EACH_METHOD, 1)) {
+          name = FOR_EACH_METHOD;
+        }
+        else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FOR_EACH_ORDERED_METHOD, 1)) {
+          name = FOR_EACH_ORDERED_METHOD;
+        }
         else {
-          final String name;
-          if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FOR_EACH_METHOD, 1)) {
-            name = FOR_EACH_METHOD;
+          return;
+        }
+        final PsiMethodCallExpression qualifierCall = getQualifierMethodCall(methodCall);
+        if (qualifierCall == null) return;
+        final PsiMethod qualifier = qualifierCall.resolveMethod();
+        if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
+          final ReplaceStreamMethodFix fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, true);
+          holder
+            .registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), new SimplifyCallChainFix(fix));
+        }
+      }
+
+      private void handleStreamCollect(PsiMethodCallExpression methodCall) {
+        PsiElement parameter = methodCall.getArgumentList().getExpressions()[0];
+        if(parameter instanceof PsiMethodCallExpression) {
+          PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
+          PsiMethod collectorMethod = collectorCall.resolveMethod();
+          ReplaceCollectorFix fix = null;
+          if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, COUNTING_COLLECTOR, 0)) {
+            fix = new ReplaceCollectorFix(COUNTING_COLLECTOR, "count()", false);
+          } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MIN_BY_COLLECTOR, 1)) {
+            fix = new ReplaceCollectorFix(MIN_BY_COLLECTOR, "min({0})", true);
+          } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MAX_BY_COLLECTOR, 1)) {
+            fix = new ReplaceCollectorFix(MAX_BY_COLLECTOR, "max({0})", true);
+          } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, MAPPING_COLLECTOR, 2)) {
+            fix = new ReplaceCollectorFix(MAPPING_COLLECTOR, "map({0}).collect({1})", false);
+          } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 1)) {
+            fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "reduce({0})", true);
+          } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 2)) {
+            fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "reduce({0}, {1})", false);
+          } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, REDUCING_COLLECTOR, 3)) {
+            fix = new ReplaceCollectorFix(REDUCING_COLLECTOR, "map({1}).reduce({0}, {2})", false);
+          } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_INT_COLLECTOR, 1)) {
+            fix = new ReplaceCollectorFix(SUMMING_INT_COLLECTOR, "mapToInt({0}).sum()", false);
+          } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_LONG_COLLECTOR, 1)) {
+            fix = new ReplaceCollectorFix(SUMMING_LONG_COLLECTOR, "mapToLong({0}).sum()", false);
+          } else if(isCallOf(collectorMethod, CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, SUMMING_DOUBLE_COLLECTOR, 1)) {
+            fix = new ReplaceCollectorFix(SUMMING_DOUBLE_COLLECTOR, "mapToDouble({0}).sum()", false);
           }
-          else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, FOR_EACH_ORDERED_METHOD, 1)) {
-            name = FOR_EACH_ORDERED_METHOD;
+          if (fix != null &&
+              collectorCall.getArgumentList().getExpressions().length == collectorMethod.getParameterList().getParametersCount()) {
+            TextRange range = methodCall.getTextRange();
+            PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
+            if(nameElement != null) {
+              range = new TextRange(nameElement.getTextOffset(), range.getEndOffset());
+            }
+            holder.registerProblem(methodCall, range.shiftRight(-methodCall.getTextOffset()), fix.getMessage(),
+                                   new SimplifyCallChainFix(fix));
           }
-          else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, COUNT_METHOD, 0)) {
-            name = COUNT_METHOD;
+        }
+      }
+
+      private void handleCollectionStream(PsiMethodCallExpression methodCall) {
+        final PsiMethodCallExpression qualifierCall = getQualifierMethodCall(methodCall);
+        if (qualifierCall == null) return;
+        final PsiMethod qualifier = qualifierCall.resolveMethod();
+        ReplaceCollectionStreamFix fix = null;
+        if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_ARRAYS, AS_LIST_METHOD, 1)) {
+          if (hasSingleArrayArgument(qualifierCall)) {
+            fix = new ArraysAsListSingleArrayFix();
           }
           else {
-            return;
+            fix = new ReplaceWithStreamOfFix("Arrays.asList()");
           }
-          final PsiMethodCallExpression qualifierCall = getQualifierMethodCall(methodCall);
-          if (qualifierCall == null) return;
-          final PsiMethod qualifier = qualifierCall.resolveMethod();
-          if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
-            final ReplaceStreamMethodFix fix;
-            if (FOR_EACH_METHOD.equals(name)) {
-              fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, false);
-            }
-            else if (FOR_EACH_ORDERED_METHOD.equals(name)) {
-              fix = new ReplaceStreamMethodFix(name, FOR_EACH_METHOD, true);
-            }
-            else {
-              fix = new StreamCountFix();
-            }
-            holder.registerProblem(methodCall, getCallChainRange(methodCall, qualifierCall), fix.getMessage(), fix);
+        }
+        else if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTIONS, SINGLETON_LIST_METHOD, 1)) {
+          if (!hasSingleArrayArgument(qualifierCall)) {
+            fix = new ReplaceSingletonWithStreamOfFix("Collections.singletonList()");
           }
+        }
+        else if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTIONS, SINGLETON_METHOD, 1)) {
+          if (!hasSingleArrayArgument(qualifierCall)) {
+            fix = new ReplaceSingletonWithStreamOfFix("Collections.singleton()");
+          }
+        }
+        else if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTIONS, EMPTY_LIST_METHOD, 0)) {
+          fix = new ReplaceWithStreamEmptyFix(EMPTY_LIST_METHOD);
+        }
+        else if (isCallOf(qualifier, CommonClassNames.JAVA_UTIL_COLLECTIONS, EMPTY_SET_METHOD, 0)) {
+          fix = new ReplaceWithStreamEmptyFix(EMPTY_SET_METHOD);
+        }
+        if (fix != null) {
+          holder.registerProblem(methodCall, null, fix.getMessage(), new SimplifyCallChainFix(fix));
         }
       }
     };
@@ -199,7 +233,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   }
 
   @Nullable
-  private static PsiMethodCallExpression getQualifierMethodCall(PsiMethodCallExpression methodCall) {
+  static PsiMethodCallExpression getQualifierMethodCall(PsiMethodCallExpression methodCall) {
     final PsiExpression qualifierExpression = methodCall.getMethodExpression().getQualifierExpression();
     if (qualifierExpression instanceof PsiMethodCallExpression) {
       return (PsiMethodCallExpression)qualifierExpression;
@@ -208,8 +242,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   }
 
   @NotNull
-  protected TextRange getCallChainRange(@NotNull PsiMethodCallExpression expression,
-                                        @NotNull PsiMethodCallExpression qualifierExpression) {
+  protected static TextRange getCallChainRange(@NotNull PsiMethodCallExpression expression,
+                                               @NotNull PsiMethodCallExpression qualifierExpression) {
     final PsiReferenceExpression qualifierMethodExpression = qualifierExpression.getMethodExpression();
     final PsiElement qualifierNameElement = qualifierMethodExpression.getReferenceNameElement();
     final int startOffset = (qualifierNameElement != null ? qualifierNameElement : qualifierMethodExpression).getTextOffset();
@@ -232,14 +266,39 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     return false;
   }
 
-  private static abstract class CallChainFixBase implements LocalQuickFix {
+  interface CallChainFix {
+    String getName();
+    void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
+  }
+
+  private static class SimplifyCallChainFix implements LocalQuickFix {
+    private final CallChainFix myFix;
+
+    SimplifyCallChainFix(CallChainFix fix) {
+      myFix = fix;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName();
+      return myFix.getName();
     }
 
+    @Nls
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return "Simplify stream call chain";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      myFix.applyFix(project, descriptor);
+    }
+  }
+
+  private static abstract class CallChainFixBase implements CallChainFix {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getStartElement();
@@ -272,7 +331,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     }
 
     @NotNull
-    String getMessage() {
+    public String getMessage() {
       return myQualifierCall + ".stream() can be replaced with " + ClassUtil.extractClassName(myClassName) + "." + myMethodName + "()";
     }
 
@@ -313,13 +372,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     private ReplaceWithStreamOfFix(String qualifierCall) {
       super(qualifierCall, CommonClassNames.JAVA_UTIL_STREAM_STREAM, OF_METHOD);
     }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Replace with Stream.of()";
-    }
   }
 
   private static class ReplaceSingletonWithStreamOfFix extends ReplaceWithStreamOfFix {
@@ -349,29 +401,15 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     private ArraysAsListSingleArrayFix() {
       super("Arrays.asList()", CommonClassNames.JAVA_UTIL_ARRAYS, STREAM_METHOD);
     }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Replace Arrays.asList().stream() with Arrays.stream()";
-    }
   }
 
   private static class ReplaceWithStreamEmptyFix extends ReplaceCollectionStreamFix {
     private ReplaceWithStreamEmptyFix(String qualifierMethodName) {
       super("Collections." + qualifierMethodName + "()", CommonClassNames.JAVA_UTIL_STREAM_STREAM, EMPTY_METHOD);
     }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return "Replace with Stream.empty()";
-    }
   }
 
-  private static class ReplaceStreamMethodFix extends CallChainFixBase {
+  static class ReplaceStreamMethodFix extends CallChainFixBase {
     private final String myStreamMethod;
     private final String myCollectionMethod;
     private final boolean myChangeSemantics;
@@ -385,14 +423,14 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     @Nls
     @NotNull
     @Override
-    public String getFamilyName() {
+    public String getName() {
       return "Replace Collection.stream()." + myStreamMethod +
              "() with Collection." + myCollectionMethod + "()" +
              (myChangeSemantics ? " (may change semantics)" : "");
     }
 
     @NotNull
-    String getMessage() {
+    public String getMessage() {
       return "Collection.stream()." + myStreamMethod +
              "() can be replaced with Collection." + myCollectionMethod + "()" +
              (myChangeSemantics ? " (may change semantics)" : "");
@@ -416,30 +454,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     }
   }
 
-  private static class StreamCountFix extends ReplaceStreamMethodFix {
-    public StreamCountFix() {
-      super(COUNT_METHOD, SIZE_METHOD, false);
-    }
-
-    @Override
-    protected void replaceMethodCall(@NotNull PsiMethodCallExpression methodCall,
-                                     @NotNull PsiMethodCallExpression qualifierCall,
-                                     @Nullable PsiExpression qualifierExpression) {
-      super.replaceMethodCall(methodCall, qualifierCall, qualifierExpression);
-      PsiElement parent = methodCall.getParent();
-      if(parent != null && !(parent instanceof PsiExpressionStatement)) {
-        Project project = methodCall.getProject();
-        PsiExpression expression =
-          JavaPsiFacade.getElementFactory(project).createExpressionFromText("(long) " + methodCall.getText(), methodCall);
-        PsiElement replacement = methodCall.replace(expression);
-        if (replacement instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)replacement)) {
-          RedundantCastUtil.removeCast((PsiTypeCastExpression)replacement);
-        }
-      }
-    }
-  }
-
-  private static class ReplaceCollectorFix implements LocalQuickFix {
+  private static class ReplaceCollectorFix implements CallChainFix {
     private final String myCollector;
     private final String myStreamSequence;
     private final String myStreamSequenceStripped;
@@ -456,13 +471,6 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
       return "Replace Stream.collect(" + myCollector +
              "()) with Stream." + myStreamSequenceStripped +
              (myChangeSemantics ? " (may change semantics when result is null)" : "");
@@ -479,34 +487,35 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
           if (parameter instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression collectorCall = (PsiMethodCallExpression)parameter;
             PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
-            String result = myStreamSequence;
-            for(int i=0; i<collectorArgs.length; i++) {
-              result = result.replace("{"+(i+1)+"}", collectorArgs[i].getText());
-            }
+            String result = MessageFormat.format(myStreamSequence, Arrays.stream(collectorArgs).map(PsiExpression::getText).toArray());
             if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
             PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-            PsiExpression replacement = factory.createExpressionFromText(
-              qualifierExpression.getText() + "." + result, collectCall);
-            PsiElement expression = collectCall.replace(replacement);
-            // Replacements like .collect(counting()) -> .count() change the result type from boxed to primitive
-            // In rare cases it's necessary to add cast to return back to boxed type
-            // example:
-            // List<Integer> intList; List<String> stringList;
-            // intList.remove(stringList.stream().collect(summingInt(String::length)) -- remove given element
-            // intList.remove(stringList.stream().mapToInt(String::length).sum()) -- remove element by index
-            if(expression instanceof PsiExpression) {
-              PsiType type = ((PsiExpression)expression).getType();
-              if(type instanceof PsiPrimitiveType) {
-                PsiClassType boxedType = ((PsiPrimitiveType)type).getBoxedType(expression);
-                if(boxedType != null) {
-                  PsiExpression castExpression =
-                    factory.createExpressionFromText("(" + boxedType.getCanonicalText() + ") " + expression.getText(), expression);
-                  PsiElement cast = expression.replace(castExpression);
-                  if (cast instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)cast)) {
-                    RedundantCastUtil.removeCast((PsiTypeCastExpression)cast);
-                  }
-                }
-              }
+            PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
+            addBoxingIfNecessary(factory, collectCall.replace(replacement));
+          }
+        }
+      }
+    }
+
+    /*
+    Replacements like .collect(counting()) -> .count() change the result type from boxed to primitive
+    In rare cases it's necessary to add cast to return back to boxed type
+    example:
+    List<Integer> intList; List<String> stringList;
+    intList.remove(stringList.stream().collect(summingInt(String::length)) -- remove given element
+    intList.remove(stringList.stream().mapToInt(String::length).sum()) -- remove element by index
+    */
+    private static void addBoxingIfNecessary(PsiElementFactory factory, PsiElement expression) {
+      if(expression instanceof PsiExpression) {
+        PsiType type = ((PsiExpression)expression).getType();
+        if(type instanceof PsiPrimitiveType) {
+          PsiClassType boxedType = ((PsiPrimitiveType)type).getBoxedType(expression);
+          if(boxedType != null) {
+            PsiExpression castExpression =
+              factory.createExpressionFromText("(" + boxedType.getCanonicalText() + ") " + expression.getText(), expression);
+            PsiElement cast = expression.replace(castExpression);
+            if (cast instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)cast)) {
+              RedundantCastUtil.removeCast((PsiTypeCastExpression)cast);
             }
           }
         }
@@ -514,11 +523,52 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     }
 
     @NotNull
-    String getMessage() {
+    public String getMessage() {
       return "Stream.collect(" + myCollector +
-             "()) can be replaced with Stream." + myStreamSequenceStripped + "()" +
+             "()) can be replaced with Stream." + myStreamSequenceStripped +
              (myChangeSemantics ? " (may change semantics when result is null)" : "");
     }
   }
 
+  private static class ReplaceOptionalIsPresentChainFix implements CallChainFix {
+    private final String myFindMethodName;
+
+    ReplaceOptionalIsPresentChainFix(String findMethodName) {
+      myFindMethodName = findMethodName;
+    }
+
+    @Nls
+    @NotNull
+    @Override
+    public String getName() {
+      return "Replace Stream.filter()." + myFindMethodName + "().isPresent() with Stream.anyMatch()";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getStartElement();
+      if (element instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression isPresentCall = (PsiMethodCallExpression)element;
+        PsiExpression isPresentQualifier = isPresentCall.getMethodExpression().getQualifierExpression();
+        if(isPresentQualifier instanceof PsiMethodCallExpression) {
+          PsiMethodCallExpression findCall = (PsiMethodCallExpression)isPresentQualifier;
+          PsiExpression findQualifier = findCall.getMethodExpression().getQualifierExpression();
+          if(findQualifier instanceof PsiMethodCallExpression) {
+            PsiMethodCallExpression filterCall = (PsiMethodCallExpression)findQualifier;
+            if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
+            PsiElement replacement = element.replace(filterCall);
+            PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+            PsiElement filterName = ((PsiMethodCallExpression)replacement).getMethodExpression().getReferenceNameElement();
+            LOG.assertTrue(filterName != null);
+            filterName.replace(factory.createIdentifier(ANY_MATCH_METHOD));
+          }
+        }
+      }
+    }
+
+    @NotNull
+    public String getMessage() {
+      return "Stream.filter()." + myFindMethodName + "().isPresent() can be replaced with Stream.anyMatch()";
+    }
+  }
 }

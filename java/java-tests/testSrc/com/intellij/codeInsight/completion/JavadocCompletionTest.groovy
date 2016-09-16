@@ -48,155 +48,155 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   @Override
   protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/javadoc/";
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/javadoc/"
   }
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
-    settings = CodeStyleSettingsManager.getSettings(getProject());
+    super.setUp()
+    settings = CodeStyleSettingsManager.getSettings(getProject())
     javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class)
-    myFixture.enableInspections(new JavaDocLocalInspection());
+    myFixture.enableInspections(new JavaDocLocalInspection())
   }
 
   void testNamesInPackage() throws Exception {
-    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject("package-info.java", "p/package-info.java"));
-    complete();
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject("package-info.java", "p/package-info.java"))
+    complete()
     assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "see", "since", "version")
   }
 
   void testNamesInClass() throws Exception {
-    configureByFile("ClassTagName.java");
-    assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "param", "see", "serial", "since", "version");
+    configureByFile("ClassTagName.java")
+    assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "param", "see", "serial", "since", "version")
   }
 
   void testNamesInField() throws Exception {
-    configureByFile("FieldTagName.java");
-    assertStringItems("deprecated", "see", "serial", "serialField", "since");
+    configureByFile("FieldTagName.java")
+    assertStringItems("deprecated", "see", "serial", "serialField", "since")
   }
 
   void testNamesInMethod0() throws Exception {
-    configureByFile("MethodTagName0.java");
-    assertStringItems("deprecated", "exception", "param", "return", "see", "serialData", "since", "throws");
+    configureByFile("MethodTagName0.java")
+    assertStringItems("deprecated", "exception", "param", "return", "see", "serialData", "since", "throws")
   }
 
   void testNamesInMethod1() throws Exception {
-    configureByFile("MethodTagName1.java");
-    assertStringItems("see", "serialData", "since", "throws");
+    configureByFile("MethodTagName1.java")
+    assertStringItems("see", "serialData", "since", "throws")
   }
 
   void testParamValueCompletion() throws Exception {
-    configureByFile("ParamValue0.java");
-    assertStringItems("a", "b", "c");
+    configureByFile("ParamValue0.java")
+    assertStringItems("a", "b", "c")
   }
 
   void testParamValueWithPrefixCompletion() throws Exception {
-    configureByFile("ParamValue1.java");
-    assertStringItems("a1", "a2", "a3");
+    configureByFile("ParamValue1.java")
+    assertStringItems("a1", "a2", "a3")
   }
 
   void testDescribedParameters() throws Exception {
-    configureByFile("ParamValue2.java");
-    assertStringItems("a2", "a3");
+    configureByFile("ParamValue2.java")
+    assertStringItems("a2", "a3")
   }
 
   void testSee0() throws Exception {
-    configureByFile("See0.java");
-    myFixture.assertPreferredCompletionItems(0, "foo", "clone", "equals", "hashCode");
+    configureByFile("See0.java")
+    myFixture.assertPreferredCompletionItems(0, "foo", "clone", "equals", "hashCode")
   }
 
   void testSee1() throws Exception {
-    configureByFile("See1.java");
-    assertStringItems("notify", "notifyAll");
+    configureByFile("See1.java")
+    assertStringItems("notify", "notifyAll")
   }
 
   void testSee2() throws Exception {
-    configureByFile("See2.java");
-    assertStringItems("notify", "notifyAll");
+    configureByFile("See2.java")
+    assertStringItems("notify", "notifyAll")
   }
 
   void testSee3() throws Exception {
-    configureByFile("See3.java");
+    configureByFile("See3.java")
 
-    assertTrue(getLookupElementStrings().containsAll(Arrays.asList("foo", "myField")));
+    assertTrue(getLookupElementStrings().containsAll(Arrays.asList("foo", "myField")))
   }
 
   @NotNull
   private List<String> getLookupElementStrings() {
-    return ObjectUtils.assertNotNull(myFixture.getLookupElementStrings());
+    return ObjectUtils.assertNotNull(myFixture.getLookupElementStrings())
   }
 
   void testSee4() throws Exception {
-    configureByFile("See4.java");
+    configureByFile("See4.java")
 
-    assertTrue(getLookupElementStrings().containsAll(Arrays.asList("A", "B", "C")));
+    assertTrue(getLookupElementStrings().containsAll(Arrays.asList("A", "B", "C")))
   }
 
   void testSee5() throws Exception {
-    configureByFile("See5.java");
+    configureByFile("See5.java")
 
-    assertTrue(getLookupElementStrings().containsAll(Arrays.asList("foo", "myName")));
+    assertTrue(getLookupElementStrings().containsAll(Arrays.asList("foo", "myName")))
   }
 
   void testIDEADEV10620() throws Exception {
-    configureByFile("IDEADEV10620.java");
+    configureByFile("IDEADEV10620.java")
 
-    checkResultByFile("IDEADEV10620-after.java");
+    checkResultByFile("IDEADEV10620-after.java")
   }
 
   void testException0() throws Exception {
-    configureByFile("Exception0.java");
-    assertStringItems("deprecated", "exception", "param", "see", "serialData", "since", "throws");
+    configureByFile("Exception0.java")
+    assertStringItems("deprecated", "exception", "param", "see", "serialData", "since", "throws")
   }
 
   void testException1() throws Exception {
-    configureByFile("Exception1.java");
-    assertTrue(myItems.length > 18);
+    configureByFile("Exception1.java")
+    assertTrue(myItems.length > 18)
   }
 
   void testException2() throws Exception {
-    myFixture.configureByFile("Exception2.java");
-    myFixture.complete(CompletionType.SMART);
-    assertStringItems("IllegalStateException", "IOException");
+    myFixture.configureByFile("Exception2.java")
+    myFixture.complete(CompletionType.SMART)
+    assertStringItems("IllegalStateException", "IOException")
   }
 
   void testInlineLookup() throws Exception {
-    configureByFile("InlineTagName.java");
-    assertStringItems("code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "value");
+    configureByFile("InlineTagName.java")
+    assertStringItems("code", "docRoot", "inheritDoc", "link", "linkplain", "literal", "value")
   }
 
   void testFinishWithSharp() throws Throwable {
-    boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
+    boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
     try {
-      checkFinishWithSharp();
+      checkFinishWithSharp()
     }
     finally {
-      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = old;
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = old
     }
   }
 
   private void checkFinishWithSharp() throws Exception {
-    myFixture.configureByFile("FinishWithSharp.java");
-    myFixture.completeBasic();
-    type('#');
-    checkResultByFile("FinishWithSharp_after.java");
-    final List<LookupElement> items = getLookup().getItems();
-    assertEquals("bar", items.get(0).getLookupString());
-    assertEquals("foo", items.get(1).getLookupString());
+    myFixture.configureByFile("FinishWithSharp.java")
+    myFixture.completeBasic()
+    type('#')
+    checkResultByFile("FinishWithSharp_after.java")
+    final List<LookupElement> items = getLookup().getItems()
+    assertEquals("bar", items.get(0).getLookupString())
+    assertEquals("foo", items.get(1).getLookupString())
   }
 
   void testShortenClassName() throws Throwable {
-    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT;
-    doTest();
+    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
+    doTest()
   }
 
   void testMethodBeforeSharp() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testFieldReferenceInInnerClassJavadoc() throws Throwable {
-    doTest();
+    doTest()
   }
 
   void testShortenClassReference() throws Throwable {
@@ -205,33 +205,33 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testQualifiedClassReference() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    myFixture.complete(CompletionType.BASIC, 2);
-    checkResultByFile(getTestName(false) + "_after.java");
+    configureByFile(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.BASIC, 2)
+    checkResultByFile(getTestName(false) + "_after.java")
   }
 
   void testQualifiedImportedClassReference() throws Throwable { doTest() }
 
   void testThrowsNonImported() throws Throwable {
-    configureByFile(getTestName(false) + ".java");
-    myFixture.complete(CompletionType.BASIC, 2);
-    checkResultByFile(getTestName(false) + "_after.java");
+    configureByFile(getTestName(false) + ".java")
+    myFixture.complete(CompletionType.BASIC, 2)
+    checkResultByFile(getTestName(false) + "_after.java")
   }
 
   private void doTest() throws Exception {
-    configureByFile(getTestName(false) + ".java");
-    checkResultByFile(getTestName(false) + "_after.java");
+    configureByFile(getTestName(false) + ".java")
+    checkResultByFile(getTestName(false) + "_after.java")
   }
 
   void testInlinePackageReferenceCompletion() throws Exception {
-    configureByFile("InlineReference.java");
-    assertTrue(getLookupElementStrings().containsAll(Arrays.asList("io", "lang", "util")));
+    configureByFile("InlineReference.java")
+    assertTrue(getLookupElementStrings().containsAll(Arrays.asList("io", "lang", "util")))
   }
 
   void testQualifyClassReferenceInPackageStatement() throws Exception {
-    configureByFile(getTestName(false) + ".java");
-    myFixture.type('\n');
-    checkResultByFile(getTestName(false) + "_after.java");
+    configureByFile(getTestName(false) + ".java")
+    myFixture.type('\n')
+    checkResultByFile(getTestName(false) + "_after.java")
   }
 
   void "test suggest param names"() {
@@ -584,7 +584,7 @@ class Foo {
 
   void testCustomReferenceProvider() throws Exception {
     PsiReferenceRegistrarImpl registrar =
-      (PsiReferenceRegistrarImpl) ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA);
+      (PsiReferenceRegistrarImpl) ReferenceProvidersRegistry.getInstance().getRegistrar(StdLanguages.JAVA)
     PsiReferenceProvider provider = new PsiReferenceProvider() {
       @Override
       @NotNull
@@ -593,7 +593,7 @@ class Foo {
 
           @Override
           PsiElement resolve() {
-            return element;
+            return element
           }
 
           @Override
@@ -604,14 +604,14 @@ class Foo {
         }
         return [ref]
       }
-    };
+    }
     try {
-      registrar.registerReferenceProvider(PsiDocTag.class, provider);
-      configureByFile("ReferenceProvider.java");
-      assertStringItems("1", "2", "3");
+      registrar.registerReferenceProvider(PsiDocTag.class, provider)
+      configureByFile("ReferenceProvider.java")
+      assertStringItems("1", "2", "3")
     }
     finally {
-      registrar.unregisterReferenceProvider(PsiDocTag.class, provider);
+      registrar.unregisterReferenceProvider(PsiDocTag.class, provider)
     }
   }
 

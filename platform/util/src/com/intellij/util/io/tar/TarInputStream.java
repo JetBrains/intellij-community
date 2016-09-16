@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /** @deprecated use bundled commons-compress library (to be removed in IDEA 17) */
-@SuppressWarnings("unused")
 public class TarInputStream extends FilterInputStream {
   private static final int SMALL_BUFFER_SIZE = 256;
   private static final int BUFFER_SIZE = 8 * 1024;

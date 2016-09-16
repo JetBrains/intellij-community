@@ -161,7 +161,7 @@ class MacDistributionBuilder {
 
     def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER";
     Path pathSsh = new Path(ant.project)
-    pathSsh.createPathElement().setLocation(new File("$communityHome/lib/jsch-0.1.53.jar"))
+    pathSsh.createPathElement().setLocation(new File("$communityHome/lib/jsch-0.1.54.jar"))
     pathSsh.createPathElement().setLocation(new File("$communityHome/lib/ant/lib/ant-jsch.jar"))
     ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
                                                                     ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))

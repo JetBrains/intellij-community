@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.openapi.application.ModalityState.defaultModalityState;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
@@ -183,8 +182,8 @@ abstract class GitBranchOperation {
     notifySuccess(getSuccessMessage());
   }
 
-  protected final void saveAllDocuments() {
-    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments(), defaultModalityState());
+  protected static void saveAllDocuments() {
+    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
   }
 
   /**

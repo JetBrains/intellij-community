@@ -46,6 +46,13 @@ public abstract class SemanticEditorPosition {
     return this;
   }
   
+  public SemanticEditorPosition beforeOptionalMix(@NotNull SyntaxElement... elements) {
+    while (isAtAnyOf(elements)) {
+      myIterator.retreat();
+    }
+    return this;
+  }
+  
   public boolean isAtMultiline() {
     if (!myIterator.atEnd()) {
       return CharArrayUtil.containLineBreaks(myChars, myIterator.getStart(), myIterator.getEnd());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ public class PlatformDataKeys extends CommonDataKeys {
   public static final DataKey<String> PREDEFINED_TEXT = DataKey.create("predefined.text.value");
 
   public static final DataKey<String> SEARCH_INPUT_TEXT = DataKey.create("search.input.text.value");
+  public static final DataKey<Object> SPEED_SEARCH_COMPONENT = DataKey.create("speed.search.component.value");
 
   /**
    * Returns java.awt.Point to guess where to show context menu invoked by key.

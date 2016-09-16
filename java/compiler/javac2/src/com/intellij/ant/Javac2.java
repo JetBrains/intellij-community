@@ -39,6 +39,7 @@ public class Javac2 extends Javac {
   private ArrayList myFormFiles;
   private List myNestedFormPathList;
   private boolean instrumentNotNull = true;
+  private String myNotNull;
   private List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
 
   public Javac2() {
@@ -73,6 +74,14 @@ public class Javac2 extends Javac {
 
   public void setInstrumentNotNull(boolean instrumentNotNull) {
     this.instrumentNotNull = instrumentNotNull;
+  }
+
+  public String getNotNull() {
+    return myNotNull;
+  }
+
+  public void setNotNull(String notNull) {
+    myNotNull = notNull;
   }
 
   /**
@@ -240,7 +249,6 @@ public class Javac2 extends Javac {
         final int instrumented = instrumentNotNull(getDestdir(), finder);
         log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
       }
-
     }
     finally {
       finder.releaseResources();
@@ -439,7 +447,7 @@ public class Javac2 extends Javac {
             if (version >= Opcodes.V1_5 && !shouldBeSkippedByAnnotationPattern(reader)) {
               ClassWriter writer = new InstrumenterClassWriter(reader, getAsmClassWriterFlags(version), finder);
 
-              if (NotNullVerifyingInstrumenter.processClassFile(reader, writer)) {
+              if (NotNullVerifyingInstrumenter.processClassFile(reader, writer, myNotNull)) {
                 final FileOutputStream fileOutputStream = new FileOutputStream(path);
                 try {
                   fileOutputStream.write(writer.toByteArray());

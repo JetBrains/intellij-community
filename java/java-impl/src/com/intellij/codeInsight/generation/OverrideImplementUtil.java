@@ -61,7 +61,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -618,8 +617,6 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
   @Nullable
   public static PsiClass getContextClass(Project project, Editor editor, PsiFile file, boolean allowInterface) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     do {

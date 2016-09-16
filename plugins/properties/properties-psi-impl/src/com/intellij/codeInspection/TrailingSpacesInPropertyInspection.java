@@ -19,7 +19,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertySuppressableInspectionBase;
+import com.intellij.lang.properties.PropertiesInspectionBase;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.impl.PropertyImpl;
 import com.intellij.openapi.editor.Document;
@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public class TrailingSpacesInPropertyInspection extends PropertySuppressableInspectionBase {
+public class TrailingSpacesInPropertyInspection extends PropertiesInspectionBase {
   public boolean myIgnoreVisibleSpaces;
 
   @NotNull

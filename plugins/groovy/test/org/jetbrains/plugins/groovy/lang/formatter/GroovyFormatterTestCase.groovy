@@ -34,27 +34,27 @@ import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
  * @author peter
  */
 abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase");
-  protected CodeStyleSettings myTempSettings;
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.formatter.GroovyFormatterTestCase")
+  protected CodeStyleSettings myTempSettings
 
   @Override
   protected void setUp() throws Exception {
-    super.setUp();
-    setSettings(getProject());
+    super.setUp()
+    setSettings(getProject())
 
-    groovySettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    groovySettings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    groovySettings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+    groovySettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    groovySettings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
+    groovySettings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE
   }
 
   @Override
   protected void tearDown() throws Exception {
-    setSettingsBack();
-    super.tearDown();
+    setSettingsBack()
+    super.tearDown()
   }
   
   protected CommonCodeStyleSettings getGroovySettings() {
-    return myTempSettings.getCommonSettings(GroovyLanguage.INSTANCE);
+    return myTempSettings.getCommonSettings(GroovyLanguage.INSTANCE)
   }
 
   protected GroovyCodeStyleSettings getGroovyCustomSettings() {
@@ -62,34 +62,34 @@ abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
   }
 
   protected void setSettings(Project project) {
-    assertNull(myTempSettings);
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    myTempSettings = settings.clone();
+    assertNull(myTempSettings)
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project)
+    myTempSettings = settings.clone()
 
-    CommonCodeStyleSettings.IndentOptions gr = myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE);
-    assertNotSame(gr, settings.OTHER_INDENT_OPTIONS);
-    gr.INDENT_SIZE = 2;
-    gr.CONTINUATION_INDENT_SIZE = 4;
-    gr.TAB_SIZE = 2;
-    myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
+    CommonCodeStyleSettings.IndentOptions gr = myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE)
+    assertNotSame(gr, settings.OTHER_INDENT_OPTIONS)
+    gr.INDENT_SIZE = 2
+    gr.CONTINUATION_INDENT_SIZE = 4
+    gr.TAB_SIZE = 2
+    myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3
 
-    CodeStyleSettingsManager.getInstance(project).setTemporarySettings(myTempSettings);
+    CodeStyleSettingsManager.getInstance(project).setTemporarySettings(myTempSettings)
   }
 
   protected void setSettingsBack() {
-    final CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance(getProject());
-    myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).INDENT_SIZE = 200;
-    myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).CONTINUATION_INDENT_SIZE = 200;
-    myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).TAB_SIZE = 200;
+    final CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance(getProject())
+    myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).INDENT_SIZE = 200
+    myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).CONTINUATION_INDENT_SIZE = 200
+    myTempSettings.getIndentOptions(GroovyFileType.GROOVY_FILE_TYPE).TAB_SIZE = 200
 
-    myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
-    manager.dropTemporarySettings();
-    myTempSettings = null;
+    myTempSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5
+    manager.dropTemporarySettings()
+    myTempSettings = null
   }
 
   protected void checkFormatting(String fileText, String expected) {
-    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
-    checkFormatting(expected);
+    myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText)
+    checkFormatting(expected)
   }
 
   protected void doFormat(final PsiFile file) {
@@ -100,19 +100,19 @@ abstract class GroovyFormatterTestCase extends LightCodeInsightFixtureTestCase {
           @Override
           void run() {
             try {
-              TextRange myTextRange = file.getTextRange();
-              CodeStyleManager.getInstance(file.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset());
+              TextRange myTextRange = file.getTextRange()
+              CodeStyleManager.getInstance(file.getProject()).reformatText(file, myTextRange.getStartOffset(), myTextRange.getEndOffset())
             } catch (IncorrectOperationException e) {
-              LOG.error(e);
+              LOG.error(e)
             }
           }
-        });
+        })
       }
-    }, null, null);
+    }, null, null)
   }
 
   protected void checkFormatting(String expected) {
-    doFormat(myFixture.getFile());
-    myFixture.checkResult(expected);
+    doFormat(myFixture.getFile())
+    myFixture.checkResult(expected)
   }
 }

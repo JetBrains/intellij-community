@@ -85,6 +85,8 @@ abstract class BuildContext {
 
   abstract JpsModule findModule(String name)
 
+  abstract File findFileInModuleSources(String moduleName, String relativePath)
+
   abstract void signExeFile(String path)
 
   /**
@@ -92,11 +94,13 @@ abstract class BuildContext {
    */
   abstract void executeStep(String stepMessage, String stepId, Closure step)
 
-  public static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
-                                           String communityHome, String projectHome, String buildOutputRoot, ProductProperties productProperties,
+  abstract boolean shouldBuildDistributionForOS(String os)
+
+  static BuildContext createContext(AntBuilder ant, JpsGantProjectBuilder projectBuilder, JpsProject project, JpsGlobal global,
+                                           String communityHome, String projectHome, ProductProperties productProperties,
                                            ProprietaryBuildTools proprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                                            BuildOptions options = new BuildOptions()) {
-    return BuildContextImpl.create(ant, projectBuilder, project, global, communityHome, projectHome, buildOutputRoot, productProperties,
+    return BuildContextImpl.create(ant, projectBuilder, project, global, communityHome, projectHome, productProperties,
                                    proprietaryBuildTools, options)
   }
 
@@ -107,7 +111,7 @@ abstract class BuildContext {
    */
   abstract BuildContext forkForParallelTask(String taskName)
 
-  abstract BuildContext createCopyForProduct(ProductProperties productProperties, String buildOutputRoot, String projectHomeForCustomizers)
+  abstract BuildContext createCopyForProduct(ProductProperties productProperties, String projectHomeForCustomizers)
 }
 
 /**
@@ -162,7 +166,7 @@ interface BuildMessages {
   void error(String message, Throwable cause)
 
   void progress(String message)
-  public <V> V block(String blockName, Closure<V> body)
+  def <V> V block(String blockName, Closure<V> body)
 
   void artifactBuild(String relativeArtifactPath)
 

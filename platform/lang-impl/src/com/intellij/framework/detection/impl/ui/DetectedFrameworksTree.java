@@ -81,17 +81,14 @@ public class DetectedFrameworksTree extends CheckboxTree {
   }
 
   public void processUncheckedNodes(@NotNull final Consumer<DetectedFrameworkTreeNodeBase> consumer) {
-    TreeUtil.traverse(getRoot(), new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        if (node instanceof DetectedFrameworkTreeNodeBase) {
-          final DetectedFrameworkTreeNodeBase frameworkNode = (DetectedFrameworkTreeNodeBase)node;
-          if (!frameworkNode.isChecked()) {
-            consumer.consume(frameworkNode);
-          }
+    TreeUtil.traverse(getRoot(), node -> {
+      if (node instanceof DetectedFrameworkTreeNodeBase) {
+        final DetectedFrameworkTreeNodeBase frameworkNode = (DetectedFrameworkTreeNodeBase)node;
+        if (!frameworkNode.isChecked()) {
+          consumer.consume(frameworkNode);
         }
-        return true;
       }
+      return true;
     });
   }
 

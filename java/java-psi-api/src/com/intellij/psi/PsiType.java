@@ -90,7 +90,6 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
   }
 
   /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
-  @SuppressWarnings("unused")
   public PsiArrayType createArrayType(@NotNull PsiAnnotation... annotations) {
     return new PsiArrayType(this, annotations);
   }
@@ -128,7 +127,9 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable {
    * todo[r.sh] merge with getPresentableText()
    */
   @NotNull
-  public abstract String getInternalCanonicalText();
+  public String getInternalCanonicalText() {
+    return getCanonicalText();
+  }
 
   /**
    * Checks if the type is currently valid.

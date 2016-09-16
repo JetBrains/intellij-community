@@ -70,8 +70,17 @@ public class ComparisonFailureData {
   public static void registerSMAttributes(ComparisonFailureData notification,
                                           String trace,
                                           String failureMessage,
-                                          Map attrs, 
+                                          Map attrs,
                                           Throwable throwable) {
+    registerSMAttributes(notification, trace, failureMessage, attrs, throwable, "Comparison Failure: ");
+  }
+
+  public static void registerSMAttributes(ComparisonFailureData notification,
+                                          String trace,
+                                          String failureMessage,
+                                          Map attrs,
+                                          Throwable throwable,
+                                          String comparisonFailurePrefix) {
 
     final int failureIdx = failureMessage != null ? trace.indexOf(failureMessage) : -1;
     final int failureMessageLength = failureMessage != null ? failureMessage.length() : 0;
@@ -98,7 +107,7 @@ public class ComparisonFailureData {
         comparisonFailureMessage = trace.substring(0, failureIdx + failureMessageLength);
       }
       else {
-        comparisonFailureMessage = (failureMessageLength > 0 ? failureMessage + "\n" : "") + "Comparison Failure: ";
+        comparisonFailureMessage = (failureMessageLength > 0 ? failureMessage + "\n" : "") + comparisonFailurePrefix;
       }
       attrs.put("message", comparisonFailureMessage);
     }

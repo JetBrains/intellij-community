@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.jdi.StackFrameProxy;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.SimpleStackFrameContext;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl;
@@ -194,14 +194,12 @@ class LocalVariableEvaluator implements Evaluator {
                                              final String name,
                                              final Project project,
                                              final DebugProcess process) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiVariable>() {
-      @Override
-      public PsiVariable compute() {
-        PsiElement place = PositionUtil.getContextElement(new SimpleStackFrameContext(frame, process));
-        if (place == null) return null;
-        return JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(name, place);
-      }
-    });
+    PsiElement place = ContextUtil.getContextElement(new SimpleStackFrameContext(frame, process));
+    if (place == null) {
+      return null;
+    }
+    return ApplicationManager.getApplication().runReadAction((Computable<PsiVariable>)() ->
+      JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(name, place));
   }
 
   @Override

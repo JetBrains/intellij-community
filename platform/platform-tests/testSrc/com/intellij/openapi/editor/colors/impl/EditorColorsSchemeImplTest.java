@@ -282,7 +282,6 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     
   }
   
-  @SuppressWarnings("unused")
   public void testIdea152156() throws Exception {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     EditorColorsScheme parentScheme = (EditorColorsScheme)defaultScheme.clone();

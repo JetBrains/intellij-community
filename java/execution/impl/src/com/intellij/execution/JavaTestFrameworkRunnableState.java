@@ -125,6 +125,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @NotNull
   @Override
   public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
+    return startSMRunner(executor);
+  }
+
+  /**
+   * to be removed in 2017.1, compatibility with jtreg plugin
+   */
+  @Deprecated
+  protected ExecutionResult startSMRunner(Executor executor) throws ExecutionException {
     final RunnerSettings runnerSettings = getRunnerSettings();
 
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
@@ -167,6 +175,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
     result.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction() {
+      @Override
+      public boolean isDelayApplicable() {
+        return false;
+      }
+
       @Override
       public AbstractAutoTestManager getAutoTestManager(Project project) {
         return JavaAutoRunManager.getInstance(project);
@@ -369,12 +382,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected void createTempFiles(JavaParameters javaParameters) {
     try {
-      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp");
-      myWorkingDirsFile.deleteOnExit();
+      myWorkingDirsFile = FileUtil.createTempFile("idea_working_dirs_" + getFrameworkId(), ".tmp", true);
       javaParameters.getProgramParametersList().add("@w@" + myWorkingDirsFile.getAbsolutePath());
       
-      myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp");
-      myTempFile.deleteOnExit();
+      myTempFile = FileUtil.createTempFile("idea_" + getFrameworkId(), ".tmp", true);
       passTempFile(javaParameters.getProgramParametersList(), myTempFile.getAbsolutePath());
     }
     catch (Exception e) {

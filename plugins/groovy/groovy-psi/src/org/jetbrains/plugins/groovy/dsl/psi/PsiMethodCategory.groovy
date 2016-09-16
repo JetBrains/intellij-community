@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.dsl.psi;
+package org.jetbrains.plugins.groovy.dsl.psi
 
-import com.intellij.psi.*;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.*
+import org.jetbrains.annotations.Nullable
 
 /**
  * @author ilyas
@@ -26,8 +26,8 @@ class PsiMethodCategory implements PsiEnhancerCategory {
 
   @Nullable
   static PsiClass getClassType(PsiField field) {
-    final PsiType type = field.getType();
-    return PsiCategoryUtil.getClassType(type, field);
+    final PsiType type = field.getType()
+    return PsiCategoryUtil.getClassType(type, field)
   }
 
   static Map getParamStringVector(PsiMethod method) {
@@ -37,7 +37,7 @@ class PsiMethodCategory implements PsiEnhancerCategory {
       result.put("value$idx", p.getType().getCanonicalText())
       idx++
     }
-    return result;
+    return result
   }
 
 }
