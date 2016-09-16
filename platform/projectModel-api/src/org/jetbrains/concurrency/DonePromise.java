@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.jetbrains.concurrency.Promises.rejectedPromise;
+import static org.jetbrains.concurrency.Promises.resolvedPromise;
+
 class DonePromise<T> implements Getter<T>, Promise<T> {
   private final T result;
 
@@ -62,10 +65,10 @@ class DonePromise<T> implements Getter<T>, Promise<T> {
   @Override
   public <SUB_RESULT> Promise<SUB_RESULT> then(@NotNull Function<? super T, ? extends SUB_RESULT> done) {
     if (done instanceof Obsolescent && ((Obsolescent)done).isObsolete()) {
-      return PromiseKt.rejectedPromise("obsolete");
+      return rejectedPromise("obsolete");
     }
     else {
-      return Promise.resolve(done.fun(result));
+      return resolvedPromise(done.fun(result));
     }
   }
 

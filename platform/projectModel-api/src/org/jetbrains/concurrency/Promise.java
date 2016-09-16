@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 public interface Promise<T> {
   Promise<Void> DONE = new DonePromise<>(null);
-  Promise<Void> REJECTED = PromiseKt.getREJECTED();
+  Promise<Void> REJECTED = Promises.rejectedPromise();
 
   enum State {
     PENDING, FULFILLED, REJECTED

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:JvmName("Promises")
 package org.jetbrains.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
@@ -36,7 +37,6 @@ abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolesce
 abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, Consumer<T> {
   override fun isObsolete() = obsolescent.isObsolete
 }
-
 
 inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline handler: (T) -> SUB_RESULT) = then(object : ObsolescentFunction<T, SUB_RESULT> {
   override fun `fun`(param: T) = handler(param)
@@ -186,4 +186,61 @@ fun ActionCallback.toPromise(): Promise<Void> {
   val promise = AsyncPromise<Void>()
   doWhenDone { promise.setResult(null) }.doWhenRejected { error -> promise.setError(createError(error ?: "Internal error")) }
   return promise
+}
+
+fun resolvedPromise(): Promise<*> = Promise.DONE
+
+fun <T> resolvedPromise(result: T) = Promise.resolve(result)
+
+fun all(promises: Collection<Promise<*>>) = if (promises.size == 1) promises.first() else all(promises, null)
+
+fun <T> all(promises: Collection<Promise<*>>, totalResult: T?): Promise<T> {
+  if (promises.isEmpty()) {
+    return resolvedPromise(null)
+  }
+
+  val totalPromise = AsyncPromise<T>()
+  val done = CountDownConsumer(promises.size, totalPromise, totalResult)
+  val rejected = Consumer<Throwable> { error -> totalPromise.setError(error) }
+
+  for (promise in promises) {
+    promise.done(done)
+    promise.rejected(rejected)
+  }
+  return totalPromise
+}
+
+private class CountDownConsumer<T>(@Volatile private var countDown: Int, private val promise: AsyncPromise<T>, private val totalResult: T?) : Consumer<Any?> {
+  override fun consume(t: Any?) {
+    if (--countDown == 0) {
+      promise.setResult(totalResult)
+    }
+  }
+}
+
+fun <T> any(promises: Collection<Promise<T>>, totalError: String): Promise<T> {
+  if (promises.isEmpty()) {
+    return resolvedPromise(null)
+  }
+  else if (promises.size == 1) {
+    return promises.first()
+  }
+
+  val totalPromise = AsyncPromise<T>()
+  val done = Consumer<T> { result -> totalPromise.setResult(result) }
+  val rejected = object : Consumer<Throwable> {
+    @Volatile private var toConsume = promises.size
+
+    override fun consume(throwable: Throwable) {
+      if (--toConsume <= 0) {
+        totalPromise.setError(totalError)
+      }
+    }
+  }
+
+  for (promise in promises) {
+    promise.done(done)
+    promise.rejected(rejected)
+  }
+  return totalPromise
 }
