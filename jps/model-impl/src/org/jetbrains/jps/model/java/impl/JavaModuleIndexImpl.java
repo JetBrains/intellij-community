@@ -121,6 +121,6 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
       String path = p.getProperty(key);
       mapping.put(key, NULL_PATH.equals(path) ? null : new File(path));
     }
-    return new JavaModuleIndexImpl(Collections.unmodifiableMap(mapping));
+    return new JavaModuleIndexImpl(mapping);
   }
 }
