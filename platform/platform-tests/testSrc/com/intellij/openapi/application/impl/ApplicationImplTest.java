@@ -17,14 +17,13 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -32,6 +31,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImplTest extends LightPlatformTestCase {
@@ -524,5 +525,22 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         thread.join();
       }
     }).cpuBound().usesAllCPUCores().assertTiming();
+  }
+
+  public void testCheckCanceledReadAction() throws Exception {
+    Semaphore mayStartReadAction = new Semaphore();
+    mayStartReadAction.down();
+
+    ProgressIndicatorBase progress = new ProgressIndicatorBase();
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
+      mayStartReadAction.waitFor();
+      ReadAction.run(() -> fail("should be canceled before entering read action"));
+    }, progress));
+
+    WriteAction.run(() -> {
+      mayStartReadAction.up();
+      progress.cancel();
+      future.get(1, TimeUnit.SECONDS);
+    });
   }
 }
