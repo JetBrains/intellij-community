@@ -26,7 +26,7 @@ import java.net.InetSocketAddress
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
-class Server(private val port: Int) {
+class Server(private val port: Int, private val generator: Generator) {
   private val server = HttpServer.create()
 
   fun start() {
@@ -68,7 +68,7 @@ class Server(private val port: Int) {
       return
     }
 
-    val xml = Generator.generateXml(productCode, buildId, eap)
+    val xml = generator.generateXml(productCode, buildId, eap)
     sendText(ex, xml, "text/xml")
   }
 
@@ -78,7 +78,7 @@ class Server(private val port: Int) {
       return
     }
 
-    val patch = Generator.generatePatch()
+    val patch = generator.generatePatch()
     ex.responseHeaders.add("Content-Type", "binary/octet-stream")
     ex.sendResponseHeaders(HTTP_OK, patch.size.toLong())
     ex.responseBody.write(patch)

@@ -22,5 +22,6 @@ fun main(args: Array<String>) {
   }
 
   val port = args[0].toInt()
-  Server(port).start()
+  val generator = Generator()
+  Server(port, generator).start()
 }

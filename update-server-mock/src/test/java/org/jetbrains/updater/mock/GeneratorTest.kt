@@ -20,12 +20,12 @@ import org.junit.Test
 
 class GeneratorTest {
   @Test fun generateXml() {
-    val xml = Generator.generateXml("IC", "163.11.22", false)
+    val xml = Generator().generateXml("IC", "163.11.22", false)
     assertThat(xml).contains("patch from=\"163.11.22\"").contains("status=\"release\"")
   }
 
   @Test fun generatePatch() {
-    val patch = Generator.generatePatch()
+    val patch = Generator().generatePatch()
     assertThat(patch).isNotEmpty()
   }
 }

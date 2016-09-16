@@ -15,7 +15,9 @@
  */
 package org.jetbrains.updater.mock
 
-object Generator {
+class Generator {
+  private val patch = this.javaClass.classLoader.getResourceAsStream("patch/patch.jar").use { it.readBytes() }
+
   fun generateXml(productCode: String, buildId: String, eap: Boolean): String {
     val status = if (eap) "eap" else "release"
     return """
@@ -34,6 +36,5 @@ object Generator {
       </products>""".trimIndent()
   }
 
-  fun generatePatch(): ByteArray =
-    this.javaClass.classLoader.getResourceAsStream("patch/patch.jar").use { it.readBytes() }
+  fun generatePatch(): ByteArray = patch
 }
