@@ -22,6 +22,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch.Parameters;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -79,7 +80,8 @@ public class InjectionCache {
     Set<String> result = new THashSet<>();
     ArrayList<PsiClass> annoClasses = ContainerUtil.newArrayList(JavaPsiFacade.getInstance(myProject).findClasses(annotationClassName, allScope));
     for (int cursor = 0; cursor < annoClasses.size(); cursor++) {
-      AnnotatedElementsSearch.searchElements(annoClasses.get(cursor), usageScope, PsiClass.class, PsiParameter.class, PsiMethod.class).forEach(element -> {
+      Parameters parameters = new Parameters(annoClasses.get(cursor), usageScope, true, PsiClass.class, PsiParameter.class, PsiMethod.class);
+      AnnotatedElementsSearch.searchElements(parameters).forEach(element -> {
         if (element instanceof PsiParameter) {
           final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
           if (scope instanceof PsiMethod) {
@@ -90,7 +92,7 @@ public class InjectionCache {
           annoClasses.add((PsiClass)element);
         }
         else if (element instanceof PsiMethod) {
-          ContainerUtil.addIfNotNull(result, element.getName());
+          ContainerUtil.addIfNotNull(result, ((PsiMember)element).getName());
         }
         return true;
       });
