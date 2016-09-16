@@ -15,7 +15,6 @@
  */
 package org.jetbrains.concurrency;
 
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -40,13 +39,6 @@ public interface Promise<T> {
     else {
       return new DonePromise<>(result);
     }
-  }
-
-  @NotNull
-  static <T> Promise<T> wrap(@NotNull AsyncResult<T> asyncResult) {
-    final AsyncPromise<T> promise = new AsyncPromise<>();
-    asyncResult.doWhenDone((Consumer<T>)result -> promise.setResult(result)).doWhenRejected(promise::setError);
-    return promise;
   }
 
   @NotNull
