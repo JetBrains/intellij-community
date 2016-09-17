@@ -17,7 +17,7 @@ package com.intellij.updater.mock
 
 fun main(args: Array<String>) {
   if (args.size != 1) {
-    println("usage: java -jar update-server-mock <port>")
+    println("usage: java -jar update-server-mock.jar <port>")
     System.exit(1)
   }
 
