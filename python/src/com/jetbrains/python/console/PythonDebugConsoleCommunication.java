@@ -39,9 +39,7 @@ import java.util.List;
 public class PythonDebugConsoleCommunication extends AbstractConsoleCommunication {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.console.pydev.PythonDebugConsoleCommunication");
   private final PyDebugProcess myDebugProcess;
-
-  private final StringBuilder myExpression = new StringBuilder();
-
+  private boolean myNeedsMore = false;
 
   public PythonDebugConsoleCommunication(Project project, PyDebugProcess debugProcess) {
     super(project);
@@ -62,6 +60,11 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
   @Override
   public boolean isWaitingForInput() {
     return waitingForInput;
+  }
+
+  @Override
+  public boolean needsMore() {
+    return myNeedsMore;
   }
 
   @Override
@@ -91,35 +94,45 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
           final Charset defaultCharset = EncodingProjectManager.getInstance(myDebugProcess.getProject()).getDefaultCharset();
           processInput.write((code.getText()).getBytes(defaultCharset));
           processInput.flush();
+
         }
         catch (IOException e) {
           LOG.error(e.getMessage());
         }
       }
+      myNeedsMore = false;
       waitingForInput = false;
+      notifyCommandExecuted(waitingForInput);
+
     }
     else {
 
-      myExpression.append(code.getText());
-      exec(new ConsoleCodeFragment(myExpression.toString(), false), new PyDebugCallback<Pair<String, Boolean>>() {
+      exec(new ConsoleCodeFragment(code.getText(), false), new PyDebugCallback<Pair<String, Boolean>>() {
         @Override
         public void ok(Pair<String, Boolean> executed) {
           boolean more = executed.second;
-
-          if (!more) {
-            myExpression.setLength(0);
-          }
+          myNeedsMore = more;
+          notifyCommandExecuted(more);
           callback.fun(new InterpreterResponse(more, isWaitingForInput()));
+
         }
 
         @Override
         public void error(PyDebuggerException exception) {
-          myExpression.setLength(0);
+          myNeedsMore = false;
+          notifyCommandExecuted(false);
           callback.fun(new InterpreterResponse(false, isWaitingForInput()));
         }
       });
     }
   }
+
+  @Override
+  public void notifyInputRequested() {
+    waitingForInput = true;
+    super.notifyInputRequested();
+  }
+
 
   @Override
   public void interrupt() {

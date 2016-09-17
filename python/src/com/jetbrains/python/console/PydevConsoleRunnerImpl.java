@@ -200,7 +200,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     actions.add(0, createRerunAction());
 
-    actions.add(createBackspaceHandlingAction());
     actions.add(createInterruptAction());
     actions.add(createTabCompletionAction());
 
@@ -688,32 +687,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
 
-  private AnAction createBackspaceHandlingAction() {
-    final AnAction upAction = new AnAction() {
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        new WriteCommandAction(myProject, myConsoleView.getFile()) {
-          @Override
-          protected void run(@NotNull final Result result) throws Throwable {
-            String text = myConsoleView.getEditorDocument().getText();
-            String newText = text.substring(0, text.length() - myConsoleExecuteActionHandler.getPythonIndent());
-            myConsoleView.getEditorDocument().setText(newText);
-            myConsoleView.getConsoleEditor().getCaretModel().moveToOffset(newText.length());
-          }
-        }.execute();
-      }
-
-      @Override
-      public void update(final AnActionEvent e) {
-        e.getPresentation()
-          .setEnabled(myConsoleExecuteActionHandler.getCurrentIndentSize() >= myConsoleExecuteActionHandler.getPythonIndent() &&
-                      isIndentSubstring(myConsoleView.getEditorDocument().getText()));
-      }
-    };
-    upAction.registerCustomShortcutSet(KeyEvent.VK_BACK_SPACE, 0, null);
-    upAction.getTemplatePresentation().setVisible(false);
-    return upAction;
-  }
 
   private boolean isIndentSubstring(String text) {
     int indentSize = myConsoleExecuteActionHandler.getPythonIndent();

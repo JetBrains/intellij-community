@@ -35,7 +35,9 @@ import com.intellij.util.Alarm
  */
 class PyConsoleStarter : StartupActivity {
   override fun runActivity(project: Project) {
-    ConsoleStateTracker(project)
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      ConsoleStateTracker(project)
+    }
   }
 
   private class ConsoleStateTracker(private val project: Project) {

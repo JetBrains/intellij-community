@@ -196,12 +196,21 @@ public class ConsoleViewUtil {
   }
 
   public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text, @NotNull SyntaxHighlighter highlighter) {
+    printWithHighlighting(console, text, highlighter, null);
+  }
+
+  public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text,
+                                           @NotNull SyntaxHighlighter highlighter,
+                                           Runnable doOnNewLine) {
     Lexer lexer = highlighter.getHighlightingLexer();
     lexer.start(text, 0, text.length(), 0);
 
     IElementType tokenType;
     while ((tokenType = lexer.getTokenType()) != null) {
       console.print(lexer.getTokenText(), getContentTypeForToken(tokenType, highlighter));
+      if (doOnNewLine != null && "\n".equals(lexer.getTokenText())) {
+        doOnNewLine.run();
+      }
       lexer.advance();
     }
   }
