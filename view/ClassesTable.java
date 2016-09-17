@@ -31,7 +31,10 @@ import org.jetbrains.debugger.memory.utils.InstancesProvider;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassesTable extends JBTable implements DataProvider, Disposable {
@@ -95,6 +98,20 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     setDefaultRenderer(Long.class, new MyCountColumnRenderer());
     setDefaultRenderer(DiffValue.class, new MyDiffColumnRenderer());
 
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (columnAtPoint(e.getPoint()) != DiffViewTableModel.DIFF_COLUMN_INDEX) {
+          return;
+        }
+
+        ReferenceType ref = myElems.get(convertRowIndexToModel(rowAtPoint(e.getPoint())));
+        TrackerForNewInstances strategy = myParent.getStrategy(ref);
+        if (strategy != null) {
+          new InstancesWindow(myDebugSession, limit -> strategy.getNewInstances(), ref.name()).show();
+        }
+      }
+    });
     TableRowSorter<DiffViewTableModel> sorter = new TableRowSorter<>(myModel);
     sorter.setRowFilter(new RowFilter<DiffViewTableModel, Integer>() {
       @Override
@@ -378,7 +395,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private class MyClassColumnRenderer extends MyTableCellRenderer {
     @Override
-    protected void addText(JTable table, @NotNull Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    protected void addText(JTable table, @NotNull Object value, boolean isSelected,
+                           boolean hasFocus, int row, int column) {
       String presentation = ((ReferenceType) value).name();
       append(" ");
       if (isSelected) {
@@ -397,18 +415,31 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private class MyCountColumnRenderer extends MyTableCellRenderer {
     @Override
-    protected void addText(JTable table, @NotNull Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    protected void addText(JTable table, @NotNull Object value, boolean isSelected,
+                           boolean hasFocus, int row, int column) {
       setTextAlign(SwingConstants.RIGHT);
       append(value.toString());
     }
   }
 
   private class MyDiffColumnRenderer extends MyTableCellRenderer {
+    private final SimpleTextAttributes myClickableCellAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE,
+        JBColor.BLUE);
+
     @Override
     protected void addText(JTable table, @NotNull Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      setTextAlign(SwingConstants.RIGHT);
       long diff = ((DiffValue) value).diff();
-      append(String.format("%s%d", diff > 0 ? "+" : "", diff));
+      setTextAlign(SwingConstants.RIGHT);
+
+      ReferenceType ref = myElems.get(convertRowIndexToModel(row));
+      TrackerForNewInstances strategy = myParent.getStrategy(ref);
+      SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      if (strategy != null && strategy.isReady()) {
+        attributes = myClickableCellAttributes;
+      }
+
+      String text = String.format("%s%d", diff > 0 ? "+" : "", diff);
+      append(text, attributes);
     }
   }
 }
