@@ -66,22 +66,12 @@ public class HelpManagerImpl extends HelpManager {
       String productVersion = info.getMajorVersion() + "." + info.getMinorVersion();
       String productCode = info.getPackageCode();
 
-      String url = info.getWebHelpUrl() + "?";
+      String url = info.getWebHelpUrl() + "/" + productVersion + "/?" + id;
       
       if (PlatformUtils.isJetBrainsProduct()) {
-        url += "utm_source=from_product&utm_medium=help_link&utm_campaign=" + productCode + "&utm_content=" + productVersion + "&";
+        url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=" + productCode + "&utm_content=" + productVersion;
       }
 
-      if (PlatformUtils.isCLion()) {
-        url += "Keyword=" + id;
-        url += "&ProductVersion=" + productVersion;
-        
-        if (info.isEAP()) {
-          url += "&EAP"; 
-        }
-      } else {
-        url += id;
-      }
       BrowserUtil.browse(url);
       return;
     }
