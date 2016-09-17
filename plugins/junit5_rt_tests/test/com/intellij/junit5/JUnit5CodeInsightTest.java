@@ -40,8 +40,13 @@ class JUnit5CodeInsightTest {
     myFixture.tearDown();
   }
 
-  protected static void doTest(ThrowableRunnable<Throwable> run) {
+  protected void doTest(ThrowableRunnable<Throwable> run) {
     TestRunnerUtil.replaceIdeEventQueueSafely();
+    //init junit 5 framework
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.addClass("package org.junit.jupiter.api; public @interface Test {}");
+      myFixture.addClass("package org.junit.jupiter.api; public @interface Nested {}");
+    });
     EdtTestUtil.runInEdtAndWait(run);
   }
 }

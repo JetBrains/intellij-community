@@ -50,8 +50,6 @@ class JUnit5GenerationTest extends JUnit5CodeInsightTest {
 
   private void doTest(String text, String expected) {
     doTest(() -> {
-             myFixture.addClass("package org.junit.jupiter.api; public @interface Test {}");
-             myFixture.addClass("package org.junit.jupiter.api; public @interface Nested {}");
              myFixture.configureByText("MyTest.java", text);
 
              new BaseGenerateTestSupportMethodAction.MyHandler(TestIntegrationUtils.MethodKind.TEST).invoke(myFixture.getProject(),

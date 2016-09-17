@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.junit.JUnit5Framework;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testIntegration.TestFramework;
@@ -49,6 +50,17 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
     doTest(() -> {
       PsiClass aClass = myFixture.addClass("interface MyTest {@org.junit.jupiter.api.Test default void method() {}}");
       assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+    });
+  }
+
+  @Test
+  void recognizedInnerClassesWithTestMethods() {
+    doTest(() -> {
+      PsiClass aClass = myFixture.addClass("import org.junit.jupiter.api.*; class MyTest {@Nested class NTest { @Test void method() {}}}");
+      assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+      PsiClass innerClass = aClass.getInnerClasses()[0];
+      assertTrue(JUnitUtil.isTestClass(innerClass));
+      assertTrue(JUnitUtil.isTestMethod(MethodLocation.elementInClass(innerClass.getMethods()[0], innerClass)));
     });
   }
 
