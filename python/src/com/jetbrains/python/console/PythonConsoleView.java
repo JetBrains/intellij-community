@@ -31,9 +31,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -94,6 +97,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     getVirtualFile().putUserData(LanguageLevel.KEY, PythonSdkType.getLanguageLevelForSdk(sdk));
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
+    getHistoryViewer().putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true);
     super.setPrompt(null);
     setUpdateFoldingsEnabled(false);
     //noinspection ConstantConditions
@@ -102,7 +106,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myScheme = getConsoleEditor().getColorsScheme();
     PythonConsoleData data = PyConsoleUtil.getOrCreateIPythonData(getVirtualFile());
     myPromptView = new ConsolePromptDecorator(this.getConsoleEditor(), data);
-
   }
 
   public void setConsoleCommunication(final ConsoleCommunication communication) {
@@ -161,7 +164,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       }
     });
   }
-
 
 
   public void executeInConsole(final String code) {
@@ -298,6 +300,27 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     splitWindow();
   }
 
+  protected final void doAddPromptToHistory(boolean isMainPrompt) {
+    flushDeferredText();
+    EditorEx viewer = getHistoryViewer();
+    DocumentEx document = viewer.getDocument();
+    RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
+      .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null, HighlighterTargetArea.EXACT_RANGE);
+    final String prompt;
+    if (isMainPrompt) {
+      prompt = myPromptView.getMainPrompt();
+      print(prompt + " ", myPromptView.getPromptAttributes());
+    }
+    else {
+      prompt = myPromptView.getIndentPrompt();
+      //todo should really be myPromptView.getPromptAttributes() output type
+      //but in that case flushing doesn't get handled correctly. Take a look at it later
+      print(prompt + " ", ConsoleViewContentType.USER_INPUT);
+    }
+
+    highlighter.putUserData(PyConsoleCopyHandler.PROMPT_LENGTH_MARKER, prompt.length() + 1);
+  }
+
   @NotNull
   protected String addTextRangeToHistory(@NotNull TextRange textRange, @NotNull EditorEx inputEditor, boolean preserveMarkup) {
     String text;
@@ -316,15 +339,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
     SyntaxHighlighter syntax =
       highlighter instanceof LexerEditorHighlighter ? ((LexerEditorHighlighter)highlighter).getSyntaxHighlighter() : null;
-    if (myPromptView != null) {
-      print(myPromptView.getMainPrompt() + " ", myPromptView.getPromptAttributes());
-    }
+    doAddPromptToHistory(true);
+
     if (syntax != null) {
-      ConsoleViewUtil.printWithHighlighting(this, text, syntax, () -> {
-        if (myPromptView != null) {
-          print(myPromptView.getIndentPrompt() + " ", myPromptView.getPromptAttributes());
-        }
-      });
+      ConsoleViewUtil.printWithHighlighting(this, text, syntax, () -> doAddPromptToHistory(false));
     }
     else {
       print(text, ConsoleViewContentType.USER_INPUT);
@@ -404,5 +422,4 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   public void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes) {
     myPromptView.setPromptAttributes(textAttributes);
   }
-
 }
