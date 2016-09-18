@@ -52,7 +52,6 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class LabelPainter implements ReferencePainter {
   public static final int TOP_TEXT_PADDING = JBUI.scale(2);
@@ -135,7 +134,13 @@ public class LabelPainter implements ReferencePainter {
       colors = multiple ? new Color[]{color, color} : new Color[]{color};
     }
     else {
-      List<Color> colorsList = referencesByType.keySet().stream().map(VcsRefType::getBackgroundColor).collect(Collectors.toList());
+      List<Color> colorsList = ContainerUtil.newArrayList();
+      for (VcsRefType type : referencesByType.keySet()) {
+        if (referencesByType.get(type).size() > 1) {
+          colorsList.add(type.getBackgroundColor());
+        }
+        colorsList.add(type.getBackgroundColor());
+      }
       colors = colorsList.toArray(new Color[colorsList.size()]);
     }
     return colors;
