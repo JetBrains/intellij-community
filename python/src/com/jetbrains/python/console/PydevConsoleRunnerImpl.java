@@ -43,8 +43,6 @@ import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -87,6 +85,7 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PySourcePosition;
@@ -205,7 +204,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     actions.add(createSplitLineAction());
 
-    toolbarActions.add(new ShowVarsAction());
+    toolbarActions.add(new ShowVarsAction(myConsoleView, myPydevConsoleCommunication));
     toolbarActions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
 
     toolbarActions.add(new ConnectDebuggerAction());
@@ -901,31 +900,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         });
       }
     }.queue();
-  }
-
-  private class ShowVarsAction extends ToggleAction implements DumbAware {
-    private boolean mySelected = false;
-
-    public ShowVarsAction() {
-      super("Show Variables", "Shows active console variables", AllIcons.Debugger.Watches);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return mySelected;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      mySelected = state;
-
-      if (mySelected) {
-        myConsoleView.showVariables(myPydevConsoleCommunication);
-      }
-      else {
-        myConsoleView.restoreWindow();
-      }
-    }
   }
 
 

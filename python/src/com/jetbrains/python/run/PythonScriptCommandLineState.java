@@ -36,6 +36,7 @@ import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PyConsoleType;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevConsoleRunnerImpl;
+import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +80,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         return null;
       }
       List<AnAction> actions = Lists.newArrayList(createActions(runner.getConsoleView(), runner.getProcessHandler()));
+      actions.add(new ShowVarsAction(runner.getConsoleView(), runner.getPydevConsoleCommunication()));
 
       return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler(), actions.toArray(new AnAction[actions.size()]));
     }
@@ -133,6 +135,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       AnAction a = new ConsoleExecuteAction(super.getConsoleView(), myConsoleExecuteActionHandler,
                                             myConsoleExecuteActionHandler.getEmptyExecuteAction(), myConsoleExecuteActionHandler);
       registerActionShortcuts(Lists.newArrayList(a), getConsoleView().getConsoleEditor().getComponent());
+
     }
 
     @Override
