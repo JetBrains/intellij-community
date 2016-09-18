@@ -67,7 +67,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
     connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
+      public void uiSettingsChanged(UISettings uiSettings) {
         trimToSize();
       }
     });

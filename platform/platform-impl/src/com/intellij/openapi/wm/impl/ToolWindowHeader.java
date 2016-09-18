@@ -236,7 +236,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   }
 
   @Override
-  public void uiSettingsChanged(UISettings source) {
+  public void uiSettingsChanged(UISettings uiSettings) {
     clearCaches();
   }
 

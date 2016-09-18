@@ -103,7 +103,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     }
 
     @Override
-    public void uiSettingsChanged(UISettings source) {
+    public void uiSettingsChanged(UISettings uiSettings) {
       if (!myProject.isDisposed()) {
         reinitBreadcrumbsInAllEditors(myProject);
       }

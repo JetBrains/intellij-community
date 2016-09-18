@@ -93,7 +93,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
 
     project.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
+      public void uiSettingsChanged(UISettings uiSettings) {
         checkGlobalState();
       }
     });

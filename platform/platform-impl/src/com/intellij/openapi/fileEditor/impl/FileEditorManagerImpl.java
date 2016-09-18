@@ -1924,16 +1924,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    */
   private final class MyUISettingsListener implements UISettingsListener {
     @Override
-    public void uiSettingsChanged(final UISettings source) {
+    public void uiSettingsChanged(final UISettings uiSettings) {
       assertDispatchThread();
-      setTabsMode(source.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE && !source.PRESENTATION_MODE);
+      setTabsMode(uiSettings.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE && !uiSettings.PRESENTATION_MODE);
 
       for (EditorsSplitters each : getAllSplitters()) {
-        each.setTabsPlacement(source.EDITOR_TAB_PLACEMENT);
-        each.trimToSize(source.EDITOR_TAB_LIMIT);
+        each.setTabsPlacement(uiSettings.EDITOR_TAB_PLACEMENT);
+        each.trimToSize(uiSettings.EDITOR_TAB_LIMIT);
 
         // Tab layout policy
-        if (source.SCROLL_TAB_LAYOUT_IN_EDITOR) {
+        if (uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR) {
           each.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         }
         else {

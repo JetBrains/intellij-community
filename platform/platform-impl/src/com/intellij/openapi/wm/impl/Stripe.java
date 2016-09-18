@@ -68,7 +68,7 @@ final class Stripe extends JPanel implements UISettingsListener {
   }
 
   @Override
-  public void uiSettingsChanged(UISettings source) {
+  public void uiSettingsChanged(UISettings uiSettings) {
     updatePresentation();
   }
 

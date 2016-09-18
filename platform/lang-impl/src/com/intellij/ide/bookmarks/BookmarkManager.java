@@ -118,9 +118,9 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
     connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
-        if (mySortedState != UISettings.getInstance().SORT_BOOKMARKS) {
-          mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
+      public void uiSettingsChanged(UISettings uiSettings) {
+        if (mySortedState != uiSettings.SORT_BOOKMARKS) {
+          mySortedState = uiSettings.SORT_BOOKMARKS;
           EventQueue.invokeLater(() -> myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged());
         }
       }
