@@ -451,7 +451,7 @@ class GitBranchPopupActions {
 
     public CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
       super("Checkout with Rebase", "Checkout the given branch, and rebase it on current branch in one step, " +
-                                    "just like `git rebase " + branchName + " HEAD would do.", null);
+                                    "just like `git rebase HEAD " + branchName + "` would do.", null);
       myProject = project;
       myRepositories = repositories;
       myBranchName = branchName;
