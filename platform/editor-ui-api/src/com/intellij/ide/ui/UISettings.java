@@ -180,13 +180,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     IconLoader.setFilter(MatrixFilter.get(COLOR_BLINDNESS));
   }
 
-  /**
-   * @deprecated use {@link UISettings#addUISettingsListener(UISettingsListener, Disposable disposable)} instead.
-   */
-  public void removeUISettingsListener(UISettingsListener listener) {
-    myDispatcher.removeListener(listener);
-  }
-
   private void setSystemFontFaceAndSize() {
     if (FONT_FACE == null || FONT_SIZE <= 0) {
       final Pair<String, Integer> fontData = getSystemFontFaceAndSize();
