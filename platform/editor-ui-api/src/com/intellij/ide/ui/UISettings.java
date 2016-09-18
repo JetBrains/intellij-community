@@ -171,6 +171,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    */
   public void fireUISettingsChanged() {
     incModificationCount();
+    if (myCounter == 1) {
+      return;
+    }
 
     if (ourSettings == this) {
       // if this is the main UISettings instance push event to bus and to all current components
