@@ -50,7 +50,10 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JavaModuleIndex;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.LanguageLevel;
 import org.jetbrains.jps.model.java.compiler.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -970,8 +973,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static JavaModuleIndex getJavaModuleIndex(CompileContext context) {
-    File dir = context.getProjectDescriptor().dataManager.getDataPaths().getTargetsDataRoot();
-    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(dir);
+    File storageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
+    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(storageRoot);
   }
 
   private static class DiagnosticSink implements DiagnosticOutputConsumer {

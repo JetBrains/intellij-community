@@ -32,7 +32,8 @@ import java.util.Properties;
 import java.util.Set;
 
 public class JavaModuleIndexImpl extends JavaModuleIndex {
-  private static final String INDEX_NAME = "jigsaw.map";
+  private static final String INDEX_DIR = "jigsaw";
+  private static final String INDEX_NAME = "module-info.map";
   private static final String NULL_PATH = "-";
   private static final String MODULE_INFO_FILE = "module-info.java";
 
@@ -76,13 +77,14 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
     return null;
   }
 
-  public static void store(@NotNull File indexDir, @NotNull Map<String, String> mapping) throws IOException {
+  public static void store(@NotNull File storageRoot, @NotNull Map<String, String> mapping) throws IOException {
     Properties p = new Properties();
     for (String key : mapping.keySet()) {
       String path = mapping.get(key);
       p.setProperty(key, path != null ? FileUtil.toSystemDependentName(path) : NULL_PATH);
     }
 
+    File indexDir = new File(storageRoot, INDEX_DIR);
     FileUtil.ensureExists(indexDir);
     File index = new File(indexDir, INDEX_NAME);
 
@@ -95,8 +97,8 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
     }
   }
 
-  public static JavaModuleIndex load(@NotNull File indexDir) {
-    File index = new File(indexDir, INDEX_NAME);
+  public static JavaModuleIndex load(@NotNull File storageRoot) {
+    File index = new File(new File(storageRoot, INDEX_DIR), INDEX_NAME);
     if (!index.exists()) {
       Map<String, File> mapping = ContainerUtil.newHashMap();
       return new JavaModuleIndexImpl(mapping);

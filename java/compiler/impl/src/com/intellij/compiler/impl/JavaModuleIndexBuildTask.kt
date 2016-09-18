@@ -48,8 +48,8 @@ class JavaModuleIndexBuildTask : CompileTask {
     } ?: return false
 
     try {
-      val dir = BuildManager.getInstance().getProjectSystemDirectory(project)!!
-      JavaModuleIndexImpl.store(BuildDataPathsImpl(dir).targetsDataRoot, map)
+      val systemDir = BuildManager.getInstance().getProjectSystemDirectory(project)!!
+      JavaModuleIndexImpl.store(BuildDataPathsImpl(systemDir).dataStorageRoot, map)
     }
     catch(e: Exception) {
       Logger.getInstance(JavaModuleIndexBuildTask::class.java).error(e)
