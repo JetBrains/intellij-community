@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
@@ -95,6 +96,26 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
   public void markCorrupted() {
     super.markCorrupted();
     myNoTrigramsCommits.markCorrupted();
+  }
+
+  @NotNull
+  public String getTrigramInfo(int commit) throws IOException {
+    if (myNoTrigramsCommits.containsMapping(commit)) {
+      return "No trigrams";
+    }
+
+    Collection<Integer> keys = getKeysForCommit(commit);
+    assert keys != null;
+
+    StringBuilder builder = new StringBuilder();
+    for (Integer key : keys) {
+      builder.append((char)(key >> 16));
+      builder.append((char)((key >> 8) % 256));
+      builder.append((char)(key % 256));
+      builder.append(" ");
+    }
+
+    return builder.toString();
   }
 
   public static class TrigramMessageIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {

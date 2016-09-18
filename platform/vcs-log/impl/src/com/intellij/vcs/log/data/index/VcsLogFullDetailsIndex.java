@@ -17,7 +17,6 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.indexing.*;
@@ -26,6 +25,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -149,6 +149,11 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     return new File(subdir, safeLogId + "." + version);
   }
 
+  @Nullable
+  protected Collection<Integer> getKeysForCommit(int commit) throws IOException {
+    return myMapReduceIndex.getInputsIndex().get(commit);
+  }
+
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, VcsFullCommitDetails> {
 
     public MyMapReduceIndex(@NotNull DataIndexer<Integer, T, VcsFullCommitDetails> indexer,
@@ -158,6 +163,11 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
             new MapIndexStorage<>(getStorageFile(version),
                                   EnumeratorIntegerDescriptor.INSTANCE,
                                   externalizer, 5000));
+    }
+
+    @NotNull
+    public PersistentHashMap<Integer, Collection<Integer>> getInputsIndex() {
+      return myInputsIndex;
     }
 
     public boolean isIndexed(int commitId) throws IOException {

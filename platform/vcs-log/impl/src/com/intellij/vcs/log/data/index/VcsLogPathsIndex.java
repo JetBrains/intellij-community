@@ -168,6 +168,20 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
     myEmptyCommits.markCorrupted();
   }
 
+  @NotNull
+  public String getPathInfo(int commit) throws IOException {
+    if (myEmptyCommits.containsMapping(commit)) {
+      return "No paths";
+    }
+    Collection<Integer> keys = getKeysForCommit(commit);
+    assert keys != null;
+    StringBuilder builder = new StringBuilder();
+    for (int key : keys) {
+      builder.append(myPathsIndexer.getPathsEnumerator().valueOf(key)).append("\n");
+    }
+    return builder.toString();
+  }
+
   private static class PathsIndexer implements DataIndexer<Integer, Integer, VcsFullCommitDetails> {
     @NotNull private final PersistentEnumeratorBase<String> myPathsEnumerator;
     @NotNull private final Set<String> myRoots;

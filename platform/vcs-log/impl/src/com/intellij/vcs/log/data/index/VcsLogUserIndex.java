@@ -18,6 +18,7 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.ScalarIndexExtension;
@@ -31,6 +32,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,6 +59,14 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
       ids.add(myUserRegistry.getUserId(user));
     }
     return getCommitsWithAnyKey(ids);
+  }
+
+  @NotNull
+  public String getUserInfo(int commit) throws IOException {
+    Collection<Integer> keys = getKeysForCommit(commit);
+    assert keys != null;
+    assert keys.size() == 1;
+    return ObjectUtils.assertNotNull(myUserRegistry.getUserById(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(keys)))).toString();
   }
 
   private static class UserIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {

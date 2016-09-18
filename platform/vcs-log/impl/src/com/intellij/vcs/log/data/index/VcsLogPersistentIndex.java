@@ -374,6 +374,44 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
   }
 
+  public void printDebugInfoForCommit(@NotNull CommitId commitId) {
+    int commit = myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot());
+    if (!isIndexed(commit)) {
+      LOG.info("Commit " + commitId.getHash().asString() + " is not indexed.");
+    }
+    else {
+      StringBuilder builder = new StringBuilder();
+      try {
+        builder.append("Commit ").append(commitId.getHash().asString()).append(" index info:\n");
+
+        builder.append("Message:\n").append(myMessagesIndex.get(commit)).append("\n");
+        if (myTrigramIndex != null) {
+          builder.append("Trigrams:\n").append(myTrigramIndex.getTrigramInfo(commit)).append("\n");
+        }
+        else {
+          builder.append("Trigrams index is null");
+        }
+        if (myUserIndex != null) {
+          builder.append("User:\n").append(myUserIndex.getUserInfo(commit)).append("\n");
+        }
+        else {
+          builder.append("User index is null");
+        }
+        if (myPathsIndex != null) {
+          builder.append("Paths:\n").append(myPathsIndex.getPathInfo(commit)).append("\n");
+        }
+        else {
+          builder.append("Paths index is null");
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+
+      LOG.info(builder.toString());
+    }
+  }
+
   private class MyIndexingTask extends Task.Backgroundable {
     private static final int MAGIC_NUMBER = 150000;
     private final Map<VirtualFile, TIntHashSet> myCommits;
@@ -506,8 +544,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
       flush();
     }
-
   }
+
   private static class CommitsCounter {
     @NotNull public final ProgressIndicator indicator;
     public final int allCommits;
