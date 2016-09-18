@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -84,24 +83,23 @@ import java.util.concurrent.TimeUnit;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public class CompileDriver {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompileDriver");
 
-  private final Project myProject;
+  private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
+  private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
+  private static final long ONE_MINUTE_MS = 60L * 1000L;
 
+  private final Project myProject;
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
   private final Map<Module, String> myModuleTestOutputPaths = new HashMap<>();
 
-  private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
-
-  private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
-
-  private static final long ONE_MINUTE_MS = 60L /*sec*/ * 1000L /*millisec*/;
+  @SuppressWarnings("deprecation") private CompilerFilter myCompilerFilter = CompilerFilter.ALL;
 
   public CompileDriver(Project project) {
     myProject = project;
   }
 
+  @SuppressWarnings("deprecation")
   public void setCompilerFilter(CompilerFilter compilerFilter) {
     myCompilerFilter = compilerFilter == null? CompilerFilter.ALL : compilerFilter;
   }
@@ -356,9 +354,6 @@ public class CompileDriver {
     });
   }
 
-
-  private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
-
   private void startup(final CompileScope scope,
                        final boolean isRebuild,
                        final boolean forceCompile,
@@ -366,8 +361,7 @@ public class CompileDriver {
                        final CompilerMessage message) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final String contentName =
-      forceCompile ? CompilerBundle.message("compiler.content.name.compile") : CompilerBundle.message("compiler.content.name.make");
+    final String contentName = CompilerBundle.message(forceCompile ? "compiler.content.name.compile" : "compiler.content.name.make");
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     final CompilerTask compileTask = new CompilerTask(myProject, contentName, isUnitTestMode, true, true, isCompilationStartedAutomatically(scope));
 
@@ -541,27 +535,10 @@ public class CompileDriver {
     return message;
   }
 
-  /*
-  private void dropScopesCaches() {
-    // hack to be sure the classpath will include the output directories
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).clearScopesCachesForModules();
-      }
-    });
-  }
-  */
-
   // [mike] performance optimization - this method is accessed > 15,000 times in Aurora
-  private String getModuleOutputPath(final Module module, boolean inTestSourceContent) {
-    final Map<Module, String> map = inTestSourceContent ? myModuleTestOutputPaths : myModuleOutputPaths;
-    String path = map.get(module);
-    if (path == null) {
-      path = CompilerPaths.getModuleOutputPath(module, inTestSourceContent);
-      map.put(module, path);
-    }
-
-    return path;
+  private String getModuleOutputPath(Module module, boolean inTestSourceContent) {
+    Map<Module, String> map = inTestSourceContent ? myModuleTestOutputPaths : myModuleOutputPaths;
+    return map.computeIfAbsent(module, k -> CompilerPaths.getModuleOutputPath(module, inTestSourceContent));
   }
 
   public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
@@ -595,9 +572,8 @@ public class CompileDriver {
     try {
       CompileTask[] tasks = beforeTasks ? manager.getBeforeTasks() : manager.getAfterTasks();
       if (tasks.length > 0) {
-        progressIndicator.setText(beforeTasks
-                                  ? CompilerBundle.message("progress.executing.precompile.tasks")
-                                  : CompilerBundle.message("progress.executing.postcompile.tasks"));
+        progressIndicator.setText(
+          CompilerBundle.message(beforeTasks ? "progress.executing.precompile.tasks" : "progress.executing.postcompile.tasks"));
         for (CompileTask task : tasks) {
           if (!task.execute(context)) {
             return false;

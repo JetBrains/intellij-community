@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,10 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/30/12
+ * @since 30.10.2012
  */
 public class BuildOperations {
-  private BuildOperations() {
-  }
+  private BuildOperations() { }
 
   public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
@@ -135,13 +134,13 @@ public class BuildOperations {
   Map<T, Set<File>> cleanOutputsCorrespondingToChangedFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     try {
-      final Map<T, Set<File>> cleanedSources = new java.util.HashMap<T, Set<File>>();
+      final Map<T, Set<File>> cleanedSources = new HashMap<T, Set<File>>();
 
       final THashSet<File> dirsToDelete = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       final Collection<String> deletedPaths = new ArrayList<String>();
 
       dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
-        private final Map<T, SourceToOutputMapping> mappingsCache = new java.util.HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
+        private final Map<T, SourceToOutputMapping> mappingsCache = new HashMap<T, SourceToOutputMapping>(); // cache the mapping locally
         private final TObjectIntHashMap<T> idsCache = new TObjectIntHashMap<T>();
 
         @Override
