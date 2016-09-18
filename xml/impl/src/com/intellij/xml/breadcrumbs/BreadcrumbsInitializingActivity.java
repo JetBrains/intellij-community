@@ -51,7 +51,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener(project));
 
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(project), project);
-    UISettings.getInstance().addUISettingsListener(new MyUISettingsListener(project), project);
+    connection.subscribe(UISettingsListener.TOPIC, new MyUISettingsListener(project));
   }
 
   private static class MyFileEditorManagerListener extends FileEditorManagerAdapter {

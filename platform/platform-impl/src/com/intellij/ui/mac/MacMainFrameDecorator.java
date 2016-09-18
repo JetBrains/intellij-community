@@ -199,7 +199,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       SHOWN = CURRENT_GETTER.fun(null);
     }
 
-    UISettings.getInstance().addUISettingsListener(this, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, this);
 
     final ID pool = invoke("NSAutoreleasePool", "new");
 

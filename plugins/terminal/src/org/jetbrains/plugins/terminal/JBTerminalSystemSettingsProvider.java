@@ -30,6 +30,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
@@ -56,7 +57,8 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
   public JBTerminalSystemSettingsProvider() {
     myColorScheme = createBoundColorSchemeDelegate(null);
 
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
         int size = consoleFontSize(JBTerminalSystemSettingsProvider.this.myColorScheme);
@@ -66,9 +68,8 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
           fireFontChanged();
         }
       }
-    }, this);
-
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+    });
+    connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         myColorScheme.updateGlobalScheme(scheme);

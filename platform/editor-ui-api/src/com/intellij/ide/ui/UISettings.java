@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ComponentTreeEventDispatcher;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -138,7 +137,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean SORT_BOOKMARKS = false;
   public boolean MERGE_EQUAL_STACKTRACES = true;
 
-  private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
   private final ComponentTreeEventDispatcher<UISettingsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener.class);
 
   public UISettings() {
@@ -160,8 +158,12 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
   }
 
-  public void addUISettingsListener(@NotNull final UISettingsListener listener, @NotNull Disposable parentDisposable) {
-    myDispatcher.addListener(listener, parentDisposable);
+  /**
+   * @deprecated Please use {@link UISettingsListener#TOPIC}
+   */
+  @Deprecated
+  public void addUISettingsListener(@NotNull UISettingsListener listener, @NotNull Disposable parentDisposable) {
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener);
   }
 
   /**
@@ -169,7 +171,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    */
   public void fireUISettingsChanged() {
     incModificationCount();
-    myDispatcher.getMulticaster().uiSettingsChanged(this);
 
     if (ourSettings == this) {
       // if this is the main UISettings instance push event to bus and to all current components

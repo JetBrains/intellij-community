@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -77,19 +78,19 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
   public BookmarkManager(Project project,
-                         MessageBus bus,
                          PsiDocumentManager documentManager,
                          EditorColorsManager colorsManager,
                          EditorFactory editorFactory) {
     super(project);
 
-    project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
+    myBus = project.getMessageBus();
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
       @Override
       public void globalSchemeChange(EditorColorsScheme scheme) {
         colorsChanged();
       }
     });
-    myBus = bus;
     EditorEventMulticaster multicaster = editorFactory.getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);
     multicaster.addEditorMouseListener(new MyEditorMouseListener(), myProject);
@@ -115,7 +116,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       }
     });
     mySortedState = UISettings.getInstance().SORT_BOOKMARKS;
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
         if (mySortedState != UISettings.getInstance().SORT_BOOKMARKS) {
@@ -123,7 +124,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
           EventQueue.invokeLater(() -> myBus.syncPublisher(BookmarksListener.TOPIC).bookmarksOrderChanged());
         }
       }
-    }, project);
+    });
   }
 
   private static void map(Document document, Bookmark bookmark) {

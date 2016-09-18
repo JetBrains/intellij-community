@@ -476,12 +476,12 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         }
       }, this);
 
-      UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      project.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
         @Override
         public void uiSettingsChanged(UISettings source) {
           updateNorthPanel();
         }
-      }, this);
+      });
 
       updateNorthPanel();
     }

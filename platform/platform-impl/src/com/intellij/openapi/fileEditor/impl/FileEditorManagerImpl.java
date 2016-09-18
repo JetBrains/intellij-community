@@ -1508,8 +1508,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     /*
       Extends/cuts number of opened tabs. Also updates location of tabs.
      */
-    final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener, myProject);
+    connection.subscribe(UISettingsListener.TOPIC, new MyUISettingsListener());
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
@@ -1927,7 +1926,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     @Override
     public void uiSettingsChanged(final UISettings source) {
       assertDispatchThread();
-      setTabsMode(source.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE && !UISettings.getInstance().PRESENTATION_MODE);
+      setTabsMode(source.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE && !source.PRESENTATION_MODE);
 
       for (EditorsSplitters each : getAllSplitters()) {
         each.setTabsPlacement(source.EDITOR_TAB_PLACEMENT);
