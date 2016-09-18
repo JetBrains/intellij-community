@@ -27,7 +27,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtils;
@@ -159,13 +158,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
       ACTIVATE_RIGHT_EDITOR_ON_CLOSE = true;
       SHOW_ICONS_IN_MENUS = false;
     }
-  }
-
-  /**
-   * @deprecated use {@link UISettings#addUISettingsListener(UISettingsListener, Disposable disposable)} instead.
-   */
-  public void addUISettingsListener(UISettingsListener listener) {
-    myDispatcher.addListener(listener);
   }
 
   public void addUISettingsListener(@NotNull final UISettingsListener listener, @NotNull Disposable parentDisposable) {
