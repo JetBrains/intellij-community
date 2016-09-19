@@ -26,14 +26,12 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 public class JavaModuleIndexImpl extends JavaModuleIndex {
-  private static final String INDEX_DIR = "jigsaw";
-  private static final String INDEX_NAME = "module-info.map";
+  private static final String INDEX_PATH = "jigsaw/module-info.map";
   private static final String NULL_PATH = "-";
   private static final String MODULE_INFO_FILE = "module-info.java";
 
@@ -84,9 +82,8 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
       p.setProperty(key, path != null ? FileUtil.toSystemDependentName(path) : NULL_PATH);
     }
 
-    File indexDir = new File(storageRoot, INDEX_DIR);
-    FileUtil.ensureExists(indexDir);
-    File index = new File(indexDir, INDEX_NAME);
+    File index = new File(storageRoot, INDEX_PATH);
+    FileUtil.createParentDirs(index);
 
     Writer writer = new OutputStreamWriter(new FileOutputStream(index), CharsetToolkit.UTF8_CHARSET);
     try {
@@ -98,7 +95,7 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
   }
 
   public static JavaModuleIndex load(@NotNull File storageRoot) {
-    File index = new File(new File(storageRoot, INDEX_DIR), INDEX_NAME);
+    File index = new File(storageRoot, INDEX_PATH);
     if (!index.exists()) {
       Map<String, File> mapping = ContainerUtil.newHashMap();
       return new JavaModuleIndexImpl(mapping);
