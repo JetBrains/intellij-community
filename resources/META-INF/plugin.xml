@@ -1,15 +1,14 @@
 <idea-plugin version="2">
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.0.40</version>
+  <version>0.0.41</version>
   <vendor email="yaroslav.lepenkin@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
-      Collecting statistics to measure completion sorting quality
+      This plugin collects data about your usage of code completion, anonymises and sends it to us. Note, the plugin doesn’t send any of your personal data or code. All we send is just numbers calculated based on your completion usage patterns
     ]]></description>
   
   <change-notes><![CDATA[
-      Updated server url
     ]]>
   </change-notes>
 
