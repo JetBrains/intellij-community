@@ -203,7 +203,7 @@ public class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
+  public static class SwitcherPanel extends JPanel implements KeyListener, MouseListener, MouseMotionListener, DataProvider {
     final JBPopup myPopup;
     final JBList toolWindows;
     final JBList files;
@@ -217,6 +217,24 @@ public class Switcher extends AnAction implements DumbAware {
     final Alarm myAlarm;
     final SwitcherSpeedSearch mySpeedSearch;
     final String myTitle;
+
+    @Nullable
+    @Override
+    public Object getData(@NonNls String dataId) {
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        final List list = getSelectedList().getSelectedValuesList();
+        if (!list.isEmpty()) {
+          final List<VirtualFile> vFiles = new ArrayList<>();
+          for (Object o : list) {
+            if (o instanceof FileInfo) {
+              vFiles.add(((FileInfo)o).first);
+            }
+          }
+          return vFiles.isEmpty() ? null : vFiles.toArray(VirtualFile.EMPTY_ARRAY);
+        }
+      }
+      return null;
+    }
 
 
     private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
