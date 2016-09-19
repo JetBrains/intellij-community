@@ -39,7 +39,7 @@ public class Javac2 extends Javac {
   private ArrayList myFormFiles;
   private List myNestedFormPathList;
   private boolean instrumentNotNull = true;
-  private String myNotNull;
+  private String myNotNullAnnotations;
   private List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
 
   public Javac2() {
@@ -76,12 +76,18 @@ public class Javac2 extends Javac {
     this.instrumentNotNull = instrumentNotNull;
   }
 
-  public String getNotNull() {
-    return myNotNull;
+  /**
+   * @return semicolon-separated names of not-null annotations to be instrumented. Example: <code>"org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"</code>
+   */
+  public String getNotNullAnnotations() {
+    return myNotNullAnnotations;
   }
 
-  public void setNotNull(String notNull) {
-    myNotNull = notNull;
+  /**
+   * @param notNullAnnotations semicolon-separated names of not-null annotations to be instrumented. Example: <code>"org.jetbrains.annotations.NotNull;javax.annotation.Nonnull"</code>
+   */
+  public void setNotNullAnnotations(String notNullAnnotations) {
+    myNotNullAnnotations = notNullAnnotations;
   }
 
   /**
@@ -447,7 +453,7 @@ public class Javac2 extends Javac {
             if (version >= Opcodes.V1_5 && !shouldBeSkippedByAnnotationPattern(reader)) {
               ClassWriter writer = new InstrumenterClassWriter(reader, getAsmClassWriterFlags(version), finder);
 
-              if (NotNullVerifyingInstrumenter.processClassFile(reader, writer, myNotNull)) {
+              if (NotNullVerifyingInstrumenter.processClassFile(reader, writer, myNotNullAnnotations.split(";"))) {
                 final FileOutputStream fileOutputStream = new FileOutputStream(path);
                 try {
                   fileOutputStream.write(writer.toByteArray());
