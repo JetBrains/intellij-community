@@ -32,7 +32,9 @@ import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -2986,6 +2988,10 @@ public class HighlightUtil extends HighlightUtilBase {
       this.level = level;
       this.key = key;
     }
+
+    public LanguageLevel getMinimalSupportedLanguageLevel() {
+      return level;
+    }
   }
 
   @Nullable
@@ -2995,6 +3001,19 @@ public class HighlightUtil extends HighlightUtilBase {
                                     @NotNull PsiFile file) {
     if (file.getManager().isInProject(file) && !level.isAtLeast(feature.level)) {
       String message = JavaErrorMessages.message("insufficient.language.level", JavaErrorMessages.message(feature.key));
+
+      Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      if (module != null) {
+        LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+        if (level != moduleLanguageLevel) {
+          for (JavaLanguageLevelInconsistencyMessageHandler handler : JavaLanguageLevelInconsistencyMessageHandler.EP_NAME.getExtensions()) {
+            if (handler.accepts(element, feature, level, moduleLanguageLevel, file)) {
+              message = handler.getNewMessage(message, element, feature, level, moduleLanguageLevel, file);
+              break;
+            }
+          }
+        }
+      }
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(feature.level));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createShowModulePropertiesFix(element));
