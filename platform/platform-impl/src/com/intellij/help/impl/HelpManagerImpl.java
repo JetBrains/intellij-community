@@ -47,6 +47,8 @@ public class HelpManagerImpl extends HelpManager {
   private WeakReference<IdeaHelpBroker> myBrokerReference = null;
 
   public void invokeHelp(@Nullable String id) {
+    id = StringUtil.notNullize(id, "top");
+    
     UsageTrigger.trigger("ide.help." + id);
 
     if (MacHelpUtil.isApplicable() && MacHelpUtil.invokeHelp(id)) {
@@ -87,14 +89,12 @@ public class HelpManagerImpl extends HelpManager {
     Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     broker.setActivationWindow(activeWindow);
 
-    if (id != null) {
-      try {
-        broker.setCurrentID(id);
-      }
-      catch (BadIDException e) {
-        Messages.showErrorDialog(IdeBundle.message("help.topic.not.found.error", id), CommonBundle.getErrorTitle());
-        return;
-      }
+    try {
+      broker.setCurrentID(id);
+    }
+    catch (BadIDException e) {
+      Messages.showErrorDialog(IdeBundle.message("help.topic.not.found.error", id), CommonBundle.getErrorTitle());
+      return;
     }
     broker.setDisplayed(true);
   }
