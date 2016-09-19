@@ -17,14 +17,13 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.openapi.vcs.changes.ThreadSafeTransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
-import com.intellij.util.continuation.Continuation;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
+import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class RunOrContinuation<T, E extends Exception> {
@@ -32,7 +31,6 @@ public abstract class RunOrContinuation<T, E extends Exception> {
   protected final Project myProject;
   private final String myTaskTitle;
   private final Class<E> myClazzE;
-  private volatile boolean myWasCanceled;
   private TransparentlyFailedValueI<T,E> myTransparentlyFailedValue;
 
   protected RunOrContinuation(final Project project, final String taskTitle, final Class<E> clazzE) {
@@ -50,10 +48,6 @@ public abstract class RunOrContinuation<T, E extends Exception> {
   protected abstract T calculateLong() throws E;
   @CalledInAwt
   protected abstract void processResult(final TransparentlyFailedValueI<T, E> t);
-
-  protected void cancel() {
-    myWasCanceled = true;
-  }
 
   private void setException(Exception e) {
     if (myClazzE.isAssignableFrom(e.getClass())) {
@@ -75,16 +69,13 @@ public abstract class RunOrContinuation<T, E extends Exception> {
         catch (Exception e) {
           setException(e);
         }
-        if (! myWasCanceled) {
-          context.next(new TaskDescriptor("final part", Where.AWT) {
-            @Override
-            public void run(ContinuationContext context) {
-              processResult(myTransparentlyFailedValue);
-            }
-          });
-        }
+        context.next(new TaskDescriptor("final part", Where.AWT) {
+          @Override
+          public void run(ContinuationContext context) {
+            processResult(myTransparentlyFailedValue);
+          }
+        });
       }
-
     };
 
     return new TaskDescriptor("short part", Where.AWT) {
@@ -96,17 +87,12 @@ public abstract class RunOrContinuation<T, E extends Exception> {
         catch (Exception e) {
           setException(e);
         }
-        if ((! myWasCanceled) && (myTransparentlyFailedValue.haveSomething())) {
+        if (myTransparentlyFailedValue.haveSomething()) {
           processResult(myTransparentlyFailedValue);
           return;
         }
         context.next(pooled);
       }
     };
-  }
-
-  @CalledInAwt
-  public void execute() {
-    Continuation.createFragmented(myProject, true).run(getTask());
   }
 }

@@ -16,12 +16,12 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInAwt;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ValueHolder;
 import com.intellij.util.continuation.TaskDescriptor;
+import org.jetbrains.annotations.CalledInAwt;
 
 // cache. persistent. by request
 public class FactsCalculator<In, Out, E extends Exception> {
@@ -35,11 +35,6 @@ public class FactsCalculator<In, Out, E extends Exception> {
     myTaskTitle = taskTitle;
     myCache = cache;
     myLive = live;
-  }
-
-  @CalledInAwt
-  public void get(final In in, final Consumer<TransparentlyFailedValueI<Out, E>> resultConsumer, final Class<E> clazzE) {
-    createRunOrContinuation(in, resultConsumer, clazzE).execute();
   }
 
   private RunOrContinuation<Out,E> createRunOrContinuation(final In in, final Consumer<TransparentlyFailedValueI<Out, E>> resultConsumer,
