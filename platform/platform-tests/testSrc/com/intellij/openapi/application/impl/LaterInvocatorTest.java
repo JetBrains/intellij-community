@@ -389,7 +389,7 @@ public class LaterInvocatorTest extends PlatformTestCase {
     thread.join();
   }
 
-  private static void flushSwingQueue() {
+  static void flushSwingQueue() {
 
     try {
       Thread.sleep(10);
