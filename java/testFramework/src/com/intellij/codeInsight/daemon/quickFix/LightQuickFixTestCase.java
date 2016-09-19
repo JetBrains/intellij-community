@@ -186,7 +186,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     PsiFile file = getFile();
     WriteAction.run(() -> {
       try {
-        // Test that action will automatically clear the read-only attribute if modification is necessary
+        // Test that action will automatically clear the read-only attribute if modification is necessary.
+        // If your test fails due to this, make sure that your quick-fix/intention has the following line:
+        // if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
         ReadOnlyAttributeUtil.setReadOnlyAttribute(file.getVirtualFile(), true);
       }
       catch (IOException e) {
