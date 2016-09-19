@@ -81,8 +81,7 @@ public class SvnBranchPointsCalculator {
       }
     };
 
-    myCalculator = new FactsCalculator<>(
-      myProject, "Looking for branch origin", cache, new Loader(myProject));
+    myCalculator = new FactsCalculator<>("Looking for branch origin", cache, new Loader(myProject));
   }
 
   public void deactivate() {
