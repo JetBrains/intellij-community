@@ -332,7 +332,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     return StringUtil.getShortName(anno != null ? anno : StringUtil.notNullize(manager.getNullable(owner), "???"));
   }
 
-  private static String getPresentableAnnoName(@NotNull PsiAnnotation annotation) {
+  public static String getPresentableAnnoName(@NotNull PsiAnnotation annotation) {
     return StringUtil.getShortName(StringUtil.notNullize(annotation.getQualifiedName(), "???"));
   }
 

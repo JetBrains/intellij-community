@@ -149,7 +149,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private void analyzeNullLiteralMethodArguments(PsiMethod method, ProblemsHolder holder, boolean isOnTheFly) {
     if (REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER) {
       for (PsiParameter parameter : NullParameterConstraintChecker.checkMethodParameters(method, isOnTheFly)) {
-        final String name = parameter.getName();
         holder.registerProblem(parameter.getNameIdentifier(),
                                InspectionsBundle.message("dataflow.method.fails.with.null.argument"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -609,8 +608,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     final PsiMethod method = getScopeMethod(block);
     if (method == null || NullableStuffInspectionBase.isNullableNotInferred(method, true)) return;
 
-    boolean notNullRequired = NullableNotNullManager.isNotNull(method);
-    if (!notNullRequired && !SUGGEST_NULLABLE_ANNOTATIONS) return;
+    PsiAnnotation notNullAnno = NullableNotNullManager.getInstance(method.getProject()).getNotNullAnnotation(method, true);
+    if (notNullAnno == null && !SUGGEST_NULLABLE_ANNOTATIONS) return;
 
     PsiType returnType = method.getReturnType();
     // no warnings in void lambdas, where the expression is not returned anyway
@@ -624,10 +623,11 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       final PsiExpression expr = (PsiExpression)statement;
       if (!reportedAnchors.add(expr)) continue;
 
-      if (notNullRequired) {
+      if (notNullAnno != null) {
+        String presentable = NullableStuffInspectionBase.getPresentableAnnoName(notNullAnno);
         final String text = isNullLiteralExpression(expr)
-                            ? InspectionsBundle.message("dataflow.message.return.null.from.notnull")
-                            : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull");
+                            ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)
+                            : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
         holder.registerProblem(expr, text);
       }
       else if (AnnotationUtil.isAnnotatingApplicable(statement)) {
