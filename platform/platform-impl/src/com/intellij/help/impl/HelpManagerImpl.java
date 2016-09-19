@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
@@ -69,12 +70,14 @@ public class HelpManagerImpl extends HelpManager {
         minorVersion = minorVersion.substring(0, dot);
       }
       String productVersion = info.getMajorVersion() + "." + minorVersion;
-      String productCode = info.getPackageCode();
 
       String url = info.getWebHelpUrl() + "/" + productVersion + "/?" + id;
       
       if (PlatformUtils.isJetBrainsProduct()) {
-        url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=" + productCode + "&utm_content=" + productVersion;
+        String productCode = info.getBuild().getProductCode();
+        if(!StringUtil.isEmpty(productCode)) {
+          url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=" + productCode + "&utm_content=" + productVersion;
+        }
       }
 
       BrowserUtil.browse(url);
