@@ -136,6 +136,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   public static boolean isGroovyFile(String path) {
+    //todo file type check
     return path.endsWith("." + GROOVY_EXTENSION);
   }
 
