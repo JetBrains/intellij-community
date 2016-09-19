@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -443,7 +444,8 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
         if(args.length == 2) {
           PsiExpression list = args[0];
           PsiExpression comparator = args[1];
-          String replacement = list.getText()+".sort("+comparator.getText()+")";
+          String replacement =
+            ParenthesesUtils.getText(list, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".sort(" + comparator.getText() + ")";
           if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
           methodCallExpression
             .replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacement, methodCallExpression));
