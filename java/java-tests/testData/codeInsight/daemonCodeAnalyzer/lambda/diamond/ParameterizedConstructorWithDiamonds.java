@@ -1,7 +1,7 @@
 import java.util.List;
 import java.util.function.Function;
 
-public class RunnableGroup<R extends Runnable> implements Runnable {
+class RunnableGroup<R extends Runnable> implements Runnable {
   public <T> RunnableGroup(List<T> list, Function<T, R> function) {}
   @Override public void run() {}
 }
