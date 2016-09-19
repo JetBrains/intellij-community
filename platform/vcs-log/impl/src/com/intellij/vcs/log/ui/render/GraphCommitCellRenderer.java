@@ -37,7 +37,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   @NotNull private final GraphCellPainter myPainter;
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
-  @NotNull private final ReferencePainter myTextLabelPainter =
+  @NotNull private final ReferencePainter myReferencePainter =
     isRedesignedLabels() ? new LabelPainter() : new RectangleReferencePainter();
   @Nullable private final FadeOutPainter myFadeOutPainter = isRedesignedLabels() ? new FadeOutPainter() : null;
 
@@ -73,7 +73,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   private int calculateHeight() {
-    return Math.max(myTextLabelPainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
+    return Math.max(myReferencePainter.getSize().height, getFontMetrics(myFont).getHeight() + VERTICAL_PADDING);
   }
 
   @Override
@@ -81,12 +81,12 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     super.paintComponent(g);
     int graphImageWidth = (myGraphImage != null) ? myGraphImage.getWidth() : 0;
 
-    if (!myTextLabelPainter.isLeftAligned()) {
-      int start = Math.max(graphImageWidth, getWidth() - myTextLabelPainter.getSize().width);
-      myTextLabelPainter.paint((Graphics2D)g, start, 0, getHeight());
+    if (!myReferencePainter.isLeftAligned()) {
+      int start = Math.max(graphImageWidth, getWidth() - myReferencePainter.getSize().width);
+      myReferencePainter.paint((Graphics2D)g, start, 0, getHeight());
     }
     else {
-      myTextLabelPainter.paint((Graphics2D)g, graphImageWidth, 0, getHeight());
+      myReferencePainter.paint((Graphics2D)g, graphImageWidth, 0, getHeight());
     }
 
     if (myFadeOutPainter != null) {
@@ -129,11 +129,11 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     if (myFadeOutPainter != null) {
       myFadeOutPainter.customize(refs, row, column, table, foreground);
     }
-    customizeRefsPainter(myTextLabelPainter, refs, foreground);
+    customizeRefsPainter(myReferencePainter, refs, foreground);
 
     setBorder(null);
     append("");
-    appendTextPadding(graphPadding + (myTextLabelPainter.isLeftAligned() ? myTextLabelPainter.getSize().width : 0));
+    appendTextPadding(graphPadding + (myReferencePainter.isLeftAligned() ? myReferencePainter.getSize().width : 0));
     myIssueLinkRenderer.appendTextWithLinks(cell.getText(), style);
   }
 
