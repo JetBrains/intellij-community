@@ -48,7 +48,7 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
       links = parse(line);
     }
     catch (RuntimeException e) {
-      LOG.error("Failed to process '" + line + "'", e);
+      LOG.error("Failed to parse '" + line + "' with " + getClass(), e);
       return null;
     }
     List<Filter.ResultItem> items = ContainerUtil.newArrayList();
