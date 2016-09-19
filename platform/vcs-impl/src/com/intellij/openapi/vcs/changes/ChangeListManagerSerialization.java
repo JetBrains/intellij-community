@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
@@ -54,7 +53,7 @@ class ChangeListManagerSerialization {
   }
 
   @SuppressWarnings({"unchecked"})
-  public void readExternal(final Element element) throws InvalidDataException {
+  public void readExternal(final Element element) {
     final List<Element> listNodes = element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
       readChangeList(listNode);
@@ -135,7 +134,7 @@ class ChangeListManagerSerialization {
         listNode.setAttribute(ATT_COMMENT, comment);
       }
       List<Change> changes = new ArrayList<>(list.getChanges());
-      Collections.sort(changes, new ChangeComparator());
+      changes.sort(new ChangeComparator());
       for (Change change : changes) {
         writeChange(listNode, change);
       }
