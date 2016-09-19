@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableCell;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
@@ -44,6 +45,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   @Nullable private PaintInfo myGraphImage;
   @NotNull private Font myFont;
   private int myHeight;
+  private boolean myExpanded;
 
   public GraphCommitCellRenderer(@NotNull VcsLogData logData,
                                  @NotNull GraphCellPainter painter,
@@ -60,7 +62,8 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   @Override
   public Dimension getPreferredSize() {
     Dimension preferredSize = super.getPreferredSize();
-    return new Dimension(preferredSize.width, getPreferredHeight());
+    return new Dimension(preferredSize.width + (myReferencePainter.isLeftAligned() ? 0 : myReferencePainter.getSize().width),
+                         getPreferredHeight());
   }
 
   public int getPreferredHeight() {
@@ -90,8 +93,10 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     }
 
     if (myFadeOutPainter != null) {
-      int start = Math.max(graphImageWidth, getWidth() - myFadeOutPainter.getWidth());
-      myFadeOutPainter.paint((Graphics2D)g, start, 0, getHeight());
+      if (!myExpanded) {
+        int start = Math.max(graphImageWidth, getWidth() - myFadeOutPainter.getWidth());
+        myFadeOutPainter.paint((Graphics2D)g, start, 0, getHeight());
+      }
     }
 
     if (myGraphImage != null) {
@@ -126,6 +131,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     Color foreground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, "", hasFocus, isSelected).getForeground());
+    myExpanded = myGraphTable.getExpandableItemsHandler().getExpandedItems().contains(new TableCell(row, column));
     if (myFadeOutPainter != null) {
       myFadeOutPainter.customize(refs, row, column, table, foreground);
     }
