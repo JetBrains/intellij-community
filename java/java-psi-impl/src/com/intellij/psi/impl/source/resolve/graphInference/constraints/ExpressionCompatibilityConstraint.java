@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -142,6 +143,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         if (psiClass != null) {
           returnType = JavaPsiFacade.getElementFactory(argumentList.getProject()).createType(psiClass, PsiSubstitutor.EMPTY);
           typeParams = psiClass.getTypeParameters();
+          if (method != null && method.hasTypeParameters()) {
+            typeParams = ArrayUtil.mergeArrays(typeParams, method.getTypeParameters());
+          }
         }
       }
 
