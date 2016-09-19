@@ -291,7 +291,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   private static class ToLowerCaseStringDescriptor implements KeyDescriptor<String> {
     @Override
     public int getHashCode(String value) {
-      return CaseInsensitiveStringHashingStrategy.INSTANCE.hashCode();
+      return CaseInsensitiveStringHashingStrategy.INSTANCE.computeHashCode(value);
     }
 
     @Override
