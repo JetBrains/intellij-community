@@ -184,34 +184,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                   }
                 } else {
                   if(nonFinalVariables.isEmpty() && tb.getSingleStatement() instanceof PsiReturnStatement) {
-                    PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
-                    PsiExpression value = returnStatement.getReturnValue();
-                    PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
-                    if(nextReturnStatement != null) {
-                      if(isLiteral(value, Boolean.TRUE) || isLiteral(value, Boolean.FALSE)) {
-                        boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-                        if(isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
-                          String methodName;
-                          if (foundResult) {
-                            methodName = "anyMatch";
-                          }
-                          else {
-                            methodName = "noneMatch";
-                            if(!operations.isEmpty()) {
-                              Operation lastOp = operations.get(operations.size() - 1);
-                              if(lastOp instanceof FilterOp && BoolUtils.isNegation(lastOp.getExpression())) {
-                                methodName = "allMatch";
-                              }
-                            }
-                          }
-                          registerProblem(holder, isOnTheFly, statement, methodName, new ReplaceWithMatchFix(methodName));
-                          return;
-                        }
-                      }
-                      if(ExpressionUtils.isSimpleExpression(nextReturnStatement.getReturnValue())) {
-                        registerProblem(holder, isOnTheFly, statement, "findFirst", new ReplaceWithFindFirstFix());
-                      }
-                    }
+                    handleSingleReturn(statement, tb, operations);
                   }
                 }
               }
@@ -222,11 +195,51 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
       }
 
+      void handleSingleReturn(PsiForeachStatement statement,
+                              TerminalBlock tb,
+                              List<Operation> operations) {
+        PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
+        PsiExpression value = returnStatement.getReturnValue();
+        PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
+        if(nextReturnStatement != null && (isLiteral(value, Boolean.TRUE) || isLiteral(value, Boolean.FALSE))) {
+          boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
+          if(isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
+            String methodName;
+            if (foundResult) {
+              methodName = "anyMatch";
+            }
+            else {
+              methodName = "noneMatch";
+              if(!operations.isEmpty()) {
+                Operation lastOp = operations.get(operations.size() - 1);
+                if(lastOp instanceof FilterOp && BoolUtils.isNegation(lastOp.getExpression())) {
+                  methodName = "allMatch";
+                }
+              }
+            }
+            registerProblem(holder, isOnTheFly, statement, methodName, new ReplaceWithMatchFix(methodName));
+            return;
+          }
+        }
+        if (!isVariableReferenced(tb.getVariable(), value)) {
+          registerProblem(holder, isOnTheFly, statement, "anyMatch", new ReplaceWithMatchFix("anyMatch"));
+        }
+        if(nextReturnStatement != null && ExpressionUtils.isSimpleExpression(nextReturnStatement.getReturnValue())) {
+          registerProblem(holder, isOnTheFly, statement, "findFirst", new ReplaceWithFindFirstFix());
+        }
+      }
+
       private boolean isRawSubstitution(PsiType iteratedValueType, PsiClass collectionClass) {
         return iteratedValueType instanceof PsiClassType && PsiUtil
           .isRawSubstitutor(collectionClass, TypeConversionUtil.getSuperClassSubstitutor(collectionClass, (PsiClassType)iteratedValueType));
       }
     };
+  }
+
+  @Contract("_, null -> false")
+  private static boolean isVariableReferenced(PsiVariable variable, PsiExpression value) {
+    return !PsiTreeUtil
+      .processElements(value, e -> !(e instanceof PsiReferenceExpression) || ((PsiReferenceExpression)e).resolve() != variable);
   }
 
   @Nullable
@@ -859,24 +872,47 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
                  @NotNull List<String> intermediateOps) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
       PsiExpression value = returnStatement.getReturnValue();
-      if(!isLiteral(value, Boolean.TRUE) && !isLiteral(value, Boolean.FALSE)) return;
-      boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-      PsiReturnStatement nextReturnStatement = getNextReturnStatement(foreachStatement);
-      if (nextReturnStatement == null || !isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) return;
-      String methodName = foundResult ? "anyMatch" : "noneMatch";
-      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-      String streamText = generateStream(iteratedValue, intermediateOps).toString();
-      PsiExpression stream =
-        elementFactory.createExpressionFromText(streamText, foreachStatement);
-      if(!(stream instanceof PsiMethodCallExpression)) return;
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+      if (isLiteral(value, Boolean.TRUE) || isLiteral(value, Boolean.FALSE)) {
+        boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
+        PsiReturnStatement nextReturnStatement = getNextReturnStatement(foreachStatement);
+        if (nextReturnStatement != null && isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
+          String methodName = foundResult ? "anyMatch" : "noneMatch";
+          String streamText = generateStream(iteratedValue, intermediateOps).toString();
+          streamText = addTerminalOperation(streamText, methodName, foreachStatement, tb);
+          boolean siblings = nextReturnStatement.getParent() == foreachStatement.getParent();
+          PsiElement result =
+            foreachStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", foreachStatement));
+          if (siblings) {
+            nextReturnStatement.delete();
+          }
+          simplifyAndFormat(project, result);
+          return;
+        }
+      }
+      if(!isVariableReferenced(tb.getVariable(), value)) {
+        String streamText = generateStream(iteratedValue, intermediateOps).toString();
+        streamText = addTerminalOperation(streamText, "anyMatch", foreachStatement, tb);
+        String replacement = "if(" + streamText + "){" + returnStatement.getText() + "}";
+        PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(replacement, foreachStatement));
+        simplifyAndFormat(project, result);
+      }
+    }
+
+    private static String addTerminalOperation(String origStream, String methodName, @NotNull PsiElement contextElement,
+                                               @NotNull TerminalBlock tb) {
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(contextElement.getProject());
+      PsiExpression stream = elementFactory.createExpressionFromText(origStream, contextElement);
+      LOG.assertTrue(stream instanceof PsiMethodCallExpression);
       PsiElement nameElement = ((PsiMethodCallExpression)stream).getMethodExpression().getReferenceNameElement();
-      if(nameElement != null && nameElement.getText().equals("filter")) {
-        if(!foundResult) {
+      if (nameElement != null && nameElement.getText().equals("filter")) {
+        if (methodName.equals("noneMatch")) {
+          // Try to reduce noneMatch(x -> !(condition)) to allMatch(x -> condition)
           PsiExpression[] expressions = ((PsiMethodCallExpression)stream).getArgumentList().getExpressions();
-          if(expressions.length == 1 && expressions[0] instanceof PsiLambdaExpression) {
+          if (expressions.length == 1 && expressions[0] instanceof PsiLambdaExpression) {
             PsiLambdaExpression lambda = (PsiLambdaExpression)expressions[0];
             PsiElement lambdaBody = lambda.getBody();
-            if(lambdaBody instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)lambdaBody)) {
+            if (lambdaBody instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)lambdaBody)) {
               PsiExpression negated = BoolUtils.getNegated((PsiExpression)lambdaBody);
               LOG.assertTrue(negated != null, lambdaBody.getText());
               lambdaBody.replace(negated);
@@ -885,16 +921,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
         }
         nameElement.replace(elementFactory.createIdentifier(methodName));
-        streamText = stream.getText();
-      } else {
-        streamText += "."+methodName+"("+tb.getVariable().getName()+" -> true)";
+        return stream.getText();
       }
-      boolean siblings = nextReturnStatement.getParent() == foreachStatement.getParent();
-      PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", foreachStatement));
-      if(siblings) {
-        nextReturnStatement.delete();
-      }
-      simplifyAndFormat(project, result);
+      return origStream + "." + methodName + "(" + tb.getVariable().getName() + " -> true)";
     }
   }
 
