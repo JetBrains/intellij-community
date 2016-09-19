@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
@@ -45,7 +45,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     return false;
   }
 
-  private static void addPlaceholder(@NotNull CCState state) {
+  private void addPlaceholder(@NotNull CCState state) {
     Editor editor = state.getEditor();
     Project project = state.getProject();
     PsiFile file = state.getFile();
@@ -65,11 +65,14 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     String defaultPlaceholderText = "type here";
     answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
 
-    CCCreateAnswerPlaceholderDialog dlg = new CCCreateAnswerPlaceholderDialog(project, answerPlaceholder);
-    dlg.show();
-    if (dlg.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
+    CCCreateAnswerPlaceholderDialog dlg = createDialog(project, answerPlaceholder);
+    if (!dlg.showAndGet()) {
       return;
     }
+    String answerPlaceholderText = dlg.getTaskText();
+    answerPlaceholder.setTaskText(StringUtil.notNullize(answerPlaceholderText));
+    answerPlaceholder.setLength(StringUtil.notNullize(answerPlaceholderText).length());
+    answerPlaceholder.setHints(dlg.getHints());
 
     if (!model.hasSelection()) {
       DocumentUtil.writeInRunUndoTransparentAction(() -> document.insertString(offset, defaultPlaceholderText));
@@ -179,5 +182,9 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
       return false;
     }
     return state.getAnswerPlaceholder() != null;
+  }
+
+  protected CCCreateAnswerPlaceholderDialog createDialog(Project project, AnswerPlaceholder answerPlaceholder) {
+    return new CCCreateAnswerPlaceholderDialog(project, StringUtil.notNullize(answerPlaceholder.getTaskText()), answerPlaceholder.getHints());
   }
 }
