@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.SourceToOutputMapping;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -48,7 +49,7 @@ public class BuildOperations {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
     final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
-    if (context.isProjectRebuild()) {
+    if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
       FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, timestamps, true, null, null);
       pd.fsState.markInitialScanPerformed(target);
       configuration.save(context);
@@ -180,7 +181,7 @@ public class BuildOperations {
 
       });
 
-      if (context.isMake()) {
+      if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         if (logger.isEnabled()) {
           logger.logDeletedFiles(deletedPaths);
