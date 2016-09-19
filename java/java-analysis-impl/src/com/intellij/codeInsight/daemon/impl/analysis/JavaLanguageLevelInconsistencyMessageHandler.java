@@ -20,6 +20,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ibessonov
@@ -29,17 +30,9 @@ public interface JavaLanguageLevelInconsistencyMessageHandler {
   ExtensionPointName<JavaLanguageLevelInconsistencyMessageHandler> EP_NAME =
     ExtensionPointName.create("com.intellij.javaLanguageLevelInconsistencyMessageHandler");
 
-  boolean accepts(@NotNull PsiElement element,
-                  @NotNull HighlightUtil.Feature feature,
-                  @NotNull LanguageLevel level,
-                  @NotNull LanguageLevel moduleLevel,
-                  @NotNull PsiFile file);
-
-  @NotNull
+  @Nullable
   String getNewMessage(@NotNull String message,
                        @NotNull PsiElement element,
-                       @NotNull HighlightUtil.Feature feature,
                        @NotNull LanguageLevel level,
-                       @NotNull LanguageLevel moduleLevel,
                        @NotNull PsiFile file);
 }

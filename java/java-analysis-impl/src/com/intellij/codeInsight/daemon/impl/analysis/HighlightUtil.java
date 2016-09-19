@@ -2988,10 +2988,6 @@ public class HighlightUtil extends HighlightUtilBase {
       this.level = level;
       this.key = key;
     }
-
-    public LanguageLevel getMinimalSupportedLanguageLevel() {
-      return level;
-    }
   }
 
   @Nullable
@@ -3005,10 +3001,11 @@ public class HighlightUtil extends HighlightUtilBase {
       Module module = ModuleUtilCore.findModuleForPsiElement(element);
       if (module != null) {
         LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
-        if (level != moduleLanguageLevel) {
+        if (moduleLanguageLevel.isAtLeast(feature.level)) {
           for (JavaLanguageLevelInconsistencyMessageHandler handler : JavaLanguageLevelInconsistencyMessageHandler.EP_NAME.getExtensions()) {
-            if (handler.accepts(element, feature, level, moduleLanguageLevel, file)) {
-              message = handler.getNewMessage(message, element, feature, level, moduleLanguageLevel, file);
+            String newMessage = handler.getNewMessage(message, element, level, file);
+            if (newMessage != null) {
+              message = newMessage;
               break;
             }
           }
