@@ -24,7 +24,7 @@ public class StudyToolWindowFactory implements ToolWindowFactory, DumbAware {
     final Course course = taskManager.getCourse();
     if (course != null) {
       final StudyToolWindow studyToolWindow;
-      if (StudyUtils.hasJavaFx() && StudyTaskManager.getInstance(project).shouldUseJavaFx()) {
+      if (StudyUtils.hasJavaFx() && taskManager.shouldUseJavaFx()) {
         studyToolWindow = new StudyJavaFxToolWindow();
       }
       else {

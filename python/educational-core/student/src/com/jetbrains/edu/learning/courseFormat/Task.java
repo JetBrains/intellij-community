@@ -31,7 +31,7 @@ public class Task implements StudyItem {
   private StudyStatus myStatus = StudyStatus.Unchecked;
 
   @SerializedName("stepic_id")
-  @Expose private int myStepicId;
+  @Expose private int myStepId;
   
   @SerializedName("task_files")
   @Expose public Map<String, TaskFile> taskFiles = new HashMap<>();
@@ -204,12 +204,12 @@ public class Task implements StudyItem {
     return result;
   }
 
-  public void setStepicId(int stepicId) {
-    myStepicId = stepicId;
+  public void setStepId(int stepId) {
+    myStepId = stepId;
   }
 
-  public int getStepicId() {
-    return myStepicId;
+  public int getStepId() {
+    return myStepId;
   }
 
   public StudyStatus getStatus() {
@@ -244,8 +244,8 @@ public class Task implements StudyItem {
   }
 
   public boolean isUpToDate() {
-    if (getStepicId() == 0) return true;
-    final Date date = EduStepicConnector.getTaskUpdateDate(getStepicId());
+    if (getStepId() == 0) return true;
+    final Date date = EduStepicConnector.getTaskUpdateDate(getStepId());
     if (date == null) return true;
     if (myUpdateDate == null) return false;
     return !date.after(myUpdateDate);

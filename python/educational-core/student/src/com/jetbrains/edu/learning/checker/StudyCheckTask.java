@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyPluginConfigurator;
 import com.jetbrains.edu.learning.StudyState;
@@ -24,7 +23,6 @@ import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +38,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
   private final Ref<Boolean> myCheckInProcess;
   private final Process myTestProcess;
   private final String myCommandLine;
-  private final String FAILED_CHECK_LAUNCH = "Failed to launch checking";
+  private static final String FAILED_CHECK_LAUNCH = "Failed to launch checking";
 
   public StudyCheckTask(Project project, StudyState studyState, Ref<Boolean> checkInProcess, Process testProcess, String commandLine) {
     super(project, "Checking Task");
@@ -100,7 +98,7 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
       runAfterTaskCheckedActions();
       final Course course = StudyTaskManager.getInstance(myProject).getCourse();
       if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
-        postAttemptToStepic(testsOutput);
+        EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), myProject);
       }
     }
   }
@@ -210,13 +208,5 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
     else {
       LOG.warn("No configurator is provided for the plugin");
     }
-  }
-
-  protected void postAttemptToStepic(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
-    final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
-    final StepicUser user = studySettings.getUser();
-    final String login = user.getEmail();
-    final String password = StringUtil.isEmptyOrSpaces(login) ? "" : user.getPassword();
-    EduStepicConnector.postAttempt(myTask, testsOutput.isSuccess(), login, password);
   }
 }

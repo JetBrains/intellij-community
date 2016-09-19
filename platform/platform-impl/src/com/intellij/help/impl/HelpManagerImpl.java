@@ -63,7 +63,12 @@ public class HelpManagerImpl extends HelpManager {
 
     if (broker == null) {
       ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-      String productVersion = info.getMajorVersion() + "." + info.getMinorVersion();
+      String minorVersion = info.getMinorVersion();
+      int dot = minorVersion.indexOf('.');
+      if (dot != -1) {
+        minorVersion = minorVersion.substring(0, dot);
+      }
+      String productVersion = info.getMajorVersion() + "." + minorVersion;
       String productCode = info.getPackageCode();
 
       String url = info.getWebHelpUrl() + "/" + productVersion + "/?" + id;

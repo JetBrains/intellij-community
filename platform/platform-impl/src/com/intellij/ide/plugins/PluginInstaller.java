@@ -30,10 +30,10 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -232,6 +232,8 @@ public class PluginInstaller {
         if (pluginDescriptor != null) {
           StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(pluginDescriptor.getPath());
           StartupActionScriptManager.addActionCommand(deleteOld);
+
+          fireState(pluginDescriptor, false);
         }
         else {
           PluginManagerMain.LOG.error("Plugin not found: " + pluginId);
@@ -240,7 +242,10 @@ public class PluginInstaller {
     }
   }
 
-  public static void install(final File fromFile, final String pluginName, boolean deleteFromFile) throws IOException {
+  public static void install(@NotNull File fromFile,
+                             @NotNull String pluginName,
+                             boolean deleteFromFile,
+                             @NotNull IdeaPluginDescriptor descriptor) throws IOException {
     //noinspection HardCodedStringLiteral
     if (fromFile.getName().endsWith(".jar")) {
       // add command to copy file to the IDEA/plugins path
@@ -266,6 +271,38 @@ public class PluginInstaller {
     if (deleteFromFile) {
       StartupActionScriptManager.ActionCommand deleteTemp = new StartupActionScriptManager.DeleteCommand(fromFile);
       StartupActionScriptManager.addActionCommand(deleteTemp);
+    }
+
+    fireState(descriptor, true);
+  }
+
+  private static List<PluginStateListener> myStateListeners;
+
+  public static void addStateListener(@NotNull PluginStateListener listener) {
+    if (myStateListeners == null) {
+      myStateListeners = new ArrayList<>();
+    }
+    myStateListeners.add(listener);
+  }
+
+  public static void removeStateListener(@NotNull PluginStateListener listener) {
+    if (myStateListeners != null) {
+      myStateListeners.remove(listener);
+    }
+  }
+
+  private static void fireState(@NotNull IdeaPluginDescriptor descriptor, boolean install) {
+    if (myStateListeners != null) {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        for (PluginStateListener listener : myStateListeners) {
+          if (install) {
+            listener.install(descriptor);
+          }
+          else {
+            listener.uninstall(descriptor);
+          }
+        }
+      });
     }
   }
 }

@@ -45,7 +45,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,7 +150,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
           }
         }
 
-        PluginInstaller.install(file, file.getName(), false);
+        PluginInstaller.install(file, file.getName(), false, pluginDescriptor);
         ourState.onPluginInstall(pluginDescriptor);
         checkInstalledPluginDependencies(model, pluginDescriptor, parent);
         callback.consume(pair(file, (IdeaPluginDescriptor)pluginDescriptor));

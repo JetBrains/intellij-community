@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -84,7 +85,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       int i = s.indexOf(':');
       String topic = s.substring(0, i);
       int j = s.indexOf(':', i + 1);
-      final String description = s.substring(i + 1, j);
+      String description = s.substring(i + 1, j);
       final String pluginId = s.substring(j + 1);
       IdeaPluginDescriptor foundDescriptor = null;
       for (IdeaPluginDescriptor descriptor : pluginsFromRepository) {
@@ -96,18 +97,29 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
       if (foundDescriptor == null) continue;
       final IdeaPluginDescriptor descriptor = foundDescriptor;
 
-
-
       final boolean isVIM = PluginGroups.IDEA_VIM_PLUGIN_ID.equals(descriptor.getPluginId().getIdString());
+      boolean isCloud = "#Cloud".equals(topic);
+
+      if (isCloud) {
+        title = descriptor.getName();
+        description = StringUtil.defaultIfEmpty(descriptor.getDescription(), "No description available");
+        topic = StringUtil.defaultIfEmpty(descriptor.getCategory(), "Unknown");
+      }
 
       JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + title + "</h2></body></html>");
       JLabel topicLabel = new JLabel("<html><body><h4 style=\"text-align:left;color:#808080;font-weight:bold;\">" + topic + "</h4></body></html>");
 
       JLabel descriptionLabel = createHTMLLabel(description);
       JLabel warningLabel = null;
-      if (isVIM) {
-        warningLabel = createHTMLLabel("Recommended only if you are<br> familiar with Vim.");
-        warningLabel.setIcon(AllIcons.General.BalloonWarning);
+      if (isVIM || isCloud) {
+        if (isCloud) {
+          warningLabel = createHTMLLabel("JBA account");
+          warningLabel.setIcon(AllIcons.General.BalloonInformation);
+        }
+        else {
+          warningLabel = createHTMLLabel("Recommended only if you are<br> familiar with Vim.");
+          warningLabel.setIcon(AllIcons.General.BalloonWarning);
+        }
 
         if (!SystemInfo.isWindows) UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, warningLabel);
       }

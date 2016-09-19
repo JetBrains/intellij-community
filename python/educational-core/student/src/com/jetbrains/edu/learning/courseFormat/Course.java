@@ -151,7 +151,7 @@ public class Course {
     for (Lesson lesson : lessons) {
       lesson.setUpdateDate(EduStepicConnector.getLessonUpdateDate(lesson.getId()));
       for (Task task : lesson.getTaskList()) {
-        task.setUpdateDate(EduStepicConnector.getTaskUpdateDate(task.getStepicId()));
+        task.setUpdateDate(EduStepicConnector.getTaskUpdateDate(task.getStepId()));
       }
     }
   }

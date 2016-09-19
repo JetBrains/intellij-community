@@ -24,6 +24,7 @@ import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
+import com.jetbrains.edu.learning.stepic.CCStepicConnector;
 import com.jetbrains.edu.learning.stepic.CourseInfo;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,7 @@ public class CCGetCourseFromStepic extends DumbAwareAction {
 
   private static void createCourse(Project project, String courseId) {
     final VirtualFile baseDir = project.getBaseDir();
-    final CourseInfo info = EduStepicConnector.getCourseInfo(project, courseId);
+    final CourseInfo info = CCStepicConnector.getCourseInfo(project, courseId);
     if (info == null) return;
 
     final Course course = EduStepicConnector.getCourse(project, info);

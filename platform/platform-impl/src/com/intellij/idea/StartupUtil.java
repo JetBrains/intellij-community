@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -83,6 +84,8 @@ public class StartupUtil {
 
   interface AppStarter {
     void start(boolean newConfigFolder);
+
+    default void beforeImportConfigs() {}
   }
 
   static void prepareAndStart(String[] args, AppStarter appStarter) {
@@ -125,6 +128,7 @@ public class StartupUtil {
     }
 
     if (newConfigFolder) {
+      appStarter.beforeImportConfigs();
       ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
     }
 
@@ -422,8 +426,18 @@ public class StartupUtil {
         return;
       }
 
+      CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+      if (configProvider != null) {
+        configProvider.beforeStartupWizard();
+      }
+
       new CustomizeIDEWizardDialog(provider).show();
+
       PluginManagerCore.invalidatePlugins();
+      if (configProvider != null) {
+        configProvider.startupWizardFinished();
+      }
+
       return;
     }
 
