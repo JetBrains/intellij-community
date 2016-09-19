@@ -79,16 +79,19 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   @Override
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
+    int graphImageWidth = (myGraphImage != null) ? myGraphImage.getWidth() : 0;
 
     if (!myTextLabelPainter.isLeftAligned()) {
-      myTextLabelPainter.paint((Graphics2D)g, getWidth() - myTextLabelPainter.getSize().width, 0, getHeight());
+      int start = Math.max(graphImageWidth, getWidth() - myTextLabelPainter.getSize().width);
+      myTextLabelPainter.paint((Graphics2D)g, start, 0, getHeight());
     }
     else {
-      myTextLabelPainter.paint((Graphics2D)g, (myGraphImage != null) ? myGraphImage.getWidth() : 0, 0, getHeight());
+      myTextLabelPainter.paint((Graphics2D)g, graphImageWidth, 0, getHeight());
     }
 
     if (myFadeOutPainter != null) {
-      myFadeOutPainter.paint((Graphics2D)g, getWidth() - myFadeOutPainter.getWidth(), 0, getHeight());
+      int start = Math.max(graphImageWidth, getWidth() - myFadeOutPainter.getWidth());
+      myFadeOutPainter.paint((Graphics2D)g, start, 0, getHeight());
     }
 
     if (myGraphImage != null) {
