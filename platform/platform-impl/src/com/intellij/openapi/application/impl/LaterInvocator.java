@@ -221,6 +221,7 @@ public class LaterInvocator {
 
     if (project == null) {
       enterModal(dialog);
+      return;
     }
 
     List<Dialog> modalEntitiesList = projectToModalEntities.getOrDefault(project, ContainerUtil.createLockFreeCopyOnWriteList());
@@ -250,7 +251,7 @@ public class LaterInvocator {
       for (int i = 1; i < ourModalityStack.size(); i++) {
         ((ModalityStateEx)ourModalityStack.get(i)).removeModality(dialog);
       }
-    } else {
+    } else if (project != null) {
       List<Dialog> dialogs = projectToModalEntities.get(project);
       int perProjectIndex = dialogs.indexOf(dialog);
       LOG.assertTrue(perProjectIndex >= 0);
