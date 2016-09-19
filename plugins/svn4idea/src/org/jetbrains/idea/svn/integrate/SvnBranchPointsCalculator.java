@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ThreadSafeTransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
@@ -26,13 +27,14 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ValueHolder;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
+import com.intellij.util.continuation.Where;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.dialogs.FactsCalculator;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 
@@ -46,7 +48,7 @@ public class SvnBranchPointsCalculator {
 
   private static final Logger LOG = Logger.getInstance(SvnBranchPointsCalculator.class);
 
-  private FactsCalculator<KeyData, WrapperInvertor, VcsException> myCalculator;
+  private ValueHolder<WrapperInvertor, KeyData> myCache;
   private PersistentHolder myPersistentHolder;
   private File myFile;
   private final Project myProject;
@@ -61,10 +63,8 @@ public class SvnBranchPointsCalculator {
   }
 
   public void activate() {
-    ValueHolder<WrapperInvertor, KeyData> cache = null;
-
     myPersistentHolder = new PersistentHolder(myFile);
-    cache = new ValueHolder<WrapperInvertor, KeyData>() {
+    myCache = new ValueHolder<WrapperInvertor, KeyData>() {
       public WrapperInvertor getValue(KeyData dataHolder) {
         final WrapperInvertor result =
           myPersistentHolder.getBestHit(dataHolder.getRepoUrl(), dataHolder.getSourceUrl(), dataHolder.getTargetUrl());
@@ -80,13 +80,11 @@ public class SvnBranchPointsCalculator {
         myPersistentHolder.put(dataHolder.getRepoUrl(), value.getWrapped().getTarget(), value.getWrapped());
       }
     };
-
-    myCalculator = new FactsCalculator<>("Looking for branch origin", cache, new Loader(myProject));
   }
 
   public void deactivate() {
     myPersistentHolder.close();
-    myCalculator = null;
+    myCache = null;
     myPersistentHolder = null;
   }
 
@@ -348,6 +346,56 @@ public class SvnBranchPointsCalculator {
 
   public TaskDescriptor getFirstCopyPointTask(final String repoUID, final String sourceUrl, final String targetUrl,
                                           final Consumer<TransparentlyFailedValueI<WrapperInvertor, VcsException>> consumer) {
-    return myCalculator.getTask(new KeyData(repoUID, sourceUrl, targetUrl), consumer, VcsException.class);
+    KeyData in = new KeyData(repoUID, sourceUrl, targetUrl);
+    TransparentlyFailedValueI<WrapperInvertor, VcsException> value = new ThreadSafeTransparentlyFailedValue<>();
+
+    final TaskDescriptor pooled = new TaskDescriptor("Looking for branch origin", Where.POOLED) {
+      @Override
+      public void run(ContinuationContext context) {
+        try {
+          WrapperInvertor calculatedValue = new Loader(myProject).convert(in);
+          if (calculatedValue != null) {
+            myCache.setValue(calculatedValue, in);
+          }
+          value.set(calculatedValue);
+        }
+        catch (Exception e) {
+          setException(value, e);
+        }
+        context.next(new TaskDescriptor("final part", Where.AWT) {
+          @Override
+          public void run(ContinuationContext context) {
+            consumer.consume(value);
+          }
+        });
+      }
+    };
+
+    return new TaskDescriptor("short part", Where.AWT) {
+      @Override
+      public void run(ContinuationContext context) {
+        try {
+          value.set(myCache.getValue(in));
+        }
+        catch (Exception e) {
+          setException(value, e);
+        }
+        if (value.haveSomething()) {
+          consumer.consume(value);
+          return;
+        }
+        context.next(pooled);
+      }
+    };
+  }
+
+  private static void setException(TransparentlyFailedValueI<WrapperInvertor, VcsException> value, Exception e) {
+    if (e instanceof VcsException) {
+      value.fail((VcsException)e);
+    }
+    else {
+      LOG.info(e);
+      value.failRuntime(e instanceof RuntimeException ? (RuntimeException)e : new RuntimeException(e));
+    }
   }
 }
