@@ -51,18 +51,43 @@ public class PerProjectLaterInvocatorTest extends PlatformTestCase {
 
     private AtomicBoolean isRun = new AtomicBoolean(false);
     private Consumer<Exception> myExceptionConsumer;
+    private java.util.List<Runnable> tasksToExecute = Collections.synchronizedList(new ArrayList<>());
+
+    private boolean waitSuspendedEDT = false;
 
     static Testable creatTestable() {
       return new Testable();
     }
 
-    private Testable suspendEDTRunContinueEDT (@NotNull Runnable toRun) {
+    private Testable suspendEDT(){
+      waitSuspendedEDT = true;
+      return this;
+    }
+
+    private Testable execute (Runnable runnable) {
+      if (!waitSuspendedEDT) {
+        SwingUtilities.invokeLater(runnable);
+      } else {
+       tasksToExecute.add(runnable);
+      }
+      return this;
+    }
+
+    private Testable flushEDT() {
+      return execute(() -> {
+        flushSwingQueue();
+        flushSwingQueue();
+      });
+    }
+
+    private Testable continueEDT() {
+      if (!waitSuspendedEDT) throw new RuntimeException("EDT has not been suspended.");
       synchronized (lock) {
         SwingUtilities.invokeLater(blockEDT);
         SwingUtilities.invokeLater(
           () ->  {
             try {
-              toRun.run();
+              tasksToExecute.forEach(Runnable::run);
             } catch (Exception e) {
               myExceptionConsumer.accept(e);
             }
@@ -111,34 +136,35 @@ public class PerProjectLaterInvocatorTest extends PlatformTestCase {
     Integer [] expectedOrder = {1, 2, 4, 3, 5};
     java.util.List<Integer> actualIntegers = Collections.synchronizedList(new ArrayList<Integer>());
 
-    Testable.creatTestable().suspendEDTRunContinueEDT(() -> {
-      invokeLater(NumberedRunnable.withNumber(1, actualIntegers::add), ModalityState.NON_MODAL);
-      flushSwingQueue();
-      flushSwingQueue();
-      enterModal(myApplicationModalDialog);
-      invokeLater(NumberedRunnable.withNumber(2, actualIntegers::add), ModalityState.current());
-      flushSwingQueue();
-      flushSwingQueue();
-      enterModal(myProject, myPerProjectModalDialog);
-      invokeLater(NumberedRunnable.withNumber(3, actualIntegers::add), ModalityState.NON_MODAL);
-      invokeLater(NumberedRunnable.withNumber(4, actualIntegers::add), ModalityState.current());
-      flushSwingQueue();
-      flushSwingQueue();
-      leaveModal(myProject, myPerProjectModalDialog);
-      invokeLater(NumberedRunnable.withNumber(5, actualIntegers::add), ModalityState.NON_MODAL);
-      flushSwingQueue();
-      flushSwingQueue();
-      leaveModal(myApplicationModalDialog);
+    Testable.creatTestable()
+      .suspendEDT()
+      .execute(() -> invokeLater(NumberedRunnable.withNumber(1, actualIntegers::add), ModalityState.NON_MODAL))
+      .flushEDT()
+      .execute(() -> enterModal(myApplicationModalDialog))
+      .flushEDT()
+      .execute(() -> invokeLater(NumberedRunnable.withNumber(2, actualIntegers::add), ModalityState.current()))
+      .flushEDT()
+      .execute(() -> enterModal(myProject, myPerProjectModalDialog))
+      .flushEDT()
+      .execute(() -> invokeLater(NumberedRunnable.withNumber(3, actualIntegers::add), ModalityState.NON_MODAL))
+      .flushEDT()
+      .execute(() -> invokeLater(NumberedRunnable.withNumber(4, actualIntegers::add), ModalityState.current()))
+      .flushEDT()
+      .execute(() -> leaveModal(myProject, myPerProjectModalDialog))
+      .flushEDT()
+      .execute(() -> invokeLater(NumberedRunnable.withNumber(5, actualIntegers::add), ModalityState.NON_MODAL))
+      .flushEDT()
+      .execute(() -> leaveModal(myApplicationModalDialog))
+      .flushEDT()
+      .execute(() -> {
+        Object[] array = actualIntegers.toArray();
+        if (!Arrays.equals(expectedOrder, array)) {
+          throw new RuntimeException(Arrays.toString(array));
+        }
+      })
+      .continueEDT()
+      .ifExceptions(exception -> fail(exception.toString()));
 
-      flushSwingQueue();
-      flushSwingQueue();
 
-      Object[] array = actualIntegers.toArray();
-      System.out.println(Arrays.toString(array));
-      if (!Arrays.equals(expectedOrder, array)) {
-        throw new RuntimeException(Arrays.toString(array));
-      }
-
-    }).ifExceptions(exception -> fail(exception.toString()));
   }
 }
