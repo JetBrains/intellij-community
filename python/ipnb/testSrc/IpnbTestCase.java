@@ -1,11 +1,13 @@
 import com.intellij.openapi.application.PathManager;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
-public class IpnbTestUtil {
+public abstract class IpnbTestCase extends TestCase {
+  
   static String getFileText(@NotNull final String fileName) throws IOException {
     String fullPath = PathManager.getHomePath() + "/community/python/ipnb/" + fileName;
     final BufferedReader br = new BufferedReader(new FileReader(fullPath));
