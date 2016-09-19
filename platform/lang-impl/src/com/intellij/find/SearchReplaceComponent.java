@@ -411,13 +411,14 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   public void addTextToRecent(@NotNull JTextComponent textField) {
     final String text = textField.getText();
     if (text.length() > 0) {
+      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
       if (textField == mySearchTextComponent) {
-        FindSettings.getInstance().addStringToFind(text);
+        findInProjectSettings.addStringToFind(text);
         if (mySearchFieldWrapper.getTargetComponent() instanceof SearchTextField) {
           ((SearchTextField)mySearchFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
         }
       } else {
-        FindSettings.getInstance().addStringToReplace(text);
+        findInProjectSettings.addStringToReplace(text);
         if (myReplaceFieldWrapper.getTargetComponent() instanceof SearchTextField) {
           ((SearchTextField)myReplaceFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
         }
@@ -454,8 +455,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
         textComponent.setOpaque(false);
       }
       searchTextField.setHistorySize(20);
-      searchTextField.setHistory(ContainerUtil.reverse(Arrays.asList(search ? FindSettings.getInstance().getRecentFindStrings()
-                                                                            : FindSettings.getInstance().getRecentReplaceStrings())));
+      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
+
+      searchTextField.setHistory(ContainerUtil.reverse(Arrays.asList(search ? findInProjectSettings.getRecentFindStrings()
+                                                                            : findInProjectSettings.getRecentReplaceStrings())));
       textComponent.registerKeyboardAction(new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {

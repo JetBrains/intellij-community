@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
+import com.intellij.ide.actions.WindowAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -914,6 +915,8 @@ public class AbstractPopup implements JBPopup {
 
     myPopup.setRequestFocus(myRequestFocus);
     myPopup.show();
+
+    WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
 
     final Window window = getContentWindow(myContent);
 

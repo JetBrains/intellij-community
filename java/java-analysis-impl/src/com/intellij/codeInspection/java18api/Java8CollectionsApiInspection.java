@@ -135,7 +135,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
         PsiExpression[] getArguments = getCall.getArgumentList().getExpressions();
         if(getArguments.length != 1) return;
         PsiStatement thenBranch = ControlFlowUtils.stripBraces(statement.getThenBranch());
-        PsiAssignmentExpression assignment = getAssignment(thenBranch);
+        PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(thenBranch);
         EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
         if(assignment != null) {
           /*
@@ -160,7 +160,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
           PsiExpression key = getArguments[0];
           PsiStatement[] statements = ((PsiBlockStatement)thenBranch).getCodeBlock().getStatements();
           if(statements.length != 2) return;
-          assignment = getAssignment(statements[0]);
+          assignment = ExpressionUtils.getAssignment(statements[0]);
           if(assignment == null) return;
           PsiExpression lambdaCandidate = assignment.getRExpression();
           if (lambdaCandidate == null ||
@@ -205,17 +205,6 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
     return (PsiReferenceExpression)value;
   }
 
-  @Contract("null -> null")
-  private static PsiAssignmentExpression getAssignment(PsiElement element) {
-    if(element instanceof PsiExpressionStatement) {
-      element = ((PsiExpressionStatement)element).getExpression();
-    }
-    if (element instanceof PsiAssignmentExpression) {
-      return (PsiAssignmentExpression)element;
-    }
-    return null;
-  }
-
   @Nullable
   @Contract("_, null -> null")
   static PsiMethodCallExpression tryExtractMapGetCall(PsiReferenceExpression target, PsiElement element) {
@@ -234,7 +223,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
         }
       }
     }
-    PsiAssignmentExpression assignment = getAssignment(element);
+    PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(element);
     if(assignment != null) {
       PsiExpression lValue = assignment.getLExpression();
       if (lValue instanceof PsiReferenceExpression &&
@@ -513,7 +502,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       } else if(thenBranch instanceof PsiBlockStatement) {
         PsiStatement[] statements = ((PsiBlockStatement)thenBranch).getCodeBlock().getStatements();
         if(statements.length != 2) return;
-        PsiAssignmentExpression assignment = getAssignment(statements[0]);
+        PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
         if(assignment == null) return;
         PsiExpression lambdaCandidate = assignment.getRExpression();
         if(lambdaCandidate == null) return;

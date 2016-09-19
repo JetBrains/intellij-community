@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
@@ -58,22 +57,20 @@ public class XQuickEvaluateHandler extends QuickEvaluateHandler {
       return null;
     }
 
-    return PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
-      int offset = AbstractValueHint.calculateOffset(editor, point);
-      ExpressionInfo expressionInfo = getExpressionInfo(evaluator, project, type, editor, offset);
-      if (expressionInfo == null) {
-        return null;
-      }
+    int offset = AbstractValueHint.calculateOffset(editor, point);
+    ExpressionInfo expressionInfo = getExpressionInfo(evaluator, project, type, editor, offset);
+    if (expressionInfo == null) {
+      return null;
+    }
 
-      int textLength = editor.getDocument().getTextLength();
-      TextRange range = expressionInfo.getTextRange();
-      if (range.getStartOffset() > range.getEndOffset() || range.getStartOffset() < 0 || range.getEndOffset() > textLength) {
-        LOG.error("invalid range: " + range + ", text length = " + textLength + ", evaluator: " + evaluator);
-        return null;
-      }
+    int textLength = editor.getDocument().getTextLength();
+    TextRange range = expressionInfo.getTextRange();
+    if (range.getStartOffset() > range.getEndOffset() || range.getStartOffset() < 0 || range.getEndOffset() > textLength) {
+      LOG.error("invalid range: " + range + ", text length = " + textLength + ", evaluator: " + evaluator);
+      return null;
+    }
 
-      return new XValueHint(project, editor, point, type, expressionInfo, evaluator, session);
-    });
+    return new XValueHint(project, editor, point, type, expressionInfo, evaluator, session);
   }
 
   @Nullable

@@ -730,6 +730,11 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     });
   }
 
+  @Override
+  public MavenModel readModel(File file) throws RemoteException {
+    return null;
+  }
+
   private void withProjectCachesDo(Function<Map, ?> func) throws RemoteException {
     MavenProjectBuilder builder = myImpl.getComponent(MavenProjectBuilder.class);
     Field field;

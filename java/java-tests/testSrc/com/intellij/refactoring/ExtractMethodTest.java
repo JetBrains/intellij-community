@@ -762,6 +762,13 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public void testTargetAnonymous() throws Exception {
     doTest();
   }
+  
+  public void testSimpleMethodsInOneLine() throws Exception {
+    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    doTest();
+  }
 
   public void testExtractUnresolvedLambdaParameter() throws Exception {
     doTest();

@@ -209,8 +209,14 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       Expression expression = Registry.is("java.completion.argument.live.template.completion") ? new AutoPopupCompletion() : new ConstantNode(name);
       template.addVariable(name, expression, new ConstantNode(name), true);
     }
+    boolean finishInsideParens = method.isVarArgs();
+    if (finishInsideParens) {
+      template.addEndVariable();
+    }
     template.addTextSegment(argList.getText().substring(caretOffset - argRange.getStartOffset(), argList.getTextLength()));
-    template.addEndVariable();
+    if (!finishInsideParens) {
+      template.addEndVariable();
+    }
     return template;
   }
 

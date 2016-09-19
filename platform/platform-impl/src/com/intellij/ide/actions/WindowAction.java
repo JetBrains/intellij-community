@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
@@ -28,6 +27,27 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class WindowAction extends AnAction implements DumbAware {
+
+  public static void setEnabledFor(Window window, boolean enabled) {
+    JRootPane root = getRootPane(window);
+    if (root != null) root.putClientProperty(NO_WINDOW_ACTIONS, !enabled);
+  }
+
+  private static boolean isEnabledFor(Window window) {
+    if (window == null || window instanceof IdeFrame) return false;
+    JRootPane root = getRootPane(window);
+    if (root == null) return true;
+    Object property = root.getClientProperty(NO_WINDOW_ACTIONS);
+    return property == null || !property.toString().equals("true");
+  }
+
+  private static JRootPane getRootPane(Window window) {
+    if (window instanceof RootPaneContainer) {
+      RootPaneContainer container = (RootPaneContainer)window;
+      return container.getRootPane();
+    }
+    return null;
+  }
 
   public static final String NO_WINDOW_ACTIONS = "no.window.actions";
 
@@ -39,31 +59,15 @@ public abstract class WindowAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public final void update(AnActionEvent e) {
-    Window wnd = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    e.getPresentation().setEnabled(wnd != null && !(wnd instanceof IdeFrame));
-
-    Object noActions = null;
-    if (wnd instanceof JDialog) {
-      noActions = ((JDialog)wnd).getRootPane().getClientProperty(NO_WINDOW_ACTIONS);
-    } else if (wnd instanceof JFrame) {
-      noActions = ((JFrame)wnd).getRootPane().getClientProperty(NO_WINDOW_ACTIONS);
+  public final void update(AnActionEvent event) {
+    Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    boolean enabled = isEnabledFor(window);
+    if (enabled) {
+      Editor editor = event.getData(CommonDataKeys.EDITOR);
+      enabled = editor == null || !editor.getContentComponent().hasFocus();
     }
-
-    if (noActions != null && "true".equalsIgnoreCase(noActions.toString())) {
-      e.getPresentation().setEnabled(false);
-    }
-
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (editor != null && editor.getContentComponent().hasFocus()) {
-      e.getPresentation().setEnabled(false);
-    }
-
-    if (e.getPresentation().isEnabled()) {
-      myWindow = wnd;
-    } else {
-      myWindow = null;
-    }
+    event.getPresentation().setEnabled(enabled);
+    myWindow = enabled ? window : null;
   }
 
   public abstract static class BaseSizeAction extends WindowAction {
@@ -85,7 +89,7 @@ public abstract class WindowAction extends AnAction implements DumbAware {
       int baseValue = myHorizontal ? mySizeHelper.getPreferredSize().width : mySizeHelper.getPreferredSize().height;
 
       int inc = baseValue *
-                (myHorizontal ? Registry.intValue("ide.windowSystem.hScrollChars") : Registry.intValue("ide.windowSystem.vScrollChars"));
+                Registry.intValue(myHorizontal ? "ide.windowSystem.hScrollChars" : "ide.windowSystem.vScrollChars");
       if (!myPositive) {
         inc = -inc;
       }

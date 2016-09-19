@@ -44,7 +44,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.LogicalRoot;
+import com.intellij.util.LogicalRootsManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -292,7 +295,10 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
 
     if (outerMostRoot != null && !outerMostRoot.equals(virtualFile)) {
-      return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, outerMostRoot, '/'));
+      String relative = VfsUtilCore.getRelativePath(virtualFile, outerMostRoot, '/');
+      if (relative != null) {
+        return relative;
+      }
     }
 
     return virtualFile.getPath();

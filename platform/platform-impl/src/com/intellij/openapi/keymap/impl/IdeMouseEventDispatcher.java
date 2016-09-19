@@ -26,6 +26,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.ui.MouseShortcutPanel;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
@@ -154,14 +155,22 @@ public final class IdeMouseEventDispatcher {
       }
     }
 
-    if (SystemInfo.isXWindow && e.isPopupTrigger() && e.getButton() != 3) {
-      // we can do better than silly triggering popup on everything but left click
-      resetPopupTrigger(e);
+    if (e.isPopupTrigger()) {
+      if (BUTTON3 == e.getButton()) {
+        if (Registry.is("ide.mouse.popup.trigger.modifiers.disabled") && (~BUTTON3_DOWN_MASK & e.getModifiersEx()) != 0) {
+          // it allows to use our mouse shortcuts for Ctrl+Button3, for example
+          resetPopupTrigger(e);
+        }
+      }
+      else if (SystemInfo.isXWindow) {
+        // we can do better than silly triggering popup on everything but left click
+        resetPopupTrigger(e);
+      }
     }
 
     boolean ignore = false;
-    if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
-          e.getID() == MouseEvent.MOUSE_RELEASED ||
+    if (!(e.getID() == MOUSE_PRESSED ||
+          e.getID() == MOUSE_RELEASED ||
           e.getID() == MOUSE_WHEEL && 0 < e.getModifiersEx() ||
           e.getID() == MOUSE_CLICKED)) {
       ignore = true;

@@ -184,17 +184,19 @@ public class FindManagerImpl extends FindManager {
 
   void changeGlobalSettings(FindModel findModel) {
     String stringToFind = findModel.getStringToFind();
+    FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
+
     if (!StringUtil.isEmpty(stringToFind)) {
-      FindSettings.getInstance().addStringToFind(stringToFind);
+      findInProjectSettings.addStringToFind(stringToFind);
     }
     if (!findModel.isMultipleFiles()) {
       setFindWasPerformed();
     }
     if (findModel.isReplaceState()) {
-      FindSettings.getInstance().addStringToReplace(findModel.getStringToReplace());
+      findInProjectSettings.addStringToReplace(findModel.getStringToReplace());
     }
     if (findModel.isMultipleFiles() && !findModel.isProjectScope() && findModel.getDirectoryName() != null) {
-      FindSettings.getInstance().addDirectory(findModel.getDirectoryName());
+      findInProjectSettings.addDirectory(findModel.getDirectoryName());
       myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
     }
     FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());

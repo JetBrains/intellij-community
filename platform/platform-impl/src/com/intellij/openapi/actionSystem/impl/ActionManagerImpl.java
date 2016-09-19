@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -993,12 +993,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       myId2Index.put(actionId, myRegisteredActionsCount++);
       myAction2Id.put(action, actionId);
       if (pluginId != null && !(action instanceof ActionGroup)){
-        THashSet<String> pluginActionIds = myPlugin2Id.get(pluginId);
-        if (pluginActionIds == null){
-          pluginActionIds = new THashSet<>();
-          myPlugin2Id.put(pluginId, pluginActionIds);
-        }
-        pluginActionIds.add(actionId);
+        myPlugin2Id.computeIfAbsent(pluginId, k -> new THashSet<>()).add(actionId);
       }
       action.registerCustomShortcutSet(new ProxyShortcutSet(actionId, myKeymapManager), null);
     }

@@ -99,7 +99,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
       return false;
     }, parent);
 
-    UISettings.getInstance().addUISettingsListener(this, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, this);
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener("focusOwner", this);
     myAlarm = new Alarm(parent);
   }
@@ -212,7 +212,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
   }
 
   @Override
-  public void uiSettingsChanged(UISettings source) {
+  public void uiSettingsChanged(UISettings uiSettings) {
     updateIcon();
   }
 

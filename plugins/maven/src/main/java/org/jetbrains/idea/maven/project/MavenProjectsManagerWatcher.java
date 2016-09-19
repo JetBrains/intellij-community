@@ -146,8 +146,9 @@ public class MavenProjectsManagerWatcher {
         VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
 
         if (file == null) return;
-        boolean isMavenFile =
-          file.getName().equals(MavenConstants.POM_XML) || file.getName().equals(MavenConstants.PROFILES_XML) || isSettingsFile(file);
+        String fileName = file.getName();
+        boolean isMavenFile = fileName.equals(MavenConstants.POM_XML) || fileName.equals(MavenConstants.PROFILES_XML) ||
+                              isSettingsFile(file) || fileName.startsWith("pom.");
         if (!isMavenFile) return;
 
         synchronized (myChangedDocuments) {
@@ -343,7 +344,8 @@ public class MavenProjectsManagerWatcher {
   }
 
   private boolean isPomFile(String path) {
-    if (!path.endsWith("/" + MavenConstants.POM_XML)) return false;
+    String nameWithoutExtension = FileUtil.getNameWithoutExtension(path);
+    if (!MavenConstants.POM_EXTENSION.equals(nameWithoutExtension)) return false;
     return myProjectsTree.isPotentialProject(path);
   }
 

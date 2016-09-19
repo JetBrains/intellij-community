@@ -18,6 +18,7 @@ package git4idea.history;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -578,6 +579,9 @@ public class GitHistoryUtils {
     });
     h.runInCurrentThread(null);
     if (!ex.isNull()) {
+      if (ex.get().getCause() instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)ex.get().getCause();
+      }
       throw ex.get();
     }
   }

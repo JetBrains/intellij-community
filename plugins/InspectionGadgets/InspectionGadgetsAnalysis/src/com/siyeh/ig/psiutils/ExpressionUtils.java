@@ -601,7 +601,7 @@ public class ExpressionUtils {
   @Nullable
   public static PsiVariable getVariableFromNullComparison(PsiExpression expression, boolean equals) {
     final PsiReferenceExpression referenceExpression = getReferenceExpressionFromNullComparison(expression, equals);
-    final PsiElement target = referenceExpression.resolve();
+    final PsiElement target = referenceExpression != null ? referenceExpression.resolve() : null;
     return target instanceof PsiVariable ? (PsiVariable)target : null;
   }
 
@@ -699,5 +699,23 @@ public class ExpressionUtils {
       }
     }
     return false;
+  }
+
+  /**
+   * Returns assignment expression if supplied element is a statement which contains assignment expression
+   * or it's an assignment expression itself
+   *
+   * @param element element to get assignment expression from
+   * @return extracted assignment or null if assignment is not found
+   */
+  @Contract("null -> null")
+  public static PsiAssignmentExpression getAssignment(PsiElement element) {
+    if(element instanceof PsiExpressionStatement) {
+      element = ((PsiExpressionStatement)element).getExpression();
+    }
+    if (element instanceof PsiAssignmentExpression) {
+      return (PsiAssignmentExpression)element;
+    }
+    return null;
   }
 }

@@ -74,6 +74,10 @@ public class AnnotatedElementsSearcher implements QueryExecutor<PsiModifierListO
             return null;
           }
 
+          if (p.isApproximate()) {
+            return (PsiModifierListOwner)owner;
+          }
+
           final PsiJavaCodeReferenceElement ref = ann.getNameReferenceElement();
           if (ref == null || !psiManager.areElementsEquivalent(ref.resolve(), annClass)) {
             return null;

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -44,7 +45,7 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setPlugins(List<MavenPlugin> plugins) {
-    myPlugins = plugins;
+    myPlugins = new ArrayList<MavenPlugin>(plugins);
   }
 
   public List<MavenArtifact> getExtensions() {
@@ -52,7 +53,7 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setExtensions(List<MavenArtifact> extensions) {
-    myExtensions = extensions;
+    myExtensions = new ArrayList<MavenArtifact>(extensions);
   }
 
   public List<MavenArtifact> getDependencies() {
@@ -60,7 +61,7 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setDependencies(List<MavenArtifact> dependencies) {
-    myDependencies = dependencies;
+    myDependencies = new ArrayList<MavenArtifact>(dependencies);
   }
 
   public List<MavenArtifactNode> getDependencyTree() {
@@ -68,7 +69,7 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setDependencyTree(List<MavenArtifactNode> dependencyTree) {
-    myDependencyTree = dependencyTree;
+    myDependencyTree = new ArrayList<MavenArtifactNode>(dependencyTree);
   }
 
   public List<MavenRemoteRepository> getRemoteRepositories() {
@@ -76,7 +77,7 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setRemoteRepositories(List<MavenRemoteRepository> remoteRepositories) {
-    myRemoteRepositories = remoteRepositories;
+    myRemoteRepositories = new ArrayList<MavenRemoteRepository>(remoteRepositories);
   }
 
   public List<String> getModules() {
@@ -84,6 +85,6 @@ public class MavenModelBase implements Serializable {
   }
 
   public void setModules(List<String> modules) {
-    myModules = modules;
+    myModules = new ArrayList<String>(modules);
   }
 }

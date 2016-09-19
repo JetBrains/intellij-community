@@ -50,6 +50,7 @@ public class TransactionGuardImpl extends TransactionGuard {
   private final Map<ModalityState, Boolean> myWriteSafeModalities = ContainerUtil.createConcurrentWeakMap();
   private TransactionIdImpl myCurrentTransaction;
   private boolean myWritingAllowed;
+  private boolean myErrorReported;
   private static boolean ourTestingTransactions;
 
   public TransactionGuardImpl() {
@@ -212,6 +213,7 @@ public class TransactionGuardImpl extends TransactionGuard {
    */
   @NotNull
   public AccessToken startActivity(boolean userActivity) {
+    myErrorReported = false;
     boolean allowWriting = userActivity && isWriteSafeModality(ModalityState.current());
     if (myWritingAllowed == allowWriting) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
@@ -234,7 +236,7 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   public void assertWriteActionAllowed() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (areAssertionsEnabled() && !myWritingAllowed) {
+    if (areAssertionsEnabled() && !myWritingAllowed && !myErrorReported) {
       String message = "Write access is allowed from write-safe contexts only. " +
                        "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
                        "See TransactionGuard documentation for details." +
@@ -242,6 +244,7 @@ public class TransactionGuardImpl extends TransactionGuard {
                        "\n  known modalities=" + myWriteSafeModalities;
       // please assign exceptions here to Peter
       LOG.error(message);
+      myErrorReported = true;
     }
   }
 

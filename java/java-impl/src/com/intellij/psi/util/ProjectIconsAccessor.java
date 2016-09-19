@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,16 +116,20 @@ public class ProjectIconsAccessor {
   public Icon getIcon(@NotNull VirtualFile file) {
     final String path = file.getPath();
     final long stamp = file.getModificationStamp();
-    Pair<Long, Icon> iconInfo = iconsCache.get(path);
-    if (iconInfo == null || iconInfo.getFirst() < stamp) {
-      try {
-        final Icon icon = createOrFindBetterIcon(file, isIdeaProject(myProject));
-        iconInfo = new Pair<>(stamp, hasProperSize(icon) ? icon : null);
-        iconsCache.put(file.getPath(), iconInfo);
-      }
-      catch (Exception e) {//
-        iconInfo = null;
-        iconsCache.remove(path);
+
+    Pair<Long, Icon> iconInfo;
+    synchronized (iconsCache) {
+      iconInfo = iconsCache.get(path);
+      if (iconInfo == null || iconInfo.getFirst() < stamp) {
+        try {
+          final Icon icon = createOrFindBetterIcon(file, isIdeaProject(myProject));
+          iconInfo = new Pair<>(stamp, hasProperSize(icon) ? icon : null);
+          iconsCache.put(file.getPath(), iconInfo);
+        }
+        catch (Exception e) {
+          iconInfo = null;
+          iconsCache.remove(path);
+        }
       }
     }
     return iconInfo == null ? null : iconInfo.getSecond();

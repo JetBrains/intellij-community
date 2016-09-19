@@ -36,6 +36,9 @@ import java.util.*;
 
 public class MavenModelConverter {
   public static MavenModel convertModel(Model model, File localRepository) throws RemoteException {
+    if(model.getBuild() == null) {
+      model.setBuild(new Build());
+    }
     Build build = model.getBuild();
     return convertModel(model,
                         asSourcesList(build.getSourceDirectory()),

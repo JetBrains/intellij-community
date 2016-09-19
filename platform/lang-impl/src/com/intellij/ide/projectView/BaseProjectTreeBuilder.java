@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusRequestor;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -59,6 +60,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
                                 @NotNull AbstractTreeStructure treeStructure,
                                 @Nullable Comparator<NodeDescriptor> comparator) {
     init(tree, treeModel, treeStructure, comparator, DEFAULT_UPDATE_INACTIVE);
+    getUi().setClearOnHideDelay(Registry.intValue("ide.tree.clearOnHideTime"));
     myProject = project;
   }
 

@@ -153,7 +153,7 @@ private class MigLayoutRow(private val componentConstraints: MutableMap<Componen
   }
 
   private fun addComponent(component: Component, constraints: Array<out CCFlags>, gapLeft: Int) {
-    if (buttonGroup != null && component is JButton) {
+    if (buttonGroup != null && component is JToggleButton) {
       buttonGroup.add(component)
     }
 

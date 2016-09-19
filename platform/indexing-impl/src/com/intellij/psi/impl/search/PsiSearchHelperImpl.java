@@ -157,11 +157,20 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                          final short searchContext,
                                          @NotNull EnumSet<Options> options,
                                          @Nullable String containerName) {
+    return bulkProcessElementsWithWord(searchScope, text, searchContext, options, containerName, (scope, offsetsInScope, searcher) ->
+      LowLevelSearchUtil.processElementsAtOffsets(scope, searcher, options.contains(Options.PROCESS_INJECTED_PSI), getOrCreateIndicator(),
+                                                  offsetsInScope, processor));
+  }
+
+  private boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
+                                              @NotNull final String text,
+                                              final short searchContext,
+                                              @NotNull EnumSet<Options> options,
+                                              @Nullable String containerName, @NotNull final BulkOccurrenceProcessor processor) {
     if (text.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
     final ProgressIndicator progress = getOrCreateIndicator();
-    final boolean processInjectedPsi = options.contains(Options.PROCESS_INJECTED_PSI);
     if (searchScope instanceof GlobalSearchScope) {
       StringSearcher searcher = new StringSearcher(text, options.contains(Options.CASE_SENSITIVE_SEARCH), true,
                                                    searchContext == UsageSearchContext.IN_STRINGS,
@@ -170,8 +179,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       return processElementsWithTextInGlobalScope(processor,
                                                   (GlobalSearchScope)searchScope,
                                                   searcher,
-                                                  searchContext, options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, progress,
-                                                  processInjectedPsi);
+                                                  searchContext, options.contains(Options.CASE_SENSITIVE_SEARCH), containerName, progress
+      );
     }
     LocalSearchScope scope = (LocalSearchScope)searchScope;
     PsiElement[] scopeElements = scope.getScope();
@@ -190,7 +199,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           LOG.debug("Element " + scopeElement + " of class " + scopeElement.getClass() + " has null range");
           return true;
         }
-        return LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher, processInjectedPsi, progress);
+        return processor.execute(scopeElement, LowLevelSearchUtil.getTextOccurrencesInScope(scopeElement, searcher, progress), searcher);
       }
 
       @Override
@@ -213,15 +222,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static Processor<PsiElement> localProcessor(@NotNull final TextOccurenceProcessor processor,
+  private static Processor<PsiElement> localProcessor(@NotNull final BulkOccurrenceProcessor processor,
                                                       @NotNull final ProgressIndicator progress,
-                                                      final boolean processInjectedPsi,
                                                       @NotNull final StringSearcher searcher) {
     return new ReadActionProcessor<PsiElement>() {
       @Override
       public boolean processInReadAction(PsiElement scopeElement) {
         return scopeElement.isValid() &&
-               LowLevelSearchUtil.processElementsContainingWordInElement(processor, scopeElement, searcher, processInjectedPsi, progress);
+               processor.execute(scopeElement, LowLevelSearchUtil.getTextOccurrencesInScope(scopeElement, searcher, progress), searcher);
       }
 
       @Override
@@ -231,14 +239,13 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     };
   }
 
-  private boolean processElementsWithTextInGlobalScope(@NotNull final TextOccurenceProcessor processor,
+  private boolean processElementsWithTextInGlobalScope(@NotNull final BulkOccurrenceProcessor processor,
                                                        @NotNull final GlobalSearchScope scope,
                                                        @NotNull final StringSearcher searcher,
                                                        final short searchContext,
                                                        final boolean caseSensitively,
                                                        @Nullable String containerName,
-                                                       @NotNull ProgressIndicator progress,
-                                                       final boolean processInjectedPsi) {
+                                                       @NotNull ProgressIndicator progress) {
     if (Thread.holdsLock(PsiLock.LOCK)) {
       throw new AssertionError("You must not run search from within updating PSI activity. Please consider invokeLatering it instead.");
     }
@@ -253,7 +260,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       progress.setText(PsiBundle.message("psi.search.for.word.progress", text));
 
-      final Processor<PsiElement> localProcessor = localProcessor(processor, progress, processInjectedPsi, searcher);
+      final Processor<PsiElement> localProcessor = localProcessor(processor, progress, searcher);
       if (containerName != null) {
         List<VirtualFile> intersectionWithContainerFiles = new ArrayList<>();
         // intersectionWithContainerFiles holds files containing words from both `text` and `containerName`
@@ -707,18 +714,25 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @NotNull
-  private static TextOccurenceProcessor adaptProcessor(@NotNull PsiSearchRequest singleRequest,
-                                                       @NotNull final Processor<PsiReference> consumer) {
+  private static BulkOccurrenceProcessor adaptProcessor(@NotNull PsiSearchRequest singleRequest,
+                                                       @NotNull Processor<PsiReference> consumer) {
     final SearchScope searchScope = singleRequest.searchScope;
     final boolean ignoreInjectedPsi = searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).isIgnoreInjectedPsi();
     final RequestResultProcessor wrapped = singleRequest.processor;
-    return new TextOccurenceProcessor() {
+    return new BulkOccurrenceProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement element, int offsetInElement) {
-        if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
-
+      public boolean execute(@NotNull PsiElement scope, int[] offsetsInScope, @NotNull StringSearcher searcher) {
         try {
-          return wrapped.processTextOccurrence(element, offsetInElement, consumer);
+          if (wrapped instanceof RequestResultProcessor.BulkResultProcessor) {
+            return ((RequestResultProcessor.BulkResultProcessor)wrapped).processTextOccurrences(scope, offsetsInScope, consumer);
+          }
+
+          return LowLevelSearchUtil.processElementsAtOffsets(scope, searcher, !ignoreInjectedPsi,
+                                                             getOrCreateIndicator(), offsetsInScope,
+                                                             (element, offsetInElement) -> {
+            if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
+            return wrapped.processTextOccurrence(element, offsetInElement, consumer);
+          });
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -852,9 +866,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       for (RequestWithProcessor singleRequest : entry.getValue()) {
         PsiSearchRequest primitive = singleRequest.request;
         StringSearcher searcher = new StringSearcher(primitive.word, primitive.caseSensitive, true, false);
-        final TextOccurenceProcessor adapted = adaptProcessor(primitive, singleRequest.refProcessor);
+        BulkOccurrenceProcessor adapted = adaptProcessor(primitive, singleRequest.refProcessor);
 
-        Processor<PsiElement> localProcessor = localProcessor(adapted, progress, true, searcher);
+        Processor<PsiElement> localProcessor = localProcessor(adapted, progress, searcher);
 
         assert !localProcessors.containsKey(singleRequest) || localProcessors.get(singleRequest) == localProcessor;
         localProcessors.put(singleRequest, localProcessor);
@@ -880,8 +894,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     if (single.caseSensitive) options.add(Options.CASE_SENSITIVE_SEARCH);
     if (shouldProcessInjectedPsi(single.searchScope)) options.add(Options.PROCESS_INJECTED_PSI);
     
-    return processElementsWithWord(adaptProcessor(single, consumer), single.searchScope, single.word, single.searchContext, options, 
-                                   single.containerName);
+    return bulkProcessElementsWithWord(single.searchScope, single.word, single.searchContext, options, single.containerName,
+                                       adaptProcessor(single, consumer)
+    );
   }
 
   @NotNull

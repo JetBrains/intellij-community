@@ -86,24 +86,29 @@ public class ParameterNameHintsManager {
 
   @NotNull
   private static List<InlayInfo> buildDescriptorsForLiteralArguments(@NotNull PsiExpression[] callArguments,
-                                                                             @NotNull PsiParameter[] parameters,
-                                                                             @NotNull JavaResolveResult resolveResult) {
-    List<InlayInfo> descriptors = ContainerUtil.newArrayList();
-
-    int i = 0;
-    while (i < callArguments.length && i < parameters.length) {
-      if (i + 1 < callArguments.length && isCommonlyNamedParameterPair(i, i + 1, parameters)) {
-        i += 2;
-        continue;
-      }
-
-      if (shouldInlineParameterName(i, callArguments, parameters, resolveResult)) {
-        descriptors.add(createInlayInfo(callArguments[i], parameters[i]));
-      }
-      i++;
+                                                                     @NotNull PsiParameter[] parameters,
+                                                                     @NotNull JavaResolveResult resolveResult) {
+    if (callArguments.length == 2 && parameters.length == 2 
+        && isCommonlyNamedParameterPair(0, 1, parameters)) 
+    {
+      return ContainerUtil.emptyList();
     }
 
-    return descriptors;
+    List<InlayInfo> descriptors = ContainerUtil.newArrayList();
+    
+    int index = 0;
+    while (index < callArguments.length && index < parameters.length) {
+      if (shouldInlineParameterName(index, callArguments, parameters, resolveResult)) {
+        descriptors.add(createInlayInfo(callArguments[index], parameters[index]));
+      }
+      index++;
+    }
+
+    if (ContainerUtil.find(descriptors, hint -> hasProperLength(hint.getText())) != null) {
+      return descriptors;
+    }
+
+    return ContainerUtil.emptyList();
   }
 
   @NotNull
@@ -137,7 +142,6 @@ public class ParameterNameHintsManager {
     if (argument.getType() == null) return false;
     
     final PsiParameter parameter = parameters[paramIndex];
-    if (!hasProperLength(parameter.getName())) return false;
 
     PsiType argType = argument.getType();
     PsiType paramType = parameter.getType();

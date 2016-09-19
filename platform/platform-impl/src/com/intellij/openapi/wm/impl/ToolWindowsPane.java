@@ -208,7 +208,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   @Override
-  public final void uiSettingsChanged(final UISettings source) {
+  public final void uiSettingsChanged(final UISettings uiSettings) {
     updateToolStripesVisibility();
     updateLayout();
   }
@@ -801,12 +801,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         final ToolWindowAnchor anchor = myInfo.getAnchor();
         class MySplitter extends Splitter implements UISettingsListener {
           @Override
-          public void uiSettingsChanged(UISettings source) {
+          public void uiSettingsChanged(UISettings uiSettings) {
             if (anchor == ToolWindowAnchor.LEFT) {
-              setOrientation(!source.LEFT_HORIZONTAL_SPLIT);
+              setOrientation(!uiSettings.LEFT_HORIZONTAL_SPLIT);
             }
             else if (anchor == ToolWindowAnchor.RIGHT) {
-              setOrientation(!source.RIGHT_HORIZONTAL_SPLIT);
+              setOrientation(!uiSettings.RIGHT_HORIZONTAL_SPLIT);
             }
           }
         }

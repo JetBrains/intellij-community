@@ -199,7 +199,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       SHOWN = CURRENT_GETTER.fun(null);
     }
 
-    UISettings.getInstance().addUISettingsListener(this, this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, this);
 
     final ID pool = invoke("NSAutoreleasePool", "new");
 
@@ -324,7 +324,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
   }
 
   @Override
-  public void uiSettingsChanged(final UISettings source) {
+  public void uiSettingsChanged(final UISettings uiSettings) {
     if (CURRENT_GETTER != null) {
       SHOWN = CURRENT_GETTER.fun(null);
     }

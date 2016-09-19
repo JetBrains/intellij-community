@@ -6,7 +6,7 @@ class T {
             s = ""; // end of line
         }
         else if (s.startsWith("@")) {
-            s = s.substring(1);
+            s = /* inline 1 */ s.substring(1); /* inline 2 */
         }
         else if (s.startsWith("#")) {
             s = "#"; /* inline */

@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInspection.intermediaryVariable;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
@@ -37,7 +37,7 @@ import java.util.*;
  * @author Pavel.Dolgov
  */
 public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + ReturnSeparatedFromComputationInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(ReturnSeparatedFromComputationInspection.class);
 
   @NotNull
   @Override
@@ -89,20 +89,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       return ((PsiMethod)returnFrom).getReturnType();
     }
     if (returnFrom instanceof PsiLambdaExpression) {
-      return getNonParametrizedReturnType((PsiLambdaExpression)returnFrom);
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiType getNonParametrizedReturnType(PsiLambdaExpression lambdaExpression) {
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(lambdaExpression.getFunctionalInterfaceType());
-    if (interfaceMethod != null) {
-      final PsiType returnType = interfaceMethod.getReturnType();
-      if (returnType instanceof PsiPrimitiveType ||
-          returnType instanceof PsiClassType && ((PsiClassType)returnType).getParameterCount() == 0) {
-        return returnType;
-      }
+      return LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)returnFrom);
     }
     return null;
   }
@@ -214,7 +201,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
       if (flow != null) {
         Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, context.returnType, false);
         boolean removeReturn = mover.moveTo(context.refactoredStatement, true);
-        if (!mover.isEmpty()) {
+        if (!mover.isEmpty() && FileModificationService.getInstance().preparePsiElementForWrite(returnStatement)) {
           applyChanges(mover, context, removeReturn);
         }
       }
@@ -231,7 +218,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
         inlineAssignment((PsiAssignmentExpression)e, context.returnStatement);
       }
     });
-    mover.removeCompletely.forEach(e -> removeElementKeepComment(e));
+    mover.removeCompletely.forEach(e -> removeElementKeepComments(e));
     if (removeReturn) {
       removeReturn(context);
     }
@@ -241,7 +228,7 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     Set<PsiElement> skippedEmptyStatements = new THashSet<>();
     getPrevNonEmptyStatement(context.returnStatement, skippedEmptyStatements);
     skippedEmptyStatements.forEach(PsiElement::delete);
-    removeElementKeepComment(context.returnStatement);
+    removeElementKeepComments(context.returnStatement);
   }
 
   private static void inlineAssignment(PsiAssignmentExpression assignmentExpression, PsiReturnStatement returnStatement) {
@@ -257,25 +244,14 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
   }
 
   private static void replaceStatementKeepComments(PsiStatement replacedStatement, PsiReturnStatement returnStatement) {
-    List<PsiComment> keptComments = new ArrayList<>();
-    for (PsiElement element = replacedStatement.getFirstChild(); element != null; element = element.getNextSibling()) {
-      if (element instanceof PsiComment) {
-        keptComments.add((PsiComment)element);
-      }
-    }
+    List<PsiComment> keptComments = getComments(replacedStatement);
     if (!keptComments.isEmpty()) {
       returnStatement = (PsiReturnStatement)returnStatement.copy();
       PsiElement lastReturnChild = returnStatement.getLastChild();
       Project project = returnStatement.getProject();
       PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);
       PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-      if (lastReturnChild instanceof PsiComment && ((PsiComment)lastReturnChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT) {
-        String commentText = StringUtil.trimStart(lastReturnChild.getText(), "//");
-        PsiComment inlineComment = elementFactory.createCommentFromText("/* " + commentText + " */", returnStatement);
-        lastReturnChild = lastReturnChild.replace(inlineComment);
-      }
       for (PsiComment comment : keptComments) {
-        lastReturnChild = returnStatement.addAfter(parserFacade.createWhiteSpaceFromText(" "), lastReturnChild);
         lastReturnChild = returnStatement.addAfter(comment, lastReturnChild);
       }
       CodeStyleManager.getInstance(project).reformat(returnStatement, true);
@@ -283,20 +259,36 @@ public class ReturnSeparatedFromComputationInspection extends BaseJavaBatchLocal
     replacedStatement.replace(returnStatement);
   }
 
-  private static void removeElementKeepComment(PsiElement element) {
-    PsiComment comment = null;
-    for (PsiElement child = element.getLastChild(); child != null; child = child.getPrevSibling()) {
-      if (child instanceof PsiComment) {
-        comment = (PsiComment)child;
-        break;
+  private static void removeElementKeepComments(PsiElement removedElement) {
+    List<PsiComment> keptComments = getComments(removedElement);
+    if (!keptComments.isEmpty()) {
+      PsiComment firstComment = keptComments.get(0);
+      PsiElement lastComment = removedElement.replace(firstComment);
+      PsiElement parent = lastComment.getParent();
+      Project project = parent.getProject();
+      CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+      styleManager.reformat(lastComment, true);
+      if (keptComments.size() > 1) {
+        for (PsiComment comment : keptComments.subList(1, keptComments.size())) {
+          lastComment = parent.addAfter(comment, lastComment);
+          styleManager.reformat(lastComment, true);
+        }
       }
     }
-    if (comment != null) {
-      element.replace(comment);
-    }
     else {
-      element.delete();
+      removedElement.delete();
     }
+  }
+
+  private static List<PsiComment> getComments(PsiElement commentedElement) {
+    final List<PsiComment> comments = new ArrayList<>();
+    commentedElement.accept(new JavaRecursiveElementVisitor() {
+      @Override
+      public void visitComment(PsiComment comment) {
+        comments.add(comment);
+      }
+    });
+    return comments;
   }
 
   private static class Mover {

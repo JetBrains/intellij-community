@@ -26,7 +26,7 @@ import java.util.Collection;
 public interface MavenServer extends Remote {
   void set(MavenServerLogger logger, MavenServerDownloadListener downloadListener) throws RemoteException;
 
-  MavenServerEmbedder createEmbedder(MavenServerSettings settings) throws RemoteException;
+  MavenServerEmbedder createEmbedder(MavenEmbedderSettings settings) throws RemoteException;
 
   MavenServerIndexer createIndexer() throws RemoteException;
 
