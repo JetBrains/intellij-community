@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -115,7 +114,8 @@ public class MavenProjectReader {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     Set<String> alwaysOnProfiles = new THashSet<>();
 
-    if (!FileUtilRt.extensionEquals(file.getPath(), "xml")) {
+    String fileExtension = file.getExtension();
+    if (!"pom".equalsIgnoreCase(fileExtension) && !"xml".equalsIgnoreCase(fileExtension)) {
       File basedir = getBaseDir(file);
       MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
       MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, basedir.getPath(), basedir.getPath());
