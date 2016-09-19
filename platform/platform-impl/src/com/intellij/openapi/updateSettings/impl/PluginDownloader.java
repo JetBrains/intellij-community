@@ -218,7 +218,7 @@ public class PluginDownloader {
       StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(myOldFile);
       StartupActionScriptManager.addActionCommand(deleteOld);
     }
-    PluginInstaller.install(myFile, getPluginName(), true);
+    PluginInstaller.install(myFile, getPluginName(), true, myDescriptor);
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
       state.onPluginInstall(myDescriptor);

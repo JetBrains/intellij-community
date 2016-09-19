@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.customize;
 
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -58,6 +59,12 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     getPeer().setAppIcons();
 
     stepsProvider.initSteps(this, mySteps);
+
+    CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+    if (configProvider != null) {
+      myIndex = configProvider.initSteps(mySteps);
+    }
+
     if (mySteps.isEmpty()) {
       throw new IllegalArgumentException(stepsProvider + " provided no steps");
     }

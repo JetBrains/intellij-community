@@ -65,7 +65,7 @@ import java.util.zip.ZipFile;
 public class PluginManagerCore {
   private static final Logger LOG = Logger.getInstance(PluginManagerCore.class);
 
-  private static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
+  public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
   public static final String CORE_PLUGIN_ID = "com.intellij";
   private static final String META_INF = "META-INF";
   public static final String PLUGIN_XML = "plugin.xml";
@@ -100,6 +100,8 @@ public class PluginManagerCore {
       return ourBuildNumber;
     }
   }
+
+  private static List<Runnable> myDisablePluginListeners;
 
   /**
    * do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by IdeaClassLoader
@@ -140,6 +142,7 @@ public class PluginManagerCore {
           reader.close();
           if (!requiredPlugins.isEmpty()) {
             savePluginsList(disabledPlugins, false, new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME));
+            fireEditDisablePlugins();
           }
         }
       }
@@ -204,6 +207,27 @@ public class PluginManagerCore {
     return app != null && app.isUnitTestMode();
   }
 
+  public static void addDisablePluginListener(@NotNull Runnable listener) {
+    if (myDisablePluginListeners == null) {
+      myDisablePluginListeners = new ArrayList<Runnable>();
+    }
+    myDisablePluginListeners.add(listener);
+  }
+
+  public static void removeDisablePluginListener(@NotNull Runnable listener) {
+    if (myDisablePluginListeners != null) {
+      myDisablePluginListeners.remove(listener);
+    }
+  }
+
+  private static void fireEditDisablePlugins() {
+    if (myDisablePluginListeners != null) {
+      for (Runnable listener : myDisablePluginListeners) {
+        listener.run();
+      }
+    }
+  }
+
   public static void savePluginsList(@NotNull Collection<String> ids, boolean append, @NotNull File plugins) throws IOException {
     if (!plugins.isFile()) {
       FileUtil.ensureCanCreateFile(plugins);
@@ -256,6 +280,7 @@ public class PluginManagerCore {
     File plugins = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
     savePluginsList(ids, append, plugins);
     ourDisabledPlugins = null;
+    fireEditDisablePlugins();
   }
 
   public static Logger getLogger() {
