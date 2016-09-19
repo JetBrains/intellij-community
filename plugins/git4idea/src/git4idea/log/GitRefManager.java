@@ -177,7 +177,7 @@ public class GitRefManager implements VcsLogRefManager {
           VcsRef trackedRef = ContainerUtil
             .find(references, ref -> ref.getType().equals(REMOTE_BRANCH) && ref.getName().equals(trackInfo.getRemoteBranch().getName()));
           if (trackedRef != null) {
-            name = trackInfo.getRemote().getName() + "&" + firstRef.getName();
+            name = trackInfo.getRemote().getName() + " & " + firstRef.getName();
           }
         }
       }
