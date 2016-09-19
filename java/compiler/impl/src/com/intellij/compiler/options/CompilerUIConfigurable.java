@@ -15,20 +15,23 @@
  */
 package com.intellij.compiler.options;
 
+import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.MalformedPatternException;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.Gray;
@@ -44,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
@@ -80,6 +85,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JLabel               myResourcePatternsLabel;
   private JLabel               myEnableAutomakeLegendLabel;
   private JLabel               myParallelCompilationLegendLabel;
+  private JButton              myConfigureAnnotations;
 
   public CompilerUIConfigurable(@NotNull final Project project) {
     myProject = project;
@@ -97,6 +103,14 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
         mySharedVMOptionsField.setEnabled(e.getDocument().getLength() == 0);
         myHeapSizeField.setEnabled(ContainerUtil.find(ParametersListUtil.parse(myVMOptionsField.getText()),
                                                       s -> StringUtil.startsWithIgnoreCase(s, "-Xmx")) == null);
+      }
+    });
+    myConfigureAnnotations.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
+        if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+        new NullableNotNullDialog(project).show();
       }
     });
   }
