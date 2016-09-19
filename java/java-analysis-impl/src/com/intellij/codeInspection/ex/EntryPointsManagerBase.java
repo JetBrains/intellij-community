@@ -350,20 +350,22 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
     if (anEntryPoint instanceof RefMethod || anEntryPoint instanceof RefClass) {
       final RefClass aClass = anEntryPoint instanceof RefClass ? (RefClass)anEntryPoint : ((RefMethod)anEntryPoint).getOwnerClass();
-      final String qualifiedName = aClass.getQualifiedName();
-      for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
-        ClassPattern classPattern = iterator.next();
-        if (Comparing.equal(classPattern.pattern, qualifiedName)) {
-          if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
-            if (classPattern.method.isEmpty()) {
-              //todo if inheritance or pattern?
-              iterator.remove();
+      if (aClass != null) {
+        final String qualifiedName = aClass.getQualifiedName();
+        for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
+          ClassPattern classPattern = iterator.next();
+          if (Comparing.equal(classPattern.pattern, qualifiedName)) {
+            if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
+              if (classPattern.method.isEmpty()) {
+                //todo if inheritance or pattern?
+                iterator.remove();
+              }
             }
-          }
-          else {
-            String methodName = getMethodName(anEntryPoint);
-            if (methodName.equals(classPattern.method)) {
-              iterator.remove();
+            else {
+              String methodName = getMethodName(anEntryPoint);
+              if (methodName.equals(classPattern.method)) {
+                iterator.remove();
+              }
             }
           }
         }
