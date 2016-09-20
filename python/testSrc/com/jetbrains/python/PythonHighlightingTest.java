@@ -310,6 +310,16 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20770
+  public void testAsyncComprehensionsPy35() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  // PY-20770
+  public void testAsyncComprehensionsPy36() {
+    doTest(LanguageLevel.PYTHON36, true, false);
+  }
+
   // PY-20775
   public void testFStringMissingRightBrace() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
@@ -329,12 +339,12 @@ public class PythonHighlightingTest extends PyTestCase {
   public void testFStringHashSigns() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
   }
-  
+
   // PY-20844
   public void testFStringBackslashes() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
   }
-  
+
   // ---
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
