@@ -70,7 +70,7 @@ public class FileTemplatesLoader {
 
   protected FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
     myTypeManager = typeManager;
-    File configDir = project == null
+    File configDir = project == null || project.isDefault()
                      ? new File(PathManager.getConfigPath(), TEMPLATES_DIR)
                      : new File(ProjectKt.getStateStore(project).getDirectoryStorePath(true) + "/" + TEMPLATES_DIR);
     myDefaultTemplatesManager = new FTManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, configDir);
