@@ -8,6 +8,9 @@ public class Main {
       for(String string : innerList) {
         if(string.startsWith("ABC")) {
           return string.substring(3);
+          /*
+          Block comment
+           */
         }
       }
     }

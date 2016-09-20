@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.StreamApiMigrationInspection;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -24,8 +24,10 @@ public class StreamApiMigrationInspectionTest extends LightQuickFixParameterized
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
+    StreamApiMigrationInspection inspection = new StreamApiMigrationInspection();
+    inspection.SUGGEST_FOREACH = true;
     return new LocalInspectionTool[]{
-      new StreamApiMigrationInspection()
+      inspection
     };
   }
 
