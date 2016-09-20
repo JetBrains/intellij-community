@@ -46,10 +46,9 @@ public abstract class DefaultVcsRootPolicy {
 
   @NotNull
   public abstract Collection<VirtualFile> getDirtyRoots();
-  
+
   public String getProjectConfigurationMessage(final Project project) {
     boolean isDirectoryBased = ProjectKt.isDirectoryBased(project);
-    final StringBuilder sb = new StringBuilder("Content roots of all modules");
     final String[] parts = new String[] {"Content roots of all modules", "all immediate descendants of project base directory",
       Project.DIRECTORY_STORE_FOLDER + " directory contents"};
     final StringBuilder sb = new StringBuilder(parts[0]);
@@ -58,10 +57,10 @@ public abstract class DefaultVcsRootPolicy {
     } else {
       sb.append(", and ");
     }
-    sb.append("all immediate descendants of project base directory");
+    sb.append(parts[1]);
     if (isDirectoryBased) {
       sb.append(", and ");
-      sb.append(PathUtilRt.getFileName(ProjectKt.getStateStore(project).getDirectoryStorePath()) + " directory contents");
+      sb.append(parts[2]);
     }
     return sb.toString();
   }
