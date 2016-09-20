@@ -66,7 +66,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.docking.DockContainer;
@@ -74,7 +73,6 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
@@ -989,30 +987,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     EditorWithProviderComposite composite = compositeRef.get();
     return Pair.create(composite == null ? EMPTY_EDITOR_ARRAY : composite.getEditors(),
                        composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
-  }
-
-  /**
-   * Commit all documents and execute the runnable on EDT.
-   * When called not on EDT, performs commit asynchronously to avoid UI freezes:
-   * {@link #restoreEditorState} requires a committed document (to apply folding info in PsiAwareTextEditorProvider#setStateImpl).
-   */
-  private void commitAndInvoke(@NotNull Runnable runnable) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      runnable.run();
-    } else {
-      Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-        try {
-          runnable.run();
-        } finally {
-          semaphore.up();
-        }
-      });
-      //noinspection StatementWithEmptyBody
-      while (!semaphore.waitFor(10) && !myProject.isDisposed());
-    }
   }
 
   @Nullable
