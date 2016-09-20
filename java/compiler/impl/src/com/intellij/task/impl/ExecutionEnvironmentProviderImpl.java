@@ -24,8 +24,8 @@ import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.task.ExecuteRunConfigurationTask;
 import com.intellij.task.ProjectTaskRunner;
-import com.intellij.task.RunProjectTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,10 +45,11 @@ public class ExecutionEnvironmentProviderImpl implements ExecutionEnvironmentPro
                                                          @Nullable ConfigurationPerRunnerSettings configurationSettings,
                                                          @Nullable RunnerAndConfigurationSettings settings) {
 
-    RunProjectTask runTask = new RunProjectTaskImpl(runProfile, executor, target, runnerSettings, configurationSettings, settings);
+    ExecuteRunConfigurationTask
+      runTask = new ExecuteRunConfigurationTaskImpl(runProfile, target, runnerSettings, configurationSettings, settings);
     for (ProjectTaskRunner projectTaskRunner : ProjectTaskRunner.EP_NAME.getExtensions()) {
       if (projectTaskRunner.canRun(runTask)) {
-        return projectTaskRunner.createExecutionEnvironment(project, runTask);
+        return projectTaskRunner.createExecutionEnvironment(project, runTask, executor);
       }
     }
     return null;

@@ -15,6 +15,7 @@
  */
 package com.intellij.task;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -46,5 +47,7 @@ public abstract class ProjectTaskRunner {
 
   public abstract boolean canRun(@NotNull ProjectTask projectTask);
 
-  public abstract ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull RunProjectTask task);
+  public abstract ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                                  @NotNull ExecuteRunConfigurationTask task,
+                                                                  @Nullable Executor executor);
 }

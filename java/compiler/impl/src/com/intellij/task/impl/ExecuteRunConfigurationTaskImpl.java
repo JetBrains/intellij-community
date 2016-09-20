@@ -16,12 +16,11 @@
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionTarget;
-import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.task.RunProjectTask;
+import com.intellij.task.ExecuteRunConfigurationTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,26 +28,23 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 7/13/2016
  */
-public class RunProjectTaskImpl extends AbstractProjectTask implements RunProjectTask {
+public class ExecuteRunConfigurationTaskImpl extends AbstractProjectTask implements ExecuteRunConfigurationTask {
   @NotNull private final RunProfile myRunProfile;
-  @Nullable private Executor myExecutor;
   @Nullable private ExecutionTarget myTarget;
   @Nullable private RunnerSettings myRunnerSettings;
   @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
   @Nullable private RunnerAndConfigurationSettings mySettings;
 
-  public RunProjectTaskImpl(@NotNull RunProfile runProfile) {
+  public ExecuteRunConfigurationTaskImpl(@NotNull RunProfile runProfile) {
     myRunProfile = runProfile;
   }
 
-  public RunProjectTaskImpl(@NotNull RunProfile runProfile,
-                            @NotNull Executor executor,
-                            @NotNull ExecutionTarget target,
-                            @Nullable RunnerSettings runnerSettings,
-                            @Nullable ConfigurationPerRunnerSettings configurationSettings,
-                            @Nullable RunnerAndConfigurationSettings settings) {
+  public ExecuteRunConfigurationTaskImpl(@NotNull RunProfile runProfile,
+                                         @NotNull ExecutionTarget target,
+                                         @Nullable RunnerSettings runnerSettings,
+                                         @Nullable ConfigurationPerRunnerSettings configurationSettings,
+                                         @Nullable RunnerAndConfigurationSettings settings) {
     myRunProfile = runProfile;
-    myExecutor = executor;
     myTarget = target;
     myRunnerSettings = runnerSettings;
     myConfigurationSettings = configurationSettings;
@@ -59,12 +55,6 @@ public class RunProjectTaskImpl extends AbstractProjectTask implements RunProjec
   @Override
   public RunProfile getRunProfile() {
     return myRunProfile;
-  }
-
-  @Nullable
-  @Override
-  public Executor getExecutor() {
-    return myExecutor;
   }
 
   @Nullable

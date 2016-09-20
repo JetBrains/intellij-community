@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.execution.build;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
@@ -132,10 +133,10 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       }
     }
 
-    if (projectTask instanceof RunProjectTask) {
+    if (projectTask instanceof ExecuteRunConfigurationTask) {
       if (!GradleSystemRunningSettings.getInstance().isUseGradleAwareMake()) return false;
 
-      RunProfile runProfile = ((RunProjectTask)projectTask).getRunProfile();
+      RunProfile runProfile = ((ExecuteRunConfigurationTask)projectTask).getRunProfile();
       if (runProfile instanceof ApplicationConfiguration) {
         JavaRunConfigurationModule module = ((ApplicationConfiguration)runProfile).getConfigurationModule();
         return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule());
@@ -146,9 +147,11 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
 
   @Override
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull RunProjectTask task) {
+  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                         @NotNull ExecuteRunConfigurationTask task,
+                                                         @Nullable Executor executor) {
     if (task.getRunProfile() instanceof ApplicationConfiguration) {
-      return new GradleApplicationEnvironmentBuilder().build(project, task);
+      return new GradleApplicationEnvironmentBuilder().build(project, task, executor);
     }
     return null;
   }

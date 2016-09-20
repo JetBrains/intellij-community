@@ -15,6 +15,7 @@
  */
 package com.intellij.task.impl;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -65,7 +66,9 @@ public class InternalProjectTaskRunner extends ProjectTaskRunner {
   }
 
   @Override
-  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project, @NotNull RunProjectTask task) {
+  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                         @NotNull ExecuteRunConfigurationTask task,
+                                                         @Nullable Executor executor) {
     return null;
   }
 

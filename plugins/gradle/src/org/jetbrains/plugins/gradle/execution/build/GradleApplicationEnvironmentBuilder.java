@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.execution.build;
 
+import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
@@ -29,7 +30,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.PsiClass;
-import com.intellij.task.RunProjectTask;
+import com.intellij.task.ExecuteRunConfigurationTask;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,10 +49,12 @@ import java.util.Collections;
 public class GradleApplicationEnvironmentBuilder {
 
   @Nullable
-  public ExecutionEnvironment build(@NotNull Project project, @NotNull RunProjectTask runProjectTask) {
-    if (!(runProjectTask.getRunProfile() instanceof ApplicationConfiguration)) return null;
+  public ExecutionEnvironment build(@NotNull Project project,
+                                    @NotNull ExecuteRunConfigurationTask executeRunConfigurationTask,
+                                    @Nullable Executor executor) {
+    if (!(executeRunConfigurationTask.getRunProfile() instanceof ApplicationConfiguration)) return null;
 
-    ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)runProjectTask.getRunProfile();
+    ApplicationConfiguration applicationConfiguration = (ApplicationConfiguration)executeRunConfigurationTask.getRunProfile();
     PsiClass mainClass = applicationConfiguration.getMainClass();
     if(mainClass == null) return null;
 
@@ -79,7 +82,7 @@ public class GradleApplicationEnvironmentBuilder {
     final String runAppTaskName = "run " + mainClass.getName();
     taskSettings.setTaskNames(Collections.singletonList(runAppTaskName));
 
-    String executorId = runProjectTask.getExecutor() == null ? DefaultRunExecutor.EXECUTOR_ID : runProjectTask.getExecutor().getId();
+    String executorId = executor == null ? DefaultRunExecutor.EXECUTOR_ID : executor.getId();
     ExecutionEnvironment environment =
       ExternalSystemUtil.createExecutionEnvironment(project, GradleConstants.SYSTEM_ID, taskSettings, executorId);
     if (environment != null) {

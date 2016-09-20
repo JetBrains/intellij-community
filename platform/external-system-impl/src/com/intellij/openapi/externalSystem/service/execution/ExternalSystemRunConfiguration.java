@@ -274,6 +274,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       }
       if (consoleViewImpl != null) {
         consoleViewImpl.performWhenNoDeferredOutput(() -> {
+          if(!ApplicationManager.getApplication().isDispatchThread()) return;
+
           Document document = consoleViewImpl.getEditor().getDocument();
           int line = isGreeting ? 0 : document.getLineCount() - 2;
           if (CharArrayUtil.regionMatches(document.getCharsSequence(), document.getLineStartOffset(line), text)) {

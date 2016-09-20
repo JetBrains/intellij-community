@@ -16,7 +16,6 @@
 package com.intellij.task;
 
 import com.intellij.execution.ExecutionTarget;
-import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
@@ -28,13 +27,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 5/11/2016
  */
-public interface RunProjectTask extends ProjectTask {
+public interface ExecuteRunConfigurationTask extends ProjectTask {
 
   @NotNull
   RunProfile getRunProfile();
-
-  @Nullable
-  Executor getExecutor();
 
   @Nullable
   ExecutionTarget getExecutionTarget();
