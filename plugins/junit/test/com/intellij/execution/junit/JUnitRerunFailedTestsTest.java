@@ -28,6 +28,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
+@SuppressWarnings({"JUnitTestClassNamingConvention", "JUnitTestCaseWithNoTests"})
 public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  {
 
   @Override
@@ -147,6 +148,6 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     PsiElement element = location.getPsiElement();
     assertTrue(element instanceof PsiMethod);
     String name = ((PsiMethod)element).getName();
-    assertEquals(name, "testFoo");
+    assertEquals("testFoo", name);
   }
 }
