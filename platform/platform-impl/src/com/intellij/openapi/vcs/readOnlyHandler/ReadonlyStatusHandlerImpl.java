@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -40,6 +41,7 @@ import java.util.*;
 public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements PersistentStateComponent<ReadonlyStatusHandlerImpl.State> {
   private final Project myProject;
   private final WritingAccessProvider[] myAccessProviders;
+  protected boolean myClearReadOnlyInTests;
 
   public static class State {
     public boolean SHOW_DIALOG = true;
@@ -95,7 +97,7 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
     
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (myClearedByRequest) {
+      if (myClearReadOnlyInTests) {
         processFiles(new ArrayList<>(Arrays.asList(fileInfos)), null);
       }
       return createResultStatus(files);
@@ -154,6 +156,13 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         fileInfos.remove(fileInfo);
       }
     }
+  }
+
+  @Override
+  @TestOnly
+  public void setClearReadOnlyInTests(boolean clearReadOnlyInTests) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myClearReadOnlyInTests = clearReadOnlyInTests;
   }
 
   private static class OperationStatusImpl extends OperationStatus {

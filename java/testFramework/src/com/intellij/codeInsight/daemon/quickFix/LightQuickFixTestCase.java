@@ -196,9 +196,15 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         throw new UncheckedIOException(e);
       }
     });
-    ReadonlyStatusHandler.getInstance(file.getProject()).setReadOnlyStatusClearedByRequest(true);
-    ShowIntentionActionsHandler.chooseActionAndInvoke(file, getEditor(), action, action.getText());
-    UIUtil.dispatchAllInvocationEvents();
+    ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(file.getProject());
+    handler.setClearReadOnlyInTests(true);
+    try {
+      ShowIntentionActionsHandler.chooseActionAndInvoke(file, getEditor(), action, action.getText());
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    finally {
+      handler.setClearReadOnlyInTests(false);
+    }
   }
 
   protected IntentionAction findActionWithText(@NotNull String text) {
