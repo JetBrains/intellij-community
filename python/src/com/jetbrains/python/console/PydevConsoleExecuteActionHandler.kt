@@ -65,7 +65,8 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     else {
       text
     }
-    sendLineToConsole(ConsoleCommunication.ConsoleCodeFragment(commandText, false))
+    val singleLine = text.count { it == '\n' } < 2
+    sendLineToConsole(ConsoleCommunication.ConsoleCodeFragment(commandText, singleLine))
   }
 
   private fun sendLineToConsole(code: ConsoleCommunication.ConsoleCodeFragment) {
@@ -74,10 +75,11 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     if (!consoleComm.isWaitingForInput) {
       executingPrompt()
     }
-    if (ipythonEnabled && !consoleComm.isWaitingForInput){
+    if (ipythonEnabled && !consoleComm.isWaitingForInput && !code.getText().isBlank()) {
       ++myIpythonInputPromptCount;
     }
-    consoleComm.execInterpreter(code) { }
+
+    consoleComm.execInterpreter(code) {}
   }
 
 
