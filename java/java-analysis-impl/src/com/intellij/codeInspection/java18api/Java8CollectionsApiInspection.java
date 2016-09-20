@@ -183,11 +183,12 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
             return;
           }
           if(!ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {lambdaCandidate}).isEmpty()) return;
-          PsiElement[] varRefs = PsiTreeUtil.collectElements(lambdaCandidate, e -> e instanceof PsiReferenceExpression &&
-                                                                                    ((PsiReferenceExpression)e)
-                                                                                      .resolve() instanceof PsiVariable);
-          if (!StreamEx.of(varRefs).select(PsiReferenceExpression.class).map(PsiReferenceExpression::resolve).select(PsiVariable.class)
-            .allMatch(var -> HighlightControlFlowUtil.isEffectivelyFinal(var, lambdaCandidate, null))) {
+          if(!PsiTreeUtil.processElements(lambdaCandidate, e -> {
+            if(!(e instanceof PsiReferenceExpression)) return true;
+            PsiElement element = ((PsiReferenceExpression)e).resolve();
+            if(!(element instanceof PsiVariable)) return true;
+            return HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)element, lambdaCandidate, null);
+          })) {
             return;
           }
           holder.registerProblem(condition, QuickFixBundle.message("java.8.collections.api.inspection.description"),
