@@ -294,6 +294,19 @@ public class GitRefManager implements VcsLogRefManager {
     public String toString() {
       return myName;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      SimpleRefType type = (SimpleRefType)o;
+      return myIsBranch == type.myIsBranch && Objects.equals(myName, type.myName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myIsBranch, myName);
+    }
   }
 
   private static class LogicalRefGroup implements RefGroup {

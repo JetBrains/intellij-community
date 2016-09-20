@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.Consumer;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentEnumeratorBase;
@@ -38,9 +37,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +51,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
   public static final int VERSION = 5;
+  private static final int REFS_VERSION = 1;
   @NotNull private static final String ROOT_STORAGE_KIND = "roots";
   private static final int ROOTS_STORAGE_VERSION = 0;
 
@@ -76,7 +74,8 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
     myCommitIdEnumerator = PersistentUtil.createPersistentEnumerator(commitIdKeyDescriptor, HASHES_STORAGE, logId, VERSION);
     myRefsEnumerator =
-      PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor), REFS_STORAGE, logId, VERSION);
+      PersistentUtil.createPersistentEnumerator(new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor), REFS_STORAGE, logId,
+                                                VERSION + REFS_VERSION);
 
     // cleanup old root storages, to remove after 2016.3 release
     PersistentUtil
@@ -278,10 +277,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
     @Override
     public int getHashCode(@NotNull VcsRef value) {
-      int result = new CommitId(value.getCommitHash(), value.getRoot()).hashCode();
-      result = 31 * result + value.getName().hashCode();
-      result = 31 * result + value.getType().hashCode();
-      return result;
+      return value.hashCode();
     }
 
     @Override
