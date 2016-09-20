@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ThreadSafeTransparentlyFailedValue;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
 import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
 import com.intellij.util.Consumer;
@@ -249,10 +248,8 @@ public class SvnBranchPointsCalculator {
 
     @Override
     public WrapperInvertor convert(final KeyData keyData) throws VcsException {
-      final TransparentlyFailedValue<CopyData, VcsException> consumer = new TransparentlyFailedValue<>();
-      new FirstInBranch(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl(), consumer).run();
+      CopyData copyData = new FirstInBranch(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl()).run();
 
-      final CopyData copyData = consumer.get();
       if (copyData != null) {
         final boolean correct = copyData.isTrunkSupposedCorrect();
         final BranchCopyData branchCopyData;
