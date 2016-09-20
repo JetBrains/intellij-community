@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * @author irengrig
  */
 public interface ChangesViewContentI {
+  void setUp(ToolWindow toolWindow);
   void addContent(Content content);
   void removeContent(final Content content);
   void setSelectedContent(final Content content);

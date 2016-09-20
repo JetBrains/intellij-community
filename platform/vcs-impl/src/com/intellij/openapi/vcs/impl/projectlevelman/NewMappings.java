@@ -107,6 +107,9 @@ public class NewMappings {
 
   public AbstractVcs[] getActiveVcses() {
     synchronized (myLock) {
+      if (!myActivated) {
+        activateActiveVcses();
+      }
       final AbstractVcs[] result = new AbstractVcs[myActiveVcses.length];
       System.arraycopy(myActiveVcses, 0, result, 0, myActiveVcses.length);
       return result;
