@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.console;
 
+import com.google.common.base.CharMatcher;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.Result;
@@ -73,11 +74,26 @@ public class ConsoleEnterHandler {
       return false;
     }
 
+    PsiDocumentManager psiMgr = PsiDocumentManager.getInstance(project);
+    PsiFile psiFile = psiMgr.getPsiFile(document);
+    assert psiFile != null;
     int caretOffset = currentCaret.getOffset();
+    PsiElement currentElement = psiFile.findElementAt(caretOffset);
+
+    if (currentElement != null && (PyTokenTypes.TRIPLE_NODES.contains(currentElement.getNode().getElementType()) ||
+                                   currentElement.getNode().getElementType() == PyTokenTypes.DOCSTRING)) {
+      return false;
+    }
+
+
     String textAfterCursor = document.getText(new TextRange(caretOffset, document.getTextLength()));
      /* Check if we're on the last line, if not then don't want to execute */
     if (!StringUtil.isEmptyOrSpaces(textAfterCursor)) {
       return false;
+    }
+
+    if (CharMatcher.WHITESPACE.matchesAllOf(prevLine)) {
+      return true;
     }
 
     /* don't execute if previous line has an indent */
@@ -94,15 +110,6 @@ public class ConsoleEnterHandler {
     }
 
 
-    PsiDocumentManager psiMgr = PsiDocumentManager.getInstance(project);
-    PsiFile psiFile = psiMgr.getPsiFile(document);
-    assert psiFile != null;
-    PsiElement currentElement = psiFile.findElementAt(caretOffset);
-
-    if (currentElement != null && (PyTokenTypes.TRIPLE_NODES.contains(currentElement.getNode().getElementType()) ||
-                                   currentElement.getNode().getElementType() == PyTokenTypes.DOCSTRING)) {
-      return false;
-    }
 
     return currentElement == null || currentElement instanceof PsiWhiteSpace;
   }
