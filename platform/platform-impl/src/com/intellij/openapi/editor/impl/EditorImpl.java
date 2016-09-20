@@ -6012,8 +6012,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             }
           }
         }
-        else if (myCaretModel.supportsMultipleCarets() && e.getSource() != myGutterComponent && isCreateRectangularSelectionEvent(e)) {
-          mySelectionModel.setBlockSelection(myCaretModel.getLogicalPosition(), pos);
+        else if (e.getSource() != myGutterComponent && isCreateRectangularSelectionEvent(e)) {
+          CaretState anchorCaretState = myCaretModel.getCaretsAndSelections().get(0);
+          LogicalPosition anchor = Objects.equals(anchorCaretState.getCaretPosition(), anchorCaretState.getSelectionStart()) ?
+                                   anchorCaretState.getSelectionEnd() : anchorCaretState.getSelectionStart();
+          if (anchor == null) anchor = myCaretModel.getLogicalPosition();
+          mySelectionModel.setBlockSelection(anchor, pos);
         }
         else {
           getCaretModel().removeSecondaryCarets();
