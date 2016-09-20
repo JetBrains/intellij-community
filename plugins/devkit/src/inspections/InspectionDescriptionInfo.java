@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,25 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomService;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.Extensions;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+
+import java.util.List;
 
 public class InspectionDescriptionInfo {
 
@@ -40,12 +53,61 @@ public class InspectionDescriptionInfo {
         DescriptionType.INSPECTION.getClassName().equals(method.getContainingClass().getQualifiedName())) {
       method = null;
     }
-    final String filename = method == null ?
-                            InspectionProfileEntry.getShortName(psiClass.getName()) :
-                            PsiUtil.getReturnedLiteral(method, psiClass);
+    String filename = null;
+    if (method == null) {
+      String className = psiClass.getQualifiedName();
+      if(className != null) {
+        XmlTag tag = findExtensionTag(module, className);
+        if(tag != null) {
+          filename = tag.getAttributeValue("shortName");
+        }
+      }
+      if(filename == null) {
+        filename = InspectionProfileEntry.getShortName(psiClass.getName());
+      }
+    }
+    else {
+      filename = PsiUtil.getReturnedLiteral(method, psiClass);
+    }
 
     PsiFile descriptionFile = resolveInspectionDescriptionFile(module, filename);
     return new InspectionDescriptionInfo(filename, method, descriptionFile);
+  }
+
+  @Nullable
+  static XmlTag findExtensionTag(Module module, final String className) {
+    List<DomFileElement<IdeaPlugin>> elements = DomService.getInstance().getFileElements(IdeaPlugin.class, module.getProject(),
+                                                                                         GlobalSearchScope.projectScope(module.getProject()));
+    elements = ContainerUtil.filter(elements, element -> {
+      VirtualFile virtualFile = element.getFile().getVirtualFile();
+      return virtualFile != null && ProjectRootManager.getInstance(module.getProject()).getFileIndex().isInContent(virtualFile);
+    });
+
+    elements = PluginDescriptorChooser.findAppropriateIntelliJModule(module.getName(), elements);
+    for (DomFileElement<IdeaPlugin> element : elements) {
+      IdeaPlugin ideaPlugin = element.getRootElement();
+      List<Extensions> extensionsList = ideaPlugin.getExtensions();
+      for (Extensions extensions : extensionsList) {
+        String epPrefix = extensions.getEpPrefix();
+        if (epPrefix.equals("com.intellij.")) {
+          XmlTag[] result = {null};
+          extensions.getXmlTag().acceptChildren(new XmlElementVisitor() {
+            @Override
+            public void visitXmlTag(XmlTag tag) {
+              if (className.equals(tag.getAttributeValue("implementationClass")) &&
+                  ((epPrefix + tag.getName()).equals(InspectionEP.GLOBAL_INSPECTION.getName()) ||
+                   (epPrefix + tag.getName()).equals(LocalInspectionEP.LOCAL_INSPECTION.getName()))) {
+                result[0] = tag;
+              }
+            }
+          });
+          if (result[0] != null) {
+            return result[0];
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
