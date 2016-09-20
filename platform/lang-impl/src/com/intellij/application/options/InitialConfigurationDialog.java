@@ -376,7 +376,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
       assert myColorAndFontPanel != null;
       myPreviewEditor = new SimpleEditorPreview(myPreviewOptions, myColorAndFontPanel.getSettingsPage(), false);
       myPreviewEditor.updateView();
-      myWrapper.add(myPreviewEditor.getPanel(), BorderLayout.EAST);
+      myWrapper.add(myPreviewEditor.getPanel());
       if (recalculateDialogSize) {
         final InitialConfigurationDialog dialog = InitialConfigurationDialog.this;
         resizeTo(dialog.getSize().width, dialog.getSize().height - wrapperHeight + getPreviewPreferredHeight());
