@@ -32,8 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.lang.folding.CompositeFoldingBuilder.FOLDING_BUILDER;
-
 /**
  * Builds custom folding regions. If custom folding is supported for a language, its FoldingBuilder must be inherited from this class.
  * 
@@ -99,8 +97,6 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
           ASTNode startNode = localFoldingStack.pop();
           int startOffset = startNode.getTextRange().getStartOffset();
           TextRange range = new TextRange(startOffset, child.getTextRange().getEndOffset());
-          startNode.getPsi().putUserData(FOLDING_BUILDER, this); // Required by CompositeFoldingBuilder when getting info from the original
-                                                                 // folding builder
           descriptors.add(new FoldingDescriptor(startNode, range));
           Set<ASTNode> nodeSet = ourCustomRegionElements.get();
           nodeSet.add(startNode);
