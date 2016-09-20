@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -47,9 +47,8 @@ public class PyFStringsInjector extends PyInjectorBase {
     }
     
     for (ASTNode node : pyString.getStringNodes()) {
-      final String nodeText = node.getText();
       final int relNodeOffset = node.getTextRange().getStartOffset() - pyString.getTextRange().getStartOffset();
-      final List<TextRange> ranges = getInjectionRanges(nodeText);
+      final List<TextRange> ranges = getInjectionRanges(node);
       for (TextRange range : ranges) {
         registrar.startInjecting(PyDocstringLanguageDialect.getInstance());
         registrar.addPlace(null, null, pyString, range.shiftRight(relNodeOffset));
@@ -58,78 +57,83 @@ public class PyFStringsInjector extends PyInjectorBase {
     }
   }
 
+  @NotNull
+  private static List<TextRange> getInjectionRanges(@NotNull ASTNode node) {
+    final StringNodeInfo nodeInfo = new StringNodeInfo(node);
+    if (nodeInfo.isFormatted()) {
+      return getInjectionRanges(node.getText());
+    }
+    return Collections.emptyList();
+  }
+
   @VisibleForTesting
   @NotNull
   public static List<TextRange> getInjectionRanges(@NotNull String nodeText) {
     final List<TextRange> result = new ArrayList<>();
-    final String nodePrefix = nodeText.substring(0, PyStringLiteralExpressionImpl.getPrefixLength(nodeText));
-    final boolean isFormattedString = nodePrefix.toLowerCase(Locale.US).contains("f");
-    if (isFormattedString) {
-      int bracesBalance = 0;
-      boolean insideChunk = false;
-      String nestedLiteralQuotes = null;
-      int chunkStart = 0;
-      final TextRange nodeContentRange = PyStringLiteralExpressionImpl.getNodeTextRange(nodeText);
-      int offset = nodeContentRange.getStartOffset();
-      while (offset < nodeContentRange.getEndOffset()) {
-        final char c1 = nodeText.charAt(offset);
-        final char c2 = offset + 1 < nodeContentRange.getEndOffset() ? nodeText.charAt(offset + 1) : '\0';
-        final char c3 = offset + 2 < nodeContentRange.getEndOffset() ? nodeText.charAt(offset + 2) : '\0';
-        if (!insideChunk) {
-          if ((c1 == '{' && c2 == '{') || (c1 == '}' && c2 == '}')) {
-            offset += 2;
-            continue;
-          }
-          else if (c1 == '{') {
-            chunkStart = offset + 1;
-            insideChunk = true;
-          }
+    int bracesBalance = 0;
+    boolean insideChunk = false;
+    String nestedLiteralQuotes = null;
+    int chunkStart = 0;
+    final TextRange nodeContentRange = PyStringLiteralExpressionImpl.getNodeTextRange(nodeText);
+    int offset = nodeContentRange.getStartOffset();
+    while (offset < nodeContentRange.getEndOffset()) {
+      final char c1 = nodeText.charAt(offset);
+      final char c2 = offset + 1 < nodeContentRange.getEndOffset() ? nodeText.charAt(offset + 1) : '\0';
+      final char c3 = offset + 2 < nodeContentRange.getEndOffset() ? nodeText.charAt(offset + 2) : '\0';
+      if (!insideChunk) {
+        if ((c1 == '{' && c2 == '{') || (c1 == '}' && c2 == '}')) {
+          offset += 2;
+          continue;
         }
-        else if (nestedLiteralQuotes != null) {
-          if (c1 == '\'' || c1 == '"') {
-            final String expected;
-            if (c2 == c1 && c3 == c1) {
-              expected = StringUtil.repeatSymbol(c1, 3);
-            }
-            else {
-              expected = String.valueOf(c1); 
-            }
-            if (nestedLiteralQuotes.equals(expected)) {
-              nestedLiteralQuotes = null;
-              offset += expected.length();
-              continue;
-            }
-          }
-          else if (c1 == '\\') {
-            offset += 2;
-            continue;
-          }
+        else if (c1 == '{') {
+          chunkStart = offset + 1;
+          insideChunk = true;
         }
-        else if (c1 == '\'' || c1 == '"') {
+      }
+      else if (nestedLiteralQuotes != null) {
+        if (c1 == '\'' || c1 == '"') {
+          final String expected;
           if (c2 == c1 && c3 == c1) {
-            nestedLiteralQuotes = StringUtil.repeatSymbol(c1, 3);
-            offset += 3;
+            expected = StringUtil.repeatSymbol(c1, 3);
+          }
+          else {
+            expected = String.valueOf(c1); 
+          }
+          if (nestedLiteralQuotes.equals(expected)) {
+            nestedLiteralQuotes = null;
+            offset += expected.length();
             continue;
           }
-          nestedLiteralQuotes = String.valueOf(c1);
         }
-        else if (c1 == '{' || c1 == '[' || c1 == '(') {
-          bracesBalance++;
+        else if (c1 == '\\') {
+          offset += 2;
+          continue;
         }
-        else if (bracesBalance > 0 && (c1 == '}' || c1 == ']' || c1 == ')')) {
-          bracesBalance--;
-        }
-        else if (bracesBalance == 0 && (c1 == '}' || (c1 == '!' && c2 != '=') || c1 == ':')) {
-          insideChunk = false;
-          if (offset > chunkStart) {
-            result.add(TextRange.create(chunkStart, offset));
-          }
-        }
-        offset++;
       }
-      if (insideChunk) {
-        result.add(TextRange.create(chunkStart, nodeContentRange.getEndOffset()));
+      else if (c1 == '\'' || c1 == '"') {
+        if (c2 == c1 && c3 == c1) {
+          nestedLiteralQuotes = StringUtil.repeatSymbol(c1, 3);
+          offset += 3;
+          continue;
+        }
+        nestedLiteralQuotes = String.valueOf(c1);
       }
+      else if (c1 == '{' || c1 == '[' || c1 == '(') {
+        bracesBalance++;
+      }
+      else if (bracesBalance > 0 && (c1 == '}' || c1 == ']' || c1 == ')')) {
+        bracesBalance--;
+      }
+      else if (bracesBalance == 0 && (c1 == '}' || (c1 == '!' && c2 != '=') || c1 == ':')) {
+        insideChunk = false;
+        if (offset > chunkStart) {
+          result.add(TextRange.create(chunkStart, offset));
+        }
+      }
+      offset++;
+    }
+    if (insideChunk) {
+      result.add(TextRange.create(chunkStart, nodeContentRange.getEndOffset()));
     }
     return Collections.unmodifiableList(result);
   }
