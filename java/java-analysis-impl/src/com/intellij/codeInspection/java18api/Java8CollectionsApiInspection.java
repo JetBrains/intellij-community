@@ -27,6 +27,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -148,7 +149,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
           if (ExpressionUtils.isSimpleExpression(assignment.getRExpression()) &&
               equivalence.expressionsAreEquivalent(assignment.getLExpression(), value)) {
             holder.registerProblem(condition, QuickFixBundle.message("java.8.collections.api.inspection.description"),
-                                   new ReplaceWithGetOrDefaultFix("getOrDefault"));
+                                   new ReplaceGetNullCheck("getOrDefault"));
           }
         } else if(thenBranch instanceof PsiBlockStatement) {
           /*
@@ -190,7 +191,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
             return;
           }
           holder.registerProblem(condition, QuickFixBundle.message("java.8.collections.api.inspection.description"),
-                                 new ReplaceWithGetOrDefaultFix("computeIfAbsent"));
+                                 new ReplaceGetNullCheck("computeIfAbsent"));
         }
       }
     };
@@ -454,10 +455,10 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
     }
   }
 
-  private static class ReplaceWithGetOrDefaultFix implements LocalQuickFix {
+  private static class ReplaceGetNullCheck implements LocalQuickFix {
     private final String myMethodName;
 
-    ReplaceWithGetOrDefaultFix(String methodName) {
+    ReplaceGetNullCheck(String methodName) {
       myMethodName = methodName;
     }
 
@@ -515,6 +516,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
         getCall.getArgumentList().add(lambda);
       } else return;
       ifStatement.delete();
+      CodeStyleManager.getInstance(project).reformat(statement);
       comments.forEach(comment -> statement.getParent().addBefore(comment, statement));
     }
   }
