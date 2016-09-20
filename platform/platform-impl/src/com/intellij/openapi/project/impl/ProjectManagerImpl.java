@@ -394,19 +394,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public Project loadAndOpenProject(@NotNull final String originalFilePath) throws IOException {
     final String filePath = toCanonicalName(originalFilePath);
     final ConversionResult conversionResult = ConversionService.getInstance().convert(filePath);
-    Project project;
+    ProjectImpl project;
     if (conversionResult.openingIsCanceled()) {
       project = null;
     }
     else {
-      project = myProgressManager.run(new Task.WithResult<Project, IOException>(null, ProjectBundle.message("project.load.progress"), true) {
+      project = createProject(null, toCanonicalName(filePath), false);
+      myProgressManager.run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
         @Override
         protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
-          final Project project = loadProjectWithProgress(filePath);
-          if (project == null) {
+          if (!loadProjectWithProgress(project)) {
             return null;
           }
-
           if (!conversionResult.conversionNotNeeded()) {
             StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
           }
@@ -442,36 +441,28 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return null;
     }
 
-    final Project project = loadProjectWithProgress(filePath);
-
-    if (project != null && !conversionResult.conversionNotNeeded()) {
+    ProjectImpl project = createProject(null, toCanonicalName(filePath), false);
+    if (!loadProjectWithProgress(project)) return null;
+    if (!conversionResult.conversionNotNeeded()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));
     }
     return project;
   }
 
-  /**
-   * Opens the project at the specified path.
-   *
-   * @param filePath the path to open the project.
-   * @return the project, or null if the user has cancelled opening the project.
-   */
-  @Nullable
-  private Project loadProjectWithProgress(@NotNull String filePath) throws IOException {
+  private boolean loadProjectWithProgress(ProjectImpl project) throws IOException {
     try {
-      final ProjectImpl project = createProject(null, toCanonicalName(filePath), false);
       if (myProgressManager.getProgressIndicator() != null) {
         initProject(project, null);
-        return project;
+        return true;
       }
       myProgressManager.runProcessWithProgressSynchronously((ThrowableComputable<Object, RuntimeException>)() -> {
         initProject(project, null);
         return project;
       }, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
-      return project;
+      return true;
     }
     catch (ProcessCanceledException e) {
-      return null;
+      return false;
     }
     catch (Throwable t) {
       LOG.info(t);
