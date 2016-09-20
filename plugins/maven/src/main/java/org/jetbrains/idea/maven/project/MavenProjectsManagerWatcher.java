@@ -344,7 +344,7 @@ public class MavenProjectsManagerWatcher {
   }
 
   private boolean isPomFile(String path) {
-    String nameWithoutExtension = FileUtil.getNameWithoutExtension(path);
+    String nameWithoutExtension = FileUtil.getNameWithoutExtension(new File(path));
     if (!MavenConstants.POM_EXTENSION.equals(nameWithoutExtension)) return false;
     return myProjectsTree.isPotentialProject(path);
   }
