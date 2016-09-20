@@ -217,6 +217,18 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       }
     }
   }
+
+  override fun isProjectFile(file: VirtualFile): Boolean {
+    if (!file.isInLocalFileSystem) {
+      return false
+    }
+
+    val filePath = file.path
+    if (!isDirectoryBased) {
+      return filePath == projectFilePath
+    }
+    return FileUtil.isAncestor(PathUtilRt.getParentPath(projectFilePath), filePath, false)
+  }
 }
 
 private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
