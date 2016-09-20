@@ -35,7 +35,7 @@ import java.util.Map;
  */
 public class JsonSchemaFileIndex extends FileBasedIndexExtension<String, Integer> {
   public static final ID<String, Integer> PROPERTIES_INDEX = ID.create("json.schema.properties.index");
-  public static final int VERSION = 7;
+  public static final int VERSION = 8;
   private IntInlineKeyDescriptor myKeyDescriptor = new IntInlineKeyDescriptor();
 
   @NotNull
