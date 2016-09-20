@@ -78,7 +78,7 @@ public class ConsoleEnterHandler {
     PsiFile psiFile = psiMgr.getPsiFile(document);
     assert psiFile != null;
     int caretOffset = currentCaret.getOffset();
-    PsiElement currentElement = psiFile.findElementAt(caretOffset);
+    PsiElement currentElement = caretOffset > 0 ? psiFile.findElementAt(caretOffset - 1) : null;
 
     if (currentElement != null && (PyTokenTypes.TRIPLE_NODES.contains(currentElement.getNode().getElementType()) ||
                                    currentElement.getNode().getElementType() == PyTokenTypes.DOCSTRING)) {
