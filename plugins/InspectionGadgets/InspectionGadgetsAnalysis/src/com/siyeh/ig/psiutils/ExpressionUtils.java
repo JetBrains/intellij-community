@@ -332,7 +332,7 @@ public class ExpressionUtils {
       (PsiArrayAccessExpression)strippedExpression;
     final PsiExpression arrayExpression =
       arrayAccessExpression.getArrayExpression();
-    if (isOffsetArrayAccess(arrayExpression, variable)) {
+    if (VariableAccessUtils.variableIsUsed(variable, arrayExpression)) {
       return false;
     }
     final PsiExpression index = arrayAccessExpression.getIndexExpression();
