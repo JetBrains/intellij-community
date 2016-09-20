@@ -182,6 +182,7 @@ class PatchChangeBuilder {
       return myStatus;
     }
 
+    @Nullable
     public LineRange getAppliedToLines() {
       return myAppliedToLines;
     }
