@@ -102,7 +102,8 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
         }
         if (methodName != null) {
           holder
-            .registerProblem(lambda, "Can be replaced with Comparator." + methodName, new ReplaceWithComparatorFix(methodName));
+            .registerProblem(lambda, "Can be replaced with Comparator." + methodName,
+                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(methodName));
         }
       }
     };
