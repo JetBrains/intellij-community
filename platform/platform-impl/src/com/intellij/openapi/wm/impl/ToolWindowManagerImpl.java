@@ -37,14 +37,11 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
@@ -62,7 +59,9 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -100,6 +99,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Map<String, WindowedDecorator> myId2WindowedDecorator = new HashMap<>();
   private final Map<String, StripeButton> myId2StripeButton = new HashMap<>();
   private final Map<String, FocusWatcher> myId2FocusWatcher = new HashMap<>();
+  private final Set<String> myDumbAwareIds = Collections.synchronizedSet(ContainerUtil.<String>newTroveSet());
 
   private final EditorComponentFocusWatcher myEditorComponentFocusWatcher = new EditorComponentFocusWatcher();
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener = new MyToolWindowPropertyChangeListener();
@@ -380,20 +380,22 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myToolWindowsPane = new ToolWindowsPane(myFrame, this);
     Disposer.register(myProject, myToolWindowsPane);
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(myToolWindowsPane);
-    List<FinalizableCommand> commandsList = new ArrayList<>();
-    appendUpdateToolWindowsPaneCmd(commandsList);
-
     myFrame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(myProject));
-    JComponent editorComponent = createEditorComponent(myProject);
-    myEditorComponentFocusWatcher.install(editorComponent);
 
-    appendSetEditorComponentCmd(editorComponent, commandsList);
-    if (myEditorWasActive && editorComponent instanceof EditorsSplitters) {
-      activateEditorComponentImpl(commandsList, true);
-    }
-    execute(commandsList);
+    final DumbService.DumbModeListener dumbModeListener = new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+        disableStripeButtons();
+      }
 
-    StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> registerToolWindowsFromBeans());
+      @Override
+      public void exitDumbMode() {
+        for (final String id : getToolWindowIds()) {
+          getStripeButton(id).setEnabled(true);
+        }
+      }
+    };
+    myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, dumbModeListener);
 
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof KeyEvent) {
@@ -406,51 +408,46 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }, myProject);
   }
 
+  private void initAll() {
+    List<FinalizableCommand> commandsList = new ArrayList<>();
+    appendUpdateToolWindowsPaneCmd(commandsList);
+
+    JComponent editorComponent = createEditorComponent(myProject);
+    myEditorComponentFocusWatcher.install(editorComponent);
+
+    appendSetEditorComponentCmd(editorComponent, commandsList);
+    if (myEditorWasActive && editorComponent instanceof EditorsSplitters) {
+      activateEditorComponentImpl(commandsList, true);
+    }
+    execute(commandsList);
+  }
+
+  private void disableStripeButtons() {
+    for (final String id : getToolWindowIds()) {
+      if (!myDumbAwareIds.contains(id)) {
+        if (isToolWindowVisible(id)) {
+          hideToolWindow(id, true);
+        }
+        StripeButton button = getStripeButton(id);
+        if (button != null) {
+          button.setEnabled(false);
+        }
+      }
+    }
+  }
+
   private static JComponent createEditorComponent(@NotNull Project project) {
     return FrameEditorComponentProvider.EP.getExtensions()[0].createEditorComponent(project);
   }
 
   private void registerToolWindowsFromBeans() {
-    List<ToolWindowEP> beans = new ArrayList<>(Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME)));
-    Collections.reverse(beans);
-
-    checkConditionsInReadAction(beans, new ArrayList<>());
-  }
-
-  private void checkConditionsInReadAction(@NotNull List<ToolWindowEP> beans, @NotNull List<ToolWindowEP> checkedSuccessfully) {
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
-      @Nullable
-      @Override
-      public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-        for (int i = beans.size() - 1; i >= 0; i--) {
-          indicator.checkCanceled();
-          ToolWindowEP bean = beans.remove(i);
-          Condition<Project> condition = ObjectUtils.notNull(bean.getCondition(), Conditions.<Project>alwaysTrue());
-          if (!myProject.isDisposed() && condition.value(myProject)) {
-            checkedSuccessfully.add(bean);
-          }
-        }
-        return new Continuation(() -> {
-          if (!myProject.isDisposed()) {
-            for (ToolWindowEP bean : checkedSuccessfully) {
-              if (getToolWindow(bean.id) == null) {
-                try {
-                  initToolWindow(bean);
-                }
-                catch (Throwable e) {
-                  LOG.error(String.format("Tool window %s initialization failed", bean.id), e);
-                }
-              }
-            }
-          }
-        }, ModalityState.any());
+    List<ToolWindowEP> beans = Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME));
+    for (ToolWindowEP bean : beans) {
+      Condition<Project> condition = bean.getCondition();
+      if (condition == null || condition.value(myProject)) {
+        EdtInvocationManager.getInstance().invokeLater(() -> initToolWindow(bean));
       }
-
-      @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-        checkConditionsInReadAction(beans, checkedSuccessfully);
-      }
-    });
+    }
   }
 
   @Override
@@ -2453,5 +2450,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   boolean isShowStripeButton(@NotNull String id) {
     WindowInfoImpl info = getInfo(id);
     return info == null || info.isShowStripeButton();
+  }
+
+  public static class InitToolWindowsActivity implements StartupActivity, DumbAware {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      ToolWindowManagerEx ex = ToolWindowManagerEx.getInstanceEx(project);
+      if (ex instanceof ToolWindowManagerImpl) {
+        ToolWindowManagerImpl myManager = (ToolWindowManagerImpl)ex;
+        myManager.registerToolWindowsFromBeans();
+        EdtInvocationManager.getInstance().invokeLater(() -> myManager.initAll());
+      }
+    }
   }
 }
