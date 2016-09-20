@@ -76,6 +76,7 @@ public class CopyReferenceAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     boolean plural = false;
     boolean enabled;
+    boolean paths = false;
 
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -86,6 +87,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       List<PsiElement> elements = getElementsToCopy(editor, dataContext);
       enabled = !elements.isEmpty();
       plural = elements.size() > 1;
+      paths = elements.stream().allMatch(el -> el instanceof PsiFileSystemItem && getQualifiedNameFromProviders(el) == null);
     }
 
     e.getPresentation().setEnabled(enabled);
@@ -95,7 +97,9 @@ public class CopyReferenceAction extends DumbAwareAction {
     else {
       e.getPresentation().setVisible(true);
     }
-    e.getPresentation().setText(plural ? "Cop&y References" : "Cop&y Reference");
+    e.getPresentation().setText(
+      paths ? plural ? "Cop&y Relative Paths" : "Cop&y Relative Path"
+            : plural ? "Cop&y References" : "Cop&y Reference");
   }
 
   @Override
