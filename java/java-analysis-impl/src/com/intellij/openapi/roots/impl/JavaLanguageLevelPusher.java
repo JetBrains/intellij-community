@@ -26,6 +26,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +41,7 @@ import java.io.IOException;
  * @author Gregory.Shrago
  */
 public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
+
   public static void pushLanguageLevel(@NotNull final Project project) {
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new JavaLanguageLevelPusher());
   }
@@ -117,5 +120,11 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
 
   @Override
   public void afterRootsChanged(@NotNull Project project) {
+  }
+
+  @Nullable
+  public String getInconsistencyLanguageLevelMessage(@NotNull String message, @NotNull PsiElement element,
+                                                     @NotNull LanguageLevel level, @NotNull PsiFile file) {
+    return null;
   }
 }

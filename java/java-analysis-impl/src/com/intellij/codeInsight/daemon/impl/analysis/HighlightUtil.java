@@ -38,6 +38,8 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.impl.FilePropertyPusher;
+import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -3002,11 +3004,13 @@ public class HighlightUtil extends HighlightUtilBase {
       if (module != null) {
         LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
         if (moduleLanguageLevel.isAtLeast(feature.level)) {
-          for (JavaLanguageLevelInconsistencyMessageHandler handler : JavaLanguageLevelInconsistencyMessageHandler.EP_NAME.getExtensions()) {
-            String newMessage = handler.getNewMessage(message, element, level, file);
-            if (newMessage != null) {
-              message = newMessage;
-              break;
+          for (FilePropertyPusher pusher : FilePropertyPusher.EP_NAME.getExtensions()) {
+            if (pusher instanceof JavaLanguageLevelPusher) {
+              String newMessage = ((JavaLanguageLevelPusher)pusher).getInconsistencyLanguageLevelMessage(message, element, level, file);
+              if (newMessage != null) {
+                message = newMessage;
+                break;
+              }
             }
           }
         }
