@@ -20,7 +20,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -53,7 +52,6 @@ import java.util.Set;
  * 2. corresponding source file has been deleted
  */
 public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
   public static boolean ourDebugMode = false;
 
   public TranslatingCompilerFilesMonitor(VirtualFileManager vfsManager, Application application) {

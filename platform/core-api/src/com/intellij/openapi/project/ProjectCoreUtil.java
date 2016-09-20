@@ -27,15 +27,17 @@ import org.jetbrains.annotations.Nullable;
  * @author dmitrylomov
  */
 public class ProjectCoreUtil {
-  /** @deprecated use {@link Project#DIRECTORY_STORE_FOLDER} (to be removed in IDEA 17) */
-  public static final String DIRECTORY_BASED_PROJECT_DIR = Project.DIRECTORY_STORE_FOLDER;
+  public static volatile Project theProject;
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file) {
     return isProjectOrWorkspaceFile(file, file.getFileType());
   }
 
   public static boolean isProjectOrWorkspaceFile(@NotNull VirtualFile file, @Nullable FileType fileType) {
-    if (fileType instanceof InternalFileType) return true;
+    if (fileType instanceof InternalFileType) {
+      return true;
+    }
+
     VirtualFile parent = file.isDirectory() ? file: file.getParent();
     while (parent != null) {
       if (Comparing.equal(parent.getNameSequence(), Project.DIRECTORY_STORE_FOLDER, SystemInfoRt.isFileSystemCaseSensitive)) return true;
@@ -51,5 +53,4 @@ public class ProjectCoreUtil {
   public static Project theOnlyOpenProject() {
     return theProject;
   }
-  public static volatile Project theProject;
 }
