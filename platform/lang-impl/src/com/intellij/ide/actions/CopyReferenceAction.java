@@ -154,6 +154,10 @@ public class CopyReferenceAction extends DumbAwareAction {
       }
     }
 
+    if (elements.isEmpty()) {
+      ContainerUtil.addIfNotNull(elements, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
+    }
+
     if (elements.isEmpty() && editor == null) {
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
