@@ -226,7 +226,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
     val filePath = file.path
     if (!isDirectoryBased) {
-      return filePath == projectFilePath
+      return filePath == projectFilePath || filePath == workspaceFilePath
     }
     return FileUtil.isAncestor(PathUtilRt.getParentPath(projectFilePath), filePath, false)
   }
