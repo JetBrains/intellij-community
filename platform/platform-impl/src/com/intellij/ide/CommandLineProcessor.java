@@ -66,7 +66,7 @@ public class CommandLineProcessor {
   private static Project doOpenFileOrProject(String name) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(name);
     if (virtualFile == null) {
-      Messages.showErrorDialog("Cannot find file '" + name + "'", "Cannot find file");
+      Messages.showErrorDialog("Cannot find file '" + name + "'", "Cannot Find File");
       return null;
     }
     ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(virtualFile);
@@ -79,7 +79,7 @@ public class CommandLineProcessor {
         new File(name, Project.DIRECTORY_STORE_FOLDER).exists()) {
       final Project result = ProjectUtil.openOrImport(name, null, true);
       if (result == null) {
-        Messages.showErrorDialog("Cannot open project '" + name + "'", "Cannot open project");
+        Messages.showErrorDialog("Cannot open project '" + name + "'", "Cannot Open Project");
       }
       return result;
     }
@@ -96,7 +96,7 @@ public class CommandLineProcessor {
       if (processor != null) {
         return PlatformProjectOpenProcessor.doOpenProject(virtualFile, null, false, line, null, false);
       }
-      Messages.showErrorDialog("No project found to open file in", "Cannot open file");
+      Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
       return null;
     }
     else {
@@ -194,7 +194,7 @@ public class CommandLineProcessor {
             lastOpenedProject = doOpenFile(virtualFile, line);
           }
           else {
-            Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot find file");
+            Messages.showErrorDialog("Cannot find file '" + arg + "'", "Cannot Find File");
           }
         }
         else {
