@@ -80,6 +80,11 @@ public class ConsoleEnterHandler {
       return false;
     }
 
+    /* don't execute if previous line has an indent */
+    int prevIndent = IndentHelperImpl.getIndent(project, PythonFileType.INSTANCE, prevLine, false);
+    if (prevIndent > 0) {
+      return false;
+    }
 
      /* If we have an indent we don't want to execute either */
     String currentLine = getLineAtOffset(document, caretOffset);
@@ -88,9 +93,6 @@ public class ConsoleEnterHandler {
       return false;
     }
 
-    if (currentLine.startsWith("%%")) { //IPython magics
-      return false;
-    }
 
     PsiDocumentManager psiMgr = PsiDocumentManager.getInstance(project);
     PsiFile psiFile = psiMgr.getPsiFile(document);
