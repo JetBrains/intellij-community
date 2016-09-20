@@ -18,6 +18,7 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -35,6 +36,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     public Deque<UserGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<>();
     public Deque<UserGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<>();
     public Map<String, Boolean> HIGHLIGHTERS = ContainerUtil.newTreeMap();
+    public Map<String, List<String>> FILTERS = ContainerUtil.newTreeMap();
   }
 
   @NotNull
@@ -133,6 +135,22 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   @Override
   public void enableHighlighter(@NotNull String id, boolean value) {
     getState().HIGHLIGHTERS.put(id, value);
+  }
+
+  @Override
+  public void saveFilterValues(@NotNull String filterName, @Nullable List<String> values) {
+    if (values != null) {
+      getState().FILTERS.put(filterName, values);
+    }
+    else {
+      getState().FILTERS.remove(filterName);
+    }
+  }
+
+  @Nullable
+  @Override
+  public List<String> getFilterValues(@NotNull String filterName) {
+    return getState().FILTERS.get(filterName);
   }
 
   public static class UserGroup {

@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDataPack;
+import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -64,7 +65,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @Override
   protected VcsLogBranchFilter createFilter(@NotNull Collection<String> values) {
     return VcsLogBranchFilterImpl
-      .fromTextPresentation(values, ContainerUtil.map2Set(myUi.getDataPack().getRefs().getBranches(), vcsRef -> vcsRef.getName()));
+      .fromTextPresentation(values, ContainerUtil.map2Set(myUi.getDataPack().getRefs().getBranches(), VcsRef::getName));
   }
 
   @Override
@@ -111,7 +112,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), ref -> ref.getName());
+    return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), VcsRef::getName);
   }
 
   private class MyBranchPopupBuilder extends BranchPopupBuilder {
