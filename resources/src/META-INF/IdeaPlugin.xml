@@ -756,7 +756,7 @@
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="Convert2streamapi" displayName="foreach loop can be collapsed with Stream API"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.StreamApiMigrationInspection"/>
+                     implementationClass="com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Anonymous2MethodRef" displayName="Anonymous type can be replaced with method reference"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection" />
