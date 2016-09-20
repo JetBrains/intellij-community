@@ -231,12 +231,9 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     return FileUtil.isAncestor(PathUtilRt.getParentPath(projectFilePath), filePath, false)
   }
 
-  override fun getDirectoryStoreFile(): VirtualFile? {
-    if (!isDirectoryBased) {
-      return null
-    }
-    return PathUtilRt.getParentPath(projectFilePath).nullize()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
-  }
+  override fun getDirectoryStorePath() = if (!isDirectoryBased) null else PathUtilRt.getParentPath(projectFilePath).nullize()
+
+  override fun getDirectoryStoreFile() = directoryStorePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 }
 
 private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {

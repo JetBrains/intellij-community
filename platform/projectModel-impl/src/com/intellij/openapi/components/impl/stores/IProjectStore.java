@@ -58,4 +58,7 @@ public interface IProjectStore extends IComponentStore {
 
   @Nullable
   VirtualFile getDirectoryStoreFile();
+
+  @Nullable
+  String getDirectoryStorePath();
 }
