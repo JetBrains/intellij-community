@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.D
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports.ImportStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
@@ -397,6 +398,13 @@ public class GroovyParser implements PsiParser {
                                   @Nullable String typeDefinitionName) {
     PsiBuilder.Marker declMarker = builder.mark();
     boolean modifiersParsed = Modifiers.parse(builder, this);
+
+    if (modifiersParsed && PathExpression.isQualicationDot(builder)) {
+      modifiersParsed = false;
+      declMarker.rollbackTo();
+      declMarker = builder.mark();
+      builder.mark().done(GroovyElementTypes.MODIFIERS);
+    }
 
     if (GroovyTokenTypes.kIMPORT == builder.getTokenType()) {
       final PsiBuilder.Marker impMarker = declMarker.precede();

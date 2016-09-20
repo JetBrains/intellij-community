@@ -264,6 +264,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testreferences$ref8() throws Throwable { doTest(); }
 
+  void testreferences$ref9() throws Throwable { doTest(); }
+
   void testreferences$emptyTypeArgs() { doTest() }
 
   void testregex$chen() throws Throwable { doTest(); }

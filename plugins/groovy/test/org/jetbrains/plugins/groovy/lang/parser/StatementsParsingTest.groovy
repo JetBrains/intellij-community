@@ -407,6 +407,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testVardef$vardef3() throws Throwable { doTest(); }
 
+  void testVardef$vardef4() throws Throwable { doTest(); }
+
   void testVardef$vardeferr() throws Throwable { doTest(); }
 
   void testVardef$vardeferrsingle4() throws Throwable { doTest(); }
