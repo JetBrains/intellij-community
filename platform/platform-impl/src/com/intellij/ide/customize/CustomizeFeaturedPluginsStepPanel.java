@@ -195,9 +195,8 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
               try {
                 indicator.start();
                 PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
-                if (downloader.prepareToInstall(indicator)) {
-                  downloader.install();
-                }
+                downloader.prepareToInstall(indicator);
+                downloader.install();
                 indicator.processFinish();
               }
               catch (Exception ignored) {
