@@ -24,7 +24,7 @@ import com.intellij.lang.folding.CustomFoldingProvider;
 public class VisualStudioCustomFoldingProvider extends CustomFoldingProvider {
   @Override
   public boolean isCustomRegionStart(String elementText) {
-    return elementText.contains("region") && elementText.matches("..?\\s*region.*");
+    return elementText.contains("region") && elementText.matches("[/*#-]*\\s*region.*");
   }
 
   @Override
@@ -34,7 +34,7 @@ public class VisualStudioCustomFoldingProvider extends CustomFoldingProvider {
 
   @Override
   public String getPlaceholderText(String elementText) {
-    return elementText.replaceFirst("..?\\s*region(.*)","$1").trim();
+    return elementText.replaceFirst("[/*#-]*\\s*region(.*)","$1").trim();
   }
 
   @Override
