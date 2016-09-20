@@ -2107,7 +2107,7 @@ public class UIUtil {
   }
 
   @Nullable
-  public static Component findParentByCondition(@NotNull Component c, Condition<Component> condition) {
+  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
