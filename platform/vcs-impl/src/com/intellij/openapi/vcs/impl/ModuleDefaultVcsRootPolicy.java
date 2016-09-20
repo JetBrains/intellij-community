@@ -69,8 +69,8 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
       }
     }
     if (ProjectKt.isDirectoryBased(myProject) && myBaseDir != null) {
-      final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+      final VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
+      if (ideaDir != null) {
         final AbstractVcs vcsFor = vcsManager.getVcsFor(ideaDir);
         if (vcsFor != null && vcsName.equals(vcsFor.getName())) {
           result.add(ideaDir);

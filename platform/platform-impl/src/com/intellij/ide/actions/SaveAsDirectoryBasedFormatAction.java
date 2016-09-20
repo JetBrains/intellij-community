@@ -18,7 +18,6 @@ package com.intellij.ide.actions;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -31,16 +30,13 @@ import com.intellij.project.ProjectKt;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author spleaner
- */
 public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     if (project == null || ProjectKt.isDirectoryBased(project) || Messages.showOkCancelDialog(project,
                                                                                               "Project will be saved and reopened in new Directory-Based format.\nAre you sure you want to continue?",
-                                                                                              "Save project to Directory-Based format",
+                                                                                              "Save Project to Directory-Based Format",
                                                                                               Messages.getWarningIcon()) != Messages.OK) {
       return;
     }
@@ -52,7 +48,7 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
     if ((ideaDir.exists() && ideaDir.isDirectory()) || createDir(ideaDir)) {
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ideaDir);
 
-      IProjectStore projectStore = (IProjectStore)ServiceKt.getStateStore(project);
+      IProjectStore projectStore = ProjectKt.getStateStore(project);
       projectStore.clearStorages();
       projectStore.setPath(baseDir.getPath());
       project.save();
@@ -60,7 +56,7 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
       ProjectUtil.openProject(baseDir.getPath(), null, false);
     }
     else {
-      Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s)", ideaDir), "Error saving project!");
+      Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s)", ideaDir), "Error Saving Project!");
     }
   }
 

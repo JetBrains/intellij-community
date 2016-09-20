@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -23,13 +22,12 @@ import com.intellij.openapi.projectRoots.OutOfSourcesChecker;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -55,7 +53,7 @@ public class CheckinHandlerUtil {
     ArrayList<PsiFile> result = new ArrayList<>();
     PsiManager psiManager = PsiManager.getInstance(project);
 
-    IProjectStore projectStore = (IProjectStore)ServiceKt.getStateStore(project);
+    IProjectStore projectStore = ProjectKt.getStateStore(project);
     for (VirtualFile file : selectedFiles) {
       if (file.isValid()) {
         if (projectStore.isProjectFile(file) || !isFileUnderSourceRoot(project, file)
@@ -67,10 +65,6 @@ public class CheckinHandlerUtil {
       }
     }
     return PsiUtilCore.toPsiFileArray(result);
-  }
-
-  private static boolean isUnderProjectFileDir(@Nullable VirtualFile projectFileDir, @NotNull VirtualFile file) {
-    return projectFileDir != null && VfsUtilCore.isAncestor(projectFileDir, file, false);
   }
 
   private static boolean isFileUnderSourceRoot(@NotNull Project project, @NotNull VirtualFile file) {

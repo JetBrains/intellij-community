@@ -21,11 +21,10 @@ import com.intellij.configurationStore.StoreAwareProjectManager
 import com.intellij.configurationStore.loadAndUseProject
 import com.intellij.configurationStore.saveStore
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.Assertions.assertThat
 import com.intellij.util.io.delete
@@ -182,7 +181,7 @@ internal class ProjectInspectionManagerTest {
       currentProfile.profileChanged()
 
       project.saveStore()
-      val projectFile = Paths.get((project.stateStore as IProjectStore).projectFilePath)
+      val projectFile = Paths.get((project.stateStore).projectFilePath)
 
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
 

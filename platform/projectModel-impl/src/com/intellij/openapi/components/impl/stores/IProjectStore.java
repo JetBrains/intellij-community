@@ -55,4 +55,7 @@ public interface IProjectStore extends IComponentStore {
   void setOptimiseTestLoadSpeed(boolean optimiseTestLoadSpeed);
 
   boolean isProjectFile(@NotNull VirtualFile file);
+
+  @Nullable
+  VirtualFile getDirectoryStoreFile();
 }

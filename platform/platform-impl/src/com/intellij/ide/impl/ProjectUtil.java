@@ -23,7 +23,6 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +36,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
+import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
 import com.intellij.util.SystemProperties;
@@ -280,7 +280,7 @@ public class ProjectUtil {
   }
 
   public static boolean isSameProject(String path, @NotNull Project project) {
-    IProjectStore projectStore = (IProjectStore)ServiceKt.getStateStore(project);
+    IProjectStore projectStore = ProjectKt.getStateStore(project);
 
     String toOpen = FileUtil.toSystemIndependentName(path);
     String existing = projectStore.getProjectFilePath();

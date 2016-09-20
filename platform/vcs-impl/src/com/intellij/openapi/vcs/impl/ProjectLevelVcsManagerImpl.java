@@ -27,7 +27,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -914,7 +913,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private boolean isInDirectoryBasedRoot(@Nullable VirtualFile file) {
     if (file != null && ProjectKt.isDirectoryBased(myProject)) {
-      return ((IProjectStore)ServiceKt.getStateStore(myProject)).isProjectFile(file);
+      return ProjectKt.getStateStore(myProject).isProjectFile(file);
     }
     return false;
   }

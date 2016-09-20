@@ -47,6 +47,7 @@ import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.text.nullize
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
@@ -228,6 +229,13 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       return filePath == projectFilePath
     }
     return FileUtil.isAncestor(PathUtilRt.getParentPath(projectFilePath), filePath, false)
+  }
+
+  override fun getDirectoryStoreFile(): VirtualFile? {
+    if (!isDirectoryBased) {
+      return null
+    }
+    return PathUtilRt.getParentPath(projectFilePath).nullize()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
   }
 }
 
