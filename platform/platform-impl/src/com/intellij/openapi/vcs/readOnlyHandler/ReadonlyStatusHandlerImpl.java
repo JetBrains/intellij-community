@@ -95,7 +95,9 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
     
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      processFiles(new ArrayList<>(Arrays.asList(fileInfos)), null);
+      if (myClearedByRequest) {
+        processFiles(new ArrayList<>(Arrays.asList(fileInfos)), null);
+      }
       return createResultStatus(files);
     }
 

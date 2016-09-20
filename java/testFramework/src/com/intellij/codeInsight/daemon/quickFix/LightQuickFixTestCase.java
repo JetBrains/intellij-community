@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
@@ -195,6 +196,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         throw new UncheckedIOException(e);
       }
     });
+    ReadonlyStatusHandler.getInstance(file.getProject()).setReadOnlyStatusClearedByRequest(true);
     ShowIntentionActionsHandler.chooseActionAndInvoke(file, getEditor(), action, action.getText());
     UIUtil.dispatchAllInvocationEvents();
   }

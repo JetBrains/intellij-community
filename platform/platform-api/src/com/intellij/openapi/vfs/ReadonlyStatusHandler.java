@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,20 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 
 public abstract class ReadonlyStatusHandler {
+  protected boolean myClearedByRequest;
+
   public static boolean ensureFilesWritable(@NotNull Project project, @NotNull VirtualFile... files) {
     return !getInstance(project).ensureFilesWritable(files).hasReadonlyFiles();
   }
@@ -67,4 +71,16 @@ public abstract class ReadonlyStatusHandler {
     return ServiceManager.getService(project, ReadonlyStatusHandler.class);
   }
 
+  /**
+   * Normally when file is read-only and ensureFilesWritable is called, a dialog box appears which allows user to decide
+   * whether to clear read-only flag or not. This method allows to control what will happen in unit-test mode.
+   *
+   * @param clearedByRequest if true, ensureFilesWritable will try to clear read-only status from passed files.
+   *                         Otherwise, read-only status is not modified (as if user refused to modify it).
+   */
+  @TestOnly
+  public void setReadOnlyStatusClearedByRequest(boolean clearedByRequest) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myClearedByRequest = clearedByRequest;
+  }
 }
