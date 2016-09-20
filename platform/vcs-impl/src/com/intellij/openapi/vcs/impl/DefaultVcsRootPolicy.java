@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,14 +48,15 @@ public abstract class DefaultVcsRootPolicy {
   @NotNull
   public abstract Collection<VirtualFile> getDirtyRoots();
   
-  public String getProjectConfigurationMessage(final Project project) {
+  public String getProjectConfigurationMessage(@NotNull Project project) {
     boolean isDirectoryBased = ProjectKt.isDirectoryBased(project);
-    final String[] parts = new String[] {"Content roots of all modules", "all immediate descendants of project base directory",
-      Project.DIRECTORY_STORE_FOLDER + " directory contents"};
+    String[] parts = new String[]{"Content roots of all modules", "all immediate descendants of project base directory",
+      PathUtilRt.getFileName(ProjectKt.getStateStore(project).getDirectoryStorePath(true)) + " directory contents"};
     final StringBuilder sb = new StringBuilder(parts[0]);
     if (isDirectoryBased) {
       sb.append(", ");
-    } else {
+    }
+    else {
       sb.append(", and ");
     }
     sb.append(parts[1]);
