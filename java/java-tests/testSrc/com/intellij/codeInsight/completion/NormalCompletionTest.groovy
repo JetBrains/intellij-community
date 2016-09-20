@@ -1219,6 +1219,35 @@ public class ListUtils {
     checkResult()
   }
 
+  void testSuggestMembersOfStaticallyImportedClassesConflictWithLocalMethod() throws Exception {
+    myFixture.addClass("""package foo;
+    public class Foo {
+      public static void foo() {}
+      public static void bar() {}
+    }
+    """)
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'bar', 'bar'
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[1]).itemText == 'Foo.bar'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
+    myFixture.type '\t'
+    checkResult()
+  }
+
+  void testSuggestMembersOfStaticallyImportedClassesConflictWithLocalField() throws Exception {
+    myFixture.addClass("""package foo;
+    public class Foo {
+      public static int foo = 1;
+      public static int bar = 2;
+    }
+    """)
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'bar', 'Foo.bar'
+    myFixture.lookup.currentItem = myFixture.lookupElements[1]
+    myFixture.type '\t'
+    checkResult()
+  }
+
   void testInstanceMagicMethod() throws Exception { doTest() }
 
   void testNoDotOverwrite() throws Exception { doTest('.') }
