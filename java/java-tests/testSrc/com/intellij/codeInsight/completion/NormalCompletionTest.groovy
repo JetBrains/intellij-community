@@ -1721,4 +1721,11 @@ class Bar {
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[0]).tailText.contains('{...}')
     assert LookupElementPresentation.renderElement(myFixture.lookup.items[1]).tailText.contains('[]')
   }
+
+  void testDispreferPrimitiveTypesInCallArgs() throws Throwable {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    configure()
+    myFixture.assertPreferredCompletionItems 0, "dx", "doo", "Doo", "double"
+  }
+
 }

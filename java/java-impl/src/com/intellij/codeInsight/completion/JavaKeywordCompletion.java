@@ -139,12 +139,12 @@ public class JavaKeywordCompletion {
         not(START_SWITCH),
         not(JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN));
 
-  private static final String[] PRIMITIVE_TYPES = new String[]{
+  static final Set<String> PRIMITIVE_TYPES = ContainerUtil.newLinkedHashSet(
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
     PsiKeyword.DOUBLE, PsiKeyword.LONG,
     PsiKeyword.INT, PsiKeyword.FLOAT,
     PsiKeyword.CHAR, PsiKeyword.BYTE
-  };
+  );
 
   private static final NotNullLazyValue<ElementFilter> CLASS_BODY = new AtomicNotNullLazyValue<ElementFilter>() {
     @NotNull
