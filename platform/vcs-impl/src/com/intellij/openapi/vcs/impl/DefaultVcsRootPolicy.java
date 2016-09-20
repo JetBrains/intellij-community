@@ -50,19 +50,17 @@ public abstract class DefaultVcsRootPolicy {
   
   public String getProjectConfigurationMessage(@NotNull Project project) {
     boolean isDirectoryBased = ProjectKt.isDirectoryBased(project);
-    String[] parts = new String[]{"Content roots of all modules", "all immediate descendants of project base directory",
-      PathUtilRt.getFileName(ProjectKt.getStateStore(project).getDirectoryStorePath(true)) + " directory contents"};
-    final StringBuilder sb = new StringBuilder(parts[0]);
+    final StringBuilder sb = new StringBuilder("Content roots of all modules");
     if (isDirectoryBased) {
       sb.append(", ");
     }
     else {
       sb.append(", and ");
     }
-    sb.append(parts[1]);
+    sb.append("all immediate descendants of project base directory");
     if (isDirectoryBased) {
       sb.append(", and ");
-      sb.append(parts[2]);
+      sb.append(PathUtilRt.getFileName(ProjectKt.getStateStore(project).getDirectoryStorePath()) + " directory contents");
     }
     return sb.toString();
   }
