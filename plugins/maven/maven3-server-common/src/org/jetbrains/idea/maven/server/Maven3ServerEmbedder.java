@@ -175,7 +175,10 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
       buildingResults.add(build);
     }
     catch (ProjectBuildingException e) {
-      buildingResults.addAll(e.getResults());
+      List<ProjectBuildingResult> results = e.getResults();
+      if(results != null && !results.isEmpty()) {
+        buildingResults.addAll(results);
+      }
     }
   }
 
