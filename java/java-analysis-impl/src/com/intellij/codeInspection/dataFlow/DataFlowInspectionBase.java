@@ -147,12 +147,12 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   }
 
   private void analyzeNullLiteralMethodArguments(PsiMethod method, ProblemsHolder holder, boolean isOnTheFly) {
-    if (REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER) {
-      for (PsiParameter parameter : NullParameterConstraintChecker.checkMethodParameters(method, isOnTheFly)) {
+    if (REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER && isOnTheFly) {
+      for (PsiParameter parameter : NullParameterConstraintChecker.checkMethodParameters(method, true)) {
         holder.registerProblem(parameter.getNameIdentifier(),
                                InspectionsBundle.message("dataflow.method.fails.with.null.argument"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               NullableStuffInspectionBase.getWrappedUiDependentQuickFix(this::createNavigateToNullParameterUsagesFix, parameter, isOnTheFly));
+                               createNavigateToNullParameterUsagesFix(parameter));
       }
     }
   }
