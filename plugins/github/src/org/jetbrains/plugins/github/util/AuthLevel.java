@@ -15,32 +15,16 @@
  */
 package org.jetbrains.plugins.github.util;
 
+import com.google.common.base.MoreObjects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface AuthLevel {
-  boolean accepts(@NotNull GithubAuthData auth);
+public class AuthLevel {
+  public static final AuthLevel ANY = new AuthLevel(null, null);
+  public static final AuthLevel TOKEN = new AuthLevel(null, GithubAuthData.AuthType.TOKEN);
+  public static final AuthLevel BASIC = new AuthLevel(null, GithubAuthData.AuthType.BASIC);
 
-  @Nullable
-  default String getHost() {
-    return null;
-  }
-
-  @Nullable
-  default GithubAuthData.AuthType getAuthType() {
-    return null;
-  }
-
-  default boolean isOnetime() {
-    return false;
-  }
-
-
-  AuthLevel ANY = new AuthLevelImpl(null, null);
-  AuthLevel TOKEN = new AuthLevelImpl(null, GithubAuthData.AuthType.TOKEN);
-  AuthLevel BASIC = new AuthLevelImpl(null, GithubAuthData.AuthType.BASIC);
-
-  AuthLevel LOGGED = new AuthLevel() {
+  public static final AuthLevel LOGGED = new AuthLevel(null, null) {
     @Override
     public boolean accepts(@NotNull GithubAuthData auth) {
       return auth.getAuthType() != GithubAuthData.AuthType.ANONYMOUS;
@@ -53,8 +37,8 @@ public interface AuthLevel {
   };
 
   @NotNull
-  static AuthLevel basicOnetime(@NotNull String host) {
-    return new AuthLevelImpl(host, GithubAuthData.AuthType.BASIC) {
+  public static AuthLevel basicOnetime(@NotNull String host) {
+    return new AuthLevel(host, GithubAuthData.AuthType.BASIC) {
       @Override
       public boolean isOnetime() {
         return true;
@@ -63,43 +47,36 @@ public interface AuthLevel {
   }
 
 
-  class AuthLevelImpl implements AuthLevel {
-    @Nullable private final String myHost;
-    @Nullable private final GithubAuthData.AuthType myAuthType;
+  @Nullable private final String myHost;
+  @Nullable private final GithubAuthData.AuthType myAuthType;
 
-    public AuthLevelImpl(@Nullable String host, @Nullable GithubAuthData.AuthType authType) {
-      myHost = host;
-      myAuthType = authType;
-    }
+  private AuthLevel(@Nullable String host, @Nullable GithubAuthData.AuthType authType) {
+    myHost = host;
+    myAuthType = authType;
+  }
 
-    @Nullable
-    @Override
-    public String getHost() {
-      return myHost;
-    }
+  @Nullable
+  public String getHost() {
+    return myHost;
+  }
 
-    @Nullable
-    @Override
-    public GithubAuthData.AuthType getAuthType() {
-      return myAuthType;
-    }
+  @Nullable
+  public GithubAuthData.AuthType getAuthType() {
+    return myAuthType;
+  }
 
-    @Override
-    public boolean accepts(@NotNull GithubAuthData auth) {
-      if (myHost != null && !myHost.equals(auth.getHost())) return false;
-      if (myAuthType != null && !myAuthType.equals(auth.getAuthType())) return false;
-      return true;
-    }
+  public boolean accepts(@NotNull GithubAuthData auth) {
+    if (myHost != null && !myHost.equals(auth.getHost())) return false;
+    if (myAuthType != null && !myAuthType.equals(auth.getAuthType())) return false;
+    return true;
+  }
 
-    @Override
-    public String toString() {
-      String s = "";
-      if (myAuthType != null) s += myAuthType.name();
-      if (myHost != null) {
-        if (!s.isEmpty()) s += " ";
-        s += "for " + myHost;
-      }
-      return s;
-    }
+  public boolean isOnetime() {
+    return false;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).add("authType", myAuthType).add("host", myHost).toString();
   }
 }
