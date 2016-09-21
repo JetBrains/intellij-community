@@ -21,6 +21,9 @@ import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.io.basicAttributesIfExists
+import com.intellij.util.io.exists
+import java.nio.file.Paths
 
 val Project.isDirectoryBased: Boolean
   get() {
@@ -35,4 +38,10 @@ val Project.stateStore: IProjectStore
 
 fun getProjectStoreDirectory(file: VirtualFile): VirtualFile? {
   return if (file.isDirectory) file.findChild(Project.DIRECTORY_STORE_FOLDER) else null
+}
+
+fun isValidProjectPath(projectPath: String): Boolean {
+  val file = Paths.get(projectPath)
+  val attributes = file.basicAttributesIfExists() ?: return false
+  return !attributes.isDirectory /* ipr */ || file.resolve(Project.DIRECTORY_STORE_FOLDER).exists()
 }

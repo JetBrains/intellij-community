@@ -17,8 +17,6 @@ package com.intellij.util.io
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -27,7 +25,6 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
-
 
 fun Path.exists() = Files.exists(this)
 
@@ -206,16 +203,6 @@ fun Path.move(target: Path): Path = Files.move(this, target)
 fun Path.createFile() {
   parent?.createDirectories()
   Files.createFile(this)
-}
-
-fun Path.refreshVfs() {
-  LocalFileSystem.getInstance()?.let { fs ->
-    // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
-    val virtualFile = fs.refreshAndFindFileByPath(systemIndependentPath)
-    if (virtualFile != null) {
-      VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
-    }
-  }
 }
 
 inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>) -> R): R? {
