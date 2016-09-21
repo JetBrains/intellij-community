@@ -85,4 +85,9 @@ public class PyFStringTest extends PyTestCase {
   public void testNotEquals() {
     doTestRanges("f'{|x != 42|}'");
   }
+
+  // PY-20785
+  public void testNamedUnicodeEscapes() {
+    doTestRanges("f'\\N{foo}\\N{}\\N{{{{{}{|42 + \\N{DIGIT ONE}|}'");
+  }
 }

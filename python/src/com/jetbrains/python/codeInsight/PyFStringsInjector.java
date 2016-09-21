@@ -72,6 +72,7 @@ public class PyFStringsInjector extends PyInjectorBase {
     final List<TextRange> result = new ArrayList<>();
     int bracesBalance = 0;
     boolean insideChunk = false;
+    boolean insideNamedUnicodeEscape = false;
     String nestedLiteralQuotes = null;
     int chunkStart = 0;
     final TextRange nodeContentRange = PyStringLiteralExpressionImpl.getNodeTextRange(nodeText);
@@ -80,7 +81,18 @@ public class PyFStringsInjector extends PyInjectorBase {
       final char c1 = nodeText.charAt(offset);
       final char c2 = offset + 1 < nodeContentRange.getEndOffset() ? nodeText.charAt(offset + 1) : '\0';
       final char c3 = offset + 2 < nodeContentRange.getEndOffset() ? nodeText.charAt(offset + 2) : '\0';
-      if (!insideChunk) {
+      // First, skip named unicode escapes like "\N{LATIN SMALL LETTER A}" wherever they are 
+      if (c1 == '\\' && c2 == 'N' && c3 == '{') {
+        insideNamedUnicodeEscape = true;
+        offset += 3;
+        continue;
+      }
+      else if (insideNamedUnicodeEscape) {
+        if (c1 == '}') {
+          insideNamedUnicodeEscape = false;
+        }
+      }
+      else if (!insideChunk) {
         if ((c1 == '{' && c2 == '{') || (c1 == '}' && c2 == '}')) {
           offset += 2;
           continue;
