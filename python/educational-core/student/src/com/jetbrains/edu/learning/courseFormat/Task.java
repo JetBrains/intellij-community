@@ -42,7 +42,8 @@ public class Task implements StudyItem {
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
-  private int myActiveStepIndex = 0;
+  private int myActiveSubtaskIndex = 0;
+  @Expose private int mySubtaskNum = 1;
 
   public Task() {}
 
@@ -253,11 +254,19 @@ public class Task implements StudyItem {
     return !date.after(myUpdateDate);
   }
 
-  public int getActiveStepIndex() {
-    return myActiveStepIndex;
+  public int getActiveSubtaskIndex() {
+    return myActiveSubtaskIndex;
   }
 
-  public void setActiveStepIndex(int activeStepIndex) {
-    myActiveStepIndex = activeStepIndex;
+  public void setActiveSubtaskIndex(int activeSubtaskIndex) {
+    myActiveSubtaskIndex = activeSubtaskIndex;
+  }
+
+  public int getSubtaskNum() {
+    return mySubtaskNum;
+  }
+
+  public void setSubtaskNum(int subtaskNum) {
+    mySubtaskNum = subtaskNum;
   }
 }
