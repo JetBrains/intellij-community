@@ -33,21 +33,21 @@ class GroovySmartCompletionTest extends GroovyCompletionTestBase {
     assertOrderedEquals(myFixture.lookupElementStrings, "Bar", "Foo")
   }
 
-  void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest(); }
+  void testCaretAfterSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest() }
 
-  void testSmartCompletionAfterNewInDeclarationWithArray() throws Throwable { doSmartTest(); }
+  void testSmartCompletionAfterNewInDeclarationWithArray() throws Throwable { doSmartTest() }
 
-  void testSmartCompletionAfterNewInDeclarationWithIntArray() throws Throwable { doSmartTest(); }
+  void testSmartCompletionAfterNewInDeclarationWithIntArray() throws Throwable { doSmartTest() }
 
-  void testShortenNamesInSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest(); }
+  void testShortenNamesInSmartCompletionAfterNewInDeclaration() throws Throwable { doSmartTest() }
 
-  void testSmartAfterNewInCall() throws Throwable { doSmartTest(); }
+  void testSmartAfterNewInCall() throws Throwable { doSmartTest() }
 
   void testInnerClassInStaticMethodCompletion() throws Throwable {
     doVariantableTest(null, "", CompletionType.SMART, CompletionResult.notContain, 'Inner')
   }
 
-  void testSmartCompletionInAssignmentExpression() throws Throwable { doSmartTest(); }
+  void testSmartCompletionInAssignmentExpression() throws Throwable { doSmartTest() }
 
   void testSimpleMethodParameter() throws Throwable {
     doSmartCompletion("d1", "d2")
@@ -74,11 +74,11 @@ class GroovySmartCompletionTest extends GroovyCompletionTestBase {
     doSmartTest()
   }
 
-  void testSmartCastCompletion() { doSmartTest(); }
+  void testSmartCastCompletion() { doSmartTest() }
 
-  void testSmartCastCompletionWithoutRParenth() { doSmartTest(); }
+  void testSmartCastCompletionWithoutRParenth() { doSmartTest() }
 
-  void testSmartCastCompletionWithRParenth() { doSmartTest(); }
+  void testSmartCastCompletionWithRParenth() { doSmartTest() }
 
   void testDontCompletePrivateMembers() { doSmartCompletion "foo1", "foo2", "getFoo1", "getFoo2" }
 

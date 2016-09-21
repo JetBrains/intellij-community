@@ -267,6 +267,9 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void initTreeListeners() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return;
+    }
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {

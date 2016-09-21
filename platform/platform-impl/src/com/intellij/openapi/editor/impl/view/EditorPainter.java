@@ -795,7 +795,8 @@ class EditorPainter implements TextDrawingCallback {
     if (locations == null) return;
 
     Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(g_);
-    int lineHeight = myView.getLineHeight();
+    int nominalLineHeight = myView.getNominalLineHeight();
+    int topOverhang = myView.getTopOverhang();
     EditorSettings settings = myEditor.getSettings();
     Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
     if (caretColor == null) caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
@@ -803,7 +804,7 @@ class EditorPainter implements TextDrawingCallback {
     for (EditorImpl.CaretRectangle location : locations) {
       g.setColor(caretColor);
       int x = location.myPoint.x;
-      int y = location.myPoint.y;
+      int y = location.myPoint.y - topOverhang;
       Caret caret = location.myCaret;
       boolean isRtl = location.myIsRtl;
       if (myEditor.isInsertMode() != settings.isBlockCursor()) {
@@ -812,7 +813,7 @@ class EditorPainter implements TextDrawingCallback {
         if (!ImmediatePainter.isZeroLatencyTypingEnabled()) {
           if (x > minX && lineWidth > 1) x--; // fully cover extra character's pixel which can appear due to antialiasing
         }
-        g.fillRect(x, y, lineWidth, lineHeight);
+        g.fillRect(x, y, lineWidth, nominalLineHeight);
         if (myDocument.getTextLength() > 0 && caret != null &&
             !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
           g.fillPolygon(new int[]{
@@ -826,7 +827,7 @@ class EditorPainter implements TextDrawingCallback {
       else {
         int width = location.myWidth;
         int startX = Math.max(minX, isRtl ? x - width : x);
-        g.fillRect(startX, y, width, lineHeight - 1);
+        g.fillRect(startX, y, width, nominalLineHeight - 1);
         if (myDocument.getTextLength() > 0 && caret != null) {
           int targetVisualColumn = caret.getVisualPosition().column;
           for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
@@ -839,7 +840,7 @@ class EditorPainter implements TextDrawingCallback {
                 startVisualColumn == targetVisualColumn && !isRtl ||
                 endVisualColumn == targetVisualColumn && isRtl) {
               g.setColor(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK);
-              fragment.draw(g, startX, y + myView.getAscent(),
+              fragment.draw(g, startX, y + topOverhang + myView.getAscent(),
                             targetVisualColumn - startVisualColumn - (isRtl ? 1 : 0),
                             targetVisualColumn - startVisualColumn + (isRtl ? 0 : 1));
               break;
@@ -854,12 +855,13 @@ class EditorPainter implements TextDrawingCallback {
   void repaintCarets() {
     EditorImpl.CaretRectangle[] locations = myEditor.getCaretLocations(false);
     if (locations == null) return;
-    int lineHeight = myView.getLineHeight();
+    int nominalLineHeight = myView.getNominalLineHeight();
+    int topOverhang = myView.getTopOverhang();
     for (EditorImpl.CaretRectangle location : locations) {
       int x = location.myPoint.x;
-      int y = location.myPoint.y;
+      int y = location.myPoint.y - topOverhang;
       int width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
-      myEditor.getContentComponent().repaintEditorComponent(x - width, y, width * 2, lineHeight);
+      myEditor.getContentComponent().repaintEditorComponent(x - width, y, width * 2, nominalLineHeight);
     }
   }
 

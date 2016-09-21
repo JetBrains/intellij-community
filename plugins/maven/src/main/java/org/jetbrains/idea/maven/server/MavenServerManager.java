@@ -121,7 +121,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     @Attribute
     public String embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
     @Attribute
-    public String mavenHome;
+    public String mavenHome = BUNDLED_MAVEN_3;
     @Attribute
     public MavenExecutionOptions.LoggingLevel loggingLevel = MavenExecutionOptions.LoggingLevel.INFO;
   }

@@ -43,7 +43,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 
 public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionTool {
   // deprecated fields remain to minimize changes to users inspection profiles (which are often located in version control).
@@ -332,7 +331,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     return StringUtil.getShortName(anno != null ? anno : StringUtil.notNullize(manager.getNullable(owner), "???"));
   }
 
-  private static String getPresentableAnnoName(@NotNull PsiAnnotation annotation) {
+  public static String getPresentableAnnoName(@NotNull PsiAnnotation annotation) {
     return StringUtil.getShortName(StringUtil.notNullize(annotation.getQualifiedName(), "???"));
   }
 
@@ -503,15 +502,14 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                                                                 boolean isOnFly,
                                                                 int parameterIdx,
                                                                 PsiParameter parameter) {
-    if (REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER && isNotNullNotInferred(parameter, false, false)) {
+    if (REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER && isOnFly && isNotNullNotInferred(parameter, false, false)) {
       PsiAnnotation notNullAnnotation = nullableManager.getNotNullAnnotation(parameter, false);
       if (JavaNullMethodArgumentUtil.hasNullArgument(method, parameterIdx)) {
-        LocalQuickFix[] fixes = getWrappedUiDependentQuickFix(this::createNavigateToNullParameterUsagesFix, parameter, isOnFly);
         boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
         holder.registerProblem(physical ? notNullAnnotation : parameter.getNameIdentifier(),
                                InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.receives.null.literal", getPresentableAnnoName(parameter)),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               fixes);
+                               createNavigateToNullParameterUsagesFix(parameter));
       }
     }
   }
@@ -594,13 +592,6 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         }
       }
     }
-  }
-
-  @NotNull
-  public static LocalQuickFix[] getWrappedUiDependentQuickFix(Function<PsiParameter, LocalQuickFix> fixSupplier, PsiParameter parameter, boolean isOnTheFly) {
-    if (!isOnTheFly) return LocalQuickFix.EMPTY_ARRAY;
-    final LocalQuickFix fix = fixSupplier.apply(parameter);
-    return fix == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[]{fix};
   }
 
   private static boolean isNotNullNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean skipExternal) {

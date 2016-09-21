@@ -42,6 +42,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TLongArrayList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -60,6 +61,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Created with IntelliJ IDEA.
@@ -379,8 +382,9 @@ public class TreeConflictRefreshablePanel extends AbstractRefreshablePanel {
     };
   }
 
-  public static String filePath(FilePath newFilePath) {
-    return newFilePath.getName() + " (" + newFilePath.getParentPath().getPath() + ")";
+  @NotNull
+  public static String filePath(@NotNull FilePath newFilePath) {
+    return newFilePath.getName() + " (" + notNull(newFilePath.getParentPath()).getPath() + ")";
   }
 
   private static ActionListener createBoth(TreeConflictDescription description) {

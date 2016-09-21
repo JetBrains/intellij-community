@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.task.AbstractExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -53,6 +54,8 @@ import java.util.Map;
  */
 public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleExecutionSettings>
   implements ExternalSystemTaskManager<GradleExecutionSettings> {
+
+  public static final Key<String> INIT_SCRIPT_KEY = Key.create("INIT_SCRIPT_KEY");
 
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
@@ -98,6 +101,15 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
               "//");
           }
         });
+      }
+
+      final String initScript = settings == null ? null : settings.getUserData(INIT_SCRIPT_KEY);
+      if (StringUtil.isNotEmpty(initScript)) {
+        ContainerUtil.addAll(
+          initScripts,
+          "//-- Additional script",
+          initScript,
+          "//");
       }
 
       if (!initScripts.isEmpty()) {

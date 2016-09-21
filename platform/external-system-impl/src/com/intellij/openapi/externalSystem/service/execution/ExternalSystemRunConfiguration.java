@@ -5,7 +5,9 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.console.DuplexConsoleView;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -14,6 +16,9 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -27,13 +32,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
@@ -106,10 +110,13 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
   @Nullable
   @Override
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
-    return new MyRunnableState(mySettings, getProject(), DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()), this, env);
+    MyRunnableState runnableState =
+      new MyRunnableState(mySettings, getProject(), DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId()), this, env);
+    copyUserDataTo(runnableState);
+    return runnableState;
   }
 
-  public static class MyRunnableState implements RunProfileState {
+  public static class MyRunnableState extends UserDataHolderBase implements RunProfileState {
 
     @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
     @NotNull private final Project myProject;
@@ -173,6 +180,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
                                                                                    mySettings.getVmOptions(),
                                                                                    mySettings.getScriptParameters(),
                                                                                    debuggerSetup);
+      copyUserDataTo(task);
 
       final MyProcessHandler processHandler = new MyProcessHandler(task);
       final ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, ExecutionConsole, ProcessHandler>
@@ -194,6 +202,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
             ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, mySettings.toString());
         }
         processHandler.notifyTextAvailable(greeting, ProcessOutputTypes.SYSTEM);
+        foldGreetingOrFarewell(consoleView, greeting, true);
         task.execute(new ExternalSystemTaskNotificationListenerAdapter() {
 
           private boolean myResetGreeting = true;
@@ -229,6 +238,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
                 ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, mySettings.toString());
             }
             processHandler.notifyTextAvailable(farewell, ProcessOutputTypes.SYSTEM);
+            foldGreetingOrFarewell(consoleView, farewell, false);
             processHandler.notifyProcessTerminated(0);
           }
         });
@@ -236,6 +246,51 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       DefaultExecutionResult result = new DefaultExecutionResult(consoleView, processHandler);
       result.setRestartActions(consoleManager.getRestartActions(consoleView));
       return result;
+    }
+
+    private static void foldGreetingOrFarewell(ExecutionConsole consoleView, String text, boolean isGreeting) {
+      int limit = 100;
+      if (text.length() < limit) {
+        return;
+      }
+      final ConsoleViewImpl consoleViewImpl;
+      if (consoleView instanceof ConsoleViewImpl) {
+        consoleViewImpl = (ConsoleViewImpl)consoleView;
+      }
+      else if (consoleView instanceof DuplexConsoleView) {
+        DuplexConsoleView duplexConsoleView = (DuplexConsoleView)consoleView;
+        if (duplexConsoleView.getPrimaryConsoleView() instanceof ConsoleViewImpl) {
+          consoleViewImpl = (ConsoleViewImpl)duplexConsoleView.getPrimaryConsoleView();
+        }
+        else if (duplexConsoleView.getSecondaryConsoleView() instanceof ConsoleViewImpl) {
+          consoleViewImpl = (ConsoleViewImpl)duplexConsoleView.getSecondaryConsoleView();
+        }
+        else {
+          consoleViewImpl = null;
+        }
+      }
+      else {
+        consoleViewImpl = null;
+      }
+      if (consoleViewImpl != null) {
+        consoleViewImpl.performWhenNoDeferredOutput(() -> {
+          if(!ApplicationManager.getApplication().isDispatchThread()) return;
+
+          Document document = consoleViewImpl.getEditor().getDocument();
+          int line = isGreeting ? 0 : document.getLineCount() - 2;
+          if (CharArrayUtil.regionMatches(document.getCharsSequence(), document.getLineStartOffset(line), text)) {
+            final FoldingModel foldingModel = consoleViewImpl.getEditor().getFoldingModel();
+            foldingModel.runBatchFoldingOperation(() -> {
+              FoldRegion region = foldingModel.addFoldRegion(document.getLineStartOffset(line),
+                                                             document.getLineEndOffset(line),
+                                                             StringUtil.trimLog(text, limit));
+              if (region != null) {
+                region.setExpanded(false);
+              }
+            });
+          }
+        });
+      }
     }
   }
 

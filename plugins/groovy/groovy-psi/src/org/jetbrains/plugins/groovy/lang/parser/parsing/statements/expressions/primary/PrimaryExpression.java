@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.blocks.OpenOrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arguments.ArgumentList;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.ReferenceElement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.types.TypeArguments;
@@ -55,8 +56,17 @@ public class PrimaryExpression {
       return type;
     }
     if (GroovyTokenTypes.mIDENT == tokenType || GroovyTokenTypes.kSUPER == tokenType || GroovyTokenTypes.kTHIS == tokenType) {
-      ParserUtils.eatElement(builder, GroovyElementTypes.REFERENCE_EXPRESSION);
-      return GroovyElementTypes.REFERENCE_EXPRESSION;
+      return ParserUtils.eatElement(builder, GroovyElementTypes.REFERENCE_EXPRESSION);
+    }
+    if (TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(tokenType)) {
+      PsiBuilder.Marker marker = builder.mark();
+      builder.advanceLexer();
+      if (PathExpression.isQualicationDot(builder)) {
+        marker.done(GroovyElementTypes.REFERENCE_EXPRESSION);
+        return GroovyElementTypes.REFERENCE_EXPRESSION;
+      } else {
+        marker.rollbackTo();
+      }
     }
     if (GroovyTokenTypes.mGSTRING_BEGIN == tokenType) {
       final boolean result = CompoundStringExpression.parse(builder, parser, false, GroovyTokenTypes.mGSTRING_BEGIN,

@@ -5,6 +5,7 @@ public class Main {
     for(String[] arr : da<caret>ta) {
       for(String str : arr) {
         if(!str.startsWith("xyz")) {
+          // Comment
           return false;
         }
       }

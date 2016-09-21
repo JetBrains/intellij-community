@@ -67,6 +67,13 @@ public class TestMethods extends TestMethod {
     return javaParameters;
   }
 
+  @Nullable
+  @Override
+  public SourceScope getSourceScope() {
+    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    return data.getScope().getSourceScope(getConfiguration());
+  }
+
   @Override
   protected boolean configureByModule(Module module) {
     return super.configureByModule(module) && getConfiguration().getPersistentData().getScope() != TestSearchScope.WHOLE_PROJECT;

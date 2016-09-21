@@ -15,7 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.compiler
 
+import com.intellij.compiler.options.ValidationConfiguration
 import com.intellij.openapi.compiler.CompilerMessage
+import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -65,6 +67,13 @@ class GroovyResourceCheckerTest extends GroovyCompilerTestCase {
 
 
     myFixture.addFileToProject('res/a.groovy', 'class Foo extends SrcClass implements ThisResource, DependentSrc, DependentResource {}')
+    assertEmpty checkResources()
+  }
+
+  void "test exclude from validation"() {
+    checkResources()
+    def file = myFixture.addFileToProject('res/a.groovy', 'class Foo extends Bar {}')
+    ValidationConfiguration.getExcludedEntriesConfiguration(project).addExcludeEntryDescription(new ExcludeEntryDescription(file.virtualFile, false, true, project))
     assertEmpty checkResources()
   }
 

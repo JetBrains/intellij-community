@@ -73,6 +73,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.indexing.containers.TroveSetIntIterator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -1044,57 +1045,74 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                                                              @NotNull final GlobalSearchScope filter,
                                                              @Nullable final Condition<V> valueChecker,
                                                              @Nullable final ProjectIndexableFilesFilter projectFilesFilter) {
-    final ThrowableConvertor<UpdatableIndex<K, V, FileContent>, TIntHashSet, StorageException> convertor =
-      index -> {
-        TIntHashSet mainIntersection = null;
-
-        for (K dataKey : dataKeys) {
-          ProgressManager.checkCanceled();
-          final TIntHashSet copy = new TIntHashSet();
-          final ValueContainer<V> container = index.getData(dataKey);
-
-          for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
-            final V value = valueIt.next();
-            if (valueChecker != null && !valueChecker.value(value)) {
-              continue;
-            }
-
-            ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
-
-            if (mainIntersection == null || iterator.size() < mainIntersection.size()) {
-              while (iterator.hasNext()) {
-                final int id = iterator.next();
-                if (mainIntersection == null && (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) ||
-                    mainIntersection != null && mainIntersection.contains(id)
-                  ) {
-                  copy.add(id);
-                }
-              }
-            }
-            else {
-              mainIntersection.forEach(new TIntProcedure() {
-                final ValueContainer.IntPredicate predicate = valueIt.getValueAssociationPredicate();
-
-                @Override
-                public boolean execute(int id) {
-                  if (predicate.contains(id)) copy.add(id);
-                  return true;
-                }
-              });
-            }
-          }
-
-          mainIntersection = copy;
-          if (mainIntersection.isEmpty()) {
-            return new TIntHashSet();
-          }
-        }
-
-        return mainIntersection;
-      };
-
+    ThrowableConvertor<UpdatableIndex<K, V, FileContent>, TIntHashSet, StorageException> convertor =
+      index -> collectInputIdsContainingAllKeys(index, dataKeys, valueChecker,
+                                                projectFilesFilter == null ? null : projectFilesFilter::containsFileId);
 
     return processExceptions(indexId, null, filter, convertor);
+  }
+
+  @Nullable
+  private static <K, V, I> TIntHashSet collectInputIdsContainingAllKeys(@NotNull UpdatableIndex<K, V, I> index,
+                                                                        @NotNull Collection<K> dataKeys,
+                                                                        @Nullable Condition<V> valueChecker,
+                                                                        @Nullable ValueContainer.IntPredicate idChecker)
+    throws StorageException {
+    TIntHashSet mainIntersection = null;
+
+    for (K dataKey : dataKeys) {
+      ProgressManager.checkCanceled();
+      final TIntHashSet copy = new TIntHashSet();
+      final ValueContainer<V> container = index.getData(dataKey);
+
+      for (final ValueContainer.ValueIterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
+        final V value = valueIt.next();
+        if (valueChecker != null && !valueChecker.value(value)) {
+          continue;
+        }
+
+        ValueContainer.IntIterator iterator = valueIt.getInputIdsIterator();
+
+        if (mainIntersection == null || iterator.size() < mainIntersection.size()) {
+          while (iterator.hasNext()) {
+            final int id = iterator.next();
+            if (mainIntersection == null && (idChecker == null || idChecker.contains(id)) ||
+                mainIntersection != null && mainIntersection.contains(id)
+              ) {
+              copy.add(id);
+            }
+          }
+        }
+        else {
+          mainIntersection.forEach(new TIntProcedure() {
+            final ValueContainer.IntPredicate predicate = valueIt.getValueAssociationPredicate();
+
+            @Override
+            public boolean execute(int id) {
+              if (predicate.contains(id)) copy.add(id);
+              return true;
+            }
+          });
+        }
+      }
+
+      mainIntersection = copy;
+      if (mainIntersection.isEmpty()) {
+        return new TIntHashSet();
+      }
+    }
+
+    return mainIntersection;
+  }
+
+
+  @NotNull
+  public static <K, V, I> ValueContainer.IntIterator collectInputIdsContainingAllKeys(@NotNull UpdatableIndex<K, V, I> index,
+                                                                                      @NotNull Collection<K> dataKeys)
+    throws StorageException {
+    TIntHashSet result = collectInputIdsContainingAllKeys(index, dataKeys, null, null);
+    if (result == null) return TroveSetIntIterator.EMPTY;
+    return new TroveSetIntIterator(result);
   }
 
   private static boolean processVirtualFiles(@NotNull TIntHashSet ids,

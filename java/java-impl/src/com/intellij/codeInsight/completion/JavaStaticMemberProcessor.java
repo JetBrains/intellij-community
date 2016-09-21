@@ -51,6 +51,12 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
   protected LookupElement createLookupElement(@NotNull PsiMember member, @NotNull final PsiClass containingClass, boolean shouldImport) {
     shouldImport |= myOriginalPosition != null && PsiTreeUtil.isAncestor(containingClass, myOriginalPosition, false);
 
+    String exprText = member.getName() + (member instanceof PsiMethod ? "()" : "");
+    PsiReference ref = JavaPsiFacade.getElementFactory(member.getProject()).createExpressionFromText(exprText, myOriginalPosition).findReferenceAt(0);
+    if (ref instanceof PsiReferenceExpression && ((PsiReferenceExpression)ref).multiResolve(true).length > 0) {
+      shouldImport = false;
+    }
+
     if (member instanceof PsiMethod) {
       return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new GlobalMethodCallElement((PsiMethod)member, shouldImport, false));
     }

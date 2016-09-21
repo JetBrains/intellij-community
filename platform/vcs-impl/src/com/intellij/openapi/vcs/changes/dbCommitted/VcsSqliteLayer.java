@@ -20,7 +20,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
+import com.intellij.openapi.vcs.RepositoryLocation;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.committed.ReceivedChangeList;
@@ -28,6 +31,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
@@ -297,9 +301,8 @@ public class VcsSqliteLayer {
     final RevisionId lastRevData = myKnownRepositoryLocations.getLastRevision(locationId);
     final Long lastRevision = lastRevData == null ? null : lastRevData.getNumber();
 
-    final List<List<CommittedChangeList>> split = new CollectionSplitter<CommittedChangeList>(20).split(lists);
     final Map<String, Long> knowPaths = new HashMap<>();
-    for (List<CommittedChangeList> changeLists : split) {
+    for (List<CommittedChangeList> changeLists : JBIterable.from(lists).partition(20, false)) {
       final Set<String> names = new HashSet<>();
       final Set<String> paths = new HashSet<>();
       for (Iterator<CommittedChangeList> iterator = changeLists.iterator(); iterator.hasNext(); ) {

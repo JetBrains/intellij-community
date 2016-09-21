@@ -18,10 +18,10 @@ package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * Test suite for static formatting. Compares two files:
  * before and after formatting
@@ -32,17 +32,17 @@ class FormatterTest extends GroovyFormatterTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/formatter/"
 
-  void testAddign1() throws Throwable { doTest(); }
+  void testAddign1() throws Throwable { doTest() }
 
-  void testArg1() throws Throwable { doTest(); }
+  void testArg1() throws Throwable { doTest() }
 
-  void testArg2() throws Throwable { doTest(); }
+  void testArg2() throws Throwable { doTest() }
 
-  void testBin1() throws Throwable { doTest(); }
+  void testBin1() throws Throwable { doTest() }
 
-  void testBin2() throws Throwable { doTest(); }
+  void testBin2() throws Throwable { doTest() }
 
-  void testBin3() throws Throwable { doTest(); }
+  void testBin3() throws Throwable { doTest() }
 
   void testBlockExpr1() throws Throwable {
     //groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
@@ -50,138 +50,138 @@ class FormatterTest extends GroovyFormatterTestCase {
     doTest()
   }
 
-  void testClass1() throws Throwable { doTest(); }
+  void testClass1() throws Throwable { doTest() }
 
-  void testClo1() throws Throwable { doTest(); }
+  void testClo1() throws Throwable { doTest() }
 
-  void testClo2() throws Throwable { doTest(); }
+  void testClo2() throws Throwable { doTest() }
 
-  void testClo3() throws Throwable { doTest(); }
+  void testClo3() throws Throwable { doTest() }
 
-  void testClo4() throws Throwable { doTest(); }
+  void testClo4() throws Throwable { doTest() }
 
-  void testColon1() throws Throwable { doTest(); }
+  void testColon1() throws Throwable { doTest() }
 
-  void testColon2() throws Throwable { doTest(); }
+  void testColon2() throws Throwable { doTest() }
 
-  void testCond1() throws Throwable { doTest(); }
+  void testCond1() throws Throwable { doTest() }
 
-  void testDoc1() throws Throwable { doTest(); }
+  void testDoc1() throws Throwable { doTest() }
 
-  void testDoc2() throws Throwable { doTest(); }
+  void testDoc2() throws Throwable { doTest() }
 
-  void testDoc3() throws Throwable { doTest(); }
+  void testDoc3() throws Throwable { doTest() }
 
-  void testDockter() throws Throwable { doTest(); }
+  void testDockter() throws Throwable { doTest() }
 
-  void testDot1() throws Throwable { doTest(); }
+  void testDot1() throws Throwable { doTest() }
 
-  void testDot2() throws Throwable { doTest(); }
+  void testDot2() throws Throwable { doTest() }
 
-  void testFor1() throws Throwable { doTest(); }
+  void testFor1() throws Throwable { doTest() }
 
-  void testFor2() throws Throwable { doTest(); }
+  void testFor2() throws Throwable { doTest() }
 
-  void testFor3() throws Throwable { doTest(); }
+  void testFor3() throws Throwable { doTest() }
 
-  void testFor4() throws Throwable { doTest(); }
+  void testFor4() throws Throwable { doTest() }
 
-  void testGbegin1() throws Throwable { doTest(); }
+  void testGbegin1() throws Throwable { doTest() }
 
-  void testGrvy1637() throws Throwable { doTest(); }
+  void testGrvy1637() throws Throwable { doTest() }
 
-  void testGString1() throws Throwable { doTest(); }
+  void testGString1() throws Throwable { doTest() }
 
-  void testMap6() throws Throwable { doTest(); }
+  void testMap6() throws Throwable { doTest() }
 
-  void testMeth1() throws Throwable { doTest(); }
+  void testMeth1() throws Throwable { doTest() }
 
-  void testMeth2() throws Throwable { doTest(); }
+  void testMeth2() throws Throwable { doTest() }
 
-  void testMeth3() throws Throwable { doTest(); }
+  void testMeth3() throws Throwable { doTest() }
 
-  void testMeth4() throws Throwable { doTest(); }
+  void testMeth4() throws Throwable { doTest() }
 
-  void testMeth5() throws Throwable { doTest(); }
+  void testMeth5() throws Throwable { doTest() }
 
-  void testMultistring1() throws Throwable { doTest(); }
+  void testMultistring1() throws Throwable { doTest() }
 
-  void testMultistring2() throws Throwable { doTest(); }
+  void testMultistring2() throws Throwable { doTest() }
 
-  void testNew1() throws Throwable { doTest(); }
+  void testNew1() throws Throwable { doTest() }
 
-  void testParam1() throws Throwable { doTest(); }
+  void testParam1() throws Throwable { doTest() }
 
-  void testParam2() throws Throwable { doTest(); }
+  void testParam2() throws Throwable { doTest() }
 
-  void testParen1() throws Throwable { doTest(); }
+  void testParen1() throws Throwable { doTest() }
 
-  void testPath1() throws Throwable { doTest(); }
+  void testPath1() throws Throwable { doTest() }
 
-  void testPointer1() throws Throwable { doTest(); }
+  void testPointer1() throws Throwable { doTest() }
 
-  void testRange1() throws Throwable { doTest(); }
+  void testRange1() throws Throwable { doTest() }
 
-  void testRegex1() throws Throwable { doTest(); }
+  void testRegex1() throws Throwable { doTest() }
 
   void testRegex2() { doTest() }
 
-  void testSh1() throws Throwable { doTest(); }
+  void testSh1() throws Throwable { doTest() }
 
-  void testSh2() throws Throwable { doTest(); }
+  void testSh2() throws Throwable { doTest() }
 
-  void testSqr1() throws Throwable { doTest(); }
+  void testSqr1() throws Throwable { doTest() }
 
-  void testSqr2() throws Throwable { doTest(); }
+  void testSqr2() throws Throwable { doTest() }
 
-  void testSqr3() throws Throwable { doTest(); }
+  void testSqr3() throws Throwable { doTest() }
 
-  void testString1() throws Throwable { doTest(); }
+  void testString1() throws Throwable { doTest() }
 
-  void testSuper1() throws Throwable { doTest(); }
+  void testSuper1() throws Throwable { doTest() }
 
-  void testSwitch1() throws Throwable { doTest(); }
+  void testSwitch1() throws Throwable { doTest() }
 
-  void testSwitch2() throws Throwable { doTest(); }
+  void testSwitch2() throws Throwable { doTest() }
 
-  void testSwitch3() throws Throwable { doTest(); }
+  void testSwitch3() throws Throwable { doTest() }
 
-  void testSwitch4() throws Throwable { doTest(); }
+  void testSwitch4() throws Throwable { doTest() }
 
-  void testSwitch5() throws Throwable { doTest(); }
+  void testSwitch5() throws Throwable { doTest() }
 
-  void testSwitch6() throws Throwable { doTest(); }
+  void testSwitch6() throws Throwable { doTest() }
 
-  void testSwitch7() throws Throwable { doTest(); }
+  void testSwitch7() throws Throwable { doTest() }
 
-  void testSwitch8() throws Throwable { doTest(); }
+  void testSwitch8() throws Throwable { doTest() }
 
-  void testType1() throws Throwable { doTest(); }
+  void testType1() throws Throwable { doTest() }
 
-  void testTypeparam1() throws Throwable { doTest(); }
+  void testTypeparam1() throws Throwable { doTest() }
 
-  void testUn1() throws Throwable { doTest(); }
+  void testUn1() throws Throwable { doTest() }
 
-  void testUn2() throws Throwable { doTest(); }
+  void testUn2() throws Throwable { doTest() }
 
-  void testUn3() throws Throwable { doTest(); }
+  void testUn3() throws Throwable { doTest() }
 
-  void testWhile1() throws Throwable { doTest(); }
+  void testWhile1() throws Throwable { doTest() }
 
-  void testWhile2() throws Throwable { doTest(); }
+  void testWhile2() throws Throwable { doTest() }
 
-  void testWhileCStyle() throws Throwable { doTest(); }
+  void testWhileCStyle() throws Throwable { doTest() }
 
-  void testFields() throws Throwable { doTest(); }
+  void testFields() throws Throwable { doTest() }
 
   void testClosureAfterLineComment() throws Throwable {
     groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
     doTest()
   }
 
-  void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
+  void testAnnotationOnSeparateLine() throws Throwable { doTest() }
 
-  void testAlignMultipleVariables() throws Throwable { doTest(); }
+  void testAlignMultipleVariables() throws Throwable { doTest() }
 
   void testSpockTableWithStringComment() throws Throwable { doTest() }
 
@@ -192,22 +192,22 @@ class FormatterTest extends GroovyFormatterTestCase {
     doTest()
   }
 
-  void testElseIfsSpecial() throws Throwable { doTest(); }
+  void testElseIfsSpecial() throws Throwable { doTest() }
 
-  void testVarargDeclaration() throws Throwable { doTest(); }
+  void testVarargDeclaration() throws Throwable { doTest() }
 
-  void testPreserveSpaceBeforeClosureParameters() throws Throwable { doTest(); }
+  void testPreserveSpaceBeforeClosureParameters() throws Throwable { doTest() }
 
-  void testPreserveGroovydoc() throws Throwable { doTest(); }
+  void testPreserveGroovydoc() throws Throwable { doTest() }
 
   void testCaseInSwitch() throws Throwable {
     groovySettings.INDENT_CASE_FROM_SWITCH = false
     doTest()
   }
 
-  void testCaseInSwitchIndented() throws Throwable { doTest(); }
+  void testCaseInSwitchIndented() throws Throwable { doTest() }
 
-  void testStuffAfterLineComments() throws Throwable { doTest(); }
+  void testStuffAfterLineComments() throws Throwable { doTest() }
 
   void testAnonymousInCall() throws Throwable {
     groovySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
@@ -230,7 +230,7 @@ class FormatterTest extends GroovyFormatterTestCase {
     doTest()
   }
 
-  void testAlignClosureBraceWithCall() throws Throwable { doTest(); }
+  void testAlignClosureBraceWithCall() throws Throwable { doTest() }
 
   void testFlyingGeese() throws Throwable {
     myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).USE_FLYING_GEESE_BRACES = true
@@ -243,25 +243,25 @@ class FormatterTest extends GroovyFormatterTestCase {
     doTest()
   }
 
-  void testChainCallWithClosures() throws Throwable { doTest(); }
+  void testChainCallWithClosures() throws Throwable { doTest() }
 
-  void testFormatDiamonds() throws Throwable { doTest(); }
+  void testFormatDiamonds() throws Throwable { doTest() }
 
-  void testFormatAnonymousDiamonds() throws Throwable { doTest(); }
+  void testFormatAnonymousDiamonds() throws Throwable { doTest() }
 
-  void testPreserveChainingLineBreaks() throws Throwable { doTest(); }
+  void testPreserveChainingLineBreaks() throws Throwable { doTest() }
 
-  void testMultilineEolComment() throws Throwable { doTest(); }
+  void testMultilineEolComment() throws Throwable { doTest() }
 
-  void testRedundantClosureSpace() throws Throwable { doTest(); }
+  void testRedundantClosureSpace() throws Throwable { doTest() }
 
-  void testIndentNamedArguments() throws Throwable { doTest(); }
+  void testIndentNamedArguments() throws Throwable { doTest() }
 
-  void testIndentAssigned() throws Throwable { doTest(); }
+  void testIndentAssigned() throws Throwable { doTest() }
 
-  void testCommentBeforeMultilineString() throws Throwable { doTest(); }
+  void testCommentBeforeMultilineString() throws Throwable { doTest() }
 
-  void testMethodSemicolons() throws Throwable { doTest(); }
+  void testMethodSemicolons() throws Throwable { doTest() }
 
   void testNoFlyingGeese() throws Throwable {
     myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).SPACE_IN_NAMED_ARGUMENT = false
@@ -308,23 +308,23 @@ class FormatterTest extends GroovyFormatterTestCase {
     doTest()
   }
 
-  void testGeese1() { doGeeseTest(); }
+  void testGeese1() { doGeeseTest() }
 
-  void testGeese2() { doGeeseTest(); }
+  void testGeese2() { doGeeseTest() }
 
-  void testGeese3() { doGeeseTest(); }
+  void testGeese3() { doGeeseTest() }
 
-  void testGeese4() { doGeeseTest(); }
+  void testGeese4() { doGeeseTest() }
 
-  void testGeese5() { doGeeseTest(); }
+  void testGeese5() { doGeeseTest() }
 
-  void testGeese6() { doGeeseTest(); }
+  void testGeese6() { doGeeseTest() }
 
-  void testGeese7() { doGeeseTest(); }
+  void testGeese7() { doGeeseTest() }
 
-  void testGeese8() { doGeeseTest(); }
+  void testGeese8() { doGeeseTest() }
 
-  void testMapInArgumentList() { doTest(); }
+  void testMapInArgumentList() { doTest() }
 
   void testMapInArgList2() {
     myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class).ALIGN_NAMED_ARGS_IN_MAP = true

@@ -9,6 +9,7 @@ public class Main {
     for(List<String> list : map.valu<caret>es()) {
       if(list != null) {
         firstSize = list.size();
+        // comment
         break;
       }
     }

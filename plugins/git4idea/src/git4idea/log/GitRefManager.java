@@ -177,7 +177,7 @@ public class GitRefManager implements VcsLogRefManager {
           VcsRef trackedRef = ContainerUtil
             .find(references, ref -> ref.getType().equals(REMOTE_BRANCH) && ref.getName().equals(trackInfo.getRemoteBranch().getName()));
           if (trackedRef != null) {
-            name = trackInfo.getRemote().getName() + "&" + firstRef.getName();
+            name = trackInfo.getRemote().getName() + " & " + firstRef.getName();
           }
         }
       }
@@ -293,6 +293,19 @@ public class GitRefManager implements VcsLogRefManager {
     @Override
     public String toString() {
       return myName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      SimpleRefType type = (SimpleRefType)o;
+      return myIsBranch == type.myIsBranch && Objects.equals(myName, type.myName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myIsBranch, myName);
     }
   }
 

@@ -20,10 +20,7 @@ import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -58,6 +55,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -76,6 +74,7 @@ public class CopyReferenceAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     boolean plural = false;
     boolean enabled;
+    boolean paths = false;
 
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -86,6 +85,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       List<PsiElement> elements = getElementsToCopy(editor, dataContext);
       enabled = !elements.isEmpty();
       plural = elements.size() > 1;
+      paths = elements.stream().allMatch(el -> el instanceof PsiFileSystemItem && getQualifiedNameFromProviders(el) == null);
     }
 
     e.getPresentation().setEnabled(enabled);
@@ -95,7 +95,9 @@ public class CopyReferenceAction extends DumbAwareAction {
     else {
       e.getPresentation().setVisible(true);
     }
-    e.getPresentation().setText(plural ? "Cop&y References" : "Cop&y Reference");
+    e.getPresentation().setText(
+      paths ? plural ? "Cop&y Relative Paths" : "Cop&y Relative Path"
+            : plural ? "Cop&y References" : "Cop&y Reference");
   }
 
   @Override
@@ -142,6 +144,13 @@ public class CopyReferenceAction extends DumbAwareAction {
       PsiReference reference = TargetElementUtil.findReference(editor);
       if (reference != null) {
         ContainerUtil.addIfNotNull(elements, reference.getElement());
+      }
+    }
+
+    if (elements.isEmpty()) {
+      PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      if (psiElements != null) {
+        Collections.addAll(elements, psiElements);
       }
     }
 

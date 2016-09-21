@@ -24,16 +24,16 @@ class CommentsParsingTest extends GroovyParsingTestCase {
     super.basePath + "comments"
   }
 
-  void testBrown() throws Throwable { doTest(); }
+  void testBrown() throws Throwable { doTest() }
 
-  void testError1205() throws Throwable { doTest(); }
+  void testError1205() throws Throwable { doTest() }
 
-  void testMax() throws Throwable { doTest(); }
+  void testMax() throws Throwable { doTest() }
 
-  void testNls1() throws Throwable { doTest(); }
+  void testNls1() throws Throwable { doTest() }
 
-  void testNls2() throws Throwable { doTest(); }
+  void testNls2() throws Throwable { doTest() }
 
-  void testRocher3() throws Throwable { doTest(); }
+  void testRocher3() throws Throwable { doTest() }
   
 }

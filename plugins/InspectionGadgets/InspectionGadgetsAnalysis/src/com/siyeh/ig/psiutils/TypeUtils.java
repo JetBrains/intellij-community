@@ -85,7 +85,10 @@ public class TypeUtils {
   }
 
   public static boolean isOptional(@Nullable PsiType type) {
-    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return isOptional(PsiUtil.resolveClassInClassTypeOnly(type));
+  }
+
+  public static boolean isOptional(PsiClass aClass) {
     if (aClass == null) {
       return false;
     }

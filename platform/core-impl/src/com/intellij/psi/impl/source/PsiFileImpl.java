@@ -350,28 +350,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   void reportStubAstMismatch(String message, StubTree stubTree, Document cachedDocument) {
     rebuildStub();
     clearStub(STUB_PSI_MISMATCH);
-    scheduleDropCachesWithInvalidStubPsi();
 
     throw new AssertionError(message
                              + StubTreeLoader.getInstance().getStubAstMismatchDiagnostics(getViewProvider().getVirtualFile(), this,
                                                                                           stubTree, cachedDocument)
                              + "\n------------\n");
-  }
-
-  private void scheduleDropCachesWithInvalidStubPsi() {
-    // invokeLater even if already on EDT, because
-    // we might be inside an index query and write actions might result in deadlocks there (https://youtrack.jetbrains.com/issue/IDEA-123118)
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            ((PsiModificationTrackerImpl)getManager().getModificationTracker()).incCounter();
-          }
-        });
-      }
-    });
   }
 
   @NotNull
@@ -1114,6 +1097,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       public void run() {
         if (!myManager.isDisposed()) {
           myManager.dropResolveCaches();
+          ((PsiModificationTrackerImpl)myManager.getModificationTracker()).incCounter();
         }
 
         final VirtualFile vFile = getVirtualFile();

@@ -41,6 +41,9 @@ public interface JpsJavaCompilerConfiguration extends JpsElement {
   JpsCompilerExcludes getCompilerExcludes();
 
   @NotNull
+  JpsCompilerExcludes getValidationExcludes();
+
+  @NotNull
   ProcessorConfigProfile getDefaultAnnotationProcessingProfile();
   ProcessorConfigProfile addAnnotationProcessingProfile();
 

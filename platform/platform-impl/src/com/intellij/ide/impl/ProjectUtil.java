@@ -23,7 +23,6 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +36,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
+import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
 import com.intellij.util.SystemProperties;
@@ -110,8 +110,7 @@ public class ProjectUtil {
       return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
     }
 
-    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        virtualFile.isDirectory() && new File(path, Project.DIRECTORY_STORE_FOLDER).exists()) {
+    if (ProjectKt.isValidProjectPath(path, true)) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
 
@@ -153,10 +152,13 @@ public class ProjectUtil {
       return null;
     }
 
-    if (file.isDirectory() && !new File(file, Project.DIRECTORY_STORE_FOLDER).exists()) {
-      String message = IdeBundle.message("error.project.file.does.not.exist", new File(file, Project.DIRECTORY_STORE_FOLDER).getPath());
-      Messages.showErrorDialog(message, CommonBundle.getErrorTitle());
-      return null;
+    if (file.isDirectory()) {
+      File dir = new File(file, Project.DIRECTORY_STORE_FOLDER);
+      if (!dir.exists()) {
+        String message = IdeBundle.message("error.project.file.does.not.exist", dir.getPath());
+        Messages.showErrorDialog(message, CommonBundle.getErrorTitle());
+        return null;
+      }
     }
 
     Project existing = findAndFocusExistingProjectForPath(path);
@@ -280,7 +282,7 @@ public class ProjectUtil {
   }
 
   public static boolean isSameProject(String path, @NotNull Project project) {
-    IProjectStore projectStore = (IProjectStore)ServiceKt.getStateStore(project);
+    IProjectStore projectStore = ProjectKt.getStateStore(project);
 
     String toOpen = FileUtil.toSystemIndependentName(path);
     String existing = projectStore.getProjectFilePath();

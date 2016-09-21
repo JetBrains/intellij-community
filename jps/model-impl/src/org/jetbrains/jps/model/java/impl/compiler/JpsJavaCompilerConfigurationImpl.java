@@ -38,6 +38,7 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   private List<String> myNotNullAnnotations = Collections.singletonList(NotNull.class.getName());
   private boolean myClearOutputDirectoryOnRebuild = true;
   private final JpsCompilerExcludes myCompilerExcludes = new JpsCompilerExcludesImpl();
+  private final JpsCompilerExcludes myValidationExcludes = new JpsCompilerExcludesImpl();
   private final List<String> myResourcePatterns = new ArrayList<String>();
   private final List<ProcessorConfigProfile> myAnnotationProcessingProfiles = new ArrayList<ProcessorConfigProfile>();
   private final ProcessorConfigProfileImpl myDefaultAnnotationProcessingProfile = new ProcessorConfigProfileImpl("Default");
@@ -95,6 +96,12 @@ public class JpsJavaCompilerConfigurationImpl extends JpsCompositeElementBase<Jp
   @Override
   public JpsCompilerExcludes getCompilerExcludes() {
     return myCompilerExcludes;
+  }
+
+  @NotNull
+  @Override
+  public JpsCompilerExcludes getValidationExcludes() {
+    return myValidationExcludes;
   }
 
   @NotNull

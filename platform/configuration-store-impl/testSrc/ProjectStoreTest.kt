@@ -19,14 +19,13 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
-import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.Assertions.assertThat
 import com.intellij.util.PathUtil
@@ -127,7 +126,7 @@ internal class ProjectStoreTest {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.path
     }) { project ->
-      val store = project.stateStore as IProjectStore
+      val store = project.stateStore
       assertThat(store.nameFile).doesNotExist()
       val newName = "Foo"
       val oldName = project.name
@@ -148,7 +147,7 @@ internal class ProjectStoreTest {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/.name", name)
       it.path
     }) { project ->
-      val store = project.stateStore as IProjectStore
+      val store = project.stateStore
       assertThat(store.nameFile).hasContent(name)
 
       project.saveStore()

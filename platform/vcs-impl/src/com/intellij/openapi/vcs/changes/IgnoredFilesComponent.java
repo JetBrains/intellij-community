@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -53,12 +52,7 @@ public class IgnoredFilesComponent {
         }
 
         private <T extends VFileEvent> boolean hasSignificantChanges(List<T> events) {
-          return ContainerUtil.exists(events, new Condition<T>() {
-            @Override
-            public boolean value(VFileEvent event) {
-              return !(event instanceof VFileContentChangeEvent);
-            }
-          });
+          return ContainerUtil.exists(events, event -> !(event instanceof VFileContentChangeEvent));
         }
       });
     }
@@ -164,6 +158,7 @@ public class IgnoredFilesComponent {
     }
   }
 
+  @NotNull
   public IgnoredFileBean[] getFilesToIgnore() {
     myReadLock.lock();
     try {

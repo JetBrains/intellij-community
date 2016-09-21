@@ -48,9 +48,9 @@ class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package $packageName; public class $name {}")
   }
 
-  void testInFieldDeclaration() throws Exception { doTest(); }
+  void testInFieldDeclaration() throws Exception { doTest() }
 
-  void testInParameter() throws Exception { doTest(); }
+  void testInParameter() throws Exception { doTest() }
 
   void testInImport() throws Exception {
     addClassToProject("a", "FooBar")
@@ -70,11 +70,11 @@ class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
-  void testInComment() throws Exception { doTest(); }
+  void testInComment() throws Exception { doTest() }
 
-  void testInTypeElementPlace() throws Exception { doTest(); }
+  void testInTypeElementPlace() throws Exception { doTest() }
 
-  void testWhenImportExists() throws Exception { doTest(); }
+  void testWhenImportExists() throws Exception { doTest() }
 
   void testFinishByDot() throws Exception {
     addClassToProject("a", "FooBar")
@@ -316,4 +316,33 @@ print new Upper.Inner()
 ''')
   }
 
+  void "test complete class within 'in' package"() {
+    myFixture.with {
+      addClass '''\
+package in.foo.com;
+public class Foooo {}
+'''
+      configureByText '_.groovy', 'Fooo<caret>'
+      complete CompletionType.BASIC
+      type '\n'
+      checkResult '''import in.foo.com.Foooo
+
+Foooo<caret>'''
+    }
+  }
+
+  void "test complete class within 'def' package"() {
+    myFixture.with {
+      addClass '''\
+package def.foo.com;
+public class Foooo {}
+'''
+      configureByText '_.groovy', 'Fooo<caret>'
+      complete CompletionType.BASIC
+      type '\n'
+      checkResult '''import def.foo.com.Foooo
+
+Foooo<caret>'''
+    }
+  }
 }

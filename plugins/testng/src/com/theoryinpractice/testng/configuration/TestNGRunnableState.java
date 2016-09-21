@@ -114,8 +114,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
 
     final TestData data = getConfiguration().getPersistantData();
 
-    javaParameters.getProgramParametersList().add(supportSerializationProtocol(getConfiguration()) ? RemoteArgs.PORT : CommandLineArgs.PORT, String.valueOf(port));
-
     if (data.getOutputDirectory() != null && !data.getOutputDirectory().isEmpty()) {
       javaParameters.getProgramParametersList().add(CommandLineArgs.OUTPUT_DIRECTORY, data.getOutputDirectory());
     }
@@ -184,32 +182,6 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
         LOG.error(e);
       }
     }
-  }
-
-  public static boolean supportSerializationProtocol(TestNGConfiguration config) {
-    final Project project = config.getProject();
-    final GlobalSearchScope scopeToDetermineTestngIn;
-    if (config.getPersistantData().getScope() == TestSearchScope.WHOLE_PROJECT) {
-      scopeToDetermineTestngIn = GlobalSearchScope.allScope(project);
-    }
-    else {
-      final Module module = config.getConfigurationModule().getModule();
-      scopeToDetermineTestngIn = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) 
-                                                : GlobalSearchScope.allScope(project);
-    }
-
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiClass aClass = facade.findClass(SerializedMessageSender.class.getName(), scopeToDetermineTestngIn);
-    if (aClass == null) return false;
-
-    final PsiClass[] starters = facade.findClasses(RemoteTestNG.class.getName(), scopeToDetermineTestngIn);
-    for (PsiClass starter : starters) {
-      if (starter.findFieldByName("m_serPort", false) == null) {
-        LOG.info("Multiple TestNG versions found");
-        return false;
-      }
-    }
-    return Registry.is("testng.serialized.protocol.enabled") && !TestNGVersionChecker.isVersionIncompatible(project, scopeToDetermineTestngIn);
   }
 
   @NotNull

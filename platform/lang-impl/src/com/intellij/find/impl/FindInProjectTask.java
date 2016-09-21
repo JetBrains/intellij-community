@@ -36,7 +36,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
@@ -211,7 +211,7 @@ class FindInProjectTask {
       long fileLength = UsageViewManagerImpl.getFileLength(virtualFile);
       if (fileLength == -1) return true; // Binary or invalid
 
-      final boolean skipProjectFile = ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile) && !myFindModel.isSearchInProjectFiles();
+      final boolean skipProjectFile = ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !myFindModel.isSearchInProjectFiles();
       if (skipProjectFile && !Registry.is("find.search.in.project.files")) return true;
 
       if (fileLength > SINGLE_FILE_SIZE_LIMIT) {

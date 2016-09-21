@@ -33,6 +33,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.project.ProjectKt;
 import com.intellij.ui.IconDeferrer;
 import com.intellij.util.Alarm;
 import com.intellij.util.IconUtil;
@@ -505,11 +506,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   protected abstract void doOpenProject(@NotNull String projectPath, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
 
-  public static boolean isValidProjectPath(String projectPath) {
-    final File file = new File(projectPath);
-    return file.exists() && (!file.isDirectory() || new File(file, Project.DIRECTORY_STORE_FOLDER).exists());
-  }
-
   private class MyProjectListener extends ProjectManagerAdapter {
     @Override
     public void projectOpened(final Project project) {
@@ -613,7 +609,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
         }
       }
       for (String openPath : openPaths) {
-        if (isValidProjectPath(openPath)) {
+        if (ProjectKt.isValidProjectPath(openPath)) {
           doOpenProject(openPath, null, forceNewFrame);
         }
       }

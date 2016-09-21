@@ -637,7 +637,10 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         final int size = myPattern.size();
         if (size == 0) return "Temp suite";
         String fqName = myPattern.iterator().next();
-        return (fqName.contains("*") ? fqName : StringUtil.getShortName(StringUtil.getPackageName(fqName, ','))) + (size > 1 ? " and " + (size - 1) + " more" : "");
+        String firstName =
+          fqName.contains("*") ? fqName
+                               : StringUtil.getShortName(fqName.contains(",") ? StringUtil.getPackageName(fqName, ',') : fqName);
+        return firstName + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
       if (TEST_CATEGORY.equals(TEST_OBJECT)) {
         return "@Category(" + (StringUtil.isEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";

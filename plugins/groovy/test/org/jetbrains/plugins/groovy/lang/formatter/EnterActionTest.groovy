@@ -37,105 +37,105 @@ class EnterActionTest extends GroovyFormatterTestCase {
     myFixture.type('\n' as char)
   }
 
-  void testClos1() throws Throwable { doTest(); }
+  void testClos1() throws Throwable { doTest() }
 
-  void testClos2() throws Throwable { doTest(); }
+  void testClos2() throws Throwable { doTest() }
 
-  void testComment1() throws Throwable { doTest(); }
+  void testComment1() throws Throwable { doTest() }
 
-  void testComment2() throws Throwable { doTest(); }
+  void testComment2() throws Throwable { doTest() }
 
-  void testComment3() throws Throwable { doTest(); }
+  void testComment3() throws Throwable { doTest() }
 
-  void testComment4() throws Throwable { doTest(); }
+  void testComment4() throws Throwable { doTest() }
 
-  void testDef() throws Throwable { doTest(); }
+  void testDef() throws Throwable { doTest() }
 
-  void testDef2() throws Throwable { doTest(); }
+  void testDef2() throws Throwable { doTest() }
 
-  void testGdoc1() throws Throwable { doTest(); }
+  void testGdoc1() throws Throwable { doTest() }
 
-  void testGdoc2() throws Throwable { doTest(); }
+  void testGdoc2() throws Throwable { doTest() }
 
-  void testGdoc3() throws Throwable { doTest(); }
+  void testGdoc3() throws Throwable { doTest() }
 
-  void testGdoc4() throws Throwable { doTest(); }
+  void testGdoc4() throws Throwable { doTest() }
 
-  void testGdoc5() throws Throwable { doTest(); }
+  void testGdoc5() throws Throwable { doTest() }
 
-  void testGdoc6() throws Throwable { doTest(); }
+  void testGdoc6() throws Throwable { doTest() }
 
-  void testGdoc7() throws Throwable { doTest(); }
+  void testGdoc7() throws Throwable { doTest() }
 
-  void testGdoc8() throws Throwable { doTest(); }
+  void testGdoc8() throws Throwable { doTest() }
 
-  void testGdoc9() throws Throwable { doTest(); }
+  void testGdoc9() throws Throwable { doTest() }
 
-  void testGdoc10() throws Throwable { doTest(); }
+  void testGdoc10() throws Throwable { doTest() }
 
-  void testGdoc11() throws Throwable { doTest(); }
+  void testGdoc11() throws Throwable { doTest() }
 
-  void testBuildGdocPrecededByGNewLine() throws Throwable { doTest(); }
+  void testBuildGdocPrecededByGNewLine() throws Throwable { doTest() }
 
-  void testGRVY_953() throws Throwable { doTest(); }
+  void testGRVY_953() throws Throwable { doTest() }
 
-  void testGstring1() throws Throwable { doTest(); }
+  void testGstring1() throws Throwable { doTest() }
 
-  void testGstring10() throws Throwable { doTest(); }
+  void testGstring10() throws Throwable { doTest() }
 
-  void testGstring11() throws Throwable { doTest(); }
+  void testGstring11() throws Throwable { doTest() }
 
-  void testGstring12() throws Throwable { doTest(); }
+  void testGstring12() throws Throwable { doTest() }
 
-  void testGstring13() throws Throwable { doTest(); }
+  void testGstring13() throws Throwable { doTest() }
 
-  void testGstring14() throws Throwable { doTest(); }
+  void testGstring14() throws Throwable { doTest() }
 
-  void testGstring15() throws Throwable { doTest(); }
+  void testGstring15() throws Throwable { doTest() }
 
-  void testGstring16() throws Throwable { doTest(); }
+  void testGstring16() throws Throwable { doTest() }
 
-  void testGstring2() throws Throwable { doTest(); }
+  void testGstring2() throws Throwable { doTest() }
 
-  void testGstring3() throws Throwable { doTest(); }
+  void testGstring3() throws Throwable { doTest() }
 
-  void testGstring4() throws Throwable { doTest(); }
+  void testGstring4() throws Throwable { doTest() }
 
-  void testGstring5() throws Throwable { doTest(); }
+  void testGstring5() throws Throwable { doTest() }
 
-  void testGstring6() throws Throwable { doTest(); }
+  void testGstring6() throws Throwable { doTest() }
 
-  void testGstring7() throws Throwable { doTest(); }
+  void testGstring7() throws Throwable { doTest() }
 
-  void testGstring8() throws Throwable { doTest(); }
+  void testGstring8() throws Throwable { doTest() }
 
-  void testGstring9() throws Throwable { doTest(); }
+  void testGstring9() throws Throwable { doTest() }
 
-  void testMultilineIndent() throws Throwable { doTest(); }
+  void testMultilineIndent() throws Throwable { doTest() }
 
-  void testMultilineIndent2() throws Throwable { doTest(); }
+  void testMultilineIndent2() throws Throwable { doTest() }
 
-  void testSpaces1() throws Throwable { doTest(); }
+  void testSpaces1() throws Throwable { doTest() }
 
-  void testString1() throws Throwable { doTest(); }
+  void testString1() throws Throwable { doTest() }
 
-  void testString2() throws Throwable { doTest(); }
+  void testString2() throws Throwable { doTest() }
 
-  void testString3() throws Throwable { doTest(); }
+  void testString3() throws Throwable { doTest() }
 
-  void testString4() throws Throwable { doTest(); }
+  void testString4() throws Throwable { doTest() }
 
-  void testString5() throws Throwable { doTest(); }
+  void testString5() throws Throwable { doTest() }
 
-  void testString6() throws Throwable { doTest(); }
+  void testString6() throws Throwable { doTest() }
 
-  void testString7() throws Throwable { doTest(); }
+  void testString7() throws Throwable { doTest() }
 
-  void testString8() throws Throwable { doTest(); }
+  void testString8() throws Throwable { doTest() }
 
-  void testString9() throws Throwable { doTest(); }
+  void testString9() throws Throwable { doTest() }
 
-  void testString10() throws Throwable { doTest(); }
+  void testString10() throws Throwable { doTest() }
 
   void testRegex1() { doTest() }
 

@@ -318,10 +318,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     final List<File> toCompile = new ArrayList<File>();
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<R, T>() {
       public boolean apply(T target, File file, R sourceRoot) throws IOException {
-        final String path = file.getPath();
-        //todo file type check
-        if ((GroovyBuilder.isGroovyFile(path) || forEclipse && path.endsWith(".java")) &&
-            !configuration.isResourceFile(file, sourceRoot.getRootFile())) {
+        if (shouldProcessSourceFile(file, sourceRoot, file.getPath(), configuration)) {
           if (forStubs && settings.isExcludedFromStubGeneration(file)) {
             hasExcludes.set(true);
             return true;
@@ -333,6 +330,17 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       }
     });
     return toCompile;
+  }
+
+  protected boolean shouldProcessSourceFile(File file,
+                                            R sourceRoot,
+                                            String path,
+                                            JpsJavaCompilerConfiguration configuration) {
+    return acceptsFileType(path) && !configuration.isResourceFile(file, sourceRoot.getRootFile());
+  }
+
+  protected boolean acceptsFileType(String path) {
+    return GroovyBuilder.isGroovyFile(path);
   }
 
   void updateDependencies(CompileContext context,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -32,7 +33,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -40,11 +40,17 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenedCallback;
+import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author yole
@@ -53,36 +59,38 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
   private static final Logger LOG = Logger.getInstance(ModuleAttachProcessor.class);
 
   @Override
-  public boolean attachToProject(Project project, File projectDir, @Nullable ProjectOpenedCallback callback) {
-    if (!projectDir.exists()) {
-      final Project newProject = ((ProjectManagerEx)ProjectManager.getInstance())
-        .newProject(projectDir.getParentFile().getName(), projectDir.getParent(), true, false);
+  public boolean attachToProject(Project project, @NotNull Path projectDir, @Nullable ProjectOpenedCallback callback) {
+    if (!Files.exists(projectDir)) {
+      Path projectDirParent = projectDir.getParent();
+      assert projectDirParent != null;
+      String filePath = projectDirParent.toString();
+      Project newProject = ((ProjectManagerEx)ProjectManager.getInstance()).newProject(projectDirParent.getFileName().toString(),
+                                                                                       filePath, true, false);
       if (newProject == null) {
         return false;
       }
-      final VirtualFile baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getParent());
+
+      VirtualFile baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(filePath));
       PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, newProject);
       newProject.save();
       ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject));
     }
-    final String[] files = projectDir.list();
-    if (files != null) {
-      for (String file : files) {
-        if (FileUtilRt.extensionEquals(file, "iml")) {
-          VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(projectDir, file));
-          if (imlFile != null) {
-            attachModule(project, imlFile, callback);
-            return true;
-          }
+
+    PathKt.directoryStreamIfExists(projectDir, path -> path.getFileName().toString().endsWith(ModuleManagerImpl.IML_EXTENSION), files -> {
+      for (Path file : files) {
+        VirtualFile imlFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathKt.getSystemIndependentPath(file));
+        if (imlFile != null) {
+          attachModule(project, imlFile, callback);
+          return true;
         }
       }
-    }
-    int rc = Messages.showYesNoDialog(project, "The project at " +
-                                               FileUtil.toSystemDependentName(projectDir.getPath()) +
-                                               " uses a non-standard layout and cannot be attached to this project. Would you like to open it in a new window?",
-                                      "Open Project", Messages.getQuestionIcon());
+      return null;
+    });
 
-    return rc != Messages.YES;
+    return Messages.showYesNoDialog(project, "The project at " +
+                                             projectDir +
+                                             " uses a non-standard layout and cannot be attached to this project. Would you like to open it in a new window?",
+                                    "Open Project", Messages.getQuestionIcon()) != Messages.YES;
   }
 
   private static void attachModule(Project project, VirtualFile imlFile, @Nullable ProjectOpenedCallback callback) {
@@ -127,7 +135,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       if (contentRoots.length == 1 && FileUtil.filesEqual(new File(contentRoots[0].getPath()), new File(mappings.get(0).getDirectory()))) {
         final AbstractVcs vcs = vcsManager.findVersioningVcs(addedModuleContentRoot);
         if (vcs != null && vcs.getName().equals(mappings.get(0).getVcs())) {
-          vcsManager.setDirectoryMappings(Arrays.asList(new VcsDirectoryMapping("", vcs.getName())));
+          vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping("", vcs.getName())));
           return;
         }
       }
@@ -180,7 +188,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
         result.add(module);
       }
     }
-    Collections.sort(result, (module, module2) -> module.getName().compareTo(module2.getName()));
+    Collections.sort(result, Comparator.comparing(Module::getName));
     if (primaryModule != null) {
       result.add(0, primaryModule);
     }

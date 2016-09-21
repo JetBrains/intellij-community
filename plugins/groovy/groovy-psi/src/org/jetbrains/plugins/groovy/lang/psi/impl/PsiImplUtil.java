@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -964,7 +964,9 @@ public class PsiImplUtil {
     while (expr instanceof GrReferenceExpression) {
       final PsiElement nameElement = ((GrReferenceExpression)expr).getReferenceNameElement();
       if (((GrReferenceExpression)expr).getTypeArguments().length > 0) return false;
-      if (nameElement == null || nameElement.getNode().getElementType() != GroovyTokenTypes.mIDENT) return false;
+      if (nameElement == null || !TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(nameElement.getNode().getElementType())) {
+        return false;
+      }
       IElementType dotType = ((GrReferenceExpression)expr).getDotTokenType();
       if (dotType != null && dotType != GroovyTokenTypes.mDOT) return false;
       expr = ((GrReferenceExpression)expr).getQualifierExpression();

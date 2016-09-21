@@ -47,7 +47,7 @@ import java.util.Map;
  * User: anna
  */
 public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInspectionTool {
-  public static final Logger LOG = Logger.getInstance("#" + LambdaCanBeMethodReferenceInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + LambdaCanBeMethodReferenceInspection.class.getName());
 
   public boolean REPLACE_INSTANCEOF;
   public boolean REPLACE_CAST;

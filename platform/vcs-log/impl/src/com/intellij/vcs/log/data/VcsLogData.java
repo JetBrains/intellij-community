@@ -29,9 +29,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.index.VcsLogIndex;
+import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
+import com.intellij.vcs.log.impl.FatalErrorConsumer;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +46,12 @@ import java.util.Set;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
-  static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
+  private static final Consumer<Exception> FAILING_EXCEPTION_HANDLER = e -> {
+    if (!(e instanceof ProcessCanceledException)) {
+      LOG.error(e);
+    }
+  };
+  public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
@@ -71,11 +78,12 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull private final VcsLogRefresherImpl myRefresher;
   @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private final Consumer<Exception> myFatalErrorsConsumer;
+  @NotNull private final FatalErrorConsumer myFatalErrorsConsumer;
+  @NotNull private final VcsLogIndex myIndex;
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                    @NotNull Consumer<Exception> fatalErrorsConsumer) {
+                    @NotNull FatalErrorConsumer fatalErrorsConsumer) {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
@@ -86,14 +94,10 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myTopCommitsDetailsCache = new TopCommitsCache(myHashMap);
     myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
     myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
+    myIndex = new VcsLogPersistentIndex(myProject, myHashMap, logProviders, myFatalErrorsConsumer, this);
 
-    myRefresher =
-      new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myTopCommitsDetailsCache,
-                              dataPack -> fireDataPackChangeEvent(dataPack), e -> {
-        if (!(e instanceof ProcessCanceledException)) {
-          LOG.error(e);
-        }
-      }, RECENT_COMMITS_COUNT, this);
+    myRefresher = new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myIndex, myTopCommitsDetailsCache,
+                                          this::fireDataPackChangeEvent, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT, this);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
   }
@@ -134,7 +138,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull
   public VisiblePackBuilder createVisiblePackBuilder() {
-    return new VisiblePackBuilder(myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter);
+    return new VisiblePackBuilder(myLogProviders, myHashMap, myTopCommitsDetailsCache, myDetailsGetter, myIndex);
   }
 
   @Override
@@ -289,5 +293,10 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
   @NotNull
   public TopCommitsCache getTopCommitsCache() {
     return myTopCommitsDetailsCache;
+  }
+
+  @NotNull
+  public VcsLogIndex getIndex() {
+    return myIndex;
   }
 }

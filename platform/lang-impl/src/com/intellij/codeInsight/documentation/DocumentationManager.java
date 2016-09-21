@@ -35,6 +35,7 @@ import com.intellij.lang.documentation.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -63,8 +64,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -77,7 +76,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
@@ -711,6 +709,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
 
+    ModalityState modality = ModalityState.defaultModalityState();
+
     myUpdateDocAlarm.addRequest(() -> {
       if (myProject.isDisposed()) return;
       LOG.debug("Started fetching documentation...");
@@ -777,7 +777,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         // Set panel name so that it is announced by readers when it gets the focus
         AccessibleContextUtil.setName(component, getTitle(element, false));
         callback.setDone();
-      });
+      }, modality);
     }, 10);
     return callback;
   }

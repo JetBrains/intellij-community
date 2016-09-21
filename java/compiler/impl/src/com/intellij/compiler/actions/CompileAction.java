@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.task.ProjectTaskManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,12 +38,12 @@ public class CompileAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, Project project) {
     final Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
     if (module != null) {
-      CompilerManager.getInstance(project).compile(module, null);
+      ProjectTaskManager.getInstance(project).rebuild(module);
     }
     else {
       VirtualFile[] files = getCompilableFiles(project, dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
       if (files.length > 0) {
-        CompilerManager.getInstance(project).compile(files, null);
+        ProjectTaskManager.getInstance(project).compile(files);
       }
     }
 

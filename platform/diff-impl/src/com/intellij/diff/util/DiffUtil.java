@@ -692,8 +692,8 @@ public class DiffUtil {
     }
 
     ContainerUtil.sort(indexes, (i1, i2) -> {
-      T val1 = values.get(indexes.get(i1));
-      T val2 = values.get(indexes.get(i2));
+      T val1 = values.get(i1);
+      T val2 = values.get(i2);
       return comparator.compare(val1, val2);
     });
 

@@ -646,7 +646,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static void drawCenteredString(Graphics2D g2d, FontMetrics fm, int fontHeight, String text, int x, int y) {
-    g2d.drawString(text, x - fm.stringWidth(text) / 2, y + fontHeight / 2);
+    int width = fm.stringWidth(text);
+    UIUtil.drawCenteredString(g2d, new Rectangle(x - width / 2, y - fontHeight / 2, width, fontHeight), text);
   }
 
   private static class ValueCellRenderer implements TableCellRenderer {

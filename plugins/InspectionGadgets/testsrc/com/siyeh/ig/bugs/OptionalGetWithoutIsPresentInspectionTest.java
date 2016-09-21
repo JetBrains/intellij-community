@@ -111,6 +111,24 @@ public class OptionalGetWithoutIsPresentInspectionTest extends LightInspectionTe
            "}");
   }
 
+  public void testNested() {
+    doTest("import java.util.Optional;" +
+           "class X {" +
+           "  void test(Optional<String> opt, String action) {" +
+           "    if(!opt.isPresent()) {" +
+           "      throw new IllegalArgumentException();" +
+           "    }" +
+           "    switch(action) {" +
+           "      case \"case\":" +
+           "        System.out.println(opt.get());" +
+           "        break;" +
+           "      default:" +
+           "        System.err.println(opt.get());" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
   public void testOptionalGetWithoutIsPresent() {
     doTest();
   }

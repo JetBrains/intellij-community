@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -24,11 +23,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -37,9 +34,13 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.SvnWorkingCopyFormatHolder;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
 import org.jetbrains.idea.svn.api.ClientFactory;
@@ -58,7 +59,6 @@ import org.tmatesoft.svn.core.wc.ISVNFileFilter;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -150,16 +150,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
         VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
         if (vf != null) {
-          vf.refresh(true, true, new Runnable() {
-            public void run() {
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  notifyListener();
-                }
-              });
-            }
-          });
+          vf.refresh(true, true, () -> getApplication().invokeLater(() -> notifyListener()));
         }
         else {
           notifyListener();

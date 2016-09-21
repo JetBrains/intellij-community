@@ -20,9 +20,9 @@ import com.intellij.find.FindSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @State(
@@ -36,7 +36,9 @@ final class FindInProjectRecents extends FindInProjectSettingsBase implements Fi
 
   @NotNull
   public List<String> getRecentDirectories() {
-    return ContainerUtil.concat(FindSettings.getInstance().getRecentDirectories(), super.getRecentDirectories());
+    ArrayList<String> strings = new ArrayList<>(FindSettings.getInstance().getRecentDirectories());
+    strings.addAll(super.getRecentDirectories());
+    return strings;
   }
 
   @NotNull

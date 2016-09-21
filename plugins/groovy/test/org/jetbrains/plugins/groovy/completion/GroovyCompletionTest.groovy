@@ -213,9 +213,9 @@ class Foo<A, B> {
 
   void testWhileInstanceof() { doBasicTest() }
 
-  void testCompletionInParameterListInClosableBlock() { doBasicTest(); }
+  void testCompletionInParameterListInClosableBlock() { doBasicTest() }
 
-  void testCompletionInParameterListInClosableBlock3() { doBasicTest(); }
+  void testCompletionInParameterListInClosableBlock3() { doBasicTest() }
 
   void testCompletionInParameterListInClosableBlock2() {
     myFixture.testCompletionVariants(getTestName(false) + ".groovy", "aDouble")
@@ -262,9 +262,9 @@ class Foo<A, B> {
     assert presentation.typeText == 'Integer'
   }
 
-  void testIntCompletionInPlusMethod() { doBasicTest(); }
+  void testIntCompletionInPlusMethod() { doBasicTest() }
 
-  void testIntCompletionInGenericParameter() { doBasicTest(); }
+  void testIntCompletionInGenericParameter() { doBasicTest() }
 
   void testWhenSiblingIsStaticallyImported_Method() {
     myFixture.addFileToProject "foo/Foo.groovy", """package foo
