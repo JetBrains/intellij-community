@@ -19,6 +19,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaTokenType;
@@ -63,6 +64,9 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
     return inputData -> {
       final CharSequence contentAsText = inputData.getContentAsText();
       if (!JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(inputData.getFile())) {
+        return Collections.emptyMap();
+      }
+      if (ApplicationManager.getApplication().isCommandLine()) {
         return Collections.emptyMap();
       }
       if (!StringUtil.contains(contentAsText, PsiKeyword.NULL)) {
