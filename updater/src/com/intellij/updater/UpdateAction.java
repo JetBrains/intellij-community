@@ -21,7 +21,8 @@ public class UpdateAction extends BaseUpdateAction {
   @Override
   protected void doBuildPatchFile(File olderFile, File newerFile, ZipOutputStream patchOutput) throws IOException {
     if (Utils.isSymlink(newerFile)) {
-      throw new IOException("Updates to symlinks not supported");
+      throw new IOException(
+        String.format("Updates to symlinks not supported: %s -> %s", newerFile.getAbsolutePath(), newerFile.getCanonicalPath()));
     }
     if (!myIsMove) {
       patchOutput.putNextEntry(new ZipEntry(myPath));
