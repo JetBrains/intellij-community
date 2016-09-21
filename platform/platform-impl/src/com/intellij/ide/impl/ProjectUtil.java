@@ -110,8 +110,7 @@ public class ProjectUtil {
       return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
     }
 
-    if (path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        virtualFile.isDirectory() && new File(path, Project.DIRECTORY_STORE_FOLDER).exists()) {
+    if (ProjectKt.isValidProjectPath(path, true)) {
       return openProject(path, projectToClose, forceOpenInNewFrame);
     }
 
@@ -153,10 +152,13 @@ public class ProjectUtil {
       return null;
     }
 
-    if (file.isDirectory() && !new File(file, Project.DIRECTORY_STORE_FOLDER).exists()) {
-      String message = IdeBundle.message("error.project.file.does.not.exist", new File(file, Project.DIRECTORY_STORE_FOLDER).getPath());
-      Messages.showErrorDialog(message, CommonBundle.getErrorTitle());
-      return null;
+    if (file.isDirectory()) {
+      File dir = new File(file, Project.DIRECTORY_STORE_FOLDER);
+      if (!dir.exists()) {
+        String message = IdeBundle.message("error.project.file.does.not.exist", dir.getPath());
+        Messages.showErrorDialog(message, CommonBundle.getErrorTitle());
+        return null;
+      }
     }
 
     Project existing = findAndFocusExistingProjectForPath(path);
