@@ -32,17 +32,19 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
-  private final String myText;
+  private final String myQualifierText;
+  private final String myReplacementText;
 
-  private ReplaceWithObjectsEqualsFix(String text) {
-    myText = text;
+  private ReplaceWithObjectsEqualsFix(String qualifierText, String replacementText) {
+    myQualifierText = qualifierText;
+    myReplacementText = replacementText;
   }
 
   @Nls
   @NotNull
   @Override
   public String getName() {
-    return "Replace '" + myText + ".equals(...)' with 'Objects.equals(" + myText + ", ...)'";
+    return "Replace '" + myQualifierText + ".equals(...)' with 'Objects.equals(" + myReplacementText + ", ...)'";
   }
 
   @Nls
@@ -57,11 +59,10 @@ class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
     PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
     if (call == null || !FileModificationService.getInstance().prepareFileForWrite(call.getContainingFile())) return;
 
-    PsiElement qualifier = call.getMethodExpression().getQualifier();
     PsiExpression[] args = call.getArgumentList().getExpressions();
-    if (qualifier == null || args.length != 1) return;
+    if (args.length != 1) return;
 
-    String replacementText = "java.util.Objects.equals(" + qualifier.getText() + ", " + args[0].getText() + ")";
+    String replacementText = "java.util.Objects.equals(" + myReplacementText + ", " + args[0].getText() + ")";
     PsiElement replaced = call.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(replacementText, call));
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(((PsiMethodCallExpression)replaced).getMethodExpression());
   }
@@ -75,13 +76,14 @@ class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
     }
 
     PsiExpression qualifier = methodExpression.getQualifierExpression();
-    if (qualifier == null) return null;
+    PsiExpression noParens = PsiUtil.skipParenthesizedExprDown(qualifier);
+    if (noParens == null) return null;
 
     PsiMethod method = call.resolveMethod();
     if (method != null &&
         method.getParameterList().getParametersCount() == 1 &&
         method.getParameterList().getParameters()[0].getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-      return new ReplaceWithObjectsEqualsFix(qualifier.getText());
+      return new ReplaceWithObjectsEqualsFix(qualifier.getText(), noParens.getText());
     }
     return null;
   }
