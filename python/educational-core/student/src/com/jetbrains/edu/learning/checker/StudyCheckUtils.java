@@ -124,7 +124,7 @@ public class StudyCheckUtils {
       return;
     }
     final VirtualFile answerFile = getCopyWithAnswers(taskDir, virtualFile, taskFile, answerTaskFile);
-    for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getAnswerPlaceholders()) {
+    for (final AnswerPlaceholder answerPlaceholder : answerTaskFile.getActivePlaceholders()) {
       final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) {
         continue;
@@ -150,7 +150,7 @@ public class StudyCheckUtils {
         TaskFile.copy(source, target);
         EduDocumentListener listener = new EduDocumentListener(target);
         document.addDocumentListener(listener);
-        for (AnswerPlaceholder answerPlaceholder : target.getAnswerPlaceholders()) {
+        for (AnswerPlaceholder answerPlaceholder : target.getActivePlaceholders()) {
           final int start = answerPlaceholder.getOffset();
           final int end = start + answerPlaceholder.getRealLength();
           final String text = answerPlaceholder.getPossibleAnswer();

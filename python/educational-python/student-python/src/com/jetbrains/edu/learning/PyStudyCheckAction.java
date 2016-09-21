@@ -101,7 +101,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
           for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
             final String name = entry.getKey();
             final TaskFile taskFile = entry.getValue();
-            if (taskFile.getAnswerPlaceholders().size() < 2) {
+            if (taskFile.getActivePlaceholders().size() < 2) {
               continue;
             }
             final Course course = myTaskManger.getCourse();
@@ -141,7 +141,7 @@ public class PyStudyCheckAction extends StudyCheckAction {
       TaskFile taskFile = entry.getValue();
       VirtualFile virtualFile = taskDir.findChild(name);
       if (virtualFile != null) {
-        if (!taskFile.getAnswerPlaceholders().isEmpty()) {
+        if (!taskFile.getActivePlaceholders().isEmpty()) {
           taskVirtualFile = virtualFile;
         }
       }

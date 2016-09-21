@@ -72,7 +72,7 @@ public class PyCCCommandLineState extends PythonCommandLineState {
   private String getFirstTaskFilePath() {
     for (Map.Entry<String, TaskFile> entry : myTask.getTaskFiles().entrySet()) {
       String path = getTaskFilePath(entry.getKey());
-      if (!entry.getValue().getAnswerPlaceholders().isEmpty()) {
+      if (!entry.getValue().getActivePlaceholders().isEmpty()) {
         return path;
       }
       VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);

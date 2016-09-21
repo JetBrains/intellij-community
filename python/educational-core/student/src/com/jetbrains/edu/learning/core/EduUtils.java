@@ -87,7 +87,7 @@ public class EduUtils {
       try {
         fileWindows = taskDir.createChildData(taskFile, name);
         printWriter = new PrintWriter(new FileOutputStream(fileWindows.getPath()));
-        for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+        for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
           int length = answerPlaceholder.getRealLength();
           int start = answerPlaceholder.getOffset();
           final String windowDescription = document.getText(new TextRange(start, start + length));
@@ -163,7 +163,7 @@ public class EduUtils {
     EduDocumentListener listener = new EduDocumentListener(taskFile, false);
     studentDocument.addDocumentListener(listener);
 
-    for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
       replaceAnswerPlaceholder(project, studentDocument, placeholder);
     }
     studentDocument.removeDocumentListener(listener);

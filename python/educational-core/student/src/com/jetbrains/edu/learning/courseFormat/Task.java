@@ -42,6 +42,8 @@ public class Task implements StudyItem {
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
 
+  private int myActiveStepIndex = 0;
+
   public Task() {}
 
   public Task(@NotNull final String name) {
@@ -219,7 +221,7 @@ public class Task implements StudyItem {
   public void setStatus(StudyStatus status) {
     myStatus = status;
     for (TaskFile taskFile : taskFiles.values()) {
-      for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+      for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
         placeholder.setStatus(status);
       }
     }
@@ -249,5 +251,13 @@ public class Task implements StudyItem {
     if (date == null) return true;
     if (myUpdateDate == null) return false;
     return !date.after(myUpdateDate);
+  }
+
+  public int getActiveStepIndex() {
+    return myActiveStepIndex;
+  }
+
+  public void setActiveStepIndex(int activeStepIndex) {
+    myActiveStepIndex = activeStepIndex;
   }
 }

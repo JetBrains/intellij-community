@@ -30,7 +30,7 @@ public class StudyFillPlaceholdersAction extends AnAction {
       final Document document = studyState.getEditor().getDocument();
       final TaskFile realTaskFile = taskFile;
       CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-        for (AnswerPlaceholder placeholder : realTaskFile.getAnswerPlaceholders()) {
+        for (AnswerPlaceholder placeholder : realTaskFile.getActivePlaceholders()) {
           String answer = placeholder.getPossibleAnswer();
           if (answer == null) {
             continue;
@@ -63,7 +63,7 @@ public class StudyFillPlaceholdersAction extends AnAction {
         return;
       }
       TaskFile taskFile = studyState.getTaskFile();
-      if (taskFile.getAnswerPlaceholders().isEmpty()) {
+      if (taskFile.getActivePlaceholders().isEmpty()) {
         presentation.setEnabledAndVisible(false);
       }
     }
