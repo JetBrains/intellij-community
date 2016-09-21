@@ -21,9 +21,11 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.exists
+import java.nio.file.InvalidPathException
 import java.nio.file.Paths
 
 val Project.isDirectoryBased: Boolean
@@ -47,7 +49,22 @@ fun isValidProjectPath(path: String, fastCheckIpr: Boolean = false): Boolean {
     return true
   }
 
-  val file = Paths.get(path)
+  val file = try {
+    Paths.get(path)
+  }
+  catch (e: InvalidPathException) {
+    return false
+  }
+
   val attributes = file.basicAttributesIfExists() ?: return false
   return !attributes.isDirectory /* ipr */ || file.resolve(Project.DIRECTORY_STORE_FOLDER).exists()
+}
+
+fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
+  try {
+    return Paths.get(FileUtil.toSystemDependentName(parent.path), Project.DIRECTORY_STORE_FOLDER).exists()
+  }
+  catch (e: InvalidPathException) {
+    return false
+  }
 }
