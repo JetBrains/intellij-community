@@ -37,19 +37,19 @@ import java.util.Map;
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 import static com.intellij.vcs.log.ui.frame.CommitPanel.getCommitDetailsBackground;
 
-class ReferencesPanel extends JPanel {
+public class ReferencesPanel extends JPanel {
   public static final int H_GAP = 4;
   private static final int V_GAP = 0;
   public static final int PADDING = 3;
   @NotNull private List<VcsRef> myReferences;
 
-  ReferencesPanel() {
+  public ReferencesPanel() {
     super(new WrappedFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)));
     myReferences = Collections.emptyList();
     setOpaque(false);
   }
 
-  void setReferences(@NotNull List<VcsRef> references) {
+  public void setReferences(@NotNull List<VcsRef> references) {
     myReferences = references;
     update();
   }

@@ -19,6 +19,7 @@ import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
+import com.intellij.vcs.log.ui.frame.ReferencesPanel;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   private static final Logger LOG = Logger.getInstance(GraphCommitCellRenderer.class);
@@ -109,7 +112,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   @Override
-  protected void customizeCellRenderer(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+  public void customizeCellRenderer(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (value == null) {
       return;
     }
@@ -181,6 +184,25 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
   public static boolean isRedesignedLabels() {
     return Registry.is("vcs.log.labels.redesign");
+  }
+
+  @Nullable
+  public JComponent getTooltip(@NotNull Object value, @NotNull Point point, int width, int height) {
+    if (!isRedesignedLabels()) return null;
+
+    GraphCommitCell cell = getAssertCommitCell(value);
+    List<VcsRef> refs = cell.getRefsToThisCommit().stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList());
+    if (!refs.isEmpty()) {
+      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
+      customizeRefsPainter(myReferencePainter, refs, getForeground());
+      if (myReferencePainter.getSize().getWidth() - LabelPainter.GRADIENT_WIDTH >= width - point.getX()) {
+        ReferencesPanel referencesPanel = new ReferencesPanel();
+        refs.sort(myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
+        referencesPanel.setReferences(refs);
+        return referencesPanel;
+      }
+    }
+    return null;
   }
 
   private static class PaintInfo {

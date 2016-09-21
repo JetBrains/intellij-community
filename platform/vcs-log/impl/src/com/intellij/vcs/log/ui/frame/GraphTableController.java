@@ -15,7 +15,11 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.ide.IdeTooltip;
+import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.NodePrintElement;
@@ -26,10 +30,12 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -44,15 +50,18 @@ public class GraphTableController {
   @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final VcsLogData myLogData;
   @NotNull private final GraphCellPainter myGraphCellPainter;
+  @NotNull private final GraphCommitCellRenderer myCommitRenderer;
 
   public GraphTableController(@NotNull VcsLogGraphTable table,
                               @NotNull VcsLogUiImpl ui,
                               @NotNull VcsLogData logData,
-                              @NotNull GraphCellPainter graphCellPainter) {
+                              @NotNull GraphCellPainter graphCellPainter,
+                              @NotNull GraphCommitCellRenderer commitRenderer) {
     myTable = table;
     myUi = ui;
     myLogData = logData;
     myGraphCellPainter = graphCellPainter;
+    myCommitRenderer = commitRenderer;
 
     MouseAdapter mouseAdapter = new MyMouseAdapter();
     table.addMouseMotionListener(mouseAdapter);
@@ -75,9 +84,7 @@ public class GraphTableController {
     return myGraphCellPainter.getElementUnderCursor(printElements, point.x, point.y);
   }
 
-  private void performGraphAction(int row, @NotNull MouseEvent e, @NotNull GraphAction.Type actionType) {
-    PrintElement printElement = findPrintElement(row, e);
-
+  private void performGraphAction(@Nullable PrintElement printElement, @NotNull MouseEvent e, @NotNull GraphAction.Type actionType) {
     boolean isClickOnGraphElement = actionType == GraphAction.Type.MOUSE_CLICK && printElement != null;
     if (isClickOnGraphElement) {
       triggerElementClick(printElement);
@@ -130,6 +137,18 @@ public class GraphTableController {
                      PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
   }
 
+  private void showTooltip(int row, int column, @NotNull MouseEvent e) {
+    JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, column), calcPoint4Graph(e.getPoint()),
+                                                          myTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN)
+                                                            .getWidth(), myTable.getRowHeight());
+
+    if (tipComponent != null) {
+      IdeTooltip tooltip =
+        new IdeTooltip(myTable, e.getPoint(), new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.below);
+      IdeTooltipManager.getInstance().show(tooltip, false);
+    }
+  }
+
   private void performRootColumnAction() {
     if (myLogData.isMultiRoot()) {
       VcsLogUtil.triggerUsage("RootColumnClick");
@@ -164,7 +183,10 @@ public class GraphTableController {
           performRootColumnAction();
         }
         else if (column == GraphTableModel.COMMIT_COLUMN) {
-          performGraphAction(row, e, GraphAction.Type.MOUSE_CLICK);
+          PrintElement printElement = findPrintElement(row, e);
+          if (printElement != null) {
+            performGraphAction(printElement, e, GraphAction.Type.MOUSE_CLICK);
+          }
         }
       }
     }
@@ -186,7 +208,12 @@ public class GraphTableController {
           return;
         }
         else if (column == GraphTableModel.COMMIT_COLUMN) {
-          performGraphAction(row, e, GraphAction.Type.MOUSE_OVER);
+          PrintElement printElement = findPrintElement(row, e);
+          performGraphAction(printElement, e,
+                             GraphAction.Type.MOUSE_OVER); // if printElement is null, still need to unselect whatever was selected in a graph
+          if (printElement == null) {
+            showTooltip(row, column, e);
+          }
           return;
         }
       }
