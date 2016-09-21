@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -426,7 +426,11 @@ public class VfsUtil extends VfsUtilCore {
     }.execute().throwException().getResultObject();
   }
 
-  public static VirtualFile createDirectoryIfMissing(VirtualFile parent, String relativePath) throws IOException {
+  public static VirtualFile createDirectoryIfMissing(@Nullable VirtualFile parent, String relativePath) throws IOException {
+    if (parent == null) {
+      return createDirectoryIfMissing(relativePath);
+    }
+
     for (String each : StringUtil.split(relativePath, "/")) {
       VirtualFile child = parent.findChild(each);
       if (child == null) {

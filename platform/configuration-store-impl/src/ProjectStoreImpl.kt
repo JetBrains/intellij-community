@@ -234,6 +234,8 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = if (!ignoreProjectStorageScheme && !isDirectoryBased) null else PathUtilRt.getParentPath(projectFilePath).nullize()
 
   override fun getDirectoryStoreFile() = directoryStorePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+
+  override fun getDirectoryStorePathOrBase() = PathUtilRt.getParentPath(projectFilePath)
 }
 
 private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
