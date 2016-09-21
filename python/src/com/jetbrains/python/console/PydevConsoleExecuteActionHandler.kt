@@ -39,7 +39,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
                                             val consoleCommunication: ConsoleCommunication) : ProcessBackedConsoleExecuteActionHandler(processHandler, false), ConsoleCommunicationListener {
 
   private val project = myConsoleView.project
-  private val myEnterHandler = ConsoleEnterHandler()
+  private val myEnterHandler = PyConsoleEnterHandler()
   private var myIpythonInputPromptCount = 1
 
   var isEnabled = false
