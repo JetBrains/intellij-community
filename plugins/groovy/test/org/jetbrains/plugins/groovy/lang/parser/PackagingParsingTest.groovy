@@ -24,20 +24,20 @@ class PackagingParsingTest extends GroovyParsingTestCase {
     return super.basePath + "packaging"
   }
 
-  void testPack1() throws Throwable { doTest(); }
+  void testPack1() throws Throwable { doTest() }
 
-  void testPack2() throws Throwable { doTest(); }
+  void testPack2() throws Throwable { doTest() }
 
-  void testPack3() throws Throwable { doTest(); }
+  void testPack3() throws Throwable { doTest() }
 
-  void testPack4() throws Throwable { doTest(); }
+  void testPack4() throws Throwable { doTest() }
 
-  void testPack5() throws Throwable { doTest(); }
+  void testPack5() throws Throwable { doTest() }
 
-  void testPack6() throws Throwable { doTest(); }
+  void testPack6() throws Throwable { doTest() }
 
-  void testPack7() throws Throwable { doTest(); }
+  void testPack7() throws Throwable { doTest() }
 
-  void testPack8() throws Throwable { doTest(); }
+  void testPack8() throws Throwable { doTest() }
 
 }

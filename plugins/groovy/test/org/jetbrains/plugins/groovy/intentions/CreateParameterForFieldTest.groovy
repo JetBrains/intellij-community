@@ -26,9 +26,9 @@ class CreateParameterForFieldTest extends GrIntentionTestCase {
     return TestUtils.getTestDataPath() + "intentions/createParameterForField/"
   }
 
-  void testFromConstructor() { doTest(); }
+  void testFromConstructor() { doTest() }
 
-  void testFromField() { doTest(); }
+  void testFromField() { doTest() }
 
   protected void doTest() {
     doTest("Add constructor parameter for field", true)

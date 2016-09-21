@@ -204,9 +204,9 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue("Exception not found", Arrays.binarySearch(myItems, "xxx") > 0)
   }
 
-  void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest(); }
+  void testClassLiteralInArrayAnnoInitializer() throws Throwable { doTest() }
 
-  void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest(); }
+  void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest() }
 
   void testReferenceParameters() throws Exception {
     configureByFile("ReferenceParameters.java")
@@ -398,13 +398,13 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
    checkResult()
   }
 
-  void testFieldType() { doTest(); }
+  void testFieldType() { doTest() }
 
   void testPackageInAnnoParam() throws Throwable {
     doTest()
   }
 
-  void testAnonymousTypeParameter() throws Throwable { doTest(); }
+  void testAnonymousTypeParameter() throws Throwable { doTest() }
 
   void testClassLiteralInAnnoParam() throws Throwable {
     doTest()
@@ -473,9 +473,9 @@ public class Outer {
     doTest('\n')
   }
 
-  void testLocalClassName() throws Throwable { doTest(); }
+  void testLocalClassName() throws Throwable { doTest() }
 
-  void testAssigningFieldForTheFirstTime() throws Throwable { doTest(); }
+  void testAssigningFieldForTheFirstTime() throws Throwable { doTest() }
 
   void testClassTypeParameters() throws Throwable {
     configure()
@@ -538,9 +538,9 @@ public class Outer {
     doTest()
   }
 
-  void testBreakInIfCondition() throws Throwable { doTest(); }
+  void testBreakInIfCondition() throws Throwable { doTest() }
 
-  void testAccessStaticViaInstance() throws Throwable { doTest(); }
+  void testAccessStaticViaInstance() throws Throwable { doTest() }
 
   void testIfConditionLt() {
     configure()
@@ -559,7 +559,7 @@ public class Outer {
     checkResult()
   }
 
-  void testContinueLabel() throws Throwable { doTest(); }
+  void testContinueLabel() throws Throwable { doTest() }
 
   void testAnonymousProcess() {
     myFixture.addClass 'package java.lang; public class Process {}'
@@ -584,7 +584,7 @@ public class ListUtils {
     assert !('null' in myFixture.lookupElementStrings)
   }
 
-  void testLastExpressionInFor() throws Throwable { doTest(); }
+  void testLastExpressionInFor() throws Throwable { doTest() }
 
   void testOnlyKeywordsInsideSwitch() throws Throwable {
     configureByFile(getTestName(false) + ".java")
@@ -621,7 +621,7 @@ public class ListUtils {
     checkResult()
   }
 
-  void testEnclosingThis() throws Throwable { doTest(); }
+  void testEnclosingThis() throws Throwable { doTest() }
 
   void testSeamlessConstant() throws Throwable {
     configureByFile(getTestName(false) + ".java")
@@ -629,7 +629,7 @@ public class ListUtils {
     checkResult()
   }
 
-  void testDefaultAnnoParam() throws Throwable { doTest(); }
+  void testDefaultAnnoParam() throws Throwable { doTest() }
 
   void testSpaceAfterLookupString() throws Throwable {
     configureByFile(getTestName(false) + ".java")
@@ -684,7 +684,7 @@ public class ListUtils {
     doTest()
   }
 
-  void testInnerEnumConstant() throws Throwable { doTest('\n'); }
+  void testInnerEnumConstant() throws Throwable { doTest('\n') }
 
   void testNoExpectedReturnTypeDuplication() {
     configure()
@@ -717,15 +717,15 @@ public class ListUtils {
     doTest()
   }
 
-  void testNothingAfterNumericLiteral() throws Throwable { doAntiTest(); }
+  void testNothingAfterNumericLiteral() throws Throwable { doAntiTest() }
 
-  void testNothingAfterTypeParameterQualifier() { doAntiTest(); }
+  void testNothingAfterTypeParameterQualifier() { doAntiTest() }
 
-  void testExcludeVariableBeingDeclared() { doAntiTest(); }
+  void testExcludeVariableBeingDeclared() { doAntiTest() }
 
-  void testExcludeVariableBeingDeclared2() { doAntiTest(); }
+  void testExcludeVariableBeingDeclared2() { doAntiTest() }
 
-  void testSpacesAroundEq() throws Throwable { doTest('='); }
+  void testSpacesAroundEq() throws Throwable { doTest('=') }
 
   void _testClassBeforeCast() throws Throwable { doTest '\n' }
 
@@ -755,7 +755,7 @@ public class ListUtils {
     checkResult()
   }
 
-  void testFieldNegation() throws Throwable { doTest('!'); }
+  void testFieldNegation() throws Throwable { doTest('!') }
 
   void testDefaultInSwitch() throws Throwable { doTest() }
 
@@ -797,11 +797,11 @@ public class ListUtils {
     doTest()
   }
 
-  void testSecondMethodParameter() throws Throwable { doTest(); }
+  void testSecondMethodParameter() throws Throwable { doTest() }
 
-  void testReturnInCase() throws Throwable { doTest(); }
+  void testReturnInCase() throws Throwable { doTest() }
 
-  void testUnboxedConstantsInCase() throws Throwable { doTest(); }
+  void testUnboxedConstantsInCase() throws Throwable { doTest() }
 
   void testAnnotationWithoutValueMethod() throws Throwable {
     configureByFile(getTestName(false) + ".java")
@@ -858,13 +858,13 @@ public class ListUtils {
     doTest()
   }
 
-  void testNoSemicolonAfterExistingParenthesesEspeciallyIfItsACast() throws Throwable { doTest(); }
+  void testNoSemicolonAfterExistingParenthesesEspeciallyIfItsACast() throws Throwable { doTest() }
 
-  void testReturningTypeVariable() throws Throwable { doTest(); }
+  void testReturningTypeVariable() throws Throwable { doTest() }
 
-  void testReturningTypeVariable2() throws Throwable { doTest(); }
+  void testReturningTypeVariable2() throws Throwable { doTest() }
 
-  void testReturningTypeVariable3() throws Throwable { doTest(); }
+  void testReturningTypeVariable3() throws Throwable { doTest() }
 
   void testImportInGenericType() throws Throwable {
     configure()
@@ -873,7 +873,7 @@ public class ListUtils {
     checkResult()
   }
 
-  void testCaseTailType() throws Throwable { doTest(); }
+  void testCaseTailType() throws Throwable { doTest() }
 
   def doPrimitiveTypeTest() {
     configure()
@@ -963,7 +963,7 @@ public class ListUtils {
     checkResult()
   }
 
-  void testSecondAnonymousClassParameter() { doTest(); }
+  void testSecondAnonymousClassParameter() { doTest() }
 
   void testSpaceAfterReturn() throws Throwable {
     configure()
@@ -980,7 +980,7 @@ public class ListUtils {
     assertStringItems "fooa", "foob"
   }
 
-  void testNoReturnInTernary() throws Throwable { doTest(); }
+  void testNoReturnInTernary() throws Throwable { doTest() }
 
   void testWildcardsInLookup() throws Exception {
     configure()
@@ -999,11 +999,11 @@ public class ListUtils {
 
   void testSmartEnterInsideArrayBrackets() { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR as String) }
 
-  void testTabReplacesMethodNameWithLocalVariableName() throws Throwable { doTest('\t'); }
+  void testTabReplacesMethodNameWithLocalVariableName() throws Throwable { doTest('\t') }
 
-  void testMethodParameterAnnotationClass() throws Throwable { doTest(); }
+  void testMethodParameterAnnotationClass() throws Throwable { doTest() }
 
-  void testInnerAnnotation() { doTest('\n'); }
+  void testInnerAnnotation() { doTest('\n') }
 
   void testPrimitiveCastOverwrite() throws Throwable { doTest() }
 
@@ -1016,11 +1016,11 @@ public class ListUtils {
     doTest ' '
   }
 
-  void testEnumConstantFromEnumMember() throws Throwable { doTest(); }
+  void testEnumConstantFromEnumMember() throws Throwable { doTest() }
 
-  void testPrimitiveMethodParameter() throws Throwable { doTest(); }
+  void testPrimitiveMethodParameter() throws Throwable { doTest() }
 
-  void testNewExpectedClassParens() throws Throwable { doTest('\n'); }
+  void testNewExpectedClassParens() throws Throwable { doTest('\n') }
 
   void testQualifyInnerMembers() throws Throwable { doTest('\n') }
 

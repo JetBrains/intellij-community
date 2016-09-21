@@ -103,83 +103,83 @@ class ExtractMethodTest extends LightGroovyTestCase {
     }
   }
 
-  void testClos_em() throws Throwable { doTest(); }
+  void testClos_em() throws Throwable { doTest() }
 
-  void testEm1() throws Throwable { doTest(); }
+  void testEm1() throws Throwable { doTest() }
 
-  void testEnum1() throws Throwable { doTest(); }
+  void testEnum1() throws Throwable { doTest() }
 
-  void testErr1() throws Throwable { doTest(); }
+  void testErr1() throws Throwable { doTest() }
 
-  void testExpr1() throws Throwable { doTest(); }
+  void testExpr1() throws Throwable { doTest() }
 
-  void testExpr2() throws Throwable { doTest(); }
+  void testExpr2() throws Throwable { doTest() }
 
-  void testExpr3() throws Throwable { doTest(); }
+  void testExpr3() throws Throwable { doTest() }
 
-  void testInput1() throws Throwable { doTest(); }
+  void testInput1() throws Throwable { doTest() }
 
-  void testInput2() throws Throwable { doTest(); }
+  void testInput2() throws Throwable { doTest() }
 
-  void testInter1() throws Throwable { doTest(); }
+  void testInter1() throws Throwable { doTest() }
 
-  void testInter2() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
+  void testInter2() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow") }
 
-  void testInter3() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
+  void testInter3() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow") }
 
-  void testInter4() throws Throwable { doTest(); }
+  void testInter4() throws Throwable { doTest() }
 
-  void testMeth_em1() throws Throwable { doTest(); }
+  void testMeth_em1() throws Throwable { doTest() }
 
-  void testMeth_em2() throws Throwable { doTest(); }
+  void testMeth_em2() throws Throwable { doTest() }
 
-  void testMeth_em3() throws Throwable { doTest(); }
+  void testMeth_em3() throws Throwable { doTest() }
 
-  void testOutput1() throws Throwable { doTest(); }
+  void testOutput1() throws Throwable { doTest() }
 
-  void testResul1() throws Throwable { doTest(); }
+  void testResul1() throws Throwable { doTest() }
 
-  void testRet1() throws Throwable { doTest(); }
+  void testRet1() throws Throwable { doTest() }
 
-  void testRet2() throws Throwable { doTest(); }
+  void testRet2() throws Throwable { doTest() }
 
-  void testRet3() throws Throwable { doTest(); }
+  void testRet3() throws Throwable { doTest() }
 
-  void testRet4() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow"); }
+  void testRet4() throws Throwable { doAntiTest("Refactoring is not supported when return statement interrupts the execution flow") }
 
-  void testVen1() throws Throwable { doTest(); }
+  void testVen1() throws Throwable { doTest() }
 
-  void testVen2() throws Throwable { doTest(); }
+  void testVen2() throws Throwable { doTest() }
 
-  void testVen3() throws Throwable { doTest(); }
+  void testVen3() throws Throwable { doTest() }
 
-  void testForIn() throws Throwable { doTest(); }
+  void testForIn() throws Throwable { doTest() }
 
-  void testInCatch() { doTest(); }
+  void testInCatch() { doTest() }
 
-  void testClosureIt() throws Throwable { doTest(); }
+  void testClosureIt() throws Throwable { doTest() }
 
-  void testImplicitReturn() { doTest(); }
+  void testImplicitReturn() { doTest() }
 
-  void testMultiOutput1() { doTest(); }
+  void testMultiOutput1() { doTest() }
 
-  void testMultiOutput2() { doTest(); }
+  void testMultiOutput2() { doTest() }
 
-  void testMultiOutput3() { doTest(); }
+  void testMultiOutput3() { doTest() }
 
-  void testMultiOutput4() { doTest(); }
+  void testMultiOutput4() { doTest() }
 
-  void testMultiOutput5() { doTest(); }
+  void testMultiOutput5() { doTest() }
 
-  void testDontShortenRefsIncorrect() { doTest(); }
+  void testDontShortenRefsIncorrect() { doTest() }
 
-  void testLastBlockStatementInterruptsControlFlow() { doTest(); }
+  void testLastBlockStatementInterruptsControlFlow() { doTest() }
 
-  void testAOOBE() { doTest(); }
+  void testAOOBE() { doTest() }
 
-  void testWildCardReturnType() { doTest(); }
+  void testWildCardReturnType() { doTest() }
 
-  void testParamChangedInsideExtractedMethod() { doTest(); }
+  void testParamChangedInsideExtractedMethod() { doTest() }
 
   void testTerribleAppStatement() { doTest() }
 

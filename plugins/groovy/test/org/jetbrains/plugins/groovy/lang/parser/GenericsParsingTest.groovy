@@ -21,30 +21,30 @@ package org.jetbrains.plugins.groovy.lang.parser
 class GenericsParsingTest extends GroovyParsingTestCase {
   final String basePath = super.basePath + "generics"
 
-  void testErr1() throws Throwable { doTest(); }
+  void testErr1() throws Throwable { doTest() }
 
-  void testErr2() throws Throwable { doTest(); }
+  void testErr2() throws Throwable { doTest() }
 
-  void testErr3() throws Throwable { doTest(); }
+  void testErr3() throws Throwable { doTest() }
 
   void testErr4() { doTest() }
 
-  void testGenmethod1() throws Throwable { doTest(); }
+  void testGenmethod1() throws Throwable { doTest() }
 
-  void testGenmethod2() throws Throwable { doTest(); }
+  void testGenmethod2() throws Throwable { doTest() }
 
-  void testGenmethod3() throws Throwable { doTest(); }
+  void testGenmethod3() throws Throwable { doTest() }
 
-  void testGenmethod4() throws Throwable { doTest(); }
+  void testGenmethod4() throws Throwable { doTest() }
 
   void testGenmethod5() { doTest() }
 
-  void testTypeargs1() throws Throwable { doTest(); }
+  void testTypeargs1() throws Throwable { doTest() }
 
-  void testTypeparam1() throws Throwable { doTest(); }
+  void testTypeparam1() throws Throwable { doTest() }
 
-  void testTypeparam2() throws Throwable { doTest(); }
+  void testTypeparam2() throws Throwable { doTest() }
 
-  void testTypeparam3() throws Throwable { doTest(); }
+  void testTypeparam3() throws Throwable { doTest() }
 
 }

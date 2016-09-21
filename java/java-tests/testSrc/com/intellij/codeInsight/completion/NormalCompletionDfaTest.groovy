@@ -26,20 +26,20 @@ class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
   }
   
-  void testCastInstanceofedQualifier() { doTest(); }
-  void testCastInstanceofedQualifierInForeach() { doTest(); }
-  void testCastComplexInstanceofedQualifier() { doTest(); }
-  void _testCastIncompleteInstanceofedQualifier() { doTest(); }
+  void testCastInstanceofedQualifier() { doTest() }
+  void testCastInstanceofedQualifierInForeach() { doTest() }
+  void testCastComplexInstanceofedQualifier() { doTest() }
+  void _testCastIncompleteInstanceofedQualifier() { doTest() }
 
   void testCastTooComplexInstanceofedQualifier() { doAntiTest() }
   
-  void testDontCastInstanceofedQualifier() { doTest(); }
-  void testDontCastPartiallyInstanceofedQualifier() { doAntiTest(); }
-  void testQualifierCastingWithUnknownAssignments() { doTest(); }
-  void testQualifierCastingBeforeLt() { doTest(); }
-  void testCastQualifierForPrivateFieldReference() { doTest(); }
-  void testOrAssignmentDfa() { doTest(); }
-  void testFieldWithCastingCaret() { doTest(); }
+  void testDontCastInstanceofedQualifier() { doTest() }
+  void testDontCastPartiallyInstanceofedQualifier() { doAntiTest() }
+  void testQualifierCastingWithUnknownAssignments() { doTest() }
+  void testQualifierCastingBeforeLt() { doTest() }
+  void testCastQualifierForPrivateFieldReference() { doTest() }
+  void testOrAssignmentDfa() { doTest() }
+  void testFieldWithCastingCaret() { doTest() }
 
   void testCastTwice() {
     configureByTestName()

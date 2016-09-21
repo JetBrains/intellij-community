@@ -72,7 +72,7 @@ class GroovyDslExecutor {
     use(cats) { generator.with closure }
   }
 
-  String toString() { "${super.toString()}; file = $myFileName"; }
+  String toString() { "${super.toString()}; file = $myFileName" }
 
   static GroovyDslExecutor createAndRunExecutor(String text, String fileName) {
     def configuration = new CompilerConfiguration()
