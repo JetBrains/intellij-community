@@ -15,6 +15,7 @@
  */
 package com.intellij.project
 
+import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
@@ -40,8 +41,13 @@ fun getProjectStoreDirectory(file: VirtualFile): VirtualFile? {
   return if (file.isDirectory) file.findChild(Project.DIRECTORY_STORE_FOLDER) else null
 }
 
-fun isValidProjectPath(projectPath: String): Boolean {
-  val file = Paths.get(projectPath)
+@JvmOverloads
+fun isValidProjectPath(path: String, fastCheckIpr: Boolean = false): Boolean {
+  if (fastCheckIpr && path.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+    return true
+  }
+
+  val file = Paths.get(path)
   val attributes = file.basicAttributesIfExists() ?: return false
   return !attributes.isDirectory /* ipr */ || file.resolve(Project.DIRECTORY_STORE_FOLDER).exists()
 }
