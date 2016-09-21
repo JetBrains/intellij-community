@@ -33,13 +33,21 @@ public class FStringsAnnotator extends PyAnnotator {
   @Override
   public void visitPyStringLiteralExpression(PyStringLiteralExpression pyString) {
     for (ASTNode node : pyString.getStringNodes()) {
-      if (new StringNodeInfo(node).isFormatted()) {
+      final StringNodeInfo nodeInfo = new StringNodeInfo(node);
+      if (nodeInfo.isFormatted()) {
         final int nodeOffset = node.getTextRange().getStartOffset();
         final List<FragmentOffsets> fragments = FStringParser.parse(node.getText());
+        boolean hasUnclosedBrace = false;
         for (FragmentOffsets fragment : fragments) {
           if (fragment.getLeftBraceOffset() + 1 >= fragment.getContentEndOffset()) {
             report(fragment.getContentRange().shiftRight(nodeOffset), "Empty expressions are not allowed inside f-strings");
           }
+          if (fragment.getRightBraceOffset() == -1) {
+            hasUnclosedBrace = true;
+          }
+        }
+        if (hasUnclosedBrace) {
+          report(TextRange.from(nodeInfo.getContentRange().getEndOffset(), 0).shiftRight(nodeOffset), "'}' is expected");
         }
       }
     }

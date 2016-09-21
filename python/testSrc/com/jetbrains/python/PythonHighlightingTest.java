@@ -305,6 +305,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20775
+  public void testFStringMissingRightBrace() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
+  }
+
   // PY-20776
   public void testFStringEmptyExpressions() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));

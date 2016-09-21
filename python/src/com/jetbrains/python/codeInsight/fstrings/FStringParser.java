@@ -120,12 +120,19 @@ public class FStringParser {
           contentEndOffset = offset;
           if (c1 == '}') {
             rightBraceOffset = offset;
+            offset++;
             break;
           }
         }
       }
       else if (c1 == '{') {
         offset = parseFragment(offset, depth + 1);
+        continue;
+      }
+      else if (c1 == '}') {
+        rightBraceOffset = offset;
+        offset++;
+        break;
       }
       offset++;
     }
