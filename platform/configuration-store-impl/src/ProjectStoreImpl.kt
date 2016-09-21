@@ -135,9 +135,8 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     else {
       scheme = StorageScheme.DIRECTORY_BASED
 
-      val file = File(filePath)
       // if useOldWorkspaceContentIfExists false, so, file path is expected to be correct (we must avoid file io operations)
-      val isDir = !useOldWorkspaceContentIfExists || file.isDirectory
+      val isDir = !useOldWorkspaceContentIfExists || Paths.get(filePath).isDirectory()
       val configDir = "${(if (isDir) filePath else PathUtilRt.getParentPath(filePath))}/${Project.DIRECTORY_STORE_FOLDER}"
       storageManager.addMacro(PROJECT_CONFIG_DIR, configDir)
       storageManager.addMacro(PROJECT_FILE, "$configDir/misc.xml")
@@ -152,7 +151,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !file.exists()
+        isOptimiseTestLoadSpeed = !Paths.get(filePath).exists()
       }
 
       if (refreshVfs) {
