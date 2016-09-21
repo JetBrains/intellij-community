@@ -18,6 +18,7 @@ package com.intellij.ui.components
 import com.intellij.BundleBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.DialogWrapper.IdeModalityType
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.ui.*
@@ -124,8 +125,9 @@ fun dialog(title: String,
            project: Project? = null,
            parent: Component? = null,
            errorText: String? = null,
+           modality: IdeModalityType = IdeModalityType.IDE,
            ok: (() -> Unit)? = null): DialogWrapper {
-  return object: DialogWrapper(project, parent, true, IdeModalityType.PROJECT) {
+  return object: DialogWrapper(project, parent, true, modality) {
     init {
       setTitle(title)
       setResizable(resizable)
