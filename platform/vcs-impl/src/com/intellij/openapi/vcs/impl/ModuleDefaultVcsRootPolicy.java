@@ -139,8 +139,8 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   public Collection<VirtualFile> getDirtyRoots() {
     Collection<VirtualFile> dirtyRoots = ContainerUtil.newHashSet();
 
-    if (ProjectKt.isDirectoryBased(myProject) && myBaseDir != null) {
-      VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+    if (ProjectKt.isDirectoryBased(myProject)) {
+      VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
       if (ideaDir != null) {
         dirtyRoots.add(ideaDir);
       }
