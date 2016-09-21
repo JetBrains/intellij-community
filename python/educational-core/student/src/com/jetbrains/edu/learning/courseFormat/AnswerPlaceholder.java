@@ -212,7 +212,7 @@ public class AnswerPlaceholder {
     if (myTaskFile == null || myTaskFile.getTask() == null) {
       return mySubtaskInfos.get(0);
     }
-    int activeStepIndex = myTaskFile.getTask().getActiveStepIndex();
+    int activeStepIndex = myTaskFile.getTask().getActiveSubtaskIndex();
     return mySubtaskInfos.get(activeStepIndex);
   }
 }

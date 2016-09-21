@@ -58,7 +58,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     FileDocumentManager.getInstance().saveDocument(document);
     final SelectionModel model = editor.getSelectionModel();
     final int offset = model.hasSelection() ? model.getSelectionStart() : editor.getCaretModel().getOffset();
-    int stepIndex = state.getTaskFile().getTask().getActiveStepIndex();
+    int stepIndex = state.getTaskFile().getTask().getActiveSubtaskIndex();
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
     answerPlaceholder.getSubtaskInfos().put(stepIndex, new AnswerPlaceholderSubtaskInfo());
     TaskFile taskFile = state.getTaskFile();
