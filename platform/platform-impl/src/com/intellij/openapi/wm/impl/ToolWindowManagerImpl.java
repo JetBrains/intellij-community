@@ -391,8 +391,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }, myProject);
   }
 
-  private void initAll() {
-    List<FinalizableCommand> commandsList = new ArrayList<>();
+  private void initAll(List<FinalizableCommand> commandsList) {
     appendUpdateToolWindowsPaneCmd(commandsList);
 
     JComponent editorComponent = createEditorComponent(myProject);
@@ -402,19 +401,23 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (myEditorWasActive && editorComponent instanceof EditorsSplitters) {
       activateEditorComponentImpl(commandsList, true);
     }
-    execute(commandsList);
   }
 
   private static JComponent createEditorComponent(@NotNull Project project) {
     return FrameEditorComponentProvider.EP.getExtensions()[0].createEditorComponent(project);
   }
 
-  private void registerToolWindowsFromBeans() {
+  private void registerToolWindowsFromBeans(List<FinalizableCommand> list) {
     List<ToolWindowEP> beans = Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME));
     for (ToolWindowEP bean : beans) {
       Condition<Project> condition = bean.getCondition();
       if (condition == null || condition.value(myProject)) {
-        EdtInvocationManager.getInstance().invokeLater(() -> initToolWindow(bean));
+        list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
+          @Override
+          public void run() {
+            initToolWindow(bean);
+          }
+        });
       }
     }
   }
@@ -2427,8 +2430,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       ToolWindowManagerEx ex = ToolWindowManagerEx.getInstanceEx(project);
       if (ex instanceof ToolWindowManagerImpl) {
         ToolWindowManagerImpl myManager = (ToolWindowManagerImpl)ex;
-        myManager.registerToolWindowsFromBeans();
-        EdtInvocationManager.getInstance().invokeLater(() -> myManager.initAll());
+        List<FinalizableCommand> list = new ArrayList<>();
+        myManager.registerToolWindowsFromBeans(list);
+        myManager.initAll(list);
+        EdtInvocationManager.getInstance().invokeLater(() -> {
+          myManager.execute(list);
+        });
       }
     }
   }
