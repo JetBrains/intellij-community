@@ -19,14 +19,15 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     }
 
     private static boolean isEnabled() {
-      return EditorSettingsExternalizable.getInstance().isShowParameterNameHints();
+      return Registry.is("editor.inline.parameter.hints") || JavaCodeFoldingSettings.getInstance().isInlineParameterNamesForLiteralCallArguments();
     }
 
     private void addElementsToFold(PsiClass aClass) {

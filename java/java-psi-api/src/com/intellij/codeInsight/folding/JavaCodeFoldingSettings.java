@@ -65,4 +65,13 @@ public abstract class JavaCodeFoldingSettings {
 
   public abstract boolean isCollapseEndOfLineComments();
   public abstract void setCollapseEndOfLineComments(boolean value);
+
+  public abstract boolean isInlineParameterNamesForLiteralCallArguments();
+  public abstract void setInlineParameterNamesForLiteralCallArguments(boolean value);
+
+  public abstract int getInlineLiteralParameterMinNameLength();
+  public abstract void setInlineLiteralParameterMinNameLength(int value);
+
+  public abstract int getInlineLiteralParameterMinArgumentsToFold();
+  public abstract void setInlineLiteralParameterMinArgumentsToFold(int value);
 }

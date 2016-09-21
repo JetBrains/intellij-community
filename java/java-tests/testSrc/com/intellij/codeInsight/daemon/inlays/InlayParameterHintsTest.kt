@@ -16,9 +16,11 @@
 package com.intellij.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings
+import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.DocumentUtil
@@ -27,27 +29,24 @@ import org.assertj.core.api.Assertions.assertThat
 
 class InlayParameterHintsTest: LightCodeInsightFixtureTestCase() {
 
-  private var isParamHintsEnabledBefore = false
-  private var minParamLength = 3
-  private var minArgsToShow = 2
-
+  lateinit var registryStateBefore: String
+  lateinit var myFoldingSettings: JavaCodeFoldingSettingsImpl
+  lateinit var myFoldingStateToRestore: JavaCodeFoldingSettingsImpl
+  
   override fun setUp() {
     super.setUp()
+    val registry = Registry.get("editor.inline.parameter.hints")
+    registryStateBefore = registry.asString()
+    registry.setValue(true)
     
-    val settings = EditorSettingsExternalizable.getInstance()
-    isParamHintsEnabledBefore = settings.isShowParameterNameHints
-    minParamLength = settings.minParamNameLengthToShow
-    minArgsToShow = settings.minArgsToShow
-    
-    settings.isShowParameterNameHints = true
+    myFoldingSettings = JavaCodeFoldingSettings.getInstance() as JavaCodeFoldingSettingsImpl
+    myFoldingStateToRestore = JavaCodeFoldingSettingsImpl()
+    myFoldingStateToRestore.loadState(myFoldingSettings)
   }
 
   override fun tearDown() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.isShowParameterNameHints = isParamHintsEnabledBefore
-    settings.minParamNameLengthToShow = minParamLength
-    settings.minArgsToShow = minArgsToShow
-    
+    Registry.get("editor.inline.parameter.hints").setValue(registryStateBefore)
+    myFoldingSettings.loadState(myFoldingStateToRestore)
     super.tearDown()
   }
 
@@ -260,10 +259,11 @@ public class CharSymbol {
   }
   
   fun `test inline literal arguments with crazy settings`() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.minArgsToShow = 1
-    settings.minParamNameLengthToShow = 1
-
+    val foldingSettings = JavaCodeFoldingSettings.getInstance()
+    foldingSettings.isInlineParameterNamesForLiteralCallArguments = true;
+    foldingSettings.inlineLiteralParameterMinArgumentsToFold = 1;
+    foldingSettings.inlineLiteralParameterMinNameLength = 1;
+    
     setup("""
 public class Test {
   public void main(boolean isActive, boolean requestFocus, int xoo) {
@@ -281,9 +281,10 @@ public class Test {
   }
   
   fun `test hints for generic arguments`() {
-    val settings = EditorSettingsExternalizable.getInstance()
-    settings.minArgsToShow = 1
-    settings.minParamNameLengthToShow = 1
+    val foldingSettings = JavaCodeFoldingSettings.getInstance()
+    foldingSettings.isInlineParameterNamesForLiteralCallArguments = true
+    foldingSettings.inlineLiteralParameterMinArgumentsToFold = 1
+    foldingSettings.inlineLiteralParameterMinNameLength = 1
     
     setup("""
 import java.util.*;

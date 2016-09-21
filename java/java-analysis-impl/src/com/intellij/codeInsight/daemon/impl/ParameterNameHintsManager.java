@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -46,9 +46,9 @@ public class ParameterNameHintsManager {
     PsiExpression[] callArguments = getArguments(callExpression);
     JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
 
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
     List<InlayInfo> descriptors = Collections.emptyList();
-    if (callArguments.length >= settings.getMinArgsToShow() &&
+    if (callArguments.length >= settings.getInlineLiteralParameterMinArgumentsToFold() &&
         hasLiteralExpression(callArguments) &&
         resolveResult.getElement() instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)resolveResult.getElement();
@@ -159,8 +159,8 @@ public class ParameterNameHintsManager {
   }
 
   private static boolean hasProperLength(@Nullable String paramName) {
-    final int minLength = EditorSettingsExternalizable.getInstance().getMinParamNameLengthToShow();
-    return paramName != null && paramName.length() >= minLength;
+    JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
+    return paramName != null && paramName.length() >= settings.getInlineLiteralParameterMinNameLength();
   }
 
   private static boolean hasLiteralInVarargs(int index, PsiExpression[] callArguments) {
