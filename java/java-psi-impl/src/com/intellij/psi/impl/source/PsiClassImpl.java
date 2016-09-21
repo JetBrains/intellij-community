@@ -587,7 +587,7 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
       return scope.getParent();
     }
 
-    if (psi instanceof PsiClass || psi instanceof PsiLambdaExpression) {
+    if (psi instanceof PsiClass || psi instanceof PsiFunctionalExpression) {
       return calcBasesResolveContext(psi, baseClassName, false, defaultResolveContext);
     }
     if (psi instanceof PsiMember) {
