@@ -55,6 +55,7 @@ public class MigrationMapSet {
 
   @NonNls private static final String[] DEFAULT_MAPS = new  String[] {
     "/com/intellij/refactoring/migration/res/Swing__1_0_3____1_1_.xml",
+    "/com/intellij/refactoring/migration/res/JUnit4__5.xml",
   };
 
   public MigrationMapSet() {
