@@ -228,10 +228,7 @@ public class InstancesWindow extends DialogWrapper {
 
     @Override
     public void dispose() {
-      ActionManager.getInstance().removeAnActionListener(myActionListener);
-      myDebugSession.removeSessionListener(myDebugSessionListener);
       cancelFilteringTask();
-
       Disposer.dispose(myInstancesTree);
     }
 
