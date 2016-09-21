@@ -63,6 +63,8 @@ class FilteringProgressView extends BorderLayoutPanel {
     myIsInProcess = true;
     myProgressBar.setMinimum(0);
     myProgressBar.setMaximum(totalCount);
+    myProgressBar.setValue(0);
+    myProgressText.setText(getDescription());
     setProgressBarVisible(true);
   }
 
