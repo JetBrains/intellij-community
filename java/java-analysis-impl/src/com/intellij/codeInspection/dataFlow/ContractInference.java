@@ -339,6 +339,10 @@ class ContractInferenceInterpreter {
           continue;
         }
       }
+      else if (statement instanceof PsiWhileStatement) {
+        states = antecedentsReturning(visitExpression(states, ((PsiWhileStatement)statement).getCondition()), FALSE_VALUE);
+        continue;
+      }
       else if (statement instanceof PsiThrowStatement) {
         result.addAll(asPreContracts(toContracts(states, THROW_EXCEPTION)));
       }
