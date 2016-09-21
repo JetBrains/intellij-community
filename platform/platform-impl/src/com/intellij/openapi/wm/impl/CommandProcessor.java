@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,17 +45,19 @@ public final class CommandProcessor implements Runnable {
    * prevent focus handling of events which is caused by the commands to be executed.
    */
   public final void execute(@NotNull List<FinalizableCommand> commandList, @NotNull Condition expired) {
-    synchronized (myLock) {
-      final boolean isBusy = myCommandCount > 0;
+    EdtInvocationManager.getInstance().invokeLater(() -> {
+      synchronized (myLock) {
+        final boolean isBusy = myCommandCount > 0;
 
-      final CommandGroup commandGroup = new CommandGroup(commandList, expired);
-      myCommandGroupList.add(commandGroup);
-      myCommandCount += commandList.size();
+        final CommandGroup commandGroup = new CommandGroup(commandList, expired);
+        myCommandGroupList.add(commandGroup);
+        myCommandCount += commandList.size();
 
-      if (!isBusy) {
-        run();
+        if (!isBusy) {
+          run();
+        }
       }
-    }
+    });
   }
 
   public final void run() {
