@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Performs lazy initialization of a toolwindow registered in plugin.xml.
+ * Please implement {@link com.intellij.openapi.project.DumbAware} marker interface to indicate that the toolwindow content should be
+ * available during indexing process.
  *
  * @author yole
  * @author Konstantin Bulenkov

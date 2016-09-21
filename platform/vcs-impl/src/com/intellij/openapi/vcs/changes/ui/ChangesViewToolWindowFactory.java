@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -25,15 +26,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public class ChangesViewToolWindowFactory implements ToolWindowFactory, Condition<Project> {
+public class ChangesViewToolWindowFactory implements ToolWindowFactory, DumbAware, Condition<Project> {
   @Override
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     ChangesViewContentManager.getInstance(project).setUp(toolWindow);
-  }
-
-  @Override
-  public void init(ToolWindow window) {
-
   }
 
   @Override
