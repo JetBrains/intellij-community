@@ -68,6 +68,8 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
       else {
         settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
       }
+    } else {
+      MavenServerManager.getInstance().setMavenHome(settings.generalSettings.getMavenHome());
     }
   }
 }
