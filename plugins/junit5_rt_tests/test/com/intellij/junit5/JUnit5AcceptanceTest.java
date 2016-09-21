@@ -116,4 +116,23 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
 
     });
   }
+
+  @Test
+  void metaAnnotations() {
+    doTest(() -> {
+      myFixture.addClass("package a;\n" +
+                         "import java.lang.annotation.Retention;\n" +
+                         "import java.lang.annotation.RetentionPolicy;\n" +
+                         "@Retention(RetentionPolicy.RUNTIME)\n" +
+                         "@org.junit.jupiter.api.Test\n" +
+                         "@interface MyTest {}");
+      PsiClass aClass = myFixture.addClass("class ATest {\n" +
+                                           "    @a.MyTest\n" +
+                                           "    void foo() {}\n" +
+                                           "}\n");
+      assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+      assertTrue(JUnitUtil.isTestMethod(MethodLocation.elementInClass(aClass.getMethods()[0], aClass)));
+    });
+
+  }
 }

@@ -53,23 +53,7 @@ public class MetaAnnotationUtil {
     }
   };
 
-
-  @NotNull
-  private static Collection<PsiClass> getAnnotationTypesWithChildren(final String annotationName,
-                                                                     Project project,
-                                                                     GlobalSearchScope scope) {
-    final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(annotationName, scope);
-
-    if (psiClass == null || !psiClass.isAnnotationType()) return Collections.emptyList();
-
-    final Set<PsiClass> classes = new THashSet<>(HASHING_STRATEGY);
-
-    collectClassWithChildren(psiClass, classes, scope);
-
-    return classes;
-  }
-
-  public static Collection<PsiClass> getAnnotationTypesWithChildren(final Module module,
+  public static Collection<PsiClass> getAnnotationTypesWithChildren(@NotNull final Module module,
                                                                     final String annotationName,
                                                                     final boolean includeTests) {
     Map<Pair<String, Boolean>, Collection<PsiClass>> map =
@@ -94,37 +78,6 @@ public class MetaAnnotationUtil {
         });
 
     return map.get(Pair.create(annotationName, includeTests));
-  }
-
-  private static GlobalSearchScope getAllAnnotationFilesScope(Module module) {
-    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
-      GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
-      PsiClass javaLangAnnotation =
-        JavaPsiFacade.getInstance(scope.getProject()).findClass(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope);
-      if (javaLangAnnotation == null) {
-        return CachedValueProvider.Result.createSingleDependency(GlobalSearchScope.EMPTY_SCOPE, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-
-      Set<VirtualFile> allAnnotationFiles = new HashSet<>();
-      DirectClassInheritorsSearch.search(javaLangAnnotation, scope, false).forEach(annotationClass -> {
-        ContainerUtil.addIfNotNull(allAnnotationFiles, PsiUtilCore.getVirtualFile(annotationClass));
-        return true;
-      });
-
-      return CachedValueProvider.Result
-        .createSingleDependency(GlobalSearchScope.filesWithLibrariesScope(module.getProject(), allAnnotationFiles),
-                                PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    });
-  }
-
-  private static void collectClassWithChildren(final PsiClass psiClass, final Set<PsiClass> classes, final GlobalSearchScope scope) {
-    classes.add(psiClass);
-
-    for (PsiClass aClass : getChildren(psiClass, scope)) {
-      if (!classes.contains(aClass)) {
-        collectClassWithChildren(aClass, classes, scope);
-      }
-    }
   }
 
   public static Set<PsiClass> getChildren(final PsiClass psiClass, final GlobalSearchScope scope) {
@@ -164,5 +117,51 @@ public class MetaAnnotationUtil {
       }
       return new CachedValueProvider.Result<>(classes, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }, false);
+  }
+
+  @NotNull
+  private static Collection<PsiClass> getAnnotationTypesWithChildren(final String annotationName,
+                                                                     Project project,
+                                                                     GlobalSearchScope scope) {
+    final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(annotationName, scope);
+
+    if (psiClass == null || !psiClass.isAnnotationType()) return Collections.emptyList();
+
+    final Set<PsiClass> classes = new THashSet<>(HASHING_STRATEGY);
+
+    collectClassWithChildren(psiClass, classes, scope);
+
+    return classes;
+  }
+
+  private static GlobalSearchScope getAllAnnotationFilesScope(Module module) {
+    return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
+      GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, true);
+      PsiClass javaLangAnnotation =
+        JavaPsiFacade.getInstance(scope.getProject()).findClass(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION, scope);
+      if (javaLangAnnotation == null) {
+        return CachedValueProvider.Result.createSingleDependency(GlobalSearchScope.EMPTY_SCOPE, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+
+      Set<VirtualFile> allAnnotationFiles = new HashSet<>();
+      DirectClassInheritorsSearch.search(javaLangAnnotation, scope, false).forEach(annotationClass -> {
+        ContainerUtil.addIfNotNull(allAnnotationFiles, PsiUtilCore.getVirtualFile(annotationClass));
+        return true;
+      });
+
+      return CachedValueProvider.Result
+        .createSingleDependency(GlobalSearchScope.filesWithLibrariesScope(module.getProject(), allAnnotationFiles),
+                                PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
+  }
+
+  private static void collectClassWithChildren(final PsiClass psiClass, final Set<PsiClass> classes, final GlobalSearchScope scope) {
+    classes.add(psiClass);
+
+    for (PsiClass aClass : getChildren(psiClass, scope)) {
+      if (!classes.contains(aClass)) {
+        collectClassWithChildren(aClass, classes, scope);
+      }
+    }
   }
 }
