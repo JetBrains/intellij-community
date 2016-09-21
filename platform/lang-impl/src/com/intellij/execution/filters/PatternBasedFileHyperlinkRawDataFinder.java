@@ -53,6 +53,9 @@ public class PatternBasedFileHyperlinkRawDataFinder implements FileHyperlinkRawD
     boolean hyperlinkFreezed = false;
     for (int i = 1; i <= groupCount; i++) {
       String value = matcher.group(i);
+      if (value == null) {
+        continue;
+      }
       PatternHyperlinkPart part = linkParts[i - 1];
       if (part == PatternHyperlinkPart.HYPERLINK) {
         hyperlinkStartInd = matcher.start(i);
@@ -74,7 +77,9 @@ public class PatternBasedFileHyperlinkRawDataFinder implements FileHyperlinkRawD
       else if (part == PatternHyperlinkPart.COLUMN) {
         value = StringUtil.trimStart(value, ":");
         columnNumber = StringUtil.parseInt(value, UNKNOWN);
-        hyperlinkEndInd = tryExtendHyperlinkEnd(hyperlinkFreezed, hyperlinkEndInd, matcher.start(i), matcher.end(i));
+        if (columnNumber != UNKNOWN) {
+          hyperlinkEndInd = tryExtendHyperlinkEnd(hyperlinkFreezed, hyperlinkEndInd, matcher.start(i), matcher.end(i));
+        }
       }
     }
     if (path == null || lineNumber == UNKNOWN || hyperlinkStartInd == -1) {
