@@ -119,6 +119,10 @@ public abstract class AbstractTestProxy extends CompositePrintable {
     }
   }
 
+  /**
+   * to be deleted in 2017.1
+   */
+  @Deprecated
   public static void flushOutput(AbstractTestProxy testProxy) {
     testProxy.flush();
 
