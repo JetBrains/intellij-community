@@ -114,7 +114,7 @@ public class PluginConflictDialog extends DialogWrapper {
       .collect(Collectors.toList());
 
     if (!myIsConflictWithPlatform) {
-      pluginDescriptions.add(0, getChooserPanelForPlugin(buttonGroup, null));
+      pluginDescriptions.add(getChooserPanelForPlugin(buttonGroup, null));
     }
 
     for (JPanel panel : pluginDescriptions) {
