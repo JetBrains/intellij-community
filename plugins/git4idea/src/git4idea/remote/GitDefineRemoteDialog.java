@@ -50,11 +50,18 @@ public class GitDefineRemoteDialog extends DialogWrapper {
   @NotNull private final JTextField myRemoteUrl;
 
   public GitDefineRemoteDialog(@NotNull GitRepository repository, @NotNull Git git) {
+    this(repository, git, GitRemote.ORIGIN_NAME, "");
+  }
+
+  public GitDefineRemoteDialog(@NotNull GitRepository repository,
+                               @NotNull Git git,
+                               @NotNull String defaultRemoteName,
+                               @NotNull String initialRemoteUrl) {
     super(repository.getProject());
     myRepository = repository;
     myGit = git;
-    myRemoteName = new JTextField(GitRemote.ORIGIN_NAME, 20);
-    myRemoteUrl = new JTextField(20);
+    myRemoteName = new JTextField(defaultRemoteName, 20);
+    myRemoteUrl = new JTextField(initialRemoteUrl, 20);
     setTitle("Define Remote" + mention(myRepository));
     init();
   }
