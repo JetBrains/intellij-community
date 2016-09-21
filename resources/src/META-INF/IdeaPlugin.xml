@@ -835,6 +835,11 @@
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection"
                      displayName="Remove redundant lambda parameter types"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OptionalIsPresent"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.OptionalIsPresentInspection"
+                     displayName="Replace Optional.isPresent() checks with functional-style expressions"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
