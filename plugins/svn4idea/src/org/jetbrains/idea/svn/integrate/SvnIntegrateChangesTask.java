@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -169,13 +170,13 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void onTaskFinished(boolean wasCancelled) {
-    try {
-      if (!myProject.isDisposed()) {
+    TransactionGuard.submitTransaction(myProject, () -> {
+      try {
         afterExecution(wasCancelled);
+      } finally {
+        ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
       }
-    } finally {
-      ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
-    }
+    });
   }
 
   private void accumulate() {
