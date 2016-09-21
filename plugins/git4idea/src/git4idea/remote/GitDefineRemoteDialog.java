@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.push;
+package git4idea.remote;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-class GitDefineRemoteDialog extends DialogWrapper {
+public class GitDefineRemoteDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitDefineRemoteDialog.class);
 
@@ -47,7 +47,7 @@ class GitDefineRemoteDialog extends DialogWrapper {
   @NotNull private final JTextField myRemoteName;
   @NotNull private final JTextField myRemoteUrl;
 
-  GitDefineRemoteDialog(@NotNull GitRepository repository, @NotNull Git git) {
+  public GitDefineRemoteDialog(@NotNull GitRepository repository, @NotNull Git git) {
     super(repository.getProject());
     myRepository = repository;
     myGit = git;
@@ -73,12 +73,12 @@ class GitDefineRemoteDialog extends DialogWrapper {
   }
 
   @NotNull
-  String getRemoteName() {
+  public String getRemoteName() {
     return StringUtil.notNullize(myRemoteName.getText()).trim();
   }
 
   @NotNull
-  String getRemoteUrl() {
+  public String getRemoteUrl() {
     return StringUtil.notNullize(myRemoteUrl.getText()).trim();
   }
 

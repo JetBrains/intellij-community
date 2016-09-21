@@ -43,6 +43,7 @@ import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.remote.GitDefineRemoteDialog;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
