@@ -197,8 +197,9 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     myLogData = new VcsLogData(myProject, myLogProviders, (source, exception) -> LOG.error(exception));
     Disposer.register(myProject, myLogData);
     return new VcsLogRefresherImpl(myProject, myLogData.getHashMap(), myLogProviders, myLogData.getUserRegistry(), myLogData.getIndex(),
-                                   myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT,
-                                   myLogData) {
+                                   new VcsLogProgress(),
+                                   myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
+    ) {
       @Override
       protected void startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
         LOG.debug("Starting a background task...");

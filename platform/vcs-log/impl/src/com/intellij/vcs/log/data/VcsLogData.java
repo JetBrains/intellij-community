@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,10 +95,13 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myTopCommitsDetailsCache = new TopCommitsCache(myHashMap);
     myMiniDetailsGetter = new MiniDetailsGetter(myHashMap, logProviders, myTopCommitsDetailsCache, this);
     myDetailsGetter = new CommitDetailsGetter(myHashMap, logProviders, this);
-    myIndex = new VcsLogPersistentIndex(myProject, myHashMap, logProviders, myFatalErrorsConsumer, this);
 
-    myRefresher = new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myIndex, myTopCommitsDetailsCache,
-                                          this::fireDataPackChangeEvent, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT, this);
+    VcsLogProgress progress = new VcsLogProgress();
+    Disposer.register(this, progress);
+    myIndex = new VcsLogPersistentIndex(myProject, myHashMap, progress, logProviders, myFatalErrorsConsumer, this);
+
+    myRefresher = new VcsLogRefresherImpl(myProject, myHashMap, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
+                                          this::fireDataPackChangeEvent, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
   }
