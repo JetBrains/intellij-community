@@ -51,6 +51,8 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
   private static final Logger LOG = Logger.getInstance(JavaNullMethodArgumentIndex.class);
 
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");
+  private boolean myOfflineMode = ApplicationManager.getApplication().isCommandLine() &&
+                                  !ApplicationManager.getApplication().isUnitTestMode();
 
   @NotNull
   @Override
@@ -66,7 +68,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
       if (!JavaStubElementTypes.JAVA_FILE.shouldBuildStubFor(inputData.getFile())) {
         return Collections.emptyMap();
       }
-      if (ApplicationManager.getApplication().isCommandLine()) {
+      if (myOfflineMode) {
         return Collections.emptyMap();
       }
       if (!StringUtil.contains(contentAsText, PsiKeyword.NULL)) {
