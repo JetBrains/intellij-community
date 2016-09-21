@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+import static git4idea.GitUtil.mention;
+
 public class GitDefineRemoteDialog extends DialogWrapper {
 
   private static final Logger LOG = Logger.getInstance(GitDefineRemoteDialog.class);
@@ -53,7 +55,7 @@ public class GitDefineRemoteDialog extends DialogWrapper {
     myGit = git;
     myRemoteName = new JTextField(GitRemote.ORIGIN_NAME, 20);
     myRemoteUrl = new JTextField(20);
-    setTitle("Define Remote");
+    setTitle("Define Remote" + mention(myRepository));
     init();
   }
 
