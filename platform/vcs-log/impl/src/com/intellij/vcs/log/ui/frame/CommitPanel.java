@@ -49,6 +49,7 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 
@@ -59,9 +60,10 @@ class CommitPanel extends JBPanel {
 
   @NotNull private final VcsLogData myLogData;
 
-  @NotNull private final ReferencesPanel myReferencesPanel;
+  @NotNull private final ReferencesPanel myBranchesPanel;
+  @NotNull private final ReferencesPanel myTagsPanel;
   @NotNull private final DataPanel myDataPanel;
-  @NotNull private final BranchesPanel myBranchesPanel;
+  @NotNull private final BranchesPanel myContainingBranchesPanel;
   @NotNull private final RootPanel myRootPanel;
   @NotNull private final VcsLogColorManager myColorManager;
 
@@ -75,15 +77,18 @@ class CommitPanel extends JBPanel {
     setOpaque(false);
 
     myRootPanel = new RootPanel();
-    myReferencesPanel = new ReferencesPanel();
-    myReferencesPanel.setBorder(JBUI.Borders.empty(REFERENCES_BORDER, 0, 0, 0));
+    myBranchesPanel = new ReferencesPanel();
+    myBranchesPanel.setBorder(JBUI.Borders.empty(REFERENCES_BORDER, 0, 0, 0));
+    myTagsPanel = new ReferencesPanel();
+    myTagsPanel.setBorder(JBUI.Borders.empty(REFERENCES_BORDER, 0, 0, 0));
     myDataPanel = new DataPanel(myLogData.getProject());
-    myBranchesPanel = new BranchesPanel();
+    myContainingBranchesPanel = new BranchesPanel();
 
     add(myRootPanel);
     add(myDataPanel);
-    add(myReferencesPanel);
     add(myBranchesPanel);
+    add(myTagsPanel);
+    add(myContainingBranchesPanel);
 
     setBorder(getDetailsBorder());
   }
@@ -111,33 +116,36 @@ class CommitPanel extends JBPanel {
     if (!(commitData instanceof LoadingDetails)) {
       branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
     }
-    myBranchesPanel.setBranches(branches);
+    myContainingBranchesPanel.setBranches(branches);
 
     myDataPanel.update();
-    myBranchesPanel.update();
+    myContainingBranchesPanel.update();
     revalidate();
   }
 
   public void setRefs(@NotNull Collection<VcsRef> refs) {
-    myReferencesPanel.setReferences(sortRefs(refs));
+    List<VcsRef> references = sortRefs(refs);
+    myBranchesPanel.setReferences(references.stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList()));
+    myTagsPanel.setReferences(references.stream().filter(ref -> !ref.getType().isBranch()).collect(Collectors.toList()));
   }
 
   public void update() {
     myDataPanel.update();
     myRootPanel.update();
-    myReferencesPanel.update();
     myBranchesPanel.update();
+    myTagsPanel.update();
+    myContainingBranchesPanel.update();
   }
 
   public void updateBranches() {
     if (myCommit != null) {
-      myBranchesPanel
+      myContainingBranchesPanel
         .setBranches(myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getId()));
     }
     else {
-      myBranchesPanel.setBranches(null);
+      myContainingBranchesPanel.setBranches(null);
     }
-    myBranchesPanel.update();
+    myContainingBranchesPanel.update();
   }
 
   @NotNull
@@ -158,7 +166,7 @@ class CommitPanel extends JBPanel {
   }
 
   public boolean isExpanded() {
-    return myBranchesPanel.isExpanded();
+    return myContainingBranchesPanel.isExpanded();
   }
 
   @NotNull
