@@ -123,12 +123,10 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     if (contentRoot != null) {
       return contentRoot;
     }
-    if (ProjectKt.isDirectoryBased(myProject) && (myBaseDir != null)) {
-      final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-        if (VfsUtilCore.isAncestor(ideaDir, file, false)) {
-          return ideaDir;
-        }
+    if (ProjectKt.isDirectoryBased(myProject)) {
+      final VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
+      if (ideaDir != null && VfsUtilCore.isAncestor(ideaDir, file, false)) {
+        return ideaDir;
       }
     }
     return null;
