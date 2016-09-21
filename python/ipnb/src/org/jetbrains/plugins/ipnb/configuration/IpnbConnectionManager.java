@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -343,6 +344,7 @@ public final class IpnbConnectionManager implements ProjectComponent {
         }, () -> !processHandler.isProcessTerminated())
         .withRerun(() -> startIpythonServer(url, fileEditor))
         .withHelpId("reference.manage.py")
+        .withFilter(new UrlFilter())
         .run(), ModalityState.defaultModalityState());
       int countAttempt = 0;
       while (!serverStarted[0] && countAttempt < MAX_ATTEMPTS) {
