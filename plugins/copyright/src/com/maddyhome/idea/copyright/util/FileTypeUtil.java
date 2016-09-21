@@ -21,7 +21,7 @@ import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
@@ -204,7 +204,7 @@ public class FileTypeUtil {
       return false;
     }
 
-    if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return false;
+    if (ProjectUtil.isProjectOrWorkspaceFile(file)) return false;
     FileType type = file.getFileType();
 
     return getMap().get(type.getName()) != null;
@@ -216,7 +216,7 @@ public class FileTypeUtil {
     }
     final VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
-    if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
+    if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
     return isSupportedType(virtualFile.getFileType());
   }
 
