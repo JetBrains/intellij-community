@@ -19,6 +19,7 @@ import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.ui.CCCreateAnswerPlaceholderDialog;
 import org.jetbrains.annotations.NotNull;
@@ -57,19 +58,24 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     FileDocumentManager.getInstance().saveDocument(document);
     final SelectionModel model = editor.getSelectionModel();
     final int offset = model.hasSelection() ? model.getSelectionStart() : editor.getCaretModel().getOffset();
+    int stepIndex = state.getTaskFile().getTask().getActiveStepIndex();
     final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
-
+    answerPlaceholder.getSubtaskInfos().put(stepIndex, new AnswerPlaceholderSubtaskInfo());
+    TaskFile taskFile = state.getTaskFile();
+    int index = taskFile.getAnswerPlaceholders().size();
+    answerPlaceholder.setIndex(index);
+    answerPlaceholder.setTaskFile(taskFile);
+    taskFile.sortAnswerPlaceholders();
     answerPlaceholder.setOffset(offset);
     answerPlaceholder.setUseLength(false);
 
     String defaultPlaceholderText = "type here";
-    answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
-
     CCCreateAnswerPlaceholderDialog dlg = createDialog(project, answerPlaceholder);
     if (!dlg.showAndGet()) {
       return;
     }
     String answerPlaceholderText = dlg.getTaskText();
+    answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
     answerPlaceholder.setTaskText(StringUtil.notNullize(answerPlaceholderText));
     answerPlaceholder.setLength(StringUtil.notNullize(answerPlaceholderText).length());
     answerPlaceholder.setHints(dlg.getHints());
@@ -78,11 +84,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
       DocumentUtil.writeInRunUndoTransparentAction(() -> document.insertString(offset, defaultPlaceholderText));
     }
 
-    TaskFile taskFile = state.getTaskFile();
-    int index = taskFile.getAnswerPlaceholders().size();
-    answerPlaceholder.setIndex(index);
-    answerPlaceholder.setTaskFile(taskFile);
-    taskFile.sortAnswerPlaceholders();
+
     answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
     AddAction action = new AddAction(answerPlaceholder, taskFile, editor);
     EduUtils.runUndoableAction(project, "Add Answer Placeholder", action);

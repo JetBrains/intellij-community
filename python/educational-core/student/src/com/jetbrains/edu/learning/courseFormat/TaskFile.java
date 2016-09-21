@@ -44,6 +44,16 @@ public class TaskFile {
     return myAnswerPlaceholders;
   }
 
+  public List<AnswerPlaceholder> getActivePlaceholders() {
+    List<AnswerPlaceholder> result = new ArrayList<>();
+    for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
+      if (placeholder.getActiveSubtaskInfo() != null) {
+        result.add(placeholder);
+      }
+    }
+    return result;
+  }
+
   public void setAnswerPlaceholders(List<AnswerPlaceholder> answerPlaceholders) {
     this.myAnswerPlaceholders = answerPlaceholders;
   }
@@ -88,7 +98,7 @@ public class TaskFile {
 
 
   public static void copy(@NotNull final TaskFile source, @NotNull final TaskFile target) {
-    List<AnswerPlaceholder> sourceAnswerPlaceholders = source.getAnswerPlaceholders();
+    List<AnswerPlaceholder> sourceAnswerPlaceholders = source.getActivePlaceholders();
     List<AnswerPlaceholder> answerPlaceholdersCopy = new ArrayList<>(sourceAnswerPlaceholders.size());
     for (AnswerPlaceholder answerPlaceholder : sourceAnswerPlaceholders) {
       AnswerPlaceholder answerPlaceholderCopy = new AnswerPlaceholder();

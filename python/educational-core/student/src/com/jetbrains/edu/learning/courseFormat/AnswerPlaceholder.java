@@ -2,30 +2,18 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation of windows which user should type in
  */
 
 public class AnswerPlaceholder {
-  private static final Logger LOG = Logger.getInstance(AnswerPlaceholder.class);
-  
-  @SerializedName("hint")
-  @Expose private String myHint = "";
-
-  @SerializedName("additional_hints")
-  @Expose private List<String> myAdditionalHints = new ArrayList<>();
-
-  @SerializedName("possible_answer")
-  @Expose private String possibleAnswer = "";
 
   @SerializedName("offset")
   @Expose private int myOffset = -1;
@@ -33,15 +21,14 @@ public class AnswerPlaceholder {
   @Expose private int length = -1;
 
   private int myIndex = -1;
-  private String myTaskText;
   private MyInitialState myInitialState;
   private StudyStatus myStatus = StudyStatus.Unchecked;
   private boolean mySelected = false;
   private boolean myUseLength = true;
 
-
   @Transient private TaskFile myTaskFile;
 
+  @Expose private Map<Integer, AnswerPlaceholderSubtaskInfo> mySubtaskInfos = new HashMap<>();
   public AnswerPlaceholder() {
   }
 
@@ -73,21 +60,14 @@ public class AnswerPlaceholder {
     this.length = length;
   }
 
-  @NotNull
-  public List<String> getAdditionalHints() {
-    return myAdditionalHints;
-  }
-
-  public void setAdditionalHints(@Nullable final List<String> additionalHints) {
-    myAdditionalHints = additionalHints;
-  }
-
+  @Transient
   public String getPossibleAnswer() {
-    return possibleAnswer;
+    return getActiveSubtaskInfo().getPossibleAnswer();
   }
 
+  @Transient
   public void setPossibleAnswer(String possibleAnswer) {
-    this.possibleAnswer = possibleAnswer;
+    getActiveSubtaskInfo().setPossibleAnswer(possibleAnswer);
   }
 
   public MyInitialState getInitialState() {
@@ -98,12 +78,14 @@ public class AnswerPlaceholder {
     myInitialState = initialState;
   }
 
+  @Transient
   public String getTaskText() {
-    return myTaskText;
+    return getActiveSubtaskInfo().getPlaceholderText();
   }
 
+  @Transient
   public void setTaskText(String taskText) {
-    myTaskText = taskText;
+    getActiveSubtaskInfo().setPlaceholderText(taskText);
   }
 
   @Transient
@@ -117,7 +99,7 @@ public class AnswerPlaceholder {
   }
 
   public int getPossibleAnswerLength() {
-    return possibleAnswer.length();
+    return getPossibleAnswer().length();
   }
 
   /**
@@ -126,9 +108,6 @@ public class AnswerPlaceholder {
   public void reset() {
     myOffset = myInitialState.getOffset();
     length = myInitialState.getLength();
-    if (!myUseLength) {
-      possibleAnswer = myTaskText;
-    }
   }
 
   public StudyStatus getStatus() {
@@ -148,7 +127,7 @@ public class AnswerPlaceholder {
   }
 
   public void init() {
-    setInitialState(new MyInitialState(myOffset, myTaskText.length()));
+    setInitialState(new MyInitialState(myOffset, getTaskText().length()));
   }
 
   public boolean getUseLength() {
@@ -174,65 +153,30 @@ public class AnswerPlaceholder {
     myOffset = offset;
   }
 
-  public String getHint() {
-    return myHint;
-  }
-
-  public void setHint(String hint) {
-    myHint = hint;
-  }
-
   @Transient
   public List<String> getHints() {
-    if (myHint.isEmpty() && myAdditionalHints.isEmpty()) return Collections.emptyList();
-    final ArrayList<String> result = new ArrayList<>();
-    result.add(myHint);
-    result.addAll(myAdditionalHints);
-    return result;
+    return getActiveSubtaskInfo().getHints();
   }
 
   @Transient
   public void setHints(@NotNull final List<String> hints) {
-    if (hints.isEmpty()) {
-      myHint = "";
-      myAdditionalHints.clear();
-    }
-    else {
-      myHint = hints.get(0);
-      myAdditionalHints = hints.subList(1, hints.size());
-    }
-  }
-
-  public void setHintByIndex(int i, @NotNull final String text) {
-    if (i == 0) {
-      myHint = text;
-    }
-    else {
-      myAdditionalHints.set(i - 1, text);
-    }
+   getActiveSubtaskInfo().setHints(hints);
   }
 
   public void addHint(@NotNull final String text) {
-    if (myHint.isEmpty() && myAdditionalHints.isEmpty()) {
-      myHint = text;
-    }
-    else {
-      myAdditionalHints.add(text);
-    }
+    getActiveSubtaskInfo().addHint(text);
   }
 
   public void removeHint(int i) {
-    if (i == 0) {
-      myHint = "";
-    }
-    else {
-      if (i - 1 <myAdditionalHints.size()) {
-        myAdditionalHints.remove(i - 1);
-      }
-      else {
-        LOG.warn("Trying to remove nonexistent hint. Hint to remove number: " + (i - 1) + "number of hints: " + getHints().size());
-      }
-    }
+    getActiveSubtaskInfo().removeHint(i);
+  }
+
+  public Map<Integer, AnswerPlaceholderSubtaskInfo> getSubtaskInfos() {
+    return mySubtaskInfos;
+  }
+
+  public void setSubtaskInfos(Map<Integer, AnswerPlaceholderSubtaskInfo> subtaskInfos) {
+    mySubtaskInfos = subtaskInfos;
   }
 
   public static class MyInitialState {
@@ -262,5 +206,13 @@ public class AnswerPlaceholder {
     public void setOffset(int offset) {
       this.offset = offset;
     }
+  }
+
+  public AnswerPlaceholderSubtaskInfo getActiveSubtaskInfo() {
+    if (myTaskFile == null || myTaskFile.getTask() == null) {
+      return mySubtaskInfos.get(0);
+    }
+    int activeStepIndex = myTaskFile.getTask().getActiveStepIndex();
+    return mySubtaskInfos.get(activeStepIndex);
   }
 }

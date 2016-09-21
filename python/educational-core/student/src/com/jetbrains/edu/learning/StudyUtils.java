@@ -352,7 +352,7 @@ public class StudyUtils {
     final Project project = editor.getProject();
     if (project == null) return;
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
       final JBColor color = taskManager.getColor(answerPlaceholder);
       EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, color);
     }
@@ -726,7 +726,7 @@ public class StudyUtils {
     if (studyEditor == null) return;
     final Editor editor = studyEditor.getEditor();
     IdeFocusManager.getInstance(project).requestFocus(editor.getContentComponent(), true);
-    final List<AnswerPlaceholder> placeholders = studyEditor.getTaskFile().getAnswerPlaceholders();
+    final List<AnswerPlaceholder> placeholders = studyEditor.getTaskFile().getActivePlaceholders();
     if (placeholders.isEmpty()) return;
     final AnswerPlaceholder placeholder = placeholders.get(0);
     int startOffset = placeholder.getOffset();

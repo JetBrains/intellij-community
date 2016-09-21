@@ -104,7 +104,7 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
 
   private static void resetAnswerPlaceholders(TaskFile selectedTaskFile, Project project) {
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-    for (AnswerPlaceholder answerPlaceholder : selectedTaskFile.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : selectedTaskFile.getActivePlaceholders()) {
       answerPlaceholder.reset();
       taskManager.setStatus(answerPlaceholder, StudyStatus.Unchecked);
     }

@@ -108,7 +108,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   }
 
   public boolean hasFailedAnswerPlaceholders(@NotNull final TaskFile taskFile) {
-    return taskFile.getAnswerPlaceholders().size() > 0 && taskFile.hasFailedPlaceholders();
+    return taskFile.getActivePlaceholders().size() > 0 && taskFile.hasFailedPlaceholders();
   }
 
   @Nullable

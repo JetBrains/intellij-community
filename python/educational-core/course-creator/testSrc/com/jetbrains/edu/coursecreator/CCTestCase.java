@@ -25,6 +25,7 @@ import org.junit.ComparisonFailure;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +45,7 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
   }
 
   protected static void checkHighlighters(TaskFile taskFile, MarkupModel markupModel) {
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
       if (getHighlighter(markupModel, answerPlaceholder) == null) {
         throw new AssertionError("No highlighter for placeholder: " + CCTestsUtil.getPlaceholderPresentation(answerPlaceholder));
       }
@@ -54,16 +55,16 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
   public void checkByFile(TaskFile taskFile, String fileName, boolean useLength) {
     Pair<Document, List<AnswerPlaceholder>> placeholders = getPlaceholders(fileName, useLength, true);
     String message = "Placeholders don't match";
-    if (taskFile.getAnswerPlaceholders().size() != placeholders.second.size()) {
+    if (taskFile.getActivePlaceholders().size() != placeholders.second.size()) {
       throw new ComparisonFailure(message,
-                                  CCTestsUtil.getPlaceholdersPresentation(taskFile.getAnswerPlaceholders()),
+                                  CCTestsUtil.getPlaceholdersPresentation(taskFile.getActivePlaceholders()),
                                   CCTestsUtil.getPlaceholdersPresentation(placeholders.second));
     }
     for (AnswerPlaceholder answerPlaceholder : placeholders.getSecond()) {
       AnswerPlaceholder placeholder = taskFile.getAnswerPlaceholder(answerPlaceholder.getOffset());
       if (!CCTestsUtil.comparePlaceholders(placeholder, answerPlaceholder)) {
         throw new ComparisonFailure(message,
-                                    CCTestsUtil.getPlaceholdersPresentation(taskFile.getAnswerPlaceholders()),
+                                    CCTestsUtil.getPlaceholdersPresentation(taskFile.getActivePlaceholders()),
                                     CCTestsUtil.getPlaceholdersPresentation(placeholders.second));
       }
     }
@@ -140,6 +141,8 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
         int pos = 0;
         while (openingMatcher.find(pos)) {
           AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
+          AnswerPlaceholderSubtaskInfo subtaskInfo = new AnswerPlaceholderSubtaskInfo();
+          answerPlaceholder.getSubtaskInfos().put(0, subtaskInfo);
           answerPlaceholder.setUseLength(useLength);
           String taskText = openingMatcher.group(2);
           if (taskText != null) {
@@ -152,7 +155,7 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
           }
           String hint = openingMatcher.group(6);
           if (hint != null) {
-            answerPlaceholder.setHint(hint);
+            answerPlaceholder.setHints(Collections.singletonList(hint));
           }
           answerPlaceholder.setOffset(openingMatcher.start());
           if (!closingMatcher.find(openingMatcher.end())) {

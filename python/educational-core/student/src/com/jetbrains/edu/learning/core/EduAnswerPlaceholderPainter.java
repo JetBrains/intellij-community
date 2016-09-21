@@ -76,7 +76,7 @@ public class EduAnswerPlaceholderPainter {
 
 
   public static void createGuardedBlocks(@NotNull final Editor editor, TaskFile taskFile) {
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
       createGuardedBlocks(editor, answerPlaceholder);
     }
   }

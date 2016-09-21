@@ -165,7 +165,7 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
           if (file != null) {
             FileEditorManager.getInstance(myProject).openFile(file, true);
           }
-          if (!entry.getValue().getAnswerPlaceholders().isEmpty()) {
+          if (!entry.getValue().getActivePlaceholders().isEmpty()) {
             child = file;
           }
         }

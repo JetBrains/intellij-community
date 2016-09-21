@@ -74,7 +74,7 @@ public class StudyNavigator {
   public static void navigateToFirstFailedAnswerPlaceholder(@NotNull final Editor editor, @NotNull final TaskFile taskFile) {
     final Project project = editor.getProject();
     if (project == null) return;
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
       if (answerPlaceholder.getStatus() != StudyStatus.Failed) {
         continue;
       }
@@ -94,8 +94,8 @@ public class StudyNavigator {
 
 
   public static void navigateToFirstAnswerPlaceholder(@NotNull final Editor editor, @NotNull final TaskFile taskFile) {
-    if (!taskFile.getAnswerPlaceholders().isEmpty()) {
-      AnswerPlaceholder firstAnswerPlaceholder = StudyUtils.getFirst(taskFile.getAnswerPlaceholders());
+    if (!taskFile.getActivePlaceholders().isEmpty()) {
+      AnswerPlaceholder firstAnswerPlaceholder = StudyUtils.getFirst(taskFile.getActivePlaceholders());
       if (firstAnswerPlaceholder == null) return;
       navigateToAnswerPlaceholder(editor, firstAnswerPlaceholder);
     }
@@ -113,7 +113,7 @@ public class StudyNavigator {
         if (shouldBeActive != null) {
           FileEditorManager.getInstance(project).openFile(vf, true);
         }
-        if (shouldBeActive == null && !taskFile.getAnswerPlaceholders().isEmpty()) {
+        if (shouldBeActive == null && !taskFile.getActivePlaceholders().isEmpty()) {
           shouldBeActive = vf;
         }
       }

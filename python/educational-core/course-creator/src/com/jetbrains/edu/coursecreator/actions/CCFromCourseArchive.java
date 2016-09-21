@@ -143,7 +143,7 @@ public class CCFromCourseArchive extends DumbAwareAction {
     EduDocumentListener listener = new EduDocumentListener(taskFile, false);
     document.addDocumentListener(listener);
     taskFile.sortAnswerPlaceholders();
-    for (int i = taskFile.getAnswerPlaceholders().size() - 1; i >= 0; i--) {
+    for (int i = taskFile.getActivePlaceholders().size() - 1; i >= 0; i--) {
       final AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholders().get(i);
       replaceAnswerPlaceholder(project, document, answerPlaceholder);
     }

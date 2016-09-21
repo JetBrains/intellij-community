@@ -108,7 +108,7 @@ public class CCShowPreview extends DumbAwareAction {
     }
 
 
-    if (taskFile.getAnswerPlaceholders().isEmpty()) {
+    if (taskFile.getActivePlaceholders().isEmpty()) {
       Messages.showInfoMessage("Preview is available for task files with answer placeholders only", "No Preview for This File");
       return;
     }
@@ -146,7 +146,7 @@ public class CCShowPreview extends DumbAwareAction {
         factory.releaseEditor(createdEditor);
       }
     });
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
       answerPlaceholder.setUseLength(true);
       EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, JBColor.BLUE);
     }
