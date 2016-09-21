@@ -24,8 +24,13 @@ class NotNullClass {
     return <warning descr="'null' is returned by the method declared as @MethodsAreNotNullByDefault">null</warning>;
   }
 
-  private Object privateFoo() {
+  private String privateFoo() {
     return <warning descr="'null' is returned by the method declared as @MethodsAreNotNullByDefault">null</warning>;
+  }
+
+  {
+    String s2 = privateFoo();
+    int i2 = s2.length();
   }
 
   @Nullable
