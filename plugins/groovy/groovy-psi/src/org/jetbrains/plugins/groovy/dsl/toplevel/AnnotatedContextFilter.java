@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
@@ -66,7 +67,9 @@ public class AnnotatedContextFilter implements ContextFilter {
 
   @NotNull
   private static Boolean containsString(String anno, PsiFile file) {
-    if (file.getVirtualFile() == null) return StringUtil.contains(file.getViewProvider().getContents(), anno);
+    if (file.getVirtualFile() == null || DumbService.isDumb(file.getProject())) {
+      return StringUtil.contains(file.getViewProvider().getContents(), anno);
+    }
 
     GlobalSearchScope scope = GlobalSearchScope.fileScope(file);
     return !FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, new IdIndexEntry(anno, true), scope).isEmpty();
