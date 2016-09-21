@@ -201,6 +201,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testMethods$method5() throws Throwable { doTest(); }
 
+  void testMethods$method6() throws Throwable { doTest(); }
+
   void testMethods$vararg() throws Throwable { doTest(); }
 
   void testMultiple_assign$grvy2086() throws Throwable { doTest("multiple_assign/grvy-2086.test"); }
