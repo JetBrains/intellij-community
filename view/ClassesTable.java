@@ -107,7 +107,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
         ReferenceType ref = myElems.get(convertRowIndexToModel(rowAtPoint(e.getPoint())));
         TrackerForNewInstances strategy = myParent.getStrategy(ref);
-        if (strategy != null) {
+        if (strategy != null && strategy.isReady()) {
           new InstancesWindow(myDebugSession, limit -> strategy.getNewInstances(), ref.name()).show();
         }
       }
@@ -121,7 +121,6 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         DiffValue diff = myCounts.getOrDefault(ref, myUnknownValue);
         return !(myOnlyWithDiff && diff.diff() == 0 || myOnlyWithInstances && !diff.hasInstance())
             && myMatcher.matches(ref.name());
-
       }
     });
 
@@ -433,13 +432,24 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
       ReferenceType ref = myElems.get(convertRowIndexToModel(row));
       TrackerForNewInstances strategy = myParent.getStrategy(ref);
-      SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
       if (strategy != null && strategy.isReady()) {
-        attributes = myClickableCellAttributes;
+        DiffValue diffValue = (DiffValue) value;
+        long current = diffValue.myCurrentCount;
+        long old = diffValue.myOldCount;
+        long trackedNew = strategy.getCount();
+        long deleted = Math.max(0, old + trackedNew - current);
+        if (trackedNew != 0) {
+          append(String.format("+%d", trackedNew), myClickableCellAttributes);
+          if (deleted != 0) {
+            append(String.format(" / %d", -deleted), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          }
+        } else {
+          append("0", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        }
+      } else {
+        String text = String.format("%s%d", diff > 0 ? "+" : "", diff);
+        append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
-
-      String text = String.format("%s%d", diff > 0 ? "+" : "", diff);
-      append(text, attributes);
     }
   }
 }

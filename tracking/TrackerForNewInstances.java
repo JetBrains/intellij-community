@@ -8,5 +8,8 @@ import java.util.List;
 public interface TrackerForNewInstances {
   @NotNull
   List<ObjectReference> getNewInstances();
+
+  int getCount();
+
   boolean isReady();
 }

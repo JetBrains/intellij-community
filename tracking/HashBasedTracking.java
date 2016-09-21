@@ -15,10 +15,11 @@ class HashBasedTracking extends InstanceTrackingStrategy {
   private static final Logger LOG = Logger.getInstance(HashBasedTracking.class);
 
   private final ReferenceType myClassType;
+
   private MyHashCodeMethodWrapper myHashCodeWrapper;
   private Set<Integer> myHashesSet;
   private MyState myState = MyState.WAIT_HASHES;
-
+  private int myCount = 0;
   HashBasedTracking(@Nullable SuspendContextImpl suspendContext,
                     @NotNull ReferenceType classType,
                     @NotNull List<ObjectReference> initialInstances) {
@@ -45,7 +46,13 @@ class HashBasedTracking extends InstanceTrackingStrategy {
 
     myHashesSet = toSetOfHashes(ref2hash);
     myState = myState.next();
+    myCount = newInstances.size();
     return newInstances;
+  }
+
+  @Override
+  public int getCount() {
+    return myCount;
   }
 
   @Override

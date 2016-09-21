@@ -8,7 +8,6 @@ import java.util.List;
 
 class RetainReferencesTracking extends InstanceTrackingStrategy {
   private final IdentityBasedTracking myIdTracker;
-  @SuppressWarnings("unused")
   private List<ObjectReference> myHardRefs;
   RetainReferencesTracking(@NotNull List<ObjectReference> initialInstances) {
     myHardRefs = initialInstances;
@@ -22,5 +21,10 @@ class RetainReferencesTracking extends InstanceTrackingStrategy {
     myIdTracker.update(suspendContext, references);
     myHardRefs = references;
     return myIdTracker.getNewInstances();
+  }
+
+  @Override
+  public int getCount() {
+    return myHardRefs.size();
   }
 }

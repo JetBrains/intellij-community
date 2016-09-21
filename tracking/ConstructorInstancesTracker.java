@@ -38,11 +38,12 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   private final XDebugSession myDebugSession;
   private final CreationPositionTracker myPositionTracker;
   private final DebugProcessImpl myDebugProcess;
+
   @Nullable
   private HashSet<ObjectReference> myNewObjects = null;
+
   @NotNull
   private HashSet<ObjectReference> myTrackedObjects = new HashSet<>();
-
   public ConstructorInstancesTracker(@NotNull ReferenceType ref,
                                      @NotNull XDebugSession debugSession) {
     myReference = ref;
@@ -78,6 +79,11 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   @Override
   public List<ObjectReference> getNewInstances() {
     return myNewObjects == null ? Collections.EMPTY_LIST : new ArrayList<>(myNewObjects);
+  }
+
+  @Override
+  public int getCount() {
+    return myNewObjects == null ? 0 : myNewObjects.size();
   }
 
   @Override
