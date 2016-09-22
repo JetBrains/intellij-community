@@ -47,7 +47,7 @@ public class Modifiers {
       final boolean parsed = Annotation.parse(builder, parser) || parseModifier(builder);
 
       if (parsed) {
-        if (PathExpression.isQualicationDot(builder)) {
+        if (PathExpression.isQualificationDot(builder)) {
           modifierListItem.rollbackTo();
           break;
         }

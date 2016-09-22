@@ -103,7 +103,7 @@ public class PathExpression {
 
 
     // Property reference
-    if (isQualicationDot(builder)) {
+    if (isQualificationDot(builder)) {
       if (ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mDOT)) {
         ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
       }
@@ -143,7 +143,15 @@ public class PathExpression {
     }
   }
 
-  public static boolean isQualicationDot(@NotNull PsiBuilder builder) {
+  public static boolean isQualificationDotAhead(@NotNull PsiBuilder builder) {
+    PsiBuilder.Marker mark = builder.mark();
+    builder.advanceLexer();
+    boolean result = isQualificationDot(builder);
+    mark.rollbackTo();
+    return result;
+  }
+
+  public static boolean isQualificationDot(@NotNull PsiBuilder builder) {
     return DOTS.contains(builder.getTokenType()) || ParserUtils.lookAhead(builder, GroovyTokenTypes.mNLS, GroovyTokenTypes.mDOT);
   }
 
