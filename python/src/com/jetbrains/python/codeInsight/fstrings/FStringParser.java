@@ -76,12 +76,14 @@ public class FStringParser {
     int bracesBalance = 0;
     char stringLiteralQuote = '\0';
     int quotesNum = 0;
+    boolean containsNamedUnicodeEscape = false;
 
     int offset = leftBraceOffset + 1;
     while (offset < myNodeContentRange.getEndOffset()) {
       // Actually they aren't allowed inside expression fragments, but we skip them anyway to prevent injection errors
       final int nextOffset = skipNamedUnicodeEscape(offset);
       if (offset != nextOffset) {
+        containsNamedUnicodeEscape = true;
         offset = nextOffset;
         continue;
       }
@@ -139,7 +141,7 @@ public class FStringParser {
     if (contentEndOffset == -1) {
       contentEndOffset = offset;
     }
-    myFragments.add(new FragmentOffsets(leftBraceOffset, contentEndOffset, rightBraceOffset));
+    myFragments.add(new FragmentOffsets(leftBraceOffset, contentEndOffset, rightBraceOffset, containsNamedUnicodeEscape));
     return offset;
   }
 
@@ -155,14 +157,16 @@ public class FStringParser {
     private final int myLeftBraceOffset;
     private final int myRightBraceOffset;
     private final int myContentEndOffset;
+    private final boolean myContainsNamedUnicodeEscape;
 
-    public FragmentOffsets(int leftBraceOffset, int contentEndOffset, int rightBraceOffset) {
+    private FragmentOffsets(int leftBraceOffset, int contentEndOffset, int rightBraceOffset, boolean escape) {
       assert contentEndOffset > leftBraceOffset;
       assert rightBraceOffset < 0 || (contentEndOffset <= rightBraceOffset && leftBraceOffset < rightBraceOffset);
 
       myLeftBraceOffset = leftBraceOffset;
       myRightBraceOffset = rightBraceOffset;
       myContentEndOffset = contentEndOffset;
+      myContainsNamedUnicodeEscape = escape;
     }
 
     public int getLeftBraceOffset() {
@@ -175,6 +179,10 @@ public class FStringParser {
 
     public int getContentEndOffset() {
       return myContentEndOffset;
+    }
+
+    public boolean containsNamedUnicodeEscape() {
+      return myContainsNamedUnicodeEscape;
     }
 
     @NotNull

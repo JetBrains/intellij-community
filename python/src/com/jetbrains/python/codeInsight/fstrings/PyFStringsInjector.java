@@ -46,6 +46,7 @@ public class PyFStringsInjector extends PyInjectorBase {
     for (ASTNode node : pyString.getStringNodes()) {
       final int relNodeOffset = node.getTextRange().getStartOffset() - pyString.getTextRange().getStartOffset();
       for (FragmentOffsets offsets : getInjectionRanges(node)) {
+        if (offsets.containsNamedUnicodeEscape()) continue;
         registrar.startInjecting(PyDocstringLanguageDialect.getInstance());
         registrar.addPlace(null, null, pyString, offsets.getContentRange().shiftRight(relNodeOffset));
         registrar.doneInjecting();

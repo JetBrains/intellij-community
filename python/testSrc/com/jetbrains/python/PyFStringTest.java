@@ -24,7 +24,6 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -96,5 +95,20 @@ public class PyFStringTest extends PyTestCase {
   public void testNamedUnicodeEscapes() {
     doTestRanges("f'\\N{foo}\\N{}\\N{{{{{}{|42 + \\N{DIGIT ONE}|}'");
     doTestRanges("f'{|x|:\\N{DIGIT_ONE}}'");
+  }
+
+  // PY-20785
+  public void testUnicodeEscapeInsideExpressionFragment() {
+    doTestUnicodeEscapeDetection("f'{\\N{FOO}}'", true);
+    doTestUnicodeEscapeDetection("f'{\"\\N{FOO\"}'", true);
+    doTestUnicodeEscapeDetection("f'{\"\\N{\"}'", true);
+    doTestUnicodeEscapeDetection("f'{\"\\\\N{FOO}\"}'", false);
+  }
+
+  private static void doTestUnicodeEscapeDetection(String fStringText, boolean expected) {
+    final List<FragmentOffsets> fragments = FStringParser.parse(fStringText);
+    assertSize(1, fragments);
+    final FragmentOffsets offsets = fragments.get(0);
+    assertEquals(expected, offsets.containsNamedUnicodeEscape());
   }
 }
