@@ -39,7 +39,7 @@ val Promise<*>.isFulfilled: Boolean
 internal val OBSOLETE_ERROR by lazy { createError("Obsolete") }
 
 private val REJECTED: Promise<*> by lazy { RejectedPromise<Any?>(createError("rejected")) }
-private val DONE: Promise<*> by lazy { DonePromise(null) }
+private val DONE: Promise<*> by lazy(LazyThreadSafetyMode.NONE) { Promise.DONE }
 private val CANCELLED_PROMISE: Promise<*> by lazy { RejectedPromise<Any?>(OBSOLETE_ERROR) }
 
 @Suppress("UNCHECKED_CAST")

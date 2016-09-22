@@ -29,12 +29,6 @@ public interface Promise<T> {
   @Deprecated
   Promise<Void> DONE = new DonePromise(null);
 
-  /**
-   * @deprecated Use Promises.rejectedPromise()
-   */
-  @Deprecated
-  Promise<Void> REJECTED = new RejectedPromise(new MessageError("rejected", false));
-
   enum State {
     PENDING, FULFILLED, REJECTED
   }
