@@ -148,7 +148,7 @@ public class FindDialog extends DialogWrapper {
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
   public FindDialog(@NotNull Project project, @NotNull FindModel model, @NotNull Consumer<FindModel> myOkHandler){
-    super(project, true, IdeModalityType.PROJECT);
+    super(project, true);
     myProject = project;
     myModel = model;
 
