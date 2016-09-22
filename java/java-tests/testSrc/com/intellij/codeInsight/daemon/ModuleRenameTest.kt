@@ -20,26 +20,18 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.rename.RenameProcessor
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 import org.junit.Test
 
-class ModuleRenameTest  : LightCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
-
+class ModuleRenameTest  : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     addFile("module-info.java", "module M2 { }", M2)
-  }
-
-  override fun tearDown() {
-    MultiModuleJava9ProjectDescriptor.cleanupSourceRoots()
-    super.tearDown()
   }
 
   @Test fun testRename() {
@@ -51,6 +43,4 @@ class ModuleRenameTest  : LightCodeInsightFixtureTestCase() {
     }
     myFixture.checkResult("module M { requires M2.bis; }")
   }
-
-  private fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN) = VfsTestUtil.createFile(module.root(), path, text)
 }

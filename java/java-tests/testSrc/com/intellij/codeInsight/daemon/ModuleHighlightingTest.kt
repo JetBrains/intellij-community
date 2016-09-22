@@ -16,27 +16,17 @@
 package com.intellij.codeInsight.daemon
 
 import com.intellij.psi.PsiJavaModule
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.VfsTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M3
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.assertj.core.api.Assertions.assertThat
 
-class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
-
+class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
-  }
-
-  override fun tearDown() {
-    MultiModuleJava9ProjectDescriptor.cleanupSourceRoots()
-    super.tearDown()
   }
 
   fun testWrongFileName() {
@@ -147,8 +137,6 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   }
 
   //<editor-fold desc="Helpers.">
-  private fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN) = VfsTestUtil.createFile(module.root(), path, text)
-
   private fun highlight(text: String, filter: Boolean = false) = highlight("module-info.java", text, filter)
 
   private fun highlight(path: String, text: String, filter: Boolean = false) {
