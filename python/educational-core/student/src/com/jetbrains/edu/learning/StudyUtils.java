@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -690,7 +691,14 @@ public class StudyUtils {
   }
   
   public static boolean isTaskDescriptionFile(@NotNull final String fileName) {
-    return EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName);
+    if (EduNames.TASK_HTML.equals(fileName) || EduNames.TASK_MD.equals(fileName)) {
+      return true;
+    }
+    String extension = FileUtilRt.getExtension(fileName);
+    if (!extension.equals(FileUtilRt.getExtension(EduNames.TASK_HTML)) && !extension.equals(FileUtilRt.getExtension(EduNames.TASK_MD))) {
+      return false;
+    }
+    return fileName.contains(EduNames.TASK) && fileName.contains(EduNames.SUBTASK_MARKER);
   }
   
   @Nullable

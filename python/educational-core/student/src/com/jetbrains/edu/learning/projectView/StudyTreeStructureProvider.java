@@ -50,6 +50,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
             final TaskFile taskFile = StudyUtils.getTaskFile(project, virtualFile);
             if (taskFile != null) {
               nodes.add(node);
+              continue;
             }
             final String parentName = parent.getName();
             if (parentName != null) {
