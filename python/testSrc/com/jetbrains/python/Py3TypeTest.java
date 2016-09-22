@@ -257,6 +257,60 @@ public class Py3TypeTest extends PyTestCase {
                                                               "        expr = i"));
   }
 
+  // PY-20770
+  public void testElementInAsyncComprehensions() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        doTest("int",
+               "async def asyncgen():\n" +
+               "    yield 10\n" +
+               "async def run():\n" +
+               "    {expr async for expr in asyncgen()}\n");
+
+        doTest("int",
+               "async def asyncgen():\n" +
+               "    yield 10\n" +
+               "async def run():\n" +
+               "    [expr async for expr in asyncgen()]\n");
+
+        doTest("int",
+               "async def asyncgen():\n" +
+               "    yield 10\n" +
+               "async def run():\n" +
+               "    {expr: expr ** 2 async for expr in asyncgen()}\n");
+
+        doTest("int",
+               "async def asyncgen():\n" +
+               "    yield 10\n" +
+               "async def run():\n" +
+               "    (expr async for expr in asyncgen())\n");
+
+        doTest("int",
+               "async def asyncgen():\n" +
+               "    yield 10\n" +
+               "async def run():\n" +
+               "    list(expr async for expr in asyncgen())\n");
+
+        doTest("int",
+               "async def asyncgen():\n" +
+               "    yield 10\n" +
+               "async def run():\n" +
+               "    dataset = {data async for expr in asyncgen()\n" +
+               "                    async for data in asyncgen()\n" +
+               "                    if check(data)}\n");
+
+        doTest("int",
+               "async def asyncgen():\n" +
+               "    yield 10\n" +
+               "async def run():\n" +
+               "    dataset = {expr async for line in asyncgen()\n" +
+               "                    async for expr in asyncgen()\n" +
+               "                    if check(expr)}\n");
+      }
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
