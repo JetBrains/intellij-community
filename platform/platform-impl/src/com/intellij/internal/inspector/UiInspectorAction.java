@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -174,12 +175,9 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
       myWrapperPanel.add(myInspectorTable, BorderLayout.CENTER);
 
-      JSplitPane splitPane = new JSplitPane();
-      splitPane.setDividerLocation(0.5);
-      splitPane.setRightComponent(myWrapperPanel);
-
-      JScrollPane pane = new JBScrollPane(myHierarchyTree);
-      splitPane.setLeftComponent(pane);
+      Splitter splitPane = new JBSplitter(false, "UiInspector.splitter.proportion", 0.5f);
+      splitPane.setSecondComponent(myWrapperPanel);
+      splitPane.setFirstComponent(new JBScrollPane(myHierarchyTree));
       add(splitPane, BorderLayout.CENTER);
 
       myHierarchyTree.expandPath();
