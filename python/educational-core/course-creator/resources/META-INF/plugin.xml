@@ -27,6 +27,7 @@
                         serviceImplementation="com.jetbrains.edu.coursecreator.settings.CCSettings"/>
     <highlightErrorFilter implementation="com.jetbrains.edu.coursecreator.CCHighlightErrorFilter"/>
     <editorNotificationProvider implementation="com.jetbrains.edu.coursecreator.CCSubtaskEditorNotificationProvider"/>
+    <editorTabTitleProvider implementation="com.jetbrains.edu.coursecreator.CCTestsTabTitleProvider"/>
   </extensions>
   <extensions defaultExtensionNs="Edu">
     <studyActionsProvider implementation="com.jetbrains.edu.coursecreator.CCStudyActionsProvider"/>
