@@ -267,7 +267,13 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     }
     else {
       module.setOption(JpsProjectLoader.CLASSPATH_ATTRIBUTE, storageId);
-      module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, provider.getContentRoot(model));
+      String root = provider.getContentRoot(model);
+      if (root == null) {
+        module.clearOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE);
+      }
+      else {
+        module.setOption(JpsProjectLoader.CLASSPATH_DIR_ATTRIBUTE, root);
+      }
     }
   }
 

@@ -40,7 +40,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 public class ParameterHintsPresentationManager implements Disposable {
-  private static final Key<FontMetrics> HINT_FONT_METRICS = Key.create("ParameterHintFontMetrics");
+  private static final Key<MyFontMetrics> HINT_FONT_METRICS = Key.create("ParameterHintFontMetrics");
   private static final Key<AnimationStep> ANIMATION_STEP = Key.create("ParameterHintAnimationStep");
 
   private static final int ANIMATION_STEP_MS = 25;
@@ -108,20 +108,36 @@ public class ParameterHintsPresentationManager implements Disposable {
     return getFontMetrics(editor).getFont();
   }
 
-  private static FontMetrics getFontMetrics(@NotNull Editor editor) {
+  private static MyFontMetrics getFontMetrics(@NotNull Editor editor) {
     String familyName = UIManager.getFont("Label.font").getFamily();
     int size = Math.max(1, editor.getColorsScheme().getEditorFontSize() - 1);
-    FontMetrics metrics = editor.getUserData(HINT_FONT_METRICS);
+    MyFontMetrics metrics = editor.getUserData(HINT_FONT_METRICS);
     if (metrics != null) {
       Font font = metrics.getFont();
       if (!familyName.equals(font.getFamily()) || size != font.getSize()) metrics = null;
     }
     if (metrics == null) {
       Font font = new Font(familyName, Font.PLAIN, size);
-      metrics = FontInfo.createReferenceGraphics().getFontMetrics(font);
+      metrics = new MyFontMetrics(font);
       editor.putUserData(HINT_FONT_METRICS, metrics);
     }
     return metrics;
+  }
+
+  private static class MyFontMetrics {
+    private final FontMetrics metrics;
+    private final int lineHeight;
+
+    private MyFontMetrics(Font font) {
+      metrics = FontInfo.createReferenceGraphics().getFontMetrics(font);
+      // We assume this will be a better approximation to a real line height for a given font
+      lineHeight = (int)Math.ceil(metrics.getFont().createGlyphVector(metrics.getFontRenderContext(), "Ap")
+                                      .getVisualBounds().getHeight());
+    }
+
+    private Font getFont() {
+      return metrics.getFont();
+    }
   }
 
   private static class MyRenderer implements EditorCustomElementRenderer {
@@ -140,7 +156,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     }
 
     private void updateState(Editor editor, String text) {
-      FontMetrics metrics = getFontMetrics(editor);
+      FontMetrics metrics = getFontMetrics(editor).metrics;
       startWidth = doCalcWidth(myText, metrics);
       myText = text;
       int endWidth = doCalcWidth(myText, metrics);
@@ -154,7 +170,7 @@ public class ParameterHintsPresentationManager implements Disposable {
 
     @Override
     public int calcWidthInPixels(@NotNull Editor editor) {
-      FontMetrics metrics = getFontMetrics(editor);
+      FontMetrics metrics = getFontMetrics(editor).metrics;
       int endWidth = doCalcWidth(myText, metrics);
       return step <= steps ? Math.max(1, startWidth + (endWidth - startWidth) / steps * step) : endWidth;
     }
@@ -168,21 +184,23 @@ public class ParameterHintsPresentationManager implements Disposable {
       if (myText != null && (step > steps || startWidth != 0)) {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(JavaHighlightingColors.INLINE_PARAMETER_HINT);
         if (attributes != null) {
+          MyFontMetrics fontMetrics = getFontMetrics(editor);
           Color backgroundColor = attributes.getBackgroundColor();
           if (backgroundColor != null) {
             GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
             g.setColor(backgroundColor);
-            g.fillRoundRect(r.x + 2, r.y + 2, r.width - 4, r.height - 4, 8, 8);
+            int gap = r.height < (fontMetrics.lineHeight + 2) ? 1 : 2;
+            g.fillRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
             config.restore();
           }
           Color foregroundColor = attributes.getForegroundColor();
           if (foregroundColor != null) {
             g.setColor(foregroundColor);
             g.setFont(getFont(editor));
-            FontMetrics metrics = g.getFontMetrics();
             Shape savedClip = g.getClip();
             g.clipRect(r.x + 3, r.y + 2, r.width - 6, r.height - 4);
             int editorAscent = editor instanceof EditorImpl ? ((EditorImpl)editor).getAscent() : 0;
+            FontMetrics metrics = fontMetrics.metrics;
             g.drawString(myText, r.x + 7, r.y + Math.max(editorAscent, (r.height + metrics.getAscent() - metrics.getDescent()) / 2) - 1);
             g.setClip(savedClip);
           }

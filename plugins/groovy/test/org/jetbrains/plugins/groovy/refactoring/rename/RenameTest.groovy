@@ -42,15 +42,15 @@ class RenameTest extends LightGroovyTestCase {
     TestUtils.testDataPath + 'groovy/refactoring/rename/'
   }
 
-  void testClosureIt() throws Throwable { doTest(); }
+  void testClosureIt() throws Throwable { doTest() }
 
-  void testTo_getter() throws Throwable { doTest(); }
+  void testTo_getter() throws Throwable { doTest() }
 
-  void testTo_prop() throws Throwable { doTest(); }
+  void testTo_prop() throws Throwable { doTest() }
 
-  void testTo_setter() throws Throwable { doTest(); }
+  void testTo_setter() throws Throwable { doTest() }
 
-  void testScriptMethod() throws Throwable { doTest(); }
+  void testScriptMethod() throws Throwable { doTest() }
 
   void testParameterIsNotAUsageOfGroovyParameter() throws Exception {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.util.gotoByName;
+package com.intellij.openapi.vfs
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.io.systemIndependentPath
+import java.nio.file.Path
 
-import java.util.Set;
-import java.util.SortedSet;
-
-public interface EdtSortingModel {
-  @NotNull
-  SortedSet<Object> sort(@NotNull Set<Object> elements);
+fun Path.refreshVfs() {
+  LocalFileSystem.getInstance()?.let { fs ->
+    // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.
+    val virtualFile = fs.refreshAndFindFileByPath(systemIndependentPath)
+    if (virtualFile != null) {
+      VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile)
+    }
+  }
 }
+

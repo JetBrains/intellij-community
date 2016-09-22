@@ -27,14 +27,17 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,8 +49,10 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -65,7 +70,7 @@ import java.util.regex.Pattern;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
 
-public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, EdtSortingModel, DumbAware {
+public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
 
   @Nullable private final Project myProject;
@@ -80,6 +85,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, E
 
   protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<>();
   private final Map<String, String> myConfigurablesNames = ContainerUtil.newTroveMap();
+  private final ModalityState myModality = ModalityState.defaultModalityState();
 
   public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file) {
     myProject = project;
@@ -390,18 +396,53 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, E
   }
 
   @NotNull
-  @Override
-  public SortedSet<Object> sort(@NotNull Set<Object> elements) {
+  public SortedSet<Object> sortItems(@NotNull Set<Object> elements) {
+    List<ActionWrapper> toUpdate = getActionsToUpdate(elements);
+    if (!toUpdate.isEmpty()) {
+      updateActions(toUpdate);
+    }
+
     TreeSet<Object> objects = ContainerUtilRt.newTreeSet(this);
     objects.addAll(elements);
     return objects;
   }
 
+  @NotNull
+  private static List<ActionWrapper> getActionsToUpdate(@NotNull Set<Object> elements) {
+    List<ActionWrapper> toUpdate = new ArrayList<>();
+    for (Object element : elements) {
+      if (element instanceof MatchedValue) {
+        Comparable value = ((MatchedValue)element).value;
+        if (value instanceof ActionWrapper && !((ActionWrapper)value).hasPresentation()) {
+          toUpdate.add((ActionWrapper)value);
+        }
+      }
+    }
+    return toUpdate;
+  }
+
+  private void updateActions(List<ActionWrapper> toUpdate) {
+    TransferToEDTQueue<ActionWrapper> queue = new TransferToEDTQueue<ActionWrapper>("goto action", aw -> {
+      aw.getPresentation();
+      return true;
+    }, Conditions.FALSE, 50) {
+      @Override
+      protected void schedule(@NotNull Runnable updateRunnable) {
+        ApplicationManager.getApplication().invokeLater(updateRunnable, myModality);
+      }
+    };
+    for (ActionWrapper wrapper : toUpdate) {
+      queue.offer(wrapper);
+    }
+    while (queue.size() > 0) {
+      ProgressManager.checkCanceled();
+      TimeoutUtil.sleep(50);
+    }
+  }
+
   public enum MatchMode {
     NONE, INTENTION, NAME, DESCRIPTION, GROUP, NON_MENU
   }
-
-
 
   @Override
   public boolean willOpenEditor() {
@@ -418,7 +459,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, E
     @NotNull private final MatchMode myMode;
     @Nullable  private final String myGroupName;
     private final DataContext myDataContext;
-    private Presentation myPresentation;
+    private volatile Presentation myPresentation;
 
     public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, @NotNull MatchMode mode, DataContext dataContext) {
       myAction = action;
@@ -463,6 +504,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, E
     public Presentation getPresentation() {
       if (myPresentation != null) return myPresentation;
       return myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+    }
+
+    private boolean hasPresentation() {
+      return myPresentation != null;
     }
 
     @Nullable

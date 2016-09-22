@@ -270,5 +270,7 @@
     <extensionPoint name="settingsSummaryFactory" interface="com.intellij.settingsSummary.ProblemType"/>
 
     <extensionPoint name="credentialStore" interface="com.intellij.credentialStore.CredentialStoreFactory"/>
+
+    <extensionPoint name="supportColorBlindness" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
   </extensionPoints>
 </idea-plugin>

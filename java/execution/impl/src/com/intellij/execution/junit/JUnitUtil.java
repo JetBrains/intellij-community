@@ -16,11 +16,13 @@
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -35,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class JUnitUtil {
@@ -209,13 +213,16 @@ public class JUnitUtil {
 
     if (!PsiClassUtil.isRunnableClass(psiClass, false, checkAbstract)) return false;
 
-    for (final PsiMethod method : psiClass.getAllMethods()) {
-      ProgressManager.checkCanceled();
-      if (AnnotationUtil.isAnnotated(method, TEST5_ANNOTATIONS)) return true;
-    }
+    Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
+    if (module != null) {
+      for (final PsiMethod method : psiClass.getAllMethods()) {
+        ProgressManager.checkCanceled();
+        if (isMetaAnnotated(method, TEST5_ANNOTATIONS, module)) return true;
+      }
 
-    for (PsiClass aClass : psiClass.getInnerClasses()) {
-      if (AnnotationUtil.isAnnotated(aClass, JUNIT5_NESTED, false)) return true;
+      for (PsiClass aClass : psiClass.getInnerClasses()) {
+        if (isMetaAnnotated(aClass, JUNIT5_NESTED, module)) return true;
+      }
     }
 
     return false;
@@ -230,7 +237,7 @@ public class JUnitUtil {
   }
   
   public static boolean isTestAnnotated(final PsiMethod method) {
-    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATIONS, false) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
+    if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, false) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(method.getContainingClass(), Collections.singleton(RUN_WITH));
       if (annotation != null) {
         final PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
@@ -244,6 +251,24 @@ public class JUnitUtil {
           }
         }
       }
+      return true;
+    }
+
+    Module module = ModuleUtilCore.findModuleForPsiElement(method);
+    return module != null && isMetaAnnotated(method, TEST5_ANNOTATIONS, module);
+  }
+
+  private static boolean isMetaAnnotated(PsiModifierListOwner owner, final Collection<String> metaAnnotations, final Module module) {
+    for (String annotation : metaAnnotations) {
+      if (isMetaAnnotated(owner, annotation, module)) return true;
+    }
+    return false;
+  }
+
+  private static boolean isMetaAnnotated(PsiModifierListOwner owner, String annotation, Module module) {
+    Collection<PsiClass> annotations = MetaAnnotationUtil.getAnnotationTypesWithChildren(module, annotation, true);
+    Stream<String> qualifiedNames = annotations.stream().map(psiClass -> psiClass.getQualifiedName());
+    if (AnnotationUtil.isAnnotated(owner, qualifiedNames.collect(Collectors.toSet()), false)) {
       return true;
     }
     return false;

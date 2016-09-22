@@ -1128,7 +1128,7 @@ class Foo {
     ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
     CodeInsightTestUtil.addTemplate(template, testRootDisposable)
 
-    writeCommand { startTemplate(template); }
+    writeCommand { startTemplate(template) }
     myFixture.checkResult """\
 class Foo {
   {

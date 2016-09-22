@@ -24,55 +24,55 @@ class TypesParsingTest extends GroovyParsingTestCase {
     return super.basePath + "types"
   }
 
-  void testAnn_def1() throws Throwable { doTest(); }
+  void testAnn_def1() throws Throwable { doTest() }
 
-  void testAnn_def2() throws Throwable { doTest(); }
+  void testAnn_def2() throws Throwable { doTest() }
 
-  void testAnn_def3() throws Throwable { doTest(); }
+  void testAnn_def3() throws Throwable { doTest() }
 
-  void testDefault1() throws Throwable { doTest(); }
+  void testDefault1() throws Throwable { doTest() }
 
-  void testDefault2() throws Throwable { doTest(); }
+  void testDefault2() throws Throwable { doTest() }
 
-  void testType1() throws Throwable { doTest(); }
+  void testType1() throws Throwable { doTest() }
 
-  void testType10() throws Throwable { doTest(); }
+  void testType10() throws Throwable { doTest() }
 
-  void testType11() throws Throwable { doTest(); }
+  void testType11() throws Throwable { doTest() }
 
-  void testType12() throws Throwable { doTest(); }
+  void testType12() throws Throwable { doTest() }
 
-  void testType13() throws Throwable { doTest(); }
+  void testType13() throws Throwable { doTest() }
 
-  void testType14() throws Throwable { doTest(); }
+  void testType14() throws Throwable { doTest() }
 
-  void testType15() throws Throwable { doTest(); }
+  void testType15() throws Throwable { doTest() }
 
-  void testType2() throws Throwable { doTest(); }
+  void testType2() throws Throwable { doTest() }
 
-  void testType3() throws Throwable { doTest(); }
+  void testType3() throws Throwable { doTest() }
 
-  void testType4() throws Throwable { doTest(); }
+  void testType4() throws Throwable { doTest() }
 
-  void testType5() throws Throwable { doTest(); }
+  void testType5() throws Throwable { doTest() }
 
-  void testType6() throws Throwable { doTest(); }
+  void testType6() throws Throwable { doTest() }
 
-  void testType7() throws Throwable { doTest(); }
+  void testType7() throws Throwable { doTest() }
 
-  void testType8() throws Throwable { doTest(); }
+  void testType8() throws Throwable { doTest() }
 
-  void testType9() throws Throwable { doTest(); }
+  void testType9() throws Throwable { doTest() }
 
-  void testInnerEnum() throws Throwable { doTest(); }
+  void testInnerEnum() throws Throwable { doTest() }
 
-  void testNewlineBeforeClassBrace() throws Throwable { doTest(); }
+  void testNewlineBeforeClassBrace() throws Throwable { doTest() }
 
-  void testNewlineBeforeExtends() throws Throwable { doTest(); }
+  void testNewlineBeforeExtends() throws Throwable { doTest() }
 
-  void testStaticInitializer() throws Throwable { doTest(); }
+  void testStaticInitializer() throws Throwable { doTest() }
 
-  void testInterfaceWithGroovyDoc() throws Throwable { doTest(); }
+  void testInterfaceWithGroovyDoc() throws Throwable { doTest() }
 
   void testIncorrectParam1() { doTest() }
 

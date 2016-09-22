@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.*;
@@ -33,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,9 +74,7 @@ public class CommandLineProcessor {
       // HACK: PlatformProjectOpenProcessor agrees to open anything
       provider = null;
     }
-    if (provider != null ||
-        name.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) ||
-        new File(name, Project.DIRECTORY_STORE_FOLDER).exists()) {
+    if (provider != null || ProjectKt.isValidProjectPath(name, true)) {
       final Project result = ProjectUtil.openOrImport(name, null, true);
       if (result == null) {
         Messages.showErrorDialog("Cannot open project '" + name + "'", "Cannot Open Project");

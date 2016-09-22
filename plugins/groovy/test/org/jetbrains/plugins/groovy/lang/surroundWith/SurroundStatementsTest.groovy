@@ -30,33 +30,33 @@ class SurroundStatementsTest extends SurroundTestCase {
     return TestUtils.getTestDataPath() + "groovy/surround/statements/"
   }
 
-  void testClosure1() throws Exception { doTest(new SurrounderByClosure()); }
+  void testClosure1() throws Exception { doTest(new SurrounderByClosure()) }
 
-  void testClosure2() throws Exception { doTest(new SurrounderByClosure()); }
+  void testClosure2() throws Exception { doTest(new SurrounderByClosure()) }
 
-  void testClosure3() throws Exception { doTest(new SurrounderByClosure()); }
+  void testClosure3() throws Exception { doTest(new SurrounderByClosure()) }
 
-  void testIf1() throws Exception { doTest(new IfSurrounder()); }
+  void testIf1() throws Exception { doTest(new IfSurrounder()) }
 
-  void testIf_else1() throws Exception { doTest(new IfElseSurrounder()); }
+  void testIf_else1() throws Exception { doTest(new IfElseSurrounder()) }
 
-  void testShouldFailWithType() throws Exception { doTest(new ShouldFailWithTypeStatementsSurrounder()); }
+  void testShouldFailWithType() throws Exception { doTest(new ShouldFailWithTypeStatementsSurrounder()) }
 
-  void testTry_catch1() throws Exception { doTest(new TryCatchSurrounder()); }
+  void testTry_catch1() throws Exception { doTest(new TryCatchSurrounder()) }
 
-  void testTry_catch_finally() throws Exception { doTest(new TryCatchFinallySurrounder()); }
+  void testTry_catch_finally() throws Exception { doTest(new TryCatchFinallySurrounder()) }
 
-  void testTry_finally1() throws Exception { doTest(new TryFinallySurrounder()); }
+  void testTry_finally1() throws Exception { doTest(new TryFinallySurrounder()) }
 
-  void testTry_finallyFormatting() throws Exception { doTest(new TryFinallySurrounder()); }
+  void testTry_finallyFormatting() throws Exception { doTest(new TryFinallySurrounder()) }
 
-  void testWhile1() throws Exception { doTest(new WhileSurrounder()); }
+  void testWhile1() throws Exception { doTest(new WhileSurrounder()) }
 
-  void testWith2() throws Exception { doTest(new WithStatementsSurrounder()); }
+  void testWith2() throws Exception { doTest(new WithStatementsSurrounder()) }
 
-  void testFor1() throws Exception { doTest(new ForSurrounder()); }
+  void testFor1() throws Exception { doTest(new ForSurrounder()) }
 
-  void testIfComments() throws Exception { doTest(new IfSurrounder()); }
+  void testIfComments() throws Exception { doTest(new IfSurrounder()) }
 
   void testBracesInIf() {
     doTest(new GrBracesSurrounder(), '''\

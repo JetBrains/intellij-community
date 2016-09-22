@@ -17,18 +17,25 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.Extensions;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -57,9 +64,9 @@ public class InspectionDescriptionInfo {
     if (method == null) {
       String className = psiClass.getQualifiedName();
       if(className != null) {
-        XmlTag tag = findExtensionTag(module, className);
-        if(tag != null) {
-          filename = tag.getAttributeValue("shortName");
+        Extension extension = findExtension(module, psiClass);
+        if(extension != null) {
+          filename = extension.getXmlTag().getAttributeValue("shortName");
         }
       }
       if(filename == null) {
@@ -75,7 +82,7 @@ public class InspectionDescriptionInfo {
   }
 
   @Nullable
-  static XmlTag findExtensionTag(Module module, final String className) {
+  static Extension findExtension(Module module, PsiClass psiClass) {
     List<DomFileElement<IdeaPlugin>> elements = DomService.getInstance().getFileElements(IdeaPlugin.class, module.getProject(),
                                                                                          GlobalSearchScope.projectScope(module.getProject()));
     elements = ContainerUtil.filter(elements, element -> {
@@ -84,25 +91,23 @@ public class InspectionDescriptionInfo {
     });
 
     elements = PluginDescriptorChooser.findAppropriateIntelliJModule(module.getName(), elements);
-    for (DomFileElement<IdeaPlugin> element : elements) {
-      IdeaPlugin ideaPlugin = element.getRootElement();
-      List<Extensions> extensionsList = ideaPlugin.getExtensions();
-      for (Extensions extensions : extensionsList) {
-        String epPrefix = extensions.getEpPrefix();
-        if (epPrefix.equals("com.intellij.")) {
-          XmlTag[] result = {null};
-          extensions.getXmlTag().acceptChildren(new XmlElementVisitor() {
-            @Override
-            public void visitXmlTag(XmlTag tag) {
-              if (className.equals(tag.getAttributeValue("implementationClass")) &&
-                  ((epPrefix + tag.getName()).equals(InspectionEP.GLOBAL_INSPECTION.getName()) ||
-                   (epPrefix + tag.getName()).equals(LocalInspectionEP.LOCAL_INSPECTION.getName()))) {
-                result[0] = tag;
-              }
+
+    Query<PsiReference> query =
+      ReferencesSearch.search(psiClass, new LocalSearchScope(elements.stream().map(DomFileElement::getFile).toArray(PsiElement[]::new)));
+
+    for(PsiReference ref : query) {
+      PsiElement element = ref.getElement();
+      if(element instanceof XmlAttributeValue) {
+        PsiElement parent = element.getParent();
+        if(parent instanceof XmlAttribute && "implementationClass".equals(((XmlAttribute)parent).getName())) {
+          DomElement domElement = DomUtil.getDomElement(parent.getParent());
+          if(domElement instanceof Extension) {
+            Extension extension = (Extension)domElement;
+            ExtensionPoint extensionPoint = extension.getExtensionPoint();
+            if(extensionPoint != null &&
+               InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {
+              return extension;
             }
-          });
-          if (result[0] != null) {
-            return result[0];
           }
         }
       }

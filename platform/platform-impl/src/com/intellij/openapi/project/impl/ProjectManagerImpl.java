@@ -490,7 +490,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     assert ApplicationManager.getApplication().isUnitTestMode();
     closeProject(project, false, false, false);
     Project[] projects = getOpenProjects();
-    return projects.length == 0 ? Collections.<Project>emptyList() : Arrays.asList(projects);
+    return projects.length == 0 ? Collections.emptyList() : Arrays.asList(projects);
   }
 
   @Override
@@ -529,7 +529,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public boolean closeProject(@NotNull final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
-    };
+    }
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (isLight(project)) {
@@ -628,7 +628,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
       listeners = ((UserDataHolderEx)project)
-        .putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.<ProjectManagerListener>createLockFreeCopyOnWriteList());
+        .putUserDataIfAbsent(LISTENERS_IN_PROJECT_KEY, ContainerUtil.createLockFreeCopyOnWriteList());
     }
     listeners.add(listener);
   }

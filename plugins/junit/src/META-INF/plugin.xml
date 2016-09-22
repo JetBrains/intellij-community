@@ -65,6 +65,7 @@
     <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
+    <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
   </extensions>
 
   <extensionPoints>

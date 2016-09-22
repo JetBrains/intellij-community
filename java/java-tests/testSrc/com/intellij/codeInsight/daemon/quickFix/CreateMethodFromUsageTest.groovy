@@ -29,7 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil
  * @author ven
  */
 class CreateMethodFromUsageTest extends LightQuickFixTestCase {
-  void test() throws Exception { doAllTests(); }
+  void test() throws Exception { doAllTests() }
 
   void testTemplateAssertions() throws Exception {
     configureFromFileText "a.java", """

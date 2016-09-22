@@ -48,25 +48,25 @@ class GroovyEditingTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
-  void testCodeBlockRightBrace() throws Throwable { doTest('{'); }
+  void testCodeBlockRightBrace() throws Throwable { doTest('{') }
 
-  void testInterpolationInsideStringRightBrace() throws Throwable { doTest('{'); }
+  void testInterpolationInsideStringRightBrace() throws Throwable { doTest('{') }
 
-  void testStructuralInterpolationInsideStringRightBrace() throws Throwable { doTest('{'); }
+  void testStructuralInterpolationInsideStringRightBrace() throws Throwable { doTest('{') }
 
-  void testEnterInMultilineString() throws Throwable { doTest('\n'); }
+  void testEnterInMultilineString() throws Throwable { doTest('\n') }
 
-  void testEnterInStringInRefExpr() throws Throwable { doTest('\n'); }
+  void testEnterInStringInRefExpr() throws Throwable { doTest('\n') }
 
-  void testEnterInGStringInRefExpr() throws Throwable { doTest('\n'); }
+  void testEnterInGStringInRefExpr() throws Throwable { doTest('\n') }
 
-  void testPairAngleBracketAfterClassName() throws Throwable { doTest('<'); }
+  void testPairAngleBracketAfterClassName() throws Throwable { doTest('<') }
 
-  void testPairAngleBracketAfterClassNameOvertype() throws Throwable { doTest('>'); }
+  void testPairAngleBracketAfterClassNameOvertype() throws Throwable { doTest('>') }
 
-  void testPairAngleBracketAfterClassNameBackspace() throws Throwable { doTest('\b'); }
+  void testPairAngleBracketAfterClassNameBackspace() throws Throwable { doTest('\b') }
 
-  void testNoPairLess() throws Throwable { doTest('<'); }
+  void testNoPairLess() throws Throwable { doTest('<') }
 
   void testTripleString() {
     doTest('', "'''", "'''<caret>'''")

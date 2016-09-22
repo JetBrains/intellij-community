@@ -148,7 +148,7 @@ public class XmlTagValueImpl implements XmlTagValue{
 
   @Override
   public boolean hasCDATA() {
-    for (XmlText xmlText : myTextElements) {
+    for (XmlText xmlText : getTextElements()) {
       PsiElement[] children = xmlText.getChildren();
       for (PsiElement child : children) {
         if (child.getNode().getElementType() == XmlElementType.XML_CDATA) {

@@ -166,9 +166,12 @@ public final class ExecutionEnvironmentBuilder {
 
   @NotNull
   public ExecutionEnvironment build() {
-    ExecutionEnvironment environment =
-      ServiceManager.getService(myProject, ExecutionEnvironmentProvider.class).createExecutionEnvironment(
+    ExecutionEnvironment environment = null;
+    ExecutionEnvironmentProvider environmentProvider = ServiceManager.getService(myProject, ExecutionEnvironmentProvider.class);
+    if (environmentProvider != null) {
+      environment = environmentProvider.createExecutionEnvironment(
         myProject, myRunProfile, myExecutor, myTarget, myRunnerSettings, myConfigurationSettings, myRunnerAndConfigurationSettings);
+    }
 
     if (environment == null && myRunner == null) {
       if (myRunnerId == null) {

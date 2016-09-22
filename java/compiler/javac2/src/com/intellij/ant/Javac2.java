@@ -39,7 +39,7 @@ public class Javac2 extends Javac {
   private ArrayList myFormFiles;
   private List myNestedFormPathList;
   private boolean instrumentNotNull = true;
-  private String myNotNullAnnotations;
+  private String myNotNullAnnotations = "org.jetbrains.annotations.NotNull";
   private List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
 
   public Javac2() {

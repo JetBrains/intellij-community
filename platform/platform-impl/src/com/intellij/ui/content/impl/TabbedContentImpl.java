@@ -168,6 +168,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
         if (tab instanceof Iconable) {
           Icon baseIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
           super.setIcon(isSelected() || baseIcon == null ? baseIcon : new WatermarkIcon(baseIcon, .5f));
+          break;
         }
       }
     }

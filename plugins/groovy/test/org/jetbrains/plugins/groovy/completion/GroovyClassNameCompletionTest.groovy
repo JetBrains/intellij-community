@@ -48,9 +48,9 @@ class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package $packageName; public class $name {}")
   }
 
-  void testInFieldDeclaration() throws Exception { doTest(); }
+  void testInFieldDeclaration() throws Exception { doTest() }
 
-  void testInParameter() throws Exception { doTest(); }
+  void testInParameter() throws Exception { doTest() }
 
   void testInImport() throws Exception {
     addClassToProject("a", "FooBar")
@@ -70,11 +70,11 @@ class GroovyClassNameCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy")
   }
 
-  void testInComment() throws Exception { doTest(); }
+  void testInComment() throws Exception { doTest() }
 
-  void testInTypeElementPlace() throws Exception { doTest(); }
+  void testInTypeElementPlace() throws Exception { doTest() }
 
-  void testWhenImportExists() throws Exception { doTest(); }
+  void testWhenImportExists() throws Exception { doTest() }
 
   void testFinishByDot() throws Exception {
     addClassToProject("a", "FooBar")

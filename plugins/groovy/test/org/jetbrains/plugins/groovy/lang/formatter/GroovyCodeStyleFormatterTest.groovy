@@ -84,53 +84,53 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
     }
   }
 
-  void testClass_decl1() throws Throwable { doTest(); }
+  void testClass_decl1() throws Throwable { doTest() }
 
-  void testClass_decl2() throws Throwable { doTest(); }
+  void testClass_decl2() throws Throwable { doTest() }
 
-  void testClass_decl3() throws Throwable { doTest(); }
+  void testClass_decl3() throws Throwable { doTest() }
 
-  void testClass_decl4() throws Throwable { doTest(); }
+  void testClass_decl4() throws Throwable { doTest() }
 
-  void testComm_at_first_column1() throws Throwable { doTest(); }
+  void testComm_at_first_column1() throws Throwable { doTest() }
 
-  void testComm_at_first_column2() throws Throwable { doTest(); }
+  void testComm_at_first_column2() throws Throwable { doTest() }
 
-  void testFor1() throws Throwable { doTest(); }
+  void testFor1() throws Throwable { doTest() }
 
-  void testFor2() throws Throwable { doTest(); }
+  void testFor2() throws Throwable { doTest() }
 
-  void testGRVY_1134() throws Throwable { doTest(); }
+  void testGRVY_1134() throws Throwable { doTest() }
 
-  void testIf1() throws Throwable { doTest(); }
+  void testIf1() throws Throwable { doTest() }
 
-  void testMethod_call_par1() throws Throwable { doTest(); }
+  void testMethod_call_par1() throws Throwable { doTest() }
 
-  void testMethod_call_par2() throws Throwable { doTest(); }
+  void testMethod_call_par2() throws Throwable { doTest() }
 
-  void testMethod_decl1() throws Throwable { doTest(); }
+  void testMethod_decl1() throws Throwable { doTest() }
 
-  void testMethod_decl2() throws Throwable { doTest(); }
+  void testMethod_decl2() throws Throwable { doTest() }
 
-  void testMethod_decl_par1() throws Throwable { doTest(); }
+  void testMethod_decl_par1() throws Throwable { doTest() }
 
-  void testSwitch1() throws Throwable { doTest(); }
+  void testSwitch1() throws Throwable { doTest() }
 
-  void testSynch1() throws Throwable { doTest(); }
+  void testSynch1() throws Throwable { doTest() }
 
-  void testTry1() throws Throwable { doTest(); }
+  void testTry1() throws Throwable { doTest() }
 
-  void testTry2() throws Throwable { doTest(); }
+  void testTry2() throws Throwable { doTest() }
 
-  void testWhile1() throws Throwable { doTest(); }
+  void testWhile1() throws Throwable { doTest() }
 
-  void testWhile2() throws Throwable { doTest(); }
+  void testWhile2() throws Throwable { doTest() }
 
-  void testWithin_brackets1() throws Throwable { doTest(); }
+  void testWithin_brackets1() throws Throwable { doTest() }
 
-  void testSpace_in_named_arg_true() throws Throwable { doTest(); }
+  void testSpace_in_named_arg_true() throws Throwable { doTest() }
 
-  void testSpace_in_named_arg_false() throws Throwable { doTest(); }
+  void testSpace_in_named_arg_false() throws Throwable { doTest() }
 
-  void testAnonymousVsLBraceOnNewLine() { doTest(); }
+  void testAnonymousVsLBraceOnNewLine() { doTest() }
 }

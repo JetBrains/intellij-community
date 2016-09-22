@@ -254,8 +254,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   @Contract("_, null -> false")
   static boolean isVariableReferenced(PsiVariable variable, PsiExpression value) {
-    return !PsiTreeUtil
-      .processElements(value, e -> !(e instanceof PsiReferenceExpression) || ((PsiReferenceExpression)e).resolve() != variable);
+    return value != null && ReferencesSearch.search(variable, new LocalSearchScope(value)).findFirst() != null;
   }
 
   @Nullable

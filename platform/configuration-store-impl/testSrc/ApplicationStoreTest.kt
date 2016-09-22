@@ -19,13 +19,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.SmartList
 import com.intellij.util.io.lastModified
-import com.intellij.util.io.refreshVfs
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.writeChild
 import com.intellij.util.xmlb.XmlSerializerUtil

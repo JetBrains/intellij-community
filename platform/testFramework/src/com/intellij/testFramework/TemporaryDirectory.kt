@@ -20,8 +20,12 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.util.SmartList
-import com.intellij.util.io.*
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.delete
+import com.intellij.util.io.exists
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.lang.CompoundRuntimeException
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description

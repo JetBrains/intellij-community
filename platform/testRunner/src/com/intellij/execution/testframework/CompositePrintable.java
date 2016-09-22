@@ -49,6 +49,13 @@ public class CompositePrintable implements Printable, Disposable {
     }
   }
 
+  public void flushOutputFile() {
+    synchronized (myNestedPrintables) {
+      ArrayList<Printable> printables = new ArrayList<>(myNestedPrintables);
+      invokeInAlarm(() -> printOutputFile(printables));
+    }
+  }
+
   public static void invokeInAlarm(Runnable runnable) {
     invokeInAlarm(runnable, !ApplicationManager.getApplication().isDispatchThread() ||
                             ApplicationManager.getApplication().isUnitTestMode());
@@ -205,39 +212,7 @@ public class CompositePrintable implements Printable, Disposable {
           }
           myPrinter.close();
         }
-        if (myOutputFile != null && new File(myOutputFile).exists()) {
-          try {
-            final PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true));
-            try {
-              for (Printable currentPrintable : currentPrintables) {
-                currentPrintable.printOn(new Printer() {
-                  @Override
-                  public void print(String text, ConsoleViewContentType contentType) {
-                    if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
-                      printStream.print(text);
-                    }
-                  }
-
-                  @Override
-                  public void printHyperlink(String text, HyperlinkInfo info) {
-                    printStream.print(text);
-                  }
-
-                  @Override
-                  public void onNewAvailable(@NotNull Printable printable) {}
-                  @Override
-                  public void mark() {}
-                });
-              }
-            }
-            finally {
-              printStream.close();
-            }
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        }
+        printOutputFile(currentPrintables);
       };
       invokeInAlarm(request, ApplicationManager.getApplication().isUnitTestMode());
     }
@@ -403,6 +378,42 @@ public class CompositePrintable implements Printable, Disposable {
     private boolean wasPrintableChanged(Printer printer) {
         return printer instanceof TestsOutputConsolePrinter && !((TestsOutputConsolePrinter)printer).isCurrent(CompositePrintable.this);
       }
+  }
+
+  private void printOutputFile(List<Printable> currentPrintables) {
+    if (myOutputFile != null && new File(myOutputFile).exists()) {
+      try {
+        final PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true));
+        try {
+          for (Printable currentPrintable : currentPrintables) {
+            currentPrintable.printOn(new Printer() {
+              @Override
+              public void print(String text, ConsoleViewContentType contentType) {
+                if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
+                  printStream.print(text);
+                }
+              }
+
+              @Override
+              public void printHyperlink(String text, HyperlinkInfo info) {
+                printStream.print(text);
+              }
+
+              @Override
+              public void onNewAvailable(@NotNull Printable printable) {}
+              @Override
+              public void mark() {}
+            });
+          }
+        }
+        finally {
+          printStream.close();
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
   }
 }
 

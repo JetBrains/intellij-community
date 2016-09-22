@@ -55,7 +55,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.exception.VelocityException;
@@ -207,18 +206,8 @@ public class TemplateModuleBuilder extends ModuleBuilder {
                      boolean reportFailuresWithDialog) {
     final WizardInputField basePackage = getBasePackageField();
     try {
-      final NullableFunction<String, String> pathConvertor = path1 -> {
-        if (moduleMode && path1.contains(Project.DIRECTORY_STORE_FOLDER)) return null;
-        if (basePackage != null) {
-          return path1.replace(getPathFragment(basePackage.getDefaultValue()), getPathFragment(basePackage.getValue()));
-        }
-        return path1;
-      };
-
       final File dir = new File(path);
-
       class ExceptionConsumer implements Consumer<VelocityException> {
-
         private String myPath;
         private String myText;
         private SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();
@@ -272,7 +261,15 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       myTemplate.processStream(new ArchivedProjectTemplate.StreamProcessor<Void>() {
         @Override
         public Void consume(@NotNull ZipInputStream stream) throws IOException {
-          ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, stream, pathConvertor, new ZipUtil.ContentProcessor() {
+          ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, stream, path1 -> {
+            if (moduleMode && path1.contains(Project.DIRECTORY_STORE_FOLDER)) {
+              return null;
+            }
+            if (basePackage != null) {
+              return path1.replace(getPathFragment(basePackage.getDefaultValue()), getPathFragment(basePackage.getValue()));
+            }
+            return path1;
+          }, new ZipUtil.ContentProcessor() {
             @Override
             public byte[] processContent(byte[] content, File file) throws IOException {
               if(pI != null){

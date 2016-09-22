@@ -170,6 +170,8 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
    * Notifies all registered listeners that UI settings has been changed.
    */
   public void fireUISettingsChanged() {
+    IconLoader.setFilter(ColorBlindnessSupport.get().getFilter(COLOR_BLINDNESS));
+
     incModificationCount();
     if (myCounter == 1) {
       return;
@@ -180,8 +182,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
       myTreeDispatcher.getMulticaster().uiSettingsChanged(this);
       ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
     }
-
-    IconLoader.setFilter(MatrixFilter.get(COLOR_BLINDNESS));
   }
 
   private void setSystemFontFaceAndSize() {

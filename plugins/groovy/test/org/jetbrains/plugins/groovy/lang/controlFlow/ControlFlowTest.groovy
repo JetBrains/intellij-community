@@ -32,35 +32,35 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class ControlFlowTest extends LightCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "groovy/controlFlow/"
 
-  void testAssignment() { doTest(); }
+  void testAssignment() { doTest() }
 
-  void testClosure1() { doTest(); }
+  void testClosure1() { doTest() }
 
-  void testComplexAssign() { doTest(); }
+  void testComplexAssign() { doTest() }
 
-  void testFor1() { doTest(); }
+  void testFor1() { doTest() }
 
-  void testForeach1() { doTest(); }
+  void testForeach1() { doTest() }
 
-  void testGrvy1497() { doTest(); }
+  void testGrvy1497() { doTest() }
 
-  void testIf1() { doTest(); }
+  void testIf1() { doTest() }
 
-  void testMultipleAssignment() { doTest(); }
+  void testMultipleAssignment() { doTest() }
 
-  void testNested() { doTest(); }
+  void testNested() { doTest() }
 
-  void testReturn() { doTest(); }
+  void testReturn() { doTest() }
 
-  void testSwitch1() { doTest(); }
+  void testSwitch1() { doTest() }
 
-  void testSwitch2() { doTest(); }
+  void testSwitch2() { doTest() }
 
-  void testSwitch3() { doTest(); }
+  void testSwitch3() { doTest() }
 
-  void testSwitch4() { doTest(); }
+  void testSwitch4() { doTest() }
 
-  void testSwitch5() { doTest(); }
+  void testSwitch5() { doTest() }
 
   void testNestedSwitch1() { doTest() }
 
@@ -76,51 +76,51 @@ class ControlFlowTest extends LightCodeInsightFixtureTestCase {
 
   void testForWithinSwitchWithinFor() { doTest() }
 
-  void testThrow1() { doTest(); }
+  void testThrow1() { doTest() }
 
-  void testThrowInCatch() { doTest(); }
+  void testThrowInCatch() { doTest() }
 
-  void testTry1() { doTest(); }
+  void testTry1() { doTest() }
 
-  void testTry2() { doTest(); }
+  void testTry2() { doTest() }
 
-  void testTry3() { doTest(); }
+  void testTry3() { doTest() }
 
-  void testTry4() { doTest(); }
+  void testTry4() { doTest() }
 
-  void testTry5() { doTest(); }
+  void testTry5() { doTest() }
 
-  void testTry6() { doTest(); }
+  void testTry6() { doTest() }
 
-  void testTry7() { doTest(); }
+  void testTry7() { doTest() }
 
-  void testTry8() { doTest(); }
+  void testTry8() { doTest() }
 
-  void testTry9() { doTest(); }
+  void testTry9() { doTest() }
 
-  void testTry10() { doTest(); }
+  void testTry10() { doTest() }
 
-  void testWhile1() { doTest(); }
+  void testWhile1() { doTest() }
 
-  void testWhile2() { doTest(); }
+  void testWhile2() { doTest() }
 
-  void testWhileNonConstant() { doTest(); }
+  void testWhileNonConstant() { doTest() }
 
-  void testIfInstanceofElse() { doTest(); }
+  void testIfInstanceofElse() { doTest() }
 
-  void testReturnMapFromClosure() { doTest(); }
+  void testReturnMapFromClosure() { doTest() }
 
-  void testSwitchInTryWithThrows() { doTest(); }
+  void testSwitchInTryWithThrows() { doTest() }
 
-  void testClosure() { doTest(); }
+  void testClosure() { doTest() }
 
-  void testAnonymous() { doTest(); }
+  void testAnonymous() { doTest() }
 
-  void testSomeCatches() { doTest(); }
+  void testSomeCatches() { doTest() }
 
-  void testOrInReturn() { doTest(); }
+  void testOrInReturn() { doTest() }
 
-  void testVarInString() { doTest(); }
+  void testVarInString() { doTest() }
 
   void testMayBeStaticWithCondition() { doTest() }
 

@@ -178,7 +178,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     private final PsiElement myElement;
     private final Integer myLambdaOrdinal;
 
-    public ExactJavaBreakpointVariant(@NotNull XSourcePosition position, PsiElement element, Integer lambdaOrdinal) {
+    public ExactJavaBreakpointVariant(@NotNull XSourcePosition position, @NotNull PsiElement element, Integer lambdaOrdinal) {
       super(position);
       myElement = element;
       myLambdaOrdinal = lambdaOrdinal;

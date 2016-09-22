@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnr
 class GrAssignabilityTest extends GrHighlightingTestBase {
   InspectionProfileEntry[] getCustomInspections() { [new GroovyAssignabilityCheckInspection()] }
 
-  void testIncompatibleTypesAssignments() { doTest(); }
+  void testIncompatibleTypesAssignments() { doTest() }
 
   void testDefaultMapConstructorNamedArgs() {
     addBigDecimal()
@@ -52,23 +52,23 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
     doTest(new GroovyConstructorNamedArgumentsInspection())
   }
 
-  void testEverythingAssignableToString() { doTest(); }
+  void testEverythingAssignableToString() { doTest() }
 
-  void testMethodCallWithDefaultParameters() { doTest(); }
+  void testMethodCallWithDefaultParameters() { doTest() }
 
-  void testClosureWithDefaultParameters() { doTest(); }
+  void testClosureWithDefaultParameters() { doTest() }
 
-  void testClosureCallMethodWithInapplicableArguments() { doTest(); }
+  void testClosureCallMethodWithInapplicableArguments() { doTest() }
 
-  void testCallIsNotApplicable() { doTest(); }
+  void testCallIsNotApplicable() { doTest() }
 
-  void testPathCallIsNotApplicable() { doTest(); }
+  void testPathCallIsNotApplicable() { doTest() }
 
-  void testByteArrayArgument() { doTest(); }
+  void testByteArrayArgument() { doTest() }
 
-  void testPutValueToEmptyMap() { doTest(); }
+  void testPutValueToEmptyMap() { doTest() }
 
-  void _testPutIncorrectValueToMap() { doTest(); } //incorrect test
+  void _testPutIncorrectValueToMap() { doTest() } //incorrect test
 
   void testTupleTypeAssignments() {
     addBigDecimal()
@@ -83,15 +83,15 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
     doTest()
   }
 
-  void testCollectionAssignments() { doTest(); }
+  void testCollectionAssignments() { doTest() }
 
-  void testReturnAssignability() { doTest(); }
+  void testReturnAssignability() { doTest() }
 
-  void testMapNotAcceptedAsStringParameter() { doTest(); }
+  void testMapNotAcceptedAsStringParameter() { doTest() }
 
-  void testRawTypeInAssignment() { doTest(); }
+  void testRawTypeInAssignment() { doTest() }
 
-  void testMapParamWithNoArgs() { doTest(); }
+  void testMapParamWithNoArgs() { doTest() }
 
   void testInheritInterfaceInDelegate() {
     doTest()

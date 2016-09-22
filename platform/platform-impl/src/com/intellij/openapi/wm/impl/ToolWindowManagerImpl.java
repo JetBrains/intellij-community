@@ -59,7 +59,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.PositionTracker;
@@ -99,7 +98,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Map<String, WindowedDecorator> myId2WindowedDecorator = new HashMap<>();
   private final Map<String, StripeButton> myId2StripeButton = new HashMap<>();
   private final Map<String, FocusWatcher> myId2FocusWatcher = new HashMap<>();
-  private final Set<String> myDumbAwareIds = Collections.synchronizedSet(ContainerUtil.<String>newTroveSet());
 
   private final EditorComponentFocusWatcher myEditorComponentFocusWatcher = new EditorComponentFocusWatcher();
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener = new MyToolWindowPropertyChangeListener();
@@ -382,21 +380,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(myToolWindowsPane);
     myFrame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(myProject));
 
-    final DumbService.DumbModeListener dumbModeListener = new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-        disableStripeButtons();
-      }
-
-      @Override
-      public void exitDumbMode() {
-        for (final String id : getToolWindowIds()) {
-          getStripeButton(id).setEnabled(true);
-        }
-      }
-    };
-    myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, dumbModeListener);
-
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof KeyEvent) {
         dispatchKeyEvent((KeyEvent)e);
@@ -408,8 +391,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }, myProject);
   }
 
-  private void initAll() {
-    List<FinalizableCommand> commandsList = new ArrayList<>();
+  private void initAll(List<FinalizableCommand> commandsList) {
     appendUpdateToolWindowsPaneCmd(commandsList);
 
     JComponent editorComponent = createEditorComponent(myProject);
@@ -419,33 +401,23 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (myEditorWasActive && editorComponent instanceof EditorsSplitters) {
       activateEditorComponentImpl(commandsList, true);
     }
-    execute(commandsList);
-  }
-
-  private void disableStripeButtons() {
-    for (final String id : getToolWindowIds()) {
-      if (!myDumbAwareIds.contains(id)) {
-        if (isToolWindowVisible(id)) {
-          hideToolWindow(id, true);
-        }
-        StripeButton button = getStripeButton(id);
-        if (button != null) {
-          button.setEnabled(false);
-        }
-      }
-    }
   }
 
   private static JComponent createEditorComponent(@NotNull Project project) {
     return FrameEditorComponentProvider.EP.getExtensions()[0].createEditorComponent(project);
   }
 
-  private void registerToolWindowsFromBeans() {
+  private void registerToolWindowsFromBeans(List<FinalizableCommand> list) {
     List<ToolWindowEP> beans = Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME));
     for (ToolWindowEP bean : beans) {
       Condition<Project> condition = bean.getCondition();
       if (condition == null || condition.value(myProject)) {
-        EdtInvocationManager.getInstance().invokeLater(() -> initToolWindow(bean));
+        list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
+          @Override
+          public void run() {
+            initToolWindow(bean);
+          }
+        });
       }
     }
   }
@@ -2458,8 +2430,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       ToolWindowManagerEx ex = ToolWindowManagerEx.getInstanceEx(project);
       if (ex instanceof ToolWindowManagerImpl) {
         ToolWindowManagerImpl myManager = (ToolWindowManagerImpl)ex;
-        myManager.registerToolWindowsFromBeans();
-        EdtInvocationManager.getInstance().invokeLater(() -> myManager.initAll());
+        List<FinalizableCommand> list = new ArrayList<>();
+        myManager.registerToolWindowsFromBeans(list);
+        myManager.initAll(list);
+        EdtInvocationManager.getInstance().invokeLater(() -> {
+          myManager.execute(list);
+        });
       }
     }
   }
