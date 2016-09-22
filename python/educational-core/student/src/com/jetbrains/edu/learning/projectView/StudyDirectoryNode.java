@@ -18,6 +18,7 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -107,25 +108,33 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   }
 
   protected void setStudyAttributes(Task task, PresentationData data, String name) {
+    String additionalInfo = task.hasSubtasks() ? getSubtaskInfo(task) : null;
     StudyStatus taskStatus = task.getStatus();
     switch (taskStatus) {
       case Unchecked: {
-        updatePresentation(data, name, JBColor.BLACK, InteractiveLearningIcons.Task);
+        updatePresentation(data, name, JBColor.BLACK, InteractiveLearningIcons.Task, additionalInfo);
         break;
       }
       case Solved: {
-        updatePresentation(data, name, LIGHT_GREEN, InteractiveLearningIcons.TaskCompl);
+        updatePresentation(data, name, LIGHT_GREEN, InteractiveLearningIcons.TaskCompl, additionalInfo);
         break;
       }
       case Failed: {
-        updatePresentation(data, name, JBColor.RED, InteractiveLearningIcons.TaskProbl);
+        updatePresentation(data, name, JBColor.RED, InteractiveLearningIcons.TaskProbl, additionalInfo);
       }
     }
   }
 
   protected static void updatePresentation(PresentationData data, String name, JBColor color, Icon icon) {
+    updatePresentation(data, name, color, icon, null);
+  }
+
+  protected static void updatePresentation(PresentationData data, String name, JBColor color, Icon icon, @Nullable String additionalInfo) {
     data.clearText();
     data.addText(name, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color));
+    if (additionalInfo != null) {
+      data.addText(" (" + additionalInfo + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+    }
     data.setIcon(icon);
   }
 
@@ -199,5 +208,10 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
   @Override
   public String getNavigateActionText(boolean focusEditor) {
     return null;
+  }
+
+  private static String getSubtaskInfo(Task task) {
+    int index = task.getActiveSubtaskIndex() + 1;
+    return EduNames.SUBTASK + " " + index + "/" + task.getSubtaskNum();
   }
 }
