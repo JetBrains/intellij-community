@@ -483,15 +483,35 @@ public class StudyUtils {
     }
     final Course course = task.getLesson().getCourse();
     String text = task.getText() != null ? task.getText() : getTaskTextFromTaskName(taskDirectory, EduNames.TASK_MD);
-    
+
     if (text == null) return null;
     if (course.isAdaptive()) text = wrapAdaptiveCourseText(text);
 
-    return wrapTextToDisplayLatex(text);
+    if (text != null && !text.isEmpty()) {
+      return wrapTextToDisplayLatex(text);
+    }
+    if (taskDirectory != null) {
+      String fileNameWithoutExtension = FileUtil.getNameWithoutExtension(EduNames.TASK_HTML);
+      int activeStepIndex = task.getActiveSubtaskIndex();
+      if (activeStepIndex != 0) {
+        fileNameWithoutExtension += EduNames.SUBTASK_MARKER + activeStepIndex;
+      }
+      final String taskTextFileHtml = getTaskTextFromTaskName(taskDirectory, getTaskDescriptionName(fileNameWithoutExtension, EduNames.TASK_HTML));
+      if (taskTextFileHtml != null) return wrapTextToDisplayLatex(taskTextFileHtml);
+
+      final String taskTextFileMd = getTaskTextFromTaskName(taskDirectory, getTaskDescriptionName(fileNameWithoutExtension, EduNames.TASK_MD));
+      if (taskTextFileMd != null) return wrapTextToDisplayLatex(convertToHtml(taskTextFileMd));      
+    }
+    return null;
   }
 
   private static String wrapAdaptiveCourseText(@NotNull String text) {
     return text + "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
+  }
+
+  @NotNull
+  private static String getTaskDescriptionName(String fileNameWithoutExtension, String defaultName) {
+    return fileNameWithoutExtension + "." + FileUtilRt.getExtension(defaultName);
   }
 
   public static String wrapTextToDisplayLatex(String taskTextFileHtml) {
@@ -503,7 +523,7 @@ public class StudyUtils {
   private static String getTaskTextFromTaskName(@Nullable VirtualFile taskDirectory, @NotNull String taskTextFilename) {
     if (taskDirectory == null) return null;
     taskDirectory.refresh(false, true);
-    VirtualFile taskTextFile = ObjectUtils.chooseNotNull(taskDirectory.findChild(EduNames.TASK_HTML), 
+    VirtualFile taskTextFile = ObjectUtils.chooseNotNull(taskDirectory.findChild(EduNames.TASK_HTML),
                                                          taskDirectory.findChild(EduNames.TASK_MD));
     if (taskTextFile == null) {
       VirtualFile srcDir = taskDirectory.findChild(EduNames.SRC);
@@ -702,8 +722,18 @@ public class StudyUtils {
   }
   
   @Nullable
-  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull VirtualFile taskDir) {
-    return ObjectUtils.chooseNotNull(taskDir.findChild(EduNames.TASK_HTML), taskDir.findChild(EduNames.TASK_MD));
+  public static VirtualFile findTaskDescriptionVirtualFile(@NotNull Project project, @NotNull VirtualFile taskDir) {
+    Task task = getTask(project, taskDir.getName().contains(EduNames.TASK) ? taskDir: taskDir.getParent());
+    if (task == null) {
+      return null;
+    }
+    String fileNameWithoutExtension  = FileUtil.getNameWithoutExtension(EduNames.TASK_HTML);
+    int activeStepIndex = task.getActiveSubtaskIndex();
+    if (activeStepIndex != 0) {
+      fileNameWithoutExtension += EduNames.SUBTASK_MARKER + activeStepIndex;
+    }
+    return ObjectUtils.chooseNotNull(taskDir.findChild(getTaskDescriptionName(fileNameWithoutExtension, EduNames.TASK_HTML)),
+                                     taskDir.findChild(getTaskDescriptionName(fileNameWithoutExtension, EduNames.TASK_MD)));
   }
   
   @NotNull

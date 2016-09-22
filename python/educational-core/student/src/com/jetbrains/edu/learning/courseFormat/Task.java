@@ -155,7 +155,7 @@ public class Task implements StudyItem {
     if (!StringUtil.isEmptyOrSpaces(text)) return text;
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(taskDir);
+      final VirtualFile file = StudyUtils.findTaskDescriptionVirtualFile(project, taskDir);
       if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
