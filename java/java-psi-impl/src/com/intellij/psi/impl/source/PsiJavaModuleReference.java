@@ -26,6 +26,7 @@ import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -51,6 +52,14 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
   @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     return ResolveCache.getInstance(getProject()).resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
+  }
+
+  @Override
+  public PsiElement handleElementRename(@NotNull String newName) throws IncorrectOperationException {
+    PsiJavaModuleReferenceElement element = getElement();
+    PsiElementFactory factory = PsiElementFactory.SERVICE.getInstance(element.getProject());
+    PsiJavaModuleReferenceElement newElement = factory.createModuleFromText("module " + newName + " {}").getNameElement();
+    return element.replace(newElement);
   }
 
   private Project getProject() {
