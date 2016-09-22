@@ -379,7 +379,8 @@ idea.fatal.error.notification=disabled
 
     buildContext.projectBuilder.cleanOutput()
     if (moduleNames == null) {
-      buildContext.projectBuilder.buildProduction()
+      //buildContext.projectBuilder.buildProduction()
+      buildContext.projectBuilder.buildAll()
     }
     else {
       List<String> modulesToBuild = ((moduleNames as Set<String>) +
