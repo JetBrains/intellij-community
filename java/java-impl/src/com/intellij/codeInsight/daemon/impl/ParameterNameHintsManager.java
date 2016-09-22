@@ -59,7 +59,7 @@ public class ParameterNameHintsManager {
     myDescriptors = descriptors;
   }
 
-  static boolean isLiteralExpression(@Nullable PsiElement callArgument) {
+  static boolean isUnclearExpression(@Nullable PsiElement callArgument) {
     if (callArgument instanceof PsiLiteralExpression)
       return true;
 
@@ -68,6 +68,10 @@ public class ParameterNameHintsManager {
       IElementType tokenType = expr.getOperationTokenType();
       return (JavaTokenType.MINUS.equals(tokenType)
               || JavaTokenType.PLUS.equals(tokenType)) && expr.getOperand() instanceof PsiLiteralExpression;
+    }
+
+    if (callArgument instanceof PsiThisExpression) {
+      return true;
     }
 
     return false;
@@ -150,7 +154,7 @@ public class ParameterNameHintsManager {
       return true;
     }
 
-    if (isLiteralExpression(argument)) {
+    if (isUnclearExpression(argument)) {
       PsiType parameterType = resolveResult.getSubstitutor().substitute(paramType);
       return TypeConversionUtil.isAssignable(parameterType, argType);
     }
@@ -166,7 +170,7 @@ public class ParameterNameHintsManager {
   private static boolean hasLiteralInVarargs(int index, PsiExpression[] callArguments) {
     for (int i = index; i < callArguments.length; i++) {
       PsiExpression arg = callArguments[i];
-      if (isLiteralExpression(arg)) return true;
+      if (isUnclearExpression(arg)) return true;
     }
     return false;
   }
@@ -178,7 +182,7 @@ public class ParameterNameHintsManager {
 
   private static boolean hasLiteralExpression(@NotNull PsiExpression[] arguments) {
     for (PsiExpression argument : arguments) {
-      if (isLiteralExpression(argument)) return true;
+      if (isUnclearExpression(argument)) return true;
     }
     return false;
   }

@@ -424,6 +424,24 @@ public class VarArgTest {
     onLineStartingWith("check(")
         .assertInlays("beginIndex->10", "endIndex->1000", """x->"su"""" )
   }
+  
+  fun `test inline this`() {
+    setup("""
+public class VarArgTest {
+  
+  public void main() {
+    check(this, 1000);
+  }
+
+  public void check(VarArgTest test, int endIndex) {
+  }
+
+}
+""")
+    
+    onLineStartingWith("check(t")
+        .assertInlays("test->this", "endIndex->1000")
+  }
 
 
   private fun onLineStartingWith(text: String): InlayAssert {
