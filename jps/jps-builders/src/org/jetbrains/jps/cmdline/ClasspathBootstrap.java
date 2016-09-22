@@ -144,7 +144,7 @@ public class ClasspathBootstrap {
     cp.addAll(getInstrumentationUtilRoots());
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
     cp.add(getJpsPluginSystemClassesPath().getAbsolutePath().replace('\\', '/'));
-    
+    appendReferenceTypeScannerClasspath(cp);
     //don't forget to update layoutCommunityJps() in layouts.gant accordingly
 
     if (!isLauncherUsed) {
@@ -159,6 +159,16 @@ public class ClasspathBootstrap {
     }
 
     return ContainerUtil.newArrayList(cp);
+  }
+
+  private static void appendReferenceTypeScannerClasspath(Set<String> cp) {
+    try {
+      final String path = getResourcePath(Class.forName("org.jetbrains.jps.javac.ast.Javac8ReferenceTypeScanner"));
+      if (path != null) {
+        cp.add(path);
+      }
+    } catch (Exception ignored) {
+    }
   }
 
   public static void appendJavaCompilerClasspath(Collection<String> cp) {

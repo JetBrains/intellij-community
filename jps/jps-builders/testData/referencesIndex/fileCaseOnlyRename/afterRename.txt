@@ -1,0 +1,11 @@
+Backward Hierarchy:
+java.lang.Object -> Inner
+
+Backward References:
+Inner in Bar bar
+Inner.<init>(0) in Bar bar
+Inner.m(0) in Bar bar
+java.io.PrintStream.println(1) in Bar bar
+java.lang.Object.<init>(0) in Bar bar
+java.lang.System in Bar bar
+java.lang.System.out in Bar bar

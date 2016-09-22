@@ -1,0 +1,7 @@
+Backward Hierarchy:
+java.lang.Object -> myPackage.A
+
+Backward References:
+java.lang.Deprecated in package-info
+myPackage.A in package-info
+myPackage.A.<init>(0) in package-info
