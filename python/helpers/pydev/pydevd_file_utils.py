@@ -41,12 +41,11 @@
 
 
 
-from _pydevd_bundle.pydevd_constants import *  #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import IS_PY2, IS_PY3K
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 import os.path
 import sys
 import traceback
-import types
 
 os_normcase = os.path.normcase
 basename = os.path.basename
