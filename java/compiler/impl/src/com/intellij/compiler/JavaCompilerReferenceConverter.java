@@ -45,9 +45,6 @@ public class JavaCompilerReferenceConverter implements CompilerReferenceConverte
       if (element instanceof PsiField) {
         final PsiField field = (PsiField)element;
         final PsiClass aClass = field.getContainingClass();
-        if (PsiUtil.isCompileTimeConstant((PsiVariable)field)) {
-          return null;
-        }
         if (aClass == null || aClass instanceof PsiAnonymousClass) return null;
         final String jvmOwnerName = aClass.getQualifiedName();
         final String name = field.getName();
