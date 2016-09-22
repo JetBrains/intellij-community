@@ -68,7 +68,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.text.CharArrayUtil;
@@ -133,14 +132,12 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private boolean myLastStickingToEnd;
   private boolean myCancelStickToEnd;
 
-  private boolean myTooMuchOfOutput;
   private boolean myInDocumentUpdate;
 
   // If true, then a document is being cleared right now.
   // Should be accessed in EDT only.
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myDocumentClearing;
-  private int myLastAddedTextLength;
   private int consoleTooMuchTextBufferRatio;
 
   public Editor getEditor() {
@@ -773,39 +770,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
     myPsiDisposedCheck.performCheck();
-    myLastAddedTextLength = addedText.length();
-    if (!myTooMuchOfOutput) {
-      if (isTheAmountOfTextTooBig(myLastAddedTextLength)) { // disable hyperlinks and folding until new output arriving slows down again
-        myTooMuchOfOutput = true;
-        final EditorNotificationPanel comp =
-          new EditorNotificationPanel().text("Too much output to process").icon(AllIcons.General.ExclMark);
-        final Alarm tooMuchOutputAlarm = new Alarm();
-        //show the notification with a delay to avoid blinking when "too much output" ceases quickly
-        tooMuchOutputAlarm.addRequest(() -> add(comp, BorderLayout.NORTH), 300);
-        performWhenNoDeferredOutput(new Runnable() {
-          @Override
-          public void run() {
-            if (!isTheAmountOfTextTooBig(myLastAddedTextLength)) {
-              try {
-                highlightHyperlinksAndFoldings(lastProcessedOutput);
-              }
-              finally {
-                myTooMuchOfOutput = false;
-                remove(comp);
-                tooMuchOutputAlarm.cancelAllRequests();
-              }
-            }
-            else {
-              myLastAddedTextLength = 0;
-              performLaterWhenNoDeferredOutput(this);
-            }
-          }
-        });
-      }
-      else {
-        highlightHyperlinksAndFoldings(lastProcessedOutput);
-      }
-    }
+
+    highlightHyperlinksAndFoldings(lastProcessedOutput);
 
     if (shouldStickToEnd) {
       scrollToEnd();
@@ -1083,7 +1049,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
                         additionalAttributes);
                   }
                   else {
-                    myHyperlinks.highlightHyperlinks(additionalHighlight, myFilters);
+                    myHyperlinks.highlightHyperlinks(additionalHighlight, 0);
                   }
                 }
 
