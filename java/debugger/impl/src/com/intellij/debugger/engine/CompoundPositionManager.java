@@ -44,6 +44,8 @@ import java.util.*;
 public class CompoundPositionManager extends PositionManagerEx implements MultiRequestPositionManager{
   private static final Logger LOG = Logger.getInstance(CompoundPositionManager.class);
 
+  public static final CompoundPositionManager EMPTY = new CompoundPositionManager();
+
   private final ArrayList<PositionManager> myPositionManagers = new ArrayList<>();
 
   @SuppressWarnings("UnusedDeclaration")
