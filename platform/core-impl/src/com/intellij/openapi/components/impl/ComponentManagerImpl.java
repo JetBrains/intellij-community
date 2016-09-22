@@ -16,6 +16,7 @@
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.StartupProgress;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,7 +97,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
-    List<ComponentConfig> componentConfigs = getComponentConfigs();
+    List<ComponentConfig> componentConfigs = getComponentConfigs(indicator);
     for (ComponentConfig config : componentConfigs) {
       registerComponents(config);
     }
@@ -299,11 +300,16 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   @NotNull
-  private List<ComponentConfig> getComponentConfigs() {
+  private List<ComponentConfig> getComponentConfigs(final ProgressIndicator indicator) {
     ArrayList<ComponentConfig> componentConfigs = new ArrayList<ComponentConfig>();
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins(new StartupProgress() {
+      @Override
+      public void showProgress(String message, float progress) {
+        indicator.setFraction(progress);
+      }
+    })) {
       if (PluginManagerCore.shouldSkipPlugin(plugin)) {
         continue;
       }

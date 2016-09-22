@@ -25,6 +25,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.*;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
@@ -393,7 +394,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       ProgressIndicator indicator = mySplash == null ? null : new EmptyProgressIndicator() {
         @Override
         public void setFraction(double fraction) {
-          mySplash.showProgress("", (float)(0.65 + getPercentageOfComponentsLoaded() * 0.35));
+          mySplash.showProgress("", (float)fraction);
         }
       };
       init(indicator, () -> {
@@ -454,6 +455,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     // could be called before full initialization
     ProgressManager progressManager = (ProgressManager)getPicoContainer().getComponentInstance(ProgressManager.class.getName());
     return progressManager == null ? null : progressManager.getProgressIndicator();
+  }
+
+  @Override
+  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+    float start = PluginManagerCore.PLUGINS_PROGRESS_PART + PluginManagerCore.LOADERS_PROGRESS_PART;
+    indicator.setFraction(start + (getPercentageOfComponentsLoaded() * (1 - start)));
   }
 
   private static void createLocatorFile() {
