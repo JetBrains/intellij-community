@@ -27,6 +27,7 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.*
 import com.intellij.util.io.encodeUrlQueryParameter
 import java.awt.Component
+import java.awt.Font
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 
@@ -35,6 +36,7 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
   val credentials = ErrorReportConfigurable.getCredentials()
   val userField = JTextField(credentials?.userName)
   val passwordField = JPasswordField(credentials?.password?.toString())
+  passwordField.font = Font("Menlo", passwordField.font.style, passwordField.font.size)
 
   // if no user name - never stored and so, defaults to remember. if user name set, but no password, so, previously was stored without password
   val rememberCheckBox = CheckBox(CommonBundle.message("checkbox.remember.password"), selected = credentials?.userName == null || !credentials?.password.isNullOrEmpty())
