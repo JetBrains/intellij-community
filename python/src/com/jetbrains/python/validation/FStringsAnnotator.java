@@ -49,6 +49,15 @@ public class FStringsAnnotator extends PyAnnotator {
           if (fragment.getRightBraceOffset() == -1) {
             hasUnclosedBrace = true;
           }
+          for (int i = fragment.getLeftBraceOffset() + 1; i < fragment.getContentEndOffset(); i++) {
+            final char c = nodeText.charAt(i);
+            if (c == '\\') {
+              reportCharacter(nodeOffset + i, "Expression fragments inside f-strings cannot include backslashes");
+            }
+            else if (c == '#') {
+              reportCharacter(nodeOffset + i, "Expressions fragments inside f-strings cannot include '#'");
+            }
+          }
           // Do not warn about illegal conversion character if '!' is right before closing quotes 
           if (fragContentEnd < nodeContentEnd && nodeText.charAt(fragContentEnd) == '!' && fragContentEnd + 1 < nodeContentEnd) {
             final char conversionChar = nodeText.charAt(fragContentEnd + 1);
