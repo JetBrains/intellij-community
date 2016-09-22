@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -89,7 +88,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
       }
 
       if (scope != null) {
-        JavaFileManager service = ServiceManager.getService(project, JavaFileManager.class);
+        JavaFileManager service = JavaFileManager.SERVICE.getInstance(project);
         Collection<PsiJavaModule> modules = service.findModules(reference.getCanonicalText(), scope);
         if (!modules.isEmpty()) {
           ResolveResult[] result = new ResolveResult[modules.size()];

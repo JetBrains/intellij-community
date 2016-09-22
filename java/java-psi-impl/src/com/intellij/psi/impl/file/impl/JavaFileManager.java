@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl.file.impl;
 
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiPackage;
@@ -28,6 +30,14 @@ import java.util.Collection;
  * @author max
  */
 public interface JavaFileManager {
+  class SERVICE {
+    private SERVICE() { }
+
+    public static JavaFileManager getInstance(@NotNull Project project) {
+      return ServiceManager.getService(project, JavaFileManager.class);
+    }
+  }
+
   @Nullable
   PsiPackage findPackage(@NotNull String packageName);
 

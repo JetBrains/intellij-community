@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -45,8 +44,7 @@ class ModuleRenameTest  : LightCodeInsightFixtureTestCase() {
 
   @Test fun testRename() {
     myFixture.configureByText("module-info.java", "module M { requires M2; }")
-    val service = ServiceManager.getService(project, JavaFileManager::class.java)
-    val module = service.findModules("M2", GlobalSearchScope.allScope(project)).first()
+    val module = JavaFileManager.SERVICE.getInstance(project).findModules("M2", GlobalSearchScope.allScope(project)).first()
     runWriteAction {
       RenameProcessor(project, module, "M2.bis", false, false).run()
       PsiDocumentManager.getInstance(project).commitAllDocuments()
