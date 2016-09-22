@@ -64,8 +64,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JCheckBox myShowVerticalIndentGuidesCheckBox;
   private JCheckBox myShowBreadcrumbsCheckBox;
   private JBCheckBox myShowParameterNameHints;
-  private JSpinner myMinimumParameterNameLengthToShow;
-  private JSpinner myMinimumArgumentsToShow;
   //private JCheckBox myUseLCDRendering;
 
   public EditorAppearanceConfigurable() {
@@ -78,31 +76,11 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     
     myCbBlinkCaret.addActionListener((e) -> myBlinkIntervalField.setEnabled(myCbBlinkCaret.isSelected()));
     myCbShowWhitespaces.addActionListener((e) -> updateWhitespaceCheckboxesState());
-    myShowParameterNameHints.addActionListener((e) -> resetNameHintsSettings());
   }
-
-  private void resetNameHintsSettings() {
-    boolean isSelected = myShowParameterNameHints.isSelected();
-    myMinimumArgumentsToShow.setEnabled(isSelected);
-    myMinimumParameterNameLengthToShow.setEnabled(isSelected);
-
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    final int currentParamLength = settings.getMinParamNameLengthToShow();
-    final int minArguments = settings.getMinArgsToShow();
-
-    myMinimumParameterNameLengthToShow.setModel(new SpinnerNumberModel(currentParamLength, 1, Integer.MAX_VALUE, 1));
-    myMinimumArgumentsToShow.setModel(new SpinnerNumberModel(minArguments, 1, Integer.MAX_VALUE, 1));
-  }
-
+  
   private void applyNameHintsSettings() {
-    boolean isSelected = myShowParameterNameHints.isSelected();
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-
-    settings.setShowParameterNameHints(isSelected);
-    if (isSelected) {
-      settings.setMinParamNameLengthToShow((int)myMinimumParameterNameLengthToShow.getModel().getValue());
-      settings.setMinArgsToShow((int)myMinimumArgumentsToShow.getModel().getValue());
-    }
+    settings.setShowParameterNameHints(myShowParameterNameHints.isSelected());
   }
 
   private void updateWhitespaceCheckboxesState() {
@@ -136,7 +114,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     updateWhitespaceCheckboxesState();
 
     myShowParameterNameHints.setSelected(editorSettings.isShowParameterNameHints());
-    resetNameHintsSettings();
 
     super.reset();
   }
@@ -223,13 +200,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().SHOW_EDITOR_TOOLTIP;
     isModified |= myShowBreadcrumbsCheckBox.isSelected() != editorSettings.isBreadcrumbsShown();
     isModified |= myShowParameterNameHints.isSelected() != editorSettings.isShowParameterNameHints();
-
-    if (myShowParameterNameHints.isSelected()) {
-      isModified |= (int)myMinimumParameterNameLengthToShow.getModel().getValue() != editorSettings.getMinParamNameLengthToShow();
-      isModified |= (int)myMinimumArgumentsToShow.getModel().getValue() != editorSettings.getMinArgsToShow();
-    }
     
-
     return isModified;
   }
 
