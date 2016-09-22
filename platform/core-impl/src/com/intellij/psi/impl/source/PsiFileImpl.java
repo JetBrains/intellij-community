@@ -655,11 +655,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   public void onContentReload() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    myRefToPsi.invalidatePsi();
-
-    FileElement treeElement = derefTreeElement();
     DebugUtil.startPsiModification("onContentReload");
     try {
+      myRefToPsi.invalidatePsi();
+
+      FileElement treeElement = derefTreeElement();
       if (treeElement != null) {
         setTreeElementPointer(null);
         treeElement.detachFromFile();
