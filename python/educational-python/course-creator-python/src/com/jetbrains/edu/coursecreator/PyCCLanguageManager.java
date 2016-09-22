@@ -70,7 +70,7 @@ public class PyCCLanguageManager implements CCLanguageManager {
       return;
     }
 
-    int prevSubtaskIndex = task.getActiveSubtaskIndex();
+    int prevSubtaskIndex = task.getSubtaskNum() - 1;
     String name = prevSubtaskIndex == 0 ? EduNames.TESTS_FILE : getSubtaskTestsFileName(prevSubtaskIndex);
     VirtualFile testsFile = taskDir.findChild(name);
     if (testsFile == null) {
