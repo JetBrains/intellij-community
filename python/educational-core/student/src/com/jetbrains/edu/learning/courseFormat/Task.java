@@ -269,4 +269,8 @@ public class Task implements StudyItem {
   public void setSubtaskNum(int subtaskNum) {
     mySubtaskNum = subtaskNum;
   }
+
+  public boolean hasSubtasks() {
+    return mySubtaskNum > 1;
+  }
 }

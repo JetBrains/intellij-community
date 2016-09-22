@@ -19,6 +19,7 @@ import com.intellij.psi.PsiManager;
 import com.jetbrains.edu.coursecreator.CCLanguageManager;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.settings.CCSettings;
+import com.jetbrains.edu.learning.StudySubtaskUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -63,7 +64,7 @@ public class CCNewSubtaskAction extends DumbAwareAction {
     createTaskDescriptionFile(project, taskDir, num);
     task.setSubtaskNum(num + 1);
     task.setActiveSubtaskIndex(num);
-    //TODO: switch subtask
+    StudySubtaskUtils.switchStep(project, task, num);
   }
 
   private static void createTestsForNewSubtask(Project project, Task task) {
