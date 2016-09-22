@@ -94,7 +94,7 @@ public class GitDefineRemoteDialog extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myRemoteUrl;
+    return myRemoteName.getText().isEmpty() ? myRemoteName : myRemoteUrl;
   }
 
   @Override

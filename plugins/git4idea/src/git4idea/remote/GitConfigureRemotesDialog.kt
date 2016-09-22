@@ -98,7 +98,8 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
 
   private fun addRemote() {
     val repository = getSelectedRepo()
-    val dialog = GitDefineRemoteDialog(repository, git)
+    val proposedName = if (repository.remotes.any { it.name == GitRemote.ORIGIN_NAME }) "" else GitRemote.ORIGIN_NAME
+    val dialog = GitDefineRemoteDialog(repository, git, proposedName, "")
     if (dialog.showAndGet()) {
       runInModalTask("Adding Remote...", repository,
                      "Add Remote", "Couldn't add remote ${dialog.remoteName} '${dialog.remoteUrl}'") {
