@@ -168,7 +168,8 @@ public class DocumentEventImpl extends DocumentEvent {
     if (myChange == TOO_BIG_FILE) throw new FilesTooBigForDiffException(0);
     if (myChange == null) {
       try {
-        myChange = Diff.buildChanges(myOldString, myNewString);
+        int startLine = getDocument().getLineNumber(getOffset());
+        myChange = Diff.buildChanges(myOldString, myNewString, startLine);
       }
       catch (FilesTooBigForDiffException e) {
         myChange = TOO_BIG_FILE;
