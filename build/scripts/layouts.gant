@@ -887,6 +887,7 @@ def layoutJps(String home, String targetDir, String buildNumber, Closure additio
         module("instrumentation-util")
         module("instrumentation-util-8")
         module("jps-builders")
+        module("jps-standalone-builder")
         module("java-runtime")
       }
       jar("jps-plugin-system.jar") {

@@ -70,7 +70,7 @@ class IdeaCommunityBuilder {
       }
       buildContext.notifyArtifactBuilt(intellijCoreZip)
     }
-    if (buildJps && false) {
+    if (buildJps) {
       buildContext.messages.block("Build standalone JPS") {
         String jpsArtifactDir = "$buildContext.paths.artifacts/jps"
         layouts.layoutJps(buildContext.paths.communityHome, jpsArtifactDir, buildContext.fullBuildNumber, {})
