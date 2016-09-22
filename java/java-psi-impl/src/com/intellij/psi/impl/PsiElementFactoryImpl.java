@@ -641,7 +641,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(text, context);
 
     PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
-    replace(variable.getTypeElement(), createTypeElement(type), text);
+    replace(variable.getTypeElement(), createTypeElement(GenericsUtil.getVariableTypeByExpressionType(type)), text);
 
     boolean generateFinalLocals = JavaCodeStyleSettingsFacade.getInstance(myManager.getProject()).isGenerateFinalLocals();
     PsiUtil.setModifierProperty(variable, PsiModifier.FINAL, generateFinalLocals);
