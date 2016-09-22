@@ -31,12 +31,12 @@ def f32(x):
 
 
 async def f41(x):
-    y = {<error descr="'await' expressions are not supported here">await</error> z: 10 for z in []}  # fail
+    y = {<error descr="Python version 3.5 does not support 'await' inside comprehensions">await</error> z: 10 for z in []}  # fail
     await x
 
 
 async def f42(x):
-    y = {mapper(<error descr="'await' expressions are not supported here">await</error> z): 10 for z in []}  # fail
+    y = {mapper(<error descr="Python version 3.5 does not support 'await' inside comprehensions">await</error> z): 10 for z in []}  # fail
     await x
 
 
@@ -76,3 +76,7 @@ async def f71(x):
 
 async def f72(x):
     return {"a": 10, await x: 10, "b": 10}
+
+async def f81(x):
+    {fun: <error descr="Python version 3.5 does not support 'await' inside comprehensions">await</error> fun() for fun in funcs if <error descr="Python version 3.5 does not support 'await' inside comprehensions">await</error> smth}
+    {fun: <error descr="Python version 3.5 does not support 'await' inside comprehensions">await</error> fun() <error descr="Python version 3.5 does not support 'async' inside comprehensions and generator expressions">async</error> for fun in funcs if <error descr="Python version 3.5 does not support 'await' inside comprehensions">await</error> smth}

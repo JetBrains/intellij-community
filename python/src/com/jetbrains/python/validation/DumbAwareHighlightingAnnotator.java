@@ -21,7 +21,6 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
@@ -66,14 +65,6 @@ public class DumbAwareHighlightingAnnotator extends PyAnnotator implements Highl
   @Override
   public void visitPyComprehensionElement(PyComprehensionElement node) {
     highlightKeywords(node, PyTokenTypes.ASYNC_KEYWORD);
-
-    PsiTreeUtil
-      .collectElementsOfType(node.getResultExpression(), PyPrefixExpression.class)
-      .stream()
-      .filter(expression -> expression.getOperator() == PyTokenTypes.AWAIT_KEYWORD && expression.getOperand() != null)
-      .map(expression -> expression.getNode().findChildByType(PyTokenTypes.AWAIT_KEYWORD))
-      .filter(awaitNode -> awaitNode != null)
-      .forEach(awaitNode -> getHolder().createErrorAnnotation(awaitNode, "'await' expressions are not supported here"));
   }
 
   @Override

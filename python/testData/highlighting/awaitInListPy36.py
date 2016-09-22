@@ -31,12 +31,12 @@ def f32(x):
 
 
 async def f41(x):
-    y = [<error descr="'await' expressions are not supported here">await</error> z for z in []]  # fail
+    y = [await z for z in []]
     await x
 
 
 async def f42(x):
-    y = [mapper(<error descr="'await' expressions are not supported here">await</error> z) for z in []]  # fail
+    y = [mapper(await z) for z in []]
     await x
 
 
@@ -76,3 +76,7 @@ async def f71(x):
 
 async def f72(x):
     return ["a", await x, "b"]
+
+async def f81(x):
+    [await fun() for fun in funcs if await smth]
+    [await fun() async for fun in funcs if await smth]

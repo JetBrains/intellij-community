@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * User : catherine
@@ -730,6 +731,22 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         .map(ASTNode::getPsi)
         .forEach(element -> registerProblem(element,
                                             "Python version 3.5 does not support 'async' inside comprehensions and generator expressions"));
+
+      final Stream<PyPrefixExpression> resultPrefixExpressions = PsiTreeUtil
+        .collectElementsOfType(node.getResultExpression(), PyPrefixExpression.class)
+        .stream();
+
+      final Stream<PyPrefixExpression> ifComponentsPrefixExpressions = node.getIfComponents()
+        .stream()
+        .map(ifComponent -> PsiTreeUtil.collectElementsOfType(ifComponent.getTest(), PyPrefixExpression.class))
+        .flatMap(Collection::stream);
+
+      Stream.concat(resultPrefixExpressions, ifComponentsPrefixExpressions)
+        .filter(expression -> expression.getOperator() == PyTokenTypes.AWAIT_KEYWORD && expression.getOperand() != null)
+        .map(expression -> expression.getNode().findChildByType(PyTokenTypes.AWAIT_KEYWORD))
+        .filter(Objects::nonNull)
+        .map(ASTNode::getPsi)
+        .forEach(element -> registerProblem(element, "Python version 3.5 does not support 'await' inside comprehensions"));
     }
   }
 }

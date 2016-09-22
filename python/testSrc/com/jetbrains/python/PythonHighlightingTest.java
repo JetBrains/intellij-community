@@ -238,7 +238,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   // PY-19679
-  public void testAwaitInList() {
+  public void testAwaitInListPy35() {
     doTest(LanguageLevel.PYTHON35, true, false);
   }
 
@@ -250,12 +250,27 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35, true, false);
   }
 
-  public void testAwaitInSet() {
+  public void testAwaitInSetPy35() {
     doTest(LanguageLevel.PYTHON35, true, false);
   }
 
-  public void testAwaitInDict() {
+  public void testAwaitInDictPy35() {
     doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  // PY-20770
+  public void testAwaitInListPy36() {
+    doTest(LanguageLevel.PYTHON36, true, false);
+  }
+
+  // PY-20770
+  public void testAwaitInSetPy36() {
+    doTest(LanguageLevel.PYTHON36, true, false);
+  }
+
+  // PY-20770
+  public void testAwaitInDictPy36() {
+    doTest(LanguageLevel.PYTHON36, true, false);
   }
 
   public void testYieldInsideAsyncDefPy35() {
