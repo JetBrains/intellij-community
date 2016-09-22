@@ -134,4 +134,4 @@ private fun Editor.getInlays(range: TextRange): List<Inlay> {
   return inlayModel.getInlineElementsInRange(range.startOffset, range.endOffset)
 }
 
-private class InlayReport(var text: String, var inlays: List<String>)
+private class InlayReport(@JvmField var text: String, @JvmField var inlays: List<String>)
