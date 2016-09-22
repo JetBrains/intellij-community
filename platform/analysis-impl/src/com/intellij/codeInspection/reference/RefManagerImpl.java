@@ -76,6 +76,7 @@ public class RefManagerImpl extends RefManager {
   private AnalysisScope myScope;
   private RefProject myRefProject;
   private final Map<PsiAnchor, RefElement> myRefTable = new THashMap<>(); // guarded by myRefTable
+  private List<RefElement> mySortedRefs; // guarded by myRefTable
 
   private final ConcurrentMap<Module, RefModule> myModules = ContainerUtil.newConcurrentMap();
   private final ProjectIterator myProjectIterator = new ProjectIterator();
@@ -143,6 +144,7 @@ public class RefManagerImpl extends RefManager {
     myRefProject = null;
     synchronized (myRefTable) {
       myRefTable.clear();
+      mySortedRefs = null;
     }
     myModules.clear();
     myContext = null;
@@ -371,15 +373,18 @@ public class RefManagerImpl extends RefManager {
   public List<RefElement> getSortedElements() {
     List<RefElement> answer;
     synchronized (myRefTable) {
+      if (mySortedRefs != null) return mySortedRefs;
+
       answer = new ArrayList<>(myRefTable.values());
     }
-    ContainerUtil.quickSort(answer, (o1, o2) -> ReadAction.compute(() -> {
+    ReadAction.run(() -> ContainerUtil.quickSort(answer, (o1, o2) -> {
       VirtualFile v1 = ((RefElementImpl)o1).getVirtualFile();
       VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
       return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
     }));
-
-    return answer;
+    synchronized (myRefTable) {
+      return mySortedRefs = Collections.unmodifiableList(answer);
+    }
   }
 
   @NotNull
@@ -396,6 +401,7 @@ public class RefManagerImpl extends RefManager {
     }
 
     synchronized (myRefTable) {
+      mySortedRefs = null;
       if (element != null && myRefTable.remove(createAnchor(element)) != null) return;
 
       //PsiElement may have been invalidated and new one returned by getElement() is different so we need to do this stuff.
@@ -564,6 +570,7 @@ public class RefManagerImpl extends RefManager {
       if (result == null) return null;
 
       myRefTable.put(psiAnchor, result);
+      mySortedRefs = null;
 
       if (whenCached != null) {
         whenCached.consume(result);
