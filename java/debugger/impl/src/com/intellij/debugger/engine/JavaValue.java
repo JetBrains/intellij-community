@@ -226,7 +226,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     }
   }
 
-  private static String truncateToMaxLength(String value) {
+  private static String truncateToMaxLength(@NotNull String value) {
     return value.substring(0, Math.min(value.length(), XValueNode.MAX_VALUE_LENGTH));
   }
 
@@ -306,9 +306,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           lastRenderer = ((CompoundTypeRenderer)lastRenderer).getLabelRenderer();
         }
         if (lastRenderer instanceof ToStringRenderer) {
-          if (!StringUtil.isEmpty(value)) {
-            value = StringUtil.wrapWithDoubleQuote(value);
-          }
+          value = StringUtil.wrapWithDoubleQuote(value);
         }
         renderer.renderValue(value);
       }
