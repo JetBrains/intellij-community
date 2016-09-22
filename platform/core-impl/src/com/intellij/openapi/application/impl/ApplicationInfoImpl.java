@@ -620,6 +620,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return false;
   }
 
+  @NotNull
   public static ApplicationInfoEx getShadowInstance() {
     if (ourShadowInstance == null) {
       ourShadowInstance = new ApplicationInfoImpl();
