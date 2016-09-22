@@ -17,6 +17,7 @@ package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.codeInsight.fstrings.FStringParser;
 import com.jetbrains.python.codeInsight.fstrings.FStringParser.FragmentOffsets;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -42,7 +43,7 @@ public class FStringsAnnotator extends PyAnnotator {
         boolean hasUnclosedBrace = false;
         for (FragmentOffsets fragment : fragments) {
           final int fragContentEnd = fragment.getContentEndOffset();
-          if (fragment.getLeftBraceOffset() + 1 >= fragContentEnd) {
+          if (CharArrayUtil.isEmptyOrSpaces(nodeText, fragment.getLeftBraceOffset() + 1, fragment.getContentEndOffset())) {
             report(fragment.getContentRange().shiftRight(nodeOffset), "Empty expressions are not allowed inside f-strings");
           }
           if (fragment.getRightBraceOffset() == -1) {
