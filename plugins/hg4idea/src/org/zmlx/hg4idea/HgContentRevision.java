@@ -38,12 +38,6 @@ public class HgContentRevision implements ByteBackedContentRevision {
     myRevisionNumber = revisionNumber;
   }
 
-  // The method is used in "Upsource Integration" plugin
-  @NotNull
-  public HgFile getHgFile() {
-    return myHgFile;
-  }
-
   @NotNull
   public static HgContentRevision create(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
     return !hgFile.toFilePath().getFileType().isBinary()
