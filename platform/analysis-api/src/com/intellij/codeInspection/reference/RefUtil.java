@@ -35,6 +35,9 @@ public class RefUtil {
   private RefUtil() {}
 
   public static boolean isImplicitUsage(PsiElement element) {
+    if (element == null) {
+      return false;
+    }
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitUsage(element)) return true;
@@ -43,6 +46,9 @@ public class RefUtil {
   }
 
   public static boolean isImplicitRead(PsiElement element) {
+    if (element == null) {
+      return false;
+    }
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitRead(element)) return true;
@@ -60,6 +66,9 @@ public class RefUtil {
   }
 
   public static boolean isImplicitWrite(PsiElement element) {
+    if (element == null) {
+      return false;
+    }
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
     for (ImplicitUsageProvider provider : implicitUsageProviders) {
       if (provider.isImplicitWrite(element)) return true;
