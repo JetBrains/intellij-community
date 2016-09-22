@@ -36,7 +36,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -407,7 +406,8 @@ public class MavenProjectImporter {
                               myMavenProjectToModule,
                               myMavenProjectToModuleName,
                               myMavenProjectToModulePath,
-                              myImportingSettings.getDedicatedModuleDir());
+                              myImportingSettings.getDedicatedModuleDir(),
+                              myImportingSettings.isPreferArtifactName());
   }
 
   private void removeOutdatedCompilerConfigSettings() {

@@ -46,6 +46,7 @@ public class MavenImportingSettings implements Cloneable {
   private boolean excludeTargetFolder = true;
   private boolean keepSourceFolders = true;
   private boolean useMavenOutput = true;
+  private boolean preferArtifactName = false;
   private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
 
   private boolean downloadSourcesAutomatically = false;
@@ -163,6 +164,14 @@ public class MavenImportingSettings implements Cloneable {
     this.useMavenOutput = useMavenOutput;
   }
 
+  public boolean isPreferArtifactName() {
+    return preferArtifactName;
+  }
+
+  public void setPreferArtifactName(boolean preferArtifactName) {
+    this.preferArtifactName = preferArtifactName;
+  }
+
   public String getUpdateFoldersOnImportPhase() {
     return updateFoldersOnImportPhase;
   }
@@ -208,6 +217,7 @@ public class MavenImportingSettings implements Cloneable {
 
     if (createModuleGroups != that.createModuleGroups) return false;
     if (createModulesForAggregators != that.createModulesForAggregators) return false;
+    if (preferArtifactName != that.preferArtifactName) return false;
     if (importAutomatically != that.importAutomatically) return false;
     if (!dependencyTypes.equals(that.dependencyTypes)) return false;
     if (downloadDocsAutomatically != that.downloadDocsAutomatically) return false;
@@ -236,6 +246,8 @@ public class MavenImportingSettings implements Cloneable {
     if (importAutomatically) result++;
     result <<= 1;
     if (createModulesForAggregators) result++;
+    result <<= 1;
+    if (preferArtifactName) result++;
     result <<= 1;
     if (createModuleGroups) result++;
     result <<= 1;

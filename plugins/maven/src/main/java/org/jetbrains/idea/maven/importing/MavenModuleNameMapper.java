@@ -30,10 +30,12 @@ public class MavenModuleNameMapper {
                          Map<MavenProject, Module> mavenProjectToModule,
                          Map<MavenProject, String> mavenProjectToModuleName,
                          Map<MavenProject, String> mavenProjectToModulePath,
-                         String dedicatedModuleDir) {
+                         String dedicatedModuleDir,
+                         boolean preferArtifactName) {
     resolveModuleNames(projects,
                        mavenProjectToModule,
-                       mavenProjectToModuleName);
+                       mavenProjectToModuleName,
+                       preferArtifactName);
     resolveModulePaths(projects,
                        mavenProjectToModule,
                        mavenProjectToModuleName,
@@ -43,12 +45,13 @@ public class MavenModuleNameMapper {
 
   private static void resolveModuleNames(Collection<MavenProject> projects,
                                          Map<MavenProject, Module> mavenProjectToModule,
-                                         Map<MavenProject, String> mavenProjectToModuleName) {
+                                         Map<MavenProject, String> mavenProjectToModuleName,
+                                         boolean preferArtifactName) {
     NameItem[] names = new NameItem[projects.size()];
 
     int i = 0;
     for (MavenProject each : projects) {
-      names[i++] = new NameItem(each, mavenProjectToModule.get(each));
+      names[i++] = new NameItem(each, mavenProjectToModule.get(each), preferArtifactName);
     }
 
     Arrays.sort(names);
@@ -116,19 +119,21 @@ public class MavenModuleNameMapper {
     public int number = -1; // has no duplicates
     public boolean hasDuplicatedGroup;
 
-    public NameItem(MavenProject project, @Nullable Module module) {
+    public NameItem(MavenProject project, @Nullable Module module, boolean preferArtifactName) {
       this.project = project;
       this.module = module;
-      originalName = calcOriginalName();
+      originalName = calcOriginalName(preferArtifactName);
 
       String group = project.getMavenId().getGroupId();
       groupId = isValidName(group) ? group : "";
     }
 
-    private String calcOriginalName() {
+    private String calcOriginalName(boolean preferArtifactName) {
       if (module != null) return module.getName();
 
-      String name = project.getMavenId().getArtifactId();
+      String name = preferArtifactName && project.getName() != null
+                    ? project.getName()
+                    : project.getMavenId().getArtifactId();
       if (!isValidName(name)) name = project.getDirectoryFile().getName();
       return name;
     }

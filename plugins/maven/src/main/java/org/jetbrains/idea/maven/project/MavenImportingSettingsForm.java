@@ -43,6 +43,7 @@ public class MavenImportingSettingsForm {
   private JCheckBox myImportAutomaticallyBox;
   private JCheckBox myCreateModulesForAggregators;
   private JCheckBox myCreateGroupsCheckBox;
+  private JCheckBox myPreferArtifactNameCheckBox;
   private JComboBox myUpdateFoldersOnImportPhaseComboBox;
   private JCheckBox myKeepSourceFoldersCheckBox;
   private JCheckBox myUseMavenOutputCheckBox;
@@ -112,6 +113,7 @@ public class MavenImportingSettingsForm {
     data.setImportAutomatically(myImportAutomaticallyBox.isSelected());
     data.setCreateModulesForAggregators(myCreateModulesForAggregators.isSelected());
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
+    data.setPreferArtifactName(myPreferArtifactNameCheckBox.isSelected());
 
     data.setKeepSourceFolders(myKeepSourceFoldersCheckBox.isSelected());
     data.setExcludeTargetFolder(myExcludeTargetFolderCheckBox.isSelected());
@@ -135,6 +137,7 @@ public class MavenImportingSettingsForm {
     myImportAutomaticallyBox.setSelected(data.isImportAutomatically());
     myCreateModulesForAggregators.setSelected(data.isCreateModulesForAggregators());
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
+    myPreferArtifactNameCheckBox.setSelected(data.isPreferArtifactName());
 
     myKeepSourceFoldersCheckBox.setSelected(data.isKeepSourceFolders());
     myExcludeTargetFolderCheckBox.setSelected(data.isExcludeTargetFolder());
