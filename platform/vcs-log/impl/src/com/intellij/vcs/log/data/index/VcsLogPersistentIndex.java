@@ -412,32 +412,31 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @Override
     protected void startNewBackgroundTask() {
       ApplicationManager.getApplication().invokeLater(() -> {
-                                                        Task.Backgroundable task = new Task.Backgroundable(VcsLogPersistentIndex.this.myProject, "Indexing Commit Data", true,
-                                                                                                           PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-                                                          @Override
-                                                          public void run(@NotNull ProgressIndicator indicator) {
-                                                            List<IndexingRequest> requests;
-                                                            while (!(requests = popRequests()).isEmpty()) {
-                                                              for (IndexingRequest request : requests) {
-                                                                try {
-                                                                  request.run(indicator);
-                                                                }
-                                                                catch (ProcessCanceledException reThrown) {
-                                                                  throw reThrown;
-                                                                }
-                                                                catch (Throwable t) {
-                                                                  LOG.error("Error while indexing", t);
-                                                                }
-                                                              }
-                                                            }
+        Task.Backgroundable task = new Task.Backgroundable(VcsLogPersistentIndex.this.myProject, "Indexing Commit Data", true,
+                                                           PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            List<IndexingRequest> requests;
+            while (!(requests = popRequests()).isEmpty()) {
+              for (IndexingRequest request : requests) {
+                try {
+                  request.run(indicator);
+                }
+                catch (ProcessCanceledException reThrown) {
+                  throw reThrown;
+                }
+                catch (Throwable t) {
+                  LOG.error("Error while indexing", t);
+                }
+              }
+            }
 
-                                                            taskCompleted(null);
-                                                          }
-                                                        };
-                                                        ProgressIndicator indicator = myProgress.createProgressIndicator(false);
-                                                        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator);
-                                                      }
-      );
+            taskCompleted(null);
+          }
+        };
+        ProgressIndicator indicator = myProgress.createProgressIndicator(false);
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator);
+      });
     }
   }
 
