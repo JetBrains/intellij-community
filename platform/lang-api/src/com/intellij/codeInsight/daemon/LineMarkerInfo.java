@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
@@ -167,6 +168,15 @@ public class LineMarkerInfo<T extends PsiElement> {
     @Override
     public Alignment getAlignment() {
       return myInfo.myIconAlignment;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        return getLineMarkerInfo().getElement();
+      }
+      return super.getData(dataId);
     }
 
     protected boolean looksTheSameAs(@NotNull LineMarkerGutterIconRenderer renderer) {

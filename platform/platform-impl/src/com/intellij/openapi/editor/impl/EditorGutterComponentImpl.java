@@ -25,7 +25,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.ide.IdeEventQueue;
@@ -591,12 +590,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     else if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;
     }
-    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      if (point != null) {
-        GutterMark renderer = getGutterRenderer(point);
-        if (renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer) {
-          return ((LineMarkerInfo.LineMarkerGutterIconRenderer)renderer).getLineMarkerInfo().getElement();
-        }
+    else if (point != null) {
+      GutterMark renderer = getGutterRenderer(point);
+      if (renderer instanceof GutterIconRenderer) {
+        return ((GutterIconRenderer)renderer).getData(dataId);
       }
     }
     return null;

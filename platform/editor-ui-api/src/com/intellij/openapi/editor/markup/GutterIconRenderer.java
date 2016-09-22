@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,6 +125,11 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
    */
   @Nullable
   public GutterDraggableObject getDraggableObject() {
+    return null;
+  }
+
+  @Nullable
+  public Object getData(@NotNull String dataId) {
     return null;
   }
 
