@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.google.common.collect.Lists;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -9,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +25,11 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   private final Project myProject;
@@ -55,55 +60,137 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
                              @NotNull final IpnbEditorUtil.PromptType promptType,
                              @NotNull final JComponent component) {
     super.addPromptPanel(parent, promptNumber, promptType, component);
-    if (component instanceof IpnbPanel)
+    if (component instanceof IpnbPanel) {
       myOutputPanels.add((IpnbPanel)component);
+    }
   }
 
   @Override
   protected JComponent createViewPanel() {
-    final JPanel mainPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, true, false));
-    mainPanel.setBackground(IpnbEditorUtil.getBackground());
+    final JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP));
+    panel.setBackground(IpnbEditorUtil.getBackground());
+    panel.add(createCodeComponent());
+    panel.add(createHideableOutputPanel());
 
+    return panel;
+  }
+
+  @NotNull
+  private JPanel createCodeComponent() {
     myCodeSourcePanel = new IpnbCodeSourcePanel(myProject, this, myCell);
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBackground(IpnbEditorUtil.getBackground());
     addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel);
-    mainPanel.add(panel);
+    final JPanel topComponent = new JPanel(new BorderLayout());
+    topComponent.add(panel, BorderLayout.PAGE_START);
+    return topComponent;
+  }
 
+  public JPanel createHideableOutputPanel() {
+    OnePixelSplitter splitter = new OnePixelSplitter(true);
+    JPanel firstComponent = createToggleBar(splitter);
+    JPanel secondComponent = createOutputPanel(createHideOutputListener(splitter, firstComponent));
+
+    splitter.setSecondComponent(secondComponent);
+
+    return splitter;
+  }
+
+  @NotNull
+  private JPanel createOutputPanel(MouseAdapter hideOutputListener) {
+    final JPanel outputPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, true, false));
+    outputPanel.setBackground(IpnbEditorUtil.getBackground());
     for (IpnbOutputCell outputCell : myCell.getCellOutputs()) {
-      addOutputPanel(mainPanel, outputCell, true);
+      addOutputPanel(outputPanel, outputCell, hideOutputListener, true);
     }
-    return mainPanel;
+
+    outputPanel.addMouseListener(hideOutputListener);
+    return outputPanel;
+  }
+
+  @NotNull
+  private MouseAdapter createHideOutputListener(final OnePixelSplitter splitter, final JPanel firstComponent) {
+    return new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) {
+          hideOutputPanel();
+        }
+      }
+
+      private void hideOutputPanel() {
+        setOutputStateInCell(true);
+        splitter.setFirstComponent(firstComponent);
+        splitter.setSecondComponent(null);
+      }
+    };
+  }
+
+  @NotNull
+  private MouseAdapter createShowOutputListener(final OnePixelSplitter splitter, final JPanel secondPanel) {
+    return new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 1) {
+          showOutputPanel();
+        }
+      }
+
+      private void showOutputPanel() {
+        setOutputStateInCell(false);
+        splitter.setFirstComponent(null);
+        splitter.setSecondComponent(createOutputPanel(createHideOutputListener(splitter, secondPanel)));
+      }
+    };
+  }
+
+  private void setOutputStateInCell(boolean isCollapsed) {
+    final Map<String, Object> metadata = myCell.getMetadata();
+    if (metadata != null) {
+      metadata.put("collapsed", isCollapsed);
+    }
+  }
+
+  private JPanel createToggleBar(OnePixelSplitter splitter) {
+    final JPanel panel = new JPanel(new BorderLayout());
+    final JLabel label = new JLabel(AllIcons.Actions.Down);
+    panel.setBackground(IpnbEditorUtil.getBackground());
+    label.setBackground(IpnbEditorUtil.getBackground());
+    panel.add(label, BorderLayout.WEST);
+
+    panel.addMouseListener(createShowOutputListener(splitter, panel));
+
+    return panel;
   }
 
   private void addOutputPanel(@NotNull final JComponent mainPanel,
-                              @NotNull final IpnbOutputCell outputCell, boolean addPrompt) {
+                              @NotNull final IpnbOutputCell outputCell, MouseAdapter hideOutputListener, boolean addPrompt) {
     final IpnbEditorUtil.PromptType promptType = addPrompt ? IpnbEditorUtil.PromptType.Out : IpnbEditorUtil.PromptType.None;
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBackground(IpnbEditorUtil.getBackground());
     if (outputCell instanceof IpnbImageOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbImagePanel((IpnbImageOutputCell)outputCell));
+                     new IpnbImagePanel((IpnbImageOutputCell)outputCell, hideOutputListener));
     }
     else if (outputCell instanceof IpnbHtmlOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbHtmlPanel((IpnbHtmlOutputCell)outputCell, myParent.getIpnbFilePanel()));
+                     new IpnbHtmlPanel((IpnbHtmlOutputCell)outputCell, myParent.getIpnbFilePanel(), hideOutputListener));
     }
     else if (outputCell instanceof IpnbLatexOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbLatexPanel((IpnbLatexOutputCell)outputCell, myParent.getIpnbFilePanel()));
+                     new IpnbLatexPanel((IpnbLatexOutputCell)outputCell, myParent.getIpnbFilePanel(), hideOutputListener));
     }
     else if (outputCell instanceof IpnbErrorOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbErrorPanel((IpnbErrorOutputCell)outputCell));
+                     new IpnbErrorPanel((IpnbErrorOutputCell)outputCell, hideOutputListener));
     }
     else if (outputCell instanceof IpnbStreamOutputCell) {
       addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.None,
-                     new IpnbStreamPanel((IpnbStreamOutputCell)outputCell));
+                     new IpnbStreamPanel((IpnbStreamOutputCell)outputCell, hideOutputListener));
     }
     else if (outputCell.getSourceAsString() != null) {
       addPromptPanel(panel, myCell.getPromptNumber(), promptType,
-                     new IpnbCodeOutputPanel<>(outputCell, myParent.getIpnbFilePanel()));
+                     new IpnbCodeOutputPanel<>(outputCell, myParent.getIpnbFilePanel(), hideOutputListener));
     }
     mainPanel.add(panel);
   }
@@ -151,17 +238,14 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       myCell.removeCellOutputs();
       myViewPanel.removeAll();
 
-      final JPanel panel = new JPanel(new GridBagLayout());
-      panel.setBackground(IpnbEditorUtil.getBackground());
-      addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel);
-      myViewPanel.add(panel);
       isRunning = false;
       if (outputContent != null) {
         for (IpnbOutputCell output : outputContent) {
           myCell.addCellOutput(output);
-          addOutputPanel(myViewPanel, output, true);
         }
       }
+
+      myViewPanel = createViewPanel();
       final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
       setEditing(false);
       filePanel.revalidateAndRepaint();
