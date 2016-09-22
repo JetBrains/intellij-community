@@ -5,10 +5,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbStreamOutputCell;
 
 import javax.swing.*;
+import java.awt.event.MouseAdapter;
 
 public class IpnbStreamPanel extends IpnbCodeOutputPanel<IpnbStreamOutputCell> {
-  public IpnbStreamPanel(@NotNull final IpnbStreamOutputCell cell) {
-    super(cell, null);
+  public IpnbStreamPanel(@NotNull final IpnbStreamOutputCell cell, MouseAdapter hideOutputListener) {
+    super(cell, null, hideOutputListener);
   }
 
   @Override

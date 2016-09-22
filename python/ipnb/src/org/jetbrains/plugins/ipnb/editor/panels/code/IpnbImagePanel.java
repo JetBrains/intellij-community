@@ -10,14 +10,15 @@ import sun.misc.BASE64Decoder;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import java.awt.event.MouseAdapter;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 
 public class IpnbImagePanel extends IpnbCodeOutputPanel<IpnbImageOutputCell> {
   private static final Logger LOG = Logger.getInstance(IpnbImagePanel.class);
 
-  public IpnbImagePanel(@NotNull final IpnbImageOutputCell cell) {
-    super(cell, null);
+  public IpnbImagePanel(@NotNull final IpnbImageOutputCell cell, MouseAdapter hideOutputListener) {
+    super(cell, null, hideOutputListener);
   }
 
   @Override

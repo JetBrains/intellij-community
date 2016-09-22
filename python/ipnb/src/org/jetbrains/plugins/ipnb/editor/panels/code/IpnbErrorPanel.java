@@ -13,11 +13,12 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
 import java.util.List;
 
 public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
-  public IpnbErrorPanel(@NotNull final IpnbErrorOutputCell cell) {
-    super(cell, null);
+  public IpnbErrorPanel(@NotNull final IpnbErrorOutputCell cell, MouseAdapter hideOutputListener) {
+    super(cell, null, hideOutputListener);
   }
 
   @Override
