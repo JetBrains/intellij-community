@@ -456,7 +456,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void handleAnswer(@Nullable GraphAnswer<Integer> answer, boolean dataCouldChange) {
-    myController.handleAnswer(answer, dataCouldChange, null, null);
+    myController.handleGraphAnswer(answer, dataCouldChange, null, null);
   }
 
   static class Selection {
@@ -593,6 +593,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       g.setColor(getBaseStyle(lastRow, GraphTableModel.COMMIT_COLUMN, "", hasFocus(), false).getBackground());
       g.fillRect(x, y, width, height);
     }
+  }
+
+  boolean isResizingColumns() {
+    return getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
   }
 
   private static class RootCellRenderer extends JBLabel implements TableCellRenderer {

@@ -40,7 +40,6 @@ import java.util.Collection;
  * Processes mouse clicks and moves on the table
  */
 public class GraphTableController {
-  @NotNull private final TableLinkMouseListener myLinkListener = new TableLinkMouseListener();
   @NotNull private final VcsLogGraphTable myTable;
   @NotNull private final VcsLogUiImpl myUi;
   @NotNull private final VcsLogData myLogData;
@@ -60,18 +59,24 @@ public class GraphTableController {
     table.addMouseListener(mouseAdapter);
   }
 
+  @Nullable
   PrintElement findPrintElement(@NotNull MouseEvent e) {
-    int row = PositionUtil.getRowIndex(e.getPoint(), myTable.getRowHeight());
-    if (row < 0 || row > myTable.getRowCount() - 1) {
-      return null;
+    int row = myTable.rowAtPoint(e.getPoint());
+    if (row >= 0 && row < myTable.getRowCount()) {
+      return findPrintElement(row, e);
     }
+    return null;
+  }
+
+  @Nullable
+  private PrintElement findPrintElement(int row, @NotNull MouseEvent e) {
     Point point = calcPoint4Graph(e.getPoint());
     Collection<? extends PrintElement> printElements = myTable.getVisibleGraph().getRowInfo(row).getPrintElements();
     return myGraphCellPainter.getElementUnderCursor(printElements, point.x, point.y);
   }
 
-  private void performAction(@NotNull MouseEvent e, @NotNull final GraphAction.Type actionType) {
-    PrintElement printElement = findPrintElement(e);
+  private void performGraphAction(int row, @NotNull MouseEvent e, @NotNull GraphAction.Type actionType) {
+    PrintElement printElement = findPrintElement(row, e);
 
     boolean isClickOnGraphElement = actionType == GraphAction.Type.MOUSE_CLICK && printElement != null;
     if (isClickOnGraphElement) {
@@ -81,13 +86,13 @@ public class GraphTableController {
     VcsLogGraphTable.Selection previousSelection = myTable.getSelection();
     GraphAnswer<Integer> answer =
       myTable.getVisibleGraph().getActionController().performAction(new GraphAction.GraphActionImpl(printElement, actionType));
-    handleAnswer(answer, isClickOnGraphElement, previousSelection, e);
+    handleGraphAnswer(answer, isClickOnGraphElement, previousSelection, e);
   }
 
-  public void handleAnswer(@Nullable GraphAnswer<Integer> answer,
-                           boolean dataCouldChange,
-                           @Nullable VcsLogGraphTable.Selection previousSelection,
-                           @Nullable MouseEvent e) {
+  public void handleGraphAnswer(@Nullable GraphAnswer<Integer> answer,
+                                boolean dataCouldChange,
+                                @Nullable VcsLogGraphTable.Selection previousSelection,
+                                @Nullable MouseEvent e) {
     if (dataCouldChange) {
       myTable.getModel().fireTableDataChanged();
 
@@ -120,43 +125,16 @@ public class GraphTableController {
 
   @NotNull
   private Point calcPoint4Graph(@NotNull Point clickPoint) {
-    return new Point(clickPoint.x - getXOffset(), PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
-  }
-
-  private int getXOffset() {
     TableColumn rootColumn = myTable.getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
-    return myLogData.isMultiRoot() ? rootColumn.getWidth() : 0;
+    return new Point(clickPoint.x - (myLogData.isMultiRoot() ? rootColumn.getWidth() : 0),
+                     PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
   }
 
-
-  private boolean expandOrCollapseRoots(@NotNull MouseEvent e) {
-    TableColumn column = getRootColumnOrNull(e);
-    if (column != null) {
+  private void performRootColumnAction() {
+    if (myLogData.isMultiRoot()) {
       VcsLogUtil.triggerUsage("RootColumnClick");
       myUi.setShowRootNames(!myUi.isShowRootNames());
-      return true;
     }
-    return false;
-  }
-
-  @Nullable
-  private TableColumn getRootColumnOrNull(@NotNull MouseEvent e) {
-    if (!myLogData.isMultiRoot()) return null;
-    int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
-    if (column == GraphTableModel.ROOT_COLUMN) {
-      return myTable.getColumnModel().getColumn(column);
-    }
-    return null;
-  }
-
-  private boolean isAboveLink(MouseEvent e) {
-    return myLinkListener.getTagAt(e) != null;
-  }
-
-  private boolean isAboveRoots(MouseEvent e) {
-    TableColumn column = getRootColumnOrNull(e);
-    int row = myTable.rowAtPoint(e.getPoint());
-    return column != null && (row >= 0 && row < myTable.getRowCount());
   }
 
   private static void triggerElementClick(@NotNull PrintElement printElement) {
@@ -171,25 +149,49 @@ public class GraphTableController {
   }
 
   private class MyMouseAdapter extends MouseAdapter {
+    @NotNull private final TableLinkMouseListener myLinkListener = new TableLinkMouseListener();
+
     @Override
     public void mouseClicked(MouseEvent e) {
       if (myLinkListener.onClick(e, e.getClickCount())) {
         return;
       }
 
-      if (e.getClickCount() == 1 && !expandOrCollapseRoots(e)) {
-        performAction(e, GraphAction.Type.MOUSE_CLICK);
+      int row = myTable.rowAtPoint(e.getPoint());
+      if ((row >= 0 && row < myTable.getRowCount()) && e.getClickCount() == 1) {
+        int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
+        if (column == GraphTableModel.ROOT_COLUMN) {
+          performRootColumnAction();
+        }
+        else if (column == GraphTableModel.COMMIT_COLUMN) {
+          performGraphAction(row, e, GraphAction.Type.MOUSE_CLICK);
+        }
       }
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-      if (isAboveLink(e) || isAboveRoots(e)) {
+      if (myTable.isResizingColumns()) return;
+
+      if (myLinkListener.getTagAt(e) != null) {
         myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return;
       }
-      else if (!(myTable.getCursor() == Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR))) {
-        performAction(e, GraphAction.Type.MOUSE_OVER);
+
+      int row = myTable.rowAtPoint(e.getPoint());
+      if (row >= 0 && row < myTable.getRowCount()) {
+        int column = myTable.convertColumnIndexToModel(myTable.columnAtPoint(e.getPoint()));
+        if (column == GraphTableModel.ROOT_COLUMN) {
+          myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          return;
+        }
+        else if (column == GraphTableModel.COMMIT_COLUMN) {
+          performGraphAction(row, e, GraphAction.Type.MOUSE_OVER);
+          return;
+        }
       }
+
+      myTable.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
     }
 
     @Override
