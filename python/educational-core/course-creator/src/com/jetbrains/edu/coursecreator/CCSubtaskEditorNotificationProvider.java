@@ -126,7 +126,7 @@ public class CCSubtaskEditorNotificationProvider extends EditorNotifications.Pro
 
     @Override
     public int getDefaultOptionIndex() {
-      return myTask.getActiveSubtaskIndex() + 1;
+      return myTask.getActiveSubtaskIndex();
     }
 
     @Nullable
