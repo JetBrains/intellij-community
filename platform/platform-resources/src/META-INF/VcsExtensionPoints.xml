@@ -70,5 +70,8 @@
 
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.actions.AnnotateToggleAction.Provider"
                     interface="com.intellij.openapi.vcs.actions.AnnotateToggleAction$Provider"/>
+
+    <extensionPoint qualifiedName="com.intellij.ignoredFileProvider"
+                    interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>
   </extensionPoints>
 </idea-plugin>

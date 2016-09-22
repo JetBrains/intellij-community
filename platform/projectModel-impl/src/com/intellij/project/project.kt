@@ -21,6 +21,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.basicAttributesIfExists
@@ -67,4 +68,13 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
   catch (e: InvalidPathException) {
     return false
   }
+}
+
+fun isEqualToProjectFileStorePath(project: Project, filePath: String, storePath: String): Boolean {
+  if (!project.isDirectoryBased) {
+    return false
+  }
+
+  val store = project.stateStore as IProjectStore
+  return filePath.equals(store.stateStorageManager.expandMacros(storePath), !SystemInfo.isFileSystemCaseSensitive)
 }
