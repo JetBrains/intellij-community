@@ -343,6 +343,7 @@ public class RefManagerImpl extends RefManager {
 
   public void inspectionReadActionFinished() {
     myIsInProcess = false;
+    if (myScope != null) myScope.invalidate();
   }
 
   public void startOfflineView() {
