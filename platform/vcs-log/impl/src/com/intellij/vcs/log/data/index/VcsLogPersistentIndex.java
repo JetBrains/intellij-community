@@ -418,16 +418,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
                                                           public void run(@NotNull ProgressIndicator indicator) {
                                                             List<IndexingRequest> requests;
                                                             while (!(requests = popRequests()).isEmpty()) {
-                                                              try {
-                                                                for (IndexingRequest request : requests) {
+                                                              for (IndexingRequest request : requests) {
+                                                                try {
                                                                   request.run(indicator);
                                                                 }
-                                                              }
-                                                              catch (ProcessCanceledException reThrown) {
-                                                                throw reThrown;
-                                                              }
-                                                              catch (Throwable t) {
-                                                                LOG.error("Error while indexing", t);
+                                                                catch (ProcessCanceledException reThrown) {
+                                                                  throw reThrown;
+                                                                }
+                                                                catch (Throwable t) {
+                                                                  LOG.error("Error while indexing", t);
+                                                                }
                                                               }
                                                             }
 
