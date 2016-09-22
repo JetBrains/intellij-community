@@ -32,7 +32,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -50,10 +49,10 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private final CardLayout myLayout = new CardLayout();
   private final JPanel myPanel = new JPanel(myLayout);
 
+  //private final JPanel myErrorPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 10, 5, true, false));
   private final JPanel myErrorPanel = new JPanel(new BorderLayout());
   private final HyperlinkLabel myErrorLabel = new HyperlinkLabel();
   private JTextArea myErrorStack;
-  private final AtomicBoolean myIsUpdateStatePending = new AtomicBoolean();
 
   private final Document myDocument;
   private final ExternalChangeListener myChangeListener;
@@ -165,18 +164,12 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   }
 
   private void updateState() {
-    if (myIsUpdateStatePending.compareAndSet(false, true)) {
-      removeSceneBuilder(); // remove immediately to avoid showing old contents for a moment
-
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (myIsUpdateStatePending.compareAndSet(true, false)) {
-          addSceneBuilder();
-        }
-      });
-    }
+    addSceneBuilder();
   }
 
   private void addSceneBuilder() {
+    removeSceneBuilder();
+
     try {
       FileDocumentManager.getInstance().saveDocument(myDocument);
 
@@ -195,13 +188,11 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private void removeSceneBuilder() {
     myChangeListener.stop();
 
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (mySceneBuilder != null) {
-        myPanel.remove(mySceneBuilder.getPanel());
-        mySceneBuilder.close();
-        mySceneBuilder = null;
-      }
-    });
+    if (mySceneBuilder != null) {
+      myPanel.remove(mySceneBuilder.getPanel());
+      mySceneBuilder.close();
+      mySceneBuilder = null;
+    }
   }
 
   @NotNull
