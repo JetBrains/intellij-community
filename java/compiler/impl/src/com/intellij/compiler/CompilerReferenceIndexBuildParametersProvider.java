@@ -16,7 +16,6 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.server.BuildProcessParametersProvider;
-import com.intellij.find.compiler.CompilerReferenceService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter;
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.find.compiler.CompilerReferenceService;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
