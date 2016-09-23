@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,23 @@
 package com.intellij.util.graph;
 
 import com.intellij.util.containers.EmptyIterator;
-import junit.framework.TestCase;
+import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
+
+import static org.junit.Assert.assertFalse;
 
 /**
- *  @author dsl
+ * @author dsl
  */
-public class GraphGeneratorTest extends TestCase {
-
+public class GraphGeneratorTest {
+  @Test
   public void testEmptyGraph() {
-    final TestNode node = new TestNode("A");
-    final GraphGenerator<TestNode> graphGenerator = new GraphGenerator<>(new GraphGenerator.SemiGraph<TestNode>() {
+    TestNode node = new TestNode("A");
+    GraphGenerator<TestNode> graphGenerator = new GraphGenerator<>(new GraphGenerator.SemiGraph<TestNode>() {
       @Override
       public Collection<TestNode> getNodes() {
-        return Arrays.asList(new TestNode[]{node});
+        return Collections.singletonList(node);
       }
 
       @Override
@@ -45,16 +44,15 @@ public class GraphGeneratorTest extends TestCase {
     assertFalse(graphGenerator.getOut(node).hasNext());
   }
 
+  @Test
   public void testLoop() {
-    final TestNode nodeA = new TestNode("A");
-    final TestNode nodeB = new TestNode("B");
-    final TestNode[] nodes = new TestNode[]{nodeA, nodeB};
-    final TestNode[] inA  = new TestNode[]{nodeB};
-    final TestNode[] inB = new TestNode[] {nodeA};
-    final TestNode[] outA = inA;
-    final TestNode[] outB = inB;
+    TestNode nodeA = new TestNode("A");
+    TestNode nodeB = new TestNode("B");
+    TestNode[] nodes = {nodeA, nodeB};
+    TestNode[] inA = {nodeB};
+    TestNode[] inB = {nodeA};
 
-    final GraphGenerator<TestNode> graph = new GraphGenerator<>(new GraphGenerator.SemiGraph<TestNode>() {
+    GraphGenerator<TestNode> graph = new GraphGenerator<>(new GraphGenerator.SemiGraph<TestNode>() {
       @Override
       public Collection<TestNode> getNodes() {
         return Arrays.asList(nodes);
@@ -67,9 +65,7 @@ public class GraphGeneratorTest extends TestCase {
         throw new NoSuchElementException();
       }
     });
-    GraphTestUtil.assertIteratorsEqual(Arrays.asList(outA).iterator(), graph.getOut(nodeA));
-    GraphTestUtil.assertIteratorsEqual(Arrays.asList(outB).iterator(), graph.getOut(nodeB));
+    GraphTestUtil.assertIteratorsEqual(Arrays.asList(inA).iterator(), graph.getOut(nodeA));
+    GraphTestUtil.assertIteratorsEqual(Arrays.asList(inB).iterator(), graph.getOut(nodeB));
   }
-
-
 }
