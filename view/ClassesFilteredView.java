@@ -212,7 +212,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       public void sessionPaused() {
         SwingUtilities.invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
         if (myNeedReloadClasses) {
-          myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::commitTracked);
+          commitAllTrackers();
           updateClassesAndCounts();
         }
       }
@@ -255,6 +255,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       if (myNeedReloadClasses) {
         SuspendContextImpl suspendContext = getSuspendContext();
         if (suspendContext != null && !suspendContext.equals(myLastSuspendContext)) {
+          commitAllTrackers();
           updateClassesAndCounts();
         }
       }
@@ -280,6 +281,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     if (ref != null && myDebugSession.isSuspended()) {
       new InstancesWindow(myDebugSession, ref::instances, ref.name()).show();
     }
+  }
+
+  private void commitAllTrackers() {
+    myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::commitTracked);
   }
 
   private SuspendContextImpl getSuspendContext() {
