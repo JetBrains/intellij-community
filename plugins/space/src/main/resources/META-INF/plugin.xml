@@ -1,0 +1,43 @@
+<idea-plugin version="2">
+    <id>org.intellij.plugins.circlet</id>
+    <name>Circlet integration</name>
+    <version>0.1.dev</version>
+    <vendor email="support@jetbrains.com" url="jetbrains.com">JetBrains</vendor>
+
+    <description><![CDATA[Circlet plugin]]></description>
+
+    <change-notes><![CDATA[]]>
+
+    </change-notes>
+
+    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Build+Number+Ranges for description -->
+    <idea-version since-build="2016.2000"/>
+
+    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+    </extensions>
+
+    <application-components>
+<!--
+        <component>
+            <implementation-class>org.intellij.plugins.hcl.UpdateComponent</implementation-class>
+        </component>
+-->
+    </application-components>
+
+    <project-components>
+        <!-- Add your project components here -->
+    </project-components>
+
+    <actions>
+        <action class="circlet.actions.ConnectAction" text="Connect To Circlet..." id="ConnectAction">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+    </actions>
+
+</idea-plugin>
