@@ -16,6 +16,10 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.configurationStore.BundledSchemeEP;
+import com.intellij.configurationStore.LazySchemeProcessor;
+import com.intellij.configurationStore.SchemeDataHolder;
+import com.intellij.configurationStore.SchemeExtensionProvider;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,7 +33,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.options.BaseSchemeProcessor;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
@@ -41,7 +45,6 @@ import com.intellij.util.JdomKt;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 @State(
   name = "EditorColorsManagerImpl",
@@ -59,8 +63,8 @@ import java.util.List;
 )
 public class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
   private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
+  private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = ExtensionPointName.create("com.intellij.bundledColorScheme");
 
-  @NonNls private static final String SCHEME_NODE_NAME = "scheme";
   private static final String DEFAULT_NAME = "Default";
 
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
@@ -74,21 +78,18 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   public EditorColorsManagerImpl(@NotNull DefaultColorSchemesManager defaultColorSchemeManager, @NotNull SchemeManagerFactory schemeManagerFactory) {
     myDefaultColorSchemeManager = defaultColorSchemeManager;
 
-    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new BaseSchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl>() {
+    class EditorColorSchemeProcessor extends LazySchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl> implements SchemeExtensionProvider {
       @NotNull
       @Override
-      public EditorColorsSchemeImpl readScheme(@NotNull Element element, boolean duringLoad) {
-        EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null);
-        scheme.readExternal(element);
+      public EditorColorsSchemeImpl createScheme(@NotNull SchemeDataHolder<? super EditorColorsSchemeImpl> dataHolder,
+                                                 @NotNull String name,
+                                                 @NotNull Function<String, String> attributeProvider,
+                                                 boolean isBundled) {
+        EditorColorsSchemeImpl scheme = isBundled ? new BundledScheme() : new EditorColorsSchemeImpl(null);
+        // todo be lazy
+        scheme.readExternal(dataHolder.read());
+        dataHolder.updateDigest(scheme);
         return scheme;
-      }
-
-      @NotNull
-      @Override
-      public Element writeScheme(@NotNull final EditorColorsSchemeImpl scheme) {
-        Element root = new Element(SCHEME_NODE_NAME);
-        scheme.writeExternal(root);
-        return root;
       }
 
       @NotNull
@@ -114,12 +115,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       public String getSchemeExtension() {
         return ".icls";
       }
-
-      @Override
-      public boolean isUpgradeNeeded() {
-        return true;
-      }
-    });
+    }
+    mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor());
 
     initDefaultSchemes();
     loadBundledSchemes();
@@ -155,8 +152,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
-      for (BundledColorSchemeEP ep : BundledColorSchemeEP.EP_NAME.getExtensions()) {
-        mySchemeManager.loadBundledScheme(ep.path + ".xml", ep, BundledScheme::new);
+      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensions()) {
+        mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
       }
     }
   }
@@ -197,10 +194,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   }
 
   static class BundledScheme extends EditorColorsSchemeImpl implements ReadOnlyColorsScheme {
-    public BundledScheme(@NotNull Element element) {
+    public BundledScheme() {
       super(null);
-
-      readExternal(element);
     }
 
     @Override

@@ -34,9 +34,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -97,7 +95,13 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private JBSplitter mySplitter;
 
   private boolean myDetailsOn;
-  @NotNull private final MyChangeProcessor myDiffDetails;
+  @NotNull private final NotNullLazyValue<MyChangeProcessor> myDiffDetails = new NotNullLazyValue<MyChangeProcessor>() {
+    @NotNull
+    @Override
+    protected MyChangeProcessor compute() {
+      return new MyChangeProcessor(myProject);
+    }
+  };
 
   @NotNull private final TreeSelectionListener myTsl;
   private Content myContent;
@@ -112,7 +116,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentManager = contentManager;
     myView = new ChangesListView(project);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
-    myDiffDetails = new MyChangeProcessor(myProject);
     myTsl = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
@@ -167,7 +170,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   public void projectClosed() {
-    Disposer.dispose(myDiffDetails);
     myView.removeTreeSelectionListener(myTsl);
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
@@ -239,17 +241,19 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private void changeDetails() {
     if (!myDetailsOn) {
-      myDiffDetails.clear();
+      if (myDiffDetails.isComputed()) {
+        myDiffDetails.getValue().clear();
 
-      if (mySplitter.getSecondComponent() != null) {
-        setChangeDetailsPanel(null);
+        if (mySplitter.getSecondComponent() != null) {
+          setChangeDetailsPanel(null);
+        }
       }
     }
     else {
-      myDiffDetails.refresh();
+      myDiffDetails.getValue().refresh();
 
       if (mySplitter.getSecondComponent() == null) {
-        setChangeDetailsPanel(myDiffDetails.getComponent());
+        setChangeDetailsPanel(myDiffDetails.getValue().getComponent());
       }
     }
   }
@@ -528,6 +532,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   private class MyChangeProcessor extends CacheChangeProcessor {
     public MyChangeProcessor(@NotNull Project project) {
       super(project, DiffPlaces.CHANGES_VIEW);
+      Disposer.register(project, this);
     }
 
     @Override

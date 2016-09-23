@@ -56,8 +56,7 @@ public class JavaTestLocator implements SMTestLocator {
       PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), path, null, true, scope);
       if (aClass != null) {
         results = ContainerUtil.newSmartList();
-        results.add(paramName != null ? PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName)
-                                      : new PsiLocation<>(project, aClass));
+        results.add(createClassNavigatable(paramName, aClass));
       }
     }
     else if (TEST_PROTOCOL.equals(protocol)) {
@@ -67,11 +66,16 @@ public class JavaTestLocator implements SMTestLocator {
         PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, scope);
         if (aClass != null) {
           results = ContainerUtil.newSmartList();
-          PsiMethod[] methods = aClass.findMethodsByName(methodName.trim(), true);
-          if (methods.length > 0) {
-            for (PsiMethod method : methods) {
-              results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)
-                                            : MethodLocation.elementInClass(method, aClass));
+          if (methodName.trim().equals(aClass.getName())) {
+            results.add(createClassNavigatable(paramName, aClass));
+          }
+          else {
+            PsiMethod[] methods = aClass.findMethodsByName(methodName.trim(), true);
+            if (methods.length > 0) {
+              for (PsiMethod method : methods) {
+                results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)
+                                              : MethodLocation.elementInClass(method, aClass));
+              }
             }
           }
         }
@@ -79,5 +83,10 @@ public class JavaTestLocator implements SMTestLocator {
     }
 
     return results;
+  }
+
+  private Location createClassNavigatable(String paramName, @NotNull PsiClass aClass) {
+    return paramName != null ? PsiMemberParameterizedLocation.getParameterizedLocation(aClass, paramName)
+                             : new PsiLocation<>(aClass.getProject(), aClass);
   }
 }
