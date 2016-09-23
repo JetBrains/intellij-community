@@ -37,6 +37,7 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +81,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   }
 
   @NotNull
+  @CalledInAwt
   private static VirtualFile getDefaultRoot(@NotNull Project project, @NotNull List<VirtualFile> roots, @Nullable VirtualFile[] vFiles) {
     if (vFiles != null) {
       for (VirtualFile file : vFiles) {
@@ -120,6 +122,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     return true;
   }
 
+  @CalledInAwt
   protected static boolean isRebasing(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
