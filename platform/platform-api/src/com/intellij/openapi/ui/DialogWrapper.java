@@ -510,78 +510,7 @@ public abstract class DialogWrapper {
     }
 
 
-    JPanel panel = new JPanel(new BorderLayout()) {
-      @Override
-      public Color getBackground() {
-        final Color bg = UIManager.getColor("DialogWrapper.southPanelBackground");
-        if (getStyle() == DialogStyle.COMPACT && bg != null) {
-          return bg;
-        }
-        return super.getBackground();
-      }
-    };
-    final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    //noinspection UseDPIAwareInsets
-    final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
-
-    if (rightSideButtons.size() > 0 || leftSideButtons.size() > 0) {
-      GridBag bag = new GridBag().setDefaultInsets(insets);
-
-      if (leftSideButtons.size() > 0) {
-        JPanel buttonsPanel = createButtonsPanel(leftSideButtons);
-        if (rightSideButtons.size() > 0) {
-          buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
-        }
-        lrButtonsPanel.add(buttonsPanel, bag.next());
-      }
-      lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());   // left strut
-      if (rightSideButtons.size() > 0) {
-        JPanel buttonsPanel = createButtonsPanel(rightSideButtons);
-        if (shouldAddErrorNearButtons()) {
-          lrButtonsPanel.add(myErrorText, bag.next());
-          lrButtonsPanel.add(Box.createHorizontalStrut(10), bag.next());
-        }
-        lrButtonsPanel.add(buttonsPanel, bag.next());
-      }
-      if (SwingConstants.CENTER == myButtonAlignment) {
-        lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());    // right strut
-      }
-    }
-
-    if (hasHelpToMoveToLeftSide) {
-      if (!(SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration"))) {
-        JButton helpButton = createHelpButton(insets);
-        panel.add(helpButton, BorderLayout.WEST);
-      }
-    }
-
-
-    panel.add(lrButtonsPanel, BorderLayout.CENTER);
-
-    final DoNotAskOption askOption = myDoNotAsk;
-    if (askOption != null) {
-      myCheckBoxDoNotShowDialog = new JCheckBox(askOption.getDoNotShowMessage());
-      JComponent southPanel = panel;
-
-      if (!askOption.canBeHidden()) {
-        return southPanel;
-      }
-
-      final JPanel withCB = addDoNotShowCheckBox(southPanel, myCheckBoxDoNotShowDialog);
-      myCheckBoxDoNotShowDialog.setSelected(!askOption.isToBeShown());
-      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
-
-      panel = withCB;
-    }
-
-    if (getStyle() == DialogStyle.COMPACT) {
-      final Color color = UIManager.getColor("DialogWrapper.southPanelDivider");
-      Border line = new CustomLineBorder(color != null ? color : OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
-      panel.setBorder(new CompoundBorder(line, JBUI.Borders.empty(8, 12)));
-    } else {
-      panel.setBorder(JBUI.Borders.emptyTop(8));
-    }
-    return panel;
+    return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide, myDoNotAsk);
   }
 
   @NotNull
@@ -674,6 +603,85 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
+  private JPanel createSouthPanel(@NotNull List<JButton> leftSideButtons,
+                                  @NotNull List<JButton> rightSideButtons,
+                                  boolean hasHelpToMoveToLeftSide,
+                                  @Nullable DoNotAskOption doNotAsk) {
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public Color getBackground() {
+        final Color bg = UIManager.getColor("DialogWrapper.southPanelBackground");
+        if (getStyle() == DialogStyle.COMPACT && bg != null) {
+          return bg;
+        }
+        return super.getBackground();
+      }
+    };
+    final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
+    //noinspection UseDPIAwareInsets
+    final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
+
+    if (rightSideButtons.size() > 0 || leftSideButtons.size() > 0) {
+      GridBag bag = new GridBag().setDefaultInsets(insets);
+
+      if (leftSideButtons.size() > 0) {
+        JPanel buttonsPanel = createButtonsPanel(leftSideButtons);
+        if (rightSideButtons.size() > 0) {
+          buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
+        }
+        lrButtonsPanel.add(buttonsPanel, bag.next());
+      }
+      lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());   // left strut
+      if (rightSideButtons.size() > 0) {
+        JPanel buttonsPanel = createButtonsPanel(rightSideButtons);
+        if (shouldAddErrorNearButtons()) {
+          lrButtonsPanel.add(myErrorText, bag.next());
+          lrButtonsPanel.add(Box.createHorizontalStrut(10), bag.next());
+        }
+        lrButtonsPanel.add(buttonsPanel, bag.next());
+      }
+      if (SwingConstants.CENTER == myButtonAlignment) {
+        lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());    // right strut
+      }
+    }
+
+    if (hasHelpToMoveToLeftSide) {
+      if (!(SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration"))) {
+        JButton helpButton = createHelpButton(insets);
+        panel.add(helpButton, BorderLayout.WEST);
+      }
+    }
+
+    panel.add(lrButtonsPanel, BorderLayout.CENTER);
+
+    if (doNotAsk != null) {
+      myCheckBoxDoNotShowDialog = new JCheckBox(doNotAsk.getDoNotShowMessage());
+      JPanel southPanel = panel;
+
+      if (!doNotAsk.canBeHidden()) {
+        return southPanel;
+      }
+
+      final JPanel withCB = addDoNotShowCheckBox(southPanel, myCheckBoxDoNotShowDialog);
+      myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
+      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
+
+      panel = withCB;
+    }
+
+    if (getStyle() == DialogStyle.COMPACT) {
+      final Color color = UIManager.getColor("DialogWrapper.southPanelDivider");
+      Border line = new CustomLineBorder(color != null ? color : OnePixelDivider.BACKGROUND, 1, 0, 0, 0);
+      panel.setBorder(new CompoundBorder(line, JBUI.Borders.empty(8, 12)));
+    }
+    else {
+      panel.setBorder(JBUI.Borders.emptyTop(8));
+    }
+
+    return panel;
+  }
+
+  @NotNull
   private JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
     int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
     JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, buttons.size(), hgap, 0));
@@ -705,29 +713,7 @@ public abstract class DialogWrapper {
   protected JButton createJButtonForAction(Action action) {
     JButton button;
     if (action instanceof OptionAction && UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
-      final Action[] options = ((OptionAction)action).getOptions();
-      button = new JBOptionButton(action, options);
-      final JBOptionButton eachOptionsButton = (JBOptionButton)button;
-      eachOptionsButton.setOkToProcessDefaultMnemonics(false);
-      eachOptionsButton.setOptionTooltipText(
-        "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
-
-      final Set<JBOptionButton.OptionInfo> infos = eachOptionsButton.getOptionInfos();
-      for (final JBOptionButton.OptionInfo eachInfo : infos) {
-        if (eachInfo.getMnemonic() >= 0) {
-          final char mnemonic = (char)eachInfo.getMnemonic();
-          JRootPane rootPane = getPeer().getRootPane();
-          if (rootPane != null) {
-            new DumbAwareAction("Show JBOptionButton popup") {
-              @Override
-              public void actionPerformed(AnActionEvent e) {
-                final JBOptionButton buttonToActivate = eachInfo.getButton();
-                buttonToActivate.showPopup(eachInfo.getAction(), true);
-              }
-            }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
-          }
-        }
-      }
+      button = createJOptionsButton((OptionAction)action);
     }
     else {
       button = new JButton(action);
@@ -767,6 +753,33 @@ public abstract class DialogWrapper {
     }
 
     return button;
+  }
+
+  @NotNull
+  private JButton createJOptionsButton(@NotNull OptionAction action) {
+    JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
+    optionButton.setOkToProcessDefaultMnemonics(false);
+    optionButton.setOptionTooltipText(
+      "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
+
+    final Set<JBOptionButton.OptionInfo> infos = optionButton.getOptionInfos();
+    for (final JBOptionButton.OptionInfo eachInfo : infos) {
+      if (eachInfo.getMnemonic() >= 0) {
+        final char mnemonic = (char)eachInfo.getMnemonic();
+        JRootPane rootPane = getPeer().getRootPane();
+        if (rootPane != null) {
+          new DumbAwareAction("Show JBOptionButton popup") {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              final JBOptionButton buttonToActivate = eachInfo.getButton();
+              buttonToActivate.showPopup(eachInfo.getAction(), true);
+            }
+          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
+        }
+      }
+    }
+
+    return optionButton;
   }
 
   @NotNull
