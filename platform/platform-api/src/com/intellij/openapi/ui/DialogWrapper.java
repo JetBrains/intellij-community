@@ -929,12 +929,11 @@ public abstract class DialogWrapper {
     myErrorTextAlarm.cancelAllRequests();
     myValidationAlarm.cancelAllRequests();
     myDisposed = true;
-    if (myButtonMap != null) {
-      for (JButton button : myButtonMap.values()) {
-        button.setAction(null); // avoid memory leak via KeyboardManager
-      }
-      myButtonMap.clear();
+
+    for (JButton button : myButtonMap.values()) {
+      button.setAction(null); // avoid memory leak via KeyboardManager
     }
+    myButtonMap.clear();
 
     final JRootPane rootPane = getRootPane();
     // if rootPane = null, dialog has already been disposed
@@ -1747,20 +1746,18 @@ public abstract class DialogWrapper {
       rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
-    if (myButtonMap != null) {
-      rootPane.registerKeyboardAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          focusPreviousButton();
-        }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-      rootPane.registerKeyboardAction(new AbstractAction() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          focusNextButton();
-        }
-      }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    }
+    rootPane.registerKeyboardAction(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        focusPreviousButton();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    rootPane.registerKeyboardAction(new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        focusNextButton();
+      }
+    }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     if (myYesAction != null) {
       rootPane.registerKeyboardAction(myYesAction, KeyStroke.getKeyStroke(KeyEvent.VK_Y, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
