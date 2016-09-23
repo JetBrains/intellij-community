@@ -123,9 +123,10 @@ public class Splash extends JDialog implements StartupProgress {
   @Override
   public void showProgress(String message, float progress) {
     if (getProgressColor() == null) return;
-    //myMessage = message;
-    myProgress = progress;
-    myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
+    if (progress - myProgress > 0.01) {
+      myProgress = progress;
+      myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
+    }
   }
 
   private void paintProgress(Graphics g) {
