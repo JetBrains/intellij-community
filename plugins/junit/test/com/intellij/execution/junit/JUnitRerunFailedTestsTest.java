@@ -150,4 +150,20 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     String name = ((PsiMethod)element).getName();
     assertEquals("testFoo", name);
   }
+
+  public void testLocatorForIgnoredClass() throws Exception {
+    PsiClass aClass = myFixture.addClass("@org.junit.Ignore" +
+                                         "public class TestClass {\n" +
+                                         "    @org.junit.Test" +
+                                         "    public void testFoo() throws Exception {}\n" +
+                                         "}");
+    final SMTestProxy testProxy = new SMTestProxy("TestClass", false, "java:test://TestClass.TestClass");
+    final Project project = getProject();
+    final GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
+    Location location = testProxy.getLocation(project, searchScope);
+    assertNotNull(location);
+    PsiElement element = location.getPsiElement();
+    assertEquals(aClass, element);
+  }
 }
