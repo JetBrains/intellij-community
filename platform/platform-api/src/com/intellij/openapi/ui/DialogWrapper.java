@@ -79,6 +79,12 @@ import java.util.List;
 public abstract class DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogWrapper");
 
+  public void reuse(@NotNull DialogWrapper dialogWrapper) {
+    assert Registry.is("vcs.single.window.commit.push");
+    getPeer().reuse(dialogWrapper);
+    //dialogWrapper.dispose();
+  }
+
   public enum IdeModalityType {
     IDE,
     PROJECT,

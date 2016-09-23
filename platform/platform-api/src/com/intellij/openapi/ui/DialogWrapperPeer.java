@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -159,5 +160,9 @@ public abstract class DialogWrapperPeer {
 
   public Object[] getCurrentModalEntities() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  public void reuse(DialogWrapper wrapper) {
+    assert Registry.is("vcs.single.window.commit.push");
   }
 }

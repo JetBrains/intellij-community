@@ -21,9 +21,11 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -195,6 +197,12 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return SvnBundle.message("checkin.operation.name");
   }
 
+  @Nullable
+  @Override
+  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    return  commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
+  }
+
   public List<VcsException> commit(List<Change> changes,
                                    final String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
@@ -220,7 +228,11 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     return exception;
   }
 
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+  public List<VcsException> commit(DialogWrapper dialog,
+                                   List<Change> changes,
+                                   String preparedComment,
+                                   NullableFunction<Object, Object> additionalData, HashSet<String> feedback) {
+    assert Registry.is("vcs.single.window.commit.push");
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 

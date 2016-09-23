@@ -28,4 +28,7 @@ public interface CommitExecutor {
 
   @NotNull
   CommitSession createCommitSession();
+
+  default boolean willHackyReuseDialog() { return false; }
+
 }

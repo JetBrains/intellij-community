@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -75,8 +76,10 @@ public class CommitHelper {
   private final VcsConfiguration myConfiguration;
   private final VcsDirtyScopeManager myDirtyScopeManager;
   private final HashSet<String> myFeedback;
+  private final CommitChangeListDialog myDialog;
 
-  public CommitHelper(final Project project,
+  public CommitHelper(CommitChangeListDialog dialog,
+                      final Project project,
                       final ChangeList changeList,
                       final List<Change> includedChanges,
                       final String actionName,
@@ -84,7 +87,9 @@ public class CommitHelper {
                       final List<CheckinHandler> handlers,
                       final boolean allOfDefaultChangeListChangesIncluded,
                       final boolean synchronously, final NullableFunction<Object, Object> additionalDataHolder,
-                      @Nullable CommitResultHandler customResultHandler) {
+                      @Nullable CommitResultHandler customResultHandler)
+  {
+    myDialog = dialog;
     myProject = project;
     myChangeList = changeList;
     myIncludedChanges = includedChanges;
@@ -98,6 +103,30 @@ public class CommitHelper {
     myConfiguration = VcsConfiguration.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myFeedback = new HashSet<>();
+  }
+
+
+  public CommitHelper(final Project project,
+                      final ChangeList changeList,
+                      final List<Change> includedChanges,
+                      final String actionName,
+                      final String commitMessage,
+                      final List<CheckinHandler> handlers,
+                      final boolean allOfDefaultChangeListChangesIncluded,
+                      final boolean synchronously, final NullableFunction<Object, Object> additionalDataHolder,
+                      @Nullable CommitResultHandler customResultHandler) {
+    this(null,
+         project,
+         changeList,
+         includedChanges,
+         actionName,
+         commitMessage,
+         handlers,
+         allOfDefaultChangeListChangesIncluded,
+         synchronously,
+         additionalDataHolder,
+         customResultHandler);
+    assert Registry.is("vcs.single.window.commit.push");
   }
 
   public boolean doCommit() {
@@ -418,7 +447,7 @@ public class CommitHelper {
         if (environment.keepChangeListAfterCommit(myChangeList)) {
           myKeepChangeListAfterCommit = true;
         }
-        final List<VcsException> exceptions = environment.commit(items, myCommitMessage, myAdditionalData, myFeedback);
+        final List<VcsException> exceptions = environment.commit(myDialog, items, myCommitMessage, myAdditionalData, myFeedback);
         if (exceptions != null && exceptions.size() > 0) {
           myVcsExceptions.addAll(exceptions);
           myChangesFailedToCommit.addAll(items);

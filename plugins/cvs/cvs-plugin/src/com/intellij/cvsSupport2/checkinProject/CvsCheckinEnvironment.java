@@ -26,7 +26,9 @@ import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -43,6 +45,7 @@ import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
@@ -83,6 +86,13 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return CvsBundle.message("operation.name.checkin.project");
   }
 
+  @Nullable
+  @Override
+  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    assert Registry.is("vcs.single.window.commit.push");
+    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
+  }
+
   public List<VcsException> commit(List<Change> changes,
                                    String preparedComment,
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
@@ -120,7 +130,10 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
     return executor.getResult().getErrorsAndWarnings();
   }
 
-  public List<VcsException> commit(List<Change> changes, String preparedComment) {
+  public List<VcsException> commit(DialogWrapper dialog,
+                                   List<Change> changes,
+                                   String preparedComment,
+                                   NullableFunction<Object, Object> additionalData, HashSet<String> feedback) {
     return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
   }
 

@@ -18,7 +18,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -213,7 +215,18 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return choice[0] == Messages.OK;
   }
 
+
+  @Nullable
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
+  }
+
+  public List<VcsException> commit(DialogWrapper dialog,
+                                   List<Change> changes,
+                                   String preparedComment,
+                                   NullableFunction<Object, Object> additionalData, HashSet<String> feedback) {
+    assert Registry.is("vcs.single.window.commit.push");
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 

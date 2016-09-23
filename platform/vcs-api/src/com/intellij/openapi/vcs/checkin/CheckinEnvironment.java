@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -53,6 +55,12 @@ public interface CheckinEnvironment extends VcsProviderMarker {
 
   @Nullable
   List<VcsException> commit(List<Change> changes, String preparedComment);
+
+  @Nullable
+  List<VcsException> commit(DialogWrapper dialog,
+                            List<Change> changes,
+                            String preparedComment,
+                            NullableFunction<Object, Object> additionalData, HashSet<String> feedback);
 
   @Nullable
   List<VcsException> commit(List<Change> changes,

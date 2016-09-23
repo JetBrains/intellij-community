@@ -121,6 +121,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   private static final float SPLITTER_PROPORTION_OPTION_DEFAULT = 0.5f;
   private static final float DETAILS_SPLITTER_PROPORTION_OPTION_DEFAULT = 0.6f;
   private static final boolean DETAILS_SHOW_OPTION_DEFAULT = true;
+  private boolean myReuseDialog;
 
   private static class MyUpdateButtonsRunnable implements Runnable {
     private CommitChangeListDialog myDialog;
@@ -591,8 +592,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           CheckinHandler.ReturnResult result = runBeforeCommitHandlers(new Runnable() {
             @Override
             public void run() {
-              CommitChangeListDialog.super.doOKAction();
-              doCommit(myResultHandler);
+              if (!Registry.is("vcs.single.window.commit.push")) {
+                CommitChangeListDialog.super.doOKAction();
+              }
+              dispose();
+              doCommit(CommitChangeListDialog.this, myResultHandler);
             }
           }, null);
 
@@ -663,6 +667,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (session instanceof CommitSessionContextAware) {
       ((CommitSessionContextAware)session).setContext(myCommitContext);
     }
+
+    if (Registry.is("vcs.single.window.commit.push")) {
+      myReuseDialog = commitExecutor.willHackyReuseDialog();
+    }
+
     if (session == CommitSession.VCS_COMMIT) {
       doOKAction();
       return;
@@ -793,12 +802,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @Override
   public void dispose() {
-    myDisposed = true;
+    if (!myReuseDialog) {
+      myDisposed = true;
+    }
     Disposer.dispose(myBrowser);
     Disposer.dispose(myCommitMessageArea);
     Disposer.dispose(myOKButtonUpdateAlarm);
     myUpdateButtonsRunnable.cancel();
-    super.dispose();
+    if (!myReuseDialog) {
+      super.dispose();
+    }
     Disposer.dispose(myDiffDetails);
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, mySplitter.getProportion(), SPLITTER_PROPORTION_OPTION_DEFAULT);
     float usedProportion = myDetailsSplitter.getUsedProportion();
@@ -974,8 +987,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     super.doCancelAction();
   }
 
-  private void doCommit(@Nullable CommitResultHandler customResultHandler) {
+  private void doCommit(CommitChangeListDialog dialog, @Nullable CommitResultHandler customResultHandler) {
     final CommitHelper helper = new CommitHelper(
+      Registry.is("vcs.single.window.commit.push") ? dialog : null,
       myProject,
       myBrowser.getSelectedChangeList(),
       getIncludedChanges(),

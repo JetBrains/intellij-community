@@ -15,6 +15,8 @@
  */
 package git4idea.checkin;
 
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.changes.CommitSession;
 import org.jetbrains.annotations.Nls;
@@ -33,6 +35,11 @@ public class GitCommitAndPushExecutor implements CommitExecutor {
   @Nls
   public String getActionText() {
     return "Commit and &Push...";
+  }
+
+  public boolean willHackyReuseDialog() {
+    assert Registry.is("vcs.single.window.commit.push");
+    return true;
   }
 
   @NotNull

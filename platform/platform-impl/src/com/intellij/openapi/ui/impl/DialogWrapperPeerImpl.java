@@ -136,6 +136,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     createDialog(owner, canBeParent, ideModalityType);
   }
 
+  public void reuse(DialogWrapper dialogWrapper) {
+    assert Registry.is("vcs.single.window.commit.push");
+    setContentPane((JComponent)dialogWrapper.getContentPane());
+  }
+
   /**
    * Creates modal <code>DialogWrapper</code>. The currently active window will be the dialog's parent.
    *

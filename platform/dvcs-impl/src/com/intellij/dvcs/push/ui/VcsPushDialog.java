@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,7 +124,26 @@ public class VcsPushDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     myController.push(false);
+    disposeParent();
     close(OK_EXIT_CODE);
+  }
+
+  @Override
+  public void doCancelAction() {
+    super.doCancelAction();
+    disposeParent();
+  }
+
+  @Override
+  protected void doHelpAction() {
+    super.doHelpAction();
+    disposeParent();
+  }
+
+  private void disposeParent() {
+    if (!Registry.is("vcs.single.window.commit.push")) return;
+    Window ancestor = SwingUtilities.getWindowAncestor(getContentPane());
+    ancestor.dispose();
   }
 
   @Override

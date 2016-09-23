@@ -23,10 +23,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -107,6 +109,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   private Boolean myNextCommitIsPushed = null; // The push option of the next commit
   private Date myNextCommitAuthorDate;
   private boolean myNextCommitSignOff;
+  private DialogWrapper myDialog;
 
   public GitCheckinEnvironment(@NotNull Project project,
                                @NotNull final VcsDirtyScopeManager dirtyScopeManager,
@@ -260,7 +263,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Collection<GitRepository> repositories = GitUtil.getRepositoriesFromRoots(manager, sortedChanges.keySet());
       final List<GitRepository> preselectedRepositories = newArrayList(repositories);
       GuiUtils.invokeLaterIfNeeded(() ->
-        new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show(),
+                                   {
+                                     if (Registry.is("vcs.single.window.commit.push")) {
+                                       myDialog.reuse(new VcsPushDialog(myProject, preselectedRepositories,
+                                                                        GitBranchUtil.getCurrentRepository(myProject)));
+                                     } else {
+                                       new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject))
+                                         .show();
+                                     }
+                                   },
         ModalityState.defaultModalityState());
     }
     return exceptions;
@@ -355,7 +366,19 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return new VcsException(msg.trim(), original.getCause());
   }
 
+
+  @Nullable
+  @Override
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
+  }
+
+
+  public List<VcsException> commit(DialogWrapper dialog,
+                                   List<Change> changes,
+                                   String preparedComment,
+                                   NullableFunction<Object, Object> additionalData, HashSet<String> feedback) {
+    myDialog = dialog;
     return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
