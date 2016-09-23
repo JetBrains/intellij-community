@@ -57,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -577,7 +576,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     final List<InspectionToolWrapper> tools;
     try {
-      tools = createTools(project);
+      if (mySource == null) {
+        tools = myRegistrar.createTools();
+      }
+      else {
+        tools = ContainerUtil.map(mySource.getDefaultStates(project), ScopeToolState::getTool);
+      }
     }
     catch (ProcessCanceledException ignored) {
       return;
@@ -639,7 +643,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                                    : HighlightDisplayLevel.DO_NOT_SHOW;
     HighlightDisplayLevel defaultLevel = toolWrapper.getDefaultLevel();
     HighlightDisplayLevel level = baseLevel.getSeverity().compareTo(defaultLevel.getSeverity()) > 0 ? baseLevel : defaultLevel;
-    //HighlightDisplayLevel level = myBaseProfile != null && myBaseProfile.getTools(shortName, project) != null ? myBaseProfile.getErrorLevel(key, project) : toolWrapper.getDefaultLevel();
     boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
     final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
     final Element element = myUninitializedSettings.remove(shortName);
@@ -649,10 +652,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
       else if (!myUninitializedSettings.containsKey(InspectionElementsMergerBase.getMergedMarkerName(shortName))) {
         final InspectionElementsMergerBase merger = getMerger(shortName);
-        if (merger != null) {
-          final Element merged = merger.merge(myUninitializedSettings);
-          if (merged != null) {
-            toolsList.readExternal(merged, this, dependencies);
+        Element merged = merger == null ? null : merger.merge(myUninitializedSettings);
+        if (merged != null) {
+          toolsList.readExternal(merged, this, dependencies);
+        }
+        else if (isProfileLocked()) {
+          // https://youtrack.jetbrains.com/issue/IDEA-158936
+          toolsList.setEnabled(false);
+          if (toolsList.getNonDefaultTools() == null) {
+            toolsList.getDefaultState().setEnabled(false);
           }
         }
       }
@@ -690,14 +698,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void setScopesOrder(String[] scopesOrder) {
     myScopesOrder = scopesOrder;
-  }
-
-  @NotNull
-  private List<InspectionToolWrapper> createTools(@Nullable Project project) {
-    if (mySource != null) {
-      return ContainerUtil.map(mySource.getDefaultStates(project), ScopeToolState::getTool);
-    }
-    return myRegistrar.createTools();
   }
 
   private HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, @Nullable Project project) {
@@ -916,7 +916,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public List<ScopeToolState> getDefaultStates(@Nullable Project project) {
     initInspectionTools(project);
-    return myTools.values().stream().map(Tools::getDefaultState).collect(Collectors.toList());
+    List<ScopeToolState> result = new ArrayList<>();
+    for (Tools tools : myTools.values()) {
+      result.add(tools.getDefaultState());
+    }
+    return result;
   }
 
   @NotNull
