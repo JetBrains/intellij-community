@@ -50,7 +50,6 @@ import com.maddyhome.idea.copyright.util.FileTypeUtil
 import com.maddyhome.idea.copyright.util.NewFileTracker
 import org.jdom.Element
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
 private const val DEFAULT = "default"
@@ -91,7 +90,7 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
                               attributeProvider: Function<String, String?>): SchemeWrapper<CopyrightProfile> {
-      return LazySchemeWrapper(name, dataHolder, schemeWriter)
+      return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
     }
 
     override fun getState(scheme: SchemeWrapper<CopyrightProfile>) = scheme.schemeState
@@ -253,12 +252,10 @@ private fun wrapScheme(element: Element): Element {
   return wrapper
 }
 
-private class LazySchemeWrapper(name: String,
-                        dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
-                        private val writer: (scheme: CopyrightProfile) -> Element,
-                        private val subStateTagName: String = "copyright") : SchemeWrapper<CopyrightProfile>(name) {
-  private val dataHolder = AtomicReference(dataHolder)
-
+private class CopyrightLazySchemeWrapper(name: String,
+                                         dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
+                                         writer: (scheme: CopyrightProfile) -> Element,
+                                         private val subStateTagName: String = "copyright") : LazySchemeWrapper<CopyrightProfile>(name, dataHolder, writer) {
   override val lazyScheme = lazy {
     val scheme = CopyrightProfile()
     @Suppress("NAME_SHADOWING")
@@ -271,10 +268,5 @@ private class LazySchemeWrapper(name: String,
     scheme.readExternal(element)
     dataHolder.updateDigest(writer(scheme))
     scheme
-  }
-
-  override fun writeScheme(): Element {
-    val dataHolder = dataHolder.get()
-    return if (dataHolder == null) writer(scheme) else dataHolder.read()
   }
 }

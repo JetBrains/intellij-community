@@ -22,6 +22,7 @@ import com.intellij.util.isEmpty
 import org.jdom.Element
 import java.io.OutputStream
 import java.security.MessageDigest
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Function
 
 interface SchemeDataHolder<in MUTABLE_SCHEME : Scheme> {
@@ -101,6 +102,15 @@ abstract class SchemeWrapper<out T : Scheme>(name: String) : ExternalizableSchem
 
   init {
     this.name = name
+  }
+}
+
+abstract class LazySchemeWrapper<T : Scheme>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
+  protected val dataHolder = AtomicReference(dataHolder)
+
+  override final fun writeScheme(): Element {
+    val dataHolder = dataHolder.get()
+    return if (dataHolder == null) writer(scheme) else dataHolder.read()
   }
 }
 
