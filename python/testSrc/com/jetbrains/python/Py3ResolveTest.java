@@ -354,4 +354,15 @@ public class Py3ResolveTest extends PyResolveTestCase {
   public void testDunderClassInDeclarationInsideFunction() {
     assertUnresolved();
   }
+  
+  // PY-20864
+  public void testTopLevelVariableAnnotationFromTyping() {
+    myFixture.copyDirectoryToProject("typing", "");
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyClass.class, "List"));
+  }
+
+  // PY-20864
+  public void testLocalVariableAnnotationWithInnerClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyClass.class, "MyType"));
+  }
 }
