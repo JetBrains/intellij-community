@@ -656,17 +656,11 @@ public abstract class DialogWrapper {
 
     if (doNotAsk != null) {
       myCheckBoxDoNotShowDialog = new JCheckBox(doNotAsk.getDoNotShowMessage());
-      JPanel southPanel = panel;
-
-      if (!doNotAsk.canBeHidden()) {
-        return southPanel;
+      if (doNotAsk.canBeHidden()) {
+        panel = addDoNotShowCheckBox(panel, myCheckBoxDoNotShowDialog);
+        myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
+        DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
       }
-
-      final JPanel withCB = addDoNotShowCheckBox(southPanel, myCheckBoxDoNotShowDialog);
-      myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
-      DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
-
-      panel = withCB;
     }
 
     if (getStyle() == DialogStyle.COMPACT) {
