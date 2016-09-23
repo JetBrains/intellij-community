@@ -15,10 +15,12 @@
  */
 package com.intellij.configurationStore
 
+import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
 import com.intellij.openapi.project.Project
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.isEmpty
+import com.intellij.util.xmlb.annotations.Attribute
 import org.jdom.Element
 import java.io.OutputStream
 import java.security.MessageDigest
@@ -136,4 +138,9 @@ fun wrapState(element: Element, project: Project): Element {
   val wrapper = Element("state")
   wrapper.addContent(element)
   return wrapper
+}
+
+class BundledSchemeEP : AbstractExtensionPointBean() {
+  @Attribute("path")
+  var path: String? = null
 }

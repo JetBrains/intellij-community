@@ -24,19 +24,12 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
 public class InspectionProfileLoadUtil {
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
-  public static final String PROFILE_NAME_TAG = "profile_name";
-
-  @NonNls public static final String PROFILE_TAG = "profile";
-
   private static String getProfileName(@NotNull File file, @NotNull Element element) {
     String name = null;
     for (Element option : element.getChildren("option")) {
@@ -46,7 +39,7 @@ public class InspectionProfileLoadUtil {
     }
     if (name == null) {
       //noinspection deprecation
-      name = element.getAttributeValue(PROFILE_NAME_TAG);
+      name = element.getAttributeValue("profile_name");
     }
     return name != null ? name : FileUtil.getNameWithoutExtension(file);
   }
@@ -57,7 +50,7 @@ public class InspectionProfileLoadUtil {
                              @NotNull ProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
     Element element = JDOMUtil.load(file);
     InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file, element), registrar, profileManager);
-    final Element profileElement = element.getChild(PROFILE_TAG);
+    final Element profileElement = element.getChild("profile");
     if (profileElement != null) {
       element = profileElement;
     }

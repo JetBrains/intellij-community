@@ -17,7 +17,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -126,6 +125,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myProfileManager = profileManager;
   }
 
+  public InspectionProfileImpl(@NotNull String profileName,
+                               @NotNull InspectionToolRegistrar registrar,
+                               @NotNull ProfileManager profileManager,
+                               @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
+    this(profileName, registrar, profileManager, getDefaultProfile(), dataHolder);
+  }
+
   @NotNull
   public static InspectionProfileImpl createSimple(@NotNull String name,
                                                    @NotNull Project project,
@@ -225,20 +231,41 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void readExternal(@NotNull Element element) {
     super.readExternal(element);
 
-    final String version = element.getAttributeValue(VERSION_TAG);
-    if (version == null || !version.equals(VALID_VERSION)) {
-      element = InspectionProfileConvertor.convertToNewFormat(element, this);
-    }
-
     final Element highlightElement = element.getChild(USED_LEVELS);
     if (highlightElement != null) {
       // from old profiles
       ((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().readExternal(highlightElement);
     }
 
-    for (Element toolElement : element.getChildren(INSPECTION_TOOL_TAG)) {
-      myUninitializedSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement.clone());
+    String version = element.getAttributeValue(VERSION_TAG);
+    if (version == null || !version.equals(VALID_VERSION)) {
+      InspectionToolWrapper[] tools = getInspectionTools(null);
+      for (Element toolElement : element.getChildren("inspection_tool")) {
+        String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
+        String shortName = convertToShortName(toolClassName, tools);
+        if (shortName == null) {
+          continue;
+        }
+        toolElement.setAttribute(CLASS_TAG, shortName);
+        myUninitializedSettings.put(shortName, toolElement.clone());
+      }
     }
+    else {
+      for (Element toolElement : element.getChildren(INSPECTION_TOOL_TAG)) {
+        myUninitializedSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement.clone());
+      }
+    }
+  }
+
+  @Nullable
+  private static String convertToShortName(@Nullable String displayName, InspectionToolWrapper[] tools) {
+    if (displayName == null) return null;
+    for (InspectionToolWrapper tool : tools) {
+      if (displayName.equals(tool.getDisplayName())) {
+        return tool.getShortName();
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -259,10 +286,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       return myDataHolder.read();
     }
 
-    Element result = isProjectLevel() ? new Element("profile").setAttribute("version", "1.0") : new Element("inspections").setAttribute("profile_name", getName());
+    Element element = new Element("profile");
+    Element result = isProjectLevel() ? element.setAttribute("version", "1.0") : element.setAttribute("profile_name", getName());
     serializeInto(result, false);
 
-    if (myProfileManager instanceof ProjectInspectionProfileManager && ProjectKt.isDirectoryBased(((ProjectInspectionProfileManager)myProfileManager).getProject())) {
+    if (isProjectLevel() && ProjectKt.isDirectoryBased(((ProjectInspectionProfileManager)myProfileManager).getProject())) {
       return new Element("component").setAttribute("name", "InspectionProjectProfileManager").addContent(result);
     }
     return result;

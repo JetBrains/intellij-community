@@ -24,6 +24,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,6 +34,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -40,6 +42,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.Profile;
+import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -72,6 +75,8 @@ import static com.intellij.codeInspection.ex.InspectionProfileImpl.getDefaultPro
 public class ApplicationInspectionProfileManager extends BaseInspectionProfileManager implements InspectionProfileManager,
                                                                                                  SeverityProvider,
                                                                                                  PersistentStateComponent<Element> {
+  private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = ExtensionPointName.create("com.intellij.bundledInspectionProfile");
+
   private final InspectionToolRegistrar myRegistrar;
   private final SchemeManager<InspectionProfileImpl> mySchemeManager;
   private final AtomicBoolean myProfilesAreInitialized = new AtomicBoolean(false);
@@ -90,14 +95,20 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
       @NotNull
       @Override
       public String getName(@NotNull Function<String, String> attributeProvider) {
-        return ObjectUtils.chooseNotNull(attributeProvider.apply(InspectionProfileLoadUtil.PROFILE_NAME_TAG), "unnamed");
+        return "unnamed";
       }
 
       @NotNull
       public InspectionProfileImpl createScheme(@NotNull SchemeDataHolder<? super InspectionProfileImpl> dataHolder,
                                                 @NotNull String name,
-                                                @NotNull Function<String, String> attributeProvider) {
-        return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManager.this, getDefaultProfile(), dataHolder);
+                                                @NotNull Function<String, String> attributeProvider,
+                                                boolean isBundled) {
+        if (isBundled) {
+          return new BundledInspectionProfile(name, myRegistrar, ApplicationInspectionProfileManager.this, dataHolder);
+        }
+        else {
+          return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManager.this, dataHolder);
+        }
       }
 
       @Override
@@ -160,22 +171,43 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   }
 
   public void initProfiles() {
-    if (myProfilesAreInitialized.getAndSet(true)) {
-      if (mySchemeManager.isEmpty()) {
-        createDefaultProfile();
-      }
+    if (!myProfilesAreInitialized.compareAndSet(false, true)) {
       return;
     }
+
     if (!LOAD_PROFILES) return;
 
+    loadBundledSchemes();
     mySchemeManager.loadSchemes();
-    if (mySchemeManager.isEmpty()) {
-      createDefaultProfile();
-    }
+    createDefaultProfile();
   }
 
   private void createDefaultProfile() {
-    getSchemeManager().addScheme(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile()));
+    final InspectionProfileImpl oldDefault = mySchemeManager.findSchemeByName(InspectionProfileImpl.DEFAULT_PROFILE_NAME);
+    if (oldDefault == null || !oldDefault.isProfileLocked()) {
+      getSchemeManager().addScheme(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile()));
+    }
+  }
+
+  private void loadBundledSchemes() {
+    if (!isUnitTestOrHeadlessMode()) {
+      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensions()) {
+        mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
+      }
+    }
+  }
+
+  private static class BundledInspectionProfile extends InspectionProfileImpl {
+    public BundledInspectionProfile(@NotNull String profileName,
+                                   @NotNull InspectionToolRegistrar registrar,
+                                   @NotNull ProfileManager profileManager,
+                                   @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
+      super(profileName, registrar, profileManager, dataHolder);
+    }
+  }
+
+  private static boolean isUnitTestOrHeadlessMode() {
+    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
   public Profile loadProfile(@NotNull String path) throws IOException, JDOMException {

@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.configurationStore.BundledSchemeEP;
 import com.intellij.configurationStore.LazySchemeProcessor;
 import com.intellij.configurationStore.SchemeDataHolder;
 import com.intellij.configurationStore.SchemeExtensionProvider;
@@ -32,6 +33,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
@@ -61,6 +63,7 @@ import java.util.function.Function;
 )
 public class EditorColorsManagerImpl extends EditorColorsManager implements PersistentStateComponent<EditorColorsManagerImpl.State> {
   private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
+  private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = ExtensionPointName.create("com.intellij.bundledColorScheme");
 
   private static final String DEFAULT_NAME = "Default";
 
@@ -149,8 +152,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
   private void loadBundledSchemes() {
     if (!isUnitTestOrHeadlessMode()) {
-      for (BundledColorSchemeEP ep : BundledColorSchemeEP.EP_NAME.getExtensions()) {
-        mySchemeManager.loadBundledScheme(ep.path + ".xml", ep);
+      for (BundledSchemeEP ep : BUNDLED_EP_NAME.getExtensions()) {
+        mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", ep);
       }
     }
   }
