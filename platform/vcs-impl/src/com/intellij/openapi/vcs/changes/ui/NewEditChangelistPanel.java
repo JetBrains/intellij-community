@@ -175,16 +175,18 @@ public abstract class NewEditChangelistPanel extends JPanel {
 
     final Set<EditorCustomization> editorFeatures = ContainerUtil.newHashSet();
     ContainerUtil.addIfNotNull(editorFeatures, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
-
+    double scaleFactor = 1.3;
     if (defaultLines == 1) {
       editorFeatures.add(HorizontalScrollBarEditorCustomization.DISABLED);
       editorFeatures.add(OneLineEditorCustomization.ENABLED);
-    } else {
+    }
+    else {
       editorFeatures.add(SoftWrapsEditorCustomization.ENABLED);
+      scaleFactor = 2.1;
     }
     editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
     final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();
-    editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * 1.3)));
+    editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * scaleFactor)));
     return editorField;
   }
 
