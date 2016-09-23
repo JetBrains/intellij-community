@@ -107,8 +107,9 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
         ReferenceType ref = myElems.get(convertRowIndexToModel(rowAtPoint(e.getPoint())));
         TrackerForNewInstances strategy = myParent.getStrategy(ref);
-        if (strategy != null && strategy.isReady()) {
-          new InstancesWindow(myDebugSession, limit -> strategy.getNewInstances(), ref.name()).show();
+        if (strategy != null && strategy.isReady() && strategy.getCount() > 0) {
+          List<ObjectReference> newInstances = strategy.getNewInstances();
+          new InstancesWindow(myDebugSession, limit -> newInstances, ref.name()).show();
         }
       }
     });
