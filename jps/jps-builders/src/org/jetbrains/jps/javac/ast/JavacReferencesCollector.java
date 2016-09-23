@@ -149,18 +149,21 @@ public class JavacReferencesCollector {
         final JCTree.JCFieldAccess id = (JCTree.JCFieldAccess)anImport.getQualifiedIdentifier();
         final Symbol sym = id.sym;
         if (sym == null) {
-          final JCTree.JCFieldAccess classImport = (JCTree.JCFieldAccess)id.getExpression();
-          final Symbol ownerSym = classImport.sym;
-          final Name name = id.getIdentifier();
-          if (name != getAsteriksFromCurrentNameTable(name)) {
-            // member import
-            for (Symbol memberSymbol : ownerSym.members().getElements()) {
-              if (memberSymbol.getSimpleName() == name) {
-                symbols.add(new JavacRefSymbol(memberSymbol, Tree.Kind.IMPORT));
+          final JCTree.JCExpression qExpr = id.getExpression();
+          if (qExpr instanceof JCTree.JCFieldAccess) {
+            final JCTree.JCFieldAccess classImport = (JCTree.JCFieldAccess)qExpr;
+            final Symbol ownerSym = classImport.sym;
+            final Name name = id.getIdentifier();
+            if (name != getAsteriksFromCurrentNameTable(name)) {
+              // member import
+              for (Symbol memberSymbol : ownerSym.members().getElements()) {
+                if (memberSymbol.getSimpleName() == name) {
+                  symbols.add(new JavacRefSymbol(memberSymbol, Tree.Kind.IMPORT));
+                }
               }
             }
+            collectClassImports(ownerSym, symbols);
           }
-          collectClassImports(ownerSym, symbols);
         } else {
           // class import
           collectClassImports(sym, symbols);
