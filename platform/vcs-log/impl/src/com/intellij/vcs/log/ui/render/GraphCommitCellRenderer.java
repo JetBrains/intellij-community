@@ -187,7 +187,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   @Nullable
-  public JComponent getTooltip(@NotNull Object value, @NotNull Point point, int width, int height) {
+  public JComponent getTooltip(@NotNull Object value, @NotNull Point point, int width) {
     if (!isRedesignedLabels()) return null;
 
     GraphCommitCell cell = getAssertCommitCell(value);
@@ -196,7 +196,13 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
       VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
       customizeRefsPainter(myReferencePainter, refs, getForeground());
       if (myReferencePainter.getSize().getWidth() - LabelPainter.GRADIENT_WIDTH >= width - point.getX()) {
-        ReferencesPanel referencesPanel = new ReferencesPanel();
+        ReferencesPanel referencesPanel = new ReferencesPanel() {
+          @NotNull
+          @Override
+          protected Font getLabelsFont() {
+            return myReferencePainter.getReferenceFont();
+          }
+        };
         refs.sort(myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
         referencesPanel.setReferences(refs);
         return referencesPanel;

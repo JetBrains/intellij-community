@@ -56,7 +56,7 @@ public class ReferencesPanel extends JPanel {
 
   public void update() {
     removeAll();
-    int height = getFontMetrics(getCommitDetailsFont()).getHeight() + JBUI.scale(PADDING);
+    int height = getFontMetrics(getLabelsFont()).getHeight() + JBUI.scale(PADDING);
     JBLabel firstLabel = null;
     for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : ContainerUtil.groupBy(myReferences, VcsRef::getType).entrySet()) {
       if (GraphCommitCellRenderer.isRedesignedLabels()) {
@@ -72,7 +72,7 @@ public class ReferencesPanel extends JPanel {
           JBLabel label =
             new JBLabel(reference.getName() + (index != typeAndRefs.getValue().size() - 1 ? "," : ""),
                         icon, SwingConstants.LEFT);
-          label.setFont(getCommitDetailsFont());
+          label.setFont(getLabelsFont());
           label.setIconTextGap(0);
           label.setHorizontalAlignment(SwingConstants.LEFT);
           if (firstLabel == null) {
@@ -96,6 +96,11 @@ public class ReferencesPanel extends JPanel {
     setVisible(!myReferences.isEmpty());
     revalidate();
     repaint();
+  }
+
+  @NotNull
+  protected Font getLabelsFont() {
+    return getCommitDetailsFont();
   }
 
   @Override

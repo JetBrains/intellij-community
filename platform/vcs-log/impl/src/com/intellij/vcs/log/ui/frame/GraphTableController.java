@@ -140,7 +140,7 @@ public class GraphTableController {
   private void showTooltip(int row, int column, @NotNull MouseEvent e) {
     JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, column), calcPoint4Graph(e.getPoint()),
                                                           myTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN)
-                                                            .getWidth(), myTable.getRowHeight());
+                                                            .getWidth());
 
     if (tipComponent != null) {
       IdeTooltip tooltip =
