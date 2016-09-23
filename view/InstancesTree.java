@@ -58,6 +58,7 @@ class InstancesTree extends XDebuggerTree {
   }
 
   void setMessage(@Nullable Icon icon, @NotNull String text, @NotNull SimpleTextAttributes textAttributes) {
+    myChildren = null;
     myRoot.clearChildren();
     myRoot.setMessage(text, icon, textAttributes, null);
   }
