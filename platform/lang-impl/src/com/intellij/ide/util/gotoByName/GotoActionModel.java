@@ -23,7 +23,6 @@ import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,10 +35,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -75,44 +71,48 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @Nullable private final Project myProject;
   private final Component myContextComponent;
+  @Nullable private final Editor myEditor;
+  @Nullable private final PsiFile myFile;
 
   protected final ActionManager myActionManager = ActionManager.getInstance();
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  protected final SearchableOptionsRegistrar myIndex;
   protected final Map<AnAction, String> myActionGroups = ContainerUtil.newHashMap();
 
-  protected final Map<String, ApplyIntentionAction> myIntentions = new TreeMap<>();
-  private final Map<String, String> myConfigurablesNames = ContainerUtil.newTroveMap();
+  private final NotNullLazyValue<Map<String, String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
+    Map<String, String> map = ContainerUtil.newTroveMap();
+    for (Configurable configurable : ShowSettingsUtilImpl.getConfigurables(getProject(), true)) {
+      if (configurable instanceof SearchableConfigurable) {
+        map.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
+      }
+    }
+    return map;
+  });
+
   private final ModalityState myModality = ModalityState.defaultModalityState();
 
   public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file) {
     myProject = project;
     myContextComponent = component;
+    myEditor = editor;
+    myFile = file;
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     collectActions(myActionGroups, mainMenu, mainMenu.getTemplatePresentation().getText());
-    if (project != null && editor != null && file != null) {
-      ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(editor, file);
+  }
+
+  @NotNull
+  Map<String, ApplyIntentionAction> getAvailableIntentions() {
+    Map<String, ApplyIntentionAction> map = new TreeMap<>();
+    if (myProject != null && myEditor != null && myFile != null) {
+      ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(myEditor, myFile);
       if (children != null) {
         for (ApplyIntentionAction action : children) {
-          myIntentions.put(action.getName(), action);
+          map.put(action.getName(), action);
         }
       }
     }
-    myIndex = SearchableOptionsRegistrar.getInstance();
-    if (!EventQueue.isDispatchThread()) {
-      return;
-    }
-    fillConfigurablesNames(ShowSettingsUtilImpl.getConfigurables(project, true));
-  }
-
-  private void fillConfigurablesNames(@NotNull Configurable[] configurables) {
-    for (Configurable configurable : configurables) {
-      if (configurable instanceof SearchableConfigurable) {
-        myConfigurablesNames.put(((SearchableConfigurable)configurable).getId(), configurable.getDisplayName());
-      }
-    }
+    return map;
   }
 
   @Override
@@ -289,10 +289,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @NotNull
   String getGroupName(@NotNull OptionDescription description) {
     String id = description.getConfigurableId();
-    String name = myConfigurablesNames.get(id);
+    String name = myConfigurablesNames.getValue().get(id);
     String settings = SystemInfo.isMac ? "Preferences" : "Settings";
     if (name == null) return settings;
     return settings + " > " + name;
+  }
+
+  void initConfigurables() {
+    myConfigurablesNames.getValue();
   }
 
   private void collectActions(@NotNull Map<AnAction, String> result, @NotNull ActionGroup group, @Nullable String containingGroupName) {
