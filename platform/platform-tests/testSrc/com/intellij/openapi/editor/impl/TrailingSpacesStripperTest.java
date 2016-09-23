@@ -67,7 +67,7 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
 
   private static void stripTrailingSpaces() {
     WriteCommandAction.runWriteCommandAction(null, () -> {
-      TrailingSpacesStripper.stripIfNotCurrentLine(getEditor().getDocument(), true);
+      TrailingSpacesStripper.strip(getEditor().getDocument(), true, true);
     });
   }
 
@@ -214,6 +214,24 @@ public class TrailingSpacesStripperTest extends LightPlatformCodeInsightTestCase
     FileDocumentManager.getInstance().saveAllDocuments();
     assertEquals("x11\nyyy\n", editor1.getDocument().getText());
     assertEquals("x22  \nyyy\n", editor2.getDocument().getText()); // caret in the way in second but not in the first
+  }
+  
+  public void testStripTrailingSpacesAtCaretLineOnExplicitSave() {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    configureFromFileText(
+      "x.txt",
+      "xxx   <caret>\nyyy   "
+    );
+    type(' ');
+    backspace();
+    EditorTestUtil.executeAction(
+      getEditor(),
+      "SaveAll"
+    );
+    checkResultByText(
+      "xxx<caret>\nyyy"
+    );
   }
 
   @NotNull

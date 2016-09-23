@@ -17,13 +17,29 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 public class SaveAllAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    if (editor != null) {
+      stripSpacesFromCaretLines(editor);
+    }
     ApplicationManager.getApplication().saveAll();
+  }
+  
+  private static void stripSpacesFromCaretLines(@NotNull Editor editor) {
+    Document document = editor.getDocument();
+    final EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    final boolean inChangedLinesOnly = !EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE.equals(settings.getStripTrailingSpaces());
+    TrailingSpacesStripper.strip(document, inChangedLinesOnly, false);
   }
 }
