@@ -18,13 +18,10 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.CachedValueProvider;
@@ -45,11 +42,9 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 
 public class InspectionDescriptionInfo {
 
@@ -103,16 +98,9 @@ public class InspectionDescriptionInfo {
   private static Extension doFindExtension(Module module, PsiClass psiClass) {
     // Try search in narrow scopes first
     Project project = module.getProject();
-    List<Supplier<GlobalSearchScope>> scopes = Arrays.asList(
-      module::getModuleScope,
-      module::getModuleWithDependenciesScope,
-      () -> ModuleUtilCore.getAllDependentModules(module).stream().map(Module::getModuleContentWithDependenciesScope)
-        .reduce(GlobalSearchScope::uniteWith).orElse(GlobalSearchScope.EMPTY_SCOPE),
-      () -> GlobalSearchScopesCore.projectProductionScope(project)
-    );
     Set<DomFileElement<IdeaPlugin>> processed = new HashSet<>();
-    for(Supplier<GlobalSearchScope> scope : scopes) {
-      List<DomFileElement<IdeaPlugin>> origElements = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope.get());
+    for(GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
+      List<DomFileElement<IdeaPlugin>> origElements = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope);
       origElements.removeAll(processed);
       List<DomFileElement<IdeaPlugin>> elements = PluginDescriptorChooser.findAppropriateIntelliJModule(module.getName(), origElements);
 
@@ -150,16 +138,9 @@ public class InspectionDescriptionInfo {
   private static PsiFile resolveInspectionDescriptionFile(Module module, @Nullable String filename) {
     if (filename == null) return null;
 
-    for (PsiDirectory description : DescriptionCheckerUtil.getDescriptionsDirs(module, DescriptionType.INSPECTION)) {
-      final PsiFile file = description.findFile(filename + ".html");
-      if (file == null) continue;
-      final VirtualFile vf = file.getVirtualFile();
-      if (vf == null) continue;
-      if (vf.getNameWithoutExtension().equals(filename)) {
-        return PsiManager.getInstance(module.getProject()).findFile(vf);
-      }
-    }
-    return null;
+    String nameWithSuffix = filename + ".html";
+    return DescriptionCheckerUtil.allDescriptionDirs(module, DescriptionType.INSPECTION)
+      .map(description -> description.findFile(nameWithSuffix)).nonNull().findFirst().orElse(null);
   }
 
   public boolean isValid() {
