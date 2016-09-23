@@ -404,45 +404,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
-  @NotNull
-  String getArrowTooltipText(int commit, @Nullable Integer row) {
-    VcsShortCommitDetails details;
-    if (row != null && row >= 0) {
-      details = getModel().getShortDetails(row); // preload rows around the commit
-    }
-    else {
-      details = myLogData.getMiniDetailsGetter().getCommitData(commit, Collections.singleton(commit)); // preload just the commit
-    }
-
-    String balloonText = "";
-    if (details instanceof LoadingDetails) {
-      CommitId commitId = myLogData.getCommitId(commit);
-      if (commitId != null) {
-        balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
-        if (myUi.isMultipleRoots()) {
-          balloonText += " in " + commitId.getRoot().getName();
-        }
-      }
-    }
-    else {
-      balloonText = "Jump to <b>\"" +
-                    StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
-                    "\"</b> by " +
-                    VcsUserUtil.getShortPresentation(details.getAuthor()) +
-                    CommitPanel.formatDateTime(details.getAuthorTime());
-    }
-    return balloonText;
-  }
-
-  protected void showToolTip(@NotNull String text, @NotNull MouseEvent e) {
-    // standard tooltip does not allow to customize its location, and locating tooltip above can obscure some important info
-    Point point = new Point(e.getX() + 5, e.getY());
-
-    JEditorPane tipComponent = IdeTooltipManager.initPane(text, new HintHint(this, point).setAwtTooltip(true), null);
-    IdeTooltip tooltip = new IdeTooltip(this, point, new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.atRight);
-    IdeTooltipManager.getInstance().show(tooltip, false);
-  }
-
   @Override
   @NotNull
   public GraphTableModel getModel() {

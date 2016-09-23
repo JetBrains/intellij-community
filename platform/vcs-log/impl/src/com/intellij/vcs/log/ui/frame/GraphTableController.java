@@ -18,8 +18,13 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.EdgePrintElement;
 import com.intellij.vcs.log.graph.NodePrintElement;
@@ -32,6 +37,7 @@ import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +47,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Processes mouse clicks and moves on the table
@@ -126,7 +133,7 @@ public class GraphTableController {
         // TODO wait for the full log and then jump
         return;
       }
-      if (e != null) myTable.showToolTip(myTable.getArrowTooltipText(answer.getCommitToJump(), row), e);
+      if (e != null) showToolTip(getArrowTooltipText(answer.getCommitToJump(), row), e);
     }
   }
 
@@ -135,6 +142,45 @@ public class GraphTableController {
     TableColumn rootColumn = myTable.getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
     return new Point(clickPoint.x - (myLogData.isMultiRoot() ? rootColumn.getWidth() : 0),
                      PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
+  }
+
+  @NotNull
+  private String getArrowTooltipText(int commit, @Nullable Integer row) {
+    VcsShortCommitDetails details;
+    if (row != null && row >= 0) {
+      details = myTable.getModel().getShortDetails(row); // preload rows around the commit
+    }
+    else {
+      details = myLogData.getMiniDetailsGetter().getCommitData(commit, Collections.singleton(commit)); // preload just the commit
+    }
+
+    String balloonText = "";
+    if (details instanceof LoadingDetails) {
+      CommitId commitId = myLogData.getCommitId(commit);
+      if (commitId != null) {
+        balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
+        if (myUi.isMultipleRoots()) {
+          balloonText += " in " + commitId.getRoot().getName();
+        }
+      }
+    }
+    else {
+      balloonText = "Jump to <b>\"" +
+                    StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
+                    "\"</b> by " +
+                    VcsUserUtil.getShortPresentation(details.getAuthor()) +
+                    CommitPanel.formatDateTime(details.getAuthorTime());
+    }
+    return balloonText;
+  }
+
+  private void showToolTip(@NotNull String text, @NotNull MouseEvent e) {
+    // standard tooltip does not allow to customize its location, and locating tooltip above can obscure some important info
+    Point point = new Point(e.getX() + 5, e.getY());
+
+    JEditorPane tipComponent = IdeTooltipManager.initPane(text, new HintHint(myTable, point).setAwtTooltip(true), null);
+    IdeTooltip tooltip = new IdeTooltip(myTable, point, new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.atRight);
+    IdeTooltipManager.getInstance().show(tooltip, false);
   }
 
   private void showOrHideCommitTooltip(int row, int column, @NotNull MouseEvent e) {
