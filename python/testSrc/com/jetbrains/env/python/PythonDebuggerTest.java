@@ -992,7 +992,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void testing() throws Exception {
-        waitForPause();
+        waitForAllThreadsPause();
         eval("m").hasValue("42");
         assertNull(getRunningThread());
         resume();
