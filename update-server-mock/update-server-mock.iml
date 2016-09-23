@@ -10,7 +10,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="log4j-api">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/log4j-api-2.6.2.jar!/" />
@@ -19,7 +19,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library" scope="RUNTIME">
+    <orderEntry type="module-library" scope="PROVIDED">
       <library name="log4j-core">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/log4j-core-2.6.2.jar!/" />
