@@ -1078,14 +1078,13 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  //TODO: fix me as I don't work properly sometimes (something connected with process termination on agent)
   @Staging
   @Test
   public void testResume() throws Exception {
-    runPythonTest(new PyDebuggerTask("/debug", "Test_Resume.py") {
+    runPythonTest(new PyDebuggerTask("/debug", "test_resume.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getScriptName(), 2);
+        toggleBreakpoint(getScriptName(), 1);
       }
 
       @Override
