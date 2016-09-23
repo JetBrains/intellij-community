@@ -569,24 +569,6 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private static JPanel addDoNotShowCheckBox(@NotNull JComponent southPanel, @NotNull JComponent checkBox, @Nullable JComponent helpButton) {
-    final JPanel panel = new JPanel(new BorderLayout());
-
-    JPanel wrapper = new JPanel(new GridBagLayout());
-    wrapper.add(checkBox);
-    panel.add(wrapper, BorderLayout.WEST);
-    panel.add(southPanel, BorderLayout.EAST);
-    checkBox.setBorder(JBUI.Borders.emptyRight(20));
-
-    if (helpButton != null) {
-      return JBUI.Panels.simplePanel(panel).addToLeft(helpButton);
-    }
-    else {
-      return panel;
-    }
-  }
-
-  @NotNull
   private List<JButton> createButtons(@NotNull List<Action> actions) {
     List<JButton> buttons = new ArrayList<>();
     for (Action action : actions) {
@@ -642,11 +624,8 @@ public abstract class DialogWrapper {
     if (hasHelpToMoveToLeftSide) {
       if (!(SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration"))) {
         helpButton = createHelpButton(insets);
-        panel.add(helpButton, BorderLayout.WEST);
       }
     }
-
-    panel.add(lrButtonsPanel, BorderLayout.CENTER);
 
     if (doNotAsk != null) {
       myCheckBoxDoNotShowDialog = new JCheckBox(doNotAsk.getDoNotShowMessage());
@@ -654,11 +633,22 @@ public abstract class DialogWrapper {
       myCheckBoxDoNotShowDialog.setSelected(!doNotAsk.isToBeShown());
       DialogUtil.registerMnemonic(myCheckBoxDoNotShowDialog, '&');
     }
-
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
-    if (doNotAskCheckbox != null) {
-      panel = addDoNotShowCheckBox(panel, doNotAskCheckbox, helpButton);
+
+
+    if (helpButton != null || doNotAskCheckbox != null) {
+      JPanel leftPanel = new JPanel(new BorderLayout());
+
+      if (helpButton != null) leftPanel.add(helpButton, BorderLayout.WEST);
+
+      if (doNotAskCheckbox != null) {
+        doNotAskCheckbox.setBorder(JBUI.Borders.emptyRight(20));
+        leftPanel.add(doNotAskCheckbox, BorderLayout.CENTER);
+      }
+
+      panel.add(leftPanel, BorderLayout.WEST);
     }
+    panel.add(lrButtonsPanel, BorderLayout.CENTER);
 
     if (getStyle() == DialogStyle.COMPACT) {
       final Color color = UIManager.getColor("DialogWrapper.southPanelDivider");
