@@ -46,9 +46,9 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -451,29 +451,29 @@ public abstract class DialogWrapper {
    * @return south panel
    */
   protected JComponent createSouthPanel() {
-    Action[] actions = filter(createActions());
-    Action[] leftSideActions = createLeftSideActions();
+    List<Action> actions = filter(ContainerUtil.newArrayList(createActions()));
+    List<Action> leftSideActions = ContainerUtil.newArrayList(createLeftSideActions());
 
     boolean hasHelpToMoveToLeftSide = false;
-    if (isMoveHelpButtonLeft() && Arrays.asList(actions).contains(getHelpAction())) {
+    if (isMoveHelpButtonLeft() && actions.contains(getHelpAction())) {
       hasHelpToMoveToLeftSide = true;
-      actions = ArrayUtil.remove(actions, getHelpAction());
+      actions.remove(getHelpAction());
     } else if (Registry.is("ide.remove.help.button.from.dialogs")) {
-      actions = ArrayUtil.remove(actions, getHelpAction());
+      actions.remove(getHelpAction());
     }
 
     if (SystemInfo.isMac) {
       for (Action action : actions) {
         if (action instanceof MacOtherAction) {
-          leftSideActions = ArrayUtil.append(leftSideActions, action);
-          actions = ArrayUtil.remove(actions, action);
+          leftSideActions.add(action);
+          actions.remove(action);
           break;
         }
       }
     }
-    else if (UIUtil.isUnderGTKLookAndFeel() && Arrays.asList(actions).contains(getHelpAction())) {
-      leftSideActions = ArrayUtil.append(leftSideActions, getHelpAction());
-      actions = ArrayUtil.remove(actions, getHelpAction());
+    else if (UIUtil.isUnderGTKLookAndFeel() && actions.contains(getHelpAction())) {
+      leftSideActions.add(getHelpAction());
+      actions.remove(getHelpAction());
     }
 
     JPanel panel = new JPanel(new BorderLayout()) {
@@ -490,30 +490,32 @@ public abstract class DialogWrapper {
     //noinspection UseDPIAwareInsets
     final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
 
-    if (actions.length > 0 || leftSideActions.length > 0) {
+    if (actions.size() > 0 || leftSideActions.size() > 0) {
       Map<Action, JButton> buttonMap = new LinkedHashMap<>();
       GridBag bag = new GridBag().setDefaultInsets(insets);
 
-      if (leftSideActions.length > 0) {
+      if (leftSideActions.size() > 0) {
         JPanel buttonsPanel = createButtons(leftSideActions, buttonMap);
-        if (actions.length > 0) {
+        if (actions.size() > 0) {
           buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
         }
         lrButtonsPanel.add(buttonsPanel, bag.next());
       }
       lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());   // left strut
-      if (actions.length > 0) {
+      if (actions.size() > 0) {
         if (SystemInfo.isMac) {
           // move ok action to the right
-          int okNdx = ArrayUtil.indexOf(actions, getOKAction());
-          if (okNdx >= 0 && okNdx != actions.length - 1) {
-            actions = ArrayUtil.append(ArrayUtil.remove(actions, getOKAction()), getOKAction());
+          int okNdx = actions.indexOf(getOKAction());
+          if (okNdx >= 0 && okNdx != actions.size() - 1) {
+            actions.remove(getOKAction());
+            actions.add(getOKAction());
           }
 
           // move cancel action to the left
-          int cancelNdx = ArrayUtil.indexOf(actions, getCancelAction());
+          int cancelNdx = actions.indexOf(getCancelAction());
           if (cancelNdx > 0) {
-            actions = ArrayUtil.mergeArrays(new Action[]{getCancelAction()}, ArrayUtil.remove(actions, getCancelAction()));
+            actions.remove(getCancelAction());
+            actions.add(0, getCancelAction());
           }
         }
 
@@ -603,14 +605,14 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private Action[] filter(@NotNull Action[] actions) {
+  private List<Action> filter(@NotNull List<Action> actions) {
     ArrayList<Action> answer = new ArrayList<>();
     for (Action action : actions) {
       if (action != null && (ApplicationInfo.contextHelpAvailable() || action != getHelpAction())) {
         answer.add(action);
       }
     }
-    return answer.toArray(new Action[answer.size()]);
+    return answer;
   }
 
 
@@ -648,7 +650,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private JPanel createButtons(@NotNull Action[] actions, @NotNull Map<Action, JButton> buttons) {
+  private JPanel createButtons(@NotNull List<Action> actions, @NotNull Map<Action, JButton> buttons) {
     if (!UISettings.getShadowInstance().ALLOW_MERGE_BUTTONS) {
       final List<Action> actionList = new ArrayList<>();
       for (Action action : actions) {
@@ -658,13 +660,11 @@ public abstract class DialogWrapper {
           actionList.addAll(Arrays.asList(options));
         }
       }
-      if (actionList.size() != actions.length) {
-        actions = actionList.toArray(actionList.toArray(new Action[actionList.size()]));
-      }
+      actions = actionList;
     }
 
     int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
-    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.length, hgap, 0));
+    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.size(), hgap, 0));
     for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
       final Object value = action.getValue(Action.MNEMONIC_KEY);
