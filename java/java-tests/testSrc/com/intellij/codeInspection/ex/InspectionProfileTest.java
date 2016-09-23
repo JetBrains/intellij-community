@@ -623,7 +623,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionProfileImpl foo = new InspectionProfileImpl("foo", InspectionToolRegistrar.getInstance(), InspectionProjectProfileManager.getInstance(getProject()));
     String test = "<profile version=\"1.0\" is_locked=\"false\">\n" +
                  "  <option name=\"myName\" value=\"idea.default\" />\n" +
-                 "  <option name=\"myLocal\" value=\"false\" />\n" +
                  "  <inspection_tool class=\"AbstractMethodCallInConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
                  "  <inspection_tool class=\"AssignmentToForLoopParameter\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                  "    <option name=\"m_checkForeachParameters\" value=\"false\" />\n" +
