@@ -311,6 +311,26 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-20770
+  public void testAwaitInComprehensions() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("List[int]",
+                                                              "async def asyncgen():\n" +
+                                                              "    yield 10\n" +
+                                                              "async def run():\n" +
+                                                              "    expr = [await z for z in [asyncgen().__anext__()]]\n"));
+  }
+
+  // PY-20770
+  public void testAwaitInAsyncComprehensions() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest("List[int]",
+                                                              "async def asyncgen():\n" +
+                                                              "    yield 10\n" +
+                                                              "async def asyncgen2():\n" +
+                                                              "    yield asyncgen().__anext__()\n" +
+                                                              "async def run():\n" +
+                                                              "    expr = [await z async for z in asyncgen2()]\n"));
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
