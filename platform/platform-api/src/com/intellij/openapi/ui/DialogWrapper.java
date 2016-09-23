@@ -742,28 +742,10 @@ public abstract class DialogWrapper {
     }
 
     if (text != null) {
-      int mnemonic = 0;
-      StringBuilder plainText = new StringBuilder();
-      for (int i = 0; i < text.length(); i++) {
-        char ch = text.charAt(i);
-        if (ch == '_' || ch == '&') {
-          i++;
-          if (i >= text.length()) {
-            break;
-          }
-          ch = text.charAt(i);
-          if (ch != '_' && ch != '&') {
-            // Mnemonic is case insensitive.
-            int vk = ch;
-            if (vk >= 'a' && vk <= 'z') {
-              vk -= 'a' - 'A';
-            }
-            mnemonic = vk;
-          }
-        }
-        plainText.append(ch);
-      }
-      button.setText(plainText.toString());
+      Pair<Integer, String> pair = extractMnemonic(text);
+      button.setText(pair.second);
+      int mnemonic = pair.first;
+
       final Object name = action.getValue(Action.NAME);
       if (mnemonic == KeyEvent.VK_Y && "Yes".equals(name)) {
         myYesAction = action;
@@ -781,6 +763,34 @@ public abstract class DialogWrapper {
       }
     }
     return button;
+  }
+
+  @NotNull
+  private static Pair<Integer, String> extractMnemonic(@Nullable String text) {
+    if (text == null) return Pair.create(0, null);
+
+    int mnemonic = 0;
+    StringBuilder plainText = new StringBuilder();
+    for (int i = 0; i < text.length(); i++) {
+      char ch = text.charAt(i);
+      if (ch == '_' || ch == '&') {
+        i++;
+        if (i >= text.length()) {
+          break;
+        }
+        ch = text.charAt(i);
+        if (ch != '_' && ch != '&') {
+          // Mnemonic is case insensitive.
+          int vk = ch;
+          if (vk >= 'a' && vk <= 'z') {
+            vk -= 'a' - 'A';
+          }
+          mnemonic = vk;
+        }
+      }
+      plainText.append(ch);
+    }
+    return Pair.create(mnemonic, plainText.toString());
   }
 
   private void setMargin(@NotNull JButton button) {
