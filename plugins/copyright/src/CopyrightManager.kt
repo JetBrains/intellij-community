@@ -89,7 +89,8 @@ class CopyrightManager(private val project: Project, schemeManagerFactory: Schem
   val schemeManager = schemeManagerFactory.create("copyright", object : LazySchemeProcessor<SchemeWrapper<CopyrightProfile>, SchemeWrapper<CopyrightProfile>>() {
     override fun createScheme(dataHolder: SchemeDataHolder<SchemeWrapper<CopyrightProfile>>,
                               name: String,
-                              attributeProvider: Function<String, String?>): SchemeWrapper<CopyrightProfile> {
+                              attributeProvider: Function<String, String?>,
+                              isBundled: Boolean): SchemeWrapper<CopyrightProfile> {
       return CopyrightLazySchemeWrapper(name, dataHolder, schemeWriter)
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -28,7 +31,7 @@ import java.awt.*;
 /**
  * @author Yura Cangea
  */
-public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
+public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme, SerializableScheme {
   public EditorColorsSchemeImpl(EditorColorsScheme parentScheme) {
     super(parentScheme);
   }
@@ -82,5 +85,13 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     newScheme.setName(getName());
     newScheme.setDefaultMetaInfo(this);
     return newScheme;
+  }
+
+  @NotNull
+  @Override
+  public Element writeScheme() {
+    Element root = new Element("scheme");
+    writeExternal(root);
+    return root;
   }
 }

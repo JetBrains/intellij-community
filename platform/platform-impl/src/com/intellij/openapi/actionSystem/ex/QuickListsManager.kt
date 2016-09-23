@@ -37,10 +37,16 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
 
   init {
     mySchemeManager = schemeManagerFactory.create("quicklists",
-        object : LazySchemeProcessor<QuickList, QuickList>() {
+        object : LazySchemeProcessor<QuickList, QuickList>(QuickList.DISPLAY_NAME_TAG) {
           override fun createScheme(dataHolder: SchemeDataHolder<QuickList>,
                                     name: String,
-                                    attributeProvider: Function<String, String?>) = createItem(dataHolder)
+                                    attributeProvider: Function<String, String?>,
+                                    isBundled: Boolean): QuickList {
+            val item = QuickList()
+            item.readExternal(dataHolder.read())
+            dataHolder.updateDigest(item)
+            return item
+          }
         })
   }
 
@@ -48,12 +54,6 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
     @JvmStatic
     val instance: QuickListsManager
       get() = ApplicationManager.getApplication().getComponent(QuickListsManager::class.java)
-
-    private fun createItem(dataHolder: SchemeDataHolder<QuickList>): QuickList {
-      val item = QuickList()
-      item.readExternal(dataHolder.read())
-      return item
-    }
   }
 
   override fun getExportFiles() = arrayOf(mySchemeManager.rootDirectory)
@@ -65,7 +65,7 @@ class QuickListsManager(private val myActionManager: ActionManager, schemeManage
   override fun initComponent() {
     for (provider in BundledQuickListsProvider.EP_NAME.extensions) {
       for (path in provider.bundledListsRelativePaths) {
-        mySchemeManager.loadBundledScheme(path, provider, { createItem(it) })
+        mySchemeManager.loadBundledScheme(path, provider)
       }
     }
     mySchemeManager.loadSchemes()

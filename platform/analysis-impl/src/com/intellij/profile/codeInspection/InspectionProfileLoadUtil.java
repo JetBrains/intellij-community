@@ -26,23 +26,29 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 
 public class InspectionProfileLoadUtil {
-  @NonNls public static final String PROFILE_NAME_TAG = "profile_name";
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  public static final String PROFILE_NAME_TAG = "profile_name";
+
   @NonNls public static final String PROFILE_TAG = "profile";
 
   private static String getProfileName(@NotNull File file, @NotNull Element element) {
-    String name = getRootElementAttribute(PROFILE_NAME_TAG, element);
+    String name = null;
+    for (Element option : element.getChildren("option")) {
+      if ("myName".equals(option.getAttributeValue("name"))) {
+        name = option.getAttributeValue("value");
+      }
+    }
+    if (name == null) {
+      //noinspection deprecation
+      name = element.getAttributeValue(PROFILE_NAME_TAG);
+    }
     return name != null ? name : FileUtil.getNameWithoutExtension(file);
-  }
-
-  @Nullable
-  private static String getRootElementAttribute(@NonNls String name, @NotNull Element element) {
-    return element.getAttributeValue(name);
   }
 
   @NotNull

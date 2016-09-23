@@ -38,17 +38,18 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.*
+import com.intellij.util.PathUtil
+import com.intellij.util.PathUtilRt
+import com.intellij.util.SmartList
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.*
+import com.intellij.util.loadElement
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashSet
 import org.jdom.Document
 import org.jdom.Element
-import org.xmlpull.mxp1.MXParser
-import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -97,7 +98,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   init {
     if (processor is SchemeExtensionProvider) {
       schemeExtension = processor.schemeExtension
-      updateExtension = processor.isUpgradeNeeded
+      updateExtension = true
     }
     else {
       schemeExtension = FileStorageCoreUtil.DEFAULT_EXT
@@ -219,7 +220,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     directory.refresh(true, false)
   }
 
-  override fun loadBundledScheme(resourceName: String, requestor: Any, convertor: ThrowableConvertor<Element, T, Throwable>) {
+  override fun loadBundledScheme(resourceName: String, requestor: Any) {
     try {
       val url = if (requestor is AbstractExtensionPointBean)
         requestor.loaderForClass.getResource(resourceName)
@@ -230,23 +231,25 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         return
       }
 
-      val element = loadElement(URLUtil.openStream(url))
-      val scheme = convertor.convert(element)
-      if (processor.isExternalizable(scheme)) {
+      val bytes = URLUtil.openStream(url).readBytes()
+      lazyPreloadScheme(bytes, isUseOldFileNameSanitize) { name, parser ->
+        val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
+        val schemeName = name ?: (processor as LazySchemeProcessor).getName(attributeProvider)
+
         val fileName = PathUtilRt.getFileName(url.path)
         val extension = getFileExtension(fileName, true)
-        val info = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
-        info.digest = element.digest()
-        info.schemeName = scheme.name
-        val oldInfo = schemeToInfo.put(scheme, info)
+        val externalInfo = ExternalInfo(fileName.substring(0, fileName.length - extension.length), extension)
+        externalInfo.schemeName = schemeName
+
+        val scheme = (processor as LazySchemeProcessor).createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeName, attributeProvider, true)
+        val oldInfo = schemeToInfo.put(scheme, externalInfo)
         LOG.assertTrue(oldInfo == null)
         val oldScheme = readOnlyExternalizableSchemes.put(scheme.name, scheme)
         if (oldScheme != null) {
           LOG.warn("Duplicated scheme ${scheme.name} - old: $oldScheme, new $scheme")
         }
+        schemes.add(scheme)
       }
-
-      schemes.add(scheme)
     }
     catch (e: Throwable) {
       LOG.error("Cannot read scheme from $resourceName", e)
@@ -434,53 +437,23 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     var scheme: MUTABLE_SCHEME? = null
     if (processor is LazySchemeProcessor) {
       val bytes = input.readBytes()
-      val parser = MXParser()
-      parser.setInput(bytes.inputStream().reader())
-      var eventType = parser.eventType
-      read@ do {
-        when (eventType) {
-          XmlPullParser.START_TAG -> {
-            if (!isUseOldFileNameSanitize || parser.name != "component") {
-              var name: String? = null
-              if (isUseOldFileNameSanitize && (parser.name == "profile" || parser.name == "copyright")) {
-                eventType = parser.next()
-                findName@ while (eventType != XmlPullParser.END_DOCUMENT) {
-                  when (eventType) {
-                    XmlPullParser.START_TAG -> {
-                      if (parser.name == "option" && parser.getAttributeValue(null, "name") == "myName") {
-                        name = parser.getAttributeValue(null, "value")
-                        break@findName
-                      }
-                    }
-                  }
-
-                  eventType = parser.next()
-                }
-              }
-
-              val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
-              val schemeName = name ?: processor.getName(attributeProvider)
-              if (!checkExisting(schemeName)) {
-                return null
-              }
-
-              val externalInfo = createInfo(schemeName, null)
-              val dataHolder = SchemeDataHolderImpl(bytes, externalInfo)
-              scheme = processor.createScheme(dataHolder, schemeName, attributeProvider)
-              schemeToInfo.put(scheme, externalInfo)
-              this.filesToDelete.remove(fileName)
-              break@read
-            }
-          }
+      lazyPreloadScheme(bytes, isUseOldFileNameSanitize) { name, parser ->
+        val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
+        val schemeName = name ?: processor.getName(attributeProvider)
+        if (!checkExisting(schemeName)) {
+          return null
         }
-        eventType = parser.next()
+
+        val externalInfo = createInfo(schemeName, null)
+        scheme = processor.createScheme(SchemeDataHolderImpl(bytes, externalInfo), schemeName, attributeProvider)
+        schemeToInfo.put(scheme, externalInfo)
+        this.filesToDelete.remove(fileName)
       }
-      while (eventType != XmlPullParser.END_DOCUMENT)
     }
     else {
       val element = loadElement(input)
       scheme = (processor as NonLazySchemeProcessor).readScheme(element, duringLoad) ?: return null
-      val schemeName = scheme.name
+      val schemeName = scheme!!.name
       if (!checkExisting(schemeName)) {
         return null
       }

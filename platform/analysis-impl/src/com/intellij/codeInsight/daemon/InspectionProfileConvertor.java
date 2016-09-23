@@ -31,7 +31,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,10 +48,7 @@ public class InspectionProfileConvertor {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsConvertor");
 
-  @NonNls private static final String INSPECTIONS_TAG = "inspections";
   @NonNls private static final String NAME_ATT = "name";
-  @NonNls private static final String INSP_TOOL_TAG = "inspection_tool";
-  @NonNls private static final String CLASS_ATT = "class";
   @NonNls private static final String VERSION_ATT = "version";
   @NonNls private static final String PROFILE_NAME_ATT = "profile_name";
   @NonNls private static final String OPTION_TAG = "option";
@@ -100,23 +96,6 @@ public class InspectionProfileConvertor {
       fillErrorLevels(editorProfileModel);
       editorProfileModel.commit();
     }
-  }
-
-  public static Element convertToNewFormat(Element profileFile, InspectionProfile profile) {
-    Element rootElement = new Element(INSPECTIONS_TAG);
-    rootElement.setAttribute(NAME_ATT, profile.getName());
-    final InspectionToolWrapper[] tools = profile.getInspectionTools(null);
-    for (final Object o : profileFile.getChildren(INSP_TOOL_TAG)) {
-      Element toolElement = ((Element)o).clone();
-      String toolClassName = toolElement.getAttributeValue(CLASS_ATT);
-      final String shortName = convertToShortName(toolClassName, tools);
-      if (shortName == null) {
-        continue;
-      }
-      toolElement.setAttribute(CLASS_ATT, shortName);
-      rootElement.addContent(toolElement);
-    }
-    return rootElement;
   }
 
   private static void renameOldDefaultsProfile() {
@@ -169,16 +148,5 @@ public class InspectionProfileConvertor {
       }
       profile.setErrorLevel(key, level, null);
     }
-  }
-
-  @Nullable
-  private static String convertToShortName(String displayName, InspectionToolWrapper[] tools) {
-    if (displayName == null) return null;
-    for (InspectionToolWrapper tool : tools) {
-      if (displayName.equals(tool.getDisplayName())) {
-        return tool.getShortName();
-      }
-    }
-    return null;
   }
 }

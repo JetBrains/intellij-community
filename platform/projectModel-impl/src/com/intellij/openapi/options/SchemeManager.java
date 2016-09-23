@@ -16,8 +16,6 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.ThrowableConvertor;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,9 +96,11 @@ public abstract class SchemeManager<T extends Scheme> {
   public abstract File getRootDirectory();
 
   /**
-   * Must be called before {@link #loadSchemes}
+   * Must be called before {@link #loadSchemes}.
+   *
+   * Scheme manager processor must be LazySchemeProcessor
    */
-  public void loadBundledScheme(@NotNull String resourceName, @NotNull Object requestor, @NotNull ThrowableConvertor<Element, T, Throwable> convertor) {
+  public void loadBundledScheme(@NotNull String resourceName, @NotNull Object requestor) {
   }
 
   public final void setSchemes(@NotNull List<T> newSchemes) {

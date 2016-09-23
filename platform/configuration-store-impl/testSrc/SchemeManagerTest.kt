@@ -15,7 +15,6 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.options.BaseSchemeProcessor
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.io.FileUtil
@@ -36,12 +35,12 @@ import com.intellij.util.xmlb.serialize
 import gnu.trove.THashMap
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.nio.file.Path
+import java.util.function.Function
 
 internal val FILE_SPEC = "REMOTE"
 
@@ -155,11 +154,11 @@ internal class SchemeManagerTest {
     scheme.save(dir.resolve("1.icls"))
     TestScheme("local", "false").save(dir.resolve("1.xml"))
 
-    val schemesManager = SchemeManagerImpl(FILE_SPEC, object: TestSchemesProcessor() {
-      override val isUpgradeNeeded = true
-
+    class ATestSchemesProcessor : TestSchemesProcessor(), SchemeExtensionProvider {
       override val schemeExtension = ".icls"
-    }, null, dir)
+    }
+
+    val schemesManager = SchemeManagerImpl(FILE_SPEC, ATestSchemesProcessor(), null, dir)
     schemesManager.loadSchemes()
     assertThat(schemesManager.allSchemes).containsOnly(scheme)
 
@@ -219,9 +218,8 @@ internal class SchemeManagerTest {
   @Test fun `save only if scheme differs from bundled`() {
     val dir = tempDirManager.newPath()
     var schemeManager = createSchemeManager(dir)
-    val converter: (Element) -> TestScheme = { XmlSerializer.deserialize(it, TestScheme::class.java)!! }
     val bundledPath = "/com/intellij/configurationStore/bundledSchemes/default"
-    schemeManager.loadBundledScheme(bundledPath, this, converter)
+    schemeManager.loadBundledScheme(bundledPath, this)
     val customScheme = TestScheme("default")
     assertThat(schemeManager.allSchemes).containsOnly(customScheme)
 
@@ -239,7 +237,7 @@ internal class SchemeManagerTest {
     assertThat(dir.resolve("default.xml")).isRegularFile()
 
     schemeManager = createSchemeManager(dir)
-    schemeManager.loadBundledScheme(bundledPath, this, converter)
+    schemeManager.loadBundledScheme(bundledPath, this)
     schemeManager.loadSchemes()
 
     assertThat(schemeManager.allSchemes).containsOnly(customScheme)
@@ -375,27 +373,33 @@ private fun checkSchemes(baseDir: Path, expected: String, ignoreDeleted: Boolean
   }
 
   baseDir.directoryStreamIfExists {
-    val schemesProcessor = TestSchemesProcessor()
     for (file in it) {
-      val scheme = schemesProcessor.readScheme(loadElement(file), true)!!
+      val scheme = XmlSerializer.deserialize(loadElement(file), TestScheme::class.java)!!
       assertThat(fileToSchemeMap.get(FileUtil.getNameWithoutExtension(file.fileName.toString()))).isEqualTo(scheme.name)
     }
   }
 }
 
 @Tag("scheme")
-data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:kotlin.jvm.JvmField var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme {
+data class TestScheme(@field:com.intellij.util.xmlb.annotations.Attribute @field:kotlin.jvm.JvmField var name: String = "", @field:com.intellij.util.xmlb.annotations.Attribute var data: String? = null) : ExternalizableScheme, SerializableScheme {
   override fun getName() = name
 
   override fun setName(value: String) {
     name = value
   }
+
+  override fun writeScheme() = serialize()
 }
 
-open class TestSchemesProcessor : BaseSchemeProcessor<TestScheme, TestScheme>() {
-  override fun readScheme(element: Element, duringLoad: Boolean) = XmlSerializer.deserialize(element, TestScheme::class.java)
-
-  override fun writeScheme(scheme: TestScheme) = scheme.serialize()
+open class TestSchemesProcessor : LazySchemeProcessor<TestScheme, TestScheme>() {
+  override fun createScheme(dataHolder: SchemeDataHolder<TestScheme>,
+                            name: String,
+                            attributeProvider: Function<String, String?>,
+                            isBundled: Boolean): TestScheme {
+    val scheme = XmlSerializer.deserialize(dataHolder.read(), TestScheme::class.java)!!
+    dataHolder.updateDigest(scheme)
+    return scheme
+  }
 }
 
 fun SchemeManagerImpl<*, *>.save() {
