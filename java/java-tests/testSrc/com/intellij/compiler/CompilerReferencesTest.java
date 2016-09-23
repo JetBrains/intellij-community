@@ -17,7 +17,7 @@ package com.intellij.compiler;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.AbstractCompilerAwareTest;
-import com.intellij.find.bytecode.CompilerReferenceService;
+import com.intellij.find.compiler.CompilerReferenceService;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
