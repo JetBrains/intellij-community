@@ -661,10 +661,6 @@ public abstract class DialogWrapper {
     JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.size(), hgap, 0));
     for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
-      if (action.getValue(FOCUSED_ACTION) != null) {
-        myPreferredFocusedComponent = button;
-      }
-
       buttons.put(action, button);
       buttonsPanel.add(button);
     }
@@ -750,6 +746,11 @@ public abstract class DialogWrapper {
         getRootPane().setDefaultButton(button);
       }
     }
+
+    if (action.getValue(FOCUSED_ACTION) != null) {
+      myPreferredFocusedComponent = button;
+    }
+
     return button;
   }
 
