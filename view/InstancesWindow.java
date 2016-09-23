@@ -35,18 +35,16 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
-import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.ObjectReference;
@@ -135,12 +133,6 @@ public class InstancesWindow extends DialogWrapper {
     return comp;
   }
 
-  @Override
-  protected void dispose() {
-    super.dispose();
-    myInstancesView.dispose();
-  }
-
   @NotNull
   @Override
   protected Action[] createActions() {
@@ -151,7 +143,7 @@ public class InstancesWindow extends DialogWrapper {
     private static final int MAX_TREE_NODE_COUNT = 2000;
     private static final int FILTERING_CHUNK_SIZE = 30;
 
-    private final XDebuggerTree myInstancesTree;
+    private final InstancesTree myInstancesTree;
     private final XDebuggerExpressionEditor myFilterConditionEditor;
     private final XDebugSessionListener myDebugSessionListener = new MySessionListener();
 
@@ -171,6 +163,7 @@ public class InstancesWindow extends DialogWrapper {
     MyInstancesView() {
       super(new BorderLayout(0, JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP)));
 
+      Disposer.register(InstancesWindow.this.myDisposable, MyInstancesView.this);
       XValueMarkers<?, ?> markers = getValueMarkers();
       ActionManager.getInstance().addAnActionListener(myActionListener, InstancesWindow.this.myDisposable);
       myDebugSession.addSessionListener(myDebugSessionListener, InstancesWindow.this.myDisposable);
@@ -198,13 +191,7 @@ public class InstancesWindow extends DialogWrapper {
 
       myProgress.addStopActionListener(this::cancelFilteringTask);
 
-      XDebuggerTreeCreator treeCreator =
-          new XDebuggerTreeCreator(myProject, editorsProvider, null, markers);
-
-      myInstancesTree = (XDebuggerTree) treeCreator.createTree(getTreeRootDescriptor());
-      myInstancesTree.setRootVisible(false);
-      myInstancesTree.getRoot().setLeaf(false);
-      myInstancesTree.setExpandableItemsEnabled(true);
+      myInstancesTree = new InstancesTree(myProject, editorsProvider, markers, this::updateInstances);
 
       myFilterButton.addActionListener(e -> {
         String expression = myFilterConditionEditor.getExpression().getExpression();
@@ -213,7 +200,7 @@ public class InstancesWindow extends DialogWrapper {
         }
 
         myFilterButton.setEnabled(false);
-        myInstancesTree.rebuildAndRestore(XDebuggerTreeState.saveState(myInstancesTree));
+        myInstancesTree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES);
       });
 
       JBScrollPane treeScrollPane = new JBScrollPane(myInstancesTree);
@@ -308,28 +295,6 @@ public class InstancesWindow extends DialogWrapper {
           : null;
     }
 
-    private void addChildrenToTree(XValueChildrenList children, boolean last) {
-      XDebuggerTreeNode root = myInstancesTree.getRoot();
-      if (root != null) {
-        ((XValueNodeImpl) root).addChildren(children, last);
-      }
-    }
-
-    @NotNull
-    private Pair<XValue, String> getTreeRootDescriptor() {
-      return Pair.pair(new XValue() {
-        @Override
-        public void computeChildren(@NotNull XCompositeNode node) {
-          updateInstances();
-        }
-
-        @Override
-        public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
-          node.setPresentation(null, "", "", true);
-        }
-      }, "root");
-    }
-
     private class MySessionListener implements XDebugSessionListener {
       private volatile XDebuggerTreeState myTreeState = null;
 
@@ -339,12 +304,8 @@ public class InstancesWindow extends DialogWrapper {
           myTreeState = XDebuggerTreeState.saveState(myInstancesTree);
           cancelFilteringTask();
 
-          myInstancesTree.getRoot().clearChildren();
-          XCompositeNode root = (XCompositeNode) myInstancesTree.getRoot();
-
-          root.setMessage("The application is running", XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
-              SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
-          myProgress.setVisible(false);
+          myInstancesTree.setMessage(XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
+              "The application is running", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         });
       }
 
@@ -352,7 +313,7 @@ public class InstancesWindow extends DialogWrapper {
       public void sessionPaused() {
         SwingUtilities.invokeLater(() -> {
           myProgress.setVisible(true);
-          myInstancesTree.rebuildAndRestore(myTreeState);
+          myInstancesTree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES, myTreeState);
         });
       }
     }
@@ -380,8 +341,8 @@ public class InstancesWindow extends DialogWrapper {
                   new ValueMarkup(expression.replace("@", ""), new JBColor(0, 0), null));
             }
 
-            SwingUtilities.invokeLater(() ->
-                myInstancesTree.rebuildAndRestore(XDebuggerTreeState.saveState(myInstancesTree)));
+            SwingUtilities.invokeLater(() -> myInstancesTree
+                .rebuildTree(InstancesTree.RebuildPolicy.ONLY_UPDATE_LABELS));
           }
         }
       }
@@ -433,9 +394,9 @@ public class InstancesWindow extends DialogWrapper {
         if (!myErrorsGroup.isEmpty()) {
           XValueChildrenList lst = new XValueChildrenList();
           lst.addBottomGroup(myErrorsGroup);
-          addChildrenToTree(lst, true);
+          myInstancesTree.addChildren(lst, true);
         } else {
-          addChildrenToTree(XValueChildrenList.EMPTY, true);
+          myInstancesTree.addChildren(XValueChildrenList.EMPTY, true);
         }
 
         myFilterButton.setEnabled(true);
@@ -494,7 +455,7 @@ public class InstancesWindow extends DialogWrapper {
               if (children.size() > 0) {
                 SwingUtilities.invokeLater(() -> {
                   if (MyFilteringWorker.this == myFilteringTask) {
-                    addChildrenToTree(children, false);
+                    myInstancesTree.addChildren(children, false);
                   }
                 });
               }
