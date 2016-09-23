@@ -158,7 +158,13 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
     }
   }
 
-  @Override
+  /**
+   * Normally when file is read-only and ensureFilesWritable is called, a dialog box appears which allows user to decide
+   * whether to clear read-only flag or not. This method allows to control what will happen in unit-test mode.
+   *
+   * @param clearReadOnlyInTests if true, ensureFilesWritable will try to clear read-only status from passed files.
+   *                         Otherwise, read-only status is not modified (as if user refused to modify it).
+   */
   @TestOnly
   public void setClearReadOnlyInTests(boolean clearReadOnlyInTests) {
     assert ApplicationManager.getApplication().isUnitTestMode();
