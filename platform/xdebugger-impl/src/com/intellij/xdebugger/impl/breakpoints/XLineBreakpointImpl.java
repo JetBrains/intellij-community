@@ -293,12 +293,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
   @Override
   protected void updateIcon() {
-    final Icon icon = calculateSpecialIcon();
-    if (icon != null) {
-      setIcon(icon);
-      return;
+    Icon icon = calculateSpecialIcon();
+    if (icon == null) {
+      icon = isTemporary() ? myType.getTemporaryIcon() : myType.getEnabledIcon();
     }
-    setIcon(isTemporary() ? myType.getTemporaryIcon() : myType.getEnabledIcon());
+    setIcon(icon);
   }
 
   @Override
