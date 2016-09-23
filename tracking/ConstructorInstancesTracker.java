@@ -24,6 +24,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
+import com.sun.jdi.request.EventRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.component.CreationPositionTracker;
@@ -34,6 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ConstructorInstancesTracker implements TrackerForNewInstances, Disposable {
+  private static final int TRACKED_INSTANCES_LIMIT = 2000;
   private final ReferenceType myReference;
   private final XDebugSession myDebugSession;
   private final CreationPositionTracker myPositionTracker;
@@ -41,6 +43,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
 
   @Nullable
   private HashSet<ObjectReference> myNewObjects = null;
+
+  private final MyConstructorBreakpoints myBreakpoint;
 
   @NotNull
   private HashSet<ObjectReference> myTrackedObjects = new HashSet<>();
@@ -59,14 +63,19 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         new JavaLineBreakpointProperties(),
         new LineBreakpointState<>());
 
-    MyConstructorBreakpoints breakpoint = new MyConstructorBreakpoints(project, bpn);
-    breakpoint.createRequestForPreparedClass(myDebugProcess, myReference);
+    myBreakpoint = new MyConstructorBreakpoints(project, bpn);
+    myBreakpoint.createRequestForPreparedClass(myDebugProcess, myReference);
 
-    Disposer.register(this, breakpoint);
+    Disposer.register(this, myBreakpoint);
   }
 
   public void obsolete() {
+    if(myNewObjects != null) {
+      myNewObjects.forEach(ObjectReference::enableCollection);
+    }
+
     myNewObjects = null;
+    myBreakpoint.enable();
     myPositionTracker.releaseBySession(myDebugSession);
   }
 
@@ -98,6 +107,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   private final class MyConstructorBreakpoints extends LineBreakpoint<JavaLineBreakpointProperties>
       implements Disposable {
 
+    private final List<BreakpointRequest> myRequests = new ArrayList<>();
+
     MyConstructorBreakpoints(Project project, XBreakpoint xBreakpoint) {
       super(project, xBreakpoint);
     }
@@ -107,8 +118,9 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       classType.methods().stream().filter(Method::isConstructor).forEach(cons ->  {
         Location loc = cons.location();
         BreakpointRequest breakpointRequest = debugProcess.getRequestsManager().createBreakpointRequest(this, loc);
-        breakpointRequest.enable();
+        myRequests.add(breakpointRequest);
       });
+      enable();
     }
 
     @Override
@@ -120,6 +132,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
       myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
         protected void action() throws Exception {
+          disable();
           myDebugProcess.getRequestsManager().deleteRequest(MyConstructorBreakpoints.this);
         }
       });
@@ -133,6 +146,7 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
         if (suspendContext != null) {
           ObjectReference thisRef = getThisObject(suspendContext, event);
           if (myReference.equals(thisRef.referenceType())) {
+            thisRef.disableCollection();
             myTrackedObjects.add(thisRef);
             ThreadReferenceProxyImpl threadReferenceProxy = suspendContext.getThread();
             List<StackFrameProxyImpl> stack = threadReferenceProxy == null ? null : threadReferenceProxy.frames();
@@ -150,12 +164,26 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
               }).filter(Objects::nonNull).collect(Collectors.toList());
               myPositionTracker.addStack(myDebugSession, thisRef, stackFrameDescriptors);
             }
+
           }
         }
       } catch (EvaluateException e) {
-        e.printStackTrace();
+        return false;
       }
+
+      if(myTrackedObjects.size() >= TRACKED_INSTANCES_LIMIT) {
+        disable();
+      }
+
       return false;
+    }
+
+    void enable() {
+      myRequests.forEach(EventRequest::enable);
+    }
+
+    void disable() {
+      myRequests.forEach(EventRequest::disable);
     }
   }
 }
