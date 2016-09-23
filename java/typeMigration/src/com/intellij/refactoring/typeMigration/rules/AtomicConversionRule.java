@@ -7,13 +7,16 @@ package com.intellij.refactoring.typeMigration.rules;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
+import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,9 +117,22 @@ public class AtomicConversionRule extends TypeConversionRule {
           final IElementType operationSign = signToken.getTokenType();
           final String sign = signToken.getText();
           if (operationSign == JavaTokenType.PLUSEQ || operationSign == JavaTokenType.MINUSEQ) {
-            return new TypeConversionDescriptor("$qualifier$ " + sign + " $val$", "$qualifier$.getAndAdd(" +
-                                                                                  (operationSign == JavaTokenType.MINUSEQ ? "-" : "") +
-                                                                                  "($val$))");
+            return new TypeConversionDescriptor("$qualifier$ " + sign + " $val$",
+                                                "$qualifier$.addAndGet(" + (operationSign == JavaTokenType.MINUSEQ ? "-($val$))" : "$val$)")) {
+              @Override
+              public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) {
+                final PsiMethodCallExpression result = (PsiMethodCallExpression)super.replace(expression, evaluator);
+                final PsiExpression argument = result.getArgumentList().getExpressions()[0];
+                if (argument instanceof PsiPrefixExpression) {
+                  final PsiExpression operand = ((PsiPrefixExpression)argument).getOperand();
+                  final PsiExpression striped = ParenthesesUtils.stripParentheses(operand);
+                  if (striped != null && operand != striped) {
+                    operand.replace(striped);
+                  }
+                }
+                return result;
+              }
+            };
           }
         }
       }
@@ -198,11 +214,22 @@ public class AtomicConversionRule extends TypeConversionRule {
           return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set($val$)");
         }
         else {
-          return new TypeConversionDescriptor("$qualifier$" + sign + "$val$", "$qualifier$.set(" +
-                                                                              getBoxedWrapper(from, to, "$qualifier$.get() " +
-                                                                                                        sign.charAt(0) +
-                                                                                                        " $val$") +
-                                                                              ")");
+          if (PsiUtil.isLanguageLevel8OrHigher(context)) {
+            final String name =
+              JavaCodeStyleManager.getInstance(context.getProject()).suggestUniqueVariableName("v", context, false);
+            return new TypeConversionDescriptor("$qualifier$" + sign + "$val$", "$qualifier$.updateAndGet("
+                                                                                + name + " -> " + name + " " + sign.charAt(0) + " $val$)"); }
+          else {
+            if (context.getParent() instanceof PsiStatement) {
+              return new TypeConversionDescriptor("$qualifier$" + sign + "$val$", "$qualifier$.set(" +
+                                                                                  getBoxedWrapper(from, to, "$qualifier$.get() " +
+                                                                                                            sign.charAt(0) +
+                                                                                                            " $val$") +
+                                                                                  ")");
+            } else {
+              return null;
+            }
+          }
         }
       } //else should be a conflict
     }

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 /**
  * @author nik
@@ -42,7 +44,7 @@ import java.awt.*;
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final JComponent myComponent;
   private final ComboBox<XExpression> myComboBox;
-  private EditorComboBoxEditor myEditor;
+  private XDebuggerComboBoxEditor myEditor;
   private XExpression myExpression;
 
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
@@ -56,7 +58,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.setMinimumSize(minimumSize);
     initEditor();
     fillComboBox();
-    myComponent = decorate(myComboBox, false, showEditor);
+    myComponent = showEditor ? addMultilineButton(myComboBox) : myComboBox;
   }
 
   public ComboBox getComboBox() {
@@ -70,11 +72,11 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   @Nullable
   public Editor getEditor() {
-    return myEditor.getEditor();
+    return myEditor.getEditorTextField().getEditor();
   }
 
   public JComponent getEditorComponent() {
-    return myEditor.getEditorComponent();
+    return myEditor.getEditorTextField();
   }
 
   public void setEnabled(boolean enable) {
@@ -92,23 +94,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   private void initEditor() {
-    myEditor = new EditorComboBoxEditor(getProject(), getEditorsProvider().getFileType()) {
-      @Override
-      public void setItem(Object anObject) {
-        if (anObject == null) {
-          anObject = XExpressionImpl.EMPTY_EXPRESSION;
-        }
-        XExpression expression = (XExpression)anObject;
-        getEditorComponent().setNewDocumentAndFileType(getFileType(expression), createDocument(expression));
-      }
-
-      @Override
-      protected void onEditorCreate(EditorEx editor) {
-        editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
-        editor.getColorsScheme().setEditorFontSize(myComboBox.getFont().getSize());
-      }
-    };
-    myEditor.getEditorComponent().setFontInheritedFromLAF(false);
+    myEditor = new XDebuggerComboBoxEditor();
     myComboBox.setEditor(myEditor);
     //myEditor.setItem(myExpression);
     myComboBox.setRenderer(new EditorComboBoxRenderer(myEditor));
@@ -144,20 +130,76 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   @Override
   public XExpression getExpression() {
-    Object document = myEditor.getItem();
-    if (document instanceof Document) { // sometimes null on Mac
-      return getEditorsProvider().createExpression(getProject(), (Document)document, myExpression.getLanguage(), myExpression.getMode());
-    }
-    return myExpression;
+    XExpression item = myEditor.getItem();
+    return item != null ? item : myExpression;
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return (JComponent)myComboBox.getEditor().getEditorComponent();
+    return myEditor.getEditorTextField();
   }
 
   @Override
   public void selectAll() {
     myComboBox.getEditor().selectAll();
+  }
+
+  private class XDebuggerComboBoxEditor implements ComboBoxEditor {
+    private final JComponent myPanel;
+    private final EditorComboBoxEditor myDelegate;
+
+    public XDebuggerComboBoxEditor() {
+      myDelegate = new EditorComboBoxEditor(getProject(), getEditorsProvider().getFileType()) {
+        @Override
+        protected void onEditorCreate(EditorEx editor) {
+          editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
+          editor.getColorsScheme().setEditorFontSize(myComboBox.getFont().getSize());
+        }
+      };
+      myDelegate.getEditorComponent().setFontInheritedFromLAF(false);
+      myPanel = addChooser(myDelegate.getEditorComponent());
+    }
+
+    public EditorTextField getEditorTextField() {
+      return myDelegate.getEditorComponent();
+    }
+
+    @Override
+    public JComponent getEditorComponent() {
+      return myPanel;
+    }
+
+    @Override
+    public void setItem(Object anObject) {
+      if (anObject == null) {
+        anObject = XExpressionImpl.EMPTY_EXPRESSION;
+      }
+      XExpression expression = (XExpression)anObject;
+      myDelegate.getEditorComponent().setNewDocumentAndFileType(getFileType(expression), createDocument(expression));
+    }
+
+    @Override
+    public XExpression getItem() {
+      Object document = myDelegate.getItem();
+      if (document instanceof Document) { // sometimes null on Mac
+        return getEditorsProvider().createExpression(getProject(), (Document)document, myExpression.getLanguage(), myExpression.getMode());
+      }
+      return null;
+    }
+
+    @Override
+    public void selectAll() {
+      myDelegate.selectAll();
+    }
+
+    @Override
+    public void addActionListener(ActionListener l) {
+      myDelegate.addActionListener(l);
+    }
+
+    @Override
+    public void removeActionListener(ActionListener l) {
+      myDelegate.removeActionListener(l);
+    }
   }
 }
