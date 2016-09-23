@@ -18,17 +18,22 @@ package org.jetbrains.idea.devkit.inspections;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomService;
@@ -40,7 +45,11 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
 
 public class InspectionDescriptionInfo {
 
@@ -83,34 +92,56 @@ public class InspectionDescriptionInfo {
 
   @Nullable
   static Extension findExtension(Module module, PsiClass psiClass) {
-    List<DomFileElement<IdeaPlugin>> elements = DomService.getInstance().getFileElements(IdeaPlugin.class, module.getProject(),
-                                                                                         GlobalSearchScope.projectScope(module.getProject()));
-    elements = ContainerUtil.filter(elements, element -> {
-      VirtualFile virtualFile = element.getFile().getVirtualFile();
-      return virtualFile != null && ProjectRootManager.getInstance(module.getProject()).getFileIndex().isInContent(virtualFile);
+    return CachedValuesManager.getCachedValue(psiClass, () -> {
+      Extension extension = doFindExtension(module, psiClass);
+      return CachedValueProvider.Result
+        .create(extension, extension == null ? PsiModificationTracker.MODIFICATION_COUNT : extension.getXmlTag());
     });
+  }
 
-    elements = PluginDescriptorChooser.findAppropriateIntelliJModule(module.getName(), elements);
+  @Nullable
+  private static Extension doFindExtension(Module module, PsiClass psiClass) {
+    // Try search in narrow scopes first
+    Project project = module.getProject();
+    List<Supplier<GlobalSearchScope>> scopes = Arrays.asList(
+      module::getModuleScope,
+      module::getModuleWithDependenciesScope,
+      () -> ModuleUtilCore.getAllDependentModules(module).stream().map(Module::getModuleContentWithDependenciesScope)
+        .reduce(GlobalSearchScope::uniteWith).orElse(GlobalSearchScope.EMPTY_SCOPE),
+      () -> GlobalSearchScopesCore.projectProductionScope(project)
+    );
+    Set<DomFileElement<IdeaPlugin>> processed = new HashSet<>();
+    for(Supplier<GlobalSearchScope> scope : scopes) {
+      List<DomFileElement<IdeaPlugin>> origElements = DomService.getInstance().getFileElements(IdeaPlugin.class, project, scope.get());
+      origElements.removeAll(processed);
+      List<DomFileElement<IdeaPlugin>> elements = PluginDescriptorChooser.findAppropriateIntelliJModule(module.getName(), origElements);
 
-    Query<PsiReference> query =
-      ReferencesSearch.search(psiClass, new LocalSearchScope(elements.stream().map(DomFileElement::getFile).toArray(PsiElement[]::new)));
+      Query<PsiReference> query =
+        ReferencesSearch.search(psiClass, new LocalSearchScope(elements.stream().map(DomFileElement::getFile).toArray(PsiElement[]::new)));
 
-    for(PsiReference ref : query) {
-      PsiElement element = ref.getElement();
-      if(element instanceof XmlAttributeValue) {
-        PsiElement parent = element.getParent();
-        if(parent instanceof XmlAttribute && "implementationClass".equals(((XmlAttribute)parent).getName())) {
-          DomElement domElement = DomUtil.getDomElement(parent.getParent());
-          if(domElement instanceof Extension) {
-            Extension extension = (Extension)domElement;
-            ExtensionPoint extensionPoint = extension.getExtensionPoint();
-            if(extensionPoint != null &&
-               InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {
-              return extension;
+      Ref<Extension> result = Ref.create(null);
+      query.forEach(ref -> {
+        PsiElement element = ref.getElement();
+        if(element instanceof XmlAttributeValue) {
+          PsiElement parent = element.getParent();
+          if(parent instanceof XmlAttribute && "implementationClass".equals(((XmlAttribute)parent).getName())) {
+            DomElement domElement = DomUtil.getDomElement(parent.getParent());
+            if(domElement instanceof Extension) {
+              Extension extension = (Extension)domElement;
+              ExtensionPoint extensionPoint = extension.getExtensionPoint();
+              if(extensionPoint != null &&
+                 InheritanceUtil.isInheritor(extensionPoint.getBeanClass().getValue(), InspectionEP.class.getName())) {
+                result.set(extension);
+                return false;
+              }
             }
           }
         }
-      }
+        return true;
+      });
+      Extension extension = result.get();
+      if(extension != null) return extension;
+      processed.addAll(origElements);
     }
     return null;
   }
