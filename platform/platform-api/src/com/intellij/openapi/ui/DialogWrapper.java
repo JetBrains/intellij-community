@@ -50,6 +50,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -452,7 +453,6 @@ public abstract class DialogWrapper {
   protected JComponent createSouthPanel() {
     Action[] actions = filter(createActions());
     Action[] leftSideActions = createLeftSideActions();
-    Map<Action, JButton> buttonMap = new LinkedHashMap<>();
 
     boolean hasHelpToMoveToLeftSide = false;
     if (isMoveHelpButtonLeft() && Arrays.asList(actions).contains(getHelpAction())) {
@@ -491,19 +491,17 @@ public abstract class DialogWrapper {
     final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
 
     if (actions.length > 0 || leftSideActions.length > 0) {
-      int gridX = 0;
+      Map<Action, JButton> buttonMap = new LinkedHashMap<>();
+      GridBag bag = new GridBag().setDefaultInsets(insets);
+
       if (leftSideActions.length > 0) {
         JPanel buttonsPanel = createButtons(leftSideActions, buttonMap);
         if (actions.length > 0) {
           buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
         }
-        lrButtonsPanel.add(buttonsPanel,
-                           new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
-                                                  0));
+        lrButtonsPanel.add(buttonsPanel, bag.next());
       }
-      lrButtonsPanel.add(Box.createHorizontalGlue(),    // left strut
-                         new GridBagConstraints(gridX++, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
-                                                0));
+      lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());   // left strut
       if (actions.length > 0) {
         if (SystemInfo.isMac) {
           // move ok action to the right
@@ -521,19 +519,13 @@ public abstract class DialogWrapper {
 
         JPanel buttonsPanel = createButtons(actions, buttonMap);
         if (shouldAddErrorNearButtons()) {
-          lrButtonsPanel.add(myErrorText, new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                                 insets, 0, 0));
-          lrButtonsPanel.add(Box.createHorizontalStrut(10), new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER,
-                                                                                   GridBagConstraints.NONE, insets, 0, 0));
+          lrButtonsPanel.add(myErrorText, bag.next());
+          lrButtonsPanel.add(Box.createHorizontalStrut(10), bag.next());
         }
-        lrButtonsPanel.add(buttonsPanel,
-                           new GridBagConstraints(gridX++, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE, insets, 0,
-                                                  0));
+        lrButtonsPanel.add(buttonsPanel, bag.next());
       }
       if (SwingConstants.CENTER == myButtonAlignment) {
-        lrButtonsPanel.add(Box.createHorizontalGlue(),    // right strut
-                           new GridBagConstraints(gridX, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, insets, 0,
-                                                  0));
+        lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());    // right strut
       }
       myButtonMap.clear();
       myButtonMap.putAll(buttonMap);
@@ -671,7 +663,8 @@ public abstract class DialogWrapper {
       }
     }
 
-    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.length, SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5, 0));
+    int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
+    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.length, hgap, 0));
     for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
       final Object value = action.getValue(Action.MNEMONIC_KEY);
