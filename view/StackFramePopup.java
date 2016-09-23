@@ -43,6 +43,7 @@ public class StackFramePopup {
         .setItemChoosenCallback(() -> navigateToSelectedFrame(list, true))
         .createPopup();
 
+    list.setSelectedIndex(1);
     popup.showInFocusCenter();
   }
 
@@ -87,7 +88,7 @@ public class StackFramePopup {
                   frame.line() - 1);
           OpenFileDescriptor descriptor = info.getDescriptor();
           if (descriptor != null) {
-            FileEditorManager.getInstance(myProject).openTextEditor(descriptor, focusEditor);
+            FileEditorManager.getInstance(myProject).openEditor(descriptor, focusEditor);
           }
         });
       }
