@@ -16,6 +16,7 @@
 package com.intellij.updater.mock
 
 import com.sun.net.httpserver.HttpServer
+import org.apache.logging.log4j.LogManager
 import java.net.HttpURLConnection.*
 import java.net.InetSocketAddress
 import java.net.URI
@@ -24,6 +25,7 @@ import java.time.format.DateTimeFormatter
 
 class Server(private val port: Int, private val generator: Generator) {
   private val server = HttpServer.create()
+  private val log = LogManager.getLogger(Server::class.java)
   private val buildFormat = "([A-Z]+)-([0-9.]+)".toRegex()
   private val tsFormat = DateTimeFormatter.ofPattern("dd/MMM/yyyy:kk:mm:ss ZZ")
 
@@ -35,18 +37,23 @@ class Server(private val port: Int, private val generator: Generator) {
         process(ex.requestMethod, ex.requestURI)
       }
       catch(e: Exception) {
-        e.printStackTrace()
+        log.error(e)
         Response(HTTP_INTERNAL_ERROR, "Internal error")
       }
 
-      val contentType = if (response.type.startsWith("text/")) response.type + "; charset=utf-8" else response.type
-      ex.responseHeaders.add("Content-Type", contentType)
-      ex.sendResponseHeaders(response.code, response.bytes.size.toLong())
-      ex.responseBody.write(response.bytes)
-      ex.close()
+      try {
+        val contentType = if (response.type.startsWith("text/")) "${response.type}; charset=utf-8" else response.type
+        ex.responseHeaders.add("Content-Type", contentType)
+        ex.sendResponseHeaders(response.code, response.bytes.size.toLong())
+        ex.responseBody.write(response.bytes)
+        ex.close()
 
-      println("${ex.remoteAddress.address.hostAddress} - - [${tsFormat.format(ZonedDateTime.now())}]" +
-        " \"${ex.requestMethod} ${ex.requestURI}\" ${ex.responseCode} ${response.bytes.size}")
+        log.info("${ex.remoteAddress.address.hostAddress} - - [${tsFormat.format(ZonedDateTime.now())}]" +
+          " \"${ex.requestMethod} ${ex.requestURI}\" ${ex.responseCode} ${response.bytes.size}")
+      }
+      catch(e: Exception) {
+        log.error(e)
+      }
     }
 
     server.start()

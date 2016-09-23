@@ -15,13 +15,24 @@
  */
 package com.intellij.updater.mock
 
+import org.apache.logging.log4j.LogManager
+
 fun main(args: Array<String>) {
   if (args.size != 1) {
     println("usage: java -jar update-server-mock.jar <port>")
     System.exit(1)
   }
 
-  val port = args[0].toInt()
-  val generator = Generator()
-  Server(port, generator).start()
+  val log = LogManager.getLogger(Server::class.java)
+  val port = args[0]
+  try {
+    log.info("starting the server on port '$port' ...")
+    val generator = Generator()
+    Server(port.toInt(), generator).start()
+    log.info("ready")
+  }
+  catch(e: Exception) {
+    log.error("failed to start the server", e)
+    System.exit(2)
+  }
 }

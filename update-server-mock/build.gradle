@@ -10,6 +10,8 @@ apply plugin: 'kotlin'
 repositories { jcenter() }
 dependencies {
   compile "org.jetbrains.kotlin:kotlin-stdlib:1.0.+"
+  compile "org.apache.logging.log4j:log4j-api:2.+"
+  runtime "org.apache.logging.log4j:log4j-core:2.+"
   testCompile "junit:junit:4.+"
   testCompile "org.assertj:assertj-core:3.+"
 }
