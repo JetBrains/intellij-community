@@ -498,6 +498,18 @@ public abstract class DialogWrapper {
     }
 
 
+    List<JButton> leftSideButtons = createButtons(leftSideActions);
+    List<JButton> rightSideButtons = createButtons(actions);
+
+    myButtonMap.clear();
+    for (JButton button : ContainerUtil.concat(leftSideButtons, rightSideButtons)) {
+      myButtonMap.put(button.getAction(), button);
+      if (button instanceof JBOptionButton) {
+        myOptionsButtons.add((JBOptionButton)button);
+      }
+    }
+
+
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       public Color getBackground() {
@@ -512,20 +524,19 @@ public abstract class DialogWrapper {
     //noinspection UseDPIAwareInsets
     final Insets insets = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
 
-    if (actions.size() > 0 || leftSideActions.size() > 0) {
-      Map<Action, JButton> buttonMap = new LinkedHashMap<>();
+    if (rightSideButtons.size() > 0 || leftSideButtons.size() > 0) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
 
-      if (leftSideActions.size() > 0) {
-        JPanel buttonsPanel = createButtons(leftSideActions, buttonMap);
-        if (actions.size() > 0) {
+      if (leftSideButtons.size() > 0) {
+        JPanel buttonsPanel = createButtonsPanel(leftSideButtons);
+        if (rightSideButtons.size() > 0) {
           buttonsPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20));  // leave some space between button groups
         }
         lrButtonsPanel.add(buttonsPanel, bag.next());
       }
       lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());   // left strut
-      if (actions.size() > 0) {
-        JPanel buttonsPanel = createButtons(actions, buttonMap);
+      if (rightSideButtons.size() > 0) {
+        JPanel buttonsPanel = createButtonsPanel(rightSideButtons);
         if (shouldAddErrorNearButtons()) {
           lrButtonsPanel.add(myErrorText, bag.next());
           lrButtonsPanel.add(Box.createHorizontalStrut(10), bag.next());
@@ -535,8 +546,6 @@ public abstract class DialogWrapper {
       if (SwingConstants.CENTER == myButtonAlignment) {
         lrButtonsPanel.add(Box.createHorizontalGlue(), bag.next().weightx(1).fillCellHorizontally());    // right strut
       }
-      myButtonMap.clear();
-      myButtonMap.putAll(buttonMap);
     }
 
     if (hasHelpToMoveToLeftSide) {
@@ -656,12 +665,19 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private JPanel createButtons(@NotNull List<Action> actions, @NotNull Map<Action, JButton> buttons) {
+  private List<JButton> createButtons(@NotNull List<Action> actions) {
+    List<JButton> buttons = new ArrayList<>();
+    for (Action action : actions) {
+      buttons.add(createJButtonForAction(action));
+    }
+    return buttons;
+  }
+
+  @NotNull
+  private JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
     int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
-    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.size(), hgap, 0));
-    for (final Action action : actions) {
-      JButton button = createJButtonForAction(action);
-      buttons.put(action, button);
+    JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, buttons.size(), hgap, 0));
+    for (final JButton button : buttons) {
       buttonsPanel.add(button);
     }
     return buttonsPanel;
@@ -695,7 +711,6 @@ public abstract class DialogWrapper {
       eachOptionsButton.setOkToProcessDefaultMnemonics(false);
       eachOptionsButton.setOptionTooltipText(
         "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
-      myOptionsButtons.add(eachOptionsButton);
 
       final Set<JBOptionButton.OptionInfo> infos = eachOptionsButton.getOptionInfos();
       for (final JBOptionButton.OptionInfo eachInfo : infos) {
