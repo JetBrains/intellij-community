@@ -433,22 +433,20 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
       ReferenceType ref = myElems.get(convertRowIndexToModel(row));
       TrackerForNewInstances strategy = myParent.getStrategy(ref);
+
+      String text = String.format("%s%d", diff > 0 ? "+" : "", diff);
+
       if (strategy != null && strategy.isReady()) {
-        DiffValue diffValue = (DiffValue) value;
-        long current = diffValue.myCurrentCount;
-        long old = diffValue.myOldCount;
         long trackedNew = strategy.getCount();
-        long deleted = Math.max(0, old + trackedNew - current);
-        if (trackedNew != 0) {
-          append(String.format("+%d", trackedNew), myClickableCellAttributes);
-          if (deleted != 0) {
-            append(String.format(" / %d", -deleted), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          }
+        if (trackedNew == diff) {
+          append(text, diff == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES :  myClickableCellAttributes);
         } else {
-          append("0", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          if (trackedNew != 0) {
+            append(String.format(" (%d)", trackedNew), myClickableCellAttributes);
+          }
         }
       } else {
-        String text = String.format("%s%d", diff > 0 ? "+" : "", diff);
         append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }

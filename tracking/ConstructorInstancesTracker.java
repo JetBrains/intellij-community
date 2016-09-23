@@ -40,11 +40,10 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   private final XDebugSession myDebugSession;
   private final CreationPositionTracker myPositionTracker;
   private final DebugProcessImpl myDebugProcess;
+  private final MyConstructorBreakpoints myBreakpoint;
 
   @Nullable
   private HashSet<ObjectReference> myNewObjects = null;
-
-  private final MyConstructorBreakpoints myBreakpoint;
 
   @NotNull
   private HashSet<ObjectReference> myTrackedObjects = new HashSet<>();
