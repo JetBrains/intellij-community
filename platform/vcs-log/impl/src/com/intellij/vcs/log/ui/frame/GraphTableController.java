@@ -137,7 +137,7 @@ public class GraphTableController {
                      PositionUtil.getYInsideRow(clickPoint, myTable.getRowHeight()));
   }
 
-  private void showTooltip(int row, int column, @NotNull MouseEvent e) {
+  private void showOrHideCommitTooltip(int row, int column, @NotNull MouseEvent e) {
     JComponent tipComponent = myCommitRenderer.getTooltip(myTable.getValueAt(row, column), calcPoint4Graph(e.getPoint()),
                                                           myTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN)
                                                             .getWidth());
@@ -146,6 +146,11 @@ public class GraphTableController {
       IdeTooltip tooltip =
         new IdeTooltip(myTable, e.getPoint(), new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.below);
       IdeTooltipManager.getInstance().show(tooltip, false);
+    }
+    else {
+      if (IdeTooltipManager.getInstance().hasCurrent()) {
+        IdeTooltipManager.getInstance().hideCurrent(e);
+      }
     }
   }
 
@@ -212,7 +217,7 @@ public class GraphTableController {
           performGraphAction(printElement, e,
                              GraphAction.Type.MOUSE_OVER); // if printElement is null, still need to unselect whatever was selected in a graph
           if (printElement == null) {
-            showTooltip(row, column, e);
+            showOrHideCommitTooltip(row, column, e);
           }
           return;
         }
