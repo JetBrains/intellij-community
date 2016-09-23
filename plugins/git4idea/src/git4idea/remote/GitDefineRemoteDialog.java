@@ -21,9 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
@@ -136,12 +134,9 @@ public class GitDefineRemoteDialog extends DialogWrapper {
 
   @Nullable
   private String validateRemoteUnderModal(@NotNull final String url) throws ProcessCanceledException {
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<String, ProcessCanceledException>() {
-      @Override
-      public String compute() throws ProcessCanceledException {
-        final GitCommandResult result = myGit.lsRemote(myRepository.getProject(), VfsUtilCore.virtualToIoFile(myRepository.getRoot()), url);
-        return !result.success() ? "Remote URL test failed: " + result.getErrorOutputAsHtmlString() : null;
-      }
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      GitCommandResult result = myGit.lsRemote(myRepository.getProject(), virtualToIoFile(myRepository.getRoot()), url);
+      return !result.success() ? "Remote URL test failed: " + result.getErrorOutputAsHtmlString() : null;
     }, "Checking URL...", true, myRepository.getProject());
   }
 
