@@ -661,19 +661,6 @@ public abstract class DialogWrapper {
     JPanel buttonsPanel = new NonOpaquePanel(new GridLayout(1, actions.size(), hgap, 0));
     for (final Action action : actions) {
       JButton button = createJButtonForAction(action);
-      final Object value = action.getValue(Action.MNEMONIC_KEY);
-      if (value instanceof Integer) {
-        final int mnemonic = ((Integer)value).intValue();
-        final Object name = action.getValue(Action.NAME);
-        if (mnemonic == 'Y' && "Yes".equals(name)) {
-          myYesAction = action;
-        }
-        else if (mnemonic == 'N' && "No".equals(name)) {
-          myNoAction = action;
-        }
-        button.setMnemonic(mnemonic);
-      }
-
       if (action.getValue(FOCUSED_ACTION) != null) {
         myPreferredFocusedComponent = button;
       }
@@ -735,27 +722,28 @@ public abstract class DialogWrapper {
       button = new JButton(action);
     }
 
-    String text = button.getText();
-
     if (SystemInfo.isMac) {
       button.putClientProperty("JButton.buttonType", "text");
     }
 
-    if (text != null) {
-      Pair<Integer, String> pair = extractMnemonic(text);
-      button.setText(pair.second);
-      int mnemonic = pair.first;
+    Pair<Integer, String> pair = extractMnemonic(button.getText());
+    button.setText(pair.second);
+    int mnemonic = pair.first;
 
-      final Object name = action.getValue(Action.NAME);
-      if (mnemonic == KeyEvent.VK_Y && "Yes".equals(name)) {
-        myYesAction = action;
-      }
-      else if (mnemonic == KeyEvent.VK_N && "No".equals(name)) {
-        myNoAction = action;
-      }
-
-      button.setMnemonic(mnemonic);
+    final Object value = action.getValue(Action.MNEMONIC_KEY);
+    if (value instanceof Integer) {
+      mnemonic = (Integer)value;
     }
+    button.setMnemonic(mnemonic);
+
+    final Object name = action.getValue(Action.NAME);
+    if (mnemonic == KeyEvent.VK_Y && "Yes".equals(name)) {
+      myYesAction = action;
+    }
+    else if (mnemonic == KeyEvent.VK_N && "No".equals(name)) {
+      myNoAction = action;
+    }
+
     setMargin(button);
     if (action.getValue(DEFAULT_ACTION) != null) {
       if (!myPeer.isHeadless()) {
