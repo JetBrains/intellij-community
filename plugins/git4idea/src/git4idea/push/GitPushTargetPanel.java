@@ -38,7 +38,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import git4idea.GitRemoteBranch;
@@ -60,6 +59,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static java.util.stream.Collectors.toList;
 
 public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
@@ -330,13 +330,9 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
 
   @NotNull
   private static List<String> getTargetNames(@NotNull GitRepository repository) {
-    List<GitRemoteBranch> remoteBranches = ContainerUtil.sorted(repository.getBranches().getRemoteBranches(), REMOTE_BRANCH_COMPARATOR);
-    return ContainerUtil.map(remoteBranches, new Function<GitRemoteBranch, String>() {
-      @Override
-      public String fun(GitRemoteBranch branch) {
-        return branch.getNameForRemoteOperations();
-      }
-    });
+    return repository.getBranches().getRemoteBranches().stream().
+      sorted(REMOTE_BRANCH_COMPARATOR).
+      map(GitRemoteBranch::getNameForRemoteOperations).collect(toList());
   }
 
   private static class MyRemoteBranchComparator implements Comparator<GitRemoteBranch> {
@@ -430,7 +426,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return ContainerUtil.<Component>newArrayList(myTargetEditor.getFocusTarget(), myRemoteRenderer);
+      return newArrayList(myTargetEditor.getFocusTarget(), myRemoteRenderer);
     }
 
     @Override
