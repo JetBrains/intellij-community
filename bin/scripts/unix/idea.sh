@@ -184,23 +184,11 @@ LD_LIBRARY_PATH="$IDE_BIN_HOME:$LD_LIBRARY_PATH" "$JAVA_BIN" \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
   ${VM_OPTIONS} \
-  "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
   "-XX:ErrorFile=$HOME/java_error_in_@@product_uc@@_%p.log" \
   "-XX:HeapDumpPath=$HOME/java_error_in_@@product_uc@@.hprof" \
-  -Djb.restart.code=88 -Didea.paths.selector=@@system_selector@@ \
+  -Didea.paths.selector=@@system_selector@@ \
+  "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
   ${IDE_PROPERTIES_PROPERTY} \
   @@ide_jvm_args@@ \
   com.intellij.idea.Main \
   "$@"
-EC=$?
-unset IFS
-
-test ${EC} -ne 88 && exit ${EC}
-
-RESTARTER="$HOME/.@@system_selector@@/system/restart/restarter.sh"
-if [ -x "$RESTARTER" ]; then
-  "$RESTARTER"
-  "$RM" -f "$RESTARTER"
-fi
-
-exec "$0"

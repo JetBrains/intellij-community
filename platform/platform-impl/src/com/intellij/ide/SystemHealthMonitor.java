@@ -64,6 +64,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   public void initComponent() {
     checkJvm();
     checkIBus();
+    checkLauncherScript();
     startDiskSpaceMonitoring();
   }
 
@@ -88,6 +89,12 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           }
         }
       }
+    }
+  }
+
+  private void checkLauncherScript() {
+    if (SystemInfo.isXWindow && System.getProperty("jb.restart.code") != null) {
+      showNotification("ide.launcher.script.outdated");
     }
   }
 

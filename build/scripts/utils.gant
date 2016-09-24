@@ -1006,10 +1006,12 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
       exclude(name: "bin/fsnotifier*")
       exclude(name: "bin/*.vmoptions")
       exclude(name: "bin/*.sh")
+      exclude(name: "bin/*.py")
       exclude(name: "help/**")
     }
-    zipfileset(dir: "$distUnix/bin", filemode: "775", prefix: "bin") {
+    zipfileset(dir: "$distUnix/bin", prefix: "bin", filemode: "775") {
       include(name: "*.sh")
+      include(name: "*.py")
     }
     zipfileset(dir: "$distUnix/bin", prefix: "bin/linux", filemode: "775") {
       include(name: "fsnotifier*")
@@ -1024,7 +1026,7 @@ binding.setVariable("buildCrossPlatformZip", { String zipPath, String sandbox, L
       exclude(name: "bin/idea.properties")
       exclude(name: "bin/*.vmoptions")
     }
-    zipfileset(dir: "$distMac/bin", filemode: "775", prefix: "bin") {
+    zipfileset(dir: "$distMac/bin", prefix: "bin", filemode: "775") {
       include(name: "restarter*")
       include(name: "*.py")
     }
@@ -1058,7 +1060,7 @@ binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
     }
 
     allPaths.each {
-      zipfileset(dir: it, filemode: "755", prefix: zipRoot) {
+      zipfileset(dir: it, prefix: zipRoot, filemode: "755") {
         include(name: "bin/*.sh")
         include(name: "bin/*.py")
         include(name: "bin/fsnotifier")
@@ -1090,6 +1092,7 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths, 
     paths.each {
       tarfileset(dir: it, prefix: tarRoot) {
         exclude(name: "bin/*.sh")
+        exclude(name: "bin/*.py")
         exclude(name: "bin/fsnotifier*")
         extraBins.each {
           exclude(name: it)
@@ -1099,8 +1102,9 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths, 
     }
 
     paths.each {
-      tarfileset(dir: it, filemode: "755", prefix: tarRoot) {
+      tarfileset(dir: it, prefix: tarRoot, filemode: "755") {
         include(name: "bin/*.sh")
+        include(name: "bin/*.py")
         include(name: "bin/fsnotifier*")
         extraBins.each {
           include(name: it)

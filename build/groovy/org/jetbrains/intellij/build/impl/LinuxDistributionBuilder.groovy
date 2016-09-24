@@ -157,6 +157,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         paths.each {
           tarfileset(dir: it, prefix: tarRoot) {
             exclude(name: "bin/*.sh")
+            exclude(name: "bin/*.py")
             exclude(name: "bin/fsnotifier*")
             extraBins.each {
               exclude(name: it)
@@ -166,8 +167,9 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
 
         paths.each {
-          tarfileset(dir: it, filemode: "755", prefix: tarRoot) {
+          tarfileset(dir: it, prefix: tarRoot, filemode: "755") {
             include(name: "bin/*.sh")
+            include(name: "bin/*.py")
             include(name: "bin/fsnotifier*")
             extraBins.each {
               include(name: it)

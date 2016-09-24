@@ -780,10 +780,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
-          exitCode = Restarter.scheduleRestart(beforeRestart);
+          Restarter.scheduleRestart(beforeRestart);
         }
-        catch (IOException e) {
-          LOG.error("Cannot restart", e);
+        catch (Throwable t) {
+          LOG.error("Restart failed", t);
+          Main.showMessage("Restart failed", t);
+          exitCode = Main.RESTART_FAILED;
         }
       }
       System.exit(exitCode);
