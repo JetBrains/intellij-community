@@ -570,9 +570,9 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     # need to precompute column bounds here before slicing!
     col_bounds = [None] * cols
     for col in range(cols):
-        dtype = df.dtypes.iloc[col].kind
+        dtype = df.dtypes.iloc[coffset + col].kind
         if dtype in "biufc":
-            cvalues = df.iloc[:, col]
+            cvalues = df.iloc[:, coffset + col]
             bounds = (cvalues.min(), cvalues.max())
         else:
             bounds = (0, 0)
