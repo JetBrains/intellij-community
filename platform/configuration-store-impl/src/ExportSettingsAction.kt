@@ -225,11 +225,12 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
         }
       }
 
-      val files = if (additionalExportFile == null) listOf(file) else if (isFileIncluded) listOf(file, additionalExportFile) else listOf(additionalExportFile)
-      val item = ExportableItem(files, if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else "", storage.roamingType)
-      result.putValue(file, item)
+      val presentableName = if (computePresentableNames) getComponentPresentableName(stateAnnotation, aClass, pluginDescriptor) else ""
+      if (isFileIncluded) {
+        result.putValue(file, ExportableItem(listOf(file), presentableName, storage.roamingType))
+      }
       if (additionalExportFile != null) {
-        result.putValue(additionalExportFile, item)
+        result.putValue(additionalExportFile, ExportableItem(listOf(additionalExportFile), presentableName, RoamingType.DEFAULT))
       }
     }
     true
@@ -237,10 +238,10 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
 
   // must be in the end - because most of SchemeManager clients specify additionalExportFile in the State spec
   (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
-    if (it.roamingType != RoamingType.DISABLED && it.presentableName != null && it.fileSpec.getOrNull(0) != '$') {
+    if (it.roamingType != RoamingType.DISABLED && it.fileSpec.getOrNull(0) != '$') {
       val file = Paths.get(storageManager.expandMacros(ROOT_CONFIG), it.fileSpec)
       if (!result.containsKey(file) && !isSkipFile(file)) {
-        result.putValue(file, ExportableItem(listOf(file), it.presentableName, it.roamingType))
+        result.putValue(file, ExportableItem(listOf(file), it.presentableName ?: "", it.roamingType))
       }
     }
   }

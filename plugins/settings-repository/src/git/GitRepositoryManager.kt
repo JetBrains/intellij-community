@@ -38,7 +38,7 @@ import org.eclipse.jgit.transport.*
 import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.IOException
-import java.nio.file.Files
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.concurrent.write
 
@@ -230,7 +230,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
 
   override fun canCommit() = repository.repositoryState.canCommit()
 
-  fun renameDirectory(pairs: Map<String, String?>): Boolean {
+  fun renameDirectory(pairs: Map<String, String?>, commitMessage: String): Boolean {
     var addCommand: AddCommand? = null
     val toDelete = SmartList<DeleteDirectory>()
     for ((oldPath, newPath) in pairs) {
@@ -248,7 +248,13 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
               file.delete()
             }
             else {
-              Files.move(file, new.resolve(file.fileName))
+              try {
+                file.move(new.resolve(file.fileName))
+              }
+              catch (ignored: FileAlreadyExistsException) {
+                return@catchAndLog
+              }
+
               if (addCommand == null) {
                 addCommand = AddCommand(repository)
               }
@@ -273,7 +279,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       addCommand!!.call()
     }
 
-    repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append("Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG").toString())
+    repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append(commitMessage).toString())
     return true
   }
 
