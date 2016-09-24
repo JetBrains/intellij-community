@@ -16,6 +16,7 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.ShutDownTracker
@@ -242,7 +243,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       old.directoryStreamIfExists {
         val new = if (newPath == null) dir else dir.resolve(newPath)
         for (file in it) {
-          try {
+          LOG.catchAndLog {
             if (file.isHidden()) {
               file.delete()
             }
@@ -254,18 +255,12 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
               addCommand!!.addFilepattern(if (newPath == null) file.fileName.toString() else "$newPath/${file.fileName}")
             }
           }
-          catch (e: Throwable) {
-            LOG.error(e)
-          }
         }
         toDelete.add(DeleteDirectory(oldPath))
       }
 
-      try {
+      LOG.catchAndLog {
         old.delete()
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
       }
     }
 
