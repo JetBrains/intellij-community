@@ -64,7 +64,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
@@ -138,7 +137,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   // Should be accessed in EDT only.
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private boolean myDocumentClearing;
-  private int consoleTooMuchTextBufferRatio;
 
   public Editor getEditor() {
     return myEditor;
@@ -322,8 +320,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     else {
       myInputMessageFilter = null;
     }
-
-    consoleTooMuchTextBufferRatio = Registry.intValue("console.too.much.text.buffer.ratio");
 
     project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       private long myLastStamp;
@@ -784,10 +780,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     int caretOffset = myEditor.getCaretModel().getOffset();
     myLastStickingToEnd = document.getLineNumber(caretOffset) >= document.getLineCount() - 1;
     return myLastStickingToEnd;
-  }
-
-  private boolean isTheAmountOfTextTooBig(final int textLength) {
-    return myBuffer.isUseCyclicBuffer() && textLength > myBuffer.getCyclicBufferSize() / consoleTooMuchTextBufferRatio;
   }
 
   private void clearHyperlinkAndFoldings() {
