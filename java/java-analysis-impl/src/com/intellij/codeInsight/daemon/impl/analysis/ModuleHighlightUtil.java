@@ -114,6 +114,22 @@ public class ModuleHighlightUtil {
     return results;
   }
 
+  private static <T extends PsiElement> void checkDuplicateRefs(Iterable<T> statements,
+                                                                Function<T, Optional<String>> ref,
+                                                                @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key,
+                                                                List<HighlightInfo> results) {
+    Set<String> filter = ContainerUtil.newTroveSet();
+    for (T statement : statements) {
+      String refText = ref.apply(statement).orElse(null);
+      if (refText != null && !filter.add(refText)) {
+        String message = JavaErrorMessages.message(key, refText);
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
+        QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
+        results.add(info);
+      }
+    }
+  }
+
   @NotNull
   static List<HighlightInfo> checkUnusedServices(@NotNull PsiJavaModule module) {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
@@ -146,22 +162,6 @@ public class ModuleHighlightUtil {
     }
 
     return results;
-  }
-
-  private static <T extends PsiElement> void checkDuplicateRefs(Iterable<T> statements,
-                                                                Function<T, Optional<String>> ref,
-                                                                @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String key,
-                                                                List<HighlightInfo> results) {
-    Set<String> filter = ContainerUtil.newTroveSet();
-    for (T statement : statements) {
-      String refText = ref.apply(statement).orElse(null);
-      if (refText != null && !filter.add(refText)) {
-        String message = JavaErrorMessages.message(key, refText);
-        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).description(message).create();
-        QuickFixAction.registerQuickFixAction(info, new DeleteElementFix(statement));
-        results.add(info);
-      }
-    }
   }
 
   private static String refText(PsiJavaCodeReferenceElement ref) {
