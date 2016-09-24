@@ -432,8 +432,17 @@ public class PyNames {
     .put(ANEXT, _only_self_descr)
     .build();
 
+  public static final ImmutableMap<String, BuiltinDescription> PY36_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .putAll(PY35_BUILTIN_METHODS)
+    .put("__init_subclass__", new BuiltinDescription("(cls, **kwargs)"))
+    .put("__set_name__", new BuiltinDescription("(self, owner, name)"))
+    .build();
+
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
-    if (level.isAtLeast(LanguageLevel.PYTHON35)) {
+    if (level.isAtLeast(LanguageLevel.PYTHON36)) {
+      return PY36_BUILTIN_METHODS;
+    }
+    else if (level.isAtLeast(LanguageLevel.PYTHON35)) {
       return PY35_BUILTIN_METHODS;
     }
     else if (level.isAtLeast(LanguageLevel.PYTHON30)) {
