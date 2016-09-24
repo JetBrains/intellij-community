@@ -170,7 +170,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   }
 
   private void addRemoteUnderModal(@NotNull final String remoteName, @NotNull final String remoteUrl) {
-    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Adding remote...", true) {
+    ProgressManager.getInstance().run(new Task.Modal(myRepository.getProject(), "Adding Remote...", true) {
       private GitCommandResult myResult;
 
       @Override
