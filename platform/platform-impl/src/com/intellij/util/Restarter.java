@@ -107,6 +107,24 @@ public class Restarter {
     TimeoutUtil.sleep(500);
   }
 
+  private static String[] getRestartArgv(String[] argv) {
+    int countArgs = argv.length;
+    for (int i = argv.length-1; i >=0; i--) {
+      if (argv[i].endsWith("com.intellij.idea.Main") ||
+          argv[i].endsWith(".exe")) {
+        countArgs = i + 1;
+        if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separatorChar) < 0) {
+          //absolute path
+          argv[i] = new File(PathManager.getBinPath(), argv[i]).getPath();
+        }
+        break;
+      }
+    }
+    String[] restartArg = new String[countArgs];
+    System.arraycopy(argv, 0, restartArg, 0, countArgs);
+    return restartArg;
+  }
+
   private static void restartOnMac(String... beforeRestart) throws IOException {
     String homePath = PathManager.getHomePath();
     int p = homePath.indexOf(".app");
@@ -127,24 +145,6 @@ public class Restarter {
     });
   }
 
-  private static String[] getRestartArgv(String[] argv) {
-    int countArgs = argv.length;
-    for (int i = argv.length-1; i >=0; i--) {
-      if (argv[i].endsWith("com.intellij.idea.Main") ||
-          argv[i].endsWith(".exe")) {
-        countArgs = i + 1;
-        if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separatorChar) < 0) {
-          //absolute path
-          argv[i] = new File(PathManager.getBinPath(), argv[i]).getPath();
-        }
-        break;
-      }
-    }
-    String[] restartArg = new String[countArgs];
-    System.arraycopy(argv, 0, restartArg, 0, countArgs);
-    return restartArg;
-  }
-
   private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {
     List<String> commands = new ArrayList<>();
     commands.add(createTempExecutable(restarterFile).getPath());
@@ -152,32 +152,33 @@ public class Restarter {
     Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands));
   }
 
-  public static String getRestarterDir() {
-    return PathManager.getSystemPath() + "/restart";
-  }
+  @NotNull
+  public static File createTempExecutable(@NotNull File executable) throws IOException {
+    File tempDir = new File(PathManager.getSystemPath(), "restart");
+    if (!FileUtilRt.createDirectory(tempDir)) {
+      throw new IOException("Cannot create directory: " + tempDir);
+    }
 
-  public static File createTempExecutable(File executable) throws IOException {
-    File executableDir = new File(getRestarterDir());
-    if (!FileUtilRt.createDirectory(executableDir)) throw new IOException("Cannot create dir: " + executableDir);
-    File copy = new File(executableDir.getPath() + "/" + executable.getName());
+    File copy = new File(tempDir, executable.getName());
     if (!FileUtilRt.ensureCanCreateFile(copy) || (copy.exists() && !copy.delete())) {
-       String ext = FileUtilRt.getExtension(executable.getName());
-       copy = FileUtilRt.createTempFile(executableDir, FileUtilRt.getNameWithoutExtension(copy.getName()),
-                                        StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
-                                        true, false);
+      String prefix = FileUtilRt.getNameWithoutExtension(copy.getName());
+      String ext = FileUtilRt.getExtension(executable.getName());
+      String suffix = StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext);
+      copy = FileUtilRt.createTempFile(tempDir, prefix, suffix, true, false);
     }
     FileUtilRt.copy(executable, copy);
-    if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
+
+    if (executable.canExecute() && !copy.setExecutable(true)) {
+      throw new IOException("Cannot make file executable: " + copy);
+    }
+
     return copy;
   }
 
   private interface Kernel32 extends StdCallLibrary {
     int GetCurrentProcessId();
-
     WString GetCommandLineW();
-
     Pointer LocalFree(Pointer pointer);
-
     WinDef.DWORD GetModuleFileNameW(WinDef.HMODULE hModule, char[] lpFilename, WinDef.DWORD nSize);
   }
 
