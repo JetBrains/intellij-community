@@ -49,7 +49,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.MoreAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.BasePageEngine;
-import org.jetbrains.idea.svn.dialogs.MergeDialogI;
 import org.jetbrains.idea.svn.dialogs.PageEngine;
 import org.jetbrains.idea.svn.dialogs.PagedListWithActions;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -79,7 +78,7 @@ import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
 
-public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
+public class ToBeMergedDialog extends DialogWrapper {
   public static final int MERGE_ALL_CODE = 222;
   private final JPanel myPanel;
   @NotNull private final MergeContext myMergeContext;
@@ -136,14 +135,12 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     myMore500Action.setEnabled(!myEverythingLoaded);
   }
 
-  @Override
   public void setEverythingLoaded(boolean everythingLoaded) {
     myEverythingLoaded = everythingLoaded;
     myMore100Action.setVisible(false);
     myMore500Action.setVisible(false);
   }
 
-  @Override
   public long getLastNumber() {
     // in current implementation we just have one page with all loaded change lists - myListsEngine.getCurrent()
     CommittedChangeList lastLoadedList = getLastItem(myListsEngine.getCurrent());
@@ -151,7 +148,6 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     return lastLoadedList != null ? lastLoadedList.getNumber() : 0;
   }
 
-  @Override
   public void addMoreLists(final List<CommittedChangeList> list) {
     myListsEngine.getCurrent().addAll(list);
     myRevisionsList.revalidate();
