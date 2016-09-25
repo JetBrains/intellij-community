@@ -439,6 +439,7 @@ public class PyNames {
     .putAll(PY35_BUILTIN_METHODS)
     .put(INIT_SUBCLASS, new BuiltinDescription("(cls, **kwargs)"))
     .put("__set_name__", new BuiltinDescription("(self, owner, name)"))
+    .put("__fspath__", _only_self_descr)
     .build();
 
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
