@@ -128,6 +128,7 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   return all(promises, results)
 }
 
+@JvmOverloads
 fun createError(error: String, log: Boolean = false): RuntimeException = MessageError(error, log)
 
 inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {

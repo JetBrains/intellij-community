@@ -38,6 +38,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -470,16 +471,18 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     if (myCenterPanel == null) {
       myCenterPanel = new JPanel(new GridBagLayout());
-      final GridBagConstraints gb =
-        new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(1), 0, 0);
+      final GridBagConstraints centralGb = createConstraints();
 
       myPatchFileLabel = new JLabel(VcsBundle.message("patch.apply.file.name.field"));
       myPatchFileLabel.setLabelFor(myPatchFile);
-      myCenterPanel.add(myPatchFileLabel, gb);
+      myCenterPanel.add(myPatchFileLabel, centralGb);
 
-      gb.fill = GridBagConstraints.HORIZONTAL;
-      ++gb.gridy;
-      myCenterPanel.add(myPatchFile, gb);
+      centralGb.fill = GridBagConstraints.HORIZONTAL;
+      ++centralGb.gridy;
+      myCenterPanel.add(myPatchFile, centralGb);
+
+      JPanel treePanel = new JPanel(new GridBagLayout());
+      final GridBagConstraints gb = createConstraints();
 
       final DefaultActionGroup group = new DefaultActionGroup();
       final AnAction[] treeActions = myChangesTreeList.getTreeActions();
@@ -504,26 +507,35 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       }
 
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("APPLY_PATCH", group, true);
-      ++gb.gridy;
       gb.fill = GridBagConstraints.HORIZONTAL;
-      myCenterPanel.add(toolbar.getComponent(), gb);
+      treePanel.add(toolbar.getComponent(), gb);
 
       ++gb.gridy;
       gb.weighty = 1;
       gb.fill = GridBagConstraints.BOTH;
-      myCenterPanel.add(ScrollPaneFactory.createScrollPane(myChangesTreeList), gb);
+      treePanel.add(ScrollPaneFactory.createScrollPane(myChangesTreeList), gb);
 
       ++gb.gridy;
       gb.weighty = 0;
       gb.fill = GridBagConstraints.NONE;
       gb.insets.bottom = UIUtil.DEFAULT_VGAP;
-      myCenterPanel.add(myCommitLegendPanel.getComponent(), gb);
+      treePanel.add(myCommitLegendPanel.getComponent(), gb);
 
       ++gb.gridy;
-      gb.fill = GridBagConstraints.HORIZONTAL;
-      myCenterPanel.add(myChangeListChooser, gb);
+      Splitter splitter = new Splitter(true, 0.7f);
+      splitter.setFirstComponent(treePanel);
+      splitter.setSecondComponent(myChangeListChooser);
+      ++centralGb.gridy;
+      centralGb.weighty = 1;
+      centralGb.fill = GridBagConstraints.BOTH;
+      myCenterPanel.add(splitter, centralGb);
     }
     return myCenterPanel;
+  }
+
+  @NotNull
+  private static GridBagConstraints createConstraints() {
+    return new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE, JBUI.insets(1), 0, 0);
   }
 
   private void paintBusy(final boolean requestPut) {

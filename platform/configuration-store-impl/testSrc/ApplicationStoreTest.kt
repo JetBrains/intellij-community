@@ -129,13 +129,15 @@ internal class ApplicationStoreTest {
 
     fun test(item: ExportableItem) {
       val file = item.files.first()
-      assertThat(map[file]).containsExactly(item)
+      assertThat(map.get(file)).containsExactly(item)
       assertThat(file).doesNotExist()
     }
 
-    test(ExportableItem(listOf(Paths.get(optionsPath, "filetypes.xml"), Paths.get(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(Paths.get(optionsPath, "filetypes.xml")), "File types", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(Paths.get(rootConfigPath, "filetypes")), "File types", RoamingType.DEFAULT))
     test(ExportableItem(listOf(Paths.get(optionsPath, "customization.xml")), "Menus and toolbars customization", RoamingType.DEFAULT))
-    test(ExportableItem(listOf(Paths.get(optionsPath, "templates.xml"), Paths.get(rootConfigPath, "templates")), "Live templates", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(Paths.get(optionsPath, "templates.xml")), "Live templates", RoamingType.DEFAULT))
+    test(ExportableItem(listOf(Paths.get(rootConfigPath, "templates")), "Live templates", RoamingType.DEFAULT))
   }
 
   @Test fun `import settings`() {
@@ -166,7 +168,6 @@ internal class ApplicationStoreTest {
 
     val relativePaths = getPaths(ByteArrayInputStream(exportedData.internalBuffer, 0, exportedData.size()))
     assertThat(relativePaths).containsOnly("a.xml", "foo/", "foo/bar.icls", "IntelliJ IDEA Global Settings")
-    val list = listOf(ExportableItem(listOf(componentFile, additionalFile), ""))
 
     fun <B> Path.to(that: B) = MapEntry.entry(this, that)
 
@@ -174,7 +175,7 @@ internal class ApplicationStoreTest {
     val componentKey = A::class.java.name
     picoContainer.registerComponent(InstanceComponentAdapter(componentKey, component))
     try {
-      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile.to(list), additionalFile.to(list))
+      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile.to(listOf(ExportableItem(listOf(componentFile), ""))), additionalFile.to(listOf(ExportableItem(listOf(additionalFile), ""))))
     }
     finally {
       picoContainer.unregisterComponent(componentKey)
