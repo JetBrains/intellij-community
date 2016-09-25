@@ -88,7 +88,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         EditorColorsSchemeImpl scheme = isBundled ? new BundledScheme() : new EditorColorsSchemeImpl(null);
         // todo be lazy
         scheme.readExternal(dataHolder.read());
-        dataHolder.updateDigest(scheme);
+        // https://gist.github.com/develar/6efc34c5f11ad50346e8eaef020b0ee4
+        //dataHolder.updateDigest(scheme);
         return scheme;
       }
 
