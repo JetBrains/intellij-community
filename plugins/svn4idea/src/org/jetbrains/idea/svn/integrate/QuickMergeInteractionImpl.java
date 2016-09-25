@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -33,35 +32,31 @@ import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
 
-import static java.util.Collections.emptyList;
+import static com.intellij.openapi.ui.Messages.*;
+import static com.intellij.util.Functions.TO_STRING;
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.map2Array;
+import static org.jetbrains.idea.svn.integrate.LocalChangesAction.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/27/13
- * Time: 11:40 AM
- */
 public class QuickMergeInteractionImpl implements QuickMergeInteraction {
-  private final Project myProject;
-  private String myTitle;
 
-  public QuickMergeInteractionImpl(Project project) {
-    myProject = project;
-  }
+  @NotNull private final MergeContext myMergeContext;
+  @NotNull private final Project myProject;
+  @NotNull private final String myTitle;
 
-  @Override
-  public void setTitle(@NotNull String title) {
-    myTitle = title;
+  public QuickMergeInteractionImpl(@NotNull MergeContext mergeContext) {
+    myMergeContext = mergeContext;
+    myProject = mergeContext.getProject();
+    myTitle = mergeContext.getTitle();
   }
 
   @NotNull
   @Override
   public QuickMergeContentsVariants selectMergeVariant() {
-    final QuickMergeWayOptionsPanel panel = new QuickMergeWayOptionsPanel();
-    final DialogBuilder builder = new DialogBuilder(myProject);
-    builder.removeAllActions();
-    builder.setTitle("Select Merge Variant");
-    builder.setCenterPanel(panel.getMainPanel());
+    QuickMergeWayOptionsPanel panel = new QuickMergeWayOptionsPanel();
+    DialogBuilder builder = new DialogBuilder(myProject);
+
+    builder.title("Select Merge Variant").centerPanel(panel.getMainPanel()).removeAllActions();
     panel.setWrapper(builder.getDialogWrapper());
     builder.show();
 
@@ -74,8 +69,9 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   }
 
   @Override
-  public boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl) {
-    return prompt("<html><body>You are going to reintegrate changes.<br><br>This will make branch '" + sourceUrl +
+  public boolean shouldReintegrate(@NotNull String targetUrl) {
+    return prompt("<html><body>You are going to reintegrate changes.<br><br>This will make branch '" +
+                  myMergeContext.getSourceUrl() +
                   "' <b>no longer usable for further work</b>." +
                   "<br>It will not be able to correctly absorb new trunk (" + targetUrl +
                   ") changes,<br>nor can this branch be properly reintegrated to trunk again.<br><br>Are you sure?</body></html>");
@@ -86,17 +82,21 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
                                                  @NotNull String mergeTitle,
                                                  @NotNull MergeChecker mergeChecker) {
-    final ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, lists, mergeTitle, mergeChecker, null);
+    ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, lists, mergeTitle, mergeChecker, null);
     dialog.show();
+
     return new SelectMergeItemsResult() {
       @NotNull
       @Override
       public QuickMergeContentsVariants getResultCode() {
-        final int code = dialog.getExitCode();
-        if (ToBeMergedDialog.MERGE_ALL_CODE == code) {
-          return QuickMergeContentsVariants.all;
+        switch (dialog.getExitCode()) {
+          case ToBeMergedDialog.MERGE_ALL_CODE:
+            return QuickMergeContentsVariants.all;
+          case DialogWrapper.OK_EXIT_CODE:
+            return QuickMergeContentsVariants.select;
+          default:
+            return QuickMergeContentsVariants.cancel;
         }
-        return DialogWrapper.OK_EXIT_CODE == code ? QuickMergeContentsVariants.select : QuickMergeContentsVariants.cancel;
       }
 
       @NotNull
@@ -109,21 +109,20 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
 
   @NotNull
   @Override
-  public LocalChangesAction selectLocalChangesAction(final boolean mergeAll) {
-    if (! mergeAll) {
-      final LocalChangesAction[] possibleResults = {LocalChangesAction.shelve, LocalChangesAction.inspect,
-        LocalChangesAction.continueMerge, LocalChangesAction.cancel};
-      final int result = Messages.showDialog("There are local changes that will intersect with merge changes.\nDo you want to continue?", myTitle,
-                                                 new String[]{"Shelve local changes", "Inspect changes", "Continue merge", "Cancel"},
-                                                  0, Messages.getQuestionIcon());
-      return possibleResults[result];
+  public LocalChangesAction selectLocalChangesAction(boolean mergeAll) {
+    LocalChangesAction[] possibleResults;
+    String message;
+
+    if (!mergeAll) {
+      possibleResults = new LocalChangesAction[]{shelve, inspect, continueMerge, cancel};
+      message = "There are local changes that will intersect with merge changes.\nDo you want to continue?";
     } else {
-      final LocalChangesAction[] possibleResults = {LocalChangesAction.shelve, LocalChangesAction.continueMerge, LocalChangesAction.cancel};
-      final int result = Messages.showDialog("There are local changes that can potentially intersect with merge changes.\nDo you want to continue?", myTitle,
-                                                   new String[]{"Shelve local changes", "Continue merge", "Cancel"},
-                                                    0, Messages.getQuestionIcon());
-      return possibleResults[result];
+      possibleResults = new LocalChangesAction[]{shelve, continueMerge, cancel};
+      message = "There are local changes that can potentially intersect with merge changes.\nDo you want to continue?";
     }
+
+    int result = showDialog(message, myTitle, map2Array(possibleResults, String.class, TO_STRING()), 0, getQuestionIcon());
+    return possibleResults[result];
   }
 
   @Override
@@ -145,22 +144,17 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   @NotNull
   @Override
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                               @NotNull String mergeTitle,
                                                                @NotNull MergeChecker mergeChecker,
                                                                @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                                boolean everyThingLoaded) {
-    final ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, list, mergeTitle, mergeChecker, loader);
+    ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, list, myMergeContext.getTitle(), mergeChecker, loader);
     if (everyThingLoaded) {
       dialog.setEverythingLoaded(true);
     }
-    dialog.show();
-    if (DialogWrapper.OK_EXIT_CODE == dialog.getExitCode()) {
-      return dialog.getSelected();
-    }
-    return emptyList();
+    return dialog.showAndGet() ? dialog.getSelected() : emptyList();
   }
 
   private boolean prompt(@NotNull String question) {
-    return Messages.showOkCancelDialog(myProject, question, myTitle, Messages.getQuestionIcon()) == Messages.OK;
+    return showOkCancelDialog(myProject, question, myTitle, getQuestionIcon()) == OK;
   }
 }

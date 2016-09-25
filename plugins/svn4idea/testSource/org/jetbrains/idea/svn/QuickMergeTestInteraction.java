@@ -43,10 +43,6 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
     myExceptions = newArrayList();
   }
 
-  @Override
-  public void setTitle(@NotNull String title) {
-  }
-
   @NotNull
   @Override
   public QuickMergeContentsVariants selectMergeVariant() {
@@ -63,7 +59,7 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   }
 
   @Override
-  public boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl) {
+  public boolean shouldReintegrate(@NotNull String targetUrl) {
     return myReintegrateAnswer;
   }
 
@@ -90,7 +86,6 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   @NotNull
   @Override
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                               @NotNull String mergeTitle,
                                                                @NotNull MergeChecker mergeChecker,
                                                                @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                                boolean everyThingLoaded) {

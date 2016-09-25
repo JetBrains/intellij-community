@@ -80,7 +80,7 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
   private void runMerge(@NotNull ContinuationContext context, @NotNull SvnBranchPointsCalculator.WrapperInvertor inverter) {
     boolean reintegrate = inverter.isInvertedSense();
 
-    if (reintegrate && !myInteraction.shouldReintegrate(myMergeContext.getSourceUrl(), inverter.inverted().getTarget())) {
+    if (reintegrate && !myInteraction.shouldReintegrate(inverter.inverted().getTarget())) {
       context.cancelEverything();
     }
     else {

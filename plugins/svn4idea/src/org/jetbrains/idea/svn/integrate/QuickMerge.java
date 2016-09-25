@@ -45,7 +45,6 @@ public class QuickMerge {
   @CalledInAwt
   public void execute(@NotNull final QuickMergeInteraction interaction, @NotNull final TaskDescriptor... finalTasks) {
     myInteraction = interaction;
-    myInteraction.setTitle(myMergeContext.getTitle());
 
     FileDocumentManager.getInstance().saveAllDocuments();
 

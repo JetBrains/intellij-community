@@ -26,14 +26,13 @@ import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import java.util.List;
 
 public interface QuickMergeInteraction {
-  void setTitle(@NotNull String title);
 
   @NotNull
   QuickMergeContentsVariants selectMergeVariant();
 
   boolean shouldContinueSwitchedRootFound();
 
-  boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl);
+  boolean shouldReintegrate(@NotNull String targetUrl);
 
   @NotNull
   SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
@@ -51,7 +50,6 @@ public interface QuickMergeInteraction {
 
   @NotNull
   List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                        @NotNull String mergeTitle,
                                                         @NotNull MergeChecker mergeChecker,
                                                         @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                         boolean everyThingLoaded);

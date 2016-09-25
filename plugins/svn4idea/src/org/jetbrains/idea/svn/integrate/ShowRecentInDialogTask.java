@@ -49,7 +49,6 @@ public class ShowRecentInDialogTask extends BaseMergeTask {
   @Override
   public void run(ContinuationContext context) {
     List<CommittedChangeList> lists = myInteraction.showRecentListsForSelection(myInitialChangeListsLoader.getCommittedChangeLists(),
-                                                                                myMergeContext.getTitle(),
                                                                                 myInitialChangeListsLoader.getHelper(),
                                                                                 createMoreChangeListsLoader(),
                                                                                 myInitialChangeListsLoader.isLastLoaded());

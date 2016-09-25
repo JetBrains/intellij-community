@@ -177,7 +177,6 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       @NotNull
       @Override
       public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                                   @NotNull String mergeTitle,
                                                                    @NotNull MergeChecker mergeChecker,
                                                                    @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                                    boolean everyThingLoaded) {
@@ -265,7 +264,6 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       @NotNull
       @Override
       public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                                   @NotNull String mergeTitle,
                                                                    @NotNull MergeChecker mergeChecker,
                                                                    @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                                    boolean everyThingLoaded) {
