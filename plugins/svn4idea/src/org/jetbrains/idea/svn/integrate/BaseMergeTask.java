@@ -16,13 +16,13 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.CalledInAny;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -87,7 +87,7 @@ public abstract class BaseMergeTask extends TaskDescriptor {
   }
 
   @CalledInAny
-  protected void finishWithError(@NotNull ContinuationContext context, @NotNull final String message, final boolean isError) {
+  protected void finishWithError(@NotNull ContinuationContext context, @NotNull String message, boolean isError) {
     LOG.info((isError ? "Error: " : "Info: ") + message);
     context.next(new TaskDescriptor(message, Where.AWT) {
       @Override
@@ -99,9 +99,7 @@ public abstract class BaseMergeTask extends TaskDescriptor {
   }
 
   @CalledInAny
-  protected void finishWithError(@NotNull ContinuationContext context,
-                                 final String message,
-                                 @Nullable final List<VcsException> exceptions) {
+  protected void finishWithError(@NotNull ContinuationContext context, @NotNull String message, @NotNull List<VcsException> exceptions) {
     log(message, exceptions);
 
     context.cancelEverything();
@@ -113,11 +111,9 @@ public abstract class BaseMergeTask extends TaskDescriptor {
     });
   }
 
-  private static void log(String message, @Nullable List<VcsException> exceptions) {
-    if (exceptions != null) {
-      for (VcsException exception : exceptions) {
-        LOG.info(message, exception);
-      }
+  private static void log(@NotNull String message, @NotNull List<VcsException> exceptions) {
+    for (VcsException exception : exceptions) {
+      LOG.info(message, exception);
     }
   }
 }

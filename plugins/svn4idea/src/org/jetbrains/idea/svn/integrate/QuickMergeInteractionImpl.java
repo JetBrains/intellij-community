@@ -27,10 +27,13 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.*;
+import org.jetbrains.idea.svn.dialogs.IntersectingLocalChangesPanel;
+import org.jetbrains.idea.svn.dialogs.MergeDialogI;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 /**
  * Created with IntelliJ IDEA.
@@ -51,6 +54,7 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
     myTitle = title;
   }
 
+  @NotNull
   @Override
   public QuickMergeContentsVariants selectMergeVariant() {
     final QuickMergeWayOptionsPanel panel = new QuickMergeWayOptionsPanel();
@@ -70,19 +74,22 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   }
 
   @Override
-  public boolean shouldReintegrate(@NotNull final String sourceUrl, @NotNull final String targetUrl) {
+  public boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl) {
     return prompt("<html><body>You are going to reintegrate changes.<br><br>This will make branch '" + sourceUrl +
-                                       "' <b>no longer usable for further work</b>." +
-                                       "<br>It will not be able to correctly absorb new trunk (" + targetUrl +
-                                       ") changes,<br>nor can this branch be properly reintegrated to trunk again.<br><br>Are you sure?</body></html>");
+                  "' <b>no longer usable for further work</b>." +
+                  "<br>It will not be able to correctly absorb new trunk (" + targetUrl +
+                  ") changes,<br>nor can this branch be properly reintegrated to trunk again.<br><br>Are you sure?</body></html>");
   }
 
   @NotNull
   @Override
-  public SelectMergeItemsResult selectMergeItems(List<CommittedChangeList> lists, String mergeTitle, MergeChecker mergeChecker) {
+  public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
+                                                 @NotNull String mergeTitle,
+                                                 @NotNull MergeChecker mergeChecker) {
     final ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, lists, mergeTitle, mergeChecker, null);
     dialog.show();
     return new SelectMergeItemsResult() {
+      @NotNull
       @Override
       public QuickMergeContentsVariants getResultCode() {
         final int code = dialog.getExitCode();
@@ -92,6 +99,7 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
         return DialogWrapper.OK_EXIT_CODE == code ? QuickMergeContentsVariants.select : QuickMergeContentsVariants.cancel;
       }
 
+      @NotNull
       @Override
       public List<CommittedChangeList> getSelectedLists() {
         return dialog.getSelected();
@@ -119,21 +127,22 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   }
 
   @Override
-  public void showIntersectedLocalPaths(final List<FilePath> paths) {
+  public void showIntersectedLocalPaths(@NotNull List<FilePath> paths) {
     IntersectingLocalChangesPanel.showInVersionControlToolWindow(myProject, myTitle + ", local changes intersection",
       paths, "The following file(s) have local changes that will intersect with merge changes:");
   }
 
   @Override
-  public void showErrors(String message, List<VcsException> exceptions) {
+  public void showErrors(@NotNull String message, @NotNull List<VcsException> exceptions) {
     AbstractVcsHelper.getInstance(myProject).showErrors(exceptions, message);
   }
 
   @Override
-  public void showErrors(String message, boolean isError) {
+  public void showErrors(@NotNull String message, boolean isError) {
     VcsBalloonProblemNotifier.showOverChangesView(myProject, message, isError ? MessageType.ERROR : MessageType.WARNING);
   }
 
+  @NotNull
   @Override
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                @NotNull String mergeTitle,
@@ -148,10 +157,10 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
     if (DialogWrapper.OK_EXIT_CODE == dialog.getExitCode()) {
       return dialog.getSelected();
     }
-    return null;
+    return emptyList();
   }
 
-  private boolean prompt(final String question) {
+  private boolean prompt(@NotNull String question) {
     return Messages.showOkCancelDialog(myProject, question, myTitle, Messages.getQuestionIcon()) == Messages.OK;
   }
 }

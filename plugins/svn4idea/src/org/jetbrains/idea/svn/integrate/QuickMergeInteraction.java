@@ -25,37 +25,42 @@ import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/26/13
- * Time: 8:29 PM
- */
 public interface QuickMergeInteraction {
-  void setTitle(@NotNull final String title);
-  QuickMergeContentsVariants selectMergeVariant();
-  boolean shouldContinueSwitchedRootFound();
-
-  boolean shouldReintegrate(@NotNull final String sourceUrl, @NotNull final String targetUrl);
+  void setTitle(@NotNull String title);
 
   @NotNull
-  SelectMergeItemsResult selectMergeItems(final List<CommittedChangeList> lists, final String mergeTitle, final MergeChecker mergeChecker);
+  QuickMergeContentsVariants selectMergeVariant();
+
+  boolean shouldContinueSwitchedRootFound();
+
+  boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl);
+
+  @NotNull
+  SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
+                                          @NotNull String mergeTitle,
+                                          @NotNull MergeChecker mergeChecker);
 
   @NotNull
   LocalChangesAction selectLocalChangesAction(boolean mergeAll);
 
-  void showIntersectedLocalPaths(final List<FilePath> paths);
+  void showIntersectedLocalPaths(@NotNull List<FilePath> paths);
 
-  void showErrors(final String message, final List<VcsException> exceptions);
-  void showErrors(final String message, final boolean isError);
+  void showErrors(@NotNull String message, @NotNull List<VcsException> exceptions);
 
+  void showErrors(@NotNull String message, boolean isError);
+
+  @NotNull
   List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                         @NotNull String mergeTitle,
                                                         @NotNull MergeChecker mergeChecker,
-                                                        @NotNull PairConsumer<Long, MergeDialogI> loader, boolean everyThingLoaded);
+                                                        @NotNull PairConsumer<Long, MergeDialogI> loader,
+                                                        boolean everyThingLoaded);
 
   interface SelectMergeItemsResult {
+    @NotNull
     QuickMergeContentsVariants getResultCode();
+
+    @NotNull
     List<CommittedChangeList> getSelectedLists();
   }
 }

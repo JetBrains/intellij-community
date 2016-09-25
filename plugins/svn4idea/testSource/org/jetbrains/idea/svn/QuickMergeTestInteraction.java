@@ -30,6 +30,7 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtilRt.emptyList;
 
 public class QuickMergeTestInteraction implements QuickMergeInteraction {
 
@@ -46,12 +47,13 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   public void setTitle(@NotNull String title) {
   }
 
+  @NotNull
   @Override
   public QuickMergeContentsVariants selectMergeVariant() {
     return myMergeVariant;
   }
 
-  public void setMergeVariant(QuickMergeContentsVariants mergeVariant) {
+  public void setMergeVariant(@NotNull QuickMergeContentsVariants mergeVariant) {
     myMergeVariant = mergeVariant;
   }
 
@@ -67,27 +69,32 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
 
   @NotNull
   @Override
-  public SelectMergeItemsResult selectMergeItems(List<CommittedChangeList> lists, String mergeTitle, MergeChecker mergeChecker) {
+  public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
+                                                 @NotNull String mergeTitle,
+                                                 @NotNull MergeChecker mergeChecker) {
     return new SelectMergeItemsResult() {
+      @NotNull
       @Override
       public QuickMergeContentsVariants getResultCode() {
         return QuickMergeContentsVariants.all;
       }
 
+      @NotNull
       @Override
       public List<CommittedChangeList> getSelectedLists() {
-        return null;
+        return emptyList();
       }
     };
   }
 
+  @NotNull
   @Override
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                @NotNull String mergeTitle,
                                                                @NotNull MergeChecker mergeChecker,
                                                                @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                                boolean everyThingLoaded) {
-    return null;
+    return emptyList();
   }
 
   @NotNull
@@ -97,11 +104,11 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   }
 
   @Override
-  public void showIntersectedLocalPaths(List<FilePath> paths) {
+  public void showIntersectedLocalPaths(@NotNull List<FilePath> paths) {
   }
 
   @Override
-  public void showErrors(String message, List<VcsException> exceptions) {
+  public void showErrors(@NotNull String message, @NotNull List<VcsException> exceptions) {
     if (!isEmpty(exceptions)) {
       myExceptions.addAll(exceptions);
     }
@@ -111,7 +118,7 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   }
 
   @Override
-  public void showErrors(String message, boolean isError) {
+  public void showErrors(@NotNull String message, boolean isError) {
     if (isError) {
       myExceptions.add(new RuntimeException(message));
     } else {

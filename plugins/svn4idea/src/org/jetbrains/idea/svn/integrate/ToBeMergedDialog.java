@@ -96,9 +96,9 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
   private ToBeMergedDialog.MoreXAction myMore500Action;
 
   public ToBeMergedDialog(final Project project,
-                          final List<CommittedChangeList> lists,
+                          @NotNull List<CommittedChangeList> lists,
                           final String title,
-                          final MergeChecker mergeChecker,
+                          @NotNull MergeChecker mergeChecker,
                           final PairConsumer<Long, MergeDialogI> moreLoader) {
     super(project, true);
     myMoreLoader = moreLoader;

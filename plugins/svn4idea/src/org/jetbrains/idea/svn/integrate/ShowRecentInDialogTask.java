@@ -54,7 +54,7 @@ public class ShowRecentInDialogTask extends BaseMergeTask {
                                                                                 createMoreChangeListsLoader(),
                                                                                 myInitialChangeListsLoader.isLastLoaded());
 
-    if (lists != null && !lists.isEmpty()) {
+    if (!lists.isEmpty()) {
       runChangeListsMerge(context, lists, createBranchCopyPoint(), myMergeContext.getTitle());
     }
     else {

@@ -57,6 +57,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.stream.Collectors.toList;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
@@ -172,6 +174,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     // by default merges all
     final AtomicReference<String> selectionError = new AtomicReference<>();
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
+      @NotNull
       @Override
       public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                    @NotNull String mergeTitle,
@@ -259,6 +262,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     // by default merges all
     final AtomicReference<String> selectionError = new AtomicReference<>();
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
+      @NotNull
       @Override
       public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                    @NotNull String mergeTitle,
@@ -329,24 +333,22 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
       @NotNull
       @Override
-      public SelectMergeItemsResult selectMergeItems(final List<CommittedChangeList> lists,
-                                                     String mergeTitle,
-                                                     MergeChecker mergeChecker) {
+      public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
+                                                     @NotNull String mergeTitle,
+                                                     @NotNull MergeChecker mergeChecker) {
         return new SelectMergeItemsResult() {
+          @NotNull
           @Override
           public QuickMergeContentsVariants getResultCode() {
             return QuickMergeContentsVariants.select;
           }
 
+          @NotNull
           @Override
           public List<CommittedChangeList> getSelectedLists() {
-            final List<CommittedChangeList> result = new ArrayList<>();
-            for (CommittedChangeList list : lists) {
-              if (numberBefore + 1 == list.getNumber() || numberBefore + 2 == list.getNumber()) {
-                result.add(list);
-              }
-            }
-            return result;
+            return lists.stream()
+              .filter(list -> numberBefore + 1 == list.getNumber() || numberBefore + 2 == list.getNumber())
+              .collect(toList());
           }
         };
       }
