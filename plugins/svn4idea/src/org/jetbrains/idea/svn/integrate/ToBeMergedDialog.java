@@ -18,13 +18,17 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.QuantitySelection;
 import com.intellij.openapi.vcs.SelectionResult;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -39,7 +43,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
@@ -69,7 +72,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtilRt.emptyList;
+import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static com.intellij.util.containers.ContainerUtilRt.newHashSet;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
@@ -77,7 +82,7 @@ import static java.util.Collections.synchronizedMap;
 public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
   public static final int MERGE_ALL_CODE = 222;
   private final JPanel myPanel;
-  private final Project myProject;
+  @NotNull private final MergeContext myMergeContext;
   private final PageEngine<List<CommittedChangeList>> myListsEngine;
   private TableView<CommittedChangeList> myRevisionsList;
   private RepositoryChangesBrowser myRepositoryChangesBrowser;
@@ -86,7 +91,6 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
   private final QuantitySelection<Long> myWiseSelection;
 
   private final Set<Change> myAlreadyMerged;
-  private final PairConsumer<Long, MergeDialogI> myMoreLoader;
   private final MergeChecker myMergeChecker;
   private final boolean myAlreadyCalculatedState;
   private volatile boolean myEverythingLoaded;
@@ -95,19 +99,18 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
   private ToBeMergedDialog.MoreXAction myMore100Action;
   private ToBeMergedDialog.MoreXAction myMore500Action;
 
-  public ToBeMergedDialog(final Project project,
+  public ToBeMergedDialog(@NotNull MergeContext mergeContext,
                           @NotNull List<CommittedChangeList> lists,
                           final String title,
                           @NotNull MergeChecker mergeChecker,
-                          final PairConsumer<Long, MergeDialogI> moreLoader) {
-    super(project, true);
-    myMoreLoader = moreLoader;
-    myEverythingLoaded = moreLoader == null;
+                          boolean everythingLoaded) {
+    super(mergeContext.getProject(), true);
+    myMergeContext = mergeContext;
+    myEverythingLoaded = everythingLoaded;
     myStatusMap = synchronizedMap(newHashMap());
     myMergeChecker = mergeChecker;
-    myAlreadyCalculatedState = moreLoader == null;
+    myAlreadyCalculatedState = everythingLoaded;
     setTitle(title);
-    myProject = project;
 
     // Paging is not used - "Load Xxx" buttons load corresponding new elements and add them to the end of the table. Single (first) page is
     // always used.
@@ -338,7 +341,8 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     flatModel.setItems(myListsEngine.getCurrent());
     flatModel.fireTableDataChanged();
 
-    myRepositoryChangesBrowser = new RepositoryChangesBrowser(myProject, Collections.<CommittedChangeList>emptyList(), emptyList(), null);
+    myRepositoryChangesBrowser =
+      new RepositoryChangesBrowser(myMergeContext.getProject(), Collections.<CommittedChangeList>emptyList(), emptyList(), null);
     myRepositoryChangesBrowser.getDiffAction()
       .registerCustomShortcutSet(myRepositoryChangesBrowser.getDiffAction().getShortcutSet(), myRevisionsList);
     setChangesDecorator();
@@ -446,7 +450,8 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
       myMore500Action.setVisible(false);
       myMore100Action.setEnabled(false);
       myMore500Action.setEnabled(false);
-      myMoreLoader.consume(Long.valueOf(myQuantity), ToBeMergedDialog.this);
+
+      new LoadChangeListsTask(getLastNumber(), myQuantity).queue();
     }
   }
 
@@ -474,6 +479,59 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     }
   }
 
+  private class LoadChangeListsTask extends Task.Backgroundable {
+
+    private final long myStartNumber;
+    private final int myQuantity;
+    private List<CommittedChangeList> myLists;
+    private boolean myIsLastListLoaded;
+
+    public LoadChangeListsTask(long startNumber, int quantity) {
+      super(myMergeContext.getProject(), "Loading recent " + myMergeContext.getBranchName() + " revisions", true);
+      myStartNumber = startNumber;
+      myQuantity = quantity;
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeContext, myStartNumber, myQuantity);
+
+      try {
+        loader.run();
+
+        myLists = loader.getCommittedChangeLists();
+        myIsLastListLoaded = loader.isLastLoaded();
+      }
+      catch (VcsException e) {
+        setEmptyData();
+        PopupUtil.showBalloonForActiveComponent(e.getMessage(), MessageType.ERROR);
+      }
+    }
+
+    @Override
+    public void onCancel() {
+      setEmptyData();
+      updateDialog();
+    }
+
+    @Override
+    public void onSuccess() {
+      updateDialog();
+    }
+
+    private void setEmptyData() {
+      myLists = emptyList();
+      myIsLastListLoaded = false;
+    }
+
+    private void updateDialog() {
+      addMoreLists(myLists);
+      if (myIsLastListLoaded) {
+        setEverythingLoaded(true);
+      }
+    }
+  }
+
   private class MyListCellRenderer implements TableCellRenderer {
     private final JPanel myPanel;
     private final CommittedChangeListRenderer myRenderer;
@@ -484,7 +542,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
       myCheckBox = new JCheckBox();
       myCheckBox.setEnabled(true);
       myCheckBox.setSelected(true);
-      myRenderer = new CommittedChangeListRenderer(myProject, singletonList(list -> {
+      myRenderer = new CommittedChangeListRenderer(myMergeContext.getProject(), singletonList(list -> {
         ListMergeStatus status = myAlreadyCalculatedState
                                  ? ListMergeStatus.NOT_MERGED
                                  : ObjectUtils.notNull(myStatusMap.get(list.getNumber()), ListMergeStatus.REFRESHING);

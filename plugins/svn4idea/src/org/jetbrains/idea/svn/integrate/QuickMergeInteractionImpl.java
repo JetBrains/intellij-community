@@ -24,10 +24,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.IntersectingLocalChangesPanel;
-import org.jetbrains.idea.svn.dialogs.MergeDialogI;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
@@ -82,7 +80,7 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
                                                  @NotNull String mergeTitle,
                                                  @NotNull MergeChecker mergeChecker) {
-    ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, lists, mergeTitle, mergeChecker, null);
+    ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, lists, mergeTitle, mergeChecker, true);
     dialog.show();
 
     return new SelectMergeItemsResult() {
@@ -145,12 +143,9 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   @Override
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                @NotNull MergeChecker mergeChecker,
-                                                               @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                                boolean everyThingLoaded) {
-    ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, list, myMergeContext.getTitle(), mergeChecker, loader);
-    if (everyThingLoaded) {
-      dialog.setEverythingLoaded(true);
-    }
+    ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, list, myMergeContext.getTitle(), mergeChecker, false);
+
     return dialog.showAndGet() ? dialog.getSelected() : emptyList();
   }
 

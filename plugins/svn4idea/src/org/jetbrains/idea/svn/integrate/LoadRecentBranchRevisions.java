@@ -74,18 +74,16 @@ public class LoadRecentBranchRevisions extends TaskDescriptor {
    */
   @Override
   public void run(ContinuationContext context) {
-    List<Pair<SvnChangeList, LogHierarchyNode>> changeLists = null;
-
     try {
-      changeLists = getChangeListsBefore(myFirst);
+      run();
     }
     catch (VcsException e) {
       context.handleException(e, true);
     }
+  }
 
-    if (changeLists != null) {
-      initialize(context, changeLists);
-    }
+  public void run() throws VcsException {
+    initialize(getChangeListsBefore(myFirst));
   }
 
   @NotNull
@@ -131,17 +129,12 @@ public class LoadRecentBranchRevisions extends TaskDescriptor {
     return result;
   }
 
-  private void initialize(@NotNull ContinuationContext context, @NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) {
+  private void initialize(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) throws VcsException {
     myCommittedChangeLists = getNotMergedChangeLists(changeLists);
 
-    try {
-      myHelper = new OneShotMergeInfoHelper(myMergeContext);
-      ProgressManager.progress2("Calculating not merged revisions");
-      myHelper.prepare();
-    }
-    catch (VcsException e) {
-      context.handleException(e, true);
-    }
+    myHelper = new OneShotMergeInfoHelper(myMergeContext);
+    ProgressManager.progress2("Calculating not merged revisions");
+    myHelper.prepare();
 
     myLastLoaded = myCommittedChangeLists.size() < myBunchSize + 1;
     if (myCommittedChangeLists.size() > myBunchSize) {

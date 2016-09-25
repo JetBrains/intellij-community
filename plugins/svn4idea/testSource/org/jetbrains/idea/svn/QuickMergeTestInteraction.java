@@ -18,9 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.MergeDialogI;
 import org.jetbrains.idea.svn.integrate.LocalChangesAction;
 import org.jetbrains.idea.svn.integrate.QuickMergeContentsVariants;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteraction;
@@ -87,7 +85,6 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   @Override
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                @NotNull MergeChecker mergeChecker,
-                                                               @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                                boolean everyThingLoaded) {
     return emptyList();
   }

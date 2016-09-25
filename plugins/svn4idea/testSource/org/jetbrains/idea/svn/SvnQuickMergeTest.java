@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.continuation.ContinuationContext;
@@ -38,7 +37,6 @@ import org.jetbrains.idea.svn.branchConfig.InfoReliability;
 import org.jetbrains.idea.svn.branchConfig.InfoStorage;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.jetbrains.idea.svn.dialogs.MergeDialogI;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
@@ -178,7 +176,6 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       @Override
       public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                    @NotNull MergeChecker mergeChecker,
-                                                                   @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                                    boolean everyThingLoaded) {
         if (list.size() != 4) {
           selectionError.set("List size: " + list.size());
@@ -265,7 +262,6 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       @Override
       public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                    @NotNull MergeChecker mergeChecker,
-                                                                   @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                                    boolean everyThingLoaded) {
         if (list.size() != 2) {
           selectionError.set("List size: " + list.size());
