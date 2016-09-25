@@ -98,14 +98,11 @@ public final class SocketLock {
     }
     finally {
       try {
-        underLocks(new Callable<Void>() {
-          @Override
-          public Void call() throws Exception {
-            FileUtil.delete(new File(myConfigPath, PORT_FILE));
-            FileUtil.delete(new File(mySystemPath, PORT_FILE));
-            FileUtil.delete(new File(mySystemPath, TOKEN_FILE));
-            return null;
-          }
+        underLocks(() -> {
+          FileUtil.delete(new File(myConfigPath, PORT_FILE));
+          FileUtil.delete(new File(mySystemPath, PORT_FILE));
+          FileUtil.delete(new File(mySystemPath, TOKEN_FILE));
+          return null;
         });
       }
       catch (Exception e) {
@@ -262,6 +259,7 @@ public final class SocketLock {
     return ActivateStatus.NO_INSTANCE;
   }
 
+  @SuppressWarnings("ALL")
   private static void printPID(int port) {
     try {
       Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
