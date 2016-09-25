@@ -32,6 +32,7 @@ import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl;
 import com.intellij.vcs.log.impl.VcsLogHashFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +65,8 @@ class VisiblePackBuilder {
                                             @NotNull PermanentGraph.SortType sortType,
                                             @NotNull VcsLogFilterCollection filters,
                                             @NotNull CommitCountStage commitCount) {
+    long start = System.currentTimeMillis();
+
     VcsLogHashFilter hashFilter = filters.getHashFilter();
     if (hashFilter != null && !hashFilter.getHashes().isEmpty()) { // hashes should be shown, no matter if they match other filters or not
       return Pair.create(applyHashFilter(dataPack, hashFilter.getHashes(), sortType), commitCount);
@@ -81,6 +84,9 @@ class VisiblePackBuilder {
     else {
       visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, filterResult.matchingCommits);
     }
+
+    LOG.debug(StopWatch.formatTime(System.currentTimeMillis() - start) + " for filtering by " + filters);
+
     return Pair.create(new VisiblePack(dataPack, visibleGraph, filterResult.canRequestMore, filters), filterResult.commitCount);
   }
 

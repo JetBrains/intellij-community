@@ -38,4 +38,9 @@ public class VcsLogTextFilterImpl implements VcsLogDetailsFilter, VcsLogTextFilt
   public String getText() {
     return myText;
   }
+
+  @Override
+  public String toString() {
+    return "containing " + myText;
+  }
 }
