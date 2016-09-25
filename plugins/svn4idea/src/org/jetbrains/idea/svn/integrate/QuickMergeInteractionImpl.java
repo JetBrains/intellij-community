@@ -30,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.*;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -123,12 +122,6 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   public void showIntersectedLocalPaths(final List<FilePath> paths) {
     IntersectingLocalChangesPanel.showInVersionControlToolWindow(myProject, myTitle + ", local changes intersection",
       paths, "The following file(s) have local changes that will intersect with merge changes:");
-  }
-
-  @Override
-  public void showError(@NotNull Exception exception) {
-    AbstractVcsHelper.getInstance(myProject).showErrors(Collections.singletonList(new VcsException(exception)),
-      exception.getMessage() == null ? exception.getClass().getName() : exception.getMessage());
   }
 
   @Override

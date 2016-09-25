@@ -46,7 +46,6 @@ public interface QuickMergeInteraction {
 
   void showIntersectedLocalPaths(final List<FilePath> paths);
 
-  void showError(@NotNull Exception exception);
   void showErrors(final String message, final List<VcsException> exceptions);
   void showErrors(final String message, final boolean isError);
 

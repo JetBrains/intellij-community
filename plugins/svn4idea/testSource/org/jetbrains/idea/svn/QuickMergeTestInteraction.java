@@ -101,11 +101,6 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   }
 
   @Override
-  public void showError(@NotNull Exception exception) {
-    myExceptions.add(exception);
-  }
-
-  @Override
   public void showErrors(String message, List<VcsException> exceptions) {
     if (!isEmpty(exceptions)) {
       myExceptions.addAll(exceptions);

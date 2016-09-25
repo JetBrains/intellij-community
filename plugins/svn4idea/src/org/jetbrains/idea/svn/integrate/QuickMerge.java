@@ -16,18 +16,20 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import org.jetbrains.annotations.CalledInAwt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.Continuation;
 import com.intellij.util.continuation.TaskDescriptor;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
+import static java.util.Collections.singletonList;
 
 public class QuickMerge {
 
@@ -57,19 +59,19 @@ public class QuickMerge {
     myContinuation.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
       @Override
       public void consume(VcsException e) {
-        myInteraction.showErrors(myMergeContext.getTitle(), Collections.singletonList(e));
+        myInteraction.showErrors(myMergeContext.getTitle(), singletonList(e));
       }
     });
     myContinuation.addExceptionHandler(SVNException.class, new Consumer<SVNException>() {
       @Override
       public void consume(SVNException e) {
-        myInteraction.showErrors(myMergeContext.getTitle(), Collections.singletonList(new VcsException(e)));
+        myInteraction.showErrors(myMergeContext.getTitle(), singletonList(new VcsException(e)));
       }
     });
     myContinuation.addExceptionHandler(RuntimeException.class, new Consumer<RuntimeException>() {
       @Override
       public void consume(RuntimeException e) {
-        myInteraction.showError(e);
+        myInteraction.showErrors(notNull(e.getMessage(), e.getClass().getName()), singletonList(new VcsException(e)));
       }
     });
     myContinuation.run(tasks);
