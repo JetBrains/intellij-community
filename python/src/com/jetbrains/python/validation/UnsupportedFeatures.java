@@ -47,15 +47,6 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
   }
 
   @Override
-  protected void registerProblem(@Nullable PsiElement node,
-                                 @NotNull String message,
-                                 @Nullable LocalQuickFix localQuickFix,
-                                 boolean asError) {
-    if (node == null) return;
-    registerProblem(node, node.getTextRange(), message, localQuickFix, asError);
-  }
-
-  @Override
   protected void registerProblem(@NotNull PsiElement node,
                                  @NotNull TextRange range,
                                  @NotNull String message,

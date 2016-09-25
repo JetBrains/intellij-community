@@ -148,15 +148,6 @@ public class PyCompatibilityInspection extends PyInspection {
     }
 
     @Override
-    protected final void registerProblem(@Nullable PsiElement node,
-                                         @NotNull String message,
-                                         @Nullable LocalQuickFix localQuickFix,
-                                         boolean asError) {
-      if (node == null) return;
-      registerProblem(node, node.getTextRange(), message, localQuickFix, asError);
-    }
-
-    @Override
     protected void registerProblem(@NotNull PsiElement element,
                                    @NotNull TextRange range,
                                    @NotNull String message,

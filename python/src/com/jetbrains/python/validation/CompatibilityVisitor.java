@@ -538,22 +538,17 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
   }
 
-  protected abstract void registerProblem(@Nullable PsiElement node,
-                                          @NotNull String message,
-                                          @Nullable LocalQuickFix localQuickFix,
-                                          boolean asError);
-
   protected abstract void registerProblem(@NotNull PsiElement node,
                                           @NotNull TextRange range,
                                           @NotNull String message,
                                           @Nullable LocalQuickFix localQuickFix,
                                           boolean asError);
 
-  protected void registerProblem(@Nullable PsiElement node, @NotNull String message, @Nullable LocalQuickFix localQuickFix) {
-    registerProblem(node, message, localQuickFix, true);
+  protected void registerProblem(@NotNull PsiElement node, @NotNull String message, @Nullable LocalQuickFix localQuickFix) {
+    registerProblem(node, node.getTextRange(), message, localQuickFix, true);
   }
 
-  protected void registerProblem(@Nullable PsiElement node, @NotNull String message) {
+  protected void registerProblem(@NotNull PsiElement node, @NotNull String message) {
     registerProblem(node, message, null);
   }
 
