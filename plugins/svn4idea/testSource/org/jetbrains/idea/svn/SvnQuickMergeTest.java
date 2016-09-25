@@ -38,8 +38,8 @@ import org.jetbrains.idea.svn.branchConfig.InfoReliability;
 import org.jetbrains.idea.svn.branchConfig.InfoStorage;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.jetbrains.idea.svn.dialogs.*;
-import org.jetbrains.idea.svn.branchConfig.SvnBranchItem;
+import org.jetbrains.idea.svn.dialogs.MergeDialogI;
+import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeContentsVariants;
@@ -110,12 +110,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
     // by default merges all
-    final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
-      @Override
-      public boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl) {
-        return true;
-      }
-    };
+    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true);
     final WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
@@ -176,12 +171,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
     // by default merges all
     final AtomicReference<String> selectionError = new AtomicReference<>();
-    final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
-      @Override
-      public boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl) {
-        return true;
-      }
-
+    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
       @Override
       public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                    @NotNull String mergeTitle,
@@ -268,12 +258,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     final QuickMerge quickMerge = newQuickMerge(myRepoUrl + "/branches/b2");
     // by default merges all
     final AtomicReference<String> selectionError = new AtomicReference<>();
-    final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
-      @Override
-      public boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl) {
-        return true;
-      }
-
+    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
       @Override
       public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                    @NotNull String mergeTitle,
@@ -341,12 +326,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
     // by default merges all
-    final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction() {
-      @Override
-      public boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl) {
-        return true;
-      }
-
+    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
       @NotNull
       @Override
       public SelectMergeItemsResult selectMergeItems(final List<CommittedChangeList> lists,
@@ -431,7 +411,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     refreshSvnMappingsSynchronously();
     final QuickMerge quickMerge = newQuickMerge(trunkUrl);
     // by default merges all
-    final QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction();
+    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(false);
     final WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
