@@ -1037,6 +1037,17 @@ public class PythonCompletionTest extends PyTestCase {
                          });
   }
 
+  // PY-20769
+  public void testFsPathBuiltinMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36,
+                         () -> {
+                           doTestByText("class Cl(object):\n" +
+                                        "  def __fspa<caret>");
+                           myFixture.checkResult("class Cl(object):\n" +
+                                                 "  def __fspath__(self):");
+                         });
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";
