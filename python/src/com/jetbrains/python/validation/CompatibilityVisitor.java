@@ -19,13 +19,16 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.*;
@@ -36,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * User : catherine
@@ -73,14 +77,10 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyAnnotation(PyAnnotation node) {
     final PsiElement parent = node.getParent();
     if (!(parent instanceof PyFunction || parent instanceof PyNamedParameter)) {
-      final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-      int len = 0;
-      for (LanguageLevel languageLevel : myVersionsToProcess) {
-        if (languageLevel.isOlderThan(LanguageLevel.PYTHON36)) {
-          len = appendLanguageLevel(message, len, languageLevel);
-        }
-      }
-      commonRegisterProblem(message, " not support variable annotations", len, node, null);
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON36),
+                                     " not support variable annotations",
+                                     node,
+                                     null);
     }
   }
 
@@ -88,27 +88,33 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyDictCompExpression(PyDictCompExpression node) {
     super.visitPyDictCompExpression(node);
 
-    final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-    final int len = appendLanguageLevels(message, myVersionsToProcess, level -> !level.supportsSetLiterals());
-    commonRegisterProblem(message, " not support dictionary comprehensions", len, node, new ConvertDictCompQuickFix(), false);
+    registerForAllMatchingVersions(level -> !level.supportsSetLiterals(),
+                                   " not support dictionary comprehensions",
+                                   node,
+                                   new ConvertDictCompQuickFix(),
+                                   false);
   }
 
   @Override
   public void visitPySetLiteralExpression(PySetLiteralExpression node) {
     super.visitPySetLiteralExpression(node);
 
-    final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-    final int len = appendLanguageLevels(message, myVersionsToProcess, level -> !level.supportsSetLiterals());
-    commonRegisterProblem(message, " not support set literal expressions", len, node, new ConvertSetLiteralQuickFix(), false);
+    registerForAllMatchingVersions(level -> !level.supportsSetLiterals(),
+                                   " not support set literal expressions",
+                                   node,
+                                   new ConvertSetLiteralQuickFix(),
+                                   false);
   }
 
   @Override
   public void visitPySetCompExpression(PySetCompExpression node) {
     super.visitPySetCompExpression(node);
 
-    final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-    final int len = appendLanguageLevels(message, myVersionsToProcess, level -> !level.supportsSetLiterals());
-    commonRegisterProblem(message, " not support set comprehensions", len, node, null, false);
+    registerForAllMatchingVersions(level -> !level.supportsSetLiterals(),
+                                   " not support set comprehensions",
+                                   node,
+                                   null,
+                                   false);
   }
 
   @Override
@@ -117,27 +123,19 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
     final PyExpression exceptClass = node.getExceptClass();
     if (exceptClass != null) {
-      if (myVersionsToProcess.contains(LanguageLevel.PYTHON24) || myVersionsToProcess.contains(LanguageLevel.PYTHON25)) {
-        PsiElement element = exceptClass.getNextSibling();
-        while (element instanceof PsiWhiteSpace) {
-          element = element.getNextSibling();
-        }
-
-        if (element != null && "as".equals(element.getText())) {
-          registerProblem(node, COMMON_MESSAGE + "2.4, 2.5 do not support this syntax.");
-        }
-      }
-
       PsiElement element = exceptClass.getNextSibling();
       while (element instanceof PsiWhiteSpace) {
         element = element.getNextSibling();
       }
 
-      if (element != null && ",".equals(element.getText())) {
-        final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-        final int len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
+      if (element != null && "as".equals(element.getText())) {
+        registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON26),
+                                       "Python versions < 2.6 do not support this syntax.",
+                                       node);
+      }
 
-        commonRegisterProblem(message, " not support this syntax.", len, node, new ReplaceExceptPartQuickFix());
+      if (element != null && ",".equals(element.getText())) {
+        registerForAllMatchingVersions(LanguageLevel::isPy3K, " not support this syntax.", node, new ReplaceExceptPartQuickFix());
       }
     }
   }
@@ -153,16 +151,11 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       final QualifiedName qName = importElement.getImportedQName();
 
       if (qName != null) {
-        final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-        final int len;
-
         if (qName.matches("builtins")) {
-          len = appendLanguageLevels(message, myVersionsToProcess, level -> !level.isPy3K());
-          commonRegisterProblem(message, " not have module builtins", len, node, new ReplaceBuiltinsQuickFix());
+          registerForAllMatchingVersions(level -> !level.isPy3K(), " not have module builtins", node, new ReplaceBuiltinsQuickFix());
         }
         else if (qName.matches("__builtin__")) {
-          len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
-          commonRegisterProblem(message, " not have module __builtin__", len, node, new ReplaceBuiltinsQuickFix());
+          registerForAllMatchingVersions(LanguageLevel::isPy3K, " not have module __builtin__", node, new ReplaceBuiltinsQuickFix());
         }
       }
     }
@@ -173,17 +166,15 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyStarExpression(node);
 
     if (node.isAssignmentTarget()) {
-      registerFirst(node,
-                    "Python versions < 3.0 do not support starred expressions as assignment targets",
-                    myVersionsToProcess,
-                    level -> level.isOlderThan(LanguageLevel.PYTHON30));
+      registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON30),
+                                     "Python versions < 3.0 do not support starred expressions as assignment targets",
+                                     node);
     }
 
     if (node.isUnpacking()) {
-      registerFirst(node,
-                    "Python versions < 3.5 do not support starred expressions in tuples, lists, and sets",
-                    myVersionsToProcess,
-                    level -> level.isOlderThan(LanguageLevel.PYTHON35));
+      registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                     "Python versions < 3.5 do not support starred expressions in tuples, lists, and sets",
+                                     node);
     }
   }
 
@@ -191,10 +182,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyDoubleStarExpression(PyDoubleStarExpression node) {
     super.visitPyDoubleStarExpression(node);
 
-    registerFirst(node,
-                  "Python versions < 3.5 do not support starred expressions in dicts",
-                  myVersionsToProcess,
-                  level -> level.isOlderThan(LanguageLevel.PYTHON35));
+    registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                   "Python versions < 3.5 do not support starred expressions in dicts",
+                                   node);
   }
 
   @Override
@@ -202,10 +192,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyBinaryExpression(node);
 
     if (node.isOperator("<>")) {
-      final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-      final int len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
-
-      commonRegisterProblem(message, " not support <>, use != instead.", len, node, new ReplaceNotEqOperatorQuickFix());
+      registerForAllMatchingVersions(LanguageLevel::isPy3K, " not support <>, use != instead.", node, new ReplaceNotEqOperatorQuickFix());
     }
     else if (node.isOperator("@")) {
       checkMatrixMultiplicationOperator(node.getPsiOperator());
@@ -213,10 +200,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   private void checkMatrixMultiplicationOperator(PsiElement node) {
-    registerFirst(node,
-                  "Python versions < 3.5 do not support matrix multiplication operators",
-                  myVersionsToProcess,
-                  level -> level.isOlderThan(LanguageLevel.PYTHON35));
+    registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                   "Python versions < 3.5 do not support matrix multiplication operators",
+                                   node);
   }
 
   @Override
@@ -227,31 +213,28 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
     if (node.isIntegerLiteral()) {
       if (text.endsWith("l") || text.endsWith("L")) {
-        final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-        final String suffix = " not support a trailing \'l\' or \'L\'.";
-        final int len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
-
-        commonRegisterProblem(message, suffix, len, node, new RemoveTrailingLQuickFix());
+        registerForAllMatchingVersions(LanguageLevel::isPy3K,
+                                       " not support a trailing \'l\' or \'L\'.",
+                                       node,
+                                       new RemoveTrailingLQuickFix());
       }
 
       if (text.length() > 1 && text.charAt(0) == '0') {
         final char secondChar = Character.toLowerCase(text.charAt(1));
         if (secondChar != 'o' && secondChar != 'b' && secondChar != 'x' && text.chars().anyMatch(c -> c != '0')) {
-          final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-          final String suffix = " not support this syntax. It requires '0o' prefix for octal literals";
-          int len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
-
-          commonRegisterProblem(message, suffix, len, node, new ReplaceOctalNumericLiteralQuickFix());
+          registerForAllMatchingVersions(LanguageLevel::isPy3K,
+                                         " not support this syntax. It requires '0o' prefix for octal literals",
+                                         node,
+                                         new ReplaceOctalNumericLiteralQuickFix());
         }
       }
     }
 
     if (text.contains("_")) {
-      final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-      final String suffix = " not support underscores in numeric literals";
-      final int len = appendLanguageLevels(message, myVersionsToProcess, level -> level.isOlderThan(LanguageLevel.PYTHON36));
-
-      commonRegisterProblem(message, suffix, len, node, new PyRemoveUnderscoresInNumericLiteralsQuickFix());
+      registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON36),
+                                     " not support underscores in numeric literals",
+                                     node,
+                                     new PyRemoveUnderscoresInNumericLiteralsQuickFix());
     }
   }
 
@@ -265,14 +248,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       final String prefix = text.substring(0, prefixLength).toUpperCase();
       if (prefix.isEmpty()) continue;
 
-      final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-      final int len =
-        appendLanguageLevels(message,
-                             myVersionsToProcess,
-                             level -> !AVAILABLE_PREFIXES.getOrDefault(level, DEFAULT_PREFIXES).contains(prefix));
-
       final TextRange range = TextRange.create(stringNode.getStartOffset(), stringNode.getStartOffset() + prefixLength);
-      commonRegisterProblem(message, " not support a '" + prefix + "' prefix", len, node, range, new RemovePrefixQuickFix(prefix));
+      registerForAllMatchingVersions(level -> !AVAILABLE_PREFIXES.getOrDefault(level, DEFAULT_PREFIXES).contains(prefix),
+                                     " not support a '" + prefix + "' prefix",
+                                     node,
+                                     range,
+                                     new RemovePrefixQuickFix(prefix),
+                                     true);
     }
   }
 
@@ -280,14 +262,11 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyListCompExpression(final PyListCompExpression node) {
     super.visitPyListCompExpression(node);
 
-    final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-    final int len =
-      appendLanguageLevels(message, myVersionsToProcess, level -> UnsupportedFeaturesUtil.visitPyListCompExpression(node, level));
-
-    for (ComprhForComponent forComponent : node.getForComponents()) {
-      commonRegisterProblem(message, " not support this syntax in list comprehensions.", len, forComponent.getIteratedList(),
-                            new ReplaceListComprehensionsQuickFix());
-    }
+    final List<PyExpression> nodes = node.getForComponents().stream().map(ComprhForComponent::getIteratedList).collect(Collectors.toList());
+    registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.visitPyListCompExpression(node, level),
+                                   " not support this syntax in list comprehensions.",
+                                   nodes,
+                                   new ReplaceListComprehensionsQuickFix());
   }
 
   @Override
@@ -295,58 +274,50 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyRaiseStatement(node);
 
     // empty raise
-    StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-    int len = appendLanguageLevels(message, myVersionsToProcess, level -> UnsupportedFeaturesUtil.raiseHasNoArgs(node, level));
-    commonRegisterProblem(message, " not support this syntax. Raise with no arguments can only be used in an except block",
-                          len, node, null, false);
+    registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.raiseHasNoArgs(node, level),
+                                   " not support this syntax. Raise with no arguments can only be used in an except block",
+                                   node,
+                                   null,
+                                   false);
 
     // raise 1, 2, 3
-    message = new StringBuilder(COMMON_MESSAGE);
-    len = appendLanguageLevels(message, myVersionsToProcess, level -> UnsupportedFeaturesUtil.raiseHasMoreThenOneArg(node, level));
-    commonRegisterProblem(message, " not support this syntax.", len, node, new ReplaceRaiseStatementQuickFix());
+    registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.raiseHasMoreThenOneArg(node, level),
+                                   " not support this syntax.",
+                                   node,
+                                   new ReplaceRaiseStatementQuickFix());
 
     // raise exception from cause
-    message = new StringBuilder(COMMON_MESSAGE);
-    len = appendLanguageLevels(message, myVersionsToProcess, level -> UnsupportedFeaturesUtil.raiseHasFromKeyword(node, level));
-    commonRegisterProblem(message, " not support this syntax.", len, node, new ReplaceRaiseStatementQuickFix());
+    registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.raiseHasFromKeyword(node, level),
+                                   " not support this syntax.",
+                                   node,
+                                   new ReplaceRaiseStatementQuickFix());
   }
 
   @Override
   public void visitPyReprExpression(PyReprExpression node) {
     super.visitPyReprExpression(node);
 
-    final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-    final int len = appendLanguageLevels(message, myVersionsToProcess, LanguageLevel::isPy3K);
-    commonRegisterProblem(message, " not support backquotes, use repr() instead", len, node, new ReplaceBackquoteExpressionQuickFix());
+    registerForAllMatchingVersions(LanguageLevel::isPy3K,
+                                   " not support backquotes, use repr() instead",
+                                   node,
+                                   new ReplaceBackquoteExpressionQuickFix());
   }
 
 
   @Override
   public void visitPyWithStatement(PyWithStatement node) {
     super.visitPyWithStatement(node);
-    Set<PyWithItem> problemItems = new HashSet<>();
-    StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-    for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-      LanguageLevel languageLevel = myVersionsToProcess.get(i);
-      if (languageLevel == LanguageLevel.PYTHON24) {
-        registerProblem(node, "Python version 2.4 doesn't support this syntax.");
-      }
-      else if (!languageLevel.supportsSetLiterals()) {
-        final PyWithItem[] items = node.getWithItems();
-        if (items.length > 1) {
-          for (int j = 1; j < items.length; j++) {
-            if (!problemItems.isEmpty())
-              message.append(", ");
-            message.append(languageLevel.toString());
-            problemItems.add(items [j]);
-          }
-        }
-      }
+
+    registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
+
+    final PyWithItem[] items = node.getWithItems();
+    if (items.length > 1) {
+      registerForAllMatchingVersions(level -> !level.supportsSetLiterals() && !level.equals(LanguageLevel.PYTHON24),
+                                     " not support multiple context managers",
+                                     Arrays.asList(items).subList(1, items.length),
+                                     null);
     }
-    message.append(" do not support multiple context managers");
-    for (PyWithItem item : problemItems) {
-      registerProblem(item, message.toString());
-    }
+
     checkAsyncKeyword(node);
   }
 
@@ -362,25 +333,24 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
     final PyArgumentList list = node.getSuperClassExpressionList();
     if (list != null && list.getArguments().length == 0) {
-      registerFirst(list, "Python version 2.4 does not support this syntax.", myVersionsToProcess, LanguageLevel.PYTHON24::equals);
+      registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 does not support this syntax.", list);
     }
   }
 
   @Override
   public void visitPyPrintStatement(PyPrintStatement node) {
     super.visitPyPrintStatement(node);
-    if (shouldBeCompatibleWithPy3()) {
-      boolean hasProblem = false;
-      PsiElement[] arguments = node.getChildren();
-      for (PsiElement element : arguments) {
-        if (!((element instanceof PyParenthesizedExpression) || (element instanceof PyTupleExpression))) {
-          hasProblem = true;
-          break;
-        }
-      }
-      if (hasProblem || arguments.length == 0)
-        registerProblem(node, "Python version >= 3.0 do not support this syntax. The print statement has been replaced with a print() function",
-                          new CompatibilityPrintCallQuickFix());
+
+    final PsiElement[] arguments = node.getChildren();
+    final Predicate<PsiElement> nonParenthesesPredicate =
+      element -> !(element instanceof PyParenthesizedExpression || element instanceof PyTupleExpression);
+
+    if (arguments.length == 0 || Arrays.stream(arguments).anyMatch(nonParenthesesPredicate)) {
+      registerOnFirstMatchingVersion(LanguageLevel::isPy3K,
+                                     "Python version >= 3.0 do not support this syntax. " +
+                                     "The print statement has been replaced with a print() function",
+                                     node,
+                                     new CompatibilityPrintCallQuickFix());
     }
   }
 
@@ -392,11 +362,11 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     if (importSource != null) {
       final PsiElement prev = importSource.getPrevSibling();
       if (prev != null && prev.getNode().getElementType() == PyTokenTypes.DOT) { // PY-2793
-        registerFirst(node, "Python version 2.4 doesn't support this syntax.", myVersionsToProcess, LanguageLevel.PYTHON24::equals);
+        registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
       }
     }
     else {
-      registerFirst(node, "Python version 2.4 doesn't support this syntax.", myVersionsToProcess, LanguageLevel.PYTHON24::equals);
+      registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
     }
   }
 
@@ -426,10 +396,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyConditionalExpression(PyConditionalExpression node) {   //PY-4293
     super.visitPyConditionalExpression(node);
 
-    registerFirst(node,
-                  "Python version 2.4 doesn't support this syntax.",
-                  myVersionsToProcess,
-                  LanguageLevel.PYTHON24::equals);
+    registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
   }
 
   @Override
@@ -439,11 +406,10 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     final PyExceptPart[] excepts = node.getExceptParts();
     final PyFinallyPart finallyPart = node.getFinallyPart();
     if (excepts.length != 0 && finallyPart != null) {
-      registerFirst(node,
-                    "Python version 2.4 doesn't support this syntax. You could use a finally block to ensure " +
-                    "that code is always executed, or one or more except blocks to catch specific exceptions.",
-                    myVersionsToProcess,
-                    LanguageLevel.PYTHON24::equals);
+      registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals,
+                                     "Python version 2.4 doesn't support this syntax. You could use a finally block to ensure " +
+                                     "that code is always executed, or one or more except blocks to catch specific exceptions.",
+                                     node);
     }
   }
 
@@ -453,10 +419,10 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
     final PsiElement firstChild = node.getFirstChild();
     if (firstChild != null && PyNames.SUPER.equals(firstChild.getText()) && ArrayUtil.isEmpty(node.getArguments())) {
-      final StringBuilder message = new StringBuilder(COMMON_MESSAGE);
-      final int len = appendLanguageLevels(message, myVersionsToProcess, level -> !level.isPy3K());
-
-      commonRegisterProblem(message, " not support this syntax. super() should have arguments in Python 2", len, node, null);
+      registerForAllMatchingVersions(level -> !level.isPy3K(),
+                                     " not support this syntax. super() should have arguments in Python 2",
+                                     node,
+                                     null);
     }
 
     highlightIncorrectArguments(node);
@@ -473,10 +439,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyPrefixExpression(node);
 
     if (node.getOperator() == PyTokenTypes.AWAIT_KEYWORD) {
-      registerFirst(node,
-                    "Python versions < 3.5 do not support this syntax",
-                    myVersionsToProcess,
-                    level -> level.isOlderThan(LanguageLevel.PYTHON35));
+      registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                     "Python versions < 3.5 do not support this syntax",
+                                     node);
     }
   }
 
@@ -488,38 +453,29 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       return;
     }
 
-    registerFirst(node,
-                  "Python versions < 3.3 do not support this syntax. Delegating to a subgenerator is available since " +
-                  "Python 3.3; use explicit iteration over subgenerator instead.",
-                  myVersionsToProcess,
-                  level -> level.isOlderThan(LanguageLevel.PYTHON33));
+    registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON33),
+                                   "Python versions < 3.3 do not support this syntax. Delegating to a subgenerator is available since " +
+                                   "Python 3.3; use explicit iteration over subgenerator instead.",
+                                   node);
   }
 
   @Override
   public void visitPyReturnStatement(PyReturnStatement node) {
-    boolean allowed = true;
-    for (LanguageLevel level : myVersionsToProcess) {
-      if (level.isOlderThan(LanguageLevel.PYTHON33)) {
-        allowed = false;
-        break;
-      }
-    }
-    if (allowed) {
-      return;
-    }
-    final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
-    if (function != null && node.getExpression() != null) {
-      final YieldVisitor visitor = new YieldVisitor();
-      function.acceptChildren(visitor);
-      if (visitor.haveYield()) {
-        registerProblem(node, "Python versions < 3.3 do not allow 'return' with argument inside generator.");
+    if (myVersionsToProcess.stream().anyMatch(level -> level.isOlderThan(LanguageLevel.PYTHON33))) {
+      final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
+      if (function != null && node.getExpression() != null) {
+        final YieldVisitor visitor = new YieldVisitor();
+        function.acceptChildren(visitor);
+        if (visitor.haveYield()) {
+          registerProblem(node, "Python versions < 3.3 do not allow 'return' with argument inside generator.");
+        }
       }
     }
   }
 
   @Override
   public void visitPyNoneLiteralExpression(PyNoneLiteralExpression node) {
-    if (shouldBeCompatibleWithPy2() && node.isEllipsis()) {
+    if (node.isEllipsis()) {
       final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression.class);
       if (subscription != null && PsiTreeUtil.isAncestor(subscription.getIndexExpression(), node, false)) {
         return;
@@ -528,7 +484,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (sliceItem != null) {
         return;
       }
-      registerProblem(node, "Python versions < 3.0 do not support '...' outside of sequence slicings.");
+      registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON30),
+                                     "Python versions < 3.0 do not support '...' outside of sequence slicings.",
+                                     node);
     }
   }
 
@@ -547,12 +505,11 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   private void checkAsyncKeyword(@NotNull PsiElement node) {
     final ASTNode asyncNode = node.getNode().findChildByType(PyTokenTypes.ASYNC_KEYWORD);
     if (asyncNode != null) {
-      for (LanguageLevel level : myVersionsToProcess) {
-        if (level.isOlderThan(LanguageLevel.PYTHON35)) {
-          registerProblem(node, asyncNode.getTextRange(), "Python versions < 3.5 do not support this syntax", null, true);
-          break;
-        }
-      }
+      registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                     "Python versions < 3.5 do not support this syntax",
+                                     node,
+                                     asyncNode.getTextRange(),
+                                     null);
     }
   }
 
@@ -604,111 +561,85 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     myVersionsToProcess = versionsToProcess;
   }
 
-  protected void commonRegisterProblem(@NotNull StringBuilder initMessage,
-                                       @NotNull String suffix,
-                                       int len,
-                                       @NotNull PyElement node,
-                                       @Nullable LocalQuickFix localQuickFix) {
-    commonRegisterProblem(initMessage, suffix, len, node, node.getTextRange(), localQuickFix, true);
-  }
+  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
+                                                @NotNull String suffix,
+                                                @NotNull Iterable<Pair<? extends PsiElement, TextRange>> nodesWithRanges,
+                                                @Nullable LocalQuickFix localQuickFix,
+                                                boolean asError) {
+    final List<String> levels = myVersionsToProcess
+      .stream()
+      .filter(levelPredicate)
+      .map(LanguageLevel::toString)
+      .collect(Collectors.toList());
 
-  protected void commonRegisterProblem(@NotNull StringBuilder initMessage,
-                                       @NotNull String suffix,
-                                       int len,
-                                       @NotNull PyElement node,
-                                       @NotNull TextRange range,
-                                       @Nullable LocalQuickFix localQuickFix) {
-    commonRegisterProblem(initMessage, suffix, len, node, range, localQuickFix, true);
-  }
-
-  protected void commonRegisterProblem(@NotNull StringBuilder initMessage,
-                                       @NotNull String suffix,
-                                       int len,
-                                       @NotNull PyElement node,
-                                       @NotNull TextRange range,
-                                       @Nullable LocalQuickFix localQuickFix,
-                                       boolean asError) {
-    initMessage.append(" do");
-    if (len == 1) {
-      initMessage.append("es");
-    }
-    initMessage.append(suffix);
-    if (len != 0) {
-      registerProblem(node, range, initMessage.toString(), localQuickFix, asError);
-    }
-  }
-
-  protected void commonRegisterProblem(@NotNull StringBuilder initMessage,
-                                       @NotNull String suffix,
-                                       int len,
-                                       @NotNull PyElement node,
-                                       @Nullable LocalQuickFix localQuickFix,
-                                       boolean asError) {
-    commonRegisterProblem(initMessage, suffix, len, node, node.getTextRange(), localQuickFix, asError);
-  }
-
-  protected static int appendLanguageLevel(@NotNull StringBuilder message, int len, @NotNull LanguageLevel languageLevel) {
-    if (len != 0) {
-      message.append(", ");
-    }
-    message.append(languageLevel.toString());
-    return ++len;
-  }
-
-  protected static int appendLanguageLevels(@NotNull StringBuilder message,
-                                            @NotNull Collection<LanguageLevel> levels,
-                                            @NotNull Predicate<LanguageLevel> levelPredicate) {
-    int len = 0;
-
-    for (LanguageLevel languageLevel : levels) {
-      if (levelPredicate.test(languageLevel)) {
-        len = appendLanguageLevel(message, len, languageLevel);
+    if (!levels.isEmpty()) {
+      final String result = COMMON_MESSAGE + StringUtil.join(levels, ", ") + (levels.size() == 1 ? " does" : " do") + suffix;
+      for (Pair<? extends PsiElement, TextRange> nodeWithRange : nodesWithRanges) {
+        registerProblem(nodeWithRange.first, nodeWithRange.second, result, localQuickFix, asError);
       }
     }
-
-    return len;
   }
 
-  private void registerFirst(@Nullable PsiElement node,
-                             @NotNull String message,
-                             @NotNull Collection<LanguageLevel> levels,
-                             @NotNull Predicate<LanguageLevel> levelPredicate) {
-    registerFirst(node, message, null, levels, levelPredicate);
+  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
+                                                @NotNull String suffix,
+                                                @NotNull Iterable<? extends PsiElement> nodes,
+                                                @Nullable LocalQuickFix localQuickFix) {
+    final List<Pair<? extends PsiElement, TextRange>> nodesWithRanges =
+      ContainerUtil.map(nodes, node -> Pair.createNonNull(node, node.getTextRange()));
+    registerForAllMatchingVersions(levelPredicate, suffix, nodesWithRanges, localQuickFix, true);
   }
 
-  private void registerFirst(@Nullable PsiElement node,
-                             @NotNull String message,
-                             @Nullable LocalQuickFix localQuickFix,
-                             @NotNull Collection<LanguageLevel> levels,
-                             @NotNull Predicate<LanguageLevel> levelPredicate) {
-    if (levels.stream().anyMatch(levelPredicate)) {
-      registerProblem(node, message, localQuickFix);
+  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
+                                                @NotNull String suffix,
+                                                @NotNull PsiElement node,
+                                                @NotNull TextRange range,
+                                                @Nullable LocalQuickFix localQuickFix,
+                                                boolean asError) {
+    final List<Pair<? extends PsiElement, TextRange>> nodesWithRanges = Collections.singletonList(Pair.createNonNull(node, range));
+    registerForAllMatchingVersions(levelPredicate, suffix, nodesWithRanges, localQuickFix, asError);
+  }
+
+  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
+                                                @NotNull String suffix,
+                                                @NotNull PsiElement node,
+                                                @Nullable LocalQuickFix localQuickFix,
+                                                boolean asError) {
+    registerForAllMatchingVersions(levelPredicate, suffix, node, node.getTextRange(), localQuickFix, asError);
+  }
+
+  protected void registerForAllMatchingVersions(@NotNull Predicate<LanguageLevel> levelPredicate,
+                                                @NotNull String suffix,
+                                                @NotNull PsiElement node,
+                                                @Nullable LocalQuickFix localQuickFix) {
+    registerForAllMatchingVersions(levelPredicate, suffix, node, node.getTextRange(), localQuickFix, true);
+  }
+
+  protected void registerOnFirstMatchingVersion(@NotNull Predicate<LanguageLevel> levelPredicate,
+                                                @NotNull String message,
+                                                @NotNull PsiElement node,
+                                                @NotNull TextRange range,
+                                                @Nullable LocalQuickFix localQuickFix) {
+    if (myVersionsToProcess.stream().anyMatch(levelPredicate)) {
+      registerProblem(node, range, message, localQuickFix, true);
     }
+  }
+
+  protected void registerOnFirstMatchingVersion(@NotNull Predicate<LanguageLevel> levelPredicate,
+                                                @NotNull String message,
+                                                @NotNull PsiElement node,
+                                                @Nullable LocalQuickFix localQuickFix) {
+    registerOnFirstMatchingVersion(levelPredicate, message, node, node.getTextRange(), localQuickFix);
+  }
+
+  protected void registerOnFirstMatchingVersion(@NotNull Predicate<LanguageLevel> levelPredicate,
+                                                @NotNull String message,
+                                                @NotNull PsiElement node) {
+    registerOnFirstMatchingVersion(levelPredicate, message, node, node.getTextRange(), null);
   }
 
   @Override
   public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
-    if (shouldBeCompatibleWithPy2()) {
-      registerProblem(node, "nonlocal keyword available only since py3", null, false);
-    }
-  }
-
-  protected boolean shouldBeCompatibleWithPy2() {
-    for (LanguageLevel level : myVersionsToProcess) {
-      if (level.isOlderThan(LanguageLevel.PYTHON30)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  protected boolean shouldBeCompatibleWithPy3() {
-    for (LanguageLevel level : myVersionsToProcess) {
-      if (level.isPy3K()) {
-        return true;
-      }
-    }
-    return false;
+    registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON30), "nonlocal keyword available only since py3", node);
   }
 
   private void highlightIncorrectArguments(@NotNull PyCallExpression callExpression) {
@@ -726,18 +657,16 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
           registerProblem(argument, "Keyword argument repeated", new PyRemoveArgumentQuickFix());
         }
         else if (seenPositionalContainer) {
-          registerFirst(argument,
-                        "Python versions < 2.6 do not allow keyword arguments after *expression",
-                        new PyRemoveArgumentQuickFix(),
-                        myVersionsToProcess,
-                        level -> level.isOlderThan(LanguageLevel.PYTHON26));
+          registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON26),
+                                         "Python versions < 2.6 do not allow keyword arguments after *expression",
+                                         argument,
+                                         new PyRemoveArgumentQuickFix());
         }
         else if (seenKeywordContainer) {
-          registerFirst(argument,
-                        "Python versions < 3.5 do not allow keyword arguments after **expression",
-                        new PyRemoveArgumentQuickFix(),
-                        myVersionsToProcess,
-                        level -> level.isOlderThan(LanguageLevel.PYTHON35));
+          registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                         "Python versions < 3.5 do not allow keyword arguments after **expression",
+                                         argument,
+                                         new PyRemoveArgumentQuickFix());
         }
 
         seenKeywordArgument = true;
@@ -747,21 +676,19 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
         final PyStarArgument starArgument = (PyStarArgument)argument;
         if (starArgument.isKeyword()) {
           if (seenKeywordContainer) {
-            registerFirst(argument,
-                          "Python versions < 3.5 do not allow duplicate **expressions",
-                          new PyRemoveArgumentQuickFix(),
-                          myVersionsToProcess,
-                          level -> level.isOlderThan(LanguageLevel.PYTHON35));
+            registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                           "Python versions < 3.5 do not allow duplicate **expressions",
+                                           argument,
+                                           new PyRemoveArgumentQuickFix());
           }
           seenKeywordContainer = true;
         }
         else {
           if (seenPositionalContainer) {
-            registerFirst(argument,
-                          "Python versions < 3.5 do not allow duplicate *expressions",
-                          new PyRemoveArgumentQuickFix(),
-                          myVersionsToProcess,
-                          level -> level.isOlderThan(LanguageLevel.PYTHON35));
+            registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                           "Python versions < 3.5 do not allow duplicate *expressions",
+                                           argument,
+                                           new PyRemoveArgumentQuickFix());
           }
           seenPositionalContainer = true;
         }
@@ -771,11 +698,10 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
           registerProblem(argument, "Positional argument after keyword argument", new PyRemoveArgumentQuickFix());
         }
         else if (seenPositionalContainer) {
-          registerFirst(argument,
-                        "Python versions < 3.5 do not allow positional arguments after *expression",
-                        new PyRemoveArgumentQuickFix(),
-                        myVersionsToProcess,
-                        level -> level.isOlderThan(LanguageLevel.PYTHON35));
+          registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),
+                                         "Python versions < 3.5 do not allow positional arguments after *expression",
+                                         argument,
+                                         new PyRemoveArgumentQuickFix());
         }
         else if (seenKeywordContainer) {
           registerProblem(argument, "Positional argument after **expression", new PyRemoveArgumentQuickFix());
