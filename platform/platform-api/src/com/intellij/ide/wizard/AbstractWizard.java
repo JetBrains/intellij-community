@@ -496,7 +496,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       myNextButton.setEnabled(canGoNext);
     }
 
-    if (myNextButton.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myNextButton.isEnabled() && !ApplicationManager.getApplication().isUnitTestMode() && getRootPane() != null) {
       getRootPane().setDefaultButton(myNextButton);
     }
 
