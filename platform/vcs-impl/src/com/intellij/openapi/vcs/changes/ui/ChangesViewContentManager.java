@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsListener;
@@ -151,7 +152,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
 
   public boolean isAvailable() {
     final List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
-    return !mappings.isEmpty() && !mappings.get(0).isDefaultMapping() && mappings.get(0).getVcs() != null;
+    return !mappings.isEmpty() && !StringUtil.isEmpty(mappings.get(0).getVcs());
   }
 
   public void projectClosed() {
