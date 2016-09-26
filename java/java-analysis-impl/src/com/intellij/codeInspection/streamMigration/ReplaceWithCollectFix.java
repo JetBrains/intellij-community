@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -23,6 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -42,6 +44,16 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
     return "Replace with " + myMethodName;
   }
 
+  @Nullable
+  PsiType getAddedElementType(PsiMethodCallExpression call) {
+    JavaResolveResult resolveResult = call.resolveMethodGenerics();
+    PsiMethod method = call.resolveMethod();
+    if(method == null) return null;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if(parameters.length != 1) return null;
+    return resolveResult.getSubstitutor().substitute(parameters[0].getType());
+  }
+
   @Override
   void migrate(@NotNull Project project,
                @NotNull ProblemDescriptor descriptor,
@@ -49,7 +61,7 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
                @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-               @NotNull List<String> intermediateOps) {
+               @NotNull List<Operation> operations) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiType iteratedValueType = iteratedValue.getType();
     final PsiMethodCallExpression methodCallExpression = tb.getSingleMethodCall();
@@ -57,7 +69,7 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
     if (methodCallExpression == null) return;
 
     restoreComments(foreachStatement, body);
-    if (intermediateOps.isEmpty() && StreamApiMigrationInspection.isAddAllCall(tb)) {
+    if (operations.isEmpty() && StreamApiMigrationInspection.isAddAllCall(tb)) {
       final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
       final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "";
       final String collectionText =
@@ -69,8 +81,10 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
       return;
     }
     PsiExpression itemToAdd = methodCallExpression.getArgumentList().getExpressions()[0];
-    intermediateOps.add(createMapperFunctionalExpressionText(tb.getVariable(), itemToAdd));
-    final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
+    PsiType addedType = getAddedElementType(methodCallExpression);
+    if (addedType == null) addedType = itemToAdd.getType();
+    operations.add(new StreamApiMigrationInspection.MapOp(itemToAdd, tb.getVariable(), addedType));
+    final StringBuilder builder = generateStream(iteratedValue, operations);
 
     final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
     final PsiExpression initializer = StreamApiMigrationInspection
@@ -88,7 +102,7 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
 
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     SuggestedNameInfo suggestedNameInfo =
-      codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, itemToAdd.getType(), false);
+      codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, addedType, false);
     if (suggestedNameInfo.names.length == 0) {
       suggestedNameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, "item", null, itemToAdd.getType(), false);
     }
@@ -123,12 +137,5 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
     else {
       return "toCollection(() -> " + initializer.getText() + ")";
     }
-  }
-
-  private static String createMapperFunctionalExpressionText(PsiVariable variable, PsiExpression expression) {
-    if (!StreamApiMigrationInspection.isIdentityMapping(variable, expression)) {
-      return new StreamApiMigrationInspection.MapOp(expression, variable).createReplacement(null);
-    }
-    return "";
   }
 }

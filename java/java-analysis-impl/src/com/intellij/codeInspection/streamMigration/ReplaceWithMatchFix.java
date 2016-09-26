@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -49,18 +50,17 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
                @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-               @NotNull List<String> intermediateOps) {
+               @NotNull List<Operation> operations) {
     PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
     PsiExpression value = returnStatement.getReturnValue();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    intermediateOps.add("");
     restoreComments(foreachStatement, body);
     if (StreamApiMigrationInspection.isLiteral(value, Boolean.TRUE) || StreamApiMigrationInspection.isLiteral(value, Boolean.FALSE)) {
       boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
       PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(foreachStatement);
       if (nextReturnStatement != null && StreamApiMigrationInspection.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
         String methodName = foundResult ? "anyMatch" : "noneMatch";
-        String streamText = generateStream(iteratedValue, intermediateOps).toString();
+        String streamText = generateStream(iteratedValue, operations).toString();
         streamText = addTerminalOperation(streamText, methodName, foreachStatement, tb);
         boolean siblings = nextReturnStatement.getParent() == foreachStatement.getParent();
         PsiElement result =
@@ -73,7 +73,7 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
       }
     }
     if (!StreamApiMigrationInspection.isVariableReferenced(tb.getVariable(), value)) {
-      String streamText = generateStream(iteratedValue, intermediateOps).toString();
+      String streamText = generateStream(iteratedValue, operations).toString();
       streamText = addTerminalOperation(streamText, "anyMatch", foreachStatement, tb);
       String replacement = "if(" + streamText + "){" + returnStatement.getText() + "}";
       PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(replacement, foreachStatement));

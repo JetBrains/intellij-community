@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -40,14 +41,14 @@ class ReplaceWithCountFix extends MigrateToStreamFix {
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
                @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-               @NotNull List<String> intermediateOps) {
+               @NotNull List<Operation> operations) {
     PsiExpression operand = StreamApiMigrationInspection.extractIncrementedLValue(tb.getSingleExpression(PsiExpression.class));
     if (!(operand instanceof PsiReferenceExpression)) return;
     PsiElement element = ((PsiReferenceExpression)operand).resolve();
     if (!(element instanceof PsiLocalVariable)) return;
     PsiLocalVariable var = (PsiLocalVariable)element;
-    final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
+    final StringBuilder builder = generateStream(iteratedValue, operations);
     builder.append(".count()");
-    replaceWithNumericAddition(project, foreachStatement, var, builder, "long");
+    replaceWithNumericAddition(project, foreachStatement, var, builder, PsiType.LONG);
   }
 }

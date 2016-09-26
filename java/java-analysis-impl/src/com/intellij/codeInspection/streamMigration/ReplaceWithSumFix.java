@@ -16,12 +16,12 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Locale;
 
 /**
  * @author Tagir Valeev
@@ -41,7 +41,7 @@ class ReplaceWithSumFix extends MigrateToStreamFix {
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
                @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-               @NotNull List<String> intermediateOps) {
+               @NotNull List<Operation> operations) {
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
     if (assignment == null) return;
     PsiVariable var = StreamApiMigrationInspection.extractAccumulator(assignment);
@@ -50,22 +50,13 @@ class ReplaceWithSumFix extends MigrateToStreamFix {
     PsiExpression addend = StreamApiMigrationInspection.extractAddend(assignment);
     if (addend == null) return;
     PsiType type = var.getType();
-    if (!(type instanceof PsiPrimitiveType)) return;
-    PsiPrimitiveType primitiveType = (PsiPrimitiveType)type;
-    if (primitiveType.equalsToText("float")) return;
-    String typeName;
-    if (primitiveType.equalsToText("double")) {
-      typeName = "Double";
+    if (!(type instanceof PsiPrimitiveType) || type.equals(PsiType.FLOAT)) return;
+    if (!type.equals(PsiType.DOUBLE) && !type.equals(PsiType.LONG)) {
+      type = PsiType.INT;
     }
-    else if (primitiveType.equalsToText("long")) {
-      typeName = "Long";
-    }
-    else {
-      typeName = "Int";
-    }
-    intermediateOps.add(".mapTo" + typeName + "(" + StreamApiMigrationInspection.createLambda(tb.getVariable(), addend) + ")");
-    final StringBuilder builder = generateStream(iteratedValue, intermediateOps);
+    operations.add(new StreamApiMigrationInspection.MapOp(addend, tb.getVariable(), type));
+    final StringBuilder builder = generateStream(iteratedValue, operations);
     builder.append(".sum()");
-    replaceWithNumericAddition(project, foreachStatement, var, builder, typeName.toLowerCase(Locale.ENGLISH));
+    replaceWithNumericAddition(project, foreachStatement, var, builder, type);
   }
 }

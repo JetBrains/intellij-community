@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -40,10 +41,9 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
                @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-               @NotNull List<String> intermediateOps) {
+               @NotNull List<Operation> operations) {
     PsiStatement statement = tb.getSingleStatement();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    intermediateOps.add("");
     if (statement instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       PsiExpression value = returnStatement.getReturnValue();
@@ -52,7 +52,7 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       if (nextReturnStatement == null) return;
       PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
       if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return;
-      StringBuilder builder = generateStream(iteratedValue, intermediateOps).append(".findFirst()");
+      StringBuilder builder = generateStream(iteratedValue, operations).append(".findFirst()");
       if (!(value instanceof PsiReferenceExpression) || ((PsiReferenceExpression)value).resolve() != tb.getVariable()) {
         builder.append(".map(").append(tb.getVariable().getName()).append(" -> ").append(value.getText()).append(")");
       }
@@ -77,7 +77,7 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       PsiVariable var = (PsiVariable)element;
       PsiExpression value = assignment.getRExpression();
       if (value == null) return;
-      StringBuilder builder = generateStream(iteratedValue, intermediateOps).append(".findFirst()");
+      StringBuilder builder = generateStream(iteratedValue, operations).append(".findFirst()");
       if (!(value instanceof PsiReferenceExpression) || ((PsiReferenceExpression)value).resolve() != tb.getVariable()) {
         builder.append(".map(").append(tb.getVariable().getName()).append(" -> ").append(value.getText()).append(")");
       }
