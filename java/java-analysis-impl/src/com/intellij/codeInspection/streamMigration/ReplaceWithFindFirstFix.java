@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,6 +102,17 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
         // pull cast outside to avoid the .map() step
         if(castType != null && StreamApiMigrationInspection.isIdentityMapping(var, castExpression.getOperand())) {
           return "(" + castType.getText() + ")" + stream + ".orElse(null)";
+        }
+      }
+      if(StreamApiMigrationInspection.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueExpression.getType())) {
+        return stream + ".filter(" + StreamApiMigrationInspection.createLambda(var, trueExpression) + ").isPresent()";
+      }
+      if(trueExpression instanceof PsiConditionalExpression) {
+        PsiConditionalExpression condition = (PsiConditionalExpression)trueExpression;
+        if(EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(falseExpression, condition.getElseExpression())) {
+          return generateOptionalUnwrap(
+            stream + ".filter(" + StreamApiMigrationInspection.createLambda(var, condition.getCondition()) + ")", tb,
+            condition.getThenExpression(), falseExpression);
         }
       }
       stream += ".map(" + StreamApiMigrationInspection.createLambda(var, trueExpression) + ")";

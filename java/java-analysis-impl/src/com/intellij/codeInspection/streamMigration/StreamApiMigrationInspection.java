@@ -561,7 +561,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             methodName = "noneMatch";
             if(!operations.isEmpty()) {
               Operation lastOp = operations.get(operations.size() - 1);
-              if(lastOp instanceof FilterOp && BoolUtils.isNegation(lastOp.getExpression())) {
+              if(lastOp instanceof FilterOp && (((FilterOp)lastOp).isNegated() ^ BoolUtils.isNegation(lastOp.getExpression()))) {
                 methodName = "allMatch";
               }
             }
@@ -642,6 +642,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     FilterOp(PsiExpression condition, PsiVariable variable, boolean negated) {
       super(condition, variable);
       myNegated = negated;
+    }
+
+    public boolean isNegated() {
+      return myNegated;
     }
 
     @Override
