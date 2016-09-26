@@ -194,8 +194,8 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         }
       }
     };
-    setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN);
-    setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN);  // leave space for combobox border
+    setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.EXPORT_COLUMN_NAME);
+    setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
 
     myEntryTable.registerKeyboardAction(
       new ActionListener() {
@@ -320,10 +320,14 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     return getItemAt(myEntryTable.getSelectedRow());
   }
 
-  private void setFixedColumnWidth(final int columnIndex) {
+  private void setFixedColumnWidth(final int columnIndex, String sampleText) {
     final TableColumn column = myEntryTable.getTableHeader().getColumnModel().getColumn(columnIndex);
+    final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
+    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + 4;
+    column.setPreferredWidth(width);
+    column.setMaxWidth(width);
+
     column.setResizable(false);
-    column.setMaxWidth(column.getPreferredWidth());
   }
 
   @Override
