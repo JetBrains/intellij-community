@@ -108,20 +108,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, "edited in branch");
     runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch", myBranchTree.myS1File.getPath());
 
-    final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
-    // by default merges all
-    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true);
-    final WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        quickMerge.execute(testInteraction, descriptor);
-      }
-    });
-    descriptor.waitForCompletion();
-    testInteraction.throwIfExceptions();
-
-    Assert.assertTrue(descriptor.isCompleted());
+    waitQuickMerge(myBranchUrl, new QuickMergeTestInteraction(true));
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -168,9 +155,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     }
 
     // we should get exactly 2 revisions for selection (copy and change in b2)
-    final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
-    // by default merges all
-    final AtomicReference<String> selectionError = new AtomicReference<>();
+    AtomicReference<String> selectionError = new AtomicReference<>();
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
       @NotNull
       @Override
@@ -186,20 +171,12 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       }
     };
     testInteraction.setMergeVariant(QuickMergeContentsVariants.showLatest);
-    final WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        quickMerge.execute(testInteraction, descriptor);
-      }
-    });
-    descriptor.waitForCompletion();
-    testInteraction.throwIfExceptions();
+
+    waitQuickMerge(myBranchUrl, testInteraction);
+
     if (selectionError.get() != null){
       throw new RuntimeException(selectionError.get());
     }
-
-    Assert.assertTrue(descriptor.isCompleted());
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -254,9 +231,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in b2", myBranchTree.myS2File.getPath());
 
     // we should get exactly 2 revisions for selection (copy and change in b2)
-    final QuickMerge quickMerge = newQuickMerge(myRepoUrl + "/branches/b2");
-    // by default merges all
-    final AtomicReference<String> selectionError = new AtomicReference<>();
+    AtomicReference<String> selectionError = new AtomicReference<>();
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
       @NotNull
       @Override
@@ -272,20 +247,12 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       }
     };
     testInteraction.setMergeVariant(QuickMergeContentsVariants.showLatest);
-    final WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        quickMerge.execute(testInteraction, descriptor);
-      }
-    });
-    descriptor.waitForCompletion();
-    testInteraction.throwIfExceptions();
+
+    waitQuickMerge(myRepoUrl + "/branches/b2", testInteraction);
+
     if (selectionError.get() != null){
       throw new RuntimeException(selectionError.get());
     }
-
-    Assert.assertTrue(descriptor.isCompleted());
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -322,8 +289,6 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       Thread.sleep(10);
     }
 
-    final QuickMerge quickMerge = newQuickMerge(myBranchUrl);
-    // by default merges all
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
       @NotNull
       @Override
@@ -348,17 +313,8 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       }
     };
     testInteraction.setMergeVariant(QuickMergeContentsVariants.select);
-    final WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        quickMerge.execute(testInteraction, descriptor);
-      }
-    });
-    descriptor.waitForCompletion();
-    testInteraction.throwIfExceptions();
 
-    Assert.assertTrue(descriptor.isCompleted());
+    waitQuickMerge(myBranchUrl, testInteraction);
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -405,20 +361,8 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     myTree = new SubTree(myWorkingCopyDir); //reload
 
     refreshSvnMappingsSynchronously();
-    final QuickMerge quickMerge = newQuickMerge(trunkUrl);
-    // by default merges all
-    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(false);
-    final WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        quickMerge.execute(testInteraction, descriptor);
-      }
-    });
-    descriptor.waitForCompletion();
-    testInteraction.throwIfExceptions();
 
-    Assert.assertTrue(descriptor.isCompleted());
+    waitQuickMerge(trunkUrl, new QuickMergeTestInteraction(false));
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -433,10 +377,17 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
   }
 
-  private QuickMerge newQuickMerge(@NotNull String sourceUrl) {
+  private void waitQuickMerge(@NotNull String sourceUrl, @NotNull QuickMergeTestInteraction interaction) throws Exception {
     MergeContext mergeContext = new MergeContext(myVcs, sourceUrl, getWcInfo(), SVNPathUtil.tail(sourceUrl), myWorkingCopyDir);
+    QuickMerge quickMerge = new QuickMerge(mergeContext);
+    WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
 
-    return new QuickMerge(mergeContext);
+    ApplicationManager.getApplication().invokeLater(() -> quickMerge.execute(interaction, descriptor));
+
+    descriptor.waitForCompletion();
+    interaction.throwIfExceptions();
+
+    Assert.assertTrue(descriptor.isCompleted());
   }
 
   private static class WaitingTaskDescriptor extends TaskDescriptor {
