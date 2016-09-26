@@ -16,7 +16,10 @@
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
-import com.intellij.execution.*;
+import com.intellij.execution.CantRunException;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
@@ -117,7 +120,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
     }
     String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
 
-    if (sandboxHome == null){
+    if (sandboxHome == null) {
       throw new ExecutionException(DevKitBundle.message("sandbox.no.configured"));
     }
 
@@ -266,7 +269,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
         return getModule().getName();
       }
     });
-    if (ModuleManager.getInstance(getProject()).findModuleByName(moduleName) == null){
+    if (ModuleManager.getInstance(getProject()).findModuleByName(moduleName) == null) {
       throw new RuntimeConfigurationException(DevKitBundle.message("run.configuration.no.module.specified"));
     }
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
@@ -330,7 +333,7 @@ public class PluginRunConfiguration extends RunConfigurationBase implements Modu
 
   @Nullable
   public Module getModule() {
-    if (myModule == null && myModuleName != null){
+    if (myModule == null && myModuleName != null && !getProject().isDisposed()) {
       myModule = ModuleManager.getInstance(getProject()).findModuleByName(myModuleName);
     }
     if (myModule != null && myModule.isDisposed()) {
