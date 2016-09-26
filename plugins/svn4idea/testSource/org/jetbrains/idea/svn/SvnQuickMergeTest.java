@@ -379,10 +379,10 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
   private void waitQuickMerge(@NotNull String sourceUrl, @NotNull QuickMergeTestInteraction interaction) throws Exception {
     MergeContext mergeContext = new MergeContext(myVcs, sourceUrl, getWcInfo(), SVNPathUtil.tail(sourceUrl), myWorkingCopyDir);
-    QuickMerge quickMerge = new QuickMerge(mergeContext);
+    QuickMerge quickMerge = new QuickMerge(mergeContext, interaction);
     WaitingTaskDescriptor descriptor = new WaitingTaskDescriptor();
 
-    ApplicationManager.getApplication().invokeLater(() -> quickMerge.execute(interaction, descriptor));
+    ApplicationManager.getApplication().invokeLater(() -> quickMerge.execute(descriptor));
 
     descriptor.waitForCompletion();
     interaction.throwIfExceptions();
