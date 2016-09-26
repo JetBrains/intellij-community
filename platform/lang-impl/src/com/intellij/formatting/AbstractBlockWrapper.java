@@ -226,33 +226,7 @@ public abstract class AbstractBlockWrapper {
       //    }
       AlignmentImpl alignment = child.getAlignment();
       if (alignment != null) {
-        // Generally, we want to handle situation like the one below:
-        //   test("text", new Runnable() { 
-        //            @Override
-        //            public void run() {
-        //            }
-        //        },
-        //        new Runnable() {
-        //            @Override
-        //            public void run() {
-        //            }
-        //        }
-        //   );
-        // I.e. we want 'run()' method from the first anonymous class to be aligned with the 'run()' method of the second anonymous class.
-
-        AbstractBlockWrapper anchorBlock = alignment.getOffsetRespBlockBefore(child);
-        if (anchorBlock == null) {
-          anchorBlock = this;
-          if (anchorBlock instanceof CompositeBlockWrapper) {
-            List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)anchorBlock).getChildren();
-            for (AbstractBlockWrapper c : children) {
-              if (c.getStartOffset() != getStartOffset() && c.getStartOffset() < targetBlockStartOffset) {
-                anchorBlock = c;
-                break;
-              }
-            }
-          }
-        }
+        AbstractBlockWrapper anchorBlock = getAnchorBlock(child, targetBlockStartOffset, alignment);
         return anchorBlock.getNumberOfSymbolsBeforeBlock();
       }
       childIndent = CoreFormatterUtil.getIndent(options, child, getStartOffset());
@@ -319,6 +293,38 @@ public abstract class AbstractBlockWrapper {
         return childIndent.add(myParent.getChildOffset(this, options, targetBlockStartOffset));
       }
     }
+  }
+
+  @NotNull
+  private AbstractBlockWrapper getAnchorBlock(AbstractBlockWrapper child, int targetBlockStartOffset, AlignmentImpl alignment) {
+    // Generally, we want to handle situation like the one below:
+    //   test("text", new Runnable() { 
+    //            @Override
+    //            public void run() {
+    //            }
+    //        },
+    //        new Runnable() {
+    //            @Override
+    //            public void run() {
+    //            }
+    //        }
+    //   );
+    // I.e. we want 'run()' method from the first anonymous class to be aligned with the 'run()' method of the second anonymous class.
+
+    AbstractBlockWrapper anchorBlock = alignment.getOffsetRespBlockBefore(child);
+    if (anchorBlock == null) {
+      anchorBlock = this;
+      if (anchorBlock instanceof CompositeBlockWrapper) {
+        List<AbstractBlockWrapper> children = ((CompositeBlockWrapper)anchorBlock).getChildren();
+        for (AbstractBlockWrapper c : children) {
+          if (c.getStartOffset() != getStartOffset() && c.getStartOffset() < targetBlockStartOffset) {
+            anchorBlock = c;
+            break;
+          }
+        }
+      }
+    }
+    return anchorBlock;
   }
 
   /**
