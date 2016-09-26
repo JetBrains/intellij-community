@@ -360,15 +360,15 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_runtoline.py") {
       @Override
       public void before() throws Exception {
-        toggleBreakpoint(getFilePath(getScriptName()), 1);
-        toggleBreakpoint(getFilePath(getScriptName()), 7);
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
+        toggleBreakpoint(getFilePath(getScriptName()), 9);
       }
 
       @Override
       public void testing() throws Exception {
         waitForPause();
         eval("x").hasValue("0");
-        runToLine(4);
+        runToLine(6);
         eval("x").hasValue("1");
         resume();
         waitForPause();
