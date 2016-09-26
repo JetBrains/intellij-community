@@ -295,7 +295,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         } else {
           if (element instanceof PsiClass) {
             psiClass = (PsiClass)element;
-            final PsiElement resolve = reference.resolve();
+            final PsiElement resolve = ((PsiReferenceExpression)reference).advancedResolve(true).getElement();
             if (resolve instanceof PsiClass) {
               containingClass = (PsiClass)resolve;
             }
