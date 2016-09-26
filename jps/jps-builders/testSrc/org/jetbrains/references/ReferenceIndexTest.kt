@@ -66,5 +66,9 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testTypeParameterRefs() {
     assertIndexOnRebuild("TypeParam.java")
   }
+
+  fun testAnonymous() {
+    assertIndexOnRebuild("Anonymous.java")
+  }
 }
 

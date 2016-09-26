@@ -229,7 +229,7 @@ public abstract class LightUsage implements RW.Savable {
   }
 
   static byte[] bytes(Symbol symbol) {
-    return symbol.getQualifiedName().toUtf();
+    return symbol.flatName().toUtf();
   }
 
   static LightUsage fromSymbol(Symbol symbol, ByteArrayEnumerator byteArrayEnumerator) {

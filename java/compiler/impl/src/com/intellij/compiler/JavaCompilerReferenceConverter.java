@@ -46,7 +46,7 @@ public class JavaCompilerReferenceConverter implements CompilerReferenceConverte
         final PsiField field = (PsiField)element;
         final PsiClass aClass = field.getContainingClass();
         if (aClass == null || aClass instanceof PsiAnonymousClass) return null;
-        final String jvmOwnerName = aClass.getQualifiedName();
+        final String jvmOwnerName = ClassUtil.getJVMClassName(aClass);
         final String name = field.getName();
         if (name == null || jvmOwnerName == null) return null;
         return new CompilerElement.CompilerField(jvmOwnerName, name);
@@ -54,7 +54,7 @@ public class JavaCompilerReferenceConverter implements CompilerReferenceConverte
       else if (element instanceof PsiMethod) {
         final PsiClass aClass = ((PsiMethod)element).getContainingClass();
         if (aClass == null || aClass instanceof PsiAnonymousClass) return null;
-        final String jvmOwnerName = aClass.getQualifiedName();
+        final String jvmOwnerName = ClassUtil.getJVMClassName(aClass);
         if (jvmOwnerName == null) return null;
         final PsiMethod method = (PsiMethod)element;
         final String name = method.isConstructor() ? "<init>" : method.getName();
@@ -89,7 +89,7 @@ public class JavaCompilerReferenceConverter implements CompilerReferenceConverte
 
         final List<CompilerElement> result = new ArrayList<>();
         inLibrariesHierarchy(((PsiMember)element).getContainingClass(), aClass -> {
-          final String jvmClassName = aClass.getQualifiedName();
+          final String jvmClassName = ClassUtil.getJVMClassName(aClass);
           if (jvmClassName != null) {
             result.add(builder.apply(jvmClassName));
           }
@@ -100,7 +100,7 @@ public class JavaCompilerReferenceConverter implements CompilerReferenceConverte
       else if (element instanceof PsiClass) {
         final List<CompilerElement> result = new ArrayList<>();
         inLibrariesHierarchy((PsiClass)element, aClass -> {
-          final String jvmClassName = aClass.getQualifiedName();
+          final String jvmClassName = ClassUtil.getJVMClassName(aClass);
           if (jvmClassName != null) {
             result.add(new CompilerElement.CompilerClass(jvmClassName));
           }
