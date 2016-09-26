@@ -28,6 +28,11 @@ public class DummyChangesViewContentManager implements ChangesViewContentI {
   }
 
   @Override
+  public boolean isAvailable() {
+    return false;
+  }
+
+  @Override
   public void addContent(final Content content) {
   }
 

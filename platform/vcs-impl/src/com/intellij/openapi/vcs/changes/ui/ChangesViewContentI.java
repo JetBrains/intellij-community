@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface ChangesViewContentI {
   void setUp(ToolWindow toolWindow);
+  boolean isAvailable();
   void addContent(Content content);
   void removeContent(final Content content);
   void setSelectedContent(final Content content);
