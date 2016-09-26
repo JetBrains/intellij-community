@@ -113,6 +113,11 @@ public class ReferencesPanel extends JPanel {
     return getCommitDetailsBackground();
   }
 
+  @NotNull
+  public WrappedFlowLayout getLayout() {
+    return (WrappedFlowLayout)super.getLayout();
+  }
+
   private static class ReferencePanel extends JPanel {
     @NotNull private final RectanglePainter myLabelPainter;
     @NotNull private final VcsRef myReference;

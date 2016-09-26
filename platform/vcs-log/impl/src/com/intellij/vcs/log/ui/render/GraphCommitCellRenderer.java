@@ -193,19 +193,9 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     GraphCommitCell cell = getAssertCommitCell(value);
     List<VcsRef> refs = cell.getRefsToThisCommit().stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList());
     if (!refs.isEmpty()) {
-      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
       customizeRefsPainter(myReferencePainter, refs, getForeground());
       if (myReferencePainter.getSize().getWidth() - LabelPainter.GRADIENT_WIDTH >= width - point.getX()) {
-        ReferencesPanel referencesPanel = new ReferencesPanel() {
-          @NotNull
-          @Override
-          protected Font getLabelsFont() {
-            return myReferencePainter.getReferenceFont();
-          }
-        };
-        refs.sort(myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
-        referencesPanel.setReferences(refs);
-        return referencesPanel;
+        return new TooltipReferencesPanel(refs);
       }
     }
     return null;
@@ -274,6 +264,26 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
     public int getWidth() {
       return myWidth;
+    }
+  }
+
+  private class TooltipReferencesPanel extends ReferencesPanel {
+    public TooltipReferencesPanel(@NotNull List<VcsRef> refs) {
+      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
+      refs.sort(myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
+      setReferences(refs);
+    }
+
+    @NotNull
+    @Override
+    protected Font getLabelsFont() {
+      return myReferencePainter.getReferenceFont();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension size = super.getPreferredSize();
+      return getLayout().getDimension(this, size.width);
     }
   }
 }
