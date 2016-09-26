@@ -22,17 +22,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ShowRecentInDialogTask extends BaseMergeTask {
 
   @NotNull private final LoadRecentBranchRevisions myInitialChangeListsLoader;
 
-  public ShowRecentInDialogTask(@NotNull MergeContext mergeContext,
-                                @NotNull QuickMergeInteraction interaction,
-                                @NotNull LoadRecentBranchRevisions initialChangeListsLoader) {
-    super(mergeContext, interaction, "", Where.AWT);
+  public ShowRecentInDialogTask(@NotNull QuickMerge mergeProcess, @NotNull LoadRecentBranchRevisions initialChangeListsLoader) {
+    super(mergeProcess, "", Where.AWT);
 
     myInitialChangeListsLoader = initialChangeListsLoader;
   }

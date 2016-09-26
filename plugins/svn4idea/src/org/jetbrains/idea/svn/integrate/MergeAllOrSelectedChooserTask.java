@@ -22,13 +22,10 @@ import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
 
-  public MergeAllOrSelectedChooserTask(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
-    super(mergeContext, interaction, "merge source selector", Where.AWT);
+  public MergeAllOrSelectedChooserTask(@NotNull QuickMerge mergeProcess) {
+    super(mergeProcess, "merge source selector", Where.AWT);
   }
 
   @Override
@@ -40,7 +37,7 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
         break;
       case showLatest:
         LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeContext, -1);
-        ShowRecentInDialogTask dialog = new ShowRecentInDialogTask(myMergeContext, myInteraction, loader);
+        ShowRecentInDialogTask dialog = new ShowRecentInDialogTask(myMergeProcess, loader);
 
         context.next(loader, dialog);
         break;
@@ -66,7 +63,7 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
     MergeCalculatorTask result = null;
 
     try {
-      result = new MergeCalculatorTask(myMergeContext, myInteraction);
+      result = new MergeCalculatorTask(myMergeProcess);
     }
     catch (VcsException e) {
       finishWithError(context, e.getMessage(), true);

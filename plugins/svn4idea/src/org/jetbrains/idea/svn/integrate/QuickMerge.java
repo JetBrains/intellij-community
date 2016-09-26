@@ -40,6 +40,16 @@ public class QuickMerge {
     myInteraction = interaction;
   }
 
+  @NotNull
+  public MergeContext getMergeContext() {
+    return myMergeContext;
+  }
+
+  @NotNull
+  public QuickMergeInteraction getInteraction() {
+    return myInteraction;
+  }
+
   @CalledInAwt
   public void execute() {
     runMergeTasks(null);
@@ -56,8 +66,8 @@ public class QuickMerge {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     TaskDescriptor[] tasks = {
-      new MergeInitChecksTask(myMergeContext, myInteraction),
-      new CheckRepositorySupportsMergeInfoTask(myMergeContext, myInteraction),
+      new MergeInitChecksTask(this),
+      new CheckRepositorySupportsMergeInfoTask(this),
       finalTask
     };
 

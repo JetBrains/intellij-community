@@ -25,18 +25,12 @@ import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNURL;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class MergeTask extends BaseMergeTask {
 
   @NotNull private final MergerFactory myFactory;
 
-  public MergeTask(@NotNull MergeContext mergeContext,
-                   @NotNull QuickMergeInteraction interaction,
-                   @NotNull MergerFactory factory,
-                   final String mergeTitle) {
-    super(mergeContext, interaction, mergeTitle, Where.AWT);
+  public MergeTask(@NotNull QuickMerge mergeProcess, @NotNull MergerFactory factory, @NotNull String mergeTitle) {
+    super(mergeProcess, mergeTitle, Where.AWT);
 
     myFactory = factory;
   }
@@ -88,10 +82,10 @@ public class MergeTask extends BaseMergeTask {
     return needRefresh;
   }
 
-  private void refreshChanges(@NotNull final ContinuationContext context) {
+  private void refreshChanges(@NotNull ContinuationContext context) {
     context.suspend();
 
     ChangeListManager.getInstance(myMergeContext.getProject())
-      .invokeAfterUpdate(() -> context.ping(), InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.NON_MODAL);
+      .invokeAfterUpdate(context::ping, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.NON_MODAL);
   }
 }

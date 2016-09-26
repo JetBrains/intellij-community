@@ -15,22 +15,20 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnUtil;
 
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
+
 public class CheckRepositorySupportsMergeInfoTask extends BaseMergeTask {
 
-  public CheckRepositorySupportsMergeInfoTask(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
-    super(mergeContext, interaction, "Checking repository capabilities", Where.POOLED);
+  public CheckRepositorySupportsMergeInfoTask(@NotNull QuickMerge mergeProcess) {
+    super(mergeProcess, "Checking repository capabilities", Where.POOLED);
   }
 
   @Override
@@ -40,11 +38,11 @@ public class CheckRepositorySupportsMergeInfoTask extends BaseMergeTask {
 
   private boolean supportsMergeInfo() {
     return myMergeContext.getWcInfo().getFormat().supportsMergeInfo() &&
-           SvnUtil.checkRepositoryVersion15(myMergeContext.getVcs(), myMergeContext.getSourceUrl());
+           checkRepositoryVersion15(myMergeContext.getVcs(), myMergeContext.getSourceUrl());
   }
 
   @NotNull
   private List<TaskDescriptor> getChooseMergeTypeTasks() {
-    return ContainerUtil.<TaskDescriptor>newArrayList(new MergeAllOrSelectedChooserTask(myMergeContext, myInteraction));
+    return newArrayList(new MergeAllOrSelectedChooserTask(myMergeProcess));
   }
 }
