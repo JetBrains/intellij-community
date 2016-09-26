@@ -37,6 +37,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -286,22 +287,15 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     else if (rhs instanceof PyCallExpression) { // potential dict(foo=1) -> format(foo=1)
       final PyCallExpression callExpression = (PyCallExpression)rhs;
       final PyExpression callee = callExpression.getCallee();
-      if (callee instanceof PyReferenceExpression) {
-        PsiElement maybeDict = ((PyReferenceExpression)callee).getReference().resolve();
-        if (maybeDict instanceof PyFunction) {
-          PyFunction dictInit = (PyFunction)maybeDict;
-          if (PyNames.INIT.equals(dictInit.getName())) {
-            final PyClassType dictType = PyBuiltinCache.getInstance(file).getDictType();
-            if (dictType != null && dictType.getPyClass() == dictInit.getContainingClass()) {
-              target.append(sure(sure(callExpression.getArgumentList()).getNode()).getChars());
-            }
-          }
-          else { // just a call, reuse
-            target.append("(");
-            if (converted.getSecond()) target.append("**"); // map-by-name formatting was detected
-            target.append(paramText).append(")");
-          }
-        }
+      final PyClassType dictType = PyBuiltinCache.getInstance(file).getDictType();
+      final PyClassType classType = PyUtil.as(rhsType, PyClassType.class);
+      if (classType != null && callee != null && isDictCall(callee, classType, dictType)) {
+        target.append(sure(sure(callExpression.getArgumentList()).getNode()).getChars());
+      }
+      else { // just a call, reuse
+        target.append("(");
+        if (converted.getSecond()) target.append("**"); // map-by-name formatting was detected
+        target.append(paramText).append(")");
       }
     }
     else if (rhsType instanceof PyCollectionType && "dict".equals(rhsType.getName())) {
@@ -312,6 +306,21 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     target.insert(0, '(').append(')');
     final PyExpression parenthesized = elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), target.toString());
     element.replace(sure(((PyParenthesizedExpression)parenthesized).getContainedExpression()));
+  }
+  
+  private static boolean isDictCall(@NotNull PyExpression callee, @NotNull PyClassType classType, @Nullable PyClassType dictType) {
+    if (dictType != null && classType.getPyClass() == dictType.getPyClass()) {
+      if (callee instanceof PyReferenceExpression) {
+        PsiElement maybeDict = ((PyReferenceExpression)callee).getReference().resolve();
+        final PyFunction dictInit = PyUtil.as(maybeDict, PyFunction.class);
+        if (dictInit != null) {
+          if (PyNames.INIT.equals(dictInit.getName())) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   private static String getSeparator(PyStringLiteralExpression leftExpression) {

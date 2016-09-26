@@ -88,4 +88,14 @@ public class PyConvertFormatOperatorToMethodIntentionTest extends PyIntentionTes
   public void testSet() {
     doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
   }
+  
+  // PY-20917
+  public void testSetCall() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);    
+  }
+
+  // PY-20917
+  public void testCallWithNoneReturnType() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
+  }
 }
