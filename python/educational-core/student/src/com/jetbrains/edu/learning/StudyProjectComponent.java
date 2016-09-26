@@ -85,7 +85,6 @@ public class StudyProjectComponent implements ProjectComponent {
               UISettings.getInstance().fireUISettingsChanged();
               registerShortcuts();
               EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
-              LOG.info("login from dialog");
               StepikConnectorLogin.loginFromDialog(myProject);
             }
           }

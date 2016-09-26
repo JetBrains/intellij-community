@@ -78,8 +78,13 @@ public class StudyProjectGenerator {
     return myEnrolledCoursesIds;
   }
 
-  public void setSelectedCourse(@NotNull final CourseInfo courseName) {
-    mySelectedCourseInfo = courseName;
+  public void setSelectedCourse(final CourseInfo courseName) {
+    if (courseName == null) {
+      mySelectedCourseInfo = CourseInfo.INVALID_COURSE;
+    }
+    else {
+      mySelectedCourseInfo = courseName;
+    }
   }
 
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir) {

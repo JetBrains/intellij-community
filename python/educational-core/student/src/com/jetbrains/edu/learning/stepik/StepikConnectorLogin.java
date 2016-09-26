@@ -57,8 +57,10 @@ public class StepikConnectorLogin {
         headers.add(new BasicHeader("Content-type", EduStepikNames.CONTENT_TYPE_APPL_JSON));
       }
       else {
-        LOG.error("access_token is empty");
-//        showLoginDialog();
+        LOG.warn("access_token is empty.. login..");
+        showLoginDialog();
+        headers.add(new BasicHeader("Authorization", "Bearer " + currentUser.getAccessToken()));
+        headers.add(new BasicHeader("Content-type", EduStepikNames.CONTENT_TYPE_APPL_JSON));
       }
       ourClient = StepikConnectorInit.getBuilder().setDefaultHeaders(headers).build();
     }
@@ -192,6 +194,7 @@ public class StepikConnectorLogin {
     currentUser = user;
     StepikUser userInfo = StepikConnectorGet.getCurrentUser().users.get(0);
     user.update(userInfo);
+    currentUser = user;
     return user;
   }
 
