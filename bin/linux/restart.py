@@ -9,7 +9,8 @@ import time
 if len(sys.argv) < 2:
     raise Exception('At least one argument expected')
 
-while os.getppid() != 1:
+pid = os.getppid()
+while os.getppid() == pid:
     time.sleep(0.5)
 
 if len(sys.argv) > 2:

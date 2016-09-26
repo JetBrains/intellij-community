@@ -34,12 +34,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class Restarter {
   private Restarter() { }
 
   private static File getLauncherScript() {
-    return new File(PathManager.getBinPath(), ApplicationNamesInfo.getInstance().getLowercaseProductName() + ".sh");
+    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
+    return new File(PathManager.getBinPath(), name + ".sh");
   }
 
   public static boolean isSupported() {
