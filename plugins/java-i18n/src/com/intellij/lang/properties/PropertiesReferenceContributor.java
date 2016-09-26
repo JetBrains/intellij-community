@@ -62,7 +62,9 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
           return PsiReference.EMPTY_ARRAY;
         }
         final PsiField field = (PsiField)parent;
-        if (field.getInitializer() != element || !field.hasModifierProperty(PsiModifier.FINAL)) {
+        if (field.getInitializer() != element ||
+            !field.hasModifierProperty(PsiModifier.FINAL) ||
+            !field.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           return PsiReference.EMPTY_ARRAY;
         }
         List<PsiReference> references = new ArrayList<>();
@@ -80,6 +82,7 @@ public class PropertiesReferenceContributor extends PsiReferenceContributor{
                   final PsiAnnotationMemberValue value = pair.getValue();
                   if (value instanceof PsiReferenceExpression && ((PsiReferenceExpression)value).resolve() == field) {
                     Collections.addAll(references, myUnderlying.getReferencesByElement(element, context));
+                    return false;
                   }
                 }
               }
