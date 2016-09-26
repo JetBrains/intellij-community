@@ -144,7 +144,9 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
 
   private void updateToolWindowAvailability() {
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
-    toolWindow.setAvailable(isAvailable(), null);
+    if (toolWindow != null) {
+      toolWindow.setAvailable(isAvailable(), null);
+    }
   }
 
   public boolean isAvailable() {
