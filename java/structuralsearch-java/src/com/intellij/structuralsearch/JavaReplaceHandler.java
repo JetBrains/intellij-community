@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -130,7 +145,6 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
    * that are present in matched nodes but not present in searched & replaced nodes
    */
   private void copyUnmatchedElements(final PsiElement original, final PsiElement replacement) {
-
     Map<String, String> newNameToSearchPatternNameMap = myContext.getNewName2PatternNameMap();
 
     Map<String, PsiNamedElement> originalNamedElements = Collector.collectNamedElements(original);
@@ -196,6 +210,18 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
           searchedNamedElement instanceof PsiMethod &&
           replacementNamedElement instanceof PsiMethod) {
         copyMethodBodyIfNotReplaced((PsiMethod)originalNamedElement, (PsiMethod)searchedNamedElement, (PsiMethod)replacementNamedElement);
+      }
+
+      if (originalNamedElement instanceof PsiClass &&
+          searchedNamedElement instanceof PsiClass &&
+          replacementNamedElement instanceof PsiClass) {
+        final PsiClass originalClass = (PsiClass)originalNamedElement;
+        final PsiClass queryClass = (PsiClass)searchedNamedElement;
+        final PsiClass replacementClass = (PsiClass)replacementNamedElement;
+
+        copyExtendsListIfNotReplaced(originalClass, queryClass, replacementClass);
+        copyImplementsListIfNotReplaced(originalClass, queryClass, replacementClass);
+        copyTypeParameterListIfNotReplaced(originalClass, queryClass, replacementClass);
       }
     }
   }
@@ -361,26 +387,9 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         elementToReplace.getNode().getTreeParent().removeChild(elementToReplace.getNode());
       }
       else {
-        // preserve comments
         copyUnmatchedElements(elementToReplace, replacement);
 
-        if (replacement instanceof PsiClass) {
-          final PsiStatement[] searchStatements = getCodeBlock().getStatements();
-          if (searchStatements.length > 0 &&
-              searchStatements[0] instanceof PsiDeclarationStatement &&
-              ((PsiDeclarationStatement)searchStatements[0]).getDeclaredElements()[0] instanceof PsiClass) {
-            final PsiClass replaceClazz = (PsiClass)replacement;
-            final PsiClass queryClazz = (PsiClass)((PsiDeclarationStatement)searchStatements[0]).getDeclaredElements()[0];
-            final PsiClass clazz = (PsiClass)elementToReplace;
-
-            copyExtendsListIfNotReplaced(clazz, queryClazz, replaceClazz);
-            copyImplementsListIfNotReplaced(clazz, queryClazz, replaceClazz);
-            copyTypeParameterListIfNotReplaced(clazz, queryClazz, replaceClazz);
-          }
-        }
-
         replacement = handleSymbolReplacement(replacement, elementToReplace);
-
         elementToReplace.replace(replacement);
       }
     }
