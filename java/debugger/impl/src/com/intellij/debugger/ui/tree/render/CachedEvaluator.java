@@ -22,7 +22,6 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +72,6 @@ public abstract class CachedEvaluator {
       }
       cache.myPsiChildrenExpression = null;
       JavaCodeFragment codeFragment = myDefaultFragmentFactory.createCodeFragment(myReferenceExpression, psiClassAndType.first, project);
-      codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
       codeFragment.setThisType(psiClassAndType.second);
       DebuggerUtils.checkSyntax(codeFragment);
       cache.myPsiChildrenExpression = codeFragment instanceof PsiExpressionCodeFragment ? ((PsiExpressionCodeFragment)codeFragment).getExpression() : null;

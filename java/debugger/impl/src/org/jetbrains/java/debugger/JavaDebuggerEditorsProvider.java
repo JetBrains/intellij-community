@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -92,7 +91,6 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
     if (text != null) {
       CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context);
       JavaCodeFragment codeFragment = factory.createPresentationCodeFragment(text, context, project);
-      codeFragment.forceResolveScope(GlobalSearchScope.allScope(project));
 
       if (context != null) {
         PsiType contextType = context.getUserData(DebuggerUtilsImpl.PSI_TYPE_KEY);
