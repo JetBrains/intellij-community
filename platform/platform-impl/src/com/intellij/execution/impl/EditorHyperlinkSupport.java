@@ -67,12 +67,10 @@ public class EditorHyperlinkSupport {
 
   private final Editor myEditor;
   @NotNull private final Project myProject;
-  private final AsyncFilterRunner myFilterRunner;
 
   public EditorHyperlinkSupport(@NotNull final Editor editor, @NotNull final Project project) {
     myEditor = editor;
     myProject = project;
-    myFilterRunner = new AsyncFilterRunner(this, myEditor);
 
     editor.addEditorMouseListener(new EditorMouseAdapter() {
       @Override
@@ -264,15 +262,30 @@ public class EditorHyperlinkSupport {
   }
   
   public void highlightHyperlinks(final Filter customFilter, final int line1, final int endLine) {
-    myFilterRunner.highlightHyperlinks(customFilter, Math.max(0, line1), endLine);
+    final Document document = myEditor.getDocument();
+
+    final int startLine = Math.max(0, line1);
+
+    for (int line = startLine; line <= endLine; line++) {
+      int endOffset = document.getLineEndOffset(line);
+      if (endOffset < document.getTextLength()) {
+        endOffset++; // add '\n'
+      }
+      final String text = getLineText(document, line, true);
+      Filter.Result result = customFilter.applyFilter(text, endOffset);
+      if (result != null) {
+        highlightHyperlinks(result, customFilter);
+      }
+    }
   }
 
-  void highlightHyperlinks(@NotNull Filter.Result result, int offsetDelta) {
+  void highlightHyperlinks(@NotNull Filter.Result result, @NotNull Filter filter) {
     Document document = myEditor.getDocument();
     for (Filter.ResultItem resultItem : result.getResultItems()) {
-      int start = resultItem.getHighlightStartOffset() + offsetDelta;
-      int end = resultItem.getHighlightEndOffset() + offsetDelta;
-      if (start < 0 || end < start || end > document.getTextLength()) {
+      int start = resultItem.getHighlightStartOffset();
+      int end = resultItem.getHighlightEndOffset();
+      if (end < start || end > document.getTextLength()) {
+        LOG.error("Filter returned wrong range: start=" + start + "; end=" + end + "; length=" + document.getTextLength() + "; filter=" + filter);
         continue;
       }
 
@@ -369,7 +382,7 @@ public class EditorHyperlinkSupport {
     if (includeEol && endOffset < document.getTextLength()) {
       endOffset++;
     }
-    return document.getImmutableCharSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
+    return document.getCharsSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset).toString();
   }
 
   private static class HyperlinkInfoTextAttributes extends TextAttributes {
