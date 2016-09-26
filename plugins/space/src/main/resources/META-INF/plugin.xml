@@ -22,11 +22,9 @@
     </extensions>
 
     <application-components>
-<!--
         <component>
-            <implementation-class>org.intellij.plugins.hcl.UpdateComponent</implementation-class>
+            <implementation-class>circlet.components.IdePluginClient</implementation-class>
         </component>
--->
     </application-components>
 
     <project-components>
@@ -34,9 +32,16 @@
     </project-components>
 
     <actions>
-        <action class="circlet.actions.ConnectAction" text="Connect To Circlet..." id="ConnectAction">
+
+        <action class="circlet.actions.ConnectAction" text="Connect To Circlet..." id="ConnectAction"/>
+        <action class="circlet.actions.DisconnectAction" text="Connect To Circlet..." id="DisconnectAction"/>
+
+        <group text="Circlet" id="CircletGroup">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </action>
+            <reference id="ConnectActionRef" ref="ConnectAction"/>
+            <reference id="DisconnectActionRef" ref="DisconnectAction"/>
+        </group>
+
 
     </actions>
 

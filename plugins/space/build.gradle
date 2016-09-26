@@ -8,9 +8,24 @@ plugins {
     id "org.jetbrains.intellij" version "0.1.10"
 }
 
+
+// temparary hack to prevent slf4j version conflict. To be fixed as soon as Zolotov is back from vacation.
+gradle.taskGraph.whenReady {taskGraph ->
+    project.tasks.prepareSandbox.doLast{
+        def pluginName = project.intellij.pluginName
+        def toDelete = "$project.rootDir/plugin/build/idea-sandbox/plugins/$pluginName/lib/slf4j-api-1.7.21.jar"
+        delete toDelete
+        println("delete: $toDelete")
+    }
+}
+
+dependencies {
+    compile project(':client')
+}
+
 intellij {
     version 'IC-2016.2'
-    pluginName 'Circlet PLugin'
+    pluginName 'Circlet Plugin'
 
     publish {
         username 'serjic'
@@ -18,3 +33,4 @@ intellij {
         channel 'nightly'
     }
 }
+
