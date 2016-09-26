@@ -21,12 +21,14 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -79,6 +81,7 @@ public class SceneBuilderImpl implements SceneBuilder {
   private final JFXPanel myPanel = new JFXPanel();
   private EditorController myEditorController;
   private URLClassLoader myClassLoader;
+  private volatile Collection<CustomComponent> myCustomComponents;
   private volatile boolean mySkipChanges;
   private ChangeListener<Number> myListener;
   private ChangeListener<Number> mySelectionListener;
@@ -105,15 +108,8 @@ public class SceneBuilderImpl implements SceneBuilder {
       return;
     }
 
-    final Collection<CustomComponent> customComponents = DumbService.getInstance(myProject)
-      .runReadActionInSmartMode(this::collectCustomComponents);
-    myClassLoader = createProjectContentClassLoader(myProject);
-    FXMLLoader.setDefaultClassLoader(myClassLoader);
-
     myEditorController = new EditorController();
-    if (!customComponents.isEmpty()) {
-      myEditorController.setLibrary(new CustomLibrary(myClassLoader, customComponents));
-    }
+    updateCustomLibrary();
     HierarchyTreeViewController componentTree = new HierarchyTreeViewController(myEditorController);
     ContentPanelController canvas = new ContentPanelController(myEditorController);
     InspectorPanelController propertyTable = new InspectorPanelController(myEditorController);
@@ -143,6 +139,33 @@ public class SceneBuilderImpl implements SceneBuilder {
     UsageTrigger.trigger("scene-builder.open");
   }
 
+  private void updateCustomLibrary() {
+    final URLClassLoader oldClassLoader = myClassLoader;
+    myClassLoader = createProjectContentClassLoader(myProject);
+    FXMLLoader.setDefaultClassLoader(myClassLoader);
+
+    if (oldClassLoader != null) {
+      try {
+        oldClassLoader.close();
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
+
+    final Collection<CustomComponent> customComponents = DumbService.getInstance(myProject)
+      .runReadActionInSmartMode(this::collectCustomComponents);
+
+    try {
+      final CustomLibrary customLibrary = new CustomLibrary(myClassLoader, customComponents);
+      myEditorController.setLibrary(customLibrary);
+      myCustomComponents = customComponents;
+    }
+    catch (Exception e) {
+      LOG.info(e);
+    }
+  }
+
   private Collection<CustomComponent> collectCustomComponents() {
     if (myProject.isDisposed()) {
       return Collections.emptyList();
@@ -154,7 +177,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
 
     final Collection<PsiClass> psiClasses = CachedValuesManager.getCachedValue(nodeClass, () -> {
-      final GlobalSearchScope scope = GlobalSearchScope.allScope(nodeClass.getProject());
+      final GlobalSearchScope scope = ProjectScope.getLibrariesScope(nodeClass.getProject());
       final String ideJdkVersion = Object.class.getPackage().getSpecificationVersion();
       final LanguageLevel ideLanguageLevel = LanguageLevel.parse(ideJdkVersion);
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
@@ -299,6 +322,22 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     myEditorController.getJobManager().revisionProperty().addListener(myListener);
     myEditorController.getSelection().revisionProperty().addListener(mySelectionListener);
+  }
+
+  @Override
+  public boolean reload() {
+    if (myCustomComponents == null) return false;
+
+    final Collection<CustomComponent> customComponents = DumbService.getInstance(myProject)
+      .runReadActionInSmartMode(this::collectCustomComponents);
+    if (!new THashSet<>(myCustomComponents).equals(new THashSet<>(customComponents))) return false;
+
+    Platform.runLater(() -> {
+      if (myEditorController != null) {
+        loadFile();
+      }
+    });
+    return true;
   }
 
   @Override
@@ -507,6 +546,25 @@ public class SceneBuilderImpl implements SceneBuilder {
       builder.append("/>");
       return builder.toString();
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof CustomComponent)) return false;
+
+      CustomComponent c = (CustomComponent)o;
+      return myQualifiedName.equals(c.myQualifiedName) && Objects.equals(myModule, c.myModule);
+    }
+
+    @Override
+    public int hashCode() {
+      return myQualifiedName.hashCode() * 31 + Objects.hashCode(myModule);
+    }
+
+    @Override
+    public String toString() {
+      return myModule != null ? myQualifiedName + "(" + myModule + ")" : myQualifiedName;
+    }
   }
 
   private static class CustomLibrary extends Library {
@@ -515,11 +573,10 @@ public class SceneBuilderImpl implements SceneBuilder {
     public CustomLibrary(ClassLoader classLoader, Collection<CustomComponent> customComponents) {
       classLoaderProperty.set(classLoader);
 
-      final List<LibraryItem> libraryItems = getItems();
-      libraryItems.addAll(BuiltinLibrary.getLibrary().getItems());
-      for (CustomComponent component : customComponents) {
-        libraryItems.add(new LibraryItem(component.getDisplayName(), CUSTOM_SECTION, component.getFxmlText(), null, this));
-      }
+      getItems().setAll(BuiltinLibrary.getLibrary().getItems());
+      final List<LibraryItem> items = ContainerUtil.map(
+        customComponents, component -> new LibraryItem(component.getDisplayName(), CUSTOM_SECTION, component.getFxmlText(), null, this));
+      getItems().addAll(items);
     }
 
     @Override

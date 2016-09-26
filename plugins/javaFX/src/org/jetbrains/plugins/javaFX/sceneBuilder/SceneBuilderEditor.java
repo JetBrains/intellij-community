@@ -170,8 +170,6 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   }
 
   private void addSceneBuilder() {
-    removeSceneBuilder();
-
     ApplicationManager.getApplication().invokeLater(this::addSceneBuilderImpl, ModalityState.defaultModalityState());
   }
 
@@ -179,6 +177,10 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     try {
       ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveDocument(myDocument));
 
+      if (mySceneBuilder != null && mySceneBuilder.reload()) {
+        return;
+      }
+      removeSceneBuilder();
       mySceneBuilder = SceneBuilder.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
 
       myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);
