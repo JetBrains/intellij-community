@@ -52,7 +52,7 @@ public class GitDefineRemoteDialog extends DialogWrapper {
   @NotNull private final JTextField myRemoteUrl;
 
   public GitDefineRemoteDialog(@NotNull GitRepository repository, @NotNull Git git) {
-    this(repository, git, GitRemote.ORIGIN_NAME, "");
+    this(repository, git, GitRemote.ORIGIN, "");
   }
 
   public GitDefineRemoteDialog(@NotNull GitRepository repository,

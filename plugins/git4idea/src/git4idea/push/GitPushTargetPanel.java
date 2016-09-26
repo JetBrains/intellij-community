@@ -342,10 +342,10 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       String remoteName2 = o2.getRemote().getName();
       int remoteComparison = remoteName1.compareTo(remoteName2);
       if (remoteComparison != 0) {
-        if (remoteName1.equals(GitRemote.ORIGIN_NAME)) {
+        if (remoteName1.equals(GitRemote.ORIGIN)) {
           return -1;
         }
-        if (remoteName2.equals(GitRemote.ORIGIN_NAME)) {
+        if (remoteName2.equals(GitRemote.ORIGIN)) {
           return 1;
         }
         return remoteComparison;

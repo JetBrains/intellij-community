@@ -69,7 +69,7 @@ public final class GitRemote implements Comparable<GitRemote> {
    * Default remote name in Git is "origin".
    * Usually all Git repositories have an "origin" remote, so it can be used as a default value in some cases.
    */
-  public static final String ORIGIN_NAME = "origin";
+  public static final String ORIGIN = "origin";
 
   @NotNull private final String myName;
   @NotNull private final List<String> myUrls;

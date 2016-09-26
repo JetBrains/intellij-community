@@ -53,7 +53,7 @@ import com.intellij.util.ui.UIUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.repo.GitRemote
-import git4idea.repo.GitRemote.ORIGIN_NAME
+import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
 import java.util.*
 import javax.swing.*
@@ -98,7 +98,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
 
   private fun addRemote() {
     val repository = getSelectedRepo()
-    val proposedName = if (repository.remotes.any { it.name == GitRemote.ORIGIN_NAME }) "" else GitRemote.ORIGIN_NAME
+    val proposedName = if (repository.remotes.any { it.name == ORIGIN }) "" else ORIGIN
     val dialog = GitDefineRemoteDialog(repository, git, proposedName, "")
     if (dialog.showAndGet()) {
       runInModalTask("Adding Remote...", repository,
@@ -176,10 +176,10 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
 
   private fun sortedRemotes(repository: GitRepository): List<GitRemote> {
     return repository.remotes.sortedWith(Comparator<GitRemote> { r1, r2 ->
-      if (r1.name == ORIGIN_NAME) {
-        if (r2.name == ORIGIN_NAME) 0 else -1
+      if (r1.name == ORIGIN) {
+        if (r2.name == ORIGIN) 0 else -1
       }
-      else if (r2.name == ORIGIN_NAME) 1 else r1.name.compareTo(r2.name)
+      else if (r2.name == ORIGIN) 1 else r1.name.compareTo(r2.name)
     })
   }
 
