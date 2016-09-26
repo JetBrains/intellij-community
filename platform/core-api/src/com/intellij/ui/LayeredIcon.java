@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,6 +29,8 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;
+  // Extra scale factor, not counting the global UI scale,
+  // thus the effective icon scale is myScale * JBUI.scale(1f)
   private float myScale = 1f;
   private final boolean[] myDisabledLayers;
   private final int[] myHShifts;
@@ -167,8 +170,9 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
     for (int i = 0; i < myIcons.length; i++) {
       Icon icon = getOrScale(i);
       if (icon == null || myDisabledLayers[i]) continue;
-      int xOffset = x + scale(myXShift + myHShifts[i]);
-      int yOffset = y + scale(myYShift + myVShifts[i]);
+      float uiScale = JBUI.scale(1f); // [tav] todo: take global scale from Graphics in HiDPI-aware JDK
+      int xOffset = x + scaledVal(myXShift + myHShifts[i], uiScale);
+      int yOffset = y + scaledVal(myYShift + myVShifts[i], uiScale);
       icon.paintIcon(c, g, xOffset, yOffset);
     }
   }
@@ -207,22 +211,26 @@ public class LayeredIcon extends AbstractSizeAdjustingIcon {
   public int getIconWidth() {
     if (myWidth <= 1) { //icon is not loaded yet
       adjustSize();
-      return scale(myWidth);
+      return scaledVal(myWidth);
     }
-    return scale(super.getIconWidth());
+    return scaledVal(super.getIconWidth());
   }
 
   @Override
   public int getIconHeight() {
     if (myHeight <= 1) { //icon is not loaded yet
       adjustSize();
-      return scale(myHeight);
+      return scaledVal(myHeight);
     }
-    return scale(super.getIconHeight());
+    return scaledVal(super.getIconHeight());
   }
 
-  private int scale(int n) {
-    return myScale == 1f ? n : (int)(n * myScale);
+  private int scaledVal(int size) {
+    return scaledVal(size, 1f);
+  }
+
+  private int scaledVal(int size, float uiScale) {
+    return (int)(myScale * uiScale * size);
   }
 
   @Override
