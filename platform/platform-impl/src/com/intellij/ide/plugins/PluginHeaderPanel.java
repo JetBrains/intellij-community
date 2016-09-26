@@ -29,6 +29,7 @@ import com.intellij.ui.JBGradientPaint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -168,6 +169,11 @@ public class PluginHeaderPanel {
 
   private void createUIComponents() {
     myInstallButton = new JButton() {
+      private final int TOP_BOTTOM_BORDER = JBUI.scale(2);
+      private final int LEFT_RIGHT_BORDER = JBUI.scale(8);
+      private final int H_GAP = JBUI.scale(4);
+      private final int ICON_SIZE = getIcon().getIconWidth();
+
       {
         setOpaque(false);
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -176,8 +182,8 @@ public class PluginHeaderPanel {
       public Dimension getPreferredSize() {
         final FontMetrics metrics = getFontMetrics(getFont());
         final int textWidth = metrics.stringWidth(getText());
-        final int width = 8 + 16 + 4 + textWidth + 8;
-        final int height = 2 + Math.max(16, metrics.getHeight()) + 2;
+        final int width = LEFT_RIGHT_BORDER + ICON_SIZE + H_GAP + textWidth + LEFT_RIGHT_BORDER;
+        final int height = TOP_BOTTOM_BORDER + Math.max(ICON_SIZE, metrics.getHeight()) + TOP_BOTTOM_BORDER;
         return new Dimension(width, height);
       }
 
@@ -188,15 +194,19 @@ public class PluginHeaderPanel {
         final int w = g.getClipBounds().width;
         final int h = g.getClipBounds().height;
 
+        int borderArc = JBUI.scale(7);
+        int border = JBUI.scale(1);
+        int buttonArc = borderArc - border;
+
         g.setPaint(getBackgroundBorderPaint());
-        g.fillRoundRect(0, 0, w, h, 7, 7);
+        g.fillRoundRect(0, 0, w, h, borderArc, borderArc);
 
         g.setPaint(getBackgroundPaint());
-        g.fillRoundRect(1, 1, w - 2, h - 2, 6, 6);
+        g.fillRoundRect(border, border, w - 2 * border, h - 2 * border, buttonArc, buttonArc);
+
         g.setColor(getButtonForeground());
-        int offset = 8;
-        g.drawString(getText(), offset + 16 + 4, getBaseline(w, h));
-        getIcon().paintIcon(this, g, offset, (getHeight() - getIcon().getIconHeight()) / 2);
+        g.drawString(getText(), LEFT_RIGHT_BORDER + ICON_SIZE + H_GAP, getBaseline(w, h));
+        getIcon().paintIcon(this, g, LEFT_RIGHT_BORDER, (getHeight() - getIcon().getIconHeight()) / 2);
         config.restore();
       }
 
