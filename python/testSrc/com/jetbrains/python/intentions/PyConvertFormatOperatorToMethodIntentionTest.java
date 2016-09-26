@@ -82,5 +82,10 @@ public class PyConvertFormatOperatorToMethodIntentionTest extends PyIntentionTes
   // PY-20803
   public void testStarWidthPrecision() {
     doNegativeTest(PyBundle.message("INTN.replace.with.method"));    
-  }  
+  }
+  
+  // PY-20876
+  public void testSet() {
+    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
+  }
 }

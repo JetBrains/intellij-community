@@ -304,10 +304,8 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
         }
       }
     }
-    else if (rhsType instanceof PyCollectionType) {
-      if ("dict".equals(rhsType.getName())) {
-        target.append("(**").append(paramText).append(")");
-      }
+    else if (rhsType instanceof PyCollectionType && "dict".equals(rhsType.getName())) {
+      target.append("(**").append(paramText).append(")");
     }
     else target.append("(").append(paramText).append(")"); // tuple is ok as is
     // Correctly handle multiline implicitly concatenated string literals (PY-9176)
