@@ -44,6 +44,7 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
                @NotNull List<Operation> operations) {
     PsiStatement statement = tb.getSingleStatement();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    String stream = generateStream(iteratedValue, operations).append(".findFirst()").toString();
     if (statement instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       PsiExpression value = returnStatement.getReturnValue();
@@ -52,14 +53,10 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       if (nextReturnStatement == null) return;
       PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
       if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return;
-      StringBuilder builder = generateStream(iteratedValue, operations).append(".findFirst()");
-      if (!(value instanceof PsiReferenceExpression) || ((PsiReferenceExpression)value).resolve() != tb.getVariable()) {
-        builder.append(".map(").append(tb.getVariable().getName()).append(" -> ").append(value.getText()).append(")");
-      }
-      builder.append(".orElse(").append(orElseExpression.getText()).append(")");
+      stream = generateOptionalUnwrap(stream, tb, value, orElseExpression);
       restoreComments(foreachStatement, body);
       boolean siblings = nextReturnStatement.getParent() == foreachStatement.getParent();
-      PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText("return " + builder + ";", foreachStatement));
+      PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", foreachStatement));
       if (siblings) {
         nextReturnStatement.delete();
       }
@@ -77,24 +74,38 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       PsiVariable var = (PsiVariable)element;
       PsiExpression value = assignment.getRExpression();
       if (value == null) return;
-      StringBuilder builder = generateStream(iteratedValue, operations).append(".findFirst()");
-      if (!(value instanceof PsiReferenceExpression) || ((PsiReferenceExpression)value).resolve() != tb.getVariable()) {
-        builder.append(".map(").append(tb.getVariable().getName()).append(" -> ").append(value.getText()).append(")");
-      }
       restoreComments(foreachStatement, body);
       if (StreamApiMigrationInspection.isDeclarationJustBefore(var, foreachStatement)) {
         PsiExpression initializer = var.getInitializer();
         if (initializer != null) {
           PsiElement result =
-            initializer.replace(elementFactory.createExpressionFromText(builder + ".orElse(" + initializer.getText() + ")", initializer));
+            initializer.replace(elementFactory.createExpressionFromText(generateOptionalUnwrap(stream, tb, value, initializer), initializer));
           removeLoop(foreachStatement);
           simplifyAndFormat(project, result);
           return;
         }
       }
-      PsiElement result = foreachStatement.replace(
-        elementFactory.createStatementFromText(var.getName() + " = " + builder + ".orElse(" + var.getName() + ");", foreachStatement));
+      PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(
+        var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, lValue) + ";", foreachStatement));
       simplifyAndFormat(project, result);
     }
+  }
+
+  private static String generateOptionalUnwrap(String stream, @NotNull StreamApiMigrationInspection.TerminalBlock tb,
+                                               PsiExpression trueExpression, PsiExpression falseExpression) {
+    PsiVariable var = tb.getVariable();
+    if (!StreamApiMigrationInspection.isIdentityMapping(var, trueExpression)) {
+      if(trueExpression instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
+        PsiTypeCastExpression castExpression = (PsiTypeCastExpression)trueExpression;
+        PsiTypeElement castType = castExpression.getCastType();
+        // pull cast outside to avoid the .map() step
+        if(castType != null && StreamApiMigrationInspection.isIdentityMapping(var, castExpression.getOperand())) {
+          return "(" + castType.getText() + ")" + stream + ".orElse(null)";
+        }
+      }
+      stream += ".map(" + StreamApiMigrationInspection.createLambda(var, trueExpression) + ")";
+    }
+    stream += ".orElse(" + falseExpression.getText() + ")";
+    return stream;
   }
 }

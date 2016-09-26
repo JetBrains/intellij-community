@@ -516,14 +516,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         if (nonFinalVariables.isEmpty() && tb.getSingleStatement() instanceof PsiReturnStatement) {
           handleSingleReturn(statement, tb, operations);
         }
-        if (nonFinalVariables.size() == 1) {
-          PsiStatement[] statements = tb.getStatements();
-          if (statements.length == 2) {
-            PsiStatement breakStatement = statements[1];
-            if (!(breakStatement instanceof PsiBreakStatement) ||
-                ((PsiBreakStatement)breakStatement).findExitedStatement() != statement) {
-              return;
-            }
+        PsiStatement[] statements = tb.getStatements();
+        if (statements.length == 2) {
+          PsiStatement breakStatement = statements[1];
+          if (!(breakStatement instanceof PsiBreakStatement) ||
+              ((PsiBreakStatement)breakStatement).findExitedStatement() != statement) {
+            return;
+          }
+          if (ReferencesSearch.search(tb.getVariable(), new LocalSearchScope(statements)).findFirst() == null
+            && exitPoints.size() == 1 && exitPoints.contains(breakStatement)) {
+            registerProblem(statement, "anyMatch", new ReplaceWithMatchFix("anyMatch"));
+            return;
+          }
+          if (nonFinalVariables.size() == 1) {
             PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
             if(assignment == null) return;
             PsiExpression lValue = assignment.getLExpression();
@@ -566,6 +571,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
       }
       if (!isVariableReferenced(tb.getVariable(), value)) {
+        if(!REPLACE_TRIVIAL_FOREACH && operations.isEmpty() || (operations.size() == 1 && operations.get(0) instanceof FilterOp)) {
+          return;
+        }
         registerProblem(statement, "anyMatch", new ReplaceWithMatchFix("anyMatch"));
       }
       if(nextReturnStatement != null && ExpressionUtils.isSimpleExpression(nextReturnStatement.getReturnValue())
