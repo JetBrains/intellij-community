@@ -522,7 +522,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * This is helper method. It delegated its functionality to the WindowManager.
    * Before delegating it fires state changed.
    */
-  public void execute(@NotNull List<FinalizableCommand> commandList) {
+  void execute(@NotNull List<FinalizableCommand> commandList) {
+    execute(commandList, false);
+  }
+
+  private void execute(@NotNull List<FinalizableCommand> commandList, boolean synchronously) {
     for (FinalizableCommand each : commandList) {
       if (each.willChangeState()) {
         fireStateChanged();
@@ -533,7 +537,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     for (FinalizableCommand each : commandList) {
       each.beforeExecute(this);
     }
-    myWindowManager.getCommandProcessor().execute(commandList, myProject.getDisposed());
+    myWindowManager.getCommandProcessor().execute(commandList, myProject.getDisposed(), synchronously);
   }
 
   @Override
@@ -2442,7 +2446,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         myManager.registerToolWindowsFromBeans(list);
         myManager.initAll(list);
         EdtInvocationManager.getInstance().invokeLater(() -> {
-          myManager.execute(list);
+          myManager.execute(list, true);
         });
       }
     }
