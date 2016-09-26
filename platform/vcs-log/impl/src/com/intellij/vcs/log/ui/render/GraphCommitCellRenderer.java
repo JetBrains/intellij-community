@@ -283,7 +283,9 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      return getLayout().getDimension(this, size.width);
+      int k = (int)Math.ceil(Math.log(size.getHeight() / size.getWidth()) / Math.log(2) / 2);
+      int factor = 1 << k;
+      return getLayout().getDimension(this, size.width * factor);
     }
   }
 }
