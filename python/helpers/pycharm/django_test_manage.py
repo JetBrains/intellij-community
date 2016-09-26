@@ -9,14 +9,17 @@ from pycharm_run_utils import import_system_module
 
 inspect = import_system_module("inspect")
 
+project_directory = sys.argv.pop()
+
+#ensure project directory is given priority when looking for settings files
+sys.path.insert(0, project_directory)
+
 #import settings to prevent circular dependencies later on import django.db
 try:
     from django.conf import settings
     apps = settings.INSTALLED_APPS
 except:
     pass
-
-project_directory = sys.argv.pop()
 
 from django.core import management
 from django.core.management.commands.test import Command
