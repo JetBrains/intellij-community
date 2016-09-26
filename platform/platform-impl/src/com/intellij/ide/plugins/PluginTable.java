@@ -15,20 +15,22 @@
  */
 package com.intellij.ide.plugins;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import java.awt.*;
 import java.awt.datatransfer.Transferable;
 
 /**
@@ -47,7 +49,7 @@ public class PluginTable extends JBTable {
       final ColumnInfo columnInfo = model.getColumnInfos()[i];
       column.setCellEditor(columnInfo.getEditor(null));
       if (columnInfo.getColumnClass() == Boolean.class) {
-        TableUtil.setupCheckboxColumn(column);
+        TableUtil.setupCheckboxColumn(column, JBUI.scale(16));
       }
     }
 
@@ -70,12 +72,12 @@ public class PluginTable extends JBTable {
         return COPY;
       }
     });
-    if (model.getColumnCount() > 1) {
-      setColumnWidth(1, new JCheckBox().getPreferredSize().width + 4);
-      if (SystemInfo.isMac && model.getColumnCount() == 3) {
-        setColumnWidth(2, 8);
-      }
-    }
+  }
+
+  @Override
+  public void paint(@NotNull Graphics g) {
+    super.paint(g);
+    UIUtil.fixOSXEditorBackground(this);
   }
 
   public void setColumnWidth(final int columnIndex, final int width) {

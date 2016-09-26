@@ -45,6 +45,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,6 +180,12 @@ public class InspectionsConfigTreeTable extends TreeTable {
                            }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
     getEmptyText().setText("No enabled inspections available");
+  }
+
+  @Override
+  public void paint(@NotNull Graphics g) {
+    super.paint(g);
+    UIUtil.fixOSXEditorBackground(this);
   }
 
   public abstract static class InspectionsConfigTreeTableSettings {

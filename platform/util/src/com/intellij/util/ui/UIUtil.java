@@ -173,6 +173,28 @@ public class UIUtil {
     return isRetina() && SystemInfo.isAppleJvm;
   }
 
+  public static Couple<Color> getCellColors(JTable table, boolean isSel, int row, int column) {
+    return Couple.of(isSel ? table.getSelectionForeground() : table.getForeground(),
+                                 isSel
+                                 ? table.getSelectionBackground()
+                                 : isUnderNimbusLookAndFeel() && row % 2 == 1 ? TRANSPARENT_COLOR : table.getBackground());
+  }
+
+  public static void fixOSXEditorBackground(@NotNull JTable table) {
+    if (!SystemInfo.isMac) return;
+
+    if (table.isEditing()) {
+      int column = table.getEditingColumn();
+      int row = table.getEditingRow();
+      Component renderer = column>=0 && row >= 0 ? table.getCellRenderer(row, column)
+        .getTableCellRendererComponent(table, table.getValueAt(row, column), true, table.hasFocus(), row, column) : null;
+      Component component = table.getEditorComponent();
+      if (component != null && renderer != null) {
+        changeBackGround(component, renderer.getBackground());
+      }
+    }
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
 
   public enum ComponentStyle {LARGE, REGULAR, SMALL, MINI}
