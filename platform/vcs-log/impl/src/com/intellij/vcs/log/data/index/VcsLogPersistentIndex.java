@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
@@ -283,25 +284,31 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public TIntHashSet filterMessages(@NotNull String text) {
     if (myTrigramIndex != null) {
       try {
-        ValueContainer.IntIterator commitsForSearch = myTrigramIndex.getCommitsForSubstring(text);
-        if (commitsForSearch != null) {
-          TIntHashSet result = new TIntHashSet();
-          while (commitsForSearch.hasNext()) {
-            int commit = commitsForSearch.next();
-            try {
-              String value = myMessagesIndex.get(commit);
-              if (value != null) {
-                if (StringUtil.containsIgnoreCase(value, text)) {
-                  result.add(commit);
+        if (VcsLogUtil.isRegexp(text)) {
+          Pattern pattern = Pattern.compile(text);
+          return filter(myMessagesIndex, message -> pattern.matcher(message).find());
+        }
+        else {
+          ValueContainer.IntIterator commitsForSearch = myTrigramIndex.getCommitsForSubstring(text);
+          if (commitsForSearch != null) {
+            TIntHashSet result = new TIntHashSet();
+            while (commitsForSearch.hasNext()) {
+              int commit = commitsForSearch.next();
+              try {
+                String value = myMessagesIndex.get(commit);
+                if (value != null) {
+                  if (StringUtil.containsIgnoreCase(value, text)) {
+                    result.add(commit);
+                  }
                 }
               }
+              catch (IOException e) {
+                myFatalErrorsConsumer.consume(this, e);
+                break;
+              }
             }
-            catch (IOException e) {
-              myFatalErrorsConsumer.consume(this, e);
-              break;
-            }
+            return result;
           }
-          return result;
         }
       }
       catch (StorageException e) {
@@ -316,7 +323,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
     if (filters.isEmpty()) return false;
     for (VcsLogDetailsFilter filter : filters) {
-      if (filter instanceof VcsLogTextFilter && myTrigramIndex != null && !VcsLogUtil.isRegexp(((VcsLogTextFilter)filter).getText()) ||
+      if (filter instanceof VcsLogTextFilter && myTrigramIndex != null ||
           filter instanceof VcsLogUserFilterImpl && myUserIndex != null ||
           filter instanceof VcsLogStructureFilter && myPathsIndex != null) {
         continue;
