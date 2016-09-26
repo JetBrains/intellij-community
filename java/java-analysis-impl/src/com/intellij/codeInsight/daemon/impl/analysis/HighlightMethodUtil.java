@@ -213,6 +213,10 @@ public class HighlightMethodUtil {
       description).create();
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, substitutedSuperReturnType, false));
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSuperMethodReturnFix(superMethod, returnType));
+    final PsiClass returnClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
+    if (returnClass != null && substitutedSuperReturnType instanceof PsiClassType) {
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createChangeParameterClassFix(returnClass, (PsiClassType)substitutedSuperReturnType));
+    }
 
     return errorResult;
   }
