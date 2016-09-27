@@ -37,7 +37,7 @@ public class MergeInitChecksTask extends BaseMergeTask {
 
     if (url != null) {
       if (areInSameHierarchy(url, myMergeContext.getWcInfo().getUrl())) {
-        finishWithError(context, "Cannot merge from self", true);
+        end(context, "Cannot merge from self", true);
       }
       else if (hasSwitchedRoots() && !myInteraction.shouldContinueSwitchedRootFound()) {
         context.cancelEverything();

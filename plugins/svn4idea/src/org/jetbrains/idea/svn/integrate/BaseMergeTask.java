@@ -31,6 +31,9 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.List;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static java.util.Collections.singletonList;
+
 public abstract class BaseMergeTask extends TaskDescriptor {
 
   private static final Logger LOG = Logger.getInstance(BaseMergeTask.class);
@@ -77,40 +80,30 @@ public abstract class BaseMergeTask extends TaskDescriptor {
       result = SvnUtil.createUrl(myMergeContext.getSourceUrl());
     }
     catch (SvnBindException e) {
-      finishWithError(context, e.getMessage(), true);
+      end(context, e);
     }
 
     return result;
   }
 
   @CalledInAny
-  protected void finishWithError(@NotNull ContinuationContext context, @NotNull String message, boolean isError) {
+  protected void end(@NotNull ContinuationContext context, @NotNull String message, boolean isError) {
     LOG.info((isError ? "Error: " : "Info: ") + message);
-    context.next(new TaskDescriptor(message, Where.AWT) {
-      @Override
-      public void run(ContinuationContext context) {
-        myInteraction.showErrors(message, isError);
-        context.cancelEverything();
-      }
-    });
+
+    context.cancelEverything();
+    getApplication().invokeLater(() -> myInteraction.showErrors(message, isError));
   }
 
   @CalledInAny
-  protected void finishWithError(@NotNull ContinuationContext context, @NotNull String message, @NotNull List<VcsException> exceptions) {
-    log(message, exceptions);
-
-    context.cancelEverything();
-    context.next(new TaskDescriptor(message, Where.AWT) {
-      @Override
-      public void run(ContinuationContext context) {
-        myInteraction.showErrors(message, exceptions);
-      }
-    });
+  protected void end(@NotNull ContinuationContext context, @NotNull VcsException e) {
+    end(context, myMergeContext.getTitle(), e);
   }
 
-  private static void log(@NotNull String message, @NotNull List<VcsException> exceptions) {
-    for (VcsException exception : exceptions) {
-      LOG.info(message, exception);
-    }
+  @CalledInAny
+  protected void end(@NotNull ContinuationContext context, @NotNull String message, @NotNull VcsException e) {
+    LOG.info(message, e);
+
+    context.cancelEverything();
+    getApplication().invokeLater(() -> myInteraction.showErrors(message, singletonList(e)));
   }
 }

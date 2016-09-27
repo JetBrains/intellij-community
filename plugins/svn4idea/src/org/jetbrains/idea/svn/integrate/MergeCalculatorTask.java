@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
-import static java.util.Collections.singletonList;
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
@@ -79,7 +78,7 @@ public class MergeCalculatorTask extends BaseMergeTask
         context.next(new ShowRevisionSelector(myMergeProcess, copyPoint, notMergedChangeLists, myMergeChecker));
       }
       else {
-        finishWithError(context, "Everything is up-to-date", false);
+        end(context, "Everything is up-to-date", false);
       }
     }
   }
@@ -92,11 +91,11 @@ public class MergeCalculatorTask extends BaseMergeTask
       result = myCopyData.get().get();
 
       if (result == null) {
-        finishWithError(context, "Merge start wasn't found", true);
+        end(context, "Merge start wasn't found", true);
       }
     }
     catch (VcsException e) {
-      finishWithError(context, "Merge start wasn't found", singletonList(e));
+      end(context, "Merge start wasn't found", e);
     }
 
     return result;
@@ -122,7 +121,7 @@ public class MergeCalculatorTask extends BaseMergeTask
                                                });
     }
     catch (VcsException e) {
-      finishWithError(context, "Checking revisions for merge fault", singletonList(e));
+      end(context, "Checking revisions for merge fault", e);
     }
 
     return result;

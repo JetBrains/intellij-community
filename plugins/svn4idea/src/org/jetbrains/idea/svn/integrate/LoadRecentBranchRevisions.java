@@ -69,7 +69,7 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
       run();
     }
     catch (VcsException e) {
-      context.handleException(e, true);
+      end(context, e);
     }
   }
 

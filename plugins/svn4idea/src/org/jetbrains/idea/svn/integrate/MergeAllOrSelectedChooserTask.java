@@ -66,7 +66,7 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
       result = new MergeCalculatorTask(myMergeProcess);
     }
     catch (VcsException e) {
-      finishWithError(context, e.getMessage(), true);
+      end(context, e);
     }
 
     return result;

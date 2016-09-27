@@ -71,10 +71,10 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
         changedFiles.addAll(getAfterRevisionsFiles(entry.getValue().stream(), true).collect(toList()));
       }
       catch (IOException e) {
-        finishWithError(context, e.getMessage(), true);
+        end(context, new VcsException(e));
       }
       catch (VcsException e) {
-        finishWithError(context, e.getMessage(), true);
+        end(context, e);
       }
     }
 

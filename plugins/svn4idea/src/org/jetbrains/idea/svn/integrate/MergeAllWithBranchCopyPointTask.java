@@ -22,7 +22,6 @@ import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
@@ -49,7 +48,7 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
       runMerge(context, inverterValue);
     }
     else {
-      finishWithError(context, "Merge start wasn't found", true);
+      end(context, "Merge start wasn't found", true);
     }
   }
 
@@ -62,11 +61,11 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
         runMerge(context, inverter);
       }
       else {
-        finishWithError(context, "Merge start wasn't found", true);
+        end(context, "Merge start wasn't found", true);
       }
     }
     catch (VcsException e) {
-      finishWithError(context, "Merge start wasn't found", Collections.singletonList(e));
+      end(context, "Merge start wasn't found", e);
     }
   }
 
