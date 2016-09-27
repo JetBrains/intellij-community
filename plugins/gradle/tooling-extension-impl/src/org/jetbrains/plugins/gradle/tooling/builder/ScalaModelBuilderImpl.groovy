@@ -92,13 +92,13 @@ class ScalaModelBuilderImpl implements ModelBuilderService {
 
     ScalaCompileOptionsImpl result = new ScalaCompileOptionsImpl()
     result.additionalParameters = wrapStringList(options.additionalParameters)
-    result.daemonServer = options.daemonServer
+    result.daemonServer = options.hasProperty('daemonServer') ? options.daemonServer : null
     result.debugLevel = options.debugLevel
     result.deprecation = options.deprecation
     result.encoding = options.encoding
     result.failOnError = options.failOnError
     result.force = String.valueOf(options.force)
-    result.fork = options.fork
+    result.fork = options.hasProperty('fork') ? options.fork : false
     result.forkOptions = create(options.forkOptions)
     result.listFiles = options.listFiles
     result.loggingLevel = options.loggingLevel
@@ -106,8 +106,8 @@ class ScalaModelBuilderImpl implements ModelBuilderService {
     result.loggingPhases = wrapStringList(options.loggingPhases)
     result.optimize = options.optimize
     result.unchecked = options.unchecked
-    result.useAnt = options.useAnt
-    result.useCompileDaemon = options.useCompileDaemon
+    result.useAnt = options.hasProperty('useAnt') ? options.useAnt : false
+    result.useCompileDaemon = options.hasProperty('useCompileDaemon') ? options.useCompileDaemon : false
 
     return result
   }
