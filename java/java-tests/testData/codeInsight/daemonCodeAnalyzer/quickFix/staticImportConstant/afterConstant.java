@@ -1,4 +1,4 @@
-// "Static import constant..." "true"
+// "Import static constant..." "true"
 package foo;
 
 import static foo.B.aaaaaaa;
