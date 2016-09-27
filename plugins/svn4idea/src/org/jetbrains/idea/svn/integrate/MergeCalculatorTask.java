@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +48,6 @@ public class MergeCalculatorTask extends BaseMergeTask
 
   @NotNull private final AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> myCopyData;
 
-  @NotNull private final String myMergeTitle;
   @NotNull private final MergeChecker myMergeChecker;
 
   @Override
@@ -60,7 +58,6 @@ public class MergeCalculatorTask extends BaseMergeTask
   public MergeCalculatorTask(@NotNull QuickMerge mergeProcess) throws VcsException {
     super(mergeProcess, "Calculating not merged revisions", Where.POOLED);
 
-    myMergeTitle = "Merge from " + myMergeContext.getBranchName();
     // TODO: Previously it was configurable - either to use OneShotMergeInfoHelper or BranchInfo as merge checker, but later that logic
     // TODO: was commented (in 80ebdbfea5210f6c998e67ddf28ca9c670fa4efe on 5/28/2010).
     // TODO: Still check if we need to preserve such configuration or it is sufficient to always use OneShotMergeInfoHelper.
@@ -79,7 +76,7 @@ public class MergeCalculatorTask extends BaseMergeTask
       List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(afterCopyPointChangeLists);
 
       if (!notMergedChangeLists.isEmpty()) {
-        context.next(new ShowRevisionSelector(copyPoint, notMergedChangeLists));
+        context.next(new ShowRevisionSelector(myMergeProcess, copyPoint, notMergedChangeLists, myMergeChecker));
       }
       else {
         finishWithError(context, "Everything is up-to-date", false);
@@ -163,22 +160,27 @@ public class MergeCalculatorTask extends BaseMergeTask
     return result;
   }
 
-  private class ShowRevisionSelector extends TaskDescriptor {
+  private static class ShowRevisionSelector extends BaseMergeTask {
 
     @NotNull private final List<CommittedChangeList> myChangeLists;
+    @NotNull private final MergeChecker myMergeChecker;
     @NotNull private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
 
-    private ShowRevisionSelector(@NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
-                                 @NotNull List<CommittedChangeList> changeLists) {
-      super("show revisions to merge", Where.AWT);
+    private ShowRevisionSelector(@NotNull QuickMerge mergeProcess,
+                                 @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
+                                 @NotNull List<CommittedChangeList> changeLists,
+                                 @NotNull MergeChecker mergeChecker) {
+      super(mergeProcess, "show revisions to merge", Where.AWT);
 
       myCopyPoint = copyPoint;
       myChangeLists = changeLists;
+      myMergeChecker = mergeChecker;
     }
 
     @Override
     public void run(ContinuationContext context) {
-      QuickMergeInteraction.SelectMergeItemsResult result = myInteraction.selectMergeItems(myChangeLists, myMergeTitle, myMergeChecker);
+      QuickMergeInteraction.SelectMergeItemsResult result =
+        myInteraction.selectMergeItems(myChangeLists, myMergeContext.getTitle(), myMergeChecker);
 
       switch (result.getResultCode()) {
         case cancel:
@@ -191,7 +193,7 @@ public class MergeCalculatorTask extends BaseMergeTask
           List<CommittedChangeList> lists = result.getSelectedLists();
 
           if (!lists.isEmpty()) {
-            runChangeListsMerge(context, lists, myCopyPoint, myMergeTitle);
+            runChangeListsMerge(context, lists, myCopyPoint, myMergeContext.getTitle());
           }
           break;
       }

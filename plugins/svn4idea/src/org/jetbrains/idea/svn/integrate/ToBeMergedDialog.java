@@ -490,7 +490,9 @@ public class ToBeMergedDialog extends DialogWrapper {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeContext, myStartNumber, myQuantity);
+      // TODO: Update this not to create new "QuickMerge" instance
+      QuickMerge mergeProcess = new QuickMerge(myMergeContext, new QuickMergeInteractionImpl(myMergeContext));
+      LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(mergeProcess, myStartNumber, myQuantity);
 
       try {
         loader.run();

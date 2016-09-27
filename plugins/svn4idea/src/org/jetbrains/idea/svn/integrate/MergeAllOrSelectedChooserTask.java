@@ -36,7 +36,7 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
         context.next(getMergeAllTasks());
         break;
       case showLatest:
-        LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeContext, -1);
+        LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeProcess, -1);
         ShowRecentInDialogTask dialog = new ShowRecentInDialogTask(myMergeProcess, loader);
 
         context.next(loader, dialog);
