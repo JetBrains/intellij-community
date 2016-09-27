@@ -258,6 +258,8 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.miglayout.com/mavensite/license.html"),
     new LibraryLicense(name: "minlog", libraryName: "minlog-1.2.jar", version: "1.2", license: "BSD",
                        url: "https://github.com/EsotericSoftware/minlog", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause"),
+    new LibraryLicense(name: "mockito", libraryName: "mockito-all-1.9.5.jar", version: "1.9.5", license: "MIT",
+                       url: "http://mockito.org", licenseUrl: "https://github.com/mockito/mockito/blob/master/LICENSE"),
     new LibraryLicense(name: "NanoXML", version: "2.2.3", license: "zlib/libpng",
                        url: "http://mvnrepository.com/artifact/be.cyberelf.nanoxml/nanoxml/2.2.3",
                        licenseUrl: "http://www.opensource.org/licenses/zlib-license.html"),
