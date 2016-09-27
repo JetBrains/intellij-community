@@ -34,7 +34,7 @@ target('run_ui_tests' : "Runs UI tests, sharding across multiple JVMs") {
   ant.taskdef(name: "uitest", loaderRef: "GANT_CONTEXT_CLASS_LOADER",  classname: "com.android.antuitest.tasks.UiTestTask")
 
   def classpathFile = "$home/uitests.classpath"
-  List<String> testRuntimeClasspath = projectBuilder.moduleRuntimeClasspath(findModule("community-main"), true)
+  List<String> testRuntimeClasspath = projectBuilder.moduleRuntimeClasspath(findModule("android-uitests"), true)
   new File(classpathFile).text = testRuntimeClasspath.findAll({ new File((String)it).exists() }).join('\n')
 
   ant.uitest(testSuite: "com.android.tools.idea.tests.gui.GuiTestSuite", classpathFile: classpathFile) {
