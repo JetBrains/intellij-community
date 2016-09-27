@@ -149,10 +149,9 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   }
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {
-    String runPath = PathManager.getHomePath();
-    String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
-    if (!SystemInfo.isMac) runPath += "/bin/" + productName + ".sh";
-    else runPath = StringUtil.trimEnd(runPath, CONTENTS);
+    String runPath;
+    if (SystemInfo.isMac) runPath = StringUtil.trimEnd(PathManager.getHomePath(), CONTENTS);
+    else runPath = PathManager.getBinPath() + "/" + ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US) + ".sh";
 
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
     assert loader != null;
