@@ -61,7 +61,7 @@ public class ParameterHintsPresentationManager implements Disposable {
 
   public String getHintText(@NotNull Inlay inlay) {
     EditorCustomElementRenderer renderer = inlay.getRenderer();
-    return renderer instanceof MyRenderer ? ((MyRenderer)renderer).myText : null;
+    return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
   }
 
   public void addHint(@NotNull Editor editor, int offset, @NotNull String hintText, boolean useAnimation) {
@@ -141,7 +141,7 @@ public class ParameterHintsPresentationManager implements Disposable {
   }
 
   private static class MyRenderer implements EditorCustomElementRenderer {
-    private String myText;
+    private String myText; // text with colon as a suffix
     private int startWidth;
     private int steps;
     private int step;
@@ -151,6 +151,10 @@ public class ParameterHintsPresentationManager implements Disposable {
       if (!animated) step = steps + 1;
     }
 
+    private String getText() {
+      return myText == null ? null : myText.substring(0, myText.length() - 1);
+    }
+
     public void update(Editor editor, String newText) {
       updateState(editor, newText);
     }
@@ -158,7 +162,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     private void updateState(Editor editor, String text) {
       FontMetrics metrics = getFontMetrics(editor).metrics;
       startWidth = doCalcWidth(myText, metrics);
-      myText = text;
+      myText = text == null ? null : (text + ":");
       int endWidth = doCalcWidth(myText, metrics);
       step = 1;
       steps = Math.max(1, Math.abs(endWidth - startWidth) / metrics.charWidth('a') / ANIMATION_CHARS_PER_STEP);
