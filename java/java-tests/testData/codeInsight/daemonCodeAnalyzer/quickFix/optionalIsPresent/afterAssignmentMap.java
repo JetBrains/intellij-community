@@ -5,7 +5,9 @@ import java.util.*;
 public class Main {
   public void testOptional(Optional<String> str) {
     String val;
-      val = str.map(String::trim).orElse("");
+      val = str.map( // line comment
+              // another line comment
+         /* block comment *//*block comment*/String::trim).orElse("");
     System.out.println(val);
   }
 }

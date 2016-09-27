@@ -6,7 +6,9 @@ public class Main {
   public void testOptional(Optional<String> str) {
     String val;
     if (str.isPrese<caret>nt()) {
-      val = str.get().trim();
+      val = // line comment
+      // another line comment
+        str.get().trim() /* block comment *//*block comment*/;
     } else {
       val = "";
     }
