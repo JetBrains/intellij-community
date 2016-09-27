@@ -17,10 +17,8 @@ package com.intellij.util.continuation;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInAwt;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -73,18 +71,6 @@ abstract class GeneralRunner implements ContinuationContext {
     }
   }
 
-  protected void cancelIndicator() {
-    synchronized (myQueueLock) {
-      if (myIndicator != null){
-        myIndicator.cancel();
-      }
-    }
-  }
-
-  public Project getProject() {
-    return myProject;
-  }
-
   @Override
   public boolean handleException(Exception e, boolean cancelEveryThing) {
     synchronized (myQueueLock) {
@@ -121,14 +107,6 @@ abstract class GeneralRunner implements ContinuationContext {
     }
   }
 
-  public void cancelCurrent() {
-    synchronized (myQueueLock) {
-      if (myIndicator != null) {
-        myIndicator.cancel();
-      }
-    }
-  }
-
   public void suspend() {
     synchronized (myQueueLock) {
       myTriggerSuspend = true;
@@ -144,50 +122,6 @@ abstract class GeneralRunner implements ContinuationContext {
   protected void clearSuspend() {
     synchronized (myQueueLock) {
       myTriggerSuspend = false;
-    }
-  }
-
-  @Override
-  public void keepExisting(Object disaster, Object cure) {
-    synchronized (myQueueLock) {
-      for (TaskDescriptor taskDescriptor : myQueue) {
-        taskDescriptor.addCure(disaster, cure);
-      }
-    }
-  }
-
-  @Override
-  public void throwDisaster(@NotNull Object disaster, @NotNull final Object cure) {
-    synchronized (myQueueLock) {
-      final Iterator<TaskDescriptor> iterator = myQueue.iterator();
-      while (iterator.hasNext()) {
-        final TaskDescriptor taskDescriptor = iterator.next();
-        if (taskDescriptor.isHaveMagicCure()) continue;
-        final Object taskCure = taskDescriptor.hasCure(disaster);
-        if (! cure.equals(taskCure)) {
-          iterator.remove();
-        }
-      }
-      myDisasters.put(disaster, cure);
-    }
-  }
-
-  @Override
-  public void after(@NotNull TaskDescriptor inQueue, TaskDescriptor... next) {
-    synchronized (myQueueLock) {
-      int idx = -1;
-      int i = 0;
-      for (TaskDescriptor descriptor : myQueue) {
-        if (descriptor == inQueue) {
-          idx = i;
-          break;
-        }
-        ++ i;
-      }
-      assert idx != -1;
-      final List<TaskDescriptor> asList = Arrays.asList(next);
-      patchTasks(asList);
-      myQueue.addAll(idx + 1, asList);
     }
   }
 
@@ -215,62 +149,7 @@ abstract class GeneralRunner implements ContinuationContext {
     }
   }
 
-  @Override
-  public void last(List<TaskDescriptor> next) {
-    synchronized (myQueueLock) {
-      patchTasks(next);
-      myQueue.addAll(next);
-    }
-  }
-
-  @Override
-  public void last(TaskDescriptor... next) {
-    synchronized (myQueueLock) {
-      final List<TaskDescriptor> asList = Arrays.asList(next);
-      patchTasks(asList);
-      myQueue.addAll(asList);
-    }
-  }
-
-  public boolean isEmpty() {
-    synchronized (myQueueLock) {
-      return myQueue.isEmpty();
-    }
-  }
-
   public abstract void ping();
-
-  @Override
-  public void addNewTasksPatcher(@NotNull Consumer<TaskDescriptor> consumer) {
-    synchronized (myQueueLock) {
-      myTasksPatchers.add(consumer);
-    }
-  }
-
-  @Override
-  public void removeNewTasksPatcher(@NotNull Consumer<TaskDescriptor> consumer) {
-    synchronized (myQueueLock) {
-      myTasksPatchers.remove(consumer);
-    }
-  }
-
-
-  @CalledInAwt
-  public void onCancel() {
-    // left only "final" tasks
-    synchronized (myQueueLock) {
-      if (myQueue.isEmpty()) return;
-      final Iterator<TaskDescriptor> iterator = myQueue.iterator();
-      while (iterator.hasNext()) {
-        final TaskDescriptor next = iterator.next();
-        if (! next.isHaveMagicCure()) {
-          iterator.remove();
-        }
-      }
-    }
-
-    ping();
-  }
 
   // null - no more tasks
   @Nullable
