@@ -60,6 +60,18 @@
     </java>
   </target>
 
+  <target name="gradleplugin" if="${bundle.gradle.plugin}">
+    <condition property="gradle.wrapper" value="${project.home}/../gradlew.bat" else="${project.home}/../gradlew">
+      <os family="windows" />
+    </condition>
+    <exec executable="${gradle.wrapper}" dir="${project.home}/../" failonerror="true">
+      <env key="JAVA_HOME" value="${java.home}" />
+      <arg value="init" />
+      <arg value="zipOfflineRepo" />
+    </exec>
+    <unzip src="${project.home}/../../out/dist/offline_repo.zip" dest="${project.home}/../../out/studio/repo" />
+  </target>
+
   <macrodef name="call_gant">
     <attribute name="script" />
     <attribute name="target" default="default" />
@@ -130,5 +142,5 @@
     </jarjar>
     <zip destfile="${out.dir}/sdk-patcher.zip" compress="true" basedir="${out.dir}" includes="sdk-patcher/*"/>
   </target>
-  <target name="all" depends="cleanup,build,fullupdater"/>
+  <target name="all" depends="cleanup,gradleplugin,build,fullupdater"/>
 </project>
