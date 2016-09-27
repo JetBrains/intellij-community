@@ -17,7 +17,9 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
@@ -26,6 +28,7 @@ import com.intellij.vcs.log.ui.render.LabelIcon;
 import com.intellij.vcs.log.ui.render.RectanglePainter;
 import com.intellij.vcs.log.ui.render.RectangleReferencePainter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,76 +40,114 @@ import static com.intellij.vcs.log.ui.frame.CommitPanel.getCommitDetailsBackgrou
 
 public class ReferencesPanel extends JPanel {
   public static final int H_GAP = 4;
-  private static final int V_GAP = 0;
+  protected static final int V_GAP = 0;
   public static final int PADDING = 3;
 
   private final int myRefsLimit;
   @NotNull private List<VcsRef> myReferences;
+  @NotNull protected MultiMap<VcsRefType, VcsRef> myGroupedVisibleReferences;
 
   public ReferencesPanel() {
-    this(-1);
+    this(new WrappedFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)), -1);
   }
 
-  public ReferencesPanel(int limit) {
-    super(new WrappedFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)));
+  public ReferencesPanel(LayoutManager layout, int limit) {
+    super(layout);
     myRefsLimit = limit;
     myReferences = Collections.emptyList();
+    myGroupedVisibleReferences = MultiMap.create();
     setOpaque(false);
   }
 
   public void setReferences(@NotNull List<VcsRef> references) {
     myReferences = references;
+
+    List<VcsRef> visibleReferences = (myRefsLimit > 0) ? myReferences.subList(0, Math.min(myReferences.size(), myRefsLimit)) : myReferences;
+    myGroupedVisibleReferences = ContainerUtil.groupBy(visibleReferences, VcsRef::getType);
+
     update();
   }
 
   public void update() {
     removeAll();
-    int height = getFontMetrics(getLabelsFont()).getHeight() + JBUI.scale(PADDING);
+    int height = getIconHeight();
     JBLabel firstLabel = null;
-    List<VcsRef> visibleReferences = (myRefsLimit > 0) ? myReferences.subList(0, Math.min(myReferences.size(), myRefsLimit)) : myReferences;
-    String tail =
-      myReferences.size() > visibleReferences.size() ? "... (" + (myReferences.size() - visibleReferences.size()) + " more)" : "";
 
-    int typeIndex = 0;
-    Set<Map.Entry<VcsRefType, Collection<VcsRef>>> groupedByType = ContainerUtil.groupBy(visibleReferences, VcsRef::getType).entrySet();
-    for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : groupedByType) {
-      if (GraphCommitCellRenderer.isRedesignedLabels()) {
+    if (GraphCommitCellRenderer.isRedesignedLabels()) {
+      for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
         VcsRefType type = typeAndRefs.getKey();
+        Collection<VcsRef> refs = typeAndRefs.getValue();
         int refIndex = 0;
-        for (VcsRef reference : typeAndRefs.getValue()) {
-          Icon icon = null;
-          if (refIndex == 0) {
-            Color color = type.getBackgroundColor();
-            icon = new LabelIcon(height, getBackground(),
-                                 typeAndRefs.getValue().size() > 1 ? new Color[]{color, color} : new Color[]{color});
-          }
-          String ending = (refIndex != typeAndRefs.getValue().size() - 1) ? "," : ((typeIndex != groupedByType.size() - 1) ? "" : tail);
-          JBLabel label = new JBLabel(reference.getName() + ending, icon, SwingConstants.LEFT);
-          label.setFont(getLabelsFont());
-          label.setIconTextGap(0);
-          label.setHorizontalAlignment(SwingConstants.LEFT);
+        for (VcsRef reference : refs) {
+          Icon icon = createIcon(type, refs, refIndex, height);
+          String ending = (refIndex != refs.size() - 1) ? "," : "";
+          String text = reference.getName() + ending;
+          JBLabel label = createLabel(text, icon);
           if (firstLabel == null) {
             firstLabel = label;
             add(label);
           }
           else {
-            Wrapper wrapper = new Wrapper(label);
-            wrapper.setVerticalSizeReferent(firstLabel);
-            add(wrapper);
+            addWrapped(label, firstLabel);
           }
           refIndex++;
         }
-        typeIndex++;
       }
-      else {
+      if (getHiddenReferencesSize() > 0) {
+        JBLabel label = createRestLabel(getHiddenReferencesSize());
+        addWrapped(label, ObjectUtils.assertNotNull(firstLabel));
+      }
+    }
+    else {
+      for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
         for (VcsRef reference : typeAndRefs.getValue()) {
           add(new ReferencePanel(reference));
         }
       }
     }
-    setVisible(!visibleReferences.isEmpty());
+    setVisible(!myGroupedVisibleReferences.isEmpty());
     revalidate();
     repaint();
+  }
+
+  private int getHiddenReferencesSize() {
+    return (myRefsLimit > 0) ? myReferences.size() - Math.min(myReferences.size(), myRefsLimit) : 0;
+  }
+
+  protected int getIconHeight() {
+    return getFontMetrics(getLabelsFont()).getHeight() + JBUI.scale(PADDING);
+  }
+
+  @NotNull
+  protected JBLabel createRestLabel(int restSize) {
+    return createLabel("... " + restSize + " more", null);
+  }
+
+  @Nullable
+  protected Icon createIcon(@NotNull VcsRefType type,
+                            @NotNull Collection<VcsRef> refs,
+                            int refIndex, int height) {
+    if (refIndex == 0) {
+      Color color = type.getBackgroundColor();
+      return new LabelIcon(height, getBackground(),
+                           refs.size() > 1 ? new Color[]{color, color} : new Color[]{color});
+    }
+    return null;
+  }
+
+  private void addWrapped(@NotNull JBLabel label, @NotNull JBLabel referent) {
+    Wrapper wrapper = new Wrapper(label);
+    wrapper.setVerticalSizeReferent(referent);
+    add(wrapper);
+  }
+
+  @NotNull
+  protected JBLabel createLabel(@NotNull String text, @Nullable Icon icon) {
+    JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
+    label.setFont(getLabelsFont());
+    label.setIconTextGap(0);
+    label.setHorizontalAlignment(SwingConstants.LEFT);
+    return label;
   }
 
   @NotNull
@@ -122,11 +163,6 @@ public class ReferencesPanel extends JPanel {
   @Override
   public Color getBackground() {
     return getCommitDetailsBackground();
-  }
-
-  @NotNull
-  public WrappedFlowLayout getLayout() {
-    return (WrappedFlowLayout)super.getLayout();
   }
 
   private static class ReferencePanel extends JPanel {
