@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.reference.SoftReference;
@@ -43,7 +44,16 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  * @author Maxim.Medvedev
  */
 public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl implements GrAnonymousClassDefinition {
+
   private SoftReference<PsiClassType> myCachedBaseType = null;
+
+  private NullableLazyValue<GrCodeReferenceElement> myStubBaseReference = NullableLazyValue.createValue(() -> {
+    GrTypeDefinitionStub stub = getStub();
+    if (stub == null) return null;
+    String baseClassName = stub.getBaseClassName();
+    assert baseClassName != null;
+    return GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(baseClassName, this);
+  });
 
   public GrAnonymousClassDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -60,11 +70,8 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @Override
   @NotNull
   public GrCodeReferenceElement getBaseClassReferenceGroovy() {
-    GrTypeDefinitionStub stub = getStub();
-    if (stub != null) {
-      return GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(stub.getBaseClassName(), this);
-    }
-    //noinspection ConstantConditions
+    GrCodeReferenceElement stubReference = myStubBaseReference.getValue();
+    if (stubReference != null) return stubReference;
     return findNotNullChildByClass(GrCodeReferenceElement.class); //not null because of definition =)
   }
 
