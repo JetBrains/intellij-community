@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ImportFilter;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -54,14 +53,6 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     }
 
     List<T> result = !applicableOnly && applicableList.isEmpty() ? list : applicableList;
-    for (int i = result.size() - 1; i >= 0; i--) {
-      ProgressManager.checkCanceled();
-      T method = result.get(i);
-      // check for manually excluded
-      if (StaticImportMethodFix.isExcluded(method)) {
-        result.remove(i);
-      }
-    }
     Collections.sort(result, CodeInsightUtil.createSortIdenticalNamedMembersComparator(myPlace));
     return result;
   }
@@ -130,6 +121,9 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
   @Override
   public boolean process(T member) {
     ProgressManager.checkCanceled();
+    if (StaticImportMemberFix.isExcluded(member)) {
+      return true;
+    }
     final PsiClass containingClass = member.getContainingClass();
     if (containingClass != null) {
       final String qualifiedName = containingClass.getQualifiedName();
@@ -148,7 +142,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
   }
 
   private boolean processCondition() {
-    return mySuggestions.size() < 50;
+    return mySuggestions.size() < 100;
   }
 
   private void registerMember(PsiClass containingClass,
@@ -164,7 +158,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       myPossibleClasses.put(containingClass, false);
     }
     for (T member : members) {
-      if (JavaCompletionUtil.isInExcludedPackage(member, false) || !member.hasModifierProperty(PsiModifier.STATIC)) {
+      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
         continue;
       }
 
