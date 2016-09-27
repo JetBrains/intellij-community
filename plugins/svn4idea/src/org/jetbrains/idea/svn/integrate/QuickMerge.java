@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.continuation.Continuation;
+import com.intellij.util.continuation.SeparatePiecesRunner;
 import com.intellij.util.continuation.TaskDescriptor;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -71,12 +71,14 @@ public class QuickMerge {
       finalTask
     };
 
-    createContinuation().run(mapNotNull(tasks, identity()));
+    SeparatePiecesRunner runner = createRunner();
+    runner.next(mapNotNull(tasks, identity()));
+    runner.ping();
   }
 
   @NotNull
-  private Continuation createContinuation() {
-    Continuation result = Continuation.createFragmented(myMergeContext.getProject(), true);
+  private SeparatePiecesRunner createRunner() {
+    SeparatePiecesRunner result = new SeparatePiecesRunner(myMergeContext.getProject(), true);
 
     result.addExceptionHandler(VcsException.class, e -> myInteraction.showErrors(myMergeContext.getTitle(), singletonList(e)));
     result.addExceptionHandler(SVNException.class,
