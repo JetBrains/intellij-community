@@ -63,11 +63,11 @@ public abstract class JavaLikeLangLineIndentProvider extends FormatterBasedLineI
   
   @Nullable
   @Override
-  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset) {
+  public String getLineIndent(@NotNull Project project, @NotNull Editor editor, @Nullable Language language, int offset) {
     if (offset > 0) {
       IndentCalculator indentCalculator = getIndent(project, editor, language, offset - 1);
       if (indentCalculator != null) {
-        return indentCalculator.getIndentString(getPosition(editor, offset - 1));
+        return indentCalculator.getIndentString(language, getPosition(editor, offset - 1));
       }
     }
     else {
