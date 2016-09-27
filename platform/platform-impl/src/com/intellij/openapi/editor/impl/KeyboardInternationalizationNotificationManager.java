@@ -40,7 +40,8 @@ public class KeyboardInternationalizationNotificationManager {
 
   public static void showNotification() {
 
-    if (notificationHasBeenShown || !KeyboardSettingsExternalizable.isSupportedKeyboardLayout(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow())) return;
+    Window mostRecentFocusedWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+    if (notificationHasBeenShown || (mostRecentFocusedWindow != null && !KeyboardSettingsExternalizable.isSupportedKeyboardLayout(mostRecentFocusedWindow))) return;
 
     MyNotificationListener listener =
       new MyNotificationListener();
