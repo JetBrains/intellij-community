@@ -22,14 +22,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -141,7 +140,26 @@ public class OldReferenceResolver {
               final String varargsJoin = StringUtil.join(ContainerUtil.map2Array(myActualArgs, String.class,
                                                                                  expression -> expression != null ? expression.getText() : "null"), index + 1, myActualArgs.length, ",");
               String newArrayInitializer = "new " + ((PsiEllipsisType)parameterType).toArrayType().getCanonicalText() + " {" + varargsJoin + "}";
-              initializer = replaceInitializerWithVarargSubstitution(factory, parameter, initializer, newArrayInitializer);
+              final String tempVar = getTempVar((PsiExpression)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(factory.createExpressionFromText(newArrayInitializer, myContext)));
+              final Map<PsiExpression, String> map = new HashMap<>();
+              if (initializer instanceof PsiReferenceExpression && Comparing.strEqual(parameter.getName(), initializer.getText())) {
+                newExpr.replace(factory.createExpressionFromText(tempVar, myContext));
+              }
+              else {
+                initializer = (PsiExpression)initializer.copy();
+                initializer.accept(new JavaRecursiveElementWalkingVisitor() {
+                  @Override
+                  public void visitReferenceExpression(PsiReferenceExpression expression) {
+                    super.visitReferenceExpression(expression);
+                    if (Comparing.strEqual(parameter.getName(), expression.getText())) {
+                      map.put(expression, tempVar);
+                    }
+                  }
+                });
+                replaceOldRefWithNew(map.entrySet(), factory);
+                newExpr.replace(factory.createExpressionFromText(getTempVar(actualArg, initializer), null));
+              }
+              return;
             }
 
             if (RefactoringUtil.verifySafeCopyExpression(actualArg) == RefactoringUtil.EXPR_COPY_PROHIBITED) {
@@ -207,31 +225,6 @@ public class OldReferenceResolver {
         resolveOldReferences(newChildren[i], oldChildren[i]);
       }
     }
-  }
-
-  @NotNull
-  private PsiExpression replaceInitializerWithVarargSubstitution(PsiElementFactory factory,
-                                                                 final PsiParameter parameter,
-                                                                 PsiExpression initializer, String newArrayInitializer) {
-    final String tempVar = getTempVar(factory.createExpressionFromText(newArrayInitializer, myContext));
-    final Map<PsiExpression, String> map = new HashMap<>();
-    if (initializer instanceof PsiReferenceExpression && Comparing.strEqual(parameter.getName(), initializer.getText())) {
-      initializer = factory.createExpressionFromText(tempVar, myContext);
-    }
-    else {
-      initializer = (PsiExpression)initializer.copy();
-      initializer.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
-          super.visitReferenceExpression(expression);
-          if (Comparing.strEqual(parameter.getName(), expression.getText())) {
-            map.put(expression, tempVar);
-          }
-        }
-      });
-      replaceOldRefWithNew(map.entrySet(), factory);
-    }
-    return initializer;
   }
 
   private PsiExpression getInstanceRef(PsiElementFactory factory) throws IncorrectOperationException {
