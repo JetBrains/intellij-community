@@ -20,34 +20,17 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public abstract class TaskDescriptor {
-  // this also means that it would be called in case of chain cancel()
-  private boolean myHaveMagicCure;
   private final String myName;
-  @NotNull
-  private final Where myWhere;
-  private final Map<Object, Object> mySurviveKit;
+  @NotNull private final Where myWhere;
 
   public TaskDescriptor(final String name, @NotNull final Where where) {
     myName = name;
     myWhere = where;
-    mySurviveKit = new HashMap<>();
   }
 
   public abstract void run(final ContinuationContext context);
-
-  public final void addCure(final Object disaster, final Object cure) {
-    mySurviveKit.put(disaster, cure);
-  }
-  @Nullable
-  public final Object hasCure(final Object disaster) {
-    return mySurviveKit.get(disaster);
-  }
 
   public String getName() {
     return myName;
@@ -59,11 +42,7 @@ public abstract class TaskDescriptor {
   }
 
   public boolean isHaveMagicCure() {
-    return myHaveMagicCure;
-  }
-
-  public void setHaveMagicCure(boolean haveMagicCure) {
-    myHaveMagicCure = haveMagicCure;
+    return false;
   }
 
   public void canceled() {
