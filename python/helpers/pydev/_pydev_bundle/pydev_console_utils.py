@@ -10,6 +10,14 @@ from _pydevd_bundle.pydevd_constants import IS_JYTHON
 from _pydevd_bundle.pydevd_utils import to_string
 
 
+USE_IPYTHON = False
+
+
+def set_result_ipython_value(ipython):
+    global USE_IPYTHON
+    USE_IPYTHON = ipython
+
+
 # =======================================================================================================================
 # Null
 # =======================================================================================================================
@@ -75,6 +83,10 @@ class BaseStdIn:
 
     def write(self, *args, **kwargs):
         pass  # not available StdIn (but it can be expected to be in the stream interface)
+
+    def isatty(self):
+        # return True for IPython console only
+        return USE_IPYTHON
 
     def flush(self, *args, **kwargs):
         pass  # not available StdIn (but it can be expected to be in the stream interface)

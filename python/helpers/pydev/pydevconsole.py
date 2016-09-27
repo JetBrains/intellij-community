@@ -39,7 +39,7 @@ except NameError: # version < 2.3 -- didn't have the True/False builtins
     setattr(__builtin__, 'True', 1) #Python 3.0 does not accept __builtin__.True = 1 in its syntax
     setattr(__builtin__, 'False', 0)
 
-from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn
+from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn, set_result_ipython_value
 from _pydev_bundle.pydev_console_utils import CodeFragment
 
 IS_PYTHON_3K = False
@@ -245,6 +245,8 @@ try:
 except:
     IPYTHON = False
     pass
+
+set_result_ipython_value(IPYTHON)
 
 #=======================================================================================================================
 # _DoExit
