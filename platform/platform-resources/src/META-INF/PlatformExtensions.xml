@@ -107,6 +107,13 @@
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
 
+    <fileTypeFactory implementation="com.intellij.diff.contents.DiffPsiFileType$TypeFactory"/>
+    <lang.substitutor language="TEXT" implementationClass="com.intellij.diff.contents.DiffPsiFileType$Substitutor" order="first"/>
+    <daemon.highlightInfoFilter implementation="com.intellij.diff.contents.DiffPsiFileType$HighlightFilter"/>
+    <daemon.intentionActionFilter implementation="com.intellij.diff.contents.DiffPsiFileType$IntentionFilter"/>
+    <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider"
+                                        implementation="com.intellij.diff.contents.DiffPsiFileType$HighlightingSettingProvider"/>
+
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapGroupFactory"

@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.scratch.ScratchFileType;
+import com.intellij.openapi.fileTypes.PeripheralFileType;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -28,7 +28,9 @@ import org.jetbrains.annotations.NotNull;
 public class JavaProblemHighlightFilter extends ProblemHighlightFilter {
   @Override
   public boolean shouldHighlight(@NotNull PsiFile psiFile) {
-    return psiFile.getFileType() != JavaFileType.INSTANCE || !JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile) || (psiFile.getViewProvider().getFileType() ==  ScratchFileType.INSTANCE);
+    return psiFile.getFileType() != JavaFileType.INSTANCE ||
+           !JavaProjectRootsUtil.isOutsideJavaSourceRoot(psiFile) ||
+           psiFile.getViewProvider().getFileType() instanceof PeripheralFileType;
   }
 
   @Override

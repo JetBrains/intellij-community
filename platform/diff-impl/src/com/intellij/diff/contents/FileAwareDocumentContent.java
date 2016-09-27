@@ -4,6 +4,7 @@ import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -12,11 +13,14 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.diff.Diff;
@@ -107,7 +111,27 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     @NotNull
     private Builder create(@NotNull String content) {
       mySeparator = StringUtil.detectSeparators(content);
-      myDocument = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(content));
+      String correctedContent = StringUtil.convertLineSeparators(content);
+
+      if (myProject != null && Registry.is("diff.enable.psi.highlighting")) {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          LightVirtualFile file = new LightVirtualFile(myFileName, DiffPsiFileType.INSTANCE, correctedContent);
+          file.setWritable(false);
+
+          file.putUserData(DiffPsiFileType.ORIGINAL_FILE_TYPE_KEY, myFileType);
+
+          myDocument = FileDocumentManager.getInstance().getDocument(file);
+          if (myDocument == null) {
+            myDocument = EditorFactory.getInstance().createDocument(correctedContent);
+          }
+
+          PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
+        });
+      }
+      else {
+        myDocument = EditorFactory.getInstance().createDocument(correctedContent);
+      }
+
       myDocument.setReadOnly(true);
       return this;
     }
