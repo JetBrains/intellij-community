@@ -26,7 +26,6 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.ClientCodeException;
 import com.sun.tools.javac.util.Name;
 import gnu.trove.THashSet;
-import org.jetbrains.jps.javac.ast.api.JavacDefSymbol;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -109,10 +108,10 @@ public class JavacReferencesCollector {
             final Set<JavacRefSymbol> symbols = new THashSet<JavacRefSymbol>();
             scanImports(myCurrentCompilationUnit, symbols);
             for (JavacFileReferencesRegistrar listener : myOnlyImportsListeners) {
-              listener.registerFile(sourceFile, symbols, Collections.<JavacDefSymbol>emptySet());
+              listener.registerFile(sourceFile, symbols, Collections.<JavacRefSymbol>emptySet());
             }
             if (myFullASTListeners.length != 0) {
-              final Collection<JavacDefSymbol> defs = new ArrayList<JavacDefSymbol>();
+              final Collection<JavacRefSymbol> defs = new ArrayList<JavacRefSymbol>();
               myAstScanner.scan(myCurrentCompilationUnit, new JavacTreeScannerSink() {
                 @Override
                 public void sinkReference(JavacRefSymbol ref) {
@@ -120,7 +119,7 @@ public class JavacReferencesCollector {
                 }
 
                 @Override
-                public void sinkDeclaration(JavacDefSymbol def) {
+                public void sinkDeclaration(JavacRefSymbol def) {
                   defs.add(def);
                 }
               });

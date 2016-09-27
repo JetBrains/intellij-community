@@ -19,13 +19,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PathUtil
 import com.sun.tools.javac.util.Convert
-import org.jetbrains.jps.builders.JpsBuildTestCase
-import org.jetbrains.jps.builders.TestProjectBuilderLogger
-import org.jetbrains.jps.builders.logging.BuildLoggingManager
+import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter
 import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex
 import org.jetbrains.jps.backwardRefs.LightUsage
-import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter
+import org.jetbrains.jps.builders.JpsBuildTestCase
+import org.jetbrains.jps.builders.TestProjectBuilderLogger
+import org.jetbrains.jps.builders.logging.BuildLoggingManager
 import java.io.File
 
 abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
@@ -129,7 +129,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
             byteArrayEnumerator) + "(" + this.parameterCount + ")"
         is LightUsage.LightFieldUsage -> this.owner.asName(byteArrayEnumerator) + "." + this.name.asName(byteArrayEnumerator)
         is LightUsage.LightClassUsage -> this.owner.asName(byteArrayEnumerator)
-        is LightUsage.LightFunExprUsage -> "fun_expr(" + this.owner.asName(byteArrayEnumerator) + " at " + this.offset + ")";
+        is LightUsage.LightFunExprUsage -> "fun_expr(" + this.owner.asName(byteArrayEnumerator) + ")"
         else -> throw UnsupportedOperationException()
       }
 }

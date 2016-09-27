@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.dependencyView.RW;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
-import org.jetbrains.jps.javac.ast.api.JavacDefSymbol;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
 import java.io.DataInput;
@@ -219,15 +218,8 @@ public abstract class LightUsage implements RW.Savable {
   }
 
   public static class LightFunExprUsage extends LightUsage {
-    private final int myOffset;
-
-    public LightFunExprUsage(int owner, int offset) {
+    public LightFunExprUsage(int owner) {
       super(owner);
-      myOffset = offset;
-    }
-
-    public int getOffset() {
-      return myOffset;
     }
 
     @NotNull
@@ -241,7 +233,6 @@ public abstract class LightUsage implements RW.Savable {
       try {
         out.writeByte(FUN_EXPR_MARKER);
         DataInputOutputUtil.writeINT(out, getOwner());
-        DataInputOutputUtil.writeINT(out, getOffset());
       }
       catch (IOException e) {
         throw new BuildDataCorruptedException(e);
@@ -294,7 +285,7 @@ public abstract class LightUsage implements RW.Savable {
           case FIELD_MARKER:
             return new LightFieldUsage(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in));
           case FUN_EXPR_MARKER:
-            return new LightFunExprUsage(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in));
+            return new LightFunExprUsage(DataInputOutputUtil.readINT(in));
         }
         throw new AssertionError();
       }
@@ -311,7 +302,7 @@ public abstract class LightUsage implements RW.Savable {
     final Tree.Kind kind = refSymbol.getPlaceKind();
     if (symbol instanceof Symbol.ClassSymbol) {
       if (kind == LAMBDA_EXPRESSION || kind == MEMBER_REFERENCE) {
-        return new LightFunExprUsage(id(symbol, byteArrayEnumerator), ((JavacDefSymbol)refSymbol).getOffset());
+        return new LightFunExprUsage(id(symbol, byteArrayEnumerator));
       } else if (!isPrivate(symbol) && !isAnonymous(symbol)) {
         return new LightClassUsage(id(symbol, byteArrayEnumerator));
       }

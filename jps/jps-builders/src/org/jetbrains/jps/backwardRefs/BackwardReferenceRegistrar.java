@@ -18,12 +18,10 @@ package org.jetbrains.jps.backwardRefs;
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
-import org.jetbrains.jps.javac.ast.api.JavacDefSymbol;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
 import javax.tools.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -45,11 +43,8 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
   }
 
   @Override
-  public void registerFile(JavaFileObject file, Set<JavacRefSymbol> refs, Collection<JavacDefSymbol> defs) {
-
-    List<JavacRefSymbol> fileIndexData = null;
-
-    for (JavacDefSymbol def : defs) {
+  public void registerFile(JavaFileObject file, Set<JavacRefSymbol> refs, Collection<JavacRefSymbol> defs) {
+    for (JavacRefSymbol def : defs) {
       Tree.Kind kind = def.getPlaceKind();
       if (kind == Tree.Kind.CLASS) {
         Symbol.ClassSymbol sym = (Symbol.ClassSymbol)def.getSymbol();
@@ -70,22 +65,8 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
         }
         myWriter.writeHierarchy(sym, supers);
       }
-      else if (kind == LightUsage.MEMBER_REFERENCE || kind == LightUsage.LAMBDA_EXPRESSION) {
-        if (fileIndexData == null) {
-          fileIndexData = new ArrayList<JavacRefSymbol>();
-        }
-        fileIndexData.add(def);
-      }
     }
 
-    final List<LightUsage> usages;
-    if (fileIndexData != null) {
-      fileIndexData.addAll(refs);
-      usages = myWriter.asLightUsages(fileIndexData);
-    }
-    else {
-      usages = myWriter.asLightUsages(refs);
-    }
-    myWriter.writeReferences(file, usages);
+    myWriter.writeReferences(file, refs);
   }
 }

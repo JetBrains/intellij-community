@@ -5,6 +5,7 @@ Backward References:
 MethodReference in MethodReference
 MethodReference.<init>(0) in MethodReference
 MethodReference.main(1) in MethodReference
+fun_expr(java.lang.Runnable) in MethodReference
 java.lang.Object.<init>(0) in MethodReference
 java.lang.String in MethodReference
 java.lang.Thread in MethodReference

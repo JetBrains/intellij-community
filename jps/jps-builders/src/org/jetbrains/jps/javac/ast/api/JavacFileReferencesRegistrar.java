@@ -25,5 +25,5 @@ public interface JavacFileReferencesRegistrar {
 
   boolean onlyImports();
 
-  void registerFile(JavaFileObject file, Set<JavacRefSymbol> refs, Collection<JavacDefSymbol> defs);
+  void registerFile(JavaFileObject file, Set<JavacRefSymbol> refs, Collection<JavacRefSymbol> defs);
 }

@@ -85,17 +85,15 @@ public class BackwardReferenceIndexWriter {
     myIndex.close();
   }
 
-  synchronized List<LightUsage> asLightUsages(Collection<JavacRefSymbol> symbols) {
+  synchronized void writeReferences(JavaFileObject file, Collection<JavacRefSymbol> refs) {
     final ByteArrayEnumerator byteSeqEum = myIndex.getByteSeqEum();
-    return ContainerUtil.mapNotNull(symbols, new Function<JavacRefSymbol, LightUsage>() {
+    final List<LightUsage> usages = ContainerUtil.mapNotNull(refs, new Function<JavacRefSymbol, LightUsage>() {
       @Override
       public LightUsage fun(JavacRefSymbol symbol) {
         return LightUsage.fromSymbol(symbol, byteSeqEum);
       }
     });
-  }
 
-  synchronized void writeReferences(JavaFileObject file, Collection<LightUsage> usages) {
     final int fileId = enumerateFile(file);
     if (myRebuild) {
       for (LightUsage usage : usages) {

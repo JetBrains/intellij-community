@@ -15,12 +15,11 @@
  */
 package org.jetbrains.jps.javac.ast;
 
-import org.jetbrains.jps.javac.ast.api.JavacDefSymbol;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
 interface JavacTreeScannerSink {
 
   void sinkReference(JavacRefSymbol ref);
 
-  void sinkDeclaration(JavacDefSymbol def);
+  void sinkDeclaration(JavacRefSymbol def);
 }
