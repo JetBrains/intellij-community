@@ -154,7 +154,7 @@ class PostHighlightingVisitor {
       for (Language language : relevantLanguages) {
         progress.checkCanceled();
         PsiElement psiRoot = viewProvider.getPsi(language);
-        if (!HighlightingLevelManager.getInstance(myProject).shouldHighlight(psiRoot)) continue;
+        if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(psiRoot)) continue;
         List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, 0, myFile.getTextLength());
         for (PsiElement element : elements) {
           progress.checkCanceled();
@@ -197,7 +197,7 @@ class PostHighlightingVisitor {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     if (profile.isToolEnabled(unusedImportKey, myFile) &&
         myFile instanceof PsiJavaFile &&
-        HighlightingLevelManager.getInstance(myProject).shouldHighlight(myFile)) {
+        HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile)) {
       return true;
     }
     final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
