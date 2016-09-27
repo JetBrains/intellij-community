@@ -391,16 +391,18 @@ idea.fatal.error.notification=disabled
 
     buildContext.projectBuilder.cleanOutput()
     if (moduleNames == null) {
-      buildContext.projectBuilder.buildProduction()
+      //buildContext.projectBuilder.buildProduction()
+      buildContext.projectBuilder.buildAll()
     }
     else {
-      List<String> modulesToBuild = ((moduleNames as Set<String>) +
-        buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
-      List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
-      if (!invalidModules.empty) {
-        buildContext.messages.warning("The following modules won't be compiled: $invalidModules")
-      }
-      buildContext.projectBuilder.buildModules(modulesToBuild.collect {buildContext.findModule(it)}.findAll {it != null})
+//      List<String> modulesToBuild = ((moduleNames as Set<String>) +
+//        buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) as List<String>
+//      List<String> invalidModules = modulesToBuild.findAll {buildContext.findModule(it) == null}
+//      if (!invalidModules.empty) {
+//        buildContext.messages.warning("The following modules won't be compiled: $invalidModules")
+//      }
+//      buildContext.projectBuilder.buildModules(modulesToBuild.collect {buildContext.findModule(it)}.findAll {it != null})
+      buildContext.projectBuilder.buildAll()
     }
     for (String moduleName : includingTestsInModules) {
       buildContext.projectBuilder.makeModuleTests(buildContext.findModule(moduleName))
