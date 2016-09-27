@@ -28,8 +28,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   private static final Logger LOG = Logger.getInstance(GraphCommitCellRenderer.class);
@@ -268,12 +266,15 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   private class TooltipReferencesPanel extends ReferencesPanel {
+    private static final int REFS_LIMIT = 10;
     private final int myMaxWidth;
 
     public TooltipReferencesPanel(@NotNull Collection<VcsRef> refs, int maxWidth) {
+      super(REFS_LIMIT);
       myMaxWidth = maxWidth;
       VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
-      setReferences(ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));
+      setReferences(
+        ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));
     }
 
     @NotNull

@@ -29,10 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 import static com.intellij.vcs.log.ui.frame.CommitPanel.getCommitDetailsBackground;
@@ -41,10 +39,17 @@ public class ReferencesPanel extends JPanel {
   public static final int H_GAP = 4;
   private static final int V_GAP = 0;
   public static final int PADDING = 3;
+
+  private final int myRefsLimit;
   @NotNull private List<VcsRef> myReferences;
 
   public ReferencesPanel() {
+    this(-1);
+  }
+
+  public ReferencesPanel(int limit) {
     super(new WrappedFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)));
+    myRefsLimit = limit;
     myReferences = Collections.emptyList();
     setOpaque(false);
   }
@@ -58,20 +63,25 @@ public class ReferencesPanel extends JPanel {
     removeAll();
     int height = getFontMetrics(getLabelsFont()).getHeight() + JBUI.scale(PADDING);
     JBLabel firstLabel = null;
-    for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : ContainerUtil.groupBy(myReferences, VcsRef::getType).entrySet()) {
+    List<VcsRef> visibleReferences = (myRefsLimit > 0) ? myReferences.subList(0, Math.min(myReferences.size(), myRefsLimit)) : myReferences;
+    String tail =
+      myReferences.size() > visibleReferences.size() ? "... (" + (myReferences.size() - visibleReferences.size()) + " more)" : "";
+
+    int typeIndex = 0;
+    Set<Map.Entry<VcsRefType, Collection<VcsRef>>> groupedByType = ContainerUtil.groupBy(visibleReferences, VcsRef::getType).entrySet();
+    for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : groupedByType) {
       if (GraphCommitCellRenderer.isRedesignedLabels()) {
         VcsRefType type = typeAndRefs.getKey();
-        int index = 0;
+        int refIndex = 0;
         for (VcsRef reference : typeAndRefs.getValue()) {
           Icon icon = null;
-          if (index == 0) {
+          if (refIndex == 0) {
             Color color = type.getBackgroundColor();
             icon = new LabelIcon(height, getBackground(),
                                  typeAndRefs.getValue().size() > 1 ? new Color[]{color, color} : new Color[]{color});
           }
-          JBLabel label =
-            new JBLabel(reference.getName() + (index != typeAndRefs.getValue().size() - 1 ? "," : ""),
-                        icon, SwingConstants.LEFT);
+          String ending = (refIndex != typeAndRefs.getValue().size() - 1) ? "," : ((typeIndex != groupedByType.size() - 1) ? "" : tail);
+          JBLabel label = new JBLabel(reference.getName() + ending, icon, SwingConstants.LEFT);
           label.setFont(getLabelsFont());
           label.setIconTextGap(0);
           label.setHorizontalAlignment(SwingConstants.LEFT);
@@ -84,8 +94,9 @@ public class ReferencesPanel extends JPanel {
             wrapper.setVerticalSizeReferent(firstLabel);
             add(wrapper);
           }
-          index++;
+          refIndex++;
         }
+        typeIndex++;
       }
       else {
         for (VcsRef reference : typeAndRefs.getValue()) {
@@ -93,7 +104,7 @@ public class ReferencesPanel extends JPanel {
         }
       }
     }
-    setVisible(!myReferences.isEmpty());
+    setVisible(!visibleReferences.isEmpty());
     revalidate();
     repaint();
   }
