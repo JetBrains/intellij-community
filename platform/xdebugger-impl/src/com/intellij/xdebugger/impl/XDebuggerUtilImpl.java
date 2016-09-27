@@ -175,24 +175,33 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                 @Override
                 public void valueChanged(ListSelectionEvent e) {
                   if (!e.getValueIsAdjusting()) {
-                    clearHighlighter();
-                    Object value = ((JList)e.getSource()).getSelectedValue();
-                    if (value instanceof XLineBreakpointType.XLineBreakpointVariant) {
-                      TextRange range = ((XLineBreakpointType.XLineBreakpointVariant)value).getHighlightRange();
-                      TextRange lineRange = DocumentUtil.getLineTextRange(editor.getDocument(), line);
-                      if (range != null) {
-                        range = range.intersection(lineRange);
-                      }
-                      else {
-                        range = lineRange;
-                      }
-                      if (range != null && !range.isEmpty()) {
-                        EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-                        TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
-                        myHighlighter = editor.getMarkupModel().addRangeHighlighter(
-                          range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
-                          HighlighterTargetArea.EXACT_RANGE);
-                      }
+                    updateHighlighter(((JList)e.getSource()).getSelectedValue());
+                  }
+                }
+
+                public void initialSet(Object value) {
+                  if (myHighlighter == null) {
+                    updateHighlighter(value);
+                  }
+                }
+
+                void updateHighlighter(Object value) {
+                  clearHighlighter();
+                  if (value instanceof XLineBreakpointType.XLineBreakpointVariant) {
+                    TextRange range = ((XLineBreakpointType.XLineBreakpointVariant)value).getHighlightRange();
+                    TextRange lineRange = DocumentUtil.getLineTextRange(editor.getDocument(), line);
+                    if (range != null) {
+                      range = range.intersection(lineRange);
+                    }
+                    else {
+                      range = lineRange;
+                    }
+                    if (range != null && !range.isEmpty()) {
+                      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+                      TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
+                      myHighlighter = editor.getMarkupModel().addRangeHighlighter(
+                        range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                        HighlighterTargetArea.EXACT_RANGE);
                     }
                   }
                 }
@@ -251,7 +260,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                   public int getDefaultOptionIndex() {
                     return defaultIndex;
                   }
-                });
+                }) {
+                @Override
+                protected void afterShow() {
+                  super.afterShow();
+                  selectionListener.initialSet(getList().getSelectedValue());
+                }
+              };
               DebuggerUIUtil.registerExtraHandleShortcuts(popup, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
               popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT));
 
