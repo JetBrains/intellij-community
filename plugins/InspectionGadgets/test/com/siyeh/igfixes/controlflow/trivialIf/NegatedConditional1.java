@@ -8,7 +8,7 @@ class NegatedConditional {
 
     final NegatedConditional that = (NegatedConditional)object;
 
-      return text != null ? text.equals(that.text) : that.text == null;
+    <caret>if (text != null ? !text.equals(that.text) : that.text != null) return false;return true;
   }
 
   public int hashCode() {
