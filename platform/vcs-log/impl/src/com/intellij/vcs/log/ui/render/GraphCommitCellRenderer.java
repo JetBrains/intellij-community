@@ -195,7 +195,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     if (!refs.isEmpty()) {
       customizeRefsPainter(myReferencePainter, refs, getForeground());
       if (myReferencePainter.getSize().getWidth() - LabelPainter.GRADIENT_WIDTH >= width - point.getX()) {
-        return new TooltipReferencesPanel(refs);
+        return new TooltipReferencesPanel(refs, myGraphTable.getWidth());
       }
     }
     return null;
@@ -268,7 +268,10 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   private class TooltipReferencesPanel extends ReferencesPanel {
-    public TooltipReferencesPanel(@NotNull List<VcsRef> refs) {
+    private final int myMaxWidth;
+
+    public TooltipReferencesPanel(@NotNull List<VcsRef> refs, int maxWidth) {
+      myMaxWidth = maxWidth;
       VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
       refs.sort(myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
       setReferences(refs);
@@ -283,9 +286,8 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      int k = (int)Math.ceil(Math.log(size.getHeight() / size.getWidth()) / Math.log(2) / 2);
-      int factor = 1 << k;
-      return getLayout().getDimension(this, size.width * factor);
+      int k = (int)Math.ceil(Math.sqrt(size.getHeight() / size.getWidth()));
+      return getLayout().getDimension(this, Math.min(size.width * k, myMaxWidth));
     }
   }
 }
