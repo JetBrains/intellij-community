@@ -27,7 +27,6 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.javac.ast.api.JavacDefSymbol;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
-import javax.lang.model.element.ElementKind;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -313,7 +312,7 @@ public abstract class LightUsage implements RW.Savable {
     if (symbol instanceof Symbol.ClassSymbol) {
       if (kind == LAMBDA_EXPRESSION || kind == MEMBER_REFERENCE) {
         return new LightFunExprUsage(id(symbol, byteArrayEnumerator), ((JavacDefSymbol)refSymbol).getOffset());
-      } else if (!isPrivate(symbol) && !symbol.isAnonymous()) {
+      } else if (!isPrivate(symbol) && !isAnonymous(symbol)) {
         return new LightClassUsage(id(symbol, byteArrayEnumerator));
       }
     }
@@ -339,6 +338,11 @@ public abstract class LightUsage implements RW.Savable {
   // JDK-6 has no Symbol.isPrivate() method
   private static boolean isPrivate(Symbol symbol) {
     return (symbol.flags() & Flags.AccessFlags) == PRIVATE;
+  }
+
+  // JDK-6 has no Symbol.isAnonymous() method
+  private static boolean isAnonymous(Symbol symbol) {
+    return symbol.name.isEmpty();
   }
 
   private static int id(Symbol symbol, ByteArrayEnumerator byteArrayEnumerator) {
