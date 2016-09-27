@@ -158,11 +158,7 @@ public class UiTestTask extends Task {
       Class<?>[] testClasses = (Class<?>[]) getGuiTestClasses.invoke(null, classLoader.loadClass(testSuite));
       for (Class<?> testClass : testClasses) {
         Object testGroup = getTestGroup.invoke(null, testClass);
-        if (testGroup == null) {
-          addToTestGroup(result, "DEFAULT", testClass);
-        } else {
-          addToTestGroup(result, testGroup.toString(), testClass);
-        }
+        addToTestGroup(result, testGroup.toString(), testClass);
       }
     } catch (Exception ex) {
       ex.printStackTrace();
