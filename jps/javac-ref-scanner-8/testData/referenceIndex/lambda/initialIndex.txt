@@ -5,7 +5,7 @@ Backward References:
 Lambda in Lambda
 Lambda.<init>(0) in Lambda
 Lambda.main(1) in Lambda
+fun_expr(java.lang.Runnable at 80) in Lambda
 java.lang.Object.<init>(0) in Lambda
-java.lang.Runnable in Lambda
 java.lang.String in Lambda
 java.lang.Thread in Lambda

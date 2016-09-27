@@ -26,6 +26,7 @@ import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.ClientCodeException;
 import com.sun.tools.javac.util.Name;
 import gnu.trove.THashSet;
+import org.jetbrains.jps.javac.ast.api.JavacDefSymbol;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 import org.jetbrains.jps.service.JpsServiceManager;
@@ -34,8 +35,7 @@ import javax.lang.model.element.ElementKind;
 import javax.tools.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class JavacReferencesCollector {
   public static void installOn(JavacTask task) {
@@ -109,9 +109,10 @@ public class JavacReferencesCollector {
             final Set<JavacRefSymbol> symbols = new THashSet<JavacRefSymbol>();
             scanImports(myCurrentCompilationUnit, symbols);
             for (JavacFileReferencesRegistrar listener : myOnlyImportsListeners) {
-              listener.registerReferences(sourceFile, symbols);
+              listener.registerFile(sourceFile, symbols, Collections.<JavacDefSymbol>emptySet());
             }
             if (myFullASTListeners.length != 0) {
+              final Collection<JavacDefSymbol> defs = new ArrayList<JavacDefSymbol>();
               myAstScanner.scan(myCurrentCompilationUnit, new JavacTreeScannerSink() {
                 @Override
                 public void sinkReference(JavacRefSymbol ref) {
@@ -119,14 +120,12 @@ public class JavacReferencesCollector {
                 }
 
                 @Override
-                public void sinkClassDeclaration(Symbol className, Symbol[] supers) {
-                  for (JavacFileReferencesRegistrar listener : myFullASTListeners) {
-                    listener.registerClassDeclaration(className, supers);
-                  }
+                public void sinkDeclaration(JavacDefSymbol def) {
+                  defs.add(def);
                 }
               });
               for (JavacFileReferencesRegistrar listener : myFullASTListeners) {
-                listener.registerReferences(sourceFile, symbols);
+                listener.registerFile(sourceFile, symbols, defs);
               }
             }
           }

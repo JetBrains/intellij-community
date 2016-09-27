@@ -15,7 +15,9 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.tools.javac.code.Symbol;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
@@ -33,7 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Set;
+import java.util.List;
 
 public class BackwardReferenceIndexWriter {
   public static final String PROP_KEY = "ref.index.builder";
@@ -83,14 +85,17 @@ public class BackwardReferenceIndexWriter {
     myIndex.close();
   }
 
-  synchronized void writeReferences(JavaFileObject file, Set<JavacRefSymbol> refs) {
-    final LightUsage[] usages = new LightUsage[refs.size()];
-    int idx = 0;
+  synchronized List<LightUsage> asLightUsages(Collection<JavacRefSymbol> symbols) {
     final ByteArrayEnumerator byteSeqEum = myIndex.getByteSeqEum();
-    for (JavacRefSymbol ref : refs) {
-      usages[idx++] = LightUsage.fromSymbol(ref.getSymbol(), byteSeqEum);
-    }
+    return ContainerUtil.mapNotNull(symbols, new Function<JavacRefSymbol, LightUsage>() {
+      @Override
+      public LightUsage fun(JavacRefSymbol symbol) {
+        return LightUsage.fromSymbol(symbol, byteSeqEum);
+      }
+    });
+  }
 
+  synchronized void writeReferences(JavaFileObject file, Collection<LightUsage> usages) {
     final int fileId = enumerateFile(file);
     if (myRebuild) {
       for (LightUsage usage : usages) {
@@ -103,7 +108,7 @@ public class BackwardReferenceIndexWriter {
     }
   }
 
-  private void updateReferenceIndicesIncrementally(int fileId, LightUsage[] usages) {
+  private void updateReferenceIndicesIncrementally(int fileId, Collection<LightUsage> usages) {
     final Collection<LightUsage> rawOldUsages = myIndex.getReferenceMap().get(fileId);
     Collection<LightUsage> oldUsages = rawOldUsages == null ? null : new ArrayList<LightUsage>(rawOldUsages);
     for (LightUsage usage : usages) {

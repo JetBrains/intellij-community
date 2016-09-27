@@ -15,9 +15,8 @@
  */
 package org.jetbrains.jps.javac.ast.api;
 
-import com.sun.tools.javac.code.Symbol;
-
 import javax.tools.*;
+import java.util.Collection;
 import java.util.Set;
 
 public interface JavacFileReferencesRegistrar {
@@ -26,7 +25,5 @@ public interface JavacFileReferencesRegistrar {
 
   boolean onlyImports();
 
-  void registerReferences(JavaFileObject file, Set<JavacRefSymbol> refs);
-
-  void registerClassDeclaration(Symbol className, Symbol[] supers);
+  void registerFile(JavaFileObject file, Set<JavacRefSymbol> refs, Collection<JavacDefSymbol> defs);
 }

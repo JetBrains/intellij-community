@@ -70,5 +70,9 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testAnonymous() {
     assertIndexOnRebuild("Anonymous.java")
   }
+
+  fun testPrivateMembers() {
+    assertIndexOnRebuild("PrivateMembers.java")
+  }
 }
 

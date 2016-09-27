@@ -20,15 +20,13 @@ import com.sun.source.util.TreeScanner;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
+import org.jetbrains.jps.javac.ast.api.JavacDefSymbol;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.type.TypeKind;
-import java.util.List;
 
 class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
-  private static final Symbol[] EMPTY_SYMBOL_ARRAY = new Symbol[0];
-  
   @Override
   public Tree visitCompilationUnit(CompilationUnitTree node, JavacTreeScannerSink sink) {
     scan(node.getPackageAnnotations(), sink);
@@ -86,26 +84,10 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacTreeScannerSink> {
   
   @Override
   public Tree visitClass(ClassTree node, JavacTreeScannerSink sink) {
-    Symbol.ClassSymbol sym = ((JCTree.JCClassDecl)node).sym;
+    JCTree.JCClassDecl classDecl = (JCTree.JCClassDecl)node;
+    Symbol.ClassSymbol sym = classDecl.sym;
     sink.sinkReference(new JavacRefSymbol(sym, Tree.Kind.CLASS));
-
-    Type superclass = sym.getSuperclass();
-    List<Type> interfaces = sym.getInterfaces();
-
-    final Symbol[] supers;
-    if (superclass != Type.noType) {
-      supers = new Symbol[interfaces.size() + 1];
-      supers[interfaces.size()] = superclass.asElement();
-    } else {
-      supers = interfaces.isEmpty() ? EMPTY_SYMBOL_ARRAY : new Symbol[interfaces.size()];
-    }
-
-    int i = 0;
-    for (Type anInterface : interfaces) {
-      supers[i++] = anInterface.asElement();
-    }
-    sink.sinkClassDeclaration(sym, supers);
-
+    sink.sinkDeclaration(new JavacDefSymbol(sym, Tree.Kind.CLASS, classDecl.pos));
     return super.visitClass(node, sink);
   }
 

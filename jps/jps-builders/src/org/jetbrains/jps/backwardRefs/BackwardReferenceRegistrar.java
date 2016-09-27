@@ -15,14 +15,22 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Type;
+import org.jetbrains.jps.javac.ast.api.JavacDefSymbol;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
 import javax.tools.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar {
+  private static final Symbol[] EMPTY_SYMBOL_ARRAY = new Symbol[0];
+
   private BackwardReferenceIndexWriter myWriter;
 
   @Override
@@ -37,12 +45,47 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
   }
 
   @Override
-  public void registerReferences(JavaFileObject file, Set<JavacRefSymbol> refs) {
-    myWriter.writeReferences(file, refs);
-  }
+  public void registerFile(JavaFileObject file, Set<JavacRefSymbol> refs, Collection<JavacDefSymbol> defs) {
 
-  @Override
-  public void registerClassDeclaration(Symbol className, Symbol[] supers) {
-    myWriter.writeHierarchy(className, supers);
+    List<JavacRefSymbol> fileIndexData = null;
+
+    for (JavacDefSymbol def : defs) {
+      Tree.Kind kind = def.getPlaceKind();
+      if (kind == Tree.Kind.CLASS) {
+        Symbol.ClassSymbol sym = (Symbol.ClassSymbol)def.getSymbol();
+        Type superclass = sym.getSuperclass();
+        List<Type> interfaces = sym.getInterfaces();
+
+        final Symbol[] supers;
+        if (superclass != Type.noType) {
+          supers = new Symbol[interfaces.size() + 1];
+          supers[interfaces.size()] = superclass.asElement();
+        } else {
+          supers = interfaces.isEmpty() ? EMPTY_SYMBOL_ARRAY : new Symbol[interfaces.size()];
+        }
+
+        int i = 0;
+        for (Type anInterface : interfaces) {
+          supers[i++] = anInterface.asElement();
+        }
+        myWriter.writeHierarchy(sym, supers);
+      }
+      else if (kind == LightUsage.MEMBER_REFERENCE || kind == LightUsage.LAMBDA_EXPRESSION) {
+        if (fileIndexData == null) {
+          fileIndexData = new ArrayList<JavacRefSymbol>();
+        }
+        fileIndexData.add(def);
+      }
+    }
+
+    final List<LightUsage> usages;
+    if (fileIndexData != null) {
+      fileIndexData.addAll(refs);
+      usages = myWriter.asLightUsages(fileIndexData);
+    }
+    else {
+      usages = myWriter.asLightUsages(refs);
+    }
+    myWriter.writeReferences(file, usages);
   }
 }

@@ -129,6 +129,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
             byteArrayEnumerator) + "(" + this.parameterCount + ")"
         is LightUsage.LightFieldUsage -> this.owner.asName(byteArrayEnumerator) + "." + this.name.asName(byteArrayEnumerator)
         is LightUsage.LightClassUsage -> this.owner.asName(byteArrayEnumerator)
+        is LightUsage.LightFunExprUsage -> "fun_expr(" + this.owner.asName(byteArrayEnumerator) + " at " + this.offset + ")";
         else -> throw UnsupportedOperationException()
       }
 }

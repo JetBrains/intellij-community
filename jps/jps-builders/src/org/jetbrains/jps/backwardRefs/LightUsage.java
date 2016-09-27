@@ -17,20 +17,44 @@ package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
+import com.sun.source.tree.Tree;
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.dependencyView.RW;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
+import org.jetbrains.jps.javac.ast.api.JavacDefSymbol;
+import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
 import javax.lang.model.element.ElementKind;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+import static com.sun.tools.javac.code.Flags.PRIVATE;
+
 public abstract class LightUsage implements RW.Savable {
   private final static byte CLASS_MARKER = 0x0;
   private final static byte METHOD_MARKER = 0x1;
   private final static byte FIELD_MARKER = 0x2;
+  private final static byte FUN_EXPR_MARKER = 0x3;
+
+  static final Tree.Kind LAMBDA_EXPRESSION;
+  static final Tree.Kind MEMBER_REFERENCE;
+
+  static {
+    Tree.Kind lambdaExpression = null;
+    Tree.Kind memberReference = null;
+    try {
+      lambdaExpression = Tree.Kind.valueOf("LAMBDA_EXPRESSION");
+      memberReference = Tree.Kind.valueOf("MEMBER_REFERENCE");
+    }
+    catch (IllegalArgumentException ignored) {
+    }
+    LAMBDA_EXPRESSION = lambdaExpression;
+    MEMBER_REFERENCE = memberReference;
+  }
 
   public final int myOwner;
 
@@ -195,6 +219,54 @@ public abstract class LightUsage implements RW.Savable {
     }
   }
 
+  public static class LightFunExprUsage extends LightUsage {
+    private final int myOffset;
+
+    public LightFunExprUsage(int owner, int offset) {
+      super(owner);
+      myOffset = offset;
+    }
+
+    public int getOffset() {
+      return myOffset;
+    }
+
+    @NotNull
+    @Override
+    public LightClassUsage override(int ownerOverrider) {
+      return new LightClassUsage(ownerOverrider);
+    }
+
+    @Override
+    public void save(DataOutput out) {
+      try {
+        out.writeByte(FUN_EXPR_MARKER);
+        DataInputOutputUtil.writeINT(out, getOwner());
+        DataInputOutputUtil.writeINT(out, getOffset());
+      }
+      catch (IOException e) {
+        throw new BuildDataCorruptedException(e);
+      }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      LightFunExprUsage usage = (LightFunExprUsage)o;
+
+      if (myOwner != usage.myOwner) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myOwner;
+    }
+  }
+
   static KeyDescriptor<LightUsage> createDescriptor() {
     return new KeyDescriptor<LightUsage>() {
       @Override
@@ -222,6 +294,8 @@ public abstract class LightUsage implements RW.Savable {
             return new LightMethodUsage(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in));
           case FIELD_MARKER:
             return new LightFieldUsage(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in));
+          case FUN_EXPR_MARKER:
+            return new LightFunExprUsage(DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in));
         }
         throw new AssertionError();
       }
@@ -232,21 +306,39 @@ public abstract class LightUsage implements RW.Savable {
     return symbol.flatName().toUtf();
   }
 
-  static LightUsage fromSymbol(Symbol symbol, ByteArrayEnumerator byteArrayEnumerator) {
-    final ElementKind kind = symbol.getKind();
+  @Nullable
+  static LightUsage fromSymbol(JavacRefSymbol refSymbol, ByteArrayEnumerator byteArrayEnumerator) {
+    Symbol symbol = refSymbol.getSymbol();
+    final Tree.Kind kind = refSymbol.getPlaceKind();
     if (symbol instanceof Symbol.ClassSymbol) {
-      return new LightClassUsage(id(symbol, byteArrayEnumerator));
-    }
-    else if (symbol instanceof Symbol.VarSymbol) {
-      return new LightFieldUsage(id(symbol.owner, byteArrayEnumerator), id(symbol, byteArrayEnumerator));
-    }
-    else if (symbol instanceof Symbol.MethodSymbol) {
-      int paramCount = ((Symbol.MethodSymbol)symbol).type.getParameterTypes().size();
-      return new LightMethodUsage(id(symbol.owner, byteArrayEnumerator), id(symbol, byteArrayEnumerator), paramCount);
+      if (kind == LAMBDA_EXPRESSION || kind == MEMBER_REFERENCE) {
+        return new LightFunExprUsage(id(symbol, byteArrayEnumerator), ((JavacDefSymbol)refSymbol).getOffset());
+      } else if (!isPrivate(symbol) && !symbol.isAnonymous()) {
+        return new LightClassUsage(id(symbol, byteArrayEnumerator));
+      }
     }
     else {
-      throw new AssertionError("unexpected symbol: " + symbol + " class: " + symbol.getClass() + " kind: " + kind);
+      Symbol owner = symbol.owner;
+      if (isPrivate(symbol)) {
+        return null;
+      }
+      if (symbol instanceof Symbol.VarSymbol) {
+        return new LightFieldUsage(id(owner, byteArrayEnumerator), id(symbol, byteArrayEnumerator));
+      }
+      else if (symbol instanceof Symbol.MethodSymbol) {
+        int paramCount = ((Symbol.MethodSymbol)symbol).type.getParameterTypes().size();
+        return new LightMethodUsage(id(owner, byteArrayEnumerator), id(symbol, byteArrayEnumerator), paramCount);
+      }
+      else {
+        throw new AssertionError("unexpected symbol: " + symbol + " class: " + symbol.getClass() + " kind: " + kind);
+      }
     }
+    return null;
+  }
+
+  // JDK-6 has no Symbol.isPrivate() method
+  private static boolean isPrivate(Symbol symbol) {
+    return (symbol.flags() & Flags.AccessFlags) == PRIVATE;
   }
 
   private static int id(Symbol symbol, ByteArrayEnumerator byteArrayEnumerator) {
