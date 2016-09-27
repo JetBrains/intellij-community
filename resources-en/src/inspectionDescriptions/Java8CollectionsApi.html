@@ -28,6 +28,16 @@ The following cases are covered by this inspection:
       }
     </pre>
   </li>
+  <li><b>Collection.removeIf</b> method could be used to replace the code like this:
+    <pre>
+      for (Iterator&lt;String&gt; it = collection.iterator(); it.hasNext(); ) {
+        String aValue = it.next();
+        if(shouldBeRemoved(aValue)) {
+          it.remove();
+        }
+      }
+    </pre>
+  </li>
   <li><b>List.sort</b> instance method could be used to replace <b>Collections.sort</b> static method</li>
 </ul>
 </body>
