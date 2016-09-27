@@ -424,12 +424,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @Override
   public void initToolWindow(@NotNull ToolWindowEP bean) {
-    JLabel label = new JLabel("Initializing...", SwingConstants.CENTER);
-    label.setOpaque(true);
-    final Color treeBg = UIManager.getColor("Tree.background");
-    label.setBackground(ColorUtil.toAlpha(treeBg, 180));
-    final Color treeFg = UIUtil.getTreeForeground();
-    label.setForeground(ColorUtil.toAlpha(treeFg, 180));
+    WindowInfoImpl before = myLayout.getInfo(bean.id, false);
+    boolean visible = before != null && before.isVisible();
+    JLabel label = createInitializingLabel();
     ToolWindowAnchor toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor);
     final ToolWindowFactory factory = bean.getToolWindowFactory();
     final ToolWindowImpl toolWindow =
@@ -461,12 +458,23 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       toolWindow.ensureContentInitialized();
       activation.setDone();
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (visible || ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
     }
     else {
       UiNotifyConnector.doWhenFirstShown(label, () -> ApplicationManager.getApplication().invokeLater(runnable));
     }
+  }
+
+  @NotNull
+  private static JLabel createInitializingLabel() {
+    JLabel label = new JLabel("Initializing...", SwingConstants.CENTER);
+    label.setOpaque(true);
+    final Color treeBg = UIManager.getColor("Tree.background");
+    label.setBackground(ColorUtil.toAlpha(treeBg, 180));
+    final Color treeFg = UIUtil.getTreeForeground();
+    label.setForeground(ColorUtil.toAlpha(treeFg, 180));
+    return label;
   }
 
   @Override
@@ -514,7 +522,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * This is helper method. It delegated its functionality to the WindowManager.
    * Before delegating it fires state changed.
    */
-  public void execute(@NotNull List<FinalizableCommand> commandList) {
+  void execute(@NotNull List<FinalizableCommand> commandList) {
+    execute(commandList, false);
+  }
+
+  private void execute(@NotNull List<FinalizableCommand> commandList, boolean synchronously) {
     for (FinalizableCommand each : commandList) {
       if (each.willChangeState()) {
         fireStateChanged();
@@ -525,7 +537,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     for (FinalizableCommand each : commandList) {
       each.beforeExecute(this);
     }
-    myWindowManager.getCommandProcessor().execute(commandList, myProject.getDisposed());
+    myWindowManager.getCommandProcessor().execute(commandList, myProject.getDisposed(), synchronously);
   }
 
   @Override
@@ -2434,7 +2446,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         myManager.registerToolWindowsFromBeans(list);
         myManager.initAll(list);
         EdtInvocationManager.getInstance().invokeLater(() -> {
-          myManager.execute(list);
+          myManager.execute(list, true);
         });
       }
     }

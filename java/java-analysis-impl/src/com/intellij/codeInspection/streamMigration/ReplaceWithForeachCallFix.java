@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -48,12 +49,12 @@ class ReplaceWithForeachCallFix extends MigrateToStreamFix {
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
                @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-               @NotNull List<String> intermediateOps) {
+               @NotNull List<Operation> operations) {
     restoreComments(foreachStatement, body);
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
-    StringBuilder buffer = generateStream(iteratedValue, intermediateOps);
+    StringBuilder buffer = generateStream(iteratedValue, operations, true);
     PsiElement block = tb.convertToElement(elementFactory);
 
     buffer.append(".").append(myForEachMethodName).append("(");

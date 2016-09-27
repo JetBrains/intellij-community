@@ -165,11 +165,25 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPyTypeDeclarationStatement(PyTypeDeclarationStatement node) {
+    myBuilder.startNode(node);
+    final PyAnnotation annotation = node.getAnnotation();
+    if (annotation != null) {
+      annotation.accept(this);
+    }
+    node.getTarget().accept(this);
+  }
+
+  @Override
   public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
     myBuilder.startNode(node);
     final PyExpression value = node.getAssignedValue();
     if (value != null) {
       value.accept(this);
+    }
+    final PyAnnotation annotation = node.getAnnotation();
+    if (annotation != null) {
+      annotation.accept(this);
     }
     for (PyExpression expression : node.getRawTargets()) {
       expression.accept(this);

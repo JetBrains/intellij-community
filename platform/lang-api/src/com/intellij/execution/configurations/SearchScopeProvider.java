@@ -29,7 +29,7 @@ public class SearchScopeProvider {
   @NotNull
   public static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
     if (runProfile instanceof SearchScopeProvidingRunProfile) {
-      GlobalSearchScope scope = ((SearchScopeProvidingRunProfile)runProfile).getScope();
+      GlobalSearchScope scope = ((SearchScopeProvidingRunProfile)runProfile).getSearchScope();
       if (scope != null) return scope;
     }
     return GlobalSearchScope.allScope(project);

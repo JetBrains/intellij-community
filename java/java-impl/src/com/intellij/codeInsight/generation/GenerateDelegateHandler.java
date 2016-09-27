@@ -405,6 +405,9 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
           final PsiVariable psiVariable = proc.getResult(i);
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
           final PsiType type = psiVariable.getType();
+          if (LambdaUtil.notInferredType(type)) {
+            continue;
+          }
           result.add(new PsiFieldMember(elementFactory.createField(psiVariable.getName(), type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type)) {
             @Override
             protected PsiClass getContainingClass() {

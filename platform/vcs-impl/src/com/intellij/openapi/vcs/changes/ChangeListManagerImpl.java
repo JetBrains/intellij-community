@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -275,14 +274,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     ApplicationManager.getApplication().runReadAction(() -> {
       synchronized (myDataLock) {
         if (myWorker.isEmpty()) {
-          final LocalChangeList list = myWorker.addChangeList(LocalChangeList.DEFAULT_NAME, null, null);
-          setDefaultChangeList(list);
-
-          if (myIgnoredIdeaLevel.isEmpty()) {
-            for (String path : predefinedIgnorePaths()) {
-              myIgnoredIdeaLevel.add(IgnoredBeanFactory.ignoreFile(path, myProject));
-            }
-          }
+          setDefaultChangeList(myWorker.addChangeList(LocalChangeList.DEFAULT_NAME, null, null));
         }
         if (!Registry.is("ide.hide.excluded.files") && !myExcludedConvertedToIgnored) {
           convertExcludedToIgnored();
@@ -290,15 +282,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     });
-  }
-
-  @NotNull
-  List<String> predefinedIgnorePaths() {
-    List<String> myIgnoredIdeaLevel = new ArrayList<>();
-    myIgnoredIdeaLevel.add(myProject.getName() + WorkspaceFileType.DOT_DEFAULT_EXTENSION);
-    myIgnoredIdeaLevel.add(Project.DIRECTORY_STORE_FOLDER + "/workspace.xml");
-
-    return myIgnoredIdeaLevel;
   }
 
   void convertExcludedToIgnored() {
@@ -605,7 +588,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     // do actual requests about file statuses
     Getter<Boolean> disposedGetter = () -> myProject.isDisposed() || myUpdater.getIsStoppedGetter().get();
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
-                                                                            dataHolder.getComposite(), disposedGetter, myIgnoredIdeaLevel,
+                                                                            dataHolder.getComposite(), disposedGetter, this,
                                                                             gate);
 
     for (final VcsDirtyScope scope : scopes) {
@@ -1356,7 +1339,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       ignoredFilesComponent = new IgnoredFilesComponent(myIgnoredIdeaLevel);
       worker = myWorker.copy();
     }
-    new ChangeListManagerSerialization(ignoredFilesComponent, worker).writeExternal(element);
+    ChangeListManagerSerialization.writeExternal(element, ignoredFilesComponent, worker);
     if (myExcludedConvertedToIgnored) {
       JDOMExternalizerUtil.writeField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION, String.valueOf(true));
     }
@@ -1485,7 +1468,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
-    return myIgnoredIdeaLevel.isIgnoredFile(file);
+    FilePath filePath = VcsUtil.getFilePath(file);
+    return ContainerUtil.exists(IgnoredFileProvider.IGNORE_FILE.getExtensions(), it -> it.isIgnoredFile(myProject, filePath));
+  }
+
+  private static class DefaultIgnoredFileProvider implements IgnoredFileProvider {
+    @Override
+    public boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath) {
+      return ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).myIgnoredIdeaLevel.isIgnoredFile(filePath);
+    }
   }
 
   @Override

@@ -1003,7 +1003,7 @@ public class GitUtil {
   @Nullable
   public static GitRemote getDefaultRemote(@NotNull Collection<GitRemote> remotes) {
     for (GitRemote remote : remotes) {
-      if (remote.getName().equals(GitRemote.ORIGIN_NAME)) {
+      if (remote.getName().equals(GitRemote.ORIGIN)) {
         return remote;
       }
     }

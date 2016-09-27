@@ -93,5 +93,10 @@ public interface TestSearchScope {
     public void setScope(final TestSearchScope scope) {
       myScope = scope;
     }
+
+    @Override
+    public String toString() {
+      return myScope == null? "null" : myScope.toString();
+    }
   }
 }

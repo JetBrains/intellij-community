@@ -37,6 +37,7 @@ import com.intellij.openapi.project.impl.ProjectStoreClassProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VfsUtil
@@ -105,8 +106,16 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   }
 
   override final fun getProjectBasePath(): String {
-    val path = PathUtilRt.getParentPath(projectFilePath)
-    return if (scheme == StorageScheme.DEFAULT) path else PathUtilRt.getParentPath(path)
+    if (isDirectoryBased) {
+      val path = PathUtilRt.getParentPath(storageManager.expandMacro(PROJECT_CONFIG_DIR))
+      if (Registry.`is`("store.basedir.parent.detection", true) && path.startsWith("${Project.DIRECTORY_STORE_FOLDER}.")) {
+        return PathUtilRt.getParentPath(path)
+      }
+      return path
+    }
+    else {
+      return PathUtilRt.getParentPath(projectFilePath)
+    }
   }
 
   // used in upsource

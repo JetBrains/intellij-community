@@ -415,7 +415,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
             final Font font = getFont();
             g.setFont(font);
             g.setColor(textColor);
-            g.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
+            UIUtil.drawCenteredString((Graphics2D)g, new Rectangle(x, 0, Integer.MAX_VALUE, size.height), getText(), false, true);
           }
         }
         else {
@@ -454,7 +454,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
               final Font font = getFont();
               g2.setFont(font);
               g2.setColor(textColor);
-              g2.drawString(getText(), x, (size.height + font.getSize()) / 2 - 1);
+              UIUtil.drawCenteredString(g2, new Rectangle(x, 0, Integer.MAX_VALUE, size.height), getText(), false, true);
             }
           }
           else {

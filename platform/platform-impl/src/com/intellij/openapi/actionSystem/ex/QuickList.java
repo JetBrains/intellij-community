@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem.ex;
 
+import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,13 +27,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-public class QuickList extends ExternalizableSchemeAdapter {
+public class QuickList extends ExternalizableSchemeAdapter implements SerializableScheme {
   public static final String QUICK_LIST_PREFIX = "QuickList.";
   public static final String SEPARATOR_ID = QUICK_LIST_PREFIX + "$Separator$";
 
   private static final String ID_TAG = "id";
   private static final String ACTION_TAG = "action";
-  private static final String DISPLAY_NAME_TAG = "display";
+  static final String DISPLAY_NAME_TAG = "display";
   private static final String DESCRIPTION_TAG = "description";
 
   private String myDescription;
@@ -95,7 +96,7 @@ public class QuickList extends ExternalizableSchemeAdapter {
     return QUICK_LIST_PREFIX + getName();
   }
 
-  public void writeExternal(@NotNull Element groupElement) {
+  private void writeExternal(@NotNull Element groupElement) {
     groupElement.setAttribute(DISPLAY_NAME_TAG, getName());
     if (myDescription != null) {
       groupElement.setAttribute(DESCRIPTION_TAG, myDescription);
@@ -115,5 +116,13 @@ public class QuickList extends ExternalizableSchemeAdapter {
     for (int i = 0, n = actionElements.size(); i < n; i++) {
       myActionIds[i] = actionElements.get(i).getAttributeValue(ID_TAG);
     }
+  }
+
+  @NotNull
+  @Override
+  public Element writeScheme() {
+    Element element = new Element("list");
+    writeExternal(element);
+    return element;
   }
 }

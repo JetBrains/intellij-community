@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -36,15 +37,22 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
   private static final String MODULE_INFO_FILE = "module-info.java";
 
   private final Map<String, File> myMapping;
+  private final boolean myComplete;
+
+  private JavaModuleIndexImpl() {
+    myMapping = ContainerUtil.newHashMap();
+    myComplete = false;
+  }
 
   private JavaModuleIndexImpl(Map<String, File> mapping) {
-    myMapping = mapping;
+    myMapping = Collections.unmodifiableMap(mapping);
+    myComplete = true;
   }
 
   @Override
   public @Nullable File getModuleInfoFile(@NotNull JpsModule module) {
     String key = module.getName();
-    if (myMapping.containsKey(key)) {
+    if (myComplete || myMapping.containsKey(key)) {
       return myMapping.get(key);
     }
 
@@ -97,8 +105,7 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
   public static JavaModuleIndex load(@NotNull File storageRoot) {
     File index = new File(storageRoot, INDEX_PATH);
     if (!index.exists()) {
-      Map<String, File> mapping = ContainerUtil.newHashMap();
-      return new JavaModuleIndexImpl(mapping);
+      return new JavaModuleIndexImpl();
     }
 
     Properties p = new Properties();

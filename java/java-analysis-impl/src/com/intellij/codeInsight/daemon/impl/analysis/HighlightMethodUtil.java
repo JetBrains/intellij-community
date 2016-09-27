@@ -213,6 +213,10 @@ public class HighlightMethodUtil {
       description).create();
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, substitutedSuperReturnType, false));
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSuperMethodReturnFix(superMethod, returnType));
+    final PsiClass returnClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
+    if (returnClass != null && substitutedSuperReturnType instanceof PsiClassType) {
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createChangeParameterClassFix(returnClass, (PsiClassType)substitutedSuperReturnType));
+    }
 
     return errorResult;
   }
@@ -1560,9 +1564,11 @@ public class HighlightMethodUtil {
         name += buildArgTypesList(list);
         String description = JavaErrorMessages.message("cannot.resolve.constructor", name);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).navigationShift(+1).create();
-        WrapExpressionFix.registerWrapAction(results, list.getExpressions(), info);
-        registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, results, infoElement, info);
-        holder.add(info);
+        if (info != null) {
+          WrapExpressionFix.registerWrapAction(results, list.getExpressions(), info);
+          registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, results, infoElement, info);
+          holder.add(info);
+        }
       }
       else {
         if (classReference != null && (!result.isAccessible() ||
@@ -1634,7 +1640,8 @@ public class HighlightMethodUtil {
                                                             PsiExpressionList list,
                                                             PsiClass aClass,
                                                             PsiMethod[] constructors,
-                                                            JavaResolveResult[] results, PsiElement infoElement, HighlightInfo info) {
+                                                            JavaResolveResult[] results, PsiElement infoElement,
+                                                            @NotNull final HighlightInfo info) {
     QuickFixAction
       .registerQuickFixAction(info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromCallFix(constructorCall));
     if (classReference != null) {

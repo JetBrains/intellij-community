@@ -2,7 +2,9 @@ package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -32,7 +34,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -50,10 +51,10 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private final CardLayout myLayout = new CardLayout();
   private final JPanel myPanel = new JPanel(myLayout);
 
+  //private final JPanel myErrorPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 10, 5, true, false));
   private final JPanel myErrorPanel = new JPanel(new BorderLayout());
   private final HyperlinkLabel myErrorLabel = new HyperlinkLabel();
   private JTextArea myErrorStack;
-  private final AtomicBoolean myIsUpdateStatePending = new AtomicBoolean();
 
   private final Document myDocument;
   private final ExternalChangeListener myChangeListener;
@@ -165,21 +166,21 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   }
 
   private void updateState() {
-    if (myIsUpdateStatePending.compareAndSet(false, true)) {
-      removeSceneBuilder(); // remove immediately to avoid showing old contents for a moment
-
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (myIsUpdateStatePending.compareAndSet(true, false)) {
-          addSceneBuilder();
-        }
-      });
-    }
+    addSceneBuilder();
   }
 
   private void addSceneBuilder() {
-    try {
-      FileDocumentManager.getInstance().saveDocument(myDocument);
+    ApplicationManager.getApplication().invokeLater(this::addSceneBuilderImpl, ModalityState.defaultModalityState());
+  }
 
+  private void addSceneBuilderImpl() {
+    try {
+      ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveDocument(myDocument));
+
+      if (mySceneBuilder != null && mySceneBuilder.reload()) {
+        return;
+      }
+      removeSceneBuilder();
       mySceneBuilder = SceneBuilder.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
 
       myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);
@@ -195,13 +196,11 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private void removeSceneBuilder() {
     myChangeListener.stop();
 
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (mySceneBuilder != null) {
-        myPanel.remove(mySceneBuilder.getPanel());
-        mySceneBuilder.close();
-        mySceneBuilder = null;
-      }
-    });
+    if (mySceneBuilder != null) {
+      myPanel.remove(mySceneBuilder.getPanel());
+      mySceneBuilder.close();
+      mySceneBuilder = null;
+    }
   }
 
   @NotNull

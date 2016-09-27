@@ -526,6 +526,30 @@ public class GitImpl implements Git {
 
   @NotNull
   @Override
+  public GitCommandResult removeRemote(@NotNull GitRepository repository, @NotNull GitRemote remote) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE);
+    h.addParameters("remove", remote.getName());
+    return run(h);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult renameRemote(@NotNull GitRepository repository, @NotNull String oldName, @NotNull String newName) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE);
+    h.addParameters("rename", oldName, newName);
+    return run(h);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult setRemoteUrl(@NotNull GitRepository repository, @NotNull String remoteName, @NotNull String newUrl) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REMOTE);
+    h.addParameters("set-url", remoteName, newUrl);
+    return run(h);
+  }
+
+  @NotNull
+  @Override
   public GitCommandResult lsRemote(@NotNull final Project project,
                                    @NotNull final File workingDir,
                                    @NotNull final String url) {

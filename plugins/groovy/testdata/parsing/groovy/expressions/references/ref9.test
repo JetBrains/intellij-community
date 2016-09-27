@@ -1,5 +1,6 @@
 in.com.foo.Bar
 def.baz.Foo
+trait.baz.Boo
 -----
 Groovy script
   Reference expression
@@ -22,3 +23,12 @@ Groovy script
       PsiElement(identifier)('baz')
     PsiElement(.)('.')
     PsiElement(identifier)('Foo')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      Reference expression
+        PsiElement(trait)('trait')
+      PsiElement(.)('.')
+      PsiElement(identifier)('baz')
+    PsiElement(.)('.')
+    PsiElement(identifier)('Boo')

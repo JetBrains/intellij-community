@@ -86,6 +86,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
+
+    public boolean SHOW_PARAMETER_NAME_HINTS = true;
+    public int MIN_PARAM_NAME_LENGTH_TO_SHOW = 3;
+    public int MIN_PARAMS_TO_SHOW = 2;
   }
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
@@ -534,4 +538,29 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   public void setBidiTextDirection(BidiTextDirection direction) {
     myOptions.BIDI_TEXT_DIRECTION = direction;
   }
+
+  public boolean isShowParameterNameHints() {
+    return myOptions.SHOW_PARAMETER_NAME_HINTS;
+  }
+
+  public void setShowParameterNameHints(boolean value) {
+    myOptions.SHOW_PARAMETER_NAME_HINTS = value;
+  }
+
+  public int getMinParamNameLengthToShow() {
+    return myOptions.MIN_PARAM_NAME_LENGTH_TO_SHOW;
+  }
+  
+  public void setMinParamNameLengthToShow(int value) {
+    myOptions.MIN_PARAM_NAME_LENGTH_TO_SHOW = value;
+  }
+  
+  public int getMinArgsToShow() {
+    return myOptions.MIN_PARAMS_TO_SHOW;
+  }
+  
+  public void setMinArgsToShow(int minParamsToShow) {
+    myOptions.MIN_PARAMS_TO_SHOW = minParamsToShow;
+  }
+
 }

@@ -1387,7 +1387,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                       "  {" +
                       "    int i = 0;" +
                       "    i += 1;" +
-                      "    i = 3;" +
+                      "    (i) = 3;" +
                       "    int j = i;" +
                       "    i();" +
                       "  }" +

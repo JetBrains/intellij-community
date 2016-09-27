@@ -60,6 +60,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.images.editor.ImageFileEditor;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,6 +166,7 @@ public class DvcsUtil {
    * Returns the currently selected file, based on which VcsBranch or StatusBar components will identify the current repository root.
    */
   @Nullable
+  @CalledInAwt
   public static VirtualFile getSelectedFile(@NotNull Project project) {
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
     final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, statusBar);
@@ -328,6 +330,7 @@ public class DvcsUtil {
   }
 
   @Nullable
+  @CalledInAwt
   public static <T extends Repository> T guessCurrentRepositoryQuick(@NotNull Project project,
                                                                      @NotNull AbstractRepositoryManager<T> manager,
                                                                      @Nullable String defaultRootPathValue) {

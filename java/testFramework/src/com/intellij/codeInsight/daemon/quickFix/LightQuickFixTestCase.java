@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.PsiFile;
@@ -196,7 +197,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         throw new UncheckedIOException(e);
       }
     });
-    ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(file.getProject());
+    ReadonlyStatusHandlerImpl handler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(file.getProject());
     handler.setClearReadOnlyInTests(true);
     try {
       ShowIntentionActionsHandler.chooseActionAndInvoke(file, getEditor(), action, action.getText());

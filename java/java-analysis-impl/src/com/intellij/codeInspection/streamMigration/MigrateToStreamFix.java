@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -50,9 +51,8 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
         final PsiParameter parameter = foreachStatement.getIterationParameter();
         StreamApiMigrationInspection.TerminalBlock tb = StreamApiMigrationInspection.TerminalBlock.from(parameter, body);
         if (!FileModificationService.getInstance().preparePsiElementForWrite(foreachStatement)) return;
-        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        List<String> replacements = tb.extractOperationReplacements(factory);
-        migrate(project, descriptor, foreachStatement, iteratedValue, body, tb, replacements);
+        List<Operation> operations = tb.extractOperations();
+        migrate(project, descriptor, foreachStatement, iteratedValue, body, tb, operations);
       }
     }
   }
@@ -63,20 +63,20 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
                         @NotNull PsiExpression iteratedValue,
                         @NotNull PsiStatement body,
                         @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-                        @NotNull List<String> replacements);
+                        @NotNull List<Operation> operations);
 
   static void replaceWithNumericAddition(@NotNull Project project,
                                          PsiForeachStatement foreachStatement,
                                          PsiVariable var,
                                          StringBuilder builder,
-                                         String expressionType) {
+                                         PsiType expressionType) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     restoreComments(foreachStatement, foreachStatement.getBody());
     if (StreamApiMigrationInspection.isDeclarationJustBefore(var, foreachStatement)) {
       PsiExpression initializer = var.getInitializer();
       if (ExpressionUtils.isZero(initializer)) {
-        String typeStr = var.getType().getCanonicalText();
-        String replacement = (typeStr.equals(expressionType) ? "" : "(" + typeStr + ") ") + builder;
+        PsiType type = var.getType();
+        String replacement = (type.equals(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + builder;
         initializer.replace(elementFactory.createExpressionFromText(replacement, foreachStatement));
         removeLoop(foreachStatement);
         simplifyAndFormat(project, var);
@@ -102,7 +102,12 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
   }
 
   @NotNull
-  static StringBuilder generateStream(PsiExpression iteratedValue, List<String> intermediateOps) {
+  static StringBuilder generateStream(PsiExpression iteratedValue, List<Operation> intermediateOps) {
+    return generateStream(iteratedValue, intermediateOps, false);
+  }
+
+  @NotNull
+  static StringBuilder generateStream(PsiExpression iteratedValue, List<Operation> intermediateOps, boolean noStreamForEmpty) {
     StringBuilder buffer = new StringBuilder();
     final PsiType iteratedValueType = iteratedValue.getType();
     if (iteratedValueType instanceof PsiArrayType) {
@@ -110,11 +115,12 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
     }
     else {
       buffer.append(getIteratedValueText(iteratedValue));
-      if (!intermediateOps.isEmpty()) {
+      if (!(noStreamForEmpty && intermediateOps.isEmpty())) {
         buffer.append(".stream()");
       }
     }
-    intermediateOps.forEach(buffer::append);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(iteratedValue.getProject());
+    intermediateOps.stream().map(op -> op.createReplacement(factory)).forEach(buffer::append);
     return buffer;
   }
 

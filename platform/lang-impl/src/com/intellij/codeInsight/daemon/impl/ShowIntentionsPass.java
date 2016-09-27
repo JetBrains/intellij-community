@@ -56,7 +56,10 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -64,10 +67,13 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.ShowIntentionsPass");
@@ -151,19 +157,27 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     public final List<HighlightInfo.IntentionActionDescriptor> guttersToShow = ContainerUtil.createLockFreeCopyOnWriteList();
     public final List<HighlightInfo.IntentionActionDescriptor> notificationActionsToShow = ContainerUtil.createLockFreeCopyOnWriteList();
 
-    private void filterActions(@NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
-      filter(intentionsToShow, actionsFilter);
-      filter(errorFixesToShow, actionsFilter);
-      filter(inspectionFixesToShow, actionsFilter);
-      filter(guttersToShow, actionsFilter);
+    public void filterActions(@Nullable PsiFile psiFile) {
+      IntentionActionFilter[] filters = IntentionActionFilter.EXTENSION_POINT_NAME.getExtensions();
+      filter(intentionsToShow, psiFile, filters);
+      filter(errorFixesToShow, psiFile, filters);
+      filter(inspectionFixesToShow, psiFile, filters);
+      filter(guttersToShow, psiFile, filters);
+      filter(notificationActionsToShow, psiFile, filters);
     }
 
     private static void filter(@NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
-                               @NotNull IntentionFilterOwner.IntentionActionsFilter actionsFilter) {
-      for (Iterator<HighlightInfo.IntentionActionDescriptor> it = descriptors.iterator(); it.hasNext();) {
-          HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
-          if (!actionsFilter.isAvailable(actionDescriptor.getAction())) it.remove();
+                               @Nullable PsiFile psiFile,
+                               @NotNull IntentionActionFilter[] filters) {
+      for (Iterator<HighlightInfo.IntentionActionDescriptor> it = descriptors.iterator(); it.hasNext(); ) {
+        HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
+        for (IntentionActionFilter filter : filters) {
+          if (!filter.accept(actionDescriptor.getAction(), psiFile)) {
+            it.remove();
+            break;
+          }
         }
+      }
     }
 
     public boolean isEmpty() {
@@ -227,13 +241,6 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   private void getIntentionActionsToShow() {
     getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor);
-    if (myFile instanceof IntentionFilterOwner) {
-      final IntentionFilterOwner.IntentionActionsFilter actionsFilter = ((IntentionFilterOwner)myFile).getIntentionActionsFilter();
-      if (actionsFilter == null) return;
-      if (actionsFilter != IntentionFilterOwner.IntentionActionsFilter.EVERYTHING_AVAILABLE) {
-        myIntentionsInfo.filterActions(actionsFilter);
-      }
-    }
 
     if (myIntentionsInfo.isEmpty()) {
       return;
@@ -346,6 +353,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
     
     EditorNotificationActions.collectDescriptorsForEditor(hostEditor, intentions.notificationActionsToShow);
+
+    intentions.filterActions(hostFile);
   }
 
   /**

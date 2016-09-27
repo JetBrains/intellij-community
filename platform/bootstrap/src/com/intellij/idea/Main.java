@@ -30,7 +30,7 @@ import java.io.StringWriter;
 
 public class Main {
   public static final int NO_GRAPHICS = 1;
-  //public static final int UPDATE_FAILED = 2;
+  public static final int RESTART_FAILED = 2;
   public static final int STARTUP_EXCEPTION = 3;
   public static final int JDK_CHECK_FAILED = 4;
   public static final int DIR_CHECK_FAILED = 5;

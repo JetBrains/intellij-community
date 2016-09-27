@@ -15,9 +15,13 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +47,7 @@ public final class CommandProcessor implements Runnable {
    * commands with BlockFocusEventsCmd - UnblockFocusEventsCmd. It's required to
    * prevent focus handling of events which is caused by the commands to be executed.
    */
-  public final void execute(@NotNull List<FinalizableCommand> commandList, @NotNull Condition expired) {
+  void execute(@NotNull List<FinalizableCommand> commandList, @NotNull Condition expired, boolean synchronously) {
     synchronized (myLock) {
       final boolean isBusy = myCommandCount > 0;
 
@@ -52,16 +56,44 @@ public final class CommandProcessor implements Runnable {
       myCommandCount += commandList.size();
 
       if (!isBusy) {
-        run();
+        if (synchronously) {
+          //noinspection StatementWithEmptyBody
+          while (runNext()) {
+          }
+        }
+        else {
+          run();
+        }
       }
     }
   }
 
   public final void run() {
     synchronized (myLock) {
-      //noinspection StatementWithEmptyBody
-      while (runNext()) {
+
+      final CommandGroup commandGroup = getNextCommandGroup();
+      if (commandGroup == null || commandGroup.isEmpty()) return;
+
+      final Condition conditionForGroup = commandGroup.getExpireCondition();
+
+      final FinalizableCommand command = commandGroup.takeNextCommand();
+      myCommandCount--;
+
+      final Condition expire = command.getExpireCondition() != null ? command.getExpireCondition() : conditionForGroup;
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("CommandProcessor.run " + command);
       }
+      // max. I'm not actually quite sure this should have NON_MODAL modality but it should
+      // definitely have some since runnables in command list may (and do) request some PSI activity
+      final boolean queueNext = myCommandCount > 0;
+      Application application = ApplicationManager.getApplication();
+      ModalityState modalityState = Registry.is("ide.perProjectModality") ? ModalityState.current() : ModalityState.NON_MODAL;
+      application.getInvokator().invokeLater(command, modalityState, expire == null ? application.getDisposed() : expire).doWhenDone(() -> {
+        if (queueNext) {
+          this.run();
+        }
+      });
     }
   }
 

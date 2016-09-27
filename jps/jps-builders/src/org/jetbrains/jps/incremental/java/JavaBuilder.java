@@ -434,7 +434,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         JavaModuleIndex index = getJavaModuleIndex(context);
         if (index.hasJavaModules(chunk.getModules())) {
           // in Java 9, named modules are not allowed to read classes from the classpath
-          modulePath = ContainerUtil.newArrayList(classpath);
+          modulePath = classpath;
           classpath = Collections.emptyList();
         }
       }

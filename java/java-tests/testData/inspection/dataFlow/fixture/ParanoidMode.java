@@ -24,3 +24,13 @@ class Test {
   @NotNull
   native Object knownObject();
 }
+
+enum DemoEnum {
+  TEST, DEMO, DEMO_1;
+
+  public static DemoEnum testMethod(String value){
+    for (DemoEnum demoEnum : DemoEnum.values()) {
+    }
+    return null;
+  }
+}

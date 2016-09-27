@@ -15,8 +15,8 @@
  */
 package com.intellij.refactoring.extractInterface;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -69,7 +69,7 @@ public class ExtractClassUtil {
       final SmartPsiElementPointer<PsiClass> interfacePointer = SmartPointerManager.getInstance(
         project).createSmartPsiElementPointer(superClassOrInterface);
       final Runnable turnRefsToSuperRunnable = () -> askAndTurnRefsToSuper(project, classPointer, interfacePointer);
-      ApplicationManager.getApplication().invokeLater(turnRefsToSuperRunnable);
+      TransactionGuard.getInstance().submitTransactionLater(project, turnRefsToSuperRunnable);
     }
   }
 }

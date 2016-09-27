@@ -15,15 +15,20 @@
  */
 package com.intellij.openapi.application.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ModalityStateListener;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
+import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.application.impl.LaterInvocator.enterModal;
@@ -165,6 +170,50 @@ public class PerProjectLaterInvocatorTest extends PlatformTestCase {
       .continueEDT()
       .ifExceptions(exception -> fail(exception.toString()));
 
+  }
+
+  public void testModalityStateChangedListener () {
+
+    boolean [] enteringOrder = new boolean [] {true, true, false, false};
+
+    AtomicInteger enteringIndex = new AtomicInteger(-1);
+
+    ModalityStateListener modalityStateListener = entering -> {
+      if (entering != enteringOrder[enteringIndex.incrementAndGet()])
+        throw new RuntimeException("Trying to enter a modal state. Wrong order of the modalityStateListener invocations. Step #" + enteringIndex.get());
+    };
+
+    Disposable emptyDisposal = () -> {};
+
+    LaterInvocator.addModalityStateListener(modalityStateListener, emptyDisposal);
+
+    Runnable removeModalityListener = () -> {
+      LaterInvocator.removeModalityStateListener(modalityStateListener);
+    };
+
+    Testable.creatTestable()
+      .suspendEDT()
+      .execute(() -> invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL))
+      .flushEDT()
+      .execute(() -> enterModal(myApplicationModalDialog))
+      .flushEDT()
+      .execute(() -> invokeLater(NumberedRunnable.withNumber(2), ModalityState.current()))
+      .flushEDT()
+      .execute(() -> enterModal(myProject, myPerProjectModalDialog))
+      .flushEDT()
+      .execute(() -> invokeLater(NumberedRunnable.withNumber(3), ModalityState.NON_MODAL))
+      .flushEDT()
+      .execute(() -> invokeLater(NumberedRunnable.withNumber(4), ModalityState.current()))
+      .flushEDT()
+      .execute(() -> leaveModal(myProject, myPerProjectModalDialog))
+      .flushEDT()
+      .execute(() -> invokeLater(NumberedRunnable.withNumber(5), ModalityState.NON_MODAL))
+      .flushEDT()
+      .execute(() -> leaveModal(myApplicationModalDialog))
+      .flushEDT()
+      .continueEDT()
+      .execute(removeModalityListener)
+      .ifExceptions(exception -> fail(exception.toString()));
 
   }
 }

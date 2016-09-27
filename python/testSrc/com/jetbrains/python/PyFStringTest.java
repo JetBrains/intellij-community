@@ -16,7 +16,9 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.TextRange;
-import com.jetbrains.python.codeInsight.PyFStringsInjector;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.fstrings.FStringParser;
+import com.jetbrains.python.codeInsight.fstrings.FStringParser.FragmentOffsets;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +46,8 @@ public class PyFStringTest extends PyTestCase {
       barOffsets.add(lastBarOffset - barOffsets.size());
     }
     assertTrue("Odd number of markers", barOffsets.size() % 2 == 0);
-    final List<TextRange> actualRanges = PyFStringsInjector.getInjectionRanges(originalString.toString());
+    final List<FragmentOffsets> offsets = FStringParser.parse(originalString.toString());
+    final List<TextRange> actualRanges = ContainerUtil.map(offsets, FragmentOffsets::getContentRange);
     final List<TextRange> expectedRanges = new ArrayList<>();
     for (int i = 0; i < barOffsets.size(); i += 2) {
       expectedRanges.add(TextRange.create(barOffsets.get(i), barOffsets.get(i + 1)));
@@ -69,6 +72,8 @@ public class PyFStringTest extends PyTestCase {
     doTestRanges("f'{|d[\"}\"]|}'");
     doTestRanges("f'''{|\"'}\"|}'''");
     doTestRanges("f'''{|\"\\\"}\"|}'''");
+    doTestRanges("f'''{|\"\"\"}'\"}'\"\"\"|}'''");
+    doTestRanges("f\"{|'''}\"'\"'''|}\"");
   }
 
   public void testChunkTypeConversionsAndFormatSpecifiers() {
@@ -84,5 +89,26 @@ public class PyFStringTest extends PyTestCase {
 
   public void testNotEquals() {
     doTestRanges("f'{|x != 42|}'");
+  }
+
+  // PY-20785
+  public void testNamedUnicodeEscapes() {
+    doTestRanges("f'\\N{foo}\\N{}\\N{{{{{}{|42 + \\N{DIGIT ONE}|}'");
+    doTestRanges("f'{|x|:\\N{DIGIT_ONE}}'");
+  }
+
+  // PY-20785
+  public void testUnicodeEscapeInsideExpressionFragment() {
+    doTestUnicodeEscapeDetection("f'{\\N{FOO}}'", true);
+    doTestUnicodeEscapeDetection("f'{\"\\N{FOO\"}'", true);
+    doTestUnicodeEscapeDetection("f'{\"\\N{\"}'", true);
+    doTestUnicodeEscapeDetection("f'{\"\\\\N{FOO}\"}'", false);
+  }
+
+  private static void doTestUnicodeEscapeDetection(String fStringText, boolean expected) {
+    final List<FragmentOffsets> fragments = FStringParser.parse(fStringText);
+    assertSize(1, fragments);
+    final FragmentOffsets offsets = fragments.get(0);
+    assertEquals(expected, offsets.containsNamedUnicodeEscape());
   }
 }

@@ -104,6 +104,10 @@ public class LaterInvocator {
     }
   }
 
+  public static void removeModalityStateListener(@NotNull ModalityStateListener listener) {
+    ourModalityStateMulticaster.removeListener(listener);
+  }
+
   @NotNull
   static ModalityStateEx modalityStateForWindow(@NotNull Window window) {
     int index = ourModalEntities.indexOf(window);
@@ -223,6 +227,8 @@ public class LaterInvocator {
       enterModal(dialog);
       return;
     }
+
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
 
     List<Dialog> modalEntitiesList = projectToModalEntities.getOrDefault(project, ContainerUtil.createLockFreeCopyOnWriteList());
     projectToModalEntities.put(project, modalEntitiesList);

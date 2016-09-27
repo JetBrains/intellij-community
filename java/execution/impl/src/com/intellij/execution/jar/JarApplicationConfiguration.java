@@ -123,7 +123,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
 
   @Nullable
   @Override
-  public GlobalSearchScope getScope() {
+  public GlobalSearchScope getSearchScope() {
     return SearchScopeProvider.createSearchScope(getModules());
   }
 

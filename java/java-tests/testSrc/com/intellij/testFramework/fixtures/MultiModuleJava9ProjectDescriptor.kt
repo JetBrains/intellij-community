@@ -34,7 +34,7 @@ import com.intellij.testFramework.LightPlatformTestCase
 /**
  * Dependencies: 'main' -> 'm2', 'm3'
  */
-object MultiModuleJava9ProjectDescriptor  : DefaultLightProjectDescriptor() {
+object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
   enum class ModuleDescriptor(internal val moduleName: String, internal val rootName: String) {
     MAIN(TEST_MODULE_NAME, "/not_used/"),
     M2("${TEST_MODULE_NAME}_m2", "src_m2"),

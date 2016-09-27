@@ -26,6 +26,7 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +48,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
   @Nullable
   @Override
+  @CalledInAwt
   protected GitRepository guessCurrentRepository(@NotNull Project project) {
     return DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project), mySettings.getRecentRootPath());
   }

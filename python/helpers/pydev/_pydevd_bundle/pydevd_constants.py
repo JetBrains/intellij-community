@@ -138,8 +138,6 @@ if USE_LIB_COPY:
     protect_libraries_from_patching()
 
 
-from _pydev_imps._pydev_saved_modules import threading
-
 from _pydev_imps._pydev_saved_modules import thread
 _nextThreadIdLock = thread.allocate_lock()
 

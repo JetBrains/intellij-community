@@ -2,7 +2,7 @@ from _pydev_bundle import pydev_log
 import traceback
 from _pydevd_bundle import pydevd_resolver
 import sys
-from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import dict_keys, IS_PY3K, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT
 
 from _pydev_bundle.pydev_imports import quote
 

@@ -807,6 +807,7 @@ public abstract class InplaceRefactoring {
     myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
+        if (myEditor.isDisposed()) return new RelativePoint(myEditor.getContentComponent(), new Point());
         if (myTarget != null && !popupFactory.isBestPopupLocationVisible(myEditor)) {
           return myTarget;
         }

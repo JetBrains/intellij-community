@@ -17,7 +17,6 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -58,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -124,6 +122,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     myBaseProfile = baseProfile;
     myDataHolder = dataHolder;
     myProfileManager = profileManager;
+  }
+
+  public InspectionProfileImpl(@NotNull String profileName,
+                               @NotNull InspectionToolRegistrar registrar,
+                               @NotNull ProfileManager profileManager,
+                               @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
+    this(profileName, registrar, profileManager, getDefaultProfile(), dataHolder);
   }
 
   @NotNull
@@ -225,20 +230,41 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public void readExternal(@NotNull Element element) {
     super.readExternal(element);
 
-    final String version = element.getAttributeValue(VERSION_TAG);
-    if (version == null || !version.equals(VALID_VERSION)) {
-      element = InspectionProfileConvertor.convertToNewFormat(element, this);
-    }
-
     final Element highlightElement = element.getChild(USED_LEVELS);
     if (highlightElement != null) {
       // from old profiles
       ((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().readExternal(highlightElement);
     }
 
-    for (Element toolElement : element.getChildren(INSPECTION_TOOL_TAG)) {
-      myUninitializedSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement.clone());
+    String version = element.getAttributeValue(VERSION_TAG);
+    if (version == null || !version.equals(VALID_VERSION)) {
+      InspectionToolWrapper[] tools = getInspectionTools(null);
+      for (Element toolElement : element.getChildren("inspection_tool")) {
+        String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
+        String shortName = convertToShortName(toolClassName, tools);
+        if (shortName == null) {
+          continue;
+        }
+        toolElement.setAttribute(CLASS_TAG, shortName);
+        myUninitializedSettings.put(shortName, toolElement.clone());
+      }
     }
+    else {
+      for (Element toolElement : element.getChildren(INSPECTION_TOOL_TAG)) {
+        myUninitializedSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement.clone());
+      }
+    }
+  }
+
+  @Nullable
+  private static String convertToShortName(@Nullable String displayName, InspectionToolWrapper[] tools) {
+    if (displayName == null) return null;
+    for (InspectionToolWrapper tool : tools) {
+      if (displayName.equals(tool.getDisplayName())) {
+        return tool.getShortName();
+      }
+    }
+    return null;
   }
 
   @NotNull
@@ -259,10 +285,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       return myDataHolder.read();
     }
 
-    Element result = isProjectLevel() ? new Element("profile").setAttribute("version", "1.0") : new Element("inspections").setAttribute("profile_name", getName());
+    Element element = new Element("profile");
+    Element result = isProjectLevel() ? element.setAttribute("version", "1.0") : element.setAttribute("profile_name", getName());
     serializeInto(result, false);
 
-    if (myProfileManager instanceof ProjectInspectionProfileManager && ProjectKt.isDirectoryBased(((ProjectInspectionProfileManager)myProfileManager).getProject())) {
+    if (isProjectLevel() && ProjectKt.isDirectoryBased(((ProjectInspectionProfileManager)myProfileManager).getProject())) {
       return new Element("component").setAttribute("name", "InspectionProjectProfileManager").addContent(result);
     }
     return result;
@@ -549,7 +576,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     final List<InspectionToolWrapper> tools;
     try {
-      tools = createTools(project);
+      if (mySource == null) {
+        tools = myRegistrar.createTools();
+      }
+      else {
+        tools = ContainerUtil.map(mySource.getDefaultStates(project), ScopeToolState::getTool);
+      }
     }
     catch (ProcessCanceledException ignored) {
       return;
@@ -611,7 +643,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                                    : HighlightDisplayLevel.DO_NOT_SHOW;
     HighlightDisplayLevel defaultLevel = toolWrapper.getDefaultLevel();
     HighlightDisplayLevel level = baseLevel.getSeverity().compareTo(defaultLevel.getSeverity()) > 0 ? baseLevel : defaultLevel;
-    //HighlightDisplayLevel level = myBaseProfile != null && myBaseProfile.getTools(shortName, project) != null ? myBaseProfile.getErrorLevel(key, project) : toolWrapper.getDefaultLevel();
     boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
     final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
     final Element element = myUninitializedSettings.remove(shortName);
@@ -621,10 +652,15 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
       else if (!myUninitializedSettings.containsKey(InspectionElementsMergerBase.getMergedMarkerName(shortName))) {
         final InspectionElementsMergerBase merger = getMerger(shortName);
-        if (merger != null) {
-          final Element merged = merger.merge(myUninitializedSettings);
-          if (merged != null) {
-            toolsList.readExternal(merged, this, dependencies);
+        Element merged = merger == null ? null : merger.merge(myUninitializedSettings);
+        if (merged != null) {
+          toolsList.readExternal(merged, this, dependencies);
+        }
+        else if (isProfileLocked()) {
+          // https://youtrack.jetbrains.com/issue/IDEA-158936
+          toolsList.setEnabled(false);
+          if (toolsList.getNonDefaultTools() == null) {
+            toolsList.getDefaultState().setEnabled(false);
           }
         }
       }
@@ -662,14 +698,6 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public void setScopesOrder(String[] scopesOrder) {
     myScopesOrder = scopesOrder;
-  }
-
-  @NotNull
-  private List<InspectionToolWrapper> createTools(@Nullable Project project) {
-    if (mySource != null) {
-      return ContainerUtil.map(mySource.getDefaultStates(project), ScopeToolState::getTool);
-    }
-    return myRegistrar.createTools();
   }
 
   private HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, @Nullable Project project) {
@@ -888,7 +916,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public List<ScopeToolState> getDefaultStates(@Nullable Project project) {
     initInspectionTools(project);
-    return myTools.values().stream().map(Tools::getDefaultState).collect(Collectors.toList());
+    List<ScopeToolState> result = new ArrayList<>();
+    for (Tools tools : myTools.values()) {
+      result.add(tools.getDefaultState());
+    }
+    return result;
   }
 
   @NotNull

@@ -679,6 +679,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     expression.putUserData(ElementToWorkOn.PREFIX, prefixText.get());
     expression.putUserData(ElementToWorkOn.SUFFIX, suffixText.get());
     expression.putUserData(ElementToWorkOn.TEXT_RANGE, marker);
+    expression.putUserData(ElementToWorkOn.EXPR_RANGE, elements.length == 1 ? elements[0].getTextRange() : null);
 
     new Introducer(project, expression, null, editor)
       .introduceParameter(methodToIntroduceParameter, methodToSearchFor);

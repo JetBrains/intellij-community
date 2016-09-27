@@ -33,7 +33,6 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.intellij.xdebugger.frame.XValueModifier;
@@ -65,10 +64,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl{
 
   public PsiCodeFragment createCodeFragment(PsiElement context) {
     TextWithImports text = getEvaluationText();
-    final PsiCodeFragment fragment =
-      DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
-    fragment.forceResolveScope(GlobalSearchScope.allScope(myProject));
-    return fragment;
+    return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createCodeFragment(text, context, myProject);
   }
 
   public final Value calcValue(final EvaluationContextImpl evaluationContext) throws EvaluateException {

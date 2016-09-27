@@ -35,4 +35,18 @@ class EqualsReplaceableByObjectsCall {
     String s;
     T copy() { T t = new T(); t.s = s; return t; }
   }
+
+  static class X extends T {
+    public boolean equals(Object o) {
+      return super.equals(o);
+    }
+
+    boolean same(T t) {
+      return this == t || this != null && this.equals(t);
+    }
+
+    boolean different(T t) {
+      return <warning descr="'t != this && (t == null || !t.equals(this))' replaceable by 'Objects.equals()' expression">t != this && (t == null || !t.equals(this))</warning>;
+    }
+  }
 }

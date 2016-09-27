@@ -185,16 +185,19 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void writeExternal(final Element element,
-                            final Map<String, SmartRefElementPointer> persistentEntryPoints,
-                            final JDOMExternalizableStringList additional_annotations) {
-    Element entryPointsElement = new Element("entry_points");
-    entryPointsElement.setAttribute(VERSION_ATTR, VERSION);
-    for (SmartRefElementPointer entryPoint : persistentEntryPoints.values()) {
-      assert entryPoint.isPersistent();
-      entryPoint.writeExternal(entryPointsElement);
+                                   final Map<String, SmartRefElementPointer> persistentEntryPoints,
+                                   final JDOMExternalizableStringList additional_annotations) {
+    Collection<SmartRefElementPointer> elementPointers = persistentEntryPoints.values();
+    if (!elementPointers.isEmpty()) {
+      Element entryPointsElement = new Element("entry_points");
+      entryPointsElement.setAttribute(VERSION_ATTR, VERSION);
+      for (SmartRefElementPointer entryPoint : elementPointers) {
+        assert entryPoint.isPersistent();
+        entryPoint.writeExternal(entryPointsElement);
+      }
+      element.addContent(entryPointsElement);
     }
 
-    element.addContent(entryPointsElement);
     if (!additional_annotations.isEmpty()) {
       additional_annotations.writeExternal(element);
     }

@@ -67,11 +67,11 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
                              @NotNull Map<VirtualFile, VcsLogProvider> providers,
                              @NotNull VcsUserRegistryImpl userRegistry,
                              @NotNull VcsLogIndex index,
+                             @NotNull VcsLogProgress progress,
                              @NotNull TopCommitsCache topCommitsDetailsCache,
                              @NotNull Consumer<DataPack> dataPackUpdateHandler,
                              @NotNull Consumer<Exception> exceptionHandler,
-                             int recentCommitsCount,
-                             @NotNull Disposable parentDisposable) {
+                             int recentCommitsCount) {
     myProject = project;
     myHashMap = hashMap;
     myProviders = providers;
@@ -80,8 +80,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher {
     myTopCommitsDetailsCache = topCommitsDetailsCache;
     myExceptionHandler = exceptionHandler;
     myRecentCommitCount = recentCommitsCount;
-    myProgress = new VcsLogProgress();
-    Disposer.register(parentDisposable, myProgress);
+    myProgress = progress;
 
     mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(dataPack -> {
       myDataPack = dataPack;

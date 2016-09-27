@@ -620,6 +620,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
       if (TEST_PACKAGE.equals(TEST_OBJECT) || TEST_DIRECTORY.equals(TEST_OBJECT)) {
+        if (TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT) {
+          return ExecutionBundle.message("default.junit.config.name.whole.project");
+        }
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
         final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(getDirName(), '/');
         if (packageName.length() == 0) {

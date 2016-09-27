@@ -69,7 +69,10 @@ public class PluginManagerCore {
   public static final String CORE_PLUGIN_ID = "com.intellij";
   private static final String META_INF = "META-INF";
   public static final String PLUGIN_XML = "plugin.xml";
-  private static final float PLUGINS_PROGRESS_MAX_VALUE = 0.3f;
+
+  public static final float PLUGINS_PROGRESS_PART = 0.3f;
+  public static final float LOADERS_PROGRESS_PART = 0.35f;
+
   private static final TObjectIntHashMap<PluginId> ourId2Index = new TObjectIntHashMap<PluginId>();
   static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
   private static final Map<String, IdeaPluginDescriptorImpl> ourModulesToContainingPlugins = new THashMap<String, IdeaPluginDescriptorImpl>();
@@ -788,7 +791,7 @@ public class PluginManagerCore {
         final IdeaPluginDescriptorImpl descriptor = loadDescriptor(file, PLUGIN_XML);
         if (descriptor == null) continue;
         if (progress != null) {
-          progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_MAX_VALUE * ((float)++i / pluginsCount));
+          progress.showProgress(descriptor.getName(), PLUGINS_PROGRESS_PART * ((float)++i / pluginsCount));
         }
         int oldIndex = result.indexOf(descriptor);
         if (oldIndex >= 0) {
@@ -929,7 +932,7 @@ public class PluginManagerCore {
         descriptor.setUseCoreClassLoader(true);
         result.add(descriptor);
         if (progress != null && !SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) {
-          progress.showProgress("Plugin loaded: " + descriptor.getName(), PLUGINS_PROGRESS_MAX_VALUE * (float)(++i) / urls.size());
+          progress.showProgress("Plugin loaded: " + descriptor.getName(), PLUGINS_PROGRESS_PART * (float)(++i) / urls.size());
         }
       }
     }
@@ -1229,7 +1232,7 @@ public class PluginManagerCore {
       }
 
       if (progress != null) {
-        progress.showProgress("", PLUGINS_PROGRESS_MAX_VALUE + (i++ / (float)result.size()) * 0.35f);
+        progress.showProgress("", PLUGINS_PROGRESS_PART + (i++ / (float)result.size()) * LOADERS_PROGRESS_PART);
       }
     }
 

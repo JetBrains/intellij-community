@@ -200,12 +200,17 @@ idea.fatal.error.notification=disabled
   void layoutShared() {
     buildContext.messages.block("Copy files shared among all distributions") {
       new File(buildContext.paths.distAll, "build.txt").text = buildContext.fullBuildNumber
+
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/bin") {
         fileset(dir: "$buildContext.paths.communityHome/bin") {
           include(name: "*.*")
           exclude(name: "idea.properties")
+          exclude(name: "log.xml")
         }
       }
+
+      copyLogXml()
+
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/license") {
         fileset(dir: "$buildContext.paths.communityHome/license")
         buildContext.productProperties.additionalDirectoriesWithLicenses.each {
@@ -215,6 +220,13 @@ idea.fatal.error.notification=disabled
 
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
     }
+  }
+
+  private void copyLogXml() {
+    def src = new File("$buildContext.paths.communityHome/bin/log.xml")
+    def dst = new File("$buildContext.paths.distAll/bin/log.xml")
+    dst.parentFile.mkdirs()
+    src.filterLine { String it -> !it.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(dst.newWriter()).close()
   }
 
   @Override

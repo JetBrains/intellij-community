@@ -47,7 +47,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -1092,13 +1093,21 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean hasNormalExit() {
-    boolean hasNormalExit = false;
-    PsiElement lastElement = myElements[myElements.length - 1];
-    if (!(lastElement instanceof PsiReturnStatement || lastElement instanceof PsiBreakStatement ||
-          lastElement instanceof PsiContinueStatement)) {
-      hasNormalExit = true;
+    try {
+      PsiCodeBlock block = JavaPsiFacade.getElementFactory(myProject).createCodeBlock();
+      block.addRange(myElements[0], myElements[myElements.length - 1]);
+      ControlFlow flow = ControlFlowFactory.getInstance(myProject).getControlFlow(block, new LocalsControlFlowPolicy(block), false, false);
+      return ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize());
     }
-    return hasNormalExit;
+    catch (AnalysisCanceledException e) {
+      //check incomplete code as simple as possible
+      PsiElement lastElement = myElements[myElements.length - 1];
+      if (!(lastElement instanceof PsiReturnStatement || lastElement instanceof PsiBreakStatement ||
+            lastElement instanceof PsiContinueStatement)) {
+        return true;
+      }
+      return false;
+    }
   }
 
   protected boolean isNeedToChangeCallContext() {

@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author Tagir Valeev
  */
@@ -84,14 +86,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
 
   private static boolean isRaw(PsiVariable variable) {
     PsiType type = variable.getType();
-    if(type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-      PsiClass element = resolveResult.getElement();
-      if(element != null) {
-        return PsiUtil.isRawSubstitutor(element, resolveResult.getSubstitutor());
-      }
-    }
-    return false;
+    return type instanceof PsiClassType && ((PsiClassType)type).isRaw();
   }
 
   @Nullable
@@ -148,28 +143,18 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     if(lambdaCandidate == null) return false;
     if(!ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {lambdaCandidate}).isEmpty()) return false;
     return PsiTreeUtil.processElements(lambdaCandidate, e -> {
-      if(e instanceof PsiReferenceExpression) {
-        PsiElement element = ((PsiReferenceExpression)e).resolve();
-        if(element == optionalVariable) {
-          return e.getParent() instanceof PsiReferenceExpression && e.getParent().getParent() instanceof PsiMethodCallExpression;
-        }
-        return !(element instanceof PsiVariable) ||
-               HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)element, lambdaCandidate, null);
-      }
-      if(e instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)e;
-        PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
-        if(qualifier instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifier).resolve() == optionalVariable) {
-          return methodCall.getArgumentList().getExpressions().length == 0 &&
-                 "get".equals(methodCall.getMethodExpression().getReferenceName());
-        }
-      }
-      return true;
+      if (!(e instanceof PsiReferenceExpression)) return true;
+      PsiElement element = ((PsiReferenceExpression)e).resolve();
+      if(!(element instanceof PsiVariable)) return true;
+      // Check that Optional variable is referenced only in context of get() call and other variables are effectively final
+      return element == optionalVariable
+             ? isOptionalGetCall(e.getParent().getParent(), optionalVariable)
+             : HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)element, lambdaCandidate, null);
     });
   }
 
   @Contract("null -> false")
-  static boolean isVoidLambdaCandidate(PsiExpression lambdaCandidate) {
+  public static boolean isVoidLambdaCandidate(PsiExpression lambdaCandidate) {
     if(lambdaCandidate == null) return false;
     if(!ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {lambdaCandidate}).isEmpty()) return false;
     return PsiTreeUtil.processElements(lambdaCandidate, e -> {
@@ -181,7 +166,14 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
   }
 
   static String getComments(PsiStatement statement) {
-    return StreamEx.of(statement.getChildren()).select(PsiComment.class).map(PsiElement::getText).joining(" ");
+    Collection<PsiComment> comments = PsiTreeUtil.collectElementsOfType(statement, PsiComment.class);
+    return StreamEx.of(comments)
+      .filter(c -> c.getParent() == statement ||
+                   (statement instanceof PsiExpressionStatement && c.getParent() == ((PsiExpressionStatement)statement).getExpression()))
+      .flatMap(c -> StreamEx.of(c.getPrevSibling(), c, c.getNextSibling())) // add both siblings for every comment
+      .filter(e -> e instanceof PsiComment || e instanceof PsiWhiteSpace) // select only comments and whitespace
+      .distinct()
+      .map(PsiElement::getText).joining("");
   }
 
   @NotNull

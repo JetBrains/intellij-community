@@ -37,6 +37,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
@@ -149,7 +150,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
       @Override
       public void customize(JList list, Object value, int index, boolean selected, boolean cellHasFocus) {
         if (value != null) {
-          setText(((EditorColorsScheme)value).getName());
+          setText(AbstractColorsScheme.getDisplayName((EditorColorsScheme)value));
         }
       }
     });

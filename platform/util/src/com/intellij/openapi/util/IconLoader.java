@@ -100,9 +100,6 @@ public final class IconLoader {
   }
 
   public static void setFilter(ImageFilter filter) {
-    if (!Registry.is("color.blindness.icon.filter")) {
-      filter = null;
-    }
     if (IMAGE_FILTER != filter) {
       IMAGE_FILTER = filter;
       clearCache();

@@ -24,8 +24,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -65,6 +66,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     super(project);
     myVcsManager = vcsManager;
     myVcsChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
+    myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
   }
 
   public void setUp(ToolWindow toolWindow) {
@@ -73,13 +75,9 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
     myContentManagerListener = new MyContentManagerListener();
     contentManager.addContentManagerListener(myContentManagerListener);
 
-    myVcsManager.addVcsListener(myVcsListener);
-
     Disposer.register(myProject, new Disposable(){
       public void dispose() {
         contentManager.removeContentManagerListener(myContentManagerListener);
-
-        myVcsManager.removeVcsListener(myVcsListener);
       }
     });
 
@@ -146,11 +144,17 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   private void updateToolWindowAvailability() {
-    final AbstractVcs[] abstractVcses = myVcsManager.getAllActiveVcss();
     ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
-    toolWindow.setAvailable(abstractVcses.length > 0, null);
+    if (toolWindow != null) {
+      toolWindow.setAvailable(isAvailable(), null);
+    }
   }
-  
+
+  public boolean isAvailable() {
+    final List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
+    return !mappings.isEmpty() && !StringUtil.isEmpty(mappings.get(0).getVcs());
+  }
+
   public void projectClosed() {
     myVcsChangeAlarm.cancelAllRequests();
   }
@@ -216,7 +220,9 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
         public void run() {
           if (myProject.isDisposed()) return;
           updateToolWindowAvailability();
-          updateExtensionTabs();
+          if (myContentManager != null) {
+            updateExtensionTabs();
+          }
         }
       }, 100, ModalityState.NON_MODAL);
     }

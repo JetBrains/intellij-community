@@ -38,6 +38,7 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import git4idea.validators.GitNewBranchNameValidator;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -319,6 +320,7 @@ public class GitBranchUtil {
    *         or if the current Git root couldn't be determined.
    */
   @Nullable
+  @CalledInAwt
   public static GitRepository getCurrentRepository(@NotNull Project project) {
     return getRepositoryOrGuess(project, DvcsUtil.getSelectedFile(project));
   }

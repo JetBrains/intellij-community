@@ -123,6 +123,10 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
         return;
       }
+      final PsiExpression qualifierExpression = getQualifierExpression(expression);
+      if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
+        return;
+      }
       final PsiElement maybeBinary = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
       if (maybeBinary instanceof PsiBinaryExpression) {
         if (processNotNullCheck((PsiBinaryExpression)maybeBinary)) {
@@ -130,7 +134,6 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
         }
       }
       if (!checkNotNull) {
-        final PsiExpression qualifierExpression = getQualifierExpression(expression);
         if (qualifierExpression == null) {
           return;
         }

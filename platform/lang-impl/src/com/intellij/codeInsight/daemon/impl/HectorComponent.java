@@ -191,7 +191,7 @@ public class HectorComponent extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     final Dimension preferredSize = super.getPreferredSize();
-    final int width = 300;
+    final int width = JBUI.scale(300);
     if (preferredSize.width < width){
       preferredSize.width = width;
     }

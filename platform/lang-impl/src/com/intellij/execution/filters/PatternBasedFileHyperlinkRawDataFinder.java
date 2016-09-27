@@ -82,7 +82,7 @@ public class PatternBasedFileHyperlinkRawDataFinder implements FileHyperlinkRawD
         }
       }
     }
-    if (path == null || lineNumber == UNKNOWN || hyperlinkStartInd == -1) {
+    if (path == null || lineNumber == UNKNOWN || columnNumber == UNKNOWN ||  hyperlinkStartInd == -1) {
       return Collections.emptyList();
     }
     if (!format.isZeroBasedLineNumbering()) {
@@ -110,7 +110,7 @@ public class PatternBasedFileHyperlinkRawDataFinder implements FileHyperlinkRawD
   private Pair<Matcher, PatternHyperlinkFormat> findMatcher(@NotNull String line) {
     for (PatternHyperlinkFormat linkFormat : myLinkFormats) {
       Matcher matcher = linkFormat.getPattern().matcher(line);
-      if (matcher.matches()) {
+      if (matcher.find()) {
         return Pair.create(matcher, linkFormat);
       }
     }

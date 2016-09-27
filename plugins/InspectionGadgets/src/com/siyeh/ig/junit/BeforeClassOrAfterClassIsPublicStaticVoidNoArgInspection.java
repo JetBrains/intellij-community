@@ -24,6 +24,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
@@ -50,21 +51,29 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection
     protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiMethod method = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
       if (method != null) {
-        final PsiModifierList modifierList = method.getModifierList();
-        if (!modifierList.hasModifierProperty(PsiModifier.PUBLIC)) {
-          modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-        }
-        if (!modifierList.hasModifierProperty(PsiModifier.STATIC)) {
-          modifierList.setModifierProperty(PsiModifier.STATIC, true);
-        }
-
-        if (!PsiType.VOID.equals(method.getReturnType())) {
+        if (!PsiType.VOID.equals(method.getReturnType()) ||
+            !method.hasModifierProperty(PsiModifier.PUBLIC) ||
+            !method.hasModifierProperty(PsiModifier.STATIC)) {
           ChangeSignatureProcessor csp =
             new ChangeSignatureProcessor(project, method, false, PsiModifier.PUBLIC, method.getName(), PsiType.VOID,
-                                         new ParameterInfoImpl[0]);
+                                         new ParameterInfoImpl[0]) {
+              @Override
+              protected void performRefactoring(@NotNull UsageInfo[] usages) {
+                super.performRefactoring(usages);
+                final PsiModifierList modifierList = method.getModifierList();
+                if (!modifierList.hasModifierProperty(PsiModifier.STATIC)) {
+                  modifierList.setModifierProperty(PsiModifier.STATIC, true);
+                }
+              }
+            };
           csp.run();
         }
       }
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
 
     @NotNull

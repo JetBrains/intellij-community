@@ -47,13 +47,11 @@ internal class InspectionSchemeTest {
     "</inspections>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val profileManager = ApplicationInspectionProfileManager(InspectionToolRegistrar.getInstance(),
-                                                                                            schemeManagerFactory,
-                                                                                            ApplicationManager.getApplication().messageBus)
+    val profileManager = ApplicationInspectionProfileManager(InspectionToolRegistrar.getInstance(), schemeManagerFactory, ApplicationManager.getApplication().messageBus)
     profileManager.forceInitProfiles(true)
     profileManager.initProfiles()
 
-    assertThat(profileManager.profiles).hasSize(1)
+    assertThat(profileManager.profiles).hasSize(2)
     val scheme = profileManager.profiles.first() as InspectionProfileImpl
     assertThat(scheme.name).isEqualTo("Bar")
 

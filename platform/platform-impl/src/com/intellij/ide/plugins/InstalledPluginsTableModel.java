@@ -18,12 +18,9 @@ package com.intellij.ide.plugins;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellEditor;
 import com.intellij.ui.BooleanTableCellRenderer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.ColumnInfo;
@@ -31,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -59,7 +55,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   public InstalledPluginsTableModel() {
     final MyPluginManagerColumnInfo infoColumn = new MyPluginManagerColumnInfo();
     final EnabledPluginInfo enabledColumn = new EnabledPluginInfo();
-    columns = SystemInfo.isMac ? new ColumnInfo[]{infoColumn, enabledColumn, new Spacer()} : new ColumnInfo[]{infoColumn, enabledColumn};
+    columns = new ColumnInfo[]{infoColumn, enabledColumn};
 
     final ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     view.addAll(ContainerUtil.filter(PluginManagerCore.getPlugins(),
@@ -230,33 +226,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     return true;
   }
 
-  private static class Spacer extends ColumnInfo<IdeaPluginDescriptor, Object> {
-    public Spacer() {
-      super("");
-    }
-
-    @Override
-    public Object valueOf(IdeaPluginDescriptor ideaPluginDescriptor) {
-      return null;
-    }
-
-    @Override
-    public boolean isCellEditable(final IdeaPluginDescriptor ideaPluginDescriptor) {
-      return false;
-    }
-
-    @Nullable
-    @Override
-    public TableCellRenderer getRenderer(IdeaPluginDescriptor descriptor) {
-      return new DefaultTableCellRenderer();
-    }
-
-    @Override
-    public Class getColumnClass() {
-      return Spacer.class;
-    }
-  }
-
   private class EnabledPluginInfo extends ColumnInfo<IdeaPluginDescriptor, Boolean> {
 
     public EnabledPluginInfo() {
@@ -327,11 +296,6 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           return -1;
         }
       };
-    }
-
-    @Override
-    public int getWidth(JTable table) {
-      return new JCheckBox().getPreferredSize().width;
     }
   }
 

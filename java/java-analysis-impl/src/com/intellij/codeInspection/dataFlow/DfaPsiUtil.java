@@ -89,7 +89,7 @@ public class DfaPsiUtil {
     if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
       return Nullness.NOT_NULL;
     }
-    if (owner instanceof PsiMethod && isEnumValueOf((PsiMethod)owner)) {
+    if (owner instanceof PsiMethod && isEnumPredefinedMethod((PsiMethod)owner)) {
       return Nullness.NOT_NULL;
     }
 
@@ -169,14 +169,14 @@ public class DfaPsiUtil {
     return AnnotationUtil.findAnnotation(owner, anno.getQualifiedName()) == anno;
   }
 
-  private static boolean isEnumValueOf(PsiMethod method) {
-    if ("valueOf".equals(method.getName()) && method.hasModifierProperty(PsiModifier.STATIC)) {
+  private static boolean isEnumPredefinedMethod(PsiMethod method) {
+    String methodName = method.getName();
+    if (("valueOf".equals(methodName) || "values".equals(methodName)) && method.hasModifierProperty(PsiModifier.STATIC)) {
       PsiClass containingClass = method.getContainingClass();
       if (containingClass != null && containingClass.isEnum()) {
         PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameters.length == 1 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-          return true;
-        }
+        if ("values".equals(methodName)) return parameters.length == 0;
+        return parameters.length == 1 && parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_STRING);
       }
     }
     return false;

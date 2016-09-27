@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -47,7 +46,7 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitInspectionBase {
 
     if (nameIdentifier == null || module == null || !PsiUtil.isInstantiable(aClass)) return null;
 
-    final PsiClass base = JavaPsiFacade.getInstance(project).findClass(getClassName(), GlobalSearchScope.allScope(project));
+    final PsiClass base = JavaPsiFacade.getInstance(project).findClass(getClassName(), aClass.getResolveScope());
     if (base == null || !aClass.isInheritor(base, true)) return null;
 
     String descriptionDir = DescriptionCheckerUtil.getDescriptionDirName(aClass);

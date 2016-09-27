@@ -25,6 +25,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.*;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
@@ -393,7 +394,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       ProgressIndicator indicator = mySplash == null ? null : new EmptyProgressIndicator() {
         @Override
         public void setFraction(double fraction) {
-          mySplash.showProgress("", (float)(0.65 + getPercentageOfComponentsLoaded() * 0.35));
+          mySplash.showProgress("", (float)fraction);
         }
       };
       init(indicator, () -> {
@@ -454,6 +455,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     // could be called before full initialization
     ProgressManager progressManager = (ProgressManager)getPicoContainer().getComponentInstance(ProgressManager.class.getName());
     return progressManager == null ? null : progressManager.getProgressIndicator();
+  }
+
+  @Override
+  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
+    float start = PluginManagerCore.PLUGINS_PROGRESS_PART + PluginManagerCore.LOADERS_PROGRESS_PART;
+    indicator.setFraction(start + (getPercentageOfComponentsLoaded() * (1 - start)));
   }
 
   private static void createLocatorFile() {
@@ -751,7 +758,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private void doExit(boolean force, boolean exitConfirmed, boolean restart, String[] beforeRestart) {
     try {
       if (!force && !confirmExitIfNeeded(exitConfirmed)) {
-        saveAll();
         return;
       }
 
@@ -759,11 +765,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       myDisposeInProgress = true;
 
-      saveSettings();
-
       if (!force && !canExit()) {
         return;
       }
+
+      saveSettings();
 
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode()) {
@@ -773,10 +779,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
-          exitCode = Restarter.scheduleRestart(beforeRestart);
+          Restarter.scheduleRestart(beforeRestart);
         }
-        catch (IOException e) {
-          LOG.error("Cannot restart", e);
+        catch (Throwable t) {
+          LOG.error("Restart failed", t);
+          Main.showMessage("Restart failed", t);
+          exitCode = Main.RESTART_FAILED;
         }
       }
       System.exit(exitCode);
@@ -788,7 +796,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private static boolean confirmExitIfNeeded(boolean exitConfirmed) {
-    final boolean hasUnsafeBgTasks = ProgressManager.getInstance().hasUnsafeProgressIndicator();
+    boolean hasUnsafeBgTasks = ProgressManager.getInstance().hasUnsafeProgressIndicator();
     if (exitConfirmed && !hasUnsafeBgTasks) {
       return true;
     }
@@ -822,15 +830,17 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     };
 
     if (hasUnsafeBgTasks || option.isToBeShown()) {
-      String message = ApplicationBundle
-        .message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt",
-                 ApplicationNamesInfo.getInstance().getFullProductName());
-
-      if (MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), message).yesText(ApplicationBundle.message("command.exit")).noText(CommonBundle.message("button.cancel"))
-            .doNotAsk(option).show() != Messages.YES) {
+      String name = ApplicationNamesInfo.getInstance().getFullProductName();
+      String message = ApplicationBundle.message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt", name);
+      int result = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), message)
+        .yesText(ApplicationBundle.message("command.exit"))
+        .noText(CommonBundle.message("button.cancel"))
+        .doNotAsk(option).show();
+      if (result != Messages.YES) {
         return false;
       }
     }
+
     return true;
   }
 

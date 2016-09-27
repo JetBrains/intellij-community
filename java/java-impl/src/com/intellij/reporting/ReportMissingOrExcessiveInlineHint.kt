@@ -26,9 +26,9 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import java.io.File
 
 class ReportMissingOrExcessiveInlineHint : AnAction() {
@@ -128,10 +128,10 @@ class ReportMissingOrExcessiveInlineHint : AnAction() {
 
 }
 
-private fun isHintsEnabled() = Registry.`is`("editor.inline.parameter.hints")
+private fun isHintsEnabled() = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
 
 private fun Editor.getInlays(range: TextRange): List<Inlay> {
   return inlayModel.getInlineElementsInRange(range.startOffset, range.endOffset)
 }
 
-private class InlayReport(var text: String, var inlays: List<String>)
+private class InlayReport(@JvmField var text: String, @JvmField var inlays: List<String>)

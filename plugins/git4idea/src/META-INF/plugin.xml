@@ -63,6 +63,7 @@
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash" text="UnStash Changes..."/>
       <action id="Git.Reset" class="git4idea.actions.GitResetHead" text="Reset HEAD..." icon="AllIcons.Actions.Reset"/>
       <separator/>
+      <action id="Git.Configure.Remotes" class="git4idea.remote.GitConfigureRemotesAction" text="Configure Remotes" />
       <action id="Git.Clone" class="git4idea.actions.GitCloneAction" text="Clone..." />
       <action id="Git.Fetch" class="git4idea.actions.GitFetch" text="Fetch"/>
       <action id="Git.Pull" class="git4idea.actions.GitPull" text="Pull..." icon="AllIcons.Actions.CheckOut"/>

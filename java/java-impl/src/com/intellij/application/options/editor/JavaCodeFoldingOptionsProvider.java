@@ -28,28 +28,7 @@ public class JavaCodeFoldingOptionsProvider extends BeanConfigurable<JavaCodeFol
   public JavaCodeFoldingOptionsProvider() {
     super(JavaCodeFoldingSettings.getInstance());
     JavaCodeFoldingSettings settings = getInstance();
-    checkBox(ApplicationBundle.message("checkbox.collapse.boolean.parameters"), settings::isInlineParameterNamesForLiteralCallArguments, settings::setInlineParameterNamesForLiteralCallArguments);
-    JavaCodeFoldingSettingsPanel panel = new JavaCodeFoldingSettingsPanel();
-
-    component(panel.getRow0(),
-              () -> null,
-              pair -> {},
-              () -> null,
-              pair -> {}
-              );
-    component(panel.getRow1(),
-              settings::getInlineLiteralParameterMinNameLength,
-              settings::setInlineLiteralParameterMinNameLength,
-              panel::getMinNameLengthThresholdText,
-              panel::setMinNameLengthThresholdText
-              );
-    component(panel.getRow2(),
-              settings::getInlineLiteralParameterMinArgumentsToFold,
-              settings::setInlineLiteralParameterMinArgumentsToFold,
-              panel::getMinArgumentsToFoldText,
-              panel::setMinArgumentsToFoldText
-              );
-
+    
     checkBox(ApplicationBundle.message("checkbox.collapse.one.line.methods"), settings::isCollapseOneLineMethods, settings::setCollapseOneLineMethods);
 
     checkBox(ApplicationBundle.message("checkbox.collapse.simple.property.accessors"), settings::isCollapseAccessors, settings::setCollapseAccessors);

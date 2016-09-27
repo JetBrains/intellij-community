@@ -429,16 +429,11 @@ public class SwingHelper {
                                                        @NotNull TextComponentAccessor<T> textComponentAccessor) {
     fileChooserDescriptor = fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix);
     componentWithBrowseButton.addBrowseFolderListener(
+      browseDialogTitle,
+      null,
       project,
-      new ComponentWithBrowseButton.BrowseFolderActionListener<>(
-        browseDialogTitle,
-        null,
-        componentWithBrowseButton,
-        project,
-        fileChooserDescriptor,
-        textComponentAccessor
-      ),
-      true
+      fileChooserDescriptor,
+      textComponentAccessor
     );
     FileChooserFactory.getInstance().installFileCompletion(
       textField,

@@ -185,12 +185,7 @@ internal class ProjectInspectionManagerTest {
 
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
 
-      assertThat(projectFile.readText()).isEqualTo(emptyProjectFile)
-
-      currentProfile.disableAllTools(project)
-      currentProfile.profileChanged()
-      project.saveStore()
-      assertThat(projectFile.readText()).isEqualTo("""
+      val expected = """
       <?xml version="1.0" encoding="UTF-8"?>
       <project version="4">
         <component name="InspectionProjectProfileManager">
@@ -200,7 +195,13 @@ internal class ProjectInspectionManagerTest {
           </profile>
           <version value="1.0" />
         </component>
-      </project>""".trimIndent())
+      </project>""".trimIndent()
+      assertThat(projectFile.readText()).isEqualTo(expected)
+
+      currentProfile.disableAllTools(project)
+      currentProfile.profileChanged()
+      project.saveStore()
+      assertThat(projectFile.readText()).isNotEqualTo(expected)
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
     }
   }

@@ -1,6 +1,6 @@
-// "Replace with forEach" "true"
+// "Replace with collect" "true"
 import java.util.ArrayList;
-import java.util.List;
+  import java.util.List;
 
 public class Main {
   public List<Integer> test(int[][] arr) {

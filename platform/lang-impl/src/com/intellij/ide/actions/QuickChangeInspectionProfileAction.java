@@ -50,11 +50,6 @@ public class QuickChangeInspectionProfileAction extends QuickSwitchSchemeAction 
   }
 
   @Override
-  protected boolean isEnabled() {
-    return true;
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     e.getPresentation().setEnabledAndVisible(project != null && InspectionProjectProfileManager.getInstance(project).getProfiles().size() > 1);

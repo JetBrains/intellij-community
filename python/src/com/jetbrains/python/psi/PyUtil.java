@@ -1982,6 +1982,13 @@ public class PyUtil {
     }
 
     /**
+     * @return true if given string node contains "f" or "F" prefix
+     */
+    public boolean isFormatted() {
+      return StringUtil.containsIgnoreCase(myPrefix, "f");
+    }
+
+    /**
      * @return true if other string node has the same decorations, i.e. quotes and prefix
      */
     @Override

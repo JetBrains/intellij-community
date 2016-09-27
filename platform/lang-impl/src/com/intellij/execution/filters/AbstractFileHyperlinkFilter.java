@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +67,8 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
     }
     List<Filter.ResultItem> items = ContainerUtil.newArrayList();
     for (FileHyperlinkRawData link : links) {
-      VirtualFile file = findFile(FileUtil.toSystemIndependentName(link.getFilePath()));
+      String filePath = FileUtil.toSystemIndependentName(link.getFilePath());
+      VirtualFile file = StringUtil.isEmptyOrSpaces(filePath) ? null : findFile(filePath);
       if (file != null) {
         OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(myProject,
                                                                file,

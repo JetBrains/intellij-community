@@ -525,12 +525,12 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertFalse(profile.isToolEnabled(HighlightDisplayKey.find("bar")));
     assertFalse(profile.isToolEnabled(HighlightDisplayKey.find("disabled")));
 
-    assertTrue(profile.getToolDefaultState("bar", getProject()).isEnabled());
+    assertFalse(profile.getToolDefaultState("bar", getProject()).isEnabled());
     assertFalse(profile.getToolDefaultState("disabled", getProject()).isEnabled());
 
     assertEquals("<profile version=\"1.0\" is_locked=\"true\">\n" +
                  "  <option name=\"myName\" value=\"Foo\" />\n" +
-                 "  <inspection_tool class=\"bar\" enabled=\"false\" level=\"ERROR\" enabled_by_default=\"true\" />\n" +
+                 "  <inspection_tool class=\"bar\" enabled=\"false\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
                  "  <inspection_tool class=\"disabled\" enabled=\"false\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
                  "  <inspection_tool class=\"foo\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"true\" />\n" +
                  "</profile>", serialize(profile));
@@ -623,7 +623,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionProfileImpl foo = new InspectionProfileImpl("foo", InspectionToolRegistrar.getInstance(), InspectionProjectProfileManager.getInstance(getProject()));
     String test = "<profile version=\"1.0\" is_locked=\"false\">\n" +
                  "  <option name=\"myName\" value=\"idea.default\" />\n" +
-                 "  <option name=\"myLocal\" value=\"false\" />\n" +
                  "  <inspection_tool class=\"AbstractMethodCallInConstructor\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
                  "  <inspection_tool class=\"AssignmentToForLoopParameter\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
                  "    <option name=\"m_checkForeachParameters\" value=\"false\" />\n" +

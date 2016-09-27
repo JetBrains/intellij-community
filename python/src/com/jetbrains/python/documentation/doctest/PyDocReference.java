@@ -17,6 +17,7 @@ package com.jetbrains.python.documentation.doctest;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
@@ -25,9 +26,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyQualifiedExpression;
+import com.jetbrains.python.psi.PyStatement;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -80,7 +86,8 @@ public class PyDocReference extends PyReferenceImpl {
         if (scopeOwner != null) {
           final PsiFile topLevel = scopeOwner.getContainingFile();
           PyResolveUtil.scopeCrawlUp(processor, scopeOwner, referencedName, topLevel);
-          final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, scopeOwner, topLevel);
+          final PsiElement referenceAnchor = getScopeControlFlowAnchor(host);
+          final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, referenceAnchor, topLevel);
           if (resultList.size() > 0) {
             final List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
             return ret.toArray(new RatedResolveResult[ret.size()]);
@@ -89,6 +96,39 @@ public class PyDocReference extends PyReferenceImpl {
       }
     }
     return results;
+  }
+
+  @Nullable
+  private PsiElement getScopeControlFlowAnchor(@NotNull PsiLanguageInjectionHost host) {
+    return isInsideFormattedStringNode(host) ? PsiTreeUtil.getParentOfType(host, PyStatement.class) : null;
+  }
+
+  private boolean isInsideFormattedStringNode(@NotNull PsiLanguageInjectionHost host) {
+    if (host instanceof PyStringLiteralExpression) {
+      final ASTNode node = findContainingStringNode(getElement(), (PyStringLiteralExpression)host);
+      return node != null && new StringNodeInfo(node).isFormatted();
+    }
+    return false;
+  }
+
+  @Nullable
+  private static ASTNode findContainingStringNode(@NotNull PsiElement injectedElement, @NotNull PyStringLiteralExpression host) {
+    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(host.getProject());
+    final List<Pair<PsiElement, TextRange>> files = manager.getInjectedPsiFiles(host);
+    if (files != null) {
+      final PsiFile injectedFile = injectedElement.getContainingFile();
+      final Pair<PsiElement, TextRange> first = ContainerUtil.find(files, pair -> pair.getFirst() == injectedFile);
+      if (first != null) {
+        final int hostOffset = -host.getTextRange().getStartOffset();
+        for (ASTNode node : host.getStringNodes()) {
+          final TextRange relativeNodeRange = node.getTextRange().shiftRight(hostOffset);
+          if (relativeNodeRange.contains(first.getSecond())) {
+            return node;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @NotNull

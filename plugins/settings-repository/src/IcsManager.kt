@@ -24,6 +24,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
@@ -216,39 +217,32 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
     icsManager = IcsManager(pluginSystemDir)
 
     if (!pluginSystemDir.exists()) {
-      try {
+      LOG.catchAndLog {
         val oldPluginDir = Paths.get(PathManager.getSystemPath(), "settingsRepository")
         if (oldPluginDir.exists()) {
           oldPluginDir.move(pluginSystemDir)
         }
       }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
     }
 
     val repositoryManager = icsManager.repositoryManager
     if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {
+      val osFolderName = getOsFolderName()
+
       val migrateSchemes = repositoryManager.renameDirectory(linkedMapOf(
           Pair("\$ROOT_CONFIG$", null),
-          Pair("_mac/\$ROOT_CONFIG$", "_mac"),
-          Pair("_windows/\$ROOT_CONFIG$", "_windows"),
-          Pair("_linux/\$ROOT_CONFIG$", "_linux"),
-          Pair("_freebsd/\$ROOT_CONFIG$", "_freebsd"),
-          Pair("_unix/\$ROOT_CONFIG$", "_unix"),
-          Pair("_unknown/\$ROOT_CONFIG$", "_unknown"),
+          Pair("$osFolderName/\$ROOT_CONFIG$", osFolderName),
 
           Pair("\$APP_CONFIG$", null),
-          Pair("_mac/\$APP_CONFIG$", "_mac"),
-          Pair("_windows/\$APP_CONFIG$", "_windows"),
-          Pair("_linux/\$APP_CONFIG$", "_linux"),
-          Pair("_freebsd/\$APP_CONFIG$", "_freebsd"),
-          Pair("_unix/\$APP_CONFIG$", "_unix"),
-          Pair("_unknown/\$APP_CONFIG$", "_unknown")
-      ))
+          Pair("$osFolderName/\$APP_CONFIG$", osFolderName)
+      ), "Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG")
+
+      val migrateKeyMaps = repositoryManager.renameDirectory(linkedMapOf(
+          Pair("$osFolderName/keymaps", "keymaps")
+      ), "Move keymaps to root")
 
       val removeOtherXml = repositoryManager.delete("other.xml")
-      if (migrateSchemes || removeOtherXml) {
+      if (migrateSchemes || migrateKeyMaps || removeOtherXml) {
         // schedule push to avoid merge conflicts
         application.invokeLater({ icsManager.autoSyncManager.autoSync(force = true) })
       }

@@ -718,4 +718,9 @@ public class ExpressionUtils {
     }
     return null;
   }
+
+  @Contract("null, _ -> false")
+  public static boolean isLiteral(PsiElement element, Object value) {
+    return element instanceof PsiLiteralExpression && value.equals(((PsiLiteralExpression)element).getValue());
+  }
 }

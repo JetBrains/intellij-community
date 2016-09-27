@@ -38,6 +38,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -139,22 +140,33 @@ public abstract class XDebuggerEditorBase {
   }
 
   protected JPanel decorate(JComponent component, boolean multiline, boolean showEditor) {
-    JPanel panel = JBUI.Panels.simplePanel();
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel();
 
     JPanel factoryPanel = JBUI.Panels.simplePanel();
     factoryPanel.add(myChooseFactory, multiline ? BorderLayout.NORTH : BorderLayout.CENTER);
     panel.add(factoryPanel, BorderLayout.WEST);
 
     if (!multiline && showEditor) {
-      ComponentWithBrowseButton<JComponent> componentWithButton =
-        new ComponentWithBrowseButton<>(component, e -> showCodeFragmentEditor(component, this));
-      componentWithButton.setButtonIcon(AllIcons.Actions.ShowViewer);
-      componentWithButton.getButton().setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.Actions.ShowViewer));
-      panel.add(componentWithButton, BorderLayout.CENTER);
-    } else {
-      panel.add(component, BorderLayout.CENTER);
+      component = addMultilineButton(component);
     }
 
+    panel.addToCenter(component);
+
+    return panel;
+  }
+
+  protected JPanel addMultilineButton(JComponent component) {
+    ComponentWithBrowseButton<JComponent> componentWithButton =
+      new ComponentWithBrowseButton<>(component, e -> showCodeFragmentEditor(component, this));
+    componentWithButton.setButtonIcon(AllIcons.Actions.ShowViewer);
+    componentWithButton.getButton().setDisabledIcon(IconLoader.getDisabledIcon(AllIcons.Actions.ShowViewer));
+    return componentWithButton;
+  }
+
+  protected JComponent addChooser(JComponent component) {
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
+    panel.setBackground(component.getBackground());
+    panel.addToRight(myChooseFactory);
     return panel;
   }
 
@@ -345,7 +357,10 @@ public abstract class XDebuggerEditorBase {
       protected void doOKAction() {
         super.doOKAction();
         baseEditor.setExpression(inputComponent.getInputEditor().getExpression());
-        IdeFocusManager.findInstance().requestFocus(baseEditor.getEditorComponent(), false);
+        JComponent component = baseEditor.getPreferredFocusedComponent();
+        if (component != null) {
+          IdeFocusManager.findInstance().requestFocus(component, false);
+        }
       }
 
       @Nullable

@@ -26,7 +26,7 @@ public interface ModuleRunProfile extends RunProfileWithCompileBeforeLaunchOptio
 
   @Nullable
   @Override
-  default GlobalSearchScope getScope() {
+  default GlobalSearchScope getSearchScope() {
     return SearchScopeProvider.createSearchScope(getModules());
   }
 }

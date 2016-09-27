@@ -244,8 +244,9 @@ public class InspectionApplication {
             if (!isIndeterminate() && getFraction() > 0) {
               final int percent = (int)(getFraction() * 100);
               if (myLastPercent == percent) return;
+              String prefix = getPrefix(text);
               myLastPercent = percent;
-              String msg = InspectionsBundle.message("inspection.display.name") + " " + percent + "%";
+              String msg = (prefix != null ? prefix : InspectionsBundle.message("inspection.display.name")) + " " + percent + "%";
               logMessageLn(2, msg);
             }
             return;

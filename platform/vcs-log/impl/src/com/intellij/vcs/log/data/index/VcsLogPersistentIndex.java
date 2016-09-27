@@ -19,11 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -32,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.EmptyConsumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -41,10 +38,7 @@ import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.InMemoryMap;
-import com.intellij.vcs.log.data.TroveUtil;
-import com.intellij.vcs.log.data.VcsLogStorageImpl;
-import com.intellij.vcs.log.data.VcsUserRegistryImpl;
+import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorConsumer;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
@@ -57,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
@@ -66,6 +61,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final FatalErrorConsumer myFatalErrorsConsumer;
+  @NotNull private final VcsLogProgress myProgress;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsLogStorage myHashMap;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
@@ -76,17 +72,20 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @Nullable private final VcsLogUserIndex myUserIndex;
   @Nullable private final VcsLogPathsIndex myPathsIndex;
 
+  @NotNull private final SingleTaskController<IndexingRequest, Void> mySingleTaskController = new MySingleTaskController();
   @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = ContainerUtil.newHashMap();
 
   @NotNull private Map<VirtualFile, TIntHashSet> myCommitsToIndex = ContainerUtil.newHashMap();
 
   public VcsLogPersistentIndex(@NotNull Project project,
                                @NotNull VcsLogStorage hashMap,
+                               @NotNull VcsLogProgress progress,
                                @NotNull Map<VirtualFile, VcsLogProvider> providers,
                                @NotNull FatalErrorConsumer fatalErrorsConsumer,
                                @NotNull Disposable disposableParent) {
     myHashMap = hashMap;
     myProject = project;
+    myProgress = progress;
     myProviders = providers;
     myFatalErrorsConsumer = fatalErrorsConsumer;
     myRoots = ContainerUtil.newLinkedHashSet();
@@ -151,13 +150,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
     myCommitsToIndex = ContainerUtil.newHashMap();
 
-    Task.Backgroundable task = new MyIndexingTask(commitsToIndex, full);
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-                                                      BackgroundableProcessIndicator indicator = new BackgroundableProcessIndicator(task);
-                                                      ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator);
-                                                    }
-    );
+    mySingleTaskController.request(new IndexingRequest(commitsToIndex, full));
   }
 
   private void storeDetails(@NotNull List<? extends VcsFullCommitDetails> details, boolean flush) {
@@ -291,25 +284,31 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public TIntHashSet filterMessages(@NotNull String text) {
     if (myTrigramIndex != null) {
       try {
-        ValueContainer.IntIterator commitsForSearch = myTrigramIndex.getCommitsForSubstring(text);
-        if (commitsForSearch != null) {
-          TIntHashSet result = new TIntHashSet();
-          while (commitsForSearch.hasNext()) {
-            int commit = commitsForSearch.next();
-            try {
-              String value = myMessagesIndex.get(commit);
-              if (value != null) {
-                if (StringUtil.containsIgnoreCase(value, text)) {
-                  result.add(commit);
+        if (VcsLogUtil.isRegexp(text)) {
+          Pattern pattern = Pattern.compile(text);
+          return filter(myMessagesIndex, message -> pattern.matcher(message).find());
+        }
+        else {
+          ValueContainer.IntIterator commitsForSearch = myTrigramIndex.getCommitsForSubstring(text);
+          if (commitsForSearch != null) {
+            TIntHashSet result = new TIntHashSet();
+            while (commitsForSearch.hasNext()) {
+              int commit = commitsForSearch.next();
+              try {
+                String value = myMessagesIndex.get(commit);
+                if (value != null) {
+                  if (StringUtil.containsIgnoreCase(value, text)) {
+                    result.add(commit);
+                  }
                 }
               }
+              catch (IOException e) {
+                myFatalErrorsConsumer.consume(this, e);
+                break;
+              }
             }
-            catch (IOException e) {
-              myFatalErrorsConsumer.consume(this, e);
-              break;
-            }
+            return result;
           }
-          return result;
         }
       }
       catch (StorageException e) {
@@ -324,7 +323,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
     if (filters.isEmpty()) return false;
     for (VcsLogDetailsFilter filter : filters) {
-      if (filter instanceof VcsLogTextFilter && myTrigramIndex != null && !VcsLogUtil.isRegexp(((VcsLogTextFilter)filter).getText()) ||
+      if (filter instanceof VcsLogTextFilter && myTrigramIndex != null ||
           filter instanceof VcsLogUserFilterImpl && myUserIndex != null ||
           filter instanceof VcsLogStructureFilter && myPathsIndex != null) {
         continue;
@@ -412,18 +411,52 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
   }
 
-  private class MyIndexingTask extends Task.Backgroundable {
+  private class MySingleTaskController extends SingleTaskController<IndexingRequest, Void> {
+    public MySingleTaskController() {
+      super(EmptyConsumer.getInstance());
+    }
+
+    @Override
+    protected void startNewBackgroundTask() {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Task.Backgroundable task = new Task.Backgroundable(VcsLogPersistentIndex.this.myProject, "Indexing Commit Data", true,
+                                                           PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            List<IndexingRequest> requests;
+            while (!(requests = popRequests()).isEmpty()) {
+              for (IndexingRequest request : requests) {
+                try {
+                  request.run(indicator);
+                }
+                catch (ProcessCanceledException reThrown) {
+                  throw reThrown;
+                }
+                catch (Throwable t) {
+                  LOG.error("Error while indexing", t);
+                }
+              }
+            }
+
+            taskCompleted(null);
+          }
+        };
+        ProgressIndicator indicator = myProgress.createProgressIndicator(false);
+        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, indicator);
+      });
+    }
+  }
+
+  private class IndexingRequest {
     private static final int MAGIC_NUMBER = 150000;
     private final Map<VirtualFile, TIntHashSet> myCommits;
     private final boolean myFull;
 
-    public MyIndexingTask(@NotNull Map<VirtualFile, TIntHashSet> commits, boolean full) {
-      super(VcsLogPersistentIndex.this.myProject, "Indexing Commit Data", true, PerformInBackgroundOption.ALWAYS_BACKGROUND);
+    public IndexingRequest(@NotNull Map<VirtualFile, TIntHashSet> commits, boolean full) {
       myCommits = commits;
       myFull = full;
     }
 
-    @Override
     public void run(@NotNull ProgressIndicator indicator) {
       indicator.setIndeterminate(false);
       indicator.setFraction(0);

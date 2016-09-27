@@ -119,6 +119,11 @@ public final class HttpRequests {
     }
 
     @Override
+    public String getMessage() {
+      return "Status: " + myStatusCode;
+    }
+
+    @Override
     public String toString() {
       return super.toString() + ". Status=" + myStatusCode + ", Url=" + myUrl;
     }

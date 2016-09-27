@@ -129,7 +129,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Map<Type, NodeRenderer> myNodeRenderersMap = new HashMap<>();
 
   private final SuspendManagerImpl mySuspendManager = new SuspendManagerImpl(this);
-  protected CompoundPositionManager myPositionManager = null;
+  protected CompoundPositionManager myPositionManager = CompoundPositionManager.EMPTY;
   private final DebuggerManagerThreadImpl myDebuggerManagerThread;
 
   private final Semaphore myWaitFor = new Semaphore();
@@ -777,7 +777,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       finally {
         final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
         myVirtualMachineProxy = null;
-        myPositionManager = null;
+        myPositionManager = CompoundPositionManager.EMPTY;
         myReturnValueWatcher = null;
         myNodeRenderersMap.clear();
         myRenderers.clear();
@@ -1453,6 +1453,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return mySuspendManager;
   }
 
+  @NotNull
   @Override
   public CompoundPositionManager getPositionManager() {
     return myPositionManager;

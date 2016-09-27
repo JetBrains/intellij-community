@@ -427,8 +427,8 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   @Override
-  public GlobalSearchScope getScope() {
-    GlobalSearchScope superScope = super.getScope();
+  public GlobalSearchScope getSearchScope() {
+    GlobalSearchScope superScope = super.getSearchScope();
 
     String path = getScriptPath();
     if (path == null) return superScope;

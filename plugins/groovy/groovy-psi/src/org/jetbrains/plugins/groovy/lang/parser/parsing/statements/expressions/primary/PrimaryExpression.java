@@ -55,18 +55,9 @@ public class PrimaryExpression {
       marker.done(type);
       return type;
     }
-    if (GroovyTokenTypes.mIDENT == tokenType || GroovyTokenTypes.kSUPER == tokenType || GroovyTokenTypes.kTHIS == tokenType) {
+    if (GroovyTokenTypes.mIDENT == tokenType || GroovyTokenTypes.kSUPER == tokenType || GroovyTokenTypes.kTHIS == tokenType ||
+        TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(tokenType) && PathExpression.isQualificationDotAhead(builder)) {
       return ParserUtils.eatElement(builder, GroovyElementTypes.REFERENCE_EXPRESSION);
-    }
-    if (TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(tokenType)) {
-      PsiBuilder.Marker marker = builder.mark();
-      builder.advanceLexer();
-      if (PathExpression.isQualicationDot(builder)) {
-        marker.done(GroovyElementTypes.REFERENCE_EXPRESSION);
-        return GroovyElementTypes.REFERENCE_EXPRESSION;
-      } else {
-        marker.rollbackTo();
-      }
     }
     if (GroovyTokenTypes.mGSTRING_BEGIN == tokenType) {
       final boolean result = CompoundStringExpression.parse(builder, parser, false, GroovyTokenTypes.mGSTRING_BEGIN,

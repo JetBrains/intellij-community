@@ -35,6 +35,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.project.isDirectoryBased
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
@@ -115,6 +116,22 @@ abstract class ComponentStoreImpl : IComponentStore {
   override fun save(readonlyFiles: MutableList<JBPair<StateStorage.SaveSession, VirtualFile>>) {
     var errors: MutableList<Throwable>? = null
 
+    // component state uses scheme manager in an ipr project, so, we must save it before
+    val isIprProject = project?.let { !it.isDirectoryBased } ?: false
+    if (isIprProject) {
+      settingsSavingComponents.firstOrNull { it is SchemeManagerFactoryBase }?.let {
+        try {
+          it.save()
+        }
+        catch (e: Throwable) {
+          if (errors == null) {
+            errors = SmartList<Throwable>()
+          }
+          errors!!.add(e)
+        }
+      }
+    }
+
     val externalizationSession = if (components.isEmpty()) null else storageManager.startExternalization()
     if (externalizationSession != null) {
       val names = ArrayUtilRt.toStringArray(components.keys)
@@ -131,7 +148,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           if (errors == null) {
             errors = SmartList<Throwable>()
           }
-          errors.add(Exception("Cannot get ${name} component state", e))
+          errors!!.add(Exception("Cannot get ${name} component state", e))
         }
 
         timeLog?.let {
@@ -149,13 +166,15 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     for (settingsSavingComponent in settingsSavingComponents) {
       try {
-        settingsSavingComponent.save()
+        if (!isIprProject || settingsSavingComponent !is SchemeManagerFactoryBase) {
+          settingsSavingComponent.save()
+        }
       }
       catch (e: Throwable) {
         if (errors == null) {
           errors = SmartList<Throwable>()
         }
-        errors.add(e)
+        errors!!.add(e)
       }
     }
 
