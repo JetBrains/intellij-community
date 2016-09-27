@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +76,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
         super.setupJavaParameters(params);
         final File scrachesOutput = JavaScratchCompilationSupport.getScratchOutputDirectory(getProject());
         if (scrachesOutput != null) {
-          params.getClassPath().add(scrachesOutput);
+          params.getClassPath().addFirst(FileUtil.toCanonicalPath(scrachesOutput.getAbsolutePath()).replace('/', File.separatorChar));
         }
       }
 
