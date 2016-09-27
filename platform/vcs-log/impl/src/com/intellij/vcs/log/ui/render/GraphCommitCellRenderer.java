@@ -191,7 +191,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     if (!isRedesignedLabels()) return null;
 
     GraphCommitCell cell = getAssertCommitCell(value);
-    List<VcsRef> refs = cell.getRefsToThisCommit().stream().filter(ref -> ref.getType().isBranch()).collect(Collectors.toList());
+    Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
       customizeRefsPainter(myReferencePainter, refs, getForeground());
       if (myReferencePainter.getSize().getWidth() - LabelPainter.GRADIENT_WIDTH >= width - point.getX()) {
@@ -270,11 +270,10 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   private class TooltipReferencesPanel extends ReferencesPanel {
     private final int myMaxWidth;
 
-    public TooltipReferencesPanel(@NotNull List<VcsRef> refs, int maxWidth) {
+    public TooltipReferencesPanel(@NotNull Collection<VcsRef> refs, int maxWidth) {
       myMaxWidth = maxWidth;
       VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
-      refs.sort(myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator());
-      setReferences(refs);
+      setReferences(ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));
     }
 
     @NotNull
