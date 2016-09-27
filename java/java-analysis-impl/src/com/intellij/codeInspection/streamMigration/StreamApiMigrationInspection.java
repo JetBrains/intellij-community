@@ -124,11 +124,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return null;
   }
 
-  @Contract("null, _ -> false")
-  static boolean isLiteral(PsiElement element, Object value) {
-    return element instanceof PsiLiteralExpression && value.equals(((PsiLiteralExpression)element).getValue());
-  }
-
   @Contract("null, null -> true; null, !null -> false")
   private static boolean sameReference(PsiExpression expr1, PsiExpression expr2) {
     if(expr1 == null && expr2 == null) return true;
@@ -195,7 +190,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     } else if(expression instanceof PsiAssignmentExpression) {
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
-      if(isLiteral(extractAddend(assignment), 1)) {
+      if(ExpressionUtils.isLiteral(extractAddend(assignment), 1)) {
         return assignment.getLExpression();
       }
     }
@@ -375,10 +370,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == variable;
   }
 
-  static String createLambda(PsiVariable variable, PsiExpression expression) {
-    return variable.getName() + " -> " + expression.getText();
-  }
-
   @Nullable
   private static PsiClassType createDefaultConsumerType(Project project, PsiVariable variable) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
@@ -550,9 +541,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
       PsiExpression value = returnStatement.getReturnValue();
       PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
-      if(nextReturnStatement != null && (isLiteral(value, Boolean.TRUE) || isLiteral(value, Boolean.FALSE))) {
+      if(nextReturnStatement != null && (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE))) {
         boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-        if(isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
+        if(ExpressionUtils.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
           String methodName;
           if (foundResult) {
             methodName = "anyMatch";
@@ -652,7 +643,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     public String createReplacement(PsiElementFactory factory) {
       PsiExpression expression =
         myNegated ? factory.createExpressionFromText(BoolUtils.getNegatedExpressionText(myExpression), myExpression) : myExpression;
-      return ".filter(" + createLambda(myVariable, expression) + ")";
+      return ".filter(" + LambdaUtil.createLambda(myVariable, expression) + ")";
     }
   }
 
@@ -694,7 +685,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       } else if(myVariable.getType() instanceof PsiPrimitiveType) {
         operationName = "mapToObj";
       }
-      return "."+operationName+"(" + createLambda(myVariable, myExpression) + ")";
+      return "." + operationName + "(" + LambdaUtil.createLambda(myVariable, myExpression) + ")";
     }
   }
 
@@ -706,7 +697,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Override
     public String createReplacement(PsiElementFactory factory) {
       PsiExpression replacement = factory.createExpressionFromText(myExpression.getText() + ".stream()", myExpression);
-      return ".flatMap(" + createLambda(myVariable, replacement) + ")";
+      return ".flatMap(" + LambdaUtil.createLambda(myVariable, replacement) + ")";
     }
   }
 
@@ -732,7 +723,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           }
         }
       }
-      return "."+operation+"(" + createLambda(myVariable, replacement) + ")";
+      return "." + operation + "(" + LambdaUtil.createLambda(myVariable, replacement) + ")";
     }
   }
 

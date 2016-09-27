@@ -104,18 +104,18 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
           return "(" + castType.getText() + ")" + stream + ".orElse(null)";
         }
       }
-      if(StreamApiMigrationInspection.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueExpression.getType())) {
-        return stream + ".filter(" + StreamApiMigrationInspection.createLambda(var, trueExpression) + ").isPresent()";
+      if(ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueExpression.getType())) {
+        return stream + ".filter(" + LambdaUtil.createLambda(var, trueExpression) + ").isPresent()";
       }
       if(trueExpression instanceof PsiConditionalExpression) {
         PsiConditionalExpression condition = (PsiConditionalExpression)trueExpression;
         if(EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(falseExpression, condition.getElseExpression())) {
           return generateOptionalUnwrap(
-            stream + ".filter(" + StreamApiMigrationInspection.createLambda(var, condition.getCondition()) + ")", tb,
+            stream + ".filter(" + LambdaUtil.createLambda(var, condition.getCondition()) + ")", tb,
             condition.getThenExpression(), falseExpression);
         }
       }
-      stream += ".map(" + StreamApiMigrationInspection.createLambda(var, trueExpression) + ")";
+      stream += ".map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
     }
     stream += ".orElse(" + falseExpression.getText() + ")";
     return stream;

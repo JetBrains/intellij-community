@@ -42,7 +42,7 @@ import java.util.*;
  */
 public class LambdaUtil {
   public static final RecursionGuard ourParameterGuard = RecursionManager.createGuard("lambdaParameterGuard");
-  public static ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<Map<PsiElement, PsiType>>();
+  public static final ThreadLocal<Map<PsiElement, PsiType>> ourFunctionTypes = new ThreadLocal<Map<PsiElement, PsiType>>();
   private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
 
   @Nullable
@@ -128,6 +128,7 @@ public class LambdaUtil {
     return false;
   }
 
+  @Contract("null -> false")
   public static boolean isValidLambdaContext(@Nullable PsiElement context) {
     return context instanceof PsiTypeCastExpression ||
            context instanceof PsiAssignmentExpression ||
@@ -149,6 +150,7 @@ public class LambdaUtil {
     return true;
   }
 
+  @Contract("null -> null")
   @Nullable
   public static MethodSignature getFunction(PsiClass psiClass) {
     if (psiClass == null) return null;
@@ -218,6 +220,7 @@ public class LambdaUtil {
     return signature.getMethod().getContainingClass() != methodSignature.getMethod().getContainingClass();
   }
 
+  @Contract("null -> null")
   @Nullable
   public static List<HierarchicalMethodSignature> findFunctionCandidates(final PsiClass psiClass) {
     if (psiClass != null && psiClass.isInterface() && !psiClass.isAnnotationType()) {
@@ -504,8 +507,11 @@ public class LambdaUtil {
     return type;
   }
 
+  @Contract(value = "null -> false", pure = true)
   public static boolean notInferredType(PsiType typeByExpression) {
-    return typeByExpression instanceof PsiMethodReferenceType || typeByExpression instanceof PsiLambdaExpressionType || typeByExpression instanceof PsiLambdaParameterType;
+    return typeByExpression instanceof PsiMethodReferenceType ||
+           typeByExpression instanceof PsiLambdaExpressionType ||
+           typeByExpression instanceof PsiLambdaParameterType;
   }
 
   public static boolean isLambdaReturnExpression(PsiElement element) {
@@ -581,6 +587,7 @@ public class LambdaUtil {
   }
 
   //JLS 14.8 Expression Statements
+  @Contract("null -> false")
   public static boolean isExpressionStatementExpression(PsiElement body) {
     return body instanceof PsiAssignmentExpression ||
            body instanceof PsiPrefixExpression &&
@@ -850,6 +857,17 @@ public class LambdaUtil {
         getFunctionalTypeMap().remove(parameter);
       }
     }
+  }
+
+  /**
+   * Generate lambda text for single argument expression lambda
+   *
+   * @param variable lambda sole argument
+   * @param expression lambda body (expression)
+   * @return lambda text
+   */
+  public static String createLambda(@NotNull PsiVariable variable, @NotNull PsiExpression expression) {
+    return variable.getName() + " -> " + expression.getText();
   }
 
   public static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

@@ -56,10 +56,10 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
     if(tb.getSingleStatement() instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
       PsiExpression value = returnStatement.getReturnValue();
-      if (StreamApiMigrationInspection.isLiteral(value, Boolean.TRUE) || StreamApiMigrationInspection.isLiteral(value, Boolean.FALSE)) {
+      if (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE)) {
         boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
         PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(foreachStatement);
-        if (nextReturnStatement != null && StreamApiMigrationInspection.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
+        if (nextReturnStatement != null && ExpressionUtils.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
           String methodName = foundResult ? "anyMatch" : "noneMatch";
           String streamText = generateStream(iteratedValue, operations).toString();
           streamText = addTerminalOperation(streamText, methodName, foreachStatement, tb);
@@ -95,11 +95,11 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
           PsiExpression initializer = var.getInitializer();
           if(initializer != null && StreamApiMigrationInspection.isDeclarationJustBefore(var, foreachStatement)) {
             String replacement;
-            if(StreamApiMigrationInspection.isLiteral(initializer, Boolean.FALSE) &&
-               StreamApiMigrationInspection.isLiteral(rValue, Boolean.TRUE)) {
+            if(ExpressionUtils.isLiteral(initializer, Boolean.FALSE) &&
+               ExpressionUtils.isLiteral(rValue, Boolean.TRUE)) {
               replacement = streamText;
-            } else if(StreamApiMigrationInspection.isLiteral(initializer, Boolean.TRUE) &&
-                      StreamApiMigrationInspection.isLiteral(rValue, Boolean.FALSE)) {
+            } else if(ExpressionUtils.isLiteral(initializer, Boolean.TRUE) &&
+                      ExpressionUtils.isLiteral(rValue, Boolean.FALSE)) {
               replacement = "!"+streamText;
             } else {
               replacement = streamText + "?" + rValue.getText() + ":" + initializer.getText();
