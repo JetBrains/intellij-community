@@ -431,6 +431,7 @@
       <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
     </intentionAction>
 
+    <daemon.intentionActionFilter implementation="com.intellij.psi.IntentionFilterOwnerActionFilter"/>
 
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>
