@@ -765,11 +765,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       myDisposeInProgress = true;
 
-      saveSettings();
-
       if (!force && !canExit()) {
         return;
       }
+
+      saveSettings();
 
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode()) {

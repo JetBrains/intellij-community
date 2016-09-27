@@ -18,7 +18,6 @@ package com.intellij.execution;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.GeneralSettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -52,7 +51,6 @@ public class TerminateRemoteProcessDialog {
           GeneralSettings.ProcessCloseConfirmation confirmation = getConfirmation(exitCode, canDisconnect);
           if (confirmation != null) {
             GeneralSettings.getInstance().setProcessCloseConfirmation(confirmation);
-            ApplicationManager.getApplication().saveSettings();
           }
         }
       }
