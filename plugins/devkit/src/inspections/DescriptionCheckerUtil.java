@@ -31,13 +31,16 @@ import java.util.function.Supplier;
 
 public class DescriptionCheckerUtil {
   public static StreamEx<GlobalSearchScope> searchScopes(Module module) {
+    // Try search in narrow scopes first
     return StreamEx.<Supplier<GlobalSearchScope>>of(
+      () -> GlobalSearchScope.EMPTY_SCOPE,
       module::getModuleScope,
       module::getModuleWithDependenciesScope,
       () -> ModuleUtilCore.getAllDependentModules(module).stream().map(Module::getModuleContentWithDependenciesScope)
         .reduce(GlobalSearchScope::uniteWith).orElse(GlobalSearchScope.EMPTY_SCOPE),
       () -> GlobalSearchScopesCore.projectProductionScope(module.getProject())
-    ).map(Supplier::get);
+    ).map(Supplier::get)
+      .pairMap((prev, next) -> next.intersectWith(GlobalSearchScope.notScope(prev)));
   }
 
   /**
