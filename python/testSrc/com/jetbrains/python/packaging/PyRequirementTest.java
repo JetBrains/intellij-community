@@ -2220,7 +2220,7 @@ public class PyRequirementTest extends PyTestCase {
   // PY-6355
   public void testTrailingZeroesInVersion() {
     final PyRequirement req = PyRequirement.fromLine("foo==0.8.0");
-    final PyPackage pkg = new PyPackage("foo", "0.8", null, Collections.<PyRequirement>emptyList());
+    final PyPackage pkg = new PyPackage("foo", "0.8", null, Collections.emptyList());
     assertNotNull(req);
     assertEquals(pkg, req.match(Collections.singletonList(pkg)));
   }
@@ -2228,7 +2228,7 @@ public class PyRequirementTest extends PyTestCase {
   // PY-6438
   public void testUnderscoreMatchesDash() {
     final PyRequirement req = PyRequirement.fromLine("pyramid_zcml");
-    final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1", null, Collections.<PyRequirement>emptyList());
+    final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1", null, Collections.emptyList());
     assertNotNull(req);
     assertEquals(pkg, req.match(Collections.singletonList(pkg)));
   }
@@ -2239,6 +2239,20 @@ public class PyRequirementTest extends PyTestCase {
     final PyPackage pkg = new PyPackage("foo", "version", null, Collections.emptyList());
     assertNotNull(req);
     assertEquals(pkg, req.match(Collections.singletonList(pkg)));
+  }
+
+  // PY-20880
+  public void testMatchingLocalVersions() {
+    final PyPackage firstPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0100", null, Collections.emptyList());
+    final PyPackage secondPackageWithLocalVersion = new PyPackage("foo", "1.0+foo0101", null, Collections.emptyList());
+
+    final PyRequirement requirement = PyRequirement.fromLine("foo==1.0");
+    assertEquals(firstPackageWithLocalVersion, requirement.match(Collections.singletonList(firstPackageWithLocalVersion)));
+    assertEquals(secondPackageWithLocalVersion, requirement.match(Collections.singletonList(secondPackageWithLocalVersion)));
+
+    final PyRequirement requirementWithLocalVersion = PyRequirement.fromLine("foo==1.0+foo0100");
+    assertEquals(firstPackageWithLocalVersion, requirementWithLocalVersion.match(Collections.singletonList(firstPackageWithLocalVersion)));
+    assertNull(requirementWithLocalVersion.match(Collections.singletonList(secondPackageWithLocalVersion)));
   }
 
   // OPTIONS

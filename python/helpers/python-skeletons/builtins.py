@@ -985,9 +985,9 @@ class bytes(object):
         return b''
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or substring, origin 0.
 
-        :type y: numbers.Integral
+        :type y: numbers.Integral | slice
         :rtype: int | bytes
         """
         return 0
@@ -1359,9 +1359,9 @@ class str(object):
         return ''
 
     def __getitem__(self, y):
-        """y-th item of x, origin 0.
+        """y-th item of x or substring, origin 0.
 
-        :type y: numbers.Integral
+        :type y: numbers.Integral | slice
         :rtype: str
         """
         return ''

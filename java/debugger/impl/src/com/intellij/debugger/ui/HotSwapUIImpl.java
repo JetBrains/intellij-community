@@ -234,7 +234,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
           final HotSwapProgressImpl progress = new HotSwapProgressImpl(myProject);
           if (modifiedClasses.keySet().size() == 1) {
             //noinspection ConstantConditions
-            progress.setSession(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
+            progress.setSessionForActions(ContainerUtil.getFirstItem(modifiedClasses.keySet()));
           }
           application.executeOnPooledThread(() -> reloadModifiedClasses(modifiedClasses, progress));
         }
