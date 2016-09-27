@@ -31,6 +31,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
@@ -448,6 +449,18 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyYieldExpression(PyYieldExpression node) {
     super.visitPyYieldExpression(node);
+
+    Optional
+      .ofNullable(ScopeUtil.getScopeOwner(node))
+      .map(owner -> PyUtil.as(owner, PyFunction.class))
+      .filter(function -> function.isAsync() && function.isAsyncAllowed())
+      .ifPresent(
+        function -> {
+          if (!node.isDelegating() && myVersionsToProcess.contains(LanguageLevel.PYTHON35)) {
+            registerProblem(node, "Python version 3.5 does not support 'yield' inside async functions");
+          }
+        }
+      );
 
     if (!node.isDelegating()) {
       return;

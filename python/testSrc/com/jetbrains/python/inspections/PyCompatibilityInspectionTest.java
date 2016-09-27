@@ -194,6 +194,11 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  // PY-20770
+  public void testYieldInsideAsyncDef() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }

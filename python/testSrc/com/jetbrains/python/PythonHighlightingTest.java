@@ -258,8 +258,13 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON35, true, false);
   }
 
-  public void testYieldInsideAsyncDef() {
+  public void testYieldInsideAsyncDefPy35() {
     doTest(LanguageLevel.PYTHON35, false, false);
+  }
+
+  // PY-20770
+  public void testYieldInsideAsyncDefPy36() {
+    doTest(LanguageLevel.PYTHON36, true, false);
   }
 
   public void testUnpackingStar() {

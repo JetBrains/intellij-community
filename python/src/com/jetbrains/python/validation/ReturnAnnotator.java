@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 
 /**
- * Highlights incorrect return statements: 'return' and 'yield' outside functions, 'yield' inside async functions.
+ * Highlights incorrect return statements: 'return' and 'yield' outside functions
  */
 public class ReturnAnnotator extends PyAnnotator {
   public void visitPyReturnStatement(final PyReturnStatement node) {
@@ -36,8 +36,13 @@ public class ReturnAnnotator extends PyAnnotator {
     if (!(owner instanceof PyFunction || owner instanceof PyLambdaExpression)) {
       getHolder().createErrorAnnotation(node, "'yield' outside of function");
     }
-    if (owner instanceof PyFunction && ((PyFunction)owner).isAsync()) {
-      getHolder().createErrorAnnotation(node, "'yield' inside async function");
+
+    if (node.isDelegating() && owner instanceof PyFunction) {
+      final PyFunction function = (PyFunction)owner;
+
+      if (function.isAsync() && function.isAsyncAllowed()) {
+        getHolder().createErrorAnnotation(node, "Python does not support 'yield from' inside async functions");
+      }
     }
   }
 }
