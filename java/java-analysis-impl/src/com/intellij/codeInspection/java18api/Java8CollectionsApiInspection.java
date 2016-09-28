@@ -572,14 +572,14 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
     @NotNull
     @Override
     public String getName() {
-      return QuickFixBundle.message("java.8.collections.api.inspection.remove.fix.name");
+      return getFamilyName();
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return getName();
+      return QuickFixBundle.message("java.8.collections.api.inspection.remove.fix.name");
     }
 
     @Override
@@ -607,9 +607,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       if(condition == null) return;
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       String replacement = (declaration.myCollection == null ? "" : declaration.myCollection.getText() + ".") +
-                           "removeIf(" +
-                           LambdaUtil.createLambda(variable, condition) +
-                           ");";
+                           "removeIf(" + LambdaUtil.createLambda(variable, condition) + ");";
       Collection<PsiComment> comments = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(loop, PsiComment.class),
                                                           comment -> (PsiComment)comment.copy());
       PsiElement result = loop.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(replacement, loop));
@@ -620,11 +618,11 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
     }
   }
 
-  static class IteratorDeclaration {
-    private final @NotNull PsiVariable myIterator;
+  private static class IteratorDeclaration {
+    private final @NotNull PsiLocalVariable myIterator;
     private final @Nullable PsiExpression myCollection;
 
-    private IteratorDeclaration(@NotNull PsiVariable iterator, @Nullable PsiExpression collection) {
+    private IteratorDeclaration(@NotNull PsiLocalVariable iterator, @Nullable PsiExpression collection) {
       myIterator = iterator;
       myCollection = collection;
     }
@@ -649,8 +647,8 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
       if(declaration.getDeclaredElements().length != 1) return null;
       PsiElement element = declaration.getDeclaredElements()[0];
-      if(!(element instanceof PsiVariable)) return null;
-      PsiVariable var = (PsiVariable)element;
+      if(!(element instanceof PsiLocalVariable)) return null;
+      PsiLocalVariable var = (PsiLocalVariable)element;
       if(!isIteratorMethodCall(var.getInitializer(), "next")) return null;
       return var;
     }
@@ -661,8 +659,8 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
       if(declaration.getDeclaredElements().length != 1) return null;
       PsiElement element = declaration.getDeclaredElements()[0];
-      if(!(element instanceof PsiVariable)) return null;
-      PsiVariable variable = (PsiVariable)element;
+      if(!(element instanceof PsiLocalVariable)) return null;
+      PsiLocalVariable variable = (PsiLocalVariable)element;
       PsiExpression initializer = variable.getInitializer();
       if(!(initializer instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;
