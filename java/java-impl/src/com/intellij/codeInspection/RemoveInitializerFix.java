@@ -36,7 +36,7 @@ public class RemoveInitializerFix implements LocalQuickFix {
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return InspectionsBundle.message("inspection.unused.assignment.remove.quickfix");
   }
 
@@ -90,11 +90,5 @@ public class RemoveInitializerFix implements LocalQuickFix {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-  
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return getName();
   }
 }

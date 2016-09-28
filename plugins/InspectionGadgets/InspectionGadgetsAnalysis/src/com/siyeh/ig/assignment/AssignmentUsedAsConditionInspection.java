@@ -48,14 +48,8 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("assignment.used.as.condition.replace.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("assignment.used.as.condition.replace.quickfix");
     }
 
     @Override

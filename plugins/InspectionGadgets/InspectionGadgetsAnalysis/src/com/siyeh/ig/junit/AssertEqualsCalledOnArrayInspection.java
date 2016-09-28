@@ -53,14 +53,8 @@ public class AssertEqualsCalledOnArrayInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("assertequals.called.on.arrays.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("assertequals.called.on.arrays.quickfix");
     }
 
     @Override

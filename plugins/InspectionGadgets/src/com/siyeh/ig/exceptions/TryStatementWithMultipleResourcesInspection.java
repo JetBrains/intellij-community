@@ -135,15 +135,8 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("try.statement.with.multiple.resources.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("try.statement.with.multiple.resources.quickfix");
     }
   }
 }

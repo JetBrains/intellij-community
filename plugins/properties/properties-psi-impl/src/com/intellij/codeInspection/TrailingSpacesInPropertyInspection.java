@@ -120,13 +120,8 @@ public class TrailingSpacesInPropertyInspection extends PropertiesInspectionBase
     }
 
     @NotNull
-    public String getName() {
-      return "Remove Trailing Spaces";
-    }
-
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return "Remove Trailing Spaces";
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

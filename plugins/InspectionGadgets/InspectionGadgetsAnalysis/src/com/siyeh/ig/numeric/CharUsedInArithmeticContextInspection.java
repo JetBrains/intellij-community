@@ -79,15 +79,10 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
   }
 
   private static class CharUsedInArithmeticContentFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("char.used.in.arithmetic.context.quickfix");
     }
 

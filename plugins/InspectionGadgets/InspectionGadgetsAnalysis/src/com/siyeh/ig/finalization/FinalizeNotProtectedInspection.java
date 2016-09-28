@@ -52,15 +52,10 @@ public class FinalizeNotProtectedInspection extends BaseInspection {
   }
 
   private static class ProtectedFinalizeFix extends InspectionGadgetsFix {
-     @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("make.protected.quickfix");
     }
 

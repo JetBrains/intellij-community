@@ -83,14 +83,8 @@ public class ClassInitializerInspection extends BaseInspection {
 
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("class.initializer.move.code.to.constructor.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("class.initializer.move.code.to.constructor.quickfix");
     }
 
     @Override

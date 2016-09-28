@@ -50,7 +50,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
 
   @Override
   @NotNull
-  public final String getName() {
+  public final String getFamilyName() {
     return InspectionsBundle.message("inspection.convert.to.local.quickfix");
   }
 
@@ -223,12 +223,6 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
         ((PsiReferenceExpression)ref).replace(refExpr);
       }
     }
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return getName();
   }
 
   @Nullable

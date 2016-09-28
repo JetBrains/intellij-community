@@ -40,7 +40,7 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return CodeInsightBundle.message("remove.annotation");
   }
 
@@ -57,11 +57,5 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
     } else if (myListOwner != null) {
       ExternalAnnotationsManager.getInstance(project).deannotate(myListOwner, myAnnotation.getQualifiedName());
     }
-  }
-
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return getName();
   }
 }

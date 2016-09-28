@@ -60,15 +60,10 @@ public class LiteralAsArgToStringEqualsInspection
   }
 
   private static class SwapEqualsFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "literal.as.arg.to.string.equals.flip.quickfix");
     }

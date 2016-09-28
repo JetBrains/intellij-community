@@ -27,15 +27,9 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message("add.serialversionuidfield.quickfix");
   }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
-    }
 
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor)

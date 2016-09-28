@@ -63,15 +63,10 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
   }
 
   private static class UnnecessarySemicolonFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.semicolon.remove.quickfix");
     }

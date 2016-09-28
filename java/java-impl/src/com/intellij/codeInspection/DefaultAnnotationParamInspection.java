@@ -45,15 +45,8 @@ public class DefaultAnnotationParamInspection extends BaseJavaBatchLocalInspecti
             @Nls
             @NotNull
             @Override
-            public String getName() {
-              return "Remove redundant parameter";
-            }
-
-            @Nls
-            @NotNull
-            @Override
             public String getFamilyName() {
-              return getName();
+              return "Remove redundant parameter";
             }
 
             @Override

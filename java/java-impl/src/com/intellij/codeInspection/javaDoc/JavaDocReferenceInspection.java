@@ -71,14 +71,8 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
 
     @Override
     @NotNull
-    public String getName() {
-      return "Change to ...";
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return "Change to ...";
     }
 
     @Override

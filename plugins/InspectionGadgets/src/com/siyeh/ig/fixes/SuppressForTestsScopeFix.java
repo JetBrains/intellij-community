@@ -57,14 +57,8 @@ public class SuppressForTestsScopeFix extends InspectionGadgetsFix {
 
   @NotNull
   @Override
-  public String getName() {
-    return InspectionGadgetsBundle.message("suppress.for.tests.scope.quickfix");
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return InspectionGadgetsBundle.message("suppress.for.tests.scope.quickfix");
   }
 
   @Override

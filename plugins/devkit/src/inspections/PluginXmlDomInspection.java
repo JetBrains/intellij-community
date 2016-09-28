@@ -327,15 +327,8 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return "Specify JetBrains as vendor";
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Specify JetBrains as vendor";
     }
 
     @Override

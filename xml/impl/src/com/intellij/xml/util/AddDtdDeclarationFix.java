@@ -51,14 +51,8 @@ public class AddDtdDeclarationFix implements LocalQuickFix {
 
   @Override
   @NotNull
-  public String getName() {
-    return XmlBundle.message(myMessageKey, myReference);
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return XmlBundle.message(myMessageKey, myReference);
   }
 
   @Override

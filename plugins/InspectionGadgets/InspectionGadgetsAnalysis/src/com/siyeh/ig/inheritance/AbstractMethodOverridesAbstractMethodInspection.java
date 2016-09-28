@@ -73,14 +73,8 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("abstract.method.overrides.abstract.method.remove.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("abstract.method.overrides.abstract.method.remove.quickfix");
     }
 
     @Override

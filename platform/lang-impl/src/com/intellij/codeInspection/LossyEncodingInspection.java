@@ -220,14 +220,8 @@ public class LossyEncodingInspection extends LocalInspectionTool {
   private static class ChangeEncodingFix implements LocalQuickFix {
     @NotNull
     @Override
-    public String getName() {
-      return "Change file encoding";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Change file encoding";
     }
 
     @Override
