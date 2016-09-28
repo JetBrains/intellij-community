@@ -40,7 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import java.awt.*;
-import java.util.Collection;
+import java.util.*;
+import java.util.List;
 
 class MultilinePopupBuilder {
   private static final char[] SEPARATORS = {'|', '\n'};
@@ -97,7 +98,7 @@ class MultilinePopupBuilder {
   }
 
   @NotNull
-  Collection<String> getSelectedValues() {
+  List<String> getSelectedValues() {
     return ContainerUtil.mapNotNull(StringUtil.tokenize(myTextField.getText(), new String(SEPARATORS)), value -> {
       String trimmed = value.trim();
       return trimmed.isEmpty() ? null : trimmed;
