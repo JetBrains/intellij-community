@@ -293,6 +293,9 @@ public class Test {
     setNewIndex(10);
     "sss".contains("s");
     append("sdfsdf");
+    "sfsdf".startWith("s");
+    "sss".charAt(3);
+    
     clearStatus(false);
   }
   

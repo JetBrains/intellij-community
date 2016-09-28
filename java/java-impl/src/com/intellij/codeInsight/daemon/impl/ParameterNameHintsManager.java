@@ -39,13 +39,9 @@ public class ParameterNameHintsManager {
   );
   
   private static final List<String> COMMON_METHODS = ContainerUtil.newArrayList(
-    "get",
-    "set",
-    "indexOf",
-    "contains",
-    "append",
-    "print",
-    "println"
+    "get", "set", "contains", "append", 
+    "print", "println", 
+    "charAt", "startsWith", "indexOf"
   );
 
   @NotNull
