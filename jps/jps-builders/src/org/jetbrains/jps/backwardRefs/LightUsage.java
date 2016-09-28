@@ -71,7 +71,7 @@ public abstract class LightUsage implements RW.Savable {
     private final int myName;
     private final int myParameterCount;
 
-    LightMethodUsage(int owner, int name, int parameterCount) {
+    public LightMethodUsage(int owner, int name, int parameterCount) {
       super(owner);
       myName = name;
       myParameterCount = parameterCount;
@@ -130,7 +130,7 @@ public abstract class LightUsage implements RW.Savable {
   public static class LightFieldUsage extends LightUsage {
     private final int myName;
 
-    LightFieldUsage(int owner, int name) {
+    public LightFieldUsage(int owner, int name) {
       super(owner);
       myName = name;
     }
@@ -178,7 +178,7 @@ public abstract class LightUsage implements RW.Savable {
   }
 
   public static class LightClassUsage extends LightUsage {
-    LightClassUsage(int owner) {
+    public LightClassUsage(int owner) {
       super(owner);
     }
 

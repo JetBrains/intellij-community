@@ -25,6 +25,6 @@ public class JavaCompilerReferencesInCodeScopeOptimizer implements InCodeScopeOp
   @Nullable
   @Override
   public GlobalSearchScope getOptimizedScopeInCode(@NotNull PsiElement element) {
-    return CompilerReferenceService.getInstance(element.getProject()).getMayContainReferencesInCodeScope(element);
+    return CompilerReferenceService.getInstance(element.getProject()).getMayContainReferencesInCodeScope(element, JavaBaseCompilerSearchAdapter.INSTANCE);
   }
 }

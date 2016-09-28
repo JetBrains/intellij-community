@@ -15,19 +15,17 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.CompilerElement;
 
-public interface CompilerReferenceConverter {
-  @NotNull
-  FileType getAvailabilitySrcFileType();
+public interface CompilerSearchAdapter {
+
+  boolean needOverrideElement();
 
   @Nullable
-  CompilerElement sourceElementAsCompilerElement(@NotNull PsiElement element);
+  CompilerElement asCompilerElement(@NotNull PsiElement psi);
 
   @NotNull
-  CompilerElement[] libraryElementAsCompilerElements(@NotNull PsiElement element);
+  CompilerElement[] libraryElementAsCompilerElements(@NotNull PsiElement psi);
 }

@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.compiler.CompilerReferenceService;
+import com.intellij.compiler.JavaFunctionalExpressionCompilerSearchAdapter;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.application.ReadAction;
@@ -110,6 +112,14 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
           if (samType == null) continue;
 
           SearchScope scope = samClass.getUseScope().intersectWith(queryParameters.getEffectiveSearchScope());
+
+          final GlobalSearchScope mayContainReferencesScope =
+            CompilerReferenceService.getInstance(project).getMayContainReferencesInCodeScope(samClass,
+                                                                                             JavaFunctionalExpressionCompilerSearchAdapter.INSTANCE);
+          if (mayContainReferencesScope != null) {
+            scope = scope.intersectWith(mayContainReferencesScope);
+          }
+
           descriptors.add(new SamDescriptor(samClass, saMethod, samType, GlobalSearchScopeUtil.toGlobalSearchScope(scope, project)));
         }
       }

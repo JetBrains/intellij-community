@@ -18,10 +18,12 @@ package com.intellij.compiler;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.AbstractCompilerAwareTest;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Set;
@@ -50,27 +52,41 @@ public class CompilerReferencesTest extends AbstractCompilerAwareTest {
 
   public void testIsNotReady() {
     myFixture.configureByFile(getName() + "/Foo.java");
-    assertNull(getReferentFilesForElementUnderCaret());
+    assertNull(getReferentFilesForElementUnderCaret(JavaBaseCompilerSearchAdapter.INSTANCE));
   }
 
   public void testSimpleUsagesInFullyCompiledProject() {
     myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/Bar.java", getName() + "/Baz.java", getName() + "/FooImpl.java");
     rebuildProject();
 
-    final Set<VirtualFile> referents = getReferentFilesForElementUnderCaret();
+    final Set<VirtualFile> referents = getReferentFilesForElementUnderCaret(JavaBaseCompilerSearchAdapter.INSTANCE);
     assertNotNull(referents);
     final Set<String> filesWithReferences = referents.stream().map(VirtualFile::getName).collect(Collectors.toSet());
 
     assertEquals(filesWithReferences, ContainerUtil.set("Baz.java", "Foo.java", "FooImpl.java"));
     myFixture.addFileToProject("SomeModification.java", "");
-    assertNull(getReferentFilesForElementUnderCaret());
+    assertNull(getReferentFilesForElementUnderCaret(JavaBaseCompilerSearchAdapter.INSTANCE));
   }
 
-  private Set<VirtualFile> getReferentFilesForElementUnderCaret() {
+  public void testLambda() {
+    myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/FooImpl.java", getName() + "/Bar.java", getName() + "/BarRef.java");
+    rebuildProject();
+    final Set<VirtualFile> referents = getReferentFilesForElementUnderCaret(JavaFunctionalExpressionCompilerSearchAdapter.INSTANCE);
+    assertNotNull(referents);
+    final Set<String> filesWithReferences = referents.stream().map(VirtualFile::getName).collect(Collectors.toSet());
+    assertEquals(filesWithReferences, ContainerUtil.set("Bar.java", "BarRef.java"));
+  }
+
+  private Set<VirtualFile> getReferentFilesForElementUnderCaret(CompilerSearchAdapter adapter) {
     final PsiElement atCaret = myFixture.getElementAtCaret();
     assertNotNull(atCaret);
     final PsiMember memberAtCaret = PsiTreeUtil.getParentOfType(atCaret, PsiMember.class, false);
     assertNotNull(memberAtCaret);
-    return ((CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(myFixture.getProject())).getReferentFiles(memberAtCaret);
+    return ((CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(myFixture.getProject())).getReferentFiles(memberAtCaret, adapter);
+  }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
   }
 }

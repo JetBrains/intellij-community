@@ -15,7 +15,9 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.compiler.backwardRefs.CompilerElementAsLightUsageConverter;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,7 +26,6 @@ import com.intellij.util.containers.Queue;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.CompilerElement;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
 import org.jetbrains.jps.backwardRefs.LightUsage;
 
@@ -33,6 +34,8 @@ import java.io.IOException;
 import java.util.Collection;
 
 public class CompilerReferenceReader {
+  private final static Logger LOG = Logger.getInstance(CompilerReferenceReader.class);
+
   private final CompilerBackwardReferenceIndex myIndex;
 
   private CompilerReferenceReader(File buildDir) throws IOException {
@@ -40,23 +43,38 @@ public class CompilerReferenceReader {
   }
 
   @NotNull
-  public TIntHashSet findReferentFileIds(@NotNull CompilerElement element) {
-    LightUsage usage = element.asUsage(myIndex.getByteSeqEum());
+  public TIntHashSet findReferentFileIds(@NotNull CompilerElement element, @NotNull CompilerSearchAdapter adapter) {
+    LightUsage usage = null;
+    for (CompilerElementAsLightUsageConverter converter : CompilerElementAsLightUsageConverter.INSTANCES) {
+      usage = converter.asLightUsage(element, myIndex.getByteSeqEum());
+      if (usage != null) {
+        break;
+      }
+    }
+    LOG.assertTrue(usage != null);
 
     TIntHashSet set = new TIntHashSet();
-    for (int classId : getWholeHierarchy(usage.getOwner())) {
-      final LightUsage overriderUsage = usage.override(classId);
-      final Collection<Integer> usageFiles = myIndex.getBackwardReferenceMap().get(overriderUsage);
-      if (usageFiles != null) {
-        for (int fileId : usageFiles) {
-          final VirtualFile file = findFile(fileId);
-          if (file != null) {
-            set.add(((VirtualFileWithId)file).getId());
-          }
+    if (adapter.needOverrideElement()) {
+      for (int classId : getWholeHierarchy(usage.getOwner())) {
+        final LightUsage overriderUsage = usage.override(classId);
+        addUsages(overriderUsage, set);
+      }
+    } else {
+      addUsages(usage, set);
+    }
+    return set;
+  }
+
+  public void addUsages(LightUsage usage, TIntHashSet sink) {
+    final Collection<Integer> usageFiles = myIndex.getBackwardReferenceMap().get(usage);
+    if (usageFiles != null) {
+      for (int fileId : usageFiles) {
+        final VirtualFile file = findFile(fileId);
+        if (file != null) {
+          sink.add(((VirtualFileWithId)file).getId());
         }
       }
     }
-    return set;
   }
 
   public void close() {

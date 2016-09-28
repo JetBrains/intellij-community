@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -25,13 +26,12 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
@@ -39,17 +39,12 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.jps.backwardRefs.CompilerElement;
 
 import java.util.Collections;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CompilerReferenceServiceImpl extends CompilerReferenceService {
-  private static final CompilerReferenceConverter[] BYTECODE_CONVERTERS =
-    new CompilerReferenceConverter[]{new JavaCompilerReferenceConverter()};
-
+  private static final Key<ParameterizedCachedValue<GlobalSearchScope, CompilerSearchAdapter>> CACHE_KEY = Key.create("compiler.ref.service.search");
   private final ProjectFileIndex myProjectFileIndex;
   private final Set<Module> myChangedModules = ContainerUtil.newConcurrentSet();
   private final Set<FileType> myFileTypes;
@@ -62,8 +57,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
   public CompilerReferenceServiceImpl(Project project) {
     super(project);
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    myFileTypes = Collections.unmodifiableSet(
-      Stream.of(BYTECODE_CONVERTERS).map(CompilerReferenceConverter::getAvailabilitySrcFileType).collect(Collectors.toSet()));
+    myFileTypes = Collections.unmodifiableSet(ContainerUtil.set(JavaFileType.INSTANCE));
   }
 
   @Override
@@ -143,21 +137,35 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     closeReaderIfNeed();
   }
 
+
   @Nullable
   @Override
-  public GlobalSearchScope getMayContainReferencesInCodeScope(@NotNull PsiElement element) {
+  public GlobalSearchScope getMayContainReferencesInCodeScope(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
     if (!isServiceEnabled()) return null;
-    return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result.create(calculateMayContainReferencesScope(element), PsiModificationTracker.MODIFICATION_COUNT));
-  }
 
+    final ParameterizedCachedValueProvider<GlobalSearchScope, CompilerSearchAdapter> cachedValueProvider =
+      new ParameterizedCachedValueProvider<GlobalSearchScope, CompilerSearchAdapter>() {
+        @Nullable
+        @Override
+        public CachedValueProvider.Result<GlobalSearchScope> compute(CompilerSearchAdapter param) {
+          return CachedValueProvider.Result
+            .create(calculateMayContainReferencesScope(element, param), PsiModificationTracker.MODIFICATION_COUNT);
+        }
+      };
+    return CachedValuesManager.getManager(myProject).getParameterizedCachedValue(element,
+                                                                                 CACHE_KEY,
+                                                                                 cachedValueProvider,
+                                                                                 false,
+                                                                                 adapter);
+  }
 
   private boolean isServiceEnabled() {
     return myReader != null && isEnabled();
   }
 
   @Nullable
-  private GlobalSearchScope calculateMayContainReferencesScope(@NotNull PsiElement element) {
-    TIntHashSet referentFileIds = getReferentFileIds(element);
+  private GlobalSearchScope calculateMayContainReferencesScope(@NotNull PsiElement element, CompilerSearchAdapter adapter) {
+    TIntHashSet referentFileIds = getReferentFileIds(element, adapter);
     if (referentFileIds == null) return null;
 
     return new ScopeWithBytecodeReferences(referentFileIds)
@@ -167,7 +175,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
   }
 
   @Nullable
-  private TIntHashSet getReferentFileIds(@NotNull PsiElement element) {
+  private TIntHashSet getReferentFileIds(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
     final PsiFile file = element.getContainingFile();
     if (file == null) return null;
     final VirtualFile vFile = file.getVirtualFile();
@@ -181,32 +189,16 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     if (myMayContainInvalidDataScope.contains(vFile)) {
       return null;
     }
-    final FileType type = vFile.getFileType();
-    CompilerElement[] compilerElements = null;
-    if (place == ElementPlace.SRC) {
-      for (CompilerReferenceConverter converter : BYTECODE_CONVERTERS) {
-        if (converter.getAvailabilitySrcFileType().equals(type)) {
-          final CompilerElement compilerElement = converter.sourceElementAsCompilerElement(element);
-          compilerElements = compilerElement == null ? CompilerElement.EMPTY_ARRAY : new CompilerElement[]{compilerElement};
-          break;
-        }
-      }
-    }
-    else {
-      for (CompilerReferenceConverter converter : BYTECODE_CONVERTERS) {
-        compilerElements = converter.libraryElementAsCompilerElements(element);
-        if (compilerElements.length != 0) {
-          break;
-        }
-      }
-    }
-    if (compilerElements == null || compilerElements.length == 0) return null;
+    CompilerElement[] compilerElements = place == ElementPlace.SRC
+                                         ? new CompilerElement[]{adapter.asCompilerElement(element)}
+                                         : adapter.libraryElementAsCompilerElements(element);
+    if (compilerElements.length == 0) return null;
 
     synchronized (myLock) {
       if (myReader == null) return null;
       TIntHashSet referentFileIds = new TIntHashSet();
       for (CompilerElement compilerElement : compilerElements) {
-        referentFileIds.addAll(myReader.findReferentFileIds(compilerElement).toArray());
+        referentFileIds.addAll(myReader.findReferentFileIds(compilerElement, adapter).toArray());
       }
       return referentFileIds;
     }
@@ -231,9 +223,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
 
   @TestOnly
   @Nullable
-  public Set<VirtualFile> getReferentFiles(@NotNull PsiElement element) {
+  public Set<VirtualFile> getReferentFiles(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
     FileBasedIndex fileIndex = FileBasedIndex.getInstance();
-    final TIntHashSet ids = getReferentFileIds(element);
+    final TIntHashSet ids = getReferentFileIds(element, adapter);
     if (ids == null) return null;
     Set<VirtualFile> fileSet = new THashSet<>();
     ids.forEach(id -> {

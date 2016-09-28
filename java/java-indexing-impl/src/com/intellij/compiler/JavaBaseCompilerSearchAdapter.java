@@ -15,32 +15,29 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.CompilerElement;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public class JavaCompilerReferenceConverter implements CompilerReferenceConverter {
-  @NotNull
+public class JavaBaseCompilerSearchAdapter implements CompilerSearchAdapter {
+  public static final JavaBaseCompilerSearchAdapter INSTANCE = new JavaBaseCompilerSearchAdapter();
+
   @Override
-  public FileType getAvailabilitySrcFileType() {
-    return StdFileTypes.JAVA;
+  public boolean needOverrideElement() {
+    return true;
   }
 
   @Nullable
   @Override
-  public CompilerElement sourceElementAsCompilerElement(@NotNull PsiElement element) {
+  public CompilerElement asCompilerElement(@NotNull PsiElement element) {
     if (mayBeVisibleOutsideOwnerFile(element)) {
       if (element instanceof PsiField) {
         final PsiField field = (PsiField)element;

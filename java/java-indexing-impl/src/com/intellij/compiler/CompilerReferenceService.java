@@ -36,7 +36,7 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
   }
 
   @Nullable
-  public abstract GlobalSearchScope getMayContainReferencesInCodeScope(@NotNull PsiElement element);
+  public abstract GlobalSearchScope getMayContainReferencesInCodeScope(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter);
 
   public static boolean isEnabled() {
     return IS_ENABLED_KEY.asBoolean();
