@@ -197,12 +197,9 @@ public class LambdaUtil {
     for (HierarchicalMethodSignature signature : signatures) {
       boolean subsignature = true;
       for (HierarchicalMethodSignature methodSignature : signatures) {
-        if (!signature.equals(methodSignature)) {
-          if (!MethodSignatureUtil.isSubsignature(signature, methodSignature) &&
-              !skipMethod(signature, methodSignature)) {
-            subsignature = false;
-            break;
-          }
+        if (!signature.equals(methodSignature) && !skipMethod(signature, methodSignature)) {
+          subsignature = false;
+          break;
         }
       }
       if (subsignature) return Collections.singletonList(signature);
