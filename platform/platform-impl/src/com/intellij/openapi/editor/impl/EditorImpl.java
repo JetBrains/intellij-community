@@ -87,6 +87,7 @@ import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIntHashMap;
+import javafx.scene.input.DragEvent;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
@@ -104,6 +105,7 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetAdapter;
 import java.awt.dnd.DropTargetDragEvent;
@@ -114,6 +116,7 @@ import java.awt.im.InputMethodRequests;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
@@ -6492,6 +6495,22 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   static boolean handleDrop(@NotNull EditorImpl editor, @NotNull final Transferable t) {
     final EditorDropHandler dropHandler = editor.getDropHandler();
+
+    if (Registry.is("debugger.click.disable.breakpoints")) {
+      try {
+        Object attachedObject = t.getTransferData(t.getTransferDataFlavors()[0]);
+        if (attachedObject instanceof GutterIconRenderer) {
+          GutterDraggableObject object = ((GutterIconRenderer)attachedObject).getDraggableObject();
+          if (object != null) {
+            object.remove();
+          }
+        }
+      }
+      catch (UnsupportedFlavorException | IOException e) {
+        LOG.warn(e);
+      }
+    }
+
     if (dropHandler != null && dropHandler.canHandleDrop(t.getTransferDataFlavors())) {
       dropHandler.handleDrop(t, editor.getProject(), null);
       return true;
@@ -6568,6 +6587,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       for (DataFlavor transferFlavor : transferFlavors) {
         if (transferFlavor.equals(DataFlavor.stringFlavor)) return true;
+        if (Registry.is("debugger.click.disable.breakpoints")) {
+          //should be used a better representation class
+          if (transferFlavor.isRepresentationClassInputStream()) {
+            return true;
+          }
+        }
       }
 
       return false;

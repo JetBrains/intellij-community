@@ -46,4 +46,6 @@ public interface GutterDraggableObject {
    * @return the cursor to show.
    */
   Cursor getCursor(int line);
+
+  default void remove() {};
 }
