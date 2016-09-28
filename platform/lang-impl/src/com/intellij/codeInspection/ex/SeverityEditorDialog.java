@@ -31,7 +31,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
@@ -381,11 +380,6 @@ public class SeverityEditorDialog extends DialogWrapper {
                                        final TextAttributes attributes,
                                        final TextAttributesKey type) {
       super(name, group, attributes, type, null, null, null);
-    }
-
-    @Override
-    public void apply(EditorColorsScheme scheme) {
-
     }
 
     @Override
