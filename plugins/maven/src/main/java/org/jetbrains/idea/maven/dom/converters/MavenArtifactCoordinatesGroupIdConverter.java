@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -84,7 +85,10 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
 
       context.commitDocument();
 
-      XmlFile xmlFile = (XmlFile)context.getFile();
+      PsiFile contextFile = context.getFile();
+      if(!(contextFile instanceof XmlFile)) return;
+
+      XmlFile xmlFile = (XmlFile)contextFile;
 
       PsiElement element = xmlFile.findElementAt(context.getStartOffset());
       XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);

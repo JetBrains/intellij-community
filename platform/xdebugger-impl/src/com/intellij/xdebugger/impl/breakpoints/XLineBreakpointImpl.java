@@ -36,8 +36,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
@@ -230,6 +232,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
           return true;
         }
         return false;
+      }
+
+      public void remove () {
+        final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
+        ApplicationManager.getApplication().runWriteAction(() -> breakpointManager.removeBreakpoint(XLineBreakpointImpl.this));
       }
 
       @Override

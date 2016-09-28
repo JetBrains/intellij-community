@@ -15,12 +15,14 @@
  */
 package com.intellij.util.ui;
 
+import javax.swing.event.MouseInputListener;
 import java.awt.event.*;
 
 /**
  * @author Sergey.Malenkov
  */
-public abstract class MouseEventHandler implements MouseListener, MouseMotionListener, MouseWheelListener {
+public abstract class MouseEventHandler extends MouseAdapter implements MouseListener, MouseInputListener,
+                                                                        MouseMotionListener, MouseWheelListener {
   protected abstract void handle(MouseEvent event);
 
   @Override
@@ -62,4 +64,11 @@ public abstract class MouseEventHandler implements MouseListener, MouseMotionLis
   public void mouseWheelMoved(MouseWheelEvent event) {
     handle(event);
   }
+
+  public static final MouseEventHandler CONSUMER = new MouseEventHandler() {
+    @Override
+    protected void handle(MouseEvent event) {
+      event.consume();
+    }
+  };
 }

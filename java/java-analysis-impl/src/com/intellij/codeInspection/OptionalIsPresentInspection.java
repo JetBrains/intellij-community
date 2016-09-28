@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -150,18 +151,6 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       return element == optionalVariable
              ? isOptionalGetCall(e.getParent().getParent(), optionalVariable)
              : HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)element, lambdaCandidate, null);
-    });
-  }
-
-  @Contract("null -> false")
-  public static boolean isVoidLambdaCandidate(PsiExpression lambdaCandidate) {
-    if(lambdaCandidate == null) return false;
-    if(!ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {lambdaCandidate}).isEmpty()) return false;
-    return PsiTreeUtil.processElements(lambdaCandidate, e -> {
-      if (!(e instanceof PsiReferenceExpression)) return true;
-      PsiElement element = ((PsiReferenceExpression)e).resolve();
-      return !(element instanceof PsiVariable) ||
-             HighlightControlFlowUtil.isEffectivelyFinal((PsiVariable)element, lambdaCandidate, null);
     });
   }
 
@@ -318,7 +307,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       if(ExpressionUtils.isSimpleExpression(falseAssignment.getRExpression())) {
         return mapPart + "orElse()";
       }
-      if(isVoidLambdaCandidate(falseAssignment.getRExpression())) {
+      if(LambdaGenerationUtil.canBeUncheckedLambda(falseAssignment.getRExpression())) {
         return mapPart + "orElseGet()";
       }
       return null;

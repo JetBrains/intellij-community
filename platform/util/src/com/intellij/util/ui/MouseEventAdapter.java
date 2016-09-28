@@ -17,13 +17,15 @@ package com.intellij.util.ui;
 
 import javax.swing.SwingUtilities;
 import javax.swing.event.MenuDragMouseEvent;
+import javax.swing.event.MouseInputListener;
 import java.awt.*;
 import java.awt.event.*;
 
 /**
  * @author Sergey.Malenkov
  */
-public class MouseEventAdapter<T> implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class MouseEventAdapter<T> extends MouseAdapter implements MouseListener, MouseInputListener,
+                                                                  MouseMotionListener, MouseWheelListener {
   private final T myAdapter;
 
   public MouseEventAdapter(T adapter) {
@@ -119,6 +121,8 @@ public class MouseEventAdapter<T> implements MouseListener, MouseMotionListener,
 
   public static MouseWheelEvent convert(MouseWheelEvent event, Component source, int id, long when, int modifiers, int x, int y) {
     return new MouseWheelEvent(source, id, when, modifiers, x, y,
+                               event.getXOnScreen(),
+                               event.getYOnScreen(),
                                event.getClickCount(),
                                event.isPopupTrigger(),
                                event.getScrollType(),

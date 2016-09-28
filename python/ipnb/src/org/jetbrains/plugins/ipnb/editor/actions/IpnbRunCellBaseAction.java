@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
+import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 
 public abstract class IpnbRunCellBaseAction extends AnAction {
   public IpnbRunCellBaseAction() {
@@ -24,7 +25,7 @@ public abstract class IpnbRunCellBaseAction extends AnAction {
     if (selectNext) {
       final int index = ipnbFilePanel.getSelectedIndex();
       if (ipnbFilePanel.getIpnbPanels().size() - 1 == index) {
-        ipnbFilePanel.createAndAddCell(true);
+        ipnbFilePanel.createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
         CommandProcessor.getInstance().executeCommand(ipnbFilePanel.getProject(), new Runnable() {
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {

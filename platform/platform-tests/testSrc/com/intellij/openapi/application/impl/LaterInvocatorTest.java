@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.testFramework.UsefulTestCase;
@@ -30,6 +31,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings({"SSBasedInspection", "SynchronizeOnThis"})
 @SkipInHeadlessEnvironment
@@ -560,5 +564,17 @@ public class LaterInvocatorTest extends PlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
       assertOrderedEquals(myOrder, "m12", "m2", "m1", "m1x");
     });
+  }
+
+  public void testModalityStateCurrentAllowedOnlyFromEDT() throws Exception {
+    LoggedErrorProcessor.getInstance().disableStderrDumping(getTestRootDisposable());
+    Future<ModalityState> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ModalityState.current());
+    try {
+      future.get(1000, TimeUnit.MILLISECONDS);
+      fail("should fail");
+    }
+    catch (ExecutionException e) {
+      assertTrue(e.getMessage(), e.getMessage().contains("Access is allowed from event dispatch thread only"));
+    }
   }
 }

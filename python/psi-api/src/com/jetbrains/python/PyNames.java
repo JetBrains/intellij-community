@@ -170,6 +170,7 @@ public class PyNames {
   public static final String AENTER = "__aenter__";
   public static final String AEXIT = "__aexit__";
   public static final String SIZEOF = "__sizeof__";
+  public static final String INIT_SUBCLASS = "__init_subclass__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -434,7 +435,7 @@ public class PyNames {
 
   public static final ImmutableMap<String, BuiltinDescription> PY36_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
     .putAll(PY35_BUILTIN_METHODS)
-    .put("__init_subclass__", new BuiltinDescription("(cls, **kwargs)"))
+    .put(INIT_SUBCLASS, new BuiltinDescription("(cls, **kwargs)"))
     .put("__set_name__", new BuiltinDescription("(self, owner, name)"))
     .build();
 

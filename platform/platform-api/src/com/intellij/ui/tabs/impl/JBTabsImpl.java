@@ -245,13 +245,12 @@ public class JBTabsImpl extends JComponent
         }
       }
     });
-    addMouseWheelListener(new MouseWheelListener() {
-      @Override
-      public void mouseWheelMoved(MouseWheelEvent e) {
-        if (mySingleRowLayout.myLastSingRowLayout != null) {
-          mySingleRowLayout.scroll(e.getUnitsToScroll() * mySingleRowLayout.getScrollUnitIncrement());
-          revalidateAndRepaint(false);
-        }
+    addMouseWheelListener(event -> {
+      int units = event.getUnitsToScroll();
+      if (units == 0) return;
+      if (mySingleRowLayout.myLastSingRowLayout != null) {
+        mySingleRowLayout.scroll(units * mySingleRowLayout.getScrollUnitIncrement());
+        revalidateAndRepaint(false);
       }
     });
 

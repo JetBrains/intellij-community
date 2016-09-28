@@ -8,7 +8,7 @@ class Test {
     String a = notNull(getNullable());
 
     @NotNull
-    String b = notNull(null);
+    String b = <warning descr="The call to notNull always fails, according to its method contracts">notNull</warning>(null);
   }
 
   @Nullable

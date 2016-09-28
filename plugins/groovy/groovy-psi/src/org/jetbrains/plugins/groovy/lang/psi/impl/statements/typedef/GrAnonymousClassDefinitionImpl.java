@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.reference.SoftReference;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
@@ -45,15 +43,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  */
 public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl implements GrAnonymousClassDefinition {
 
-  private SoftReference<PsiClassType> myCachedBaseType = null;
-
-  private NullableLazyValue<GrCodeReferenceElement> myStubBaseReference = NullableLazyValue.createValue(() -> {
-    GrTypeDefinitionStub stub = getStub();
-    if (stub == null) return null;
-    String baseClassName = stub.getBaseClassName();
-    assert baseClassName != null;
-    return GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(baseClassName, this);
-  });
+  private SoftReference<PsiClassType> myCachedBaseType;
 
   public GrAnonymousClassDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -70,8 +60,13 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   @Override
   @NotNull
   public GrCodeReferenceElement getBaseClassReferenceGroovy() {
-    GrCodeReferenceElement stubReference = myStubBaseReference.getValue();
-    if (stubReference != null) return stubReference;
+    GrTypeDefinitionStub stub = getStub();
+    if (stub != null) {
+      GrCodeReferenceElement reference = stub.getBaseClassReference();
+      assert reference != null;
+      return reference;
+    }
+
     return findNotNullChildByClass(GrCodeReferenceElement.class); //not null because of definition =)
   }
 

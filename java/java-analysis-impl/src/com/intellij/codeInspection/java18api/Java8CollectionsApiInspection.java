@@ -20,7 +20,8 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -52,12 +53,23 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
   private static final Logger LOG = Logger.getInstance(Java8CollectionsApiInspection.class);
 
   public boolean myReportContainsCondition;
+  public boolean mySuggestCollectionRemoveIf = true;
+  public boolean mySuggestListSort = true;
+  public boolean mySuggestMapGetOrDefault = true;
+  public boolean mySuggestMapPutIfAbsent = true;
+  public boolean mySuggestMapComputeIfAbsent = true;
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Report when \'containsKey\' is used in condition (may change semantics)", this,
-                                          "myReportContainsCondition");
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox("Suggest conversion to Collection.removeIf", "mySuggestCollectionRemoveIf");
+    panel.addCheckbox("Suggest conversion to List.sort", "mySuggestListSort");
+    panel.addCheckbox("Suggest conversion to Map.computeIfAbsent", "mySuggestMapComputeIfAbsent");
+    panel.addCheckbox("Suggest conversion to Map.getOrDefault", "mySuggestMapGetOrDefault");
+    panel.addCheckbox("Suggest conversion to Map.putIfAbsent", "mySuggestMapPutIfAbsent");
+    panel.addCheckbox("Report when \'containsKey\' is used in condition (may change semantics)", "myReportContainsCondition");
+    return panel;
   }
 
   @NotNull
@@ -70,6 +82,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
+        if (!mySuggestListSort) return;
         PsiElement nameElement = expression.getMethodExpression().getReferenceNameElement();
         if(nameElement != null && expression.getArgumentList().getExpressions().length == 2 &&
           "sort".equals(nameElement.getText())) {
@@ -86,7 +99,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       }
 
       void handleIteratorLoop(PsiLoopStatement statement, PsiJavaToken endToken, IteratorDeclaration declaration) {
-        if(endToken == null) return;
+        if (!mySuggestCollectionRemoveIf || endToken == null) return;
         PsiStatement body = statement.getBody();
         if(!(body instanceof PsiBlockStatement)) return;
         PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
@@ -99,7 +112,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
         PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
         if(!(thenStatement instanceof PsiExpressionStatement)) return;
         if(!declaration.isIteratorMethodCall(((PsiExpressionStatement)thenStatement).getExpression(), "remove")) return;
-        if(!OptionalIsPresentInspection.isVoidLambdaCandidate(condition)) return;
+        if(!LambdaGenerationUtil.canBeUncheckedLambda(condition)) return;
         //noinspection DialogTitleCapitalization
         holder.registerProblem(statement, new TextRange(0, endToken.getTextOffset() - statement.getTextOffset() + 1),
                                QuickFixBundle.message("java.8.collections.api.inspection.remove.description"),
@@ -191,6 +204,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
               value = ...
             }
            */
+          if (!mySuggestMapGetOrDefault) return;
           if (ExpressionUtils.isSimpleExpression(assignment.getRExpression()) &&
               equivalence.expressionsAreEquivalent(assignment.getLExpression(), value)) {
             holder.registerProblem(condition, QuickFixBundle.message("java.8.collections.api.inspection.description"),
@@ -204,6 +218,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
               map.put(key, value);
             }
            */
+          if (!mySuggestMapComputeIfAbsent) return;
           PsiExpression key = getArguments[0];
           PsiStatement[] statements = ((PsiBlockStatement)thenBranch).getCodeBlock().getStatements();
           if(statements.length != 2) return;
@@ -356,7 +371,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
     return new ConditionInfo(containsQualifier, containsKey, inverted);
   }
 
-  private static void analyzeCorrespondenceOfPutAndGet(@NotNull PsiElement adjustedElseBranch,
+  private void analyzeCorrespondenceOfPutAndGet(@NotNull PsiElement adjustedElseBranch,
                                                        @Nullable PsiElement adjustedThenBranch,
                                                        @Nullable PsiExpression containsQualifier,
                                                        @Nullable PsiExpression containsKey,
@@ -364,6 +379,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
                                                        @NotNull PsiElement context) {
     final PsiElement maybePutMethodCall;
     final PsiElement maybeGetMethodCall;
+    if (!mySuggestMapPutIfAbsent) return;
     if (adjustedThenBranch == null) {
       maybeGetMethodCall = null;
       if (adjustedElseBranch instanceof PsiExpressionStatement) {
@@ -572,14 +588,14 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
     @NotNull
     @Override
     public String getName() {
-      return QuickFixBundle.message("java.8.collections.api.inspection.remove.fix.name");
+      return getFamilyName();
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return getName();
+      return QuickFixBundle.message("java.8.collections.api.inspection.remove.fix.name");
     }
 
     @Override
@@ -607,9 +623,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       if(condition == null) return;
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       String replacement = (declaration.myCollection == null ? "" : declaration.myCollection.getText() + ".") +
-                           "removeIf(" +
-                           LambdaUtil.createLambda(variable, condition) +
-                           ");";
+                           "removeIf(" + LambdaUtil.createLambda(variable, condition) + ");";
       Collection<PsiComment> comments = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(loop, PsiComment.class),
                                                           comment -> (PsiComment)comment.copy());
       PsiElement result = loop.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(replacement, loop));
@@ -620,11 +634,11 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
     }
   }
 
-  static class IteratorDeclaration {
-    private final @NotNull PsiVariable myIterator;
+  private static class IteratorDeclaration {
+    private final @NotNull PsiLocalVariable myIterator;
     private final @Nullable PsiExpression myCollection;
 
-    private IteratorDeclaration(@NotNull PsiVariable iterator, @Nullable PsiExpression collection) {
+    private IteratorDeclaration(@NotNull PsiLocalVariable iterator, @Nullable PsiExpression collection) {
       myIterator = iterator;
       myCollection = collection;
     }
@@ -649,8 +663,8 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
       if(declaration.getDeclaredElements().length != 1) return null;
       PsiElement element = declaration.getDeclaredElements()[0];
-      if(!(element instanceof PsiVariable)) return null;
-      PsiVariable var = (PsiVariable)element;
+      if(!(element instanceof PsiLocalVariable)) return null;
+      PsiLocalVariable var = (PsiLocalVariable)element;
       if(!isIteratorMethodCall(var.getInitializer(), "next")) return null;
       return var;
     }
@@ -661,8 +675,8 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
       if(declaration.getDeclaredElements().length != 1) return null;
       PsiElement element = declaration.getDeclaredElements()[0];
-      if(!(element instanceof PsiVariable)) return null;
-      PsiVariable variable = (PsiVariable)element;
+      if(!(element instanceof PsiLocalVariable)) return null;
+      PsiLocalVariable variable = (PsiLocalVariable)element;
       PsiExpression initializer = variable.getInitializer();
       if(!(initializer instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression call = (PsiMethodCallExpression)initializer;

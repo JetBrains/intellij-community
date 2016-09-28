@@ -173,7 +173,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
      *
      * @return true if the pattern is matched
      */
-    private boolean registerProblem(PsiBinaryExpression expression, PsiExpression rightOperand, boolean equal) {
+    private boolean registerProblem(@NotNull PsiBinaryExpression expression, PsiExpression rightOperand, boolean equal) {
       if ((rightOperand instanceof PsiMethodCallExpression)) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)rightOperand;
         final PsiReferenceExpression nullCheckedExpression =
@@ -184,11 +184,13 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
           final String qualifierName = getQualifiedVariableName(qualifierExpression);
           if (qualifierName != null && qualifierName.equals(nullCheckedName)) {
             final PsiExpression argumentExpression = getArgumentExpression(methodCallExpression);
-            final String argumentName = getQualifiedVariableName(argumentExpression);
-            final PsiExpression expressionToReplace =
-              argumentName != null ? checkEqualityBefore(expression, equal, qualifierName, argumentName) : expression;
-            registerError(expressionToReplace, nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
-            return true;
+            if (argumentExpression != null) {
+              final String argumentName = getQualifiedVariableName(argumentExpression);
+              final PsiExpression expressionToReplace =
+                argumentName != null ? checkEqualityBefore(expression, equal, qualifierName, argumentName) : expression;
+              registerError(expressionToReplace, nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
+              return true;
+            }
           }
         }
       }
@@ -203,8 +205,8 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
      *
      * @return the expression matching the pattern, or the original expression if there's no match
      */
-    @Nullable
-    private PsiExpression checkEqualityBefore(PsiExpression expression, boolean equal, String qualifiedName1, String qualifiedName2) {
+    @NotNull
+    private PsiExpression checkEqualityBefore(@NotNull PsiExpression expression, boolean equal, String qualifiedName1, String qualifiedName2) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
       if (parent instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
@@ -247,7 +249,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     }
   }
 
-  private PsiExpression getArgumentExpression(PsiMethodCallExpression callExpression) {
+  private static PsiExpression getArgumentExpression(PsiMethodCallExpression callExpression) {
     final PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
     return expressions.length == 1 ? ParenthesesUtils.stripParentheses(expressions[0]) : null;
   }
@@ -257,6 +259,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
    *
    * @return the text representation of the variable chain (with parenthesis stripped), or {@code null} if it's not a variable chain
    */
+  @Contract("null->null")
   @Nullable
   private static String getQualifiedVariableName(@Nullable PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {

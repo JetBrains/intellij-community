@@ -683,31 +683,17 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
               final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
               final List<Dependency> dependencies = dependencyResolutionResult.getDependencies();
 
-              final Map<Dependency, Artifact> winnerDependencyMap = new HashMap<Dependency, Artifact>();
+              final Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<Dependency, Artifact>();
               Set<Artifact> artifacts = new LinkedHashSet<Artifact>(dependencies.size());
               dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
                 @Override
                 public boolean visitEnter(org.eclipse.aether.graph.DependencyNode node) {
-                  Artifact winnerArtifact = null;
-                  final Map<?, ?> data = node.getData();
-                  final Object winner = data.get(ConflictResolver.NODE_DATA_WINNER);
-                  if(winner instanceof org.eclipse.aether.graph.DependencyNode) {
-                    org.eclipse.aether.graph.DependencyNode winnerNode = (org.eclipse.aether.graph.DependencyNode)winner;
-                    if(!StringUtil.equals(node.getVersion().toString(), winnerNode.getVersion().toString())) {
-                      Dependency winnerNodeDependency = winnerNode.getDependency();
-                      winnerArtifact = RepositoryUtils.toArtifact(winnerNodeDependency.getArtifact());
-                      winnerArtifact.setScope(winnerNodeDependency.getScope());
-                      winnerArtifact.setOptional(winnerNodeDependency.isOptional());
-                    }
-                  }
-
+                  final Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
                   final Dependency dependency = node.getDependency();
-                  if(dependency != null) {
-                    if(winnerArtifact == null) {
-                      winnerArtifact = RepositoryUtils.toArtifact(node.getArtifact());
-                      winnerArtifact.setScope(dependency.getScope());
-                      winnerArtifact.setOptional(dependency.isOptional());
-                    }
+                  if (dependency != null && winner == null) {
+                    Artifact winnerArtifact = RepositoryUtils.toArtifact(node.getArtifact());
+                    winnerArtifact.setScope(dependency.getScope());
+                    winnerArtifact.setOptional(dependency.isOptional());
                     winnerDependencyMap.put(dependency, winnerArtifact);
                   }
                   return true;
