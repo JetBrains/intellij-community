@@ -8,6 +8,7 @@ class SuspiciousLiteralUnderscore {{
   int i = 1_000_<warning descr="Group in number literal with underscores does not have length 3">00</warning>;
   int j = 1_000_<warning descr="Group in number literal with underscores does not have length 3">0000</warning>;
   long k = 1_000_000L;
+  int l = <error descr="Illegal underscore">100_</error>;
   double g = 12_<warning descr="Group in number literal with underscores does not have length 3">34</warning>d;
   double h = 1.123_<warning descr="Group in number literal with underscores does not have length 3">4567</warning>e3;
 
