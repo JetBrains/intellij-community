@@ -21,8 +21,7 @@ import java.awt.event.*;
 /**
  * @author Sergey.Malenkov
  */
-public abstract class MouseEventHandler extends MouseAdapter implements MouseListener, MouseInputListener,
-                                                                        MouseMotionListener, MouseWheelListener {
+public abstract class MouseEventHandler extends MouseAdapter implements MouseInputListener {
   protected abstract void handle(MouseEvent event);
 
   @Override
