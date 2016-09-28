@@ -39,22 +39,10 @@ import java.util.List;
 public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedLineMarkerProviderBase {
 
   private static final NotNullFunction<ExtensionPointCandidate, Collection<? extends PsiElement>> CONVERTER =
-    new NotNullFunction<ExtensionPointCandidate, Collection<? extends PsiElement>>() {
-      @NotNull
-      @Override
-      public Collection<? extends PsiElement> fun(ExtensionPointCandidate candidate) {
-        return Collections.singleton(candidate.pointer.getElement());
-      }
-    };
+    candidate -> Collections.singleton(candidate.pointer.getElement());
 
   private static final NotNullFunction<ExtensionPointCandidate, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
-    new NotNullFunction<ExtensionPointCandidate, Collection<? extends GotoRelatedItem>>() {
-      @NotNull
-      @Override
-      public Collection<? extends GotoRelatedItem> fun(ExtensionPointCandidate candidate) {
-        return GotoRelatedItem.createItems(Collections.singleton(candidate.pointer.getElement()), "DevKit");
-      }
-    };
+    candidate -> GotoRelatedItem.createItems(Collections.singleton(candidate.pointer.getElement()), "DevKit");
 
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, Collection<? super RelatedItemLineMarkerInfo> result) {
@@ -75,12 +63,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProvider extends Devk
 
     ExtensionPointLocator locator = new ExtensionPointLocator(epClass);
     List<ExtensionPointCandidate> targets =
-      ContainerUtil.filter(locator.findDirectCandidates(), new Condition<ExtensionPointCandidate>() {
-        @Override
-        public boolean value(ExtensionPointCandidate candidate) {
-          return epName.equals(candidate.epName);
-        }
-      });
+      ContainerUtil.filter(locator.findDirectCandidates(), candidate -> epName.equals(candidate.epName));
 
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
       .create(AllIcons.Nodes.Plugin, CONVERTER, RELATED_ITEM_PROVIDER)

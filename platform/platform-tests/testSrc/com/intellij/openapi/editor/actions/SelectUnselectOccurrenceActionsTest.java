@@ -161,13 +161,10 @@ public class SelectUnselectOccurrenceActionsTest extends LightPlatformCodeInsigh
          "collapsed line");
     final FoldingModel foldingModel = myFixture.getEditor().getFoldingModel();
     final Document document = myFixture.getEditor().getDocument();
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        FoldRegion foldRegion = foldingModel.addFoldRegion(document.getLineStartOffset(1), document.getLineEndOffset(1), "...");
-        assertNotNull(foldRegion);
-        foldRegion.setExpanded(false);
-      }
+    foldingModel.runBatchFoldingOperation(() -> {
+      FoldRegion foldRegion = foldingModel.addFoldRegion(document.getLineStartOffset(1), document.getLineEndOffset(1), "...");
+      assertNotNull(foldRegion);
+      foldRegion.setExpanded(false);
     });
     executeAction();
     checkResult("normal <selection><caret>line</selection>\n" +

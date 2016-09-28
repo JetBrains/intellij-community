@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ public class ParametersFolder {
   private final Set<String> myUsedNames = new HashSet<String>();
 
   private final Set<PsiVariable> myDeleted = new HashSet<PsiVariable>();
-  private boolean myFoldingSelectedByDefault = false;
+  private boolean myFoldingSelectedByDefault;
 
 
   public void clear() {
@@ -118,15 +119,12 @@ public class ParametersFolder {
     PsiExpression mostRanked = null;
     for (int i = mentionedInExpressions.size() - 1; i >= 0; i--) {
       PsiExpression expression = mentionedInExpressions.get(i);
-      if (expression instanceof PsiArrayAccessExpression) {
-        mostRanked = expression;
-        if (!isConditional(expression, scope)) {
-          myFoldingSelectedByDefault = true;
-          break;
-        }
+      boolean arrayAccess = expression instanceof PsiArrayAccessExpression && !isConditional(expression, scope);
+      if (arrayAccess) {
+        myFoldingSelectedByDefault = true;
       }
       final int r = findUsedVariables(data, inputVariables, expression).size();
-      if (currentRank < r) {
+      if (currentRank < r || arrayAccess && currentRank == r) {
         currentRank = r;
         mostRanked = expression;
       }
@@ -134,7 +132,7 @@ public class ParametersFolder {
 
     if (mostRanked != null) {
       myExpressions.put(data.variable, mostRanked);
-      data.type = mostRanked.getType();
+      data.type = RefactoringChangeUtil.getTypeByExpression(mostRanked);
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(mostRanked.getProject());
       final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, mostRanked, data.type);
       if (nameInfo.names.length > 0) {
@@ -211,7 +209,9 @@ public class ParametersFolder {
       if (expressions == null) {
         expressions = new ArrayList<PsiExpression>();
         while (expression != null) {
-          if (isAccessedForWriting((PsiExpression)expression)) return null;
+          if (isAccessedForWriting((PsiExpression)expression)) {
+            return null;
+          }
           for (PsiElement scopeElement : scopeElements) {
             if (PsiTreeUtil.isAncestor(expression, scopeElement, true)) {
               expression = null;
@@ -303,7 +303,8 @@ public class ParametersFolder {
     PsiElement expression = element;
     while (expression  != null) {
       if (PsiEquivalenceUtil.areElementsEquivalent(expression, expr)) {
-        return (PsiExpression)expression;
+        PsiExpression psiExpression = (PsiExpression)expression;
+        return PsiUtil.isAccessedForWriting(psiExpression) ? null : psiExpression;
       }
       expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
     }

@@ -26,7 +26,7 @@ public class TestIgnoredEvent extends TreeNodeEvent {
   private final String myStacktrace;
 
   public TestIgnoredEvent(@NotNull String testName, @NotNull String ignoreComment, @Nullable String stacktrace) {
-    super(testName, -1);
+    super(testName, null);
     myIgnoreComment = ignoreComment;
     myStacktrace = stacktrace;
   }

@@ -66,12 +66,8 @@ public class JavaDocCommentFixer implements DocCommentFixer {
    */
   @NotNull private static final Set<String> CARET_ANCHOR_TAGS = ContainerUtilRt.newHashSet(PARAM_TAG, "@throws", "@return");
 
-  @NotNull private static final Comparator<PsiElement> COMPARATOR = new Comparator<PsiElement>() {
-    @Override
-    public int compare(PsiElement e1, PsiElement e2) {
-      return e2.getTextRange().getEndOffset() - e1.getTextRange().getEndOffset();
-    }
-  };
+  @NotNull private static final Comparator<PsiElement> COMPARATOR =
+    (e1, e2) -> e2.getTextRange().getEndOffset() - e1.getTextRange().getEndOffset();
 
   @NotNull private static final String PARAM_TAG_NAME = "param";
 

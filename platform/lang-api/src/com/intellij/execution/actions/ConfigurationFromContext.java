@@ -120,38 +120,31 @@ public abstract class ConfigurationFromContext {
   /**
    * Compares configurations according to precedence.
    */
-  public static final Comparator<ConfigurationFromContext> COMPARATOR = new Comparator<ConfigurationFromContext>() {
-    @Override
-    public int compare(ConfigurationFromContext configuration1, ConfigurationFromContext configuration2) {
-      if (PsiTreeUtil.isAncestor(configuration1.getSourceElement(), configuration2.getSourceElement(), true)) {
-        return 1;
-      }
-      if (PsiTreeUtil.isAncestor(configuration2.getSourceElement(), configuration1.getSourceElement(), true)) {
-        return -1;
-      }
-      if (!configuration1.isPreferredTo(configuration2)) {
-        return 1;
-      }
-      if (configuration2.shouldReplace(configuration1)) {
-        return 1;
-      }
-      if (!configuration2.isPreferredTo(configuration1)) {
-        return -1;
-      }
-      if (configuration1.shouldReplace(configuration2)) {
-        return -1;
-      }
-      return 0;
+  public static final Comparator<ConfigurationFromContext> COMPARATOR = (configuration1, configuration2) -> {
+    if (PsiTreeUtil.isAncestor(configuration1.getSourceElement(), configuration2.getSourceElement(), true)) {
+      return 1;
     }
+    if (PsiTreeUtil.isAncestor(configuration2.getSourceElement(), configuration1.getSourceElement(), true)) {
+      return -1;
+    }
+    if (!configuration1.isPreferredTo(configuration2)) {
+      return 1;
+    }
+    if (configuration2.shouldReplace(configuration1)) {
+      return 1;
+    }
+    if (!configuration2.isPreferredTo(configuration1)) {
+      return -1;
+    }
+    if (configuration1.shouldReplace(configuration2)) {
+      return -1;
+    }
+    return 0;
   };
 
   /**
    * Compares configurations according to configuration type name.
    */
-  public static final Comparator<ConfigurationFromContext> NAME_COMPARATOR = new Comparator<ConfigurationFromContext>() {
-    @Override
-    public int compare(final ConfigurationFromContext p1, final ConfigurationFromContext p2) {
-      return p1.getConfigurationType().getDisplayName().compareTo(p2.getConfigurationType().getDisplayName());
-    }
-  };
+  public static final Comparator<ConfigurationFromContext> NAME_COMPARATOR =
+    (p1, p2) -> p1.getConfigurationType().getDisplayName().compareTo(p2.getConfigurationType().getDisplayName());
 }

@@ -117,7 +117,7 @@ public class WrapLongWithMathToIntExactFix extends LocalQuickFixAndIntentionActi
     }
 
     @Override
-    public boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, @NotNull final PsiElement context) {
+    public boolean areTypesConvertible(@NotNull final PsiType exprType, @NotNull final PsiType parameterType, @NotNull final PsiElement context) {
       return parameterType.isConvertibleFrom(exprType) || (areSameTypes(parameterType, PsiType.INT) && areSameTypes(exprType, PsiType.LONG));
     }
 

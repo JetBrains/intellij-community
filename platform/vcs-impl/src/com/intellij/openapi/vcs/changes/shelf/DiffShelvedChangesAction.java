@@ -212,7 +212,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
                 }
               };
 
-              return PatchDiffRequestFactory.createConflictDiffRequest(project, file, "Shelved Version", getter, getName(), context, indicator);
+              return PatchDiffRequestFactory.createConflictDiffRequest(project, file, patch, "Shelved Version", getter, getName(), context, indicator);
             }
             catch (VcsException e) {
               throw new DiffRequestProducerException("Can't show diff for '" + getName() + "'", e);

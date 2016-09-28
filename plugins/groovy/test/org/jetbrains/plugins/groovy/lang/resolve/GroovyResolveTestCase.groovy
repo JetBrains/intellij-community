@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 package org.jetbrains.plugins.groovy.lang.resolve
+
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,7 +34,7 @@ public abstract class GroovyResolveTestCase extends LightGroovyTestCase {
   @NonNls protected static final String MARKER = "<ref>";
 
   @Override
-  protected void setUp() {
+  void setUp() {
     super.setUp();
     if (new File("$myFixture.testDataPath/${getTestName(true)}").exists()) {
       myFixture.copyDirectoryToProject(getTestName(true), "");

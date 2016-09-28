@@ -193,12 +193,7 @@ public class EclipseClasspathWriter {
 
             final String[] nativeRoots = libraryOrderEntry.getUrls(NativeLibraryOrderRootType.getInstance());
             if (nativeRoots.length > 0) {
-              EJavadocUtil.setupAttributes(orderEntry, new Function<String, String>() {
-                @Override
-                public String fun(String nativeRoot) {
-                  return EPathUtil.collapse2EclipsePath(nativeRoot, model);
-                }
-              }, EclipseXml.DLL_LINK, nativeRoots);
+              EJavadocUtil.setupAttributes(orderEntry, nativeRoot -> EPathUtil.collapse2EclipsePath(nativeRoot, model), EclipseXml.DLL_LINK, nativeRoots);
             }
             setExported(orderEntry, libraryOrderEntry);
           }

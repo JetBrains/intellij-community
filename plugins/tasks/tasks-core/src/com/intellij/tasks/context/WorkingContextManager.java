@@ -62,11 +62,7 @@ public class WorkingContextManager {
   @NonNls private static final String TASKS_ZIP_POSTFIX = ".tasks.zip";
   @NonNls private static final String TASK_XML_POSTFIX = ".task.xml";
   private static final String CONTEXT_ZIP_POSTFIX = ".contexts.zip";
-  private static final Comparator<JBZipEntry> ENTRY_COMPARATOR = new Comparator<JBZipEntry>() {
-    public int compare(JBZipEntry o1, JBZipEntry o2) {
-      return Long.signum(o2.getTime() - o1.getTime());
-    }
-  };
+  private static final Comparator<JBZipEntry> ENTRY_COMPARATOR = (o1, o2) -> Long.signum(o2.getTime() - o1.getTime());
 
   public static WorkingContextManager getInstance(Project project) {
     return ServiceManager.getService(project, WorkingContextManager.class);
@@ -222,11 +218,7 @@ public class WorkingContextManager {
     try {
       archive = getTasksArchive(zipPostfix);
       List<JBZipEntry> entries = archive.getEntries();
-      return ContainerUtil.mapNotNull(entries, new NullableFunction<JBZipEntry, ContextInfo>() {
-        public ContextInfo fun(JBZipEntry entry) {
-          return entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null;
-        }
-      });
+      return ContainerUtil.mapNotNull(entries, (NullableFunction<JBZipEntry, ContextInfo>)entry -> entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null);
     }
     catch (IOException e) {
       LOG.error(e);

@@ -25,6 +25,7 @@ public abstract class SchemesManagerFactory {
   /**
    * directoryName — like "keymaps".
    */
+  @SuppressWarnings("unused")
   @NotNull
   public <T extends Scheme, E extends ExternalizableScheme> SchemesManager<T, E> createSchemesManager(@NotNull String directoryName,
                                                                                                       @NotNull SchemeProcessor<E> processor,

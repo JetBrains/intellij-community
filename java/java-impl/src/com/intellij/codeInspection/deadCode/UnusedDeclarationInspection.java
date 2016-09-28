@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -29,14 +30,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase {
+  public UnusedDeclarationInspection() { }
+
   @TestOnly
   public UnusedDeclarationInspection(boolean enabledInEditor) {
     super(enabledInEditor);
   }
 
-  public UnusedDeclarationInspection() {
-  }
-
+  @SuppressWarnings("deprecation")
   @Override
   protected UnusedSymbolLocalInspectionBase createUnusedSymbolLocalInspection() {
     return new UnusedSymbolLocalInspection();
@@ -61,7 +62,7 @@ public class UnusedDeclarationInspection extends UnusedDeclarationInspectionBase
       GridBagConstraints gc = new GridBagConstraints();
       gc.weightx = 1;
       gc.weighty = 0;
-      gc.insets = new Insets(0, 20, 2, 0);
+      gc.insets = JBUI.insets(0, 20, 2, 0);
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.anchor = GridBagConstraints.NORTHWEST;
 

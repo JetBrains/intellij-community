@@ -174,6 +174,11 @@ class TestRestoreFuncByDocComment(unittest.TestCase):
         self.assertEquals(result, "femme(skirt_or_pants)")
         self.assertEquals(note, M.SIG_DOC_NOTE)
 
+    def testKeyword(self):
+        result, ret_sig, note = self.m.parse_func_doc('blah femme(from, to) ololo', "femme", "femme", None)
+        self.assertEquals(result, "femme(from_, to)")
+        self.assertEquals(note, M.SIG_DOC_NOTE)
+
 
 class TestRestoreMethodByDocComment(unittest.TestCase):
     """

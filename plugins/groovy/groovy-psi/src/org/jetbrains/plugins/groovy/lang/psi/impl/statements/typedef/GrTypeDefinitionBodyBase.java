@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.EmptyStub;
@@ -110,9 +109,10 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     return findChildrenByClass(GrClassInitializer.class);
   }
 
+  @NotNull
   @Override
-  public PsiClass[] getInnerClasses() {
-    return getStubOrPsiChildren(TokenSets.TYPE_DEFINITIONS, PsiClass.ARRAY_FACTORY);
+  public GrTypeDefinition[] getInnerClasses() {
+    return getStubOrPsiChildren(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
   }
 
   @Override

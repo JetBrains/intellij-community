@@ -47,18 +47,8 @@ public class TestDnd extends AnAction {
       protected JComponent createCenterPanel() {
         JBList list = new JBList(new String[]{"1111111", "222222", "333333", "44444", "555555555555555555555555"});
         DnDSupport.createBuilder(list)
-          .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
-            @Override
-            public DnDDragStartBean fun(DnDActionInfo info) {
-              return new DnDDragStartBean("something");
-            }
-          })
-          .setImageProvider(new Function<DnDActionInfo, DnDImage>() {
-            @Override
-            public DnDImage fun(DnDActionInfo info) {
-              return new DnDImage(IconUtil.toImage(AllIcons.Icon));
-            }
-          })
+          .setBeanProvider(info -> new DnDDragStartBean("something"))
+          .setImageProvider(info -> new DnDImage(IconUtil.toImage(AllIcons.Icon)))
           .install();
 
         return list;

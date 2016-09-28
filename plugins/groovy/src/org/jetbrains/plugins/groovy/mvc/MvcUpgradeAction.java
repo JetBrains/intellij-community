@@ -41,12 +41,7 @@ public class MvcUpgradeAction extends MvcActionBase {
   protected void actionPerformed(@NotNull AnActionEvent e, @NotNull final Module module, @NotNull final MvcFramework framework) {
     final GroovyLibraryDescription description = framework.createLibraryDescription();
     final AddCustomLibraryDialog dialog =
-      AddCustomLibraryDialog.createDialog(description, module, new ParameterizedRunnable<ModifiableRootModel>() {
-        @Override
-        public void run(ModifiableRootModel modifiableRootModel) {
-          removeOldMvcSdk(framework, modifiableRootModel);
-        }
-      });
+      AddCustomLibraryDialog.createDialog(description, module, modifiableRootModel -> removeOldMvcSdk(framework, modifiableRootModel));
     dialog.setTitle("Change " + framework.getDisplayName() + " SDK version");
     if (dialog.showAndGet()) {
       module.putUserData(MvcFramework.UPGRADE, Boolean.TRUE);

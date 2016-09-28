@@ -230,18 +230,18 @@ public class DimensionService implements PersistentStateComponent<Element> {
     }
   }
 
-  @Deprecated
   /**
    * @deprecated Use {@link com.intellij.ide.util.PropertiesComponent}
    */
+  @Deprecated
   public void setExtendedState(String key, int extendedState) {
     myKey2ExtendedState.put(key, extendedState);
   }
 
-  @Deprecated
   /**
    * @deprecated Use {@link com.intellij.ide.util.PropertiesComponent}
    */
+  @Deprecated
   public int getExtendedState(String key) {
     if (!myKey2ExtendedState.containsKey(key)) return -1;
     return myKey2ExtendedState.get(key);

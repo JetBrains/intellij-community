@@ -19,7 +19,6 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.JavaSuppressionUtil;
-import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -55,7 +54,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   @NotNull
   public String getText() {
     String myText = super.getText();
-    return StringUtil.isEmpty(myText) ? "Suppress for member" : myText;
+    return StringUtil.isEmpty(myText) ? InspectionsBundle.message("suppress.inspection.member") : myText;
   }
 
   @Override
@@ -99,6 +98,12 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
     // todo suppress
     //DaemonCodeAnalyzer.getInstance(project).restart();
     UndoUtil.markPsiFileForUndo(element.getContainingFile());
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return InspectionsBundle.message("suppress.inspection.member");
   }
 
   private boolean doSuppress(@NotNull Project project, PsiDocCommentOwner container) {

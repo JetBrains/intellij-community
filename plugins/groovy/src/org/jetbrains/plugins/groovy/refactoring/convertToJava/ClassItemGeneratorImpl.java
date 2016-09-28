@@ -368,12 +368,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     Map<PsiMethod, String> setters = context.getSetters();
     Set<Map.Entry<PsiMethod, String>> entries = setters.entrySet();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      entries = ImmutableSortedSet.copyOf(new Comparator<Map.Entry<PsiMethod, String>>() {
-        @Override
-        public int compare(Map.Entry<PsiMethod, String> o1, Map.Entry<PsiMethod, String> o2) {
-          return o1.getValue().compareTo(o2.getValue());
-        }
-      }, entries);
+      entries = ImmutableSortedSet.copyOf((o1, o2) -> o1.getValue().compareTo(o2.getValue()), entries);
     }
     for (Map.Entry<PsiMethod, String> entry : entries) {
       new SetterWriter(builder, psiClass, entry.getKey(), entry.getValue(), classNameProvider, context).write();

@@ -27,7 +27,6 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitCommit;
 import git4idea.GitExecutionException;
 import git4idea.GitLocalBranch;
-import git4idea.GitPlatformFacade;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.history.GitHistoryUtils;
@@ -46,21 +45,17 @@ import java.util.Map;
  * Executes the logic of git branch operations.
  * All operations are run in the current thread.
  * All UI interaction is done via the {@link GitBranchUiHandler} passed to the constructor.
- *
- * @author Kirill Likhodedov
  */
 public final class GitBranchWorker {
 
   private static final Logger LOG = Logger.getInstance(GitBranchWorker.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final Git myGit;
   @NotNull private final GitBranchUiHandler myUiHandler;
 
-  public GitBranchWorker(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler) {
+  public GitBranchWorker(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler) {
     myProject = project;
-    myFacade = facade;
     myGit = git;
     myUiHandler = uiHandler;
   }
@@ -75,7 +70,7 @@ public final class GitBranchWorker {
       }
     });
     if (!repositories.isEmpty()) {
-      new GitCheckoutNewBranchOperation(myProject, myFacade, myGit, myUiHandler, repositories, name).execute();
+      new GitCheckoutNewBranchOperation(myProject, myGit, myUiHandler, repositories, name).execute();
     }
     else {
       LOG.error("Creating new branch the same as current in all repositories: " + name);
@@ -85,30 +80,30 @@ public final class GitBranchWorker {
   public void createNewTag(@NotNull final String name, @NotNull final String reference, @NotNull final List<GitRepository> repositories) {
     for (GitRepository repository : repositories) {
       myGit.createNewTag(repository, name, null, reference);
-      repository.getRepositoryFiles().refresh(true);
+      repository.getRepositoryFiles().refresh(false);
     }
   }
 
   public void checkoutNewBranchStartingFrom(@NotNull String newBranchName, @NotNull String startPoint,
                                             @NotNull List<GitRepository> repositories) {
     updateInfo(repositories);
-    new GitCheckoutOperation(myProject, myFacade, myGit, myUiHandler, repositories, startPoint, false, true, newBranchName).execute();
+    new GitCheckoutOperation(myProject, myGit, myUiHandler, repositories, startPoint, false, true, newBranchName).execute();
   }
 
   public void checkout(@NotNull final String reference, boolean detach, @NotNull List<GitRepository> repositories) {
     updateInfo(repositories);
-    new GitCheckoutOperation(myProject, myFacade, myGit, myUiHandler, repositories, reference, detach, false, null).execute();
+    new GitCheckoutOperation(myProject, myGit, myUiHandler, repositories, reference, detach, false, null).execute();
   }
 
 
   public void deleteBranch(@NotNull final String branchName, @NotNull final List<GitRepository> repositories) {
     updateInfo(repositories);
-    new GitDeleteBranchOperation(myProject, myFacade, myGit, myUiHandler, repositories, branchName).execute();
+    new GitDeleteBranchOperation(myProject, myGit, myUiHandler, repositories, branchName).execute();
   }
 
   public void deleteRemoteBranch(@NotNull final String branchName, @NotNull final List<GitRepository> repositories) {
     updateInfo(repositories);
-    new GitDeleteRemoteBranchOperation(myProject, myFacade, myGit, myUiHandler, repositories, branchName).execute();
+    new GitDeleteRemoteBranchOperation(myProject, myGit, myUiHandler, repositories, branchName).execute();
   }
 
   public void merge(@NotNull final String branchName, @NotNull final GitBrancher.DeleteOnMergeOption deleteOnMerge,
@@ -118,7 +113,7 @@ public final class GitBranchWorker {
     for (GitRepository repository : repositories) {
       revisions.put(repository, repository.getCurrentRevision());
     }
-    new GitMergeOperation(myProject, myFacade, myGit, myUiHandler, repositories, branchName, deleteOnMerge, revisions).execute();
+    new GitMergeOperation(myProject, myGit, myUiHandler, repositories, branchName, deleteOnMerge, revisions).execute();
   }
 
   public void rebase(@NotNull List<GitRepository> repositories, @NotNull String branchName) {
@@ -134,7 +129,7 @@ public final class GitBranchWorker {
 
   public void renameBranch(@NotNull String currentName, @NotNull String newName, @NotNull List<GitRepository> repositories) {
     updateInfo(repositories);
-    new GitRenameBranchOperation(myProject, myFacade, myGit, myUiHandler, currentName, newName, repositories).execute();
+    new GitRenameBranchOperation(myProject, myGit, myUiHandler, currentName, newName, repositories).execute();
   }
 
   public void compare(@NotNull final String branchName, @NotNull final List<GitRepository> repositories,

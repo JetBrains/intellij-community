@@ -15,14 +15,15 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -105,12 +106,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   protected final void enterModality() {
     if (myModalityProgress == this) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          doEnterModality();
-        }
-      });
+      GuiUtils.invokeLaterIfNeeded(this::doEnterModality, ModalityState.defaultModalityState());
     }
   }
 
@@ -130,12 +126,7 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
 
   protected final void exitModality() {
     if (myModalityProgress == this) {
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          doExitModality();
-         }
-      });
+      GuiUtils.invokeLaterIfNeeded(this::doExitModality, ModalityState.defaultModalityState());
     }
   }
 

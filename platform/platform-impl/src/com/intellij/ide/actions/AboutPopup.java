@@ -165,8 +165,10 @@ public class AboutPopup {
       LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true, null));
+        appendLast();
         for (String message : provider.getLicenseRestrictionsMessages()) {
           myLines.add(new AboutBoxLine(message));
+          appendLast();
         }
       }
 
@@ -193,7 +195,7 @@ public class AboutPopup {
 
       addMouseListener(new MouseAdapter() {
         @Override
-        public void mousePressed(MouseEvent event) {
+        public void mouseClicked(MouseEvent event) {
           if (myActiveLink != null) {
             event.consume();
             if (COPY_URL.equals(myActiveLink.myUrl)) {
@@ -400,7 +402,7 @@ public class AboutPopup {
             g2.setFont(myFont);
             g2.setColor(myLinkColor);
             final int xOffset = myImage.getIconWidth() - width - 10;
-            final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g2, myShowCopyAlpha);
+            final GraphicsConfig config = GraphicsUtil.paintWithAlpha(g2, Math.max(0, Math.min(1, myShowCopyAlpha)));
             g2.drawString(copyString, xOffset, yBase + y);
             config.restore();
             myLinks.add(new Link(new Rectangle(xOffset, yBase + y - fontAscent, width, fontHeight), COPY_URL));

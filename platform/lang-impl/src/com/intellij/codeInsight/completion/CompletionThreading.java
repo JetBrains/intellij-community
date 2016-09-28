@@ -79,28 +79,17 @@ class AsyncCompletion implements CompletionThreading {
   public Future<?> startThread(final ProgressIndicator progressIndicator, final Runnable runnable) {
     final Semaphore startSemaphore = new Semaphore();
     startSemaphore.down();
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().runProcess(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  startSemaphore.up();
-                  ProgressManager.checkCanceled();
-                  runnable.run();
-                }
-              });
-            }
-            catch (ProcessCanceledException ignored) {
-            }
-          }
-        }, progressIndicator);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
+      try {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          startSemaphore.up();
+          ProgressManager.checkCanceled();
+          runnable.run();
+        });
       }
-    });
+      catch (ProcessCanceledException ignored) {
+      }
+    }, progressIndicator));
     startSemaphore.waitFor();
     return future;
   }
@@ -146,12 +135,9 @@ class AsyncCompletion implements CompletionThreading {
 
       @Override
       public void consume(final CompletionResult result) {
-        queue.offer(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            indicator.addItem(result);
-            return true;
-          }
+        queue.offer(() -> {
+          indicator.addItem(result);
+          return true;
         });
       }
     };

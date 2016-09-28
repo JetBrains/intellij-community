@@ -174,12 +174,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable,
     if (!original.getPluginId().isEmpty() && !pluginIds.contains(original.getPluginId())) {
       pluginIds.add(original.getPluginId());
     }
-    Collections.sort(pluginIds, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return getPluginNameById(o1).compareToIgnoreCase(getPluginNameById(o2));
-      }
-    });
+    Collections.sort(pluginIds, (o1, o2) -> getPluginNameById(o1).compareToIgnoreCase(getPluginNameById(o2)));
 
     final ComboBox pluginChooser = new ComboBox(ArrayUtilRt.toStringArray(pluginIds), 250);
     pluginChooser.setRenderer(new ListCellRendererWrapper<String>() {

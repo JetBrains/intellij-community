@@ -69,10 +69,10 @@ public class JavaVariableConflictResolver implements PsiConflictResolver{
         Boolean oldClassIsInheritor = null;
         if (newClass != null && oldClass != null) {
           if (newClass.isInheritor(oldClass, true)) {
-            if (!(scope instanceof PsiClass) ||
-                scope.equals(oldClass) ||
+            if (scope != null &&
+                (scope.equals(oldClass) ||
                 scope.equals(newClass) ||
-                !((PsiClass)scope).isInheritorDeep(oldClass, newClass)) {
+                !((PsiClass)scope).isInheritorDeep(oldClass, newClass))) {
               // candidate is better
               conflicts.remove(currentResult);
               currentResult = candidate;

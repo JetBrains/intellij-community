@@ -52,7 +52,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     myConfig = runConfiguration;
   }
 
-  @NotNull
   @Override
   public ExecutionResult execute(Executor executor, final CommandLinePatcher... patchers) throws ExecutionException {
     if (myConfig.showCommandLineAfterwards()) {
@@ -71,7 +70,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                           PyConsoleOptions.getInstance(myConfig.getProject()).getPythonConsoleSettings());
 
       runner.runSync();
-
+      // runner.getProcessHandler() would be null if execution error occurred
+      if (runner.getProcessHandler() == null) {
+        return null;
+      }
       List<AnAction> actions = Lists.newArrayList(createActions(runner.getConsoleView(), runner.getProcessHandler()));
 
       return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler(), actions.toArray(new AnAction[actions.size()]));

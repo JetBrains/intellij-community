@@ -27,5 +27,4 @@ public interface VcsUser {
 
   @NotNull
   String getEmail();
-
 }

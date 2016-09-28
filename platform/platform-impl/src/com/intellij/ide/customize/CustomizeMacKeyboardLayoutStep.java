@@ -35,12 +35,8 @@ public class CustomizeMacKeyboardLayoutStep extends AbstractCustomizeWizardStep 
 
     JRadioButton macRadioButton = new JRadioButton("I've never used " + ApplicationNamesInfo.getInstance().getProductName());
     macRadioButton.setOpaque(false);
-    JPanel macPanel = createBigButtonPanel(new VerticalFlowLayout(), macRadioButton, new Runnable() {
-      @Override
-      public void run() {
-        WelcomeWizardUtil.setWizardKeymap(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP);
-      }
-    });
+    JPanel macPanel = createBigButtonPanel(new VerticalFlowLayout(), macRadioButton,
+                                           () -> WelcomeWizardUtil.setWizardKeymap(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP));
     macPanel.add(macRadioButton);
     macPanel.add(new JLabel("<html><head>" + style + "</head><body><h3>" + KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP + " keymap</h3>" +
                             "Adapted for OS X<br><br><table><tr><td align=\"left\" colspan=\"2\">EXAMPLES</td></tr>" +
@@ -52,12 +48,8 @@ public class CustomizeMacKeyboardLayoutStep extends AbstractCustomizeWizardStep 
 
     JRadioButton defaultRadioButton = new JRadioButton("I used " + ApplicationNamesInfo.getInstance().getProductName() + " before");
     defaultRadioButton.setOpaque(false);
-    JPanel defaultPanel = createBigButtonPanel(new VerticalFlowLayout(), defaultRadioButton, new Runnable() {
-      @Override
-      public void run() {
-        WelcomeWizardUtil.setWizardKeymap(KeymapManager.MAC_OS_X_KEYMAP);
-      }
-    });
+    JPanel defaultPanel = createBigButtonPanel(new VerticalFlowLayout(), defaultRadioButton,
+                                               () -> WelcomeWizardUtil.setWizardKeymap(KeymapManager.MAC_OS_X_KEYMAP));
     defaultPanel.add(defaultRadioButton);
     defaultPanel.add(new JLabel("<html><head>" + style + "</head><body><h3>" + KeymapManager.MAC_OS_X_KEYMAP + " keymap</h3>" +
                                 "Default for all platforms<br><br><table><tr><td align=\"left\" colspan=\"2\">EXAMPLES</td></tr>" +

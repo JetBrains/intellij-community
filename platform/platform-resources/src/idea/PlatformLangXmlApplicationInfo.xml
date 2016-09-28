@@ -2,7 +2,6 @@
   <version codename="Community Edition" major="10" minor="0" eap="true" update-channel="IDEA10EAP"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <install-over minbuild="0" maxbuild="0" version="9.0"/>
   <logo url="/idea_community_logo.png" textcolor="FFFFFF"/>
   <about url="/idea_community_about.png"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size12="/toolwindows/toolWindowProject.png" ico="idea_CE.ico"/>

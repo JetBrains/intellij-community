@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashMap;
@@ -120,7 +117,8 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @Override
   public void getAllClassNames(@NotNull HashSet<String> set) {
-    processAllClassNames(new CommonProcessors.CollectProcessor<String>(set));
+    Processor<String> processor = Processors.cancelableCollectProcessor(set);
+    processAllClassNames(processor);
   }
 
   @Override
@@ -187,7 +185,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @Override
   public void getAllMethodNames(@NotNull HashSet<String> set) {
-    JavaMethodNameIndex.getInstance().processAllKeys(myManager.getProject(), new CommonProcessors.CollectProcessor<String>(set));
+    JavaMethodNameIndex.getInstance().processAllKeys(myManager.getProject(), Processors.cancelableCollectProcessor(set));
   }
 
   @Override
@@ -226,7 +224,8 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
   @Override
   public void getAllFieldNames(@NotNull HashSet<String> set) {
-    JavaFieldNameIndex.getInstance().processAllKeys(myManager.getProject(), new CommonProcessors.CollectProcessor<String>(set));
+    Processor<String> processor = Processors.cancelableCollectProcessor(set);
+    JavaFieldNameIndex.getInstance().processAllKeys(myManager.getProject(), processor);
   }
 
   @Override

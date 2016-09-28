@@ -24,6 +24,19 @@
       <action id="SwitchApply" text="Switching Apply" class="com.intellij.ui.switcher.ApplySwitchAction"/>
     </group>
 
+    <group id="ScrollPaneActions">
+      <action id="ScrollPane-scrollHome" text="Scroll Home" class="com.intellij.ui.ScrollPaneActions$Home"/>
+      <action id="ScrollPane-scrollEnd" text="Scroll End" class="com.intellij.ui.ScrollPaneActions$End"/>
+      <action id="ScrollPane-unitScrollUp" text="Scroll Up" class="com.intellij.ui.ScrollPaneActions$Up"/>
+      <action id="ScrollPane-unitScrollDown" text="Scroll Down" class="com.intellij.ui.ScrollPaneActions$Down"/>
+      <action id="ScrollPane-unitScrollLeft" text="Scroll Left" class="com.intellij.ui.ScrollPaneActions$Left"/>
+      <action id="ScrollPane-unitScrollRight" text="Scroll Right" class="com.intellij.ui.ScrollPaneActions$Right"/>
+      <action id="ScrollPane-scrollUp" text="Scroll Page Up" class="com.intellij.ui.ScrollPaneActions$PageUp"/>
+      <action id="ScrollPane-scrollDown" text="Scroll Page Down" class="com.intellij.ui.ScrollPaneActions$PageDown"/>
+      <action id="ScrollPane-scrollLeft" text="Scroll Page Left" class="com.intellij.ui.ScrollPaneActions$PageLeft"/>
+      <action id="ScrollPane-scrollRight" text="Scroll Page Right" class="com.intellij.ui.ScrollPaneActions$PageRight"/>
+    </group>
+
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
     <action id="RunGc" class="com.intellij.ide.actions.RunGcAction"/>
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
@@ -159,7 +172,7 @@
     <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
     <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
-    <group id="Diff.KeymapGroup" text="Diff">
+    <group id="Diff.KeymapGroup" text="Diff \&amp;\&amp; Merge">
       <action id="Diff.ShowDiff" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.Diff"/> <!-- CommonShortcuts.getDiff() -->
       <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction" icon="AllIcons.Actions.Diff"/>
       <action id="CompareFileWithEditor" class="com.intellij.diff.actions.CompareFileWithEditorAction"/>
@@ -172,10 +185,14 @@
       <action id="Diff.ShowSettingsPopup" class="com.intellij.openapi.actionSystem.EmptyAction" text="Show Diff Settings Popup..."/>
       <action id="Diff.ShowInExternalTool" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.General.ExternalToolsSmall"
               text="Show Diff in External Tool"/>
+      <separator/>
 
       <action id="NextDiff" class="com.intellij.openapi.diff.actions.NextDiffAction" icon="AllIcons.Actions.MoveDown"/>
       <action id="PreviousDiff" class="com.intellij.openapi.diff.actions.PreviousDiffAction" icon="AllIcons.Actions.MoveUp"/>
+      <action id="Diff.NextConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.MoveDown"/>
+      <action id="Diff.PreviousConflict" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.MoveUp"/>
       <action id="GotoChangedFile" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Actions.ShowAsTree"/>
+      <separator/>
 
       <action id="Diff.ApplyLeftSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ArrowRight"/>
       <action id="Diff.ApplyRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Arrow"/>
@@ -185,7 +202,16 @@
       <action id="Diff.IgnoreRightSide" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Remove"/>
       <separator/>
 
-      <action id="CompareDirs" class="com.intellij.openapi.diff.actions.CompareDirectoriesAction" text="Compare Directories" use-shortcut-of="CompareTwoFiles"/>
+      <action id="Diff.ApplyNonConflicts" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ApplyNotConflicts"/>
+      <action id="Diff.ApplyNonConflicts.Left" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ApplyNotConflictsLeft"/>
+      <action id="Diff.ApplyNonConflicts.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ApplyNotConflictsRight"/>
+
+      <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.LeftDiff"/>
+      <action id="Diff.ComparePartial.Base.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.RightDiff"/>
+      <action id="Diff.ComparePartial.Left.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.BranchDiff"/>
+      <separator/>
+
+      <action id="CompareDirs" class="com.intellij.diff.actions.CompareFilesAction" text="Compare Directories" use-shortcut-of="CompareTwoFiles"/>
 
       <separator/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
@@ -340,6 +366,7 @@
         <group id="EditorToggleActions" popup="true">
           <action id="EditorToggleShowWhitespaces" class="com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction"/>
           <action id="EditorToggleShowLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersAction"/>
+          <action id="EditorToggleShowGutterIcons" class="com.intellij.openapi.editor.actions.ToggleShowGutterIconsAction"/>
           <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
           <action id="EditorToggleUseSoftWraps" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction" icon="AllIcons.Actions.ToggleSoftWrap"/>
         </group>
@@ -371,7 +398,7 @@
       <!-- Tools -->
       <group id="ToolsMenu" popup="true" compact="true">
         <action id="PsiViewer" class="com.intellij.internal.psiView.PsiViewerAction"/>
-        <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerForContextAction"/>
+        <action id="PsiViewerForContext" class="com.intellij.internal.psiView.PsiViewerAction$ForContext"/>
         <separator/>
         <action id="CreateLauncherScript" class="com.intellij.ide.actions.CreateLauncherScriptAction"/>
         <action id="CreateDesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"/>
@@ -602,9 +629,11 @@
     </group>
 
     <group id="EditorGutterPopupMenu">
-      <reference ref="EditorToggleShowLineNumbers"/>
-      <reference ref="EditorToggleShowIndentLines" />
-      <reference ref="EditorToggleUseSoftWraps" />
+      <action id="EditorGutterToggleGlobalLineNumbers" class="com.intellij.openapi.editor.actions.ToggleShowLineNumbersGloballyAction"/>
+      <action id="EditorGutterToggleGlobalIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesGloballyAction"/>
+      <separator/>
+      <action id="EditorGutterToggleGlobalSoftWraps" class="com.intellij.openapi.editor.actions.ToggleSoftWrapsGloballyAction"/>
+      <reference ref="EditorToggleUseSoftWraps"/>
     </group>
 
     <group id="FileChooserToolbar">
@@ -620,10 +649,10 @@
       <action id="FileChooser.NewFolder" class="com.intellij.openapi.fileChooser.actions.NewFolderAction"
         icon="AllIcons.Actions.NewFolder"/>
       <action id="FileChooser.Delete" class="com.intellij.openapi.fileChooser.actions.FileDeleteAction"
-        icon="AllIcons.Actions.Delete"/>
+        icon="AllIcons.Actions.Delete" use-shortcut-of="$Delete"/>
       <separator/>
       <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
-        icon="AllIcons.Actions.Refresh"/>
+        icon="AllIcons.Actions.Refresh" use-shortcut-of="Synchronize"/>
       <separator/>
       <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
         icon="AllIcons.Actions.ShowHiddens"/>
@@ -701,6 +730,7 @@
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
         <action id="ValidationTest" internal="true" class="com.intellij.internal.validation.TestDialogWithValidationAction" text="Validation Dialog Test" />
         <action id="MacMessagesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesAction" text="Test Mac Messages" />
+        <action id="ColorBlindnessTest" internal="true" class="com.intellij.ide.ui.ColorBlindnessInternalAction" text="Test ColorBlindness" />
         <action id="TreeExpandAll" internal="true" class="com.intellij.internal.tree.ExpandAll" text="Expand Tree" />
         <action id="UIDefaults" internal="true" class="com.intellij.ui.ShowUIDefaultsAction" text="LaF Defaults">
           <abbreviation value="laf"/>
@@ -725,6 +755,9 @@
     </group>
 
     <group id="EditorContextBarMenu">
+      <action id="EditorToggleUseSoftWrapsInPreview" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsInPreviewAction"
+              icon="AllIcons.Actions.ToggleSoftWrap"/>
+      <separator/>
     </group>
 
     <group id="DirDiffMenu">

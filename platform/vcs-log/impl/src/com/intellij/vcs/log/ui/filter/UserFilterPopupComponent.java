@@ -17,12 +17,12 @@ package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.util.Function;
+import com.intellij.openapi.util.Couple;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUserFilter;
-import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,13 +35,13 @@ import java.util.List;
  * Show a popup to select a user or enter the user name.
  */
 class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogUserFilter> {
-  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogData myLogData;
 
   UserFilterPopupComponent(@NotNull VcsLogUiProperties uiProperties,
-                           @NotNull VcsLogDataHolder dataHolder,
+                           @NotNull VcsLogData logData,
                            @NotNull FilterModel<VcsLogUserFilter> filterModel) {
     super("User", uiProperties, filterModel);
-    myDataHolder = dataHolder;
+    myLogData = logData;
   }
 
   @NotNull
@@ -61,7 +61,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(createAllAction());
     group.add(createSelectMultipleValuesAction());
-    if (!myDataHolder.getCurrentUser().isEmpty()) {
+    if (!myLogData.getCurrentUser().isEmpty()) {
       group.add(createPredefinedValueAction(Collections.singleton(VcsLogUserFilterImpl.ME)));
     }
     group.addAll(createRecentItemsActionGroup());
@@ -91,17 +91,17 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   @NotNull
   @Override
   protected List<String> getAllValues() {
-    return ContainerUtil.map(myDataHolder.getAllUsers(), new Function<VcsUser, String>() {
-      @Override
-      public String fun(VcsUser user) {
-        return user.getName();
-      }
+    return ContainerUtil.map(myLogData.getAllUsers(), user -> {
+      String shortPresentation = VcsUserUtil.getShortPresentation(user);
+      Couple<String> firstAndLastName = VcsUserUtil.getFirstAndLastName(shortPresentation);
+      if (firstAndLastName == null) return shortPresentation;
+      return VcsUserUtil.capitalizeName(firstAndLastName.first) + " " + VcsUserUtil.capitalizeName(firstAndLastName.second);
     });
   }
 
   @NotNull
   @Override
   protected VcsLogUserFilter createFilter(@NotNull Collection<String> values) {
-    return new VcsLogUserFilterImpl(values, myDataHolder.getCurrentUser(), myDataHolder.getAllUsers());
+    return new VcsLogUserFilterImpl(values, myLogData.getCurrentUser(), myLogData.getAllUsers());
   }
 }

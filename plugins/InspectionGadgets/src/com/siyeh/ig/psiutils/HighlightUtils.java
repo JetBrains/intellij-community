@@ -64,55 +64,47 @@ public class HighlightUtils {
       return;
     }
     final Application application = ApplicationManager.getApplication();
-    application.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final PsiElement[] elements =
-          PsiUtilCore.toPsiElementArray(elementCollection);
-        final PsiElement firstElement = elements[0];
-        if (ContainerUtil.exists(elements, new Condition<PsiElement>() {
-          @Override
-          public boolean value(PsiElement element) {
-            return !element.isValid();
-          }
-        })) {
-          return;
-        }
-        final Project project = firstElement.getProject();
-        if (project.isDisposed()) return;
-        final FileEditorManager editorManager =
-          FileEditorManager.getInstance(project);
-        final EditorColorsManager editorColorsManager =
-          EditorColorsManager.getInstance();
-        final Editor editor = editorManager.getSelectedTextEditor();
-        if (editor == null) {
-          return;
-        }
-        final EditorColorsScheme globalScheme =
-          editorColorsManager.getGlobalScheme();
-        final TextAttributes textattributes =
-          globalScheme.getAttributes(
-            EditorColors.SEARCH_RESULT_ATTRIBUTES);
-        final HighlightManager highlightManager =
-          HighlightManager.getInstance(project);
-        highlightManager.addOccurrenceHighlights(
-          editor, elements, textattributes, true, null);
-        final WindowManager windowManager =
-          WindowManager.getInstance();
-        final StatusBar statusBar =
-          windowManager.getStatusBar(project);
-        statusBar.setInfo(InspectionGadgetsBundle.message(
-          "press.escape.to.remove.highlighting.message"));
-        final FindManager findmanager =
-          FindManager.getInstance(project);
-        FindModel findmodel = findmanager.getFindNextModel();
-        if (findmodel == null) {
-          findmodel = findmanager.getFindInFileModel();
-        }
-        findmodel.setSearchHighlighters(true);
-        findmanager.setFindWasPerformed();
-        findmanager.setFindNextModel(findmodel);
+    application.invokeLater(() -> {
+      final PsiElement[] elements =
+        PsiUtilCore.toPsiElementArray(elementCollection);
+      final PsiElement firstElement = elements[0];
+      if (ContainerUtil.exists(elements, element -> !element.isValid())) {
+        return;
       }
+      final Project project = firstElement.getProject();
+      if (project.isDisposed()) return;
+      final FileEditorManager editorManager =
+        FileEditorManager.getInstance(project);
+      final EditorColorsManager editorColorsManager =
+        EditorColorsManager.getInstance();
+      final Editor editor = editorManager.getSelectedTextEditor();
+      if (editor == null) {
+        return;
+      }
+      final EditorColorsScheme globalScheme =
+        editorColorsManager.getGlobalScheme();
+      final TextAttributes textattributes =
+        globalScheme.getAttributes(
+          EditorColors.SEARCH_RESULT_ATTRIBUTES);
+      final HighlightManager highlightManager =
+        HighlightManager.getInstance(project);
+      highlightManager.addOccurrenceHighlights(
+        editor, elements, textattributes, true, null);
+      final WindowManager windowManager =
+        WindowManager.getInstance();
+      final StatusBar statusBar =
+        windowManager.getStatusBar(project);
+      statusBar.setInfo(InspectionGadgetsBundle.message(
+        "press.escape.to.remove.highlighting.message"));
+      final FindManager findmanager =
+        FindManager.getInstance(project);
+      FindModel findmodel = findmanager.getFindNextModel();
+      if (findmodel == null) {
+        findmodel = findmanager.getFindInFileModel();
+      }
+      findmodel.setSearchHighlighters(true);
+      findmanager.setFindWasPerformed();
+      findmanager.setFindNextModel(findmodel);
     });
   }
 

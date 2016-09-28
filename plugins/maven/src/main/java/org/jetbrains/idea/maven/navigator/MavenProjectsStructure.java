@@ -78,12 +78,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   private static final Collection<String> BASIC_PHASES = MavenConstants.BASIC_PHASES;
   private static final Collection<String> PHASES = MavenConstants.PHASES;
 
-  private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = new Comparator<MavenSimpleNode>() {
-    @Override
-    public int compare(MavenSimpleNode o1, MavenSimpleNode o2) {
-      return StringUtil.compare(o1.getName(), o2.getName(), true);
-    }
-  };
+  private static final Comparator<MavenSimpleNode> NODE_COMPARATOR = (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true);
 
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
@@ -731,13 +726,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
             });
             JBPopupFactory.getInstance().createListPopupBuilder(list)
               .setTitle("Choose file to open ")
-              .setItemChoosenCallback(new Runnable() {
-                public void run() {
-                  final Object value = list.getSelectedValue();
-                  if (value instanceof MavenDomProfile) {
-                    final Navigatable navigatable = getNavigatable((MavenDomProfile)value);
-                    if (navigatable != null) navigatable.navigate(requestFocus);
-                  }
+              .setItemChoosenCallback(() -> {
+                final Object value = list.getSelectedValue();
+                if (value instanceof MavenDomProfile) {
+                  final Navigatable navigatable = getNavigatable((MavenDomProfile)value);
+                  if (navigatable != null) navigatable.navigate(requestFocus);
                 }
               }).createPopup().showInFocusCenter();
           }

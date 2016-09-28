@@ -52,7 +52,7 @@ public class OpenOutputAction extends AnAction {
           return CharsetToolkit.UTF8_CHARSET;
         }
       };
-      FileEditorManager.getInstance(CommonDataKeys.PROJECT.getData(e.getDataContext())).openFile(file, true);
+      FileEditorManager.getInstance(e.getProject()).openFile(file, true);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -286,8 +286,7 @@ public class GenericsUtil {
   }
 
   public static boolean isFromExternalTypeLanguage(@NotNull PsiType type) {
-    String internalCanonicalText = type.getInternalCanonicalText();
-    return internalCanonicalText != null && internalCanonicalText.equals(type.getCanonicalText());
+    return type.getInternalCanonicalText().equals(type.getCanonicalText());
   }
 
   @Contract("null -> null")
@@ -376,11 +375,14 @@ public class GenericsUtil {
           LOG.assertTrue(toPut == null || toPut.isValid(), toPut);
           substitutor = substitutor.put(typeParameter, toPut);
         }
-        final PsiAnnotation[] applicableAnnotations = classType.getApplicableAnnotations();
-        if (substitutor == PsiSubstitutor.EMPTY && !toExtend && applicableAnnotations.length == 0 && !(aClass instanceof PsiTypeParameter)) return classType;
+        PsiAnnotation[] applicableAnnotations = classType.getApplicableAnnotations();
+        if (substitutor == PsiSubstitutor.EMPTY && !toExtend && applicableAnnotations.length == 0 && !(aClass instanceof PsiTypeParameter)) {
+          return classType;
+        }
         PsiManager manager = aClass.getManager();
         PsiType result = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
-          .createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass), applicableAnnotations);
+          .createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass))
+          .annotate(TypeAnnotationProvider.Static.create(applicableAnnotations));
         if (toExtend) result = PsiWildcardType.createExtends(manager, result);
         return result;
       }

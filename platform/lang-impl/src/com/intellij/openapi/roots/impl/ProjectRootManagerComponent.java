@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,12 +92,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       }
     }, project);
 
-    startupManager.registerStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        myStartupActivityPerformed = true;
-      }
-    });
+    startupManager.registerStartupActivity(() -> myStartupActivityPerformed = true);
 
     myHandler = new BatchUpdateListener() {
       @Override
@@ -293,7 +288,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (!myStartupActivityPerformed) return;
 
     if (myDoLogCachesUpdate) LOG.debug(new Throwable("sync roots"));
-    else LOG.info("project roots have changed");
+    else if (!ApplicationManager.getApplication().isUnitTestMode()) LOG.info("project roots have changed");
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
@@ -318,12 +313,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private class AppListener extends ApplicationAdapter {
     @Override
-    public void beforeWriteActionStart(Object action) {
+    public void beforeWriteActionStart(@NotNull Object action) {
       myInsideRefresh++;
     }
 
     @Override
-    public void writeActionFinished(Object action) {
+    public void writeActionFinished(@NotNull Object action) {
       if (--myInsideRefresh == 0) {
         if (myPointerChangesDetected) {
           myPointerChangesDetected = false;

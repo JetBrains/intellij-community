@@ -219,12 +219,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     protected void afterAddition(@NotNull final DomElement newElement) {
       final DomElement copy = newElement.createStableCopy();
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myView.setSelectedDomElement(copy);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> myView.setSelectedDomElement(copy));
 
     }
   }

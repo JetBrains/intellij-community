@@ -167,12 +167,10 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
 
                     updateContext(newNamespaces, newVariables);
 
-                    SwingUtilities.invokeLater(new Runnable() {
-                        public void run() {
-                            final Editor editor = getEditor();
-                            if (editor != null) {
-                                editor.getContentComponent().grabFocus();
-                            }
+                    SwingUtilities.invokeLater(() -> {
+                        final Editor editor = getEditor();
+                        if (editor != null) {
+                            editor.getContentComponent().grabFocus();
                         }
                     });
                 }
@@ -264,12 +262,10 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
             myComboBox.getEditor().selectAll();
         }
 
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                final Editor editor = getEditor();
-                if (editor != null) {
-                    editor.getContentComponent().grabFocus();
-                }
+        SwingUtilities.invokeLater(() -> {
+            final Editor editor = getEditor();
+            if (editor != null) {
+                editor.getContentComponent().grabFocus();
             }
         });
     }

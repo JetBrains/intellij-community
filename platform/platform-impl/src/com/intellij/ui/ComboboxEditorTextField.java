@@ -130,12 +130,9 @@ public class ComboboxEditorTextField extends EditorTextField {
   private void repaintComboBox() {
     // TODO:
     if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() || (SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel())) {
-      IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(new Runnable() {
-        @Override
-        public void run() {
-          final Container parent = getParent();
-          if (parent != null) parent.repaint();
-        }
+      IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(() -> {
+        final Container parent1 = getParent();
+        if (parent1 != null) parent1.repaint();
       });
     }
   }

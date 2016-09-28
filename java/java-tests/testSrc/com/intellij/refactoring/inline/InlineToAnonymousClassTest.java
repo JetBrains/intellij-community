@@ -261,7 +261,7 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   }
 
   public void testNoInlineMethodUsage() throws Exception {
-    doTestNoInline("Class cannot be inlined because it has usages of methods not inherited from its superclass or interface");
+    doTestNoInline("Class cannot be inlined because there are usages of its methods not inherited from its superclass or interface");
   }
 
   public void testNoInlineFieldUsage() throws Exception {

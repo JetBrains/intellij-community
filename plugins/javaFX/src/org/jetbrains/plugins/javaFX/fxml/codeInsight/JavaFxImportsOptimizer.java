@@ -35,12 +35,12 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyAttributeDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxRootTagDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticSetterAttributeDescriptor;
 
 import java.util.*;
@@ -65,17 +65,14 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
       return EmptyRunnable.INSTANCE;
     }
     final List<Pair<String, Boolean>> names = new ArrayList<Pair<String, Boolean>>();
-    collectNamesToImport(names, (XmlFile)file);
-    Collections.sort(names, new Comparator<Pair<String, Boolean>>() {
-      @Override
-      public int compare(Pair<String, Boolean> o1, Pair<String, Boolean> o2) {
-        return StringUtil.compare(o1.first, o2.first, true);
-      }
-    });
+    final Set<String> demandedForNested = new HashSet<>();
+    collectNamesToImport(names, demandedForNested, (XmlFile)file);
+    Collections.sort(names, (o1, o2) -> StringUtil.compare(o1.first, o2.first, true));
     final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
     final List<Pair<String, Boolean>> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
     final HashSet<String> onDemand = new HashSet<String>();
     ImportHelper.collectOnDemandImports(sortedNames, onDemand, settings);
+    onDemand.addAll(demandedForNested);
     final Set<String> imported = new HashSet<String>();
     final List<String> imports = new ArrayList<String>();
     for (Pair<String, Boolean> pair : sortedNames) {
@@ -96,35 +93,39 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     
     final XmlFile dummyFile = (XmlFile)factory.createFileFromText("_Dummy_.fxml", StdFileTypes.XML, StringUtil.join(imports, "\n"));
     final XmlDocument document = dummyFile.getDocument();
-    final XmlProlog newImportList = document.getProlog();
+    final XmlProlog newImportList = document != null ? document.getProlog() : null;
     if (newImportList == null) return EmptyRunnable.getInstance();
-    return new Runnable() {
-      @Override
-      public void run() {
-        final XmlDocument xmlDocument = ((XmlFile)file).getDocument();
-        final XmlProlog prolog = xmlDocument.getProlog();
-        if (prolog != null) {
-          final Collection<XmlProcessingInstruction> instructions = PsiTreeUtil.findChildrenOfType(prolog, XmlProcessingInstruction.class);
-          for (final XmlProcessingInstruction instruction : instructions) {
-            final ASTNode node = instruction.getNode();
-            final ASTNode nameNode = node.findChildByType(XmlTokenType.XML_NAME);
-            if (nameNode != null && nameNode.getText().equals("import")) {
-              instruction.delete();
-            }
+    return () -> {
+      final XmlDocument xmlDocument = ((XmlFile)file).getDocument();
+      final XmlProlog prolog = xmlDocument != null ? xmlDocument.getProlog() : null;
+      if (prolog != null) {
+        final Collection<XmlProcessingInstruction> instructions = PsiTreeUtil.findChildrenOfType(prolog, XmlProcessingInstruction.class);
+        for (final XmlProcessingInstruction instruction : instructions) {
+          final ASTNode node = instruction.getNode();
+          final ASTNode nameNode = node.findChildByType(XmlTokenType.XML_NAME);
+          if (nameNode != null && nameNode.getText().equals("import")) {
+            instruction.delete();
           }
-          prolog.add(newImportList);
-        } else {
-          document.addBefore(newImportList, document.getRootTag());
         }
+        prolog.add(newImportList);
+      } else {
+        document.addBefore(newImportList, document.getRootTag());
       }
     };
   }
-  
-  private static void collectNamesToImport(@NotNull final Collection<Pair<String, Boolean>> names, XmlFile file) {
+
+  private static void collectNamesToImport(@NotNull final Collection<Pair<String, Boolean>> names,
+                                           @NotNull final Collection<String> demandedForNested,
+                                           @NotNull XmlFile file) {
     file.accept(new JavaFxUsedClassesVisitor() {
       @Override
       protected void appendClassName(String fqn) {
         names.add(Pair.create(fqn, false));
+      }
+
+      @Override
+      protected void appendDemandedPackageName(@NotNull String packageName) {
+        demandedForNested.add(packageName);
       }
     });
   }
@@ -145,7 +146,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
           appendClassName(((PsiMember)declaration).getContainingClass());
         }
       }
-      else if (descriptor instanceof JavaFxDefaultPropertyAttributeDescriptor && FxmlConstants.TYPE.equals(descriptor.getName())) {
+      else if (descriptor instanceof JavaFxRootTagDescriptor.RootTagTypeAttributeDescriptor) {
         appendClassName(JavaFxPsiUtil.findPsiClass(attribute.getValue(), attribute));
       }
     }
@@ -154,9 +155,10 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     public void visitXmlTag(XmlTag tag) {
       super.visitXmlTag(tag);
       final XmlElementDescriptor descriptor = tag.getDescriptor();
-      if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
+      if (descriptor instanceof JavaFxClassTagDescriptorBase) {
         appendClassName(descriptor.getDeclaration());
-      } else if (descriptor instanceof JavaFxPropertyElementDescriptor && ((JavaFxPropertyElementDescriptor)descriptor).isStatic()) {
+      }
+      else if (descriptor instanceof JavaFxPropertyTagDescriptor && ((JavaFxPropertyTagDescriptor)descriptor).isStatic()) {
         final PsiElement declaration = descriptor.getDeclaration();
         if (declaration instanceof PsiMember) {
           appendClassName(((PsiMember)declaration).getContainingClass());
@@ -166,10 +168,38 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
 
     private void appendClassName(PsiElement declaration) {
       if (declaration instanceof PsiClass) {
-        appendClassName(((PsiClass)declaration).getQualifiedName());
+        final PsiClass psiClass = (PsiClass)declaration;
+        final String ownerClassQN = getTopmostOwnerClassQualifiedName(psiClass);
+        if (ownerClassQN != null) {
+          appendClassName(ownerClassQN);
+          final String ownerClassPackageName = StringUtil.getPackageName(ownerClassQN);
+          if (!StringUtil.isEmpty(ownerClassPackageName)) {
+            appendDemandedPackageName(ownerClassPackageName);
+          }
+        }
+        else {
+          final String classQN = psiClass.getQualifiedName();
+          if (classQN != null) {
+            appendClassName(classQN);
+          }
+        }
       }
     }
 
+    @Nullable
+    private static String getTopmostOwnerClassQualifiedName(@NotNull PsiClass psiClass) {
+      PsiClass ownerClass = null;
+      for (PsiClass aClass = psiClass.getContainingClass(); aClass != null; aClass = aClass.getContainingClass()) {
+        ownerClass = aClass;
+      }
+      if (ownerClass != null) {
+        return ownerClass.getQualifiedName();
+      }
+      return null;
+    }
+
     protected abstract void appendClassName(String fqn);
+
+    protected abstract void appendDemandedPackageName(@NotNull String packageName);
   }
 }

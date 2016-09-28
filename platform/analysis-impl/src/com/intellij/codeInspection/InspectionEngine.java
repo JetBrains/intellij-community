@@ -143,28 +143,22 @@ public class InspectionEngine {
     Map<LocalInspectionToolWrapper, Set<String>> toolToSpecifiedDialectIds = getToolsToSpecifiedLanguages(toolWrappers);
     List<Map.Entry<LocalInspectionToolWrapper, Set<String>>> entries = new ArrayList<Map.Entry<LocalInspectionToolWrapper, Set<String>>>(toolToSpecifiedDialectIds.entrySet());
     final Map<String, List<ProblemDescriptor>> resultDescriptors = new ConcurrentHashMap<String, List<ProblemDescriptor>>();
-    Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor = new Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>>() {
-      @Override
-      public boolean process(final Map.Entry<LocalInspectionToolWrapper, Set<String>> entry) {
-        ProblemsHolder holder = new ProblemsHolder(iManager, file, isOnTheFly);
-        final LocalInspectionTool tool = entry.getKey().getTool();
-        Set<String> dialectIdsSpecifiedForTool = entry.getValue();
-        createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, elementDialectIds, dialectIdsSpecifiedForTool);
+    Processor<Map.Entry<LocalInspectionToolWrapper, Set<String>>> processor = entry -> {
+      ProblemsHolder holder = new ProblemsHolder(iManager, file, isOnTheFly);
+      final LocalInspectionTool tool = entry.getKey().getTool();
+      Set<String> dialectIdsSpecifiedForTool = entry.getValue();
+      createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, elementDialectIds, dialectIdsSpecifiedForTool);
 
-        tool.inspectionFinished(session, holder);
+      tool.inspectionFinished(session, holder);
 
-        if (holder.hasResults()) {
-          resultDescriptors.put(tool.getShortName(), ContainerUtil.filter(holder.getResults(), new Condition<ProblemDescriptor>() {
-            @Override
-            public boolean value(ProblemDescriptor descriptor) {
-              PsiElement element = descriptor.getPsiElement();
-              return element == null || !SuppressionUtil.inspectionResultSuppressed(element, tool);
-            }
-          }));
-        }
-
-        return true;
+      if (holder.hasResults()) {
+        resultDescriptors.put(tool.getShortName(), ContainerUtil.filter(holder.getResults(), descriptor -> {
+          PsiElement element = descriptor.getPsiElement();
+          return element == null || !SuppressionUtil.inspectionResultSuppressed(element, tool);
+        }));
       }
+
+      return true;
     };
     JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, failFastOnAcquireReadAction, processor);
 

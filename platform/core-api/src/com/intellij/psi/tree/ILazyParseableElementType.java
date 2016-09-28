@@ -43,6 +43,9 @@ public class ILazyParseableElementType extends IElementType {
     super(debugName, language);
   }
 
+  /**
+   * Allows to construct element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
+   */
   public ILazyParseableElementType(@NotNull @NonNls final String debugName, @Nullable final Language language, final boolean register) {
     super(debugName, language, register);
   }

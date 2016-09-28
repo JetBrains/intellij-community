@@ -146,15 +146,12 @@ public class ArtifactCompileScope {
       result.add(artifact);
     }
 
-    ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE, new Processor<ArtifactPackagingElement>() {
-        @Override
-        public boolean process(ArtifactPackagingElement element) {
-          Artifact included = element.findArtifact(context);
-          if (included != null) {
-            collectIncludedArtifacts(included, context, processed, result, withOutputPathOnly);
-          }
-          return true;
-        }
-      }, context, false);
+    ArtifactUtil.processPackagingElements(artifact, ArtifactElementType.ARTIFACT_ELEMENT_TYPE, element -> {
+      Artifact included = element.findArtifact(context);
+      if (included != null) {
+        collectIncludedArtifacts(included, context, processed, result, withOutputPathOnly);
+      }
+      return true;
+    }, context, false);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2012 Bas Leijdekkers
+ * Copyright 2006-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.util.Consumer;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
@@ -62,7 +61,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends StaticMethodOnlyUs
     }
 
     @Override
-    protected void doFix(@NotNull final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(@NotNull final Project project, ProblemDescriptor descriptor) {
       final PsiElement location = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)location.getParent();
       final RefactoringActionHandler moveHandler = RefactoringActionHandlerFactory.getInstance().createMoveHandler();
@@ -82,6 +81,16 @@ public class StaticMethodOnlyUsedInOneClassInspection extends StaticMethodOnlyUs
           moveHandler.invoke(project, new PsiElement[]{method}, dataContext);
         }
       });
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    protected boolean prepareForWriting() {
+      return false;
     }
   }
 }

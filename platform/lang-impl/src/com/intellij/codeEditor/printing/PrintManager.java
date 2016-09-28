@@ -221,11 +221,8 @@ class PrintManager {
   private static TextPainter initTextPainter(@NotNull final DocumentEx doc, final Project project) {
     final TextPainter[] res = new TextPainter[1];
     ApplicationManager.getApplication().runReadAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          res[0] = doInitTextPainter(doc, project);
-        }
+      () -> {
+        res[0] = doInitTextPainter(doc, project);
       }
     );
     return res[0];

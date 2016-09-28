@@ -62,22 +62,14 @@ public class LogFilesManager {
           obsoletePaths.removeAll(newPaths);
 
           try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-              @Override
-              public void run() {
-                if (project.isDisposed()) {
-                  return;
-                }
+            SwingUtilities.invokeAndWait(() -> {
+              if (project.isDisposed()) {
+                return;
+              }
 
-                addConfigurationConsoles(logFile.getOptions(), new Condition<String>() {
-                  @Override
-                  public boolean value(final String file) {
-                    return !oldPaths.contains(file);
-                  }
-                }, newPaths, logFile.getConfiguration());
-                for (String each : obsoletePaths) {
-                  myManager.removeLogConsole(each);
-                }
+              addConfigurationConsoles(logFile.getOptions(), file -> !oldPaths.contains(file), newPaths, logFile.getConfiguration());
+              for (String each : obsoletePaths) {
+                myManager.removeLogConsole(each);
               }
             });
           }

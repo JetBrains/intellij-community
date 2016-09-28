@@ -18,11 +18,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,7 +42,6 @@ import java.net.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author anna
@@ -68,18 +63,20 @@ public class PluginDownloader {
   private String myDescription;
   private List<PluginId> myDepends;
   private IdeaPluginDescriptor myDescriptor;
-  private boolean myForceHttps;
+  private final boolean myForceHttps;
 
   private PluginDownloader(@NotNull String pluginId,
                            @NotNull String pluginUrl,
                            @Nullable String pluginName,
                            @Nullable String pluginVersion,
-                           @Nullable BuildNumber buildNumber) {
+                           @Nullable BuildNumber buildNumber,
+                           boolean forceHttps) {
     myPluginId = pluginId;
     myPluginUrl = pluginUrl;
     myPluginVersion = pluginVersion;
     myPluginName = pluginName;
     myBuildNumber = buildNumber;
+    myForceHttps = forceHttps;
   }
 
   public String getPluginId() {
@@ -122,10 +119,6 @@ public class PluginDownloader {
     myDescriptor = descriptor;
   }
 
-  public void setForceHttps(boolean forceHttps) {
-    myForceHttps = forceHttps;
-  }
-
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
     if (myFile != null) {
       return true;
@@ -157,12 +150,7 @@ public class PluginDownloader {
       if (ApplicationManager.getApplication() != null) {
         final String text = IdeBundle.message("error.plugin.was.not.installed", getPluginName(), errorMessage);
         final String title = IdeBundle.message("title.failed.to.download");
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showErrorDialog(text, title);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(text, title));
       }
       return false;
     }
@@ -305,10 +293,20 @@ public class PluginDownloader {
   public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
                                                   @Nullable String host,
                                                   @Nullable BuildNumber buildNumber) throws IOException {
+    boolean forceHttps = host == null
+                         && (ApplicationManager.getApplication() == null || UpdateSettings.getInstance().canUseSecureConnection());
+    return createDownloader(descriptor, host, buildNumber, forceHttps);
+  }
+
+  @NotNull
+  public static PluginDownloader createDownloader(@NotNull IdeaPluginDescriptor descriptor,
+                                                  @Nullable String host,
+                                                  @Nullable BuildNumber buildNumber,
+                                                  boolean forceHttps) throws IOException {
     try {
       String url = getUrl(descriptor, host, buildNumber);
       String id = descriptor.getPluginId().getIdString();
-      PluginDownloader downloader = new PluginDownloader(id, url, descriptor.getName(), descriptor.getVersion(), buildNumber);
+      PluginDownloader downloader = new PluginDownloader(id, url, descriptor.getName(), descriptor.getVersion(), buildNumber, forceHttps);
       downloader.setDescriptor(descriptor);
       downloader.setDescription(descriptor.getDescription());
       List<PluginId> depends;
@@ -342,13 +340,11 @@ public class PluginDownloader {
                                    app != null ? ApplicationInfo.getInstance().getApiVersion() :
                                    appInfo.getBuild().asString();
 
-      String uuid = app != null ? UpdateChecker.getInstallationUID(PropertiesComponent.getInstance()) : UUID.randomUUID().toString();
-
       URIBuilder uriBuilder = new URIBuilder(appInfo.getPluginsDownloadUrl());
       uriBuilder.addParameter("action", "download");
       uriBuilder.addParameter("id", descriptor.getPluginId().getIdString());
       uriBuilder.addParameter("build", buildNumberAsString);
-      uriBuilder.addParameter("uuid", uuid);
+      uriBuilder.addParameter("uuid", PermanentInstallationID.get());
       return uriBuilder.build().toString();
     }
   }

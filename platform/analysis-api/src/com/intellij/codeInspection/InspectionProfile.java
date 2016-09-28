@@ -88,7 +88,13 @@ public interface InspectionProfile extends Profile {
 
   boolean isExecutable(Project project);
 
-  boolean isEditable();
+  /**
+   * @see {@link ModifiableModel#setSingleTool(String)}
+   *
+   * @return tool short name when inspection profile corresponds to synthetic profile for single inspection run
+   */
+  @Nullable
+  String getSingleTool();
 
   @NotNull
   String getDisplayName();

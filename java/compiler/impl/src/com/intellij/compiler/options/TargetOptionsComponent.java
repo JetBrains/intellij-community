@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -131,12 +132,7 @@ public class TargetOptionsComponent extends JPanel {
         it.remove();
       }
     }
-    Collections.sort(items, new Comparator<Module>() {
-      @Override
-      public int compare(Module o1, Module o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    });
+    Collections.sort(items, (o1, o2) -> o1.getName().compareTo(o2.getName()));
     final ChooseModulesDialog chooser = new ChooseModulesDialog(this, items, "Choose module");
     chooser.show();
     final List<Module> elements = chooser.getChosenElements();
@@ -181,7 +177,7 @@ public class TargetOptionsComponent extends JPanel {
   }
 
   private static GridBagConstraints constraints(final int gridx, final int gridy, final int gridwidth, final int gridheight, final double weightx, final double weighty, final int fill) {
-    return new GridBagConstraints(gridx, gridy, gridwidth, gridheight, weightx, weighty, GridBagConstraints.WEST, fill, new Insets(5, 5, 0, 0), 0, 0);
+    return new GridBagConstraints(gridx, gridy, gridwidth, gridheight, weightx, weighty, GridBagConstraints.WEST, fill, JBUI.insets(5, 5, 0, 0), 0, 0);
   }
 
   private static final class TargetLevelTableModel extends AbstractTableModel implements ItemRemovable{
@@ -229,12 +225,7 @@ public class TargetOptionsComponent extends JPanel {
     }
 
     private void sorItems() {
-      Collections.sort(myItems, new Comparator<Item>() {
-        @Override
-        public int compare(Item o1, Item o2) {
-          return o1.module.getName().compareTo(o2.module.getName());
-        }
-      });
+      Collections.sort(myItems, (o1, o2) -> o1.module.getName().compareTo(o2.module.getName()));
     }
 
     public List<Item> getItems() {

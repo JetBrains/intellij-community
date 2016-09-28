@@ -195,11 +195,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
       return null;
     }
 
-    final VirtualFile[] children = dataManager.doInReadActionIfProjectOpen(new Computable<VirtualFile[]>() {
-      public VirtualFile[] compute() {
-        return dir.getChildren();
-      }
-    });
+    final VirtualFile[] children = dataManager.doInReadActionIfProjectOpen(() -> dir.getChildren());
 
     if (children == null) {
       return null;
@@ -297,82 +293,76 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
       return null;
     }
 
-    return new Runnable() {
-      public void run() {
-        final Project project = getProject();
+    return () -> {
+      final Project project = getProject();
 
-        final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+      final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
 
-        // find all modules content roots
-        final VirtualFile[] modulesContentRoots = dataManager.doInReadActionIfProjectOpen(new Computable<VirtualFile[]>() {
-          public VirtualFile[] compute() {
-            return rootManager.getContentRoots();
+      // find all modules content roots
+      final VirtualFile[] modulesContentRoots = dataManager.doInReadActionIfProjectOpen(() -> rootManager.getContentRoots());
+
+      if (modulesContentRoots == null) {
+        return;
+      }
+
+      // gather coverage from all content roots
+      for (VirtualFile root : modulesContentRoots) {
+        annotate(root, suite, dataManager, data, project, new Annotator() {
+          public void annotateSourceDirectory(final String dirPath, final DirCoverageInfo info) {
+            myDirCoverageInfos.put(dirPath, info);
+          }
+
+          public void annotateTestDirectory(final String dirPath, final DirCoverageInfo info) {
+            myTestDirCoverageInfos.put(dirPath, info);
+          }
+
+          public void annotateFile(@NotNull final String filePath, @NotNull final FileCoverageInfo info) {
+            myFileCoverageInfos.put(filePath, info);
           }
         });
-
-        if (modulesContentRoots == null) {
-          return;
-        }
-
-        // gather coverage from all content roots
-        for (VirtualFile root : modulesContentRoots) {
-          annotate(root, suite, dataManager, data, project, new Annotator() {
-            public void annotateSourceDirectory(final String dirPath, final DirCoverageInfo info) {
-              myDirCoverageInfos.put(dirPath, info);
-            }
-
-            public void annotateTestDirectory(final String dirPath, final DirCoverageInfo info) {
-              myTestDirCoverageInfos.put(dirPath, info);
-            }
-
-            public void annotateFile(@NotNull final String filePath, @NotNull final FileCoverageInfo info) {
-              myFileCoverageInfos.put(filePath, info);
-            }
-          });
-        }
-
-        //final VirtualFile[] roots = ProjectRootManagerEx.getInstanceEx(project).getContentRootsFromAllModules();
-        //index.iterateContentUnderDirectory(roots[0], new ContentIterator() {
-        //  public boolean processFile(final VirtualFile fileOrDir) {
-        //    // TODO support for libraries and sdk
-        //    if (index.isInContent(fileOrDir)) {
-        //      final String normalizedPath = RubyCoverageEngine.rcovalizePath(fileOrDir.getPath(), (RubyCoverageSuite)suite);
-        //
-        //      // TODO - check filters
-        //
-        //      if (fileOrDir.isDirectory()) {
-        //        //// process dir
-        //        //if (index.isInTestSourceContent(fileOrDir)) {
-        //        //  //myTestDirCoverageInfos.put(RubyCoverageEngine.rcovalizePath(fileOrDir.getPath(), (RubyCoverageSuite)suite), )
-        //        //} else {
-        //        //  myDirCoverageInfos.put(normalizedPath, new FileCoverageInfo());
-        //        //}
-        //      } else {
-        //        // process file
-        //        final ClassData classData = data.getOrCreateClassData(normalizedPath);
-        //        if (classData != null) {
-        //          final int count = classData.getLines().length;
-        //          if (count != 0) {
-        //            final FileCoverageInfo info = new FileCoverageInfo();
-        //            info.totalLineCount = count;
-        //            // let's count covered lines
-        //            for (int i = 1; i <= count; i++) {
-        //              final LineData lineData = classData.getLineData(i);
-        //              if (lineData.getStatus() != LineCoverage.NONE){
-        //                info.coveredLineCount++;
-        //              }
-        //            }
-        //            myFileCoverageInfos.put(normalizedPath, info);
-        //          }
-        //        }
-        //      }
-        //    }
-        //    return true;
-        //  }
-        //});
-
-        dataManager.triggerPresentationUpdate();
       }
+
+      //final VirtualFile[] roots = ProjectRootManagerEx.getInstanceEx(project).getContentRootsFromAllModules();
+      //index.iterateContentUnderDirectory(roots[0], new ContentIterator() {
+      //  public boolean processFile(final VirtualFile fileOrDir) {
+      //    // TODO support for libraries and sdk
+      //    if (index.isInContent(fileOrDir)) {
+      //      final String normalizedPath = RubyCoverageEngine.rcovalizePath(fileOrDir.getPath(), (RubyCoverageSuite)suite);
+      //
+      //      // TODO - check filters
+      //
+      //      if (fileOrDir.isDirectory()) {
+      //        //// process dir
+      //        //if (index.isInTestSourceContent(fileOrDir)) {
+      //        //  //myTestDirCoverageInfos.put(RubyCoverageEngine.rcovalizePath(fileOrDir.getPath(), (RubyCoverageSuite)suite), )
+      //        //} else {
+      //        //  myDirCoverageInfos.put(normalizedPath, new FileCoverageInfo());
+      //        //}
+      //      } else {
+      //        // process file
+      //        final ClassData classData = data.getOrCreateClassData(normalizedPath);
+      //        if (classData != null) {
+      //          final int count = classData.getLines().length;
+      //          if (count != 0) {
+      //            final FileCoverageInfo info = new FileCoverageInfo();
+      //            info.totalLineCount = count;
+      //            // let's count covered lines
+      //            for (int i = 1; i <= count; i++) {
+      //              final LineData lineData = classData.getLineData(i);
+      //              if (lineData.getStatus() != LineCoverage.NONE){
+      //                info.coveredLineCount++;
+      //              }
+      //            }
+      //            myFileCoverageInfos.put(normalizedPath, info);
+      //          }
+      //        }
+      //      }
+      //    }
+      //    return true;
+      //  }
+      //});
+
+      dataManager.triggerPresentationUpdate();
     };
   }
 

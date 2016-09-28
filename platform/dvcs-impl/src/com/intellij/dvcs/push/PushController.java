@@ -52,7 +52,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.ui.Messages.OK;
@@ -70,7 +69,7 @@ public class PushController implements Disposable {
   @Nullable private final Repository myCurrentlyOpenedRepository;
   private final boolean mySingleRepoProject;
   private static final int DEFAULT_CHILDREN_PRESENTATION_NUMBER = 20;
-  private final ExecutorService myExecutorService = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("DVCS Push"));
+  private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("DVCS Push");
 
   private final Map<RepositoryNode, MyRepoModel<?, ?, ?>> myView2Model = new TreeMap<RepositoryNode, MyRepoModel<?, ?, ?>>();
 
@@ -486,15 +485,15 @@ public class PushController implements Disposable {
       public void run(@NotNull ProgressIndicator indicator) {
         myPushSettings.saveExcludedRepoRoots(myExcludedRepositoryRoots);
         for (PushSupport support : myPushSupports) {
-          doPush(support, force);
+          doPushSynchronously(support, force);
         }
       }
     };
     task.queue();
   }
 
-  private <R extends Repository, S extends PushSource, T extends PushTarget> void doPush(@NotNull PushSupport<R, S, T> support,
-                                                                                         boolean force) {
+  private <R extends Repository, S extends PushSource, T extends PushTarget> void doPushSynchronously(@NotNull PushSupport<R, S, T> support,
+                                                                                                      boolean force) {
     VcsPushOptionValue options = myDialog.getAdditionalOptionValue(support);
     Pusher<R, S, T> pusher = support.getPusher();
     Map<R, PushSpec<S, T>> specs = collectPushSpecsForVcs(support);

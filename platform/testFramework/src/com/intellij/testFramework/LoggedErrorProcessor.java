@@ -15,6 +15,9 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.util.Disposer;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +25,7 @@ public class LoggedErrorProcessor {
   private static final LoggedErrorProcessor DEFAULT = new LoggedErrorProcessor();
 
   private static LoggedErrorProcessor ourInstance = DEFAULT;
+  private boolean myMirrorToStderr = true;
 
   @NotNull
   public static LoggedErrorProcessor getInstance() {
@@ -42,17 +46,26 @@ public class LoggedErrorProcessor {
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
+    message += DefaultLogger.attachmentsToString(t);
     logger.info(message, t);
 
-    System.err.println("ERROR: " + message);
-    if (t != null) t.printStackTrace(System.err);
-    if (details != null && details.length > 0) {
-      System.out.println("details: ");
-      for (String detail : details) {
-        System.out.println(detail);
+    if (myMirrorToStderr) {
+      System.err.println("ERROR: " + message);
+      if (t != null) t.printStackTrace(System.err);
+      if (details != null && details.length > 0) {
+        System.out.println("details: ");
+        for (String detail : details) {
+          System.out.println(detail);
+        }
       }
     }
 
     throw new AssertionError(message);
+  }
+
+  public void disableStderrDumping(@NotNull Disposable parentDisposable) {
+    boolean prev = myMirrorToStderr;
+    myMirrorToStderr = false;
+    Disposer.register(parentDisposable, () -> myMirrorToStderr = prev);
   }
 }

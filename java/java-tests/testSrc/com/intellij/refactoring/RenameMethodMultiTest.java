@@ -97,6 +97,10 @@ public class RenameMethodMultiTest extends MultiFileTestCase {
     doTest("p.Foo", "void foo()", "bar");
   }
 
+  public void testExpandStaticImportToAvoidConflictingResolve() throws Exception {
+    doTest("bar.Bar", "void createBar()", "bar");
+  }
+
   private void doTest(final String methodSignature, final String newName) throws Exception {
     doTest(getTestName(false), methodSignature, newName);
   }

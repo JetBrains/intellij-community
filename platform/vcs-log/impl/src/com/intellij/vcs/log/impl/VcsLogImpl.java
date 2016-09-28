@@ -17,14 +17,13 @@ package com.intellij.vcs.log.impl;
 
 import com.google.common.primitives.Ints;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,11 +34,11 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 public class VcsLogImpl implements VcsLog {
-  @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogUiImpl myUi;
 
-  public VcsLogImpl(@NotNull VcsLogDataHolder holder, @NotNull VcsLogUiImpl ui) {
-    myDataHolder = holder;
+  public VcsLogImpl(@NotNull VcsLogData manager, @NotNull VcsLogUiImpl ui) {
+    myLogData = manager;
     myUi = ui;
   }
 
@@ -48,10 +47,10 @@ public class VcsLogImpl implements VcsLog {
   public List<CommitId> getSelectedCommits() {
     final int[] rows = myUi.getTable().getSelectedRows();
     return new AbstractList<CommitId>() {
-      @NotNull
+      @Nullable
       @Override
       public CommitId get(int index) {
-        return ((GraphTableModel)myUi.getTable().getModel()).getCommitIdAtRow(rows[index]);
+        return getTable().getModel().getCommitIdAtRow(rows[index]);
       }
 
       @Override
@@ -59,6 +58,10 @@ public class VcsLogImpl implements VcsLog {
         return rows.length;
       }
     };
+  }
+
+  private VcsLogGraphTable getTable() {
+    return myUi.getTable();
   }
 
   @NotNull
@@ -69,7 +72,7 @@ public class VcsLogImpl implements VcsLog {
       @NotNull
       @Override
       public VcsFullCommitDetails get(int index) {
-        return myDataHolder.getCommitDetailsGetter().getCommitData(rows[index], (GraphTableModel)myUi.getTable().getModel());
+        return getTable().getModel().getFullDetails(rows[index]);
       }
 
       @Override
@@ -82,31 +85,27 @@ public class VcsLogImpl implements VcsLog {
   @Override
   public void requestSelectedDetails(@NotNull Consumer<List<VcsFullCommitDetails>> consumer, @Nullable ProgressIndicator indicator) {
     List<Integer> rowsList = Ints.asList(myUi.getTable().getSelectedRows());
-    myDataHolder.getCommitDetailsGetter().loadCommitsData(rowsList, (GraphTableModel)myUi.getTable().getModel(), consumer, indicator);
+    myLogData.getCommitDetailsGetter()
+      .loadCommitsData(getTable().getModel().convertToCommitIds(rowsList), consumer, indicator);
   }
 
   @Nullable
   @Override
   public Collection<String> getContainingBranches(@NotNull Hash commitHash, @NotNull VirtualFile root) {
-    return myDataHolder.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
+    return myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(root, commitHash);
   }
 
   @NotNull
   @Override
   public Collection<VcsRef> getAllReferences() {
-    return myUi.getDataPack().getRefsModel().getAllRefs();
+    return myUi.getDataPack().getRefs().getAllRefs();
   }
 
   @NotNull
   @Override
   public Future<Boolean> jumpToReference(final String reference) {
     Collection<VcsRef> references = getAllReferences();
-    List<VcsRef> matchingRefs = ContainerUtil.findAll(references, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getName().startsWith(reference);
-      }
-    });
+    List<VcsRef> matchingRefs = ContainerUtil.findAll(references, ref -> ref.getName().startsWith(reference));
     if (matchingRefs.isEmpty()) {
       return myUi.jumpToCommitByPartOfHash(reference);
     }
@@ -119,7 +118,6 @@ public class VcsLogImpl implements VcsLog {
   @NotNull
   @Override
   public Collection<VcsLogProvider> getLogProviders() {
-    return myDataHolder.getLogProviders();
+    return myLogData.getLogProviders();
   }
-
 }

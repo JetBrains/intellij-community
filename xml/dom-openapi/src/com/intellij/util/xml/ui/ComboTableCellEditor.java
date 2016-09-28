@@ -42,12 +42,7 @@ public class ComboTableCellEditor extends DefaultCellEditor {
     JComboBox comboBox = (JComboBox)editorComponent;
     comboBox.setBorder(null);
     comboBox.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-    ComboControl.initComboBox(comboBox, new Condition<String>() {
-      @Override
-      public boolean value(final String object) {
-        return myData != null && myData.containsKey(object) || myNullable && EMPTY.first == object;
-      }
-    });
+    ComboControl.initComboBox(comboBox, object -> myData != null && myData.containsKey(object) || myNullable && EMPTY.first == object);
   }
 
   public ComboTableCellEditor(Class<? extends Enum> anEnum, final boolean nullable) {

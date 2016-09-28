@@ -22,6 +22,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
@@ -49,7 +50,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
     }
 
     result = myFunction.fun(h);
-    final long count = getModificationCount(h.getManager().getModificationTracker());
+    final long count = getModificationCount(h);
     h.putUserData(this, new SoftReference<Pair<Long, T>>(new Pair<Long, T>(count, result)));
     return result;
   }
@@ -58,7 +59,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
   public final T getCachedValueOrNull(@NotNull H h) {
     SoftReference<Pair<Long, T>> ref = h.getUserData(this);
     Pair<Long, T> data = SoftReference.dereference(ref);
-    if (data == null || data.getFirst() != getModificationCount(h.getManager().getModificationTracker())) {
+    if (data == null || data.getFirst() != getModificationCount(h)) {
       return null;
     }
 
@@ -73,15 +74,20 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
    * @return modification count
    * @throws AssertionError if {@link #myModifyCause} is junk
    */
-  private long getModificationCount(@NotNull PsiModificationTracker tracker) {
+  private long getModificationCount(@NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    long fileStamp = file == null || file.isPhysical() ? 0 : file.getModificationStamp();
+    PsiModificationTracker tracker = file == null ? element.getManager().getModificationTracker()
+                                                  : file.getManager().getModificationTracker();
+
     if (myModifyCause.equals(PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT)) {
-      return tracker.getJavaStructureModificationCount();
+      return fileStamp + tracker.getJavaStructureModificationCount();
     }
     if (myModifyCause.equals(PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT)) {
-      return tracker.getOutOfCodeBlockModificationCount();
+      return fileStamp + tracker.getOutOfCodeBlockModificationCount();
     }
     if (myModifyCause.equals(PsiModificationTracker.MODIFICATION_COUNT)) {
-      return tracker.getModificationCount();
+      return fileStamp + tracker.getModificationCount();
     }
     throw new AssertionError("No modification tracker found for key " + myModifyCause);
   }

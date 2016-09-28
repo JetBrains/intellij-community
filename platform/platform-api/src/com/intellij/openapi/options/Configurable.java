@@ -186,4 +186,16 @@ public interface Configurable extends UnnamedConfigurable {
   interface NoMargin {
     // see ConfigurableCardPanel#create(Configurable)
   }
+
+  /**
+   * Allows to dynamically define if current configurable settings apply to current project or to the IDE and update "For current project" 
+   * indicator accordingly.
+   */
+  interface VariableProjectAppLevel {
+    /**
+     * @return True if current settings apply to the current project (enable "For current project" indicator), false for application-level
+     *         (IDE) settings.
+     */
+    boolean isProjectLevel();
+  }
 }

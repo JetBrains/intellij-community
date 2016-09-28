@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,19 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings {
     super("JavaCodeStyleSettings", container);
   }
 
-  public boolean SPACES_WITHIN_ANGLE_BRACKETS = false;
+  public boolean SPACES_WITHIN_ANGLE_BRACKETS;
 
   //Type arguments
-  public boolean SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT = false;
+  public boolean SPACE_AFTER_CLOSING_ANGLE_BRACKET_IN_TYPE_ARGUMENT;
 
   //Type parameters
-  public boolean SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER = false;
+  public boolean SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER;
   public boolean SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = true;
 
-  public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION = false;
+  public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION;
 
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
-  public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS = false;
+  public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS;
 
   public int BLANK_LINES_AROUND_INITIALIZER = 1;
   
@@ -48,11 +48,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings {
   }
   
   @Override
-  public void importLegacySettings() {
-    importLegacyUseFqClassNamesInJavadocSetting();
-  }
-
-  private void importLegacyUseFqClassNamesInJavadocSetting() {
+  protected void importLegacySettings() {
     CodeStyleSettings settings = getContainer();
     boolean isDefaultValue = settings.USE_FQ_CLASS_NAMES_IN_JAVADOC;
     if (!isDefaultValue) {

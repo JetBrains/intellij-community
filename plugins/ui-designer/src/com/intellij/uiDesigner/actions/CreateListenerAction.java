@@ -94,11 +94,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     }
     EventSetDescriptor[] sortedDescriptors = new EventSetDescriptor[eventSetDescriptors.length];
     System.arraycopy(eventSetDescriptors, 0, sortedDescriptors, 0, eventSetDescriptors.length);
-    Arrays.sort(sortedDescriptors, new Comparator<EventSetDescriptor>() {
-      public int compare(final EventSetDescriptor o1, final EventSetDescriptor o2) {
-        return o1.getListenerType().getName().compareTo(o2.getListenerType().getName());
-      }
-    });
+    Arrays.sort(sortedDescriptors, (o1, o2) -> o1.getListenerType().getName().compareTo(o2.getListenerType().getName()));
     for(EventSetDescriptor descriptor: sortedDescriptors) {
       actionGroup.add(new MyCreateListenerAction(selection, descriptor));
     }
@@ -137,15 +133,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     public void actionPerformed(AnActionEvent e) {
       CommandProcessor.getInstance().executeCommand(
         mySelection.get(0).getProject(),
-        new Runnable() {
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                createListener();
-              }
-            });
-          }
-        }, UIDesignerBundle.message("create.listener.command"), null
+        () -> ApplicationManager.getApplication().runWriteAction(() -> createListener()), UIDesignerBundle.message("create.listener.command"), null
       );
     }
 
@@ -252,14 +240,12 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
               if (brace != null) {
                 editor.getCaretModel().moveToOffset(brace.getTextOffset());
               }
-              CommandProcessor.getInstance().executeCommand(myClass.getProject(), new Runnable() {
-                public void run() {
-                  if (!OverrideImplementExploreUtil.getMethodSignaturesToImplement(newClass).isEmpty()) {
-                    OverrideImplementUtil.chooseAndImplementMethods(newClass.getProject(), editor, newClass);
-                  }
-                  else {
-                    OverrideImplementUtil.chooseAndOverrideMethods(newClass.getProject(), editor, newClass);
-                  }
+              CommandProcessor.getInstance().executeCommand(myClass.getProject(), () -> {
+                if (!OverrideImplementExploreUtil.getMethodSignaturesToImplement(newClass).isEmpty()) {
+                  OverrideImplementUtil.chooseAndImplementMethods(newClass.getProject(), editor, newClass);
+                }
+                else {
+                  OverrideImplementUtil.chooseAndOverrideMethods(newClass.getProject(), editor, newClass);
                 }
               }, "", null);
             }

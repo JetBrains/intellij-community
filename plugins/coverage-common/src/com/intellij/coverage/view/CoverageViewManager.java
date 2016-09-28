@@ -108,13 +108,11 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     final CoverageView oldView = myViews.get(displayName);
     if (oldView != null) {
       final Content content = myContentManager.getContent(oldView);
-      final Runnable runnable = new Runnable() {
-        public void run() {
-          if (content != null) {
-            myContentManager.removeContent(content, true);
-          }
-          Disposer.dispose(oldView);
+      final Runnable runnable = () -> {
+        if (content != null) {
+          myContentManager.removeContent(content, true);
         }
+        Disposer.dispose(oldView);
       };
       ApplicationManager.getApplication().invokeLater(runnable);
     }

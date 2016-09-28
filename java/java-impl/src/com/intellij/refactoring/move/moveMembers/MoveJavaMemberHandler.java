@@ -265,11 +265,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       }
 
       if (!afterFields.isEmpty()) {
-        Collections.sort(afterFields, new Comparator<PsiField>() {
-          public int compare(final PsiField o1, final PsiField o2) {
-            return -PsiUtilCore.compareElementsByPosition(o1, o2);
-          }
-        });
+        Collections.sort(afterFields, (o1, o2) -> -PsiUtilCore.compareElementsByPosition(o1, o2));
         return afterFields.get(0);
       }
 

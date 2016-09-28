@@ -97,3 +97,18 @@ def contains_even_number(l):
     else:
         for elt in range(10):
             pass
+
+def write_data():
+    lines = ''
+    line = ''
+    while True:
+        next_char = 'a'
+        line += next_char
+
+        if 100 > 999:
+            line = ''
+            last_ok = ''
+
+    if len(lines) <= 2:
+        for line in lines:
+            next_char += 'b'

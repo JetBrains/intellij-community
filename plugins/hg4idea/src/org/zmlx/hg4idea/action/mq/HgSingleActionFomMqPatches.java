@@ -24,9 +24,9 @@ import java.util.List;
 
 public abstract class HgSingleActionFomMqPatches extends HgActionFromMqPatches {
   @Override
-  protected void execute(@NotNull HgRepository repository, @NotNull List<String> patchNames) {
+  protected void executeInCurrentThread(@NotNull HgRepository repository, @NotNull List<String> patchNames) {
     assert patchNames.size() == 1;
-    execute(repository, patchNames.iterator().next());
+    executeInCurrentThread(repository, patchNames.iterator().next());
   }
 
   @Override
@@ -35,5 +35,5 @@ public abstract class HgSingleActionFomMqPatches extends HgActionFromMqPatches {
     e.getPresentation().setEnabled(patchInfo != null && patchInfo.getSelectedRowsCount() == 1);
   }
 
-  protected abstract void execute(@NotNull HgRepository repository, @NotNull String patchName);
+  protected abstract void executeInCurrentThread(@NotNull HgRepository repository, @NotNull String patchName);
 }

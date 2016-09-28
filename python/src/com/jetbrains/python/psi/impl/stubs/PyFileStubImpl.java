@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.stubs.PyFileStub;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
 import java.util.List;
@@ -72,6 +73,7 @@ public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStu
     return myDeprecationMessage == null ? null : myDeprecationMessage.getString();
   }
 
+  @NotNull
   @Override
   public IStubFileElementType getType() {
     return (IStubFileElementType) LanguageParserDefinitions.INSTANCE.forLanguage(PythonLanguage.getInstance()).getFileNodeType();

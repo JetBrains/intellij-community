@@ -44,12 +44,7 @@ public abstract class SchemesToImportPopup<T> {
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(new SchemesToImportListCellRenderer());
 
-    Runnable selectAction = new Runnable() {
-      @Override
-      public void run() {
-        onSchemeSelected((T)list.getSelectedValue());
-      }
-    };
+    Runnable selectAction = () -> onSchemeSelected((T)list.getSelectedValue());
 
     showList(list, selectAction);
   }

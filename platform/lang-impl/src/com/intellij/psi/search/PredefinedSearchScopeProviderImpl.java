@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -60,6 +59,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProvider {
+
   @NotNull
   @Override
   public List<SearchScope> getPredefinedScopes(@NotNull final Project project,
@@ -67,7 +67,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
                                                boolean suggestSearchInLibs,
                                                boolean prevSearchFiles,
                                                boolean currentSelection,
-                                               boolean usageView) {
+                                               boolean usageView,
+                                               boolean showEmptyScopes) {
     Collection<SearchScope> result = ContainerUtil.newLinkedHashSet();
     result.add(GlobalSearchScope.projectScope(project));
     if (suggestSearchInLibs) {
@@ -79,7 +80,20 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       result.add(GlobalSearchScopesCore.projectTestScope(project));
     }
 
-    result.add(GlobalSearchScopes.openFilesScope(project));
+    final GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
+    if (openFilesScope != GlobalSearchScope.EMPTY_SCOPE) {
+      result.add(openFilesScope);
+    }
+    else if (showEmptyScopes) {
+      result.add(new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.open.files")));
+    }
+
+    final Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
+                                      ? FileEditorManager.getInstance(project).getSelectedTextEditor()
+                                      : null;
+    final PsiFile psiFile =
+      (selectedTextEditor != null) ? PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument()) : null;
+    PsiFile currentFile = psiFile;
 
     if (dataContext != null) {
       PsiElement dataContextElement = CommonDataKeys.PSI_FILE.getData(dataContext);
@@ -87,11 +101,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
         dataContextElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       }
 
-      if (dataContextElement == null) {
-        final Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        if (selectedTextEditor != null) {
-          dataContextElement = PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
-        }
+      if (dataContextElement == null && psiFile != null) {
+        dataContextElement = psiFile;
       }
 
       if (dataContextElement != null) {
@@ -104,43 +115,41 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
             result.add(module.getModuleScope());
           }
         }
-        if (dataContextElement.getContainingFile() != null) {
-          result.add(new LocalSearchScope(dataContextElement, IdeBundle.message("scope.current.file")));
+        if (currentFile == null) {
+          currentFile = dataContextElement.getContainingFile();
         }
       }
     }
 
-    if (currentSelection) {
-      FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-      final Editor selectedTextEditor = fileEditorManager.getSelectedTextEditor();
-      if (selectedTextEditor != null) {
-        final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
-        if (psiFile != null) {
-          SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
-          if (selectionModel.hasSelection()) {
-            int start = selectionModel.getSelectionStart();
-            final PsiElement startElement = psiFile.findElementAt(start);
-            if (startElement != null) {
-              int end = selectionModel.getSelectionEnd();
-              final PsiElement endElement = psiFile.findElementAt(end);
-              if (endElement != null) {
-                final PsiElement parent = PsiTreeUtil.findCommonParent(startElement, endElement);
-                if (parent != null) {
-                  final List<PsiElement> elements = new ArrayList<PsiElement>();
-                  final PsiElement[] children = parent.getChildren();
-                  TextRange selection = new TextRange(start, end);
-                  for (PsiElement child : children) {
-                    if (!(child instanceof PsiWhiteSpace) &&
-                        child.getContainingFile() != null &&
-                        selection.contains(child.getTextOffset())) {
-                      elements.add(child);
-                    }
-                  }
-                  if (!elements.isEmpty()) {
-                    SearchScope local = new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements), IdeBundle.message("scope.selection"));
-                    result.add(local);
-                  }
+    if (currentFile != null || showEmptyScopes) {
+      PsiElement[] scope = currentFile != null ? new PsiElement[] {currentFile} : PsiElement.EMPTY_ARRAY;
+      result.add(new LocalSearchScope(scope, IdeBundle.message("scope.current.file")));
+    }
+
+    if (currentSelection && selectedTextEditor != null && psiFile != null) {
+      SelectionModel selectionModel = selectedTextEditor.getSelectionModel();
+      if (selectionModel.hasSelection()) {
+        int start = selectionModel.getSelectionStart();
+        final PsiElement startElement = psiFile.findElementAt(start);
+        if (startElement != null) {
+          int end = selectionModel.getSelectionEnd();
+          final PsiElement endElement = psiFile.findElementAt(end);
+          if (endElement != null) {
+            final PsiElement parent = PsiTreeUtil.findCommonParent(startElement, endElement);
+            if (parent != null) {
+              final List<PsiElement> elements = new ArrayList<PsiElement>();
+              final PsiElement[] children = parent.getChildren();
+              TextRange selection = new TextRange(start, end);
+              for (PsiElement child : children) {
+                if (!(child instanceof PsiWhiteSpace) &&
+                    child.getContainingFile() != null &&
+                    selection.contains(child.getTextOffset())) {
+                  elements.add(child);
                 }
+              }
+              if (!elements.isEmpty()) {
+                SearchScope local = new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements), IdeBundle.message("scope.selection"));
+                result.add(local);
               }
             }
           }
@@ -277,12 +286,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
   private static SearchScope getSelectedFilesScope(final Project project, @Nullable DataContext dataContext) {
     final VirtualFile[] filesOrDirs = dataContext == null ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (filesOrDirs != null) {
-      final List<VirtualFile> selectedFiles = ContainerUtil.filter(filesOrDirs, new Condition<VirtualFile>() {
-        @Override
-        public boolean value(VirtualFile file) {
-          return !file.isDirectory();
-        }
-      });
+      final List<VirtualFile> selectedFiles = ContainerUtil.filter(filesOrDirs, file -> !file.isDirectory());
       if (!selectedFiles.isEmpty()) {
         return GlobalSearchScope.filesScope(project, selectedFiles, "Selected Files");
       }

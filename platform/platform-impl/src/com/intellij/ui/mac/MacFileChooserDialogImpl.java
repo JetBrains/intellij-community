@@ -136,40 +136,24 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
       try {
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final IdeMenuBar bar = getMenuBar();
-            if (bar != null) {
-              bar.enableUpdates();
-            }
+        SwingUtilities.invokeLater(() -> {
+          final IdeMenuBar bar = getMenuBar();
+          if (bar != null) {
+            bar.enableUpdates();
           }
         });
 
         final List<String> resultPaths = processResult(returnCode, openPanelDidEnd);
         if (resultPaths.size() > 0) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-                @Override
-                public void run() {
-                  final List<VirtualFile> files = getChosenFiles(resultPaths);
-                  if (files.size() > 0) {
-                    FileChooserUtil.setLastOpenedFile(impl.myProject, files.get(files.size() - 1));
-                    impl.myCallback.consume(files);
-                  }
-                }
-              });
+          ApplicationManager.getApplication().invokeLater(() -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
+            final List<VirtualFile> files = getChosenFiles(resultPaths);
+            if (files.size() > 0) {
+              FileChooserUtil.setLastOpenedFile(impl.myProject, files.get(files.size() - 1));
+              impl.myCallback.consume(files);
             }
-          }, impl.myModalityState);
+          }), impl.myModalityState);
         } else if (impl.myCallback instanceof FileChooser.FileChooserConsumer) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled();
-            }
-          }, impl.myModalityState);
+          ApplicationManager.getApplication().invokeLater(() -> ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled(), impl.myModalityState);
         }
       }
       finally {
@@ -333,12 +317,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
     final String selectPath = selectFile != null ? FileUtil.toSystemDependentName(selectFile.getPath()) : null;
 
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        showNativeChooserAsSheet(MacFileChooserDialogImpl.this, selectPath);
-      }
-    });
+    SwingUtilities.invokeLater(() -> showNativeChooserAsSheet(MacFileChooserDialogImpl.this, selectPath));
   }
 
   @Nullable

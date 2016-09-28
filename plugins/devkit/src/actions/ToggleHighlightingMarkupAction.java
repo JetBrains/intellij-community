@@ -120,16 +120,13 @@ public class ToggleHighlightingMarkupAction extends AnAction {
       final ArrayList<HighlightInfo> infos = new ArrayList<HighlightInfo>();
       DaemonCodeAnalyzerEx.processHighlights(
         document, project, HighlightSeverity.WARNING, 0, sequence.length(),
-        new Processor<HighlightInfo>() {
-          @Override
-          public boolean process(HighlightInfo info) {
-            if (info.getSeverity() != HighlightSeverity.WARNING && info.getSeverity() != HighlightSeverity.ERROR) return true;
-            if (info.getStartOffset() >= endOffset) return false;
-            if (info.getEndOffset() > startOffset) {
-              offset[0] = appendInfo(info, sb, sequence, offset[0], infos, false);
-            }
-            return true;
+        info -> {
+          if (info.getSeverity() != HighlightSeverity.WARNING && info.getSeverity() != HighlightSeverity.ERROR) return true;
+          if (info.getStartOffset() >= endOffset) return false;
+          if (info.getEndOffset() > startOffset) {
+            offset[0] = appendInfo(info, sb, sequence, offset[0], infos, false);
           }
+          return true;
         });
       offset[0] = appendInfo(null, sb, sequence, offset[0], infos, false);
       sb.append(sequence.subSequence(offset[0], sequence.length()));

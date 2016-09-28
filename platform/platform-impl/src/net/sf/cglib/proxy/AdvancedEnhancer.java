@@ -124,6 +124,12 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     TypeUtils.parseSignature("void set(Object)");
   private static final Signature BIND_CALLBACKS =
     TypeUtils.parseSignature("void CGLIB$BIND_CALLBACKS(Object)");
+  private static final DefaultNamingPolicy JETBRAINS_NAMING_POLICY = new DefaultNamingPolicy() {
+    @Override
+    protected String getTag() {
+      return "ByJetBrainsMainCglib";
+    }
+  };
 
   /** Internal interface, only public due to ClassLoader issues. */
   public interface EnhancerKey {
@@ -157,6 +163,8 @@ public class AdvancedEnhancer extends AbstractClassGenerator
    */
   public AdvancedEnhancer() {
     super(SOURCE);
+    // to distinguish from assertj, mockito and others that have copy of cglib inside and load their own classes with the same names but different super classes
+    setNamingPolicy(JETBRAINS_NAMING_POLICY);
   }
 
   /**

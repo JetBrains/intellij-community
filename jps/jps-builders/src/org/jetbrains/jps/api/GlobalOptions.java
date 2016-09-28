@@ -26,6 +26,8 @@ public interface GlobalOptions {
   String COMPILE_PARALLEL_MAX_THREADS_OPTION = "compile.parallel.max.threads";
   String REBUILD_ON_DEPENDENCY_CHANGE_OPTION = "rebuild.on.dependency.change";
   String LOG_DIR_OPTION = "jps.log.dir";
+  String FALLBACK_JDK_HOME = "jps.fallback.jdk.home";
+  String FALLBACK_JDK_VERSION = "jps.fallback.jdk.version";
 
   /**
    * Set this property to 'false' to disable default logging. By default the log is written to build.log file in the directory specified by {@link #LOG_DIR_OPTION}.

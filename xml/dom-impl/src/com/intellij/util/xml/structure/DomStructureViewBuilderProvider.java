@@ -41,10 +41,5 @@ public final class DomStructureViewBuilderProvider implements XmlStructureViewBu
   }
 
   public static final Function<DomElement,DomService.StructureViewMode> DESCRIPTOR =
-    new Function<DomElement, DomService.StructureViewMode>() {
-      @Override
-      public DomService.StructureViewMode fun(DomElement element) {
-        return DomService.StructureViewMode.SHOW;
-      }
-    };
+    element -> DomService.StructureViewMode.SHOW;
 }

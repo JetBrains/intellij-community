@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.lang.findUsages.EmptyFindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -34,7 +35,6 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 
 public class FindUsagesInFileAction extends AnAction {
-
   public FindUsagesInFileAction() {
     setInjectedContext(true);
   }
@@ -74,7 +74,9 @@ public class FindUsagesInFileAction extends AnAction {
 
   private static boolean isEnabled(DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
+    if (project == null ||
+        EditorGutter.KEY.getData(dataContext) != null ||
+        Boolean.TRUE.equals(dataContext.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
       return false;
     }
 

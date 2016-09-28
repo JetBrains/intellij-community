@@ -36,6 +36,9 @@ public interface ExternalSourceDirectorySet extends Serializable {
   @NotNull
   File getOutputDir();
 
+  @NotNull
+  File getGradleOutputDir();
+
   /**
    * Returns <code>true</code> if compiler output for this ExternalSourceDirectorySet should is inherited from IDEA project
    * @return true if compiler output path is inherited, false otherwise

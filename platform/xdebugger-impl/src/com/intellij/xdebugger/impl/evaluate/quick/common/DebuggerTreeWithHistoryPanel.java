@@ -58,12 +58,7 @@ public class DebuggerTreeWithHistoryPanel<D> extends DebuggerTreeWithHistoryCont
   }
 
   public void rebuild() {
-    myTree.getLaterInvocator().offer(new Runnable() {
-      @Override
-      public void run() {
-        myTree.rebuildAndRestore(XDebuggerTreeState.saveState(myTree));
-      }
-    });
+    myTree.getLaterInvocator().offer(() -> myTree.rebuildAndRestore(XDebuggerTreeState.saveState(myTree)));
   }
 
   public XDebuggerTree getTree() {

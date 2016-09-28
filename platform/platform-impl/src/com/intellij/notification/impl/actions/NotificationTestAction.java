@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,8 @@ public class NotificationTestAction extends AnAction implements DumbAware {
   public static final String TEST_GROUP_ID = "Test Notification";
   private static final NotificationGroup TEST_STICKY_GROUP =
     new NotificationGroup("Test Sticky Notification", NotificationDisplayType.STICKY_BALLOON, true);
+  private static final NotificationGroup TEST_TOOLWINDOW_GROUP =
+    NotificationGroup.toolWindowGroup("Test ToolWindow Notification", ToolWindowId.TODO_VIEW, true);
   private static final String MESSAGE_KEY = "NotificationTestAction_Message";
 
   public void actionPerformed(@NotNull AnActionEvent event) {
@@ -125,12 +128,7 @@ public class NotificationTestAction extends AnAction implements DumbAware {
           notification.expire();
         }
       });
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          myMessageBus.syncPublisher(Notifications.TOPIC).notify(notification);
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> myMessageBus.syncPublisher(Notifications.TOPIC).notify(notification));
     }
 
     private void newNotification(String text) {
@@ -175,17 +173,23 @@ public class NotificationTestAction extends AnAction implements DumbAware {
             notification.setActions(StringUtil.split(value, ","));
           }
         }
+        else if (line.startsWith("Type:")) {
+          notification.setType(StringUtil.substringAfter(line, ":"));
+        }
         else if (line.startsWith("Sticky:")) {
           notification.setSticky("true".equals(StringUtil.substringAfter(line, ":")));
         }
+        else if (line.startsWith("Listener:")) {
+          notification.setAddListener("true".equals(StringUtil.substringAfter(line, ":")));
+        }
+        else if (line.startsWith("Toolwindow:")) {
+          notification.setToolwindow("true".equals(StringUtil.substringAfter(line, ":")));
+        }
       }
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          for (NotificationInfo info : notifications) {
-            myMessageBus.syncPublisher(Notifications.TOPIC).notify(info.getNotification());
-          }
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        for (NotificationInfo info : notifications) {
+          myMessageBus.syncPublisher(Notifications.TOPIC).notify(info.getNotification());
         }
       });
     }
@@ -197,26 +201,33 @@ public class NotificationTestAction extends AnAction implements DumbAware {
     private String mySubtitle;
     private List<String> myContent;
     private List<String> myActions;
+    private NotificationType myType = NotificationType.INFORMATION;
     private boolean mySticky;
+    private boolean myAddListener;
+    private boolean myToolwindow;
 
     private Notification myNotification;
 
     public Notification getNotification() {
       if (myNotification == null) {
         Icon icon = null;
-        if (myGroupId != null) {
+        if (!StringUtil.isEmpty(myGroupId)) {
           icon = IconLoader.findIcon(myGroupId);
         }
         if ("!!!St!!!".equals(myTitle)) {
-          return myNotification = new StatisticsNotification(StatisticsNotificationManager.GROUP_DISPLAY_ID, this).setIcon(icon);
+          return myNotification = new StatisticsNotification(StatisticsNotificationManager.GROUP_DISPLAY_ID, getListener()).setIcon(icon);
         }
         String displayId = mySticky ? TEST_STICKY_GROUP.getDisplayId() : TEST_GROUP_ID;
+        if (myToolwindow) {
+          displayId = TEST_TOOLWINDOW_GROUP.getDisplayId();
+        }
         String content = myContent == null ? "" : StringUtil.join(myContent, "\n");
         if (icon == null) {
-          myNotification = new Notification(displayId, StringUtil.notNullize(myTitle), content, NotificationType.INFORMATION, this);
+          myNotification =
+            new Notification(displayId, StringUtil.notNullize(myTitle), content, myType, getListener());
         }
         else {
-          myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, NotificationType.INFORMATION, this);
+          myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, myType, getListener());
           if (myActions != null) {
             for (String action : myActions) {
               myNotification.addAction(new MyAnAction(action));
@@ -225,6 +236,11 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         }
       }
       return myNotification;
+    }
+
+    @Nullable
+    private NotificationListener getListener() {
+      return myAddListener ? this : null;
     }
 
     public void setGroupId(@Nullable String groupId) {
@@ -237,6 +253,10 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
     public void setSubtitle(@Nullable String subtitle) {
       mySubtitle = subtitle;
+    }
+
+    public void setAddListener(boolean addListener) {
+      myAddListener = addListener;
     }
 
     public void addContent(@NotNull String content) {
@@ -252,6 +272,22 @@ public class NotificationTestAction extends AnAction implements DumbAware {
 
     public void setSticky(boolean sticky) {
       mySticky = sticky;
+    }
+
+    public void setToolwindow(boolean toolwindow) {
+      myToolwindow = toolwindow;
+    }
+
+    public void setType(@Nullable String type) {
+      if ("info".equals(type)) {
+        myType = NotificationType.INFORMATION;
+      }
+      else if ("error".equals(type)) {
+        myType = NotificationType.ERROR;
+      }
+      else if ("warn".equals(type)) {
+        myType = NotificationType.WARNING;
+      }
     }
 
     @Override

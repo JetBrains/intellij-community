@@ -33,18 +33,16 @@ import org.jetbrains.annotations.NotNull;
  * Date: Oct 8, 2003
  * Time: 5:08:07 PM
  */
-public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
+public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl {
   private final Method myMethod;
-  private final Value myValue;
 
   public MethodReturnValueDescriptorImpl(Project project, @NotNull Method method, Value value) {
-    super(project);
+    super(project, value);
     myMethod = method;
-    myValue = value;
   }
 
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    return myValue;
+    return getValue();
   }
 
   @NotNull
@@ -58,14 +56,15 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl{
   }
 
   public Type getType() {
-    if (myValue == null) {
+    Type type = super.getType();
+    if (type == null) {
       try {
-        return myMethod.returnType();
+        type = myMethod.returnType();
       }
       catch (ClassNotLoadedException ignored) {
       }
     }
-    return super.getType();
+    return type;
   }
 
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {

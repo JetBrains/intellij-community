@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,8 +128,8 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected PsiStatement myFirstExitStatementCopy;
   private PsiMethod myExtractedMethod;
   private PsiMethodCallExpression myMethodCall;
-  protected boolean myNullConditionalCheck = false;
-  protected boolean myNotNullConditionalCheck = false;
+  protected boolean myNullConditionalCheck;
+  protected boolean myNotNullConditionalCheck;
   private Nullness myNullness;
 
   public ExtractMethodProcessor(Project project,
@@ -462,20 +462,18 @@ public class ExtractMethodProcessor implements MatchProvider {
       final boolean classExtracted = isExtractedElement(localClass);
       final List<PsiElement> extractedReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
       final List<PsiElement> remainingReferences = Collections.synchronizedList(new ArrayList<PsiElement>());
-      ReferencesSearch.search(localClass).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference psiReference) {
-          final PsiElement element = psiReference.getElement();
-          final boolean elementExtracted = isExtractedElement(element);
-          if (elementExtracted && !classExtracted) {
-            extractedReferences.add(element);
-            return false;
-          }
-          if (!elementExtracted && classExtracted) {
-            remainingReferences.add(element);
-            return false;
-          }
-          return true;
+      ReferencesSearch.search(localClass).forEach(psiReference -> {
+        final PsiElement element = psiReference.getElement();
+        final boolean elementExtracted = isExtractedElement(element);
+        if (elementExtracted && !classExtracted) {
+          extractedReferences.add(element);
+          return false;
         }
+        if (!elementExtracted && classExtracted) {
+          remainingReferences.add(element);
+          return false;
+        }
+        return true;
       });
       if (!extractedReferences.isEmpty()) {
         throw new PrepareFailedException("Cannot extract method because the selected code fragment uses local classes defined outside of the fragment", extractedReferences.get(0));
@@ -614,18 +612,8 @@ public class ExtractMethodProcessor implements MatchProvider {
                                : PsiTreeUtil.findCommonParent(myElements);
       return CodeInsightUtil.findReferenceExpressions(scope, myOutputVariable);
     }
-    final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, new Condition<PsiStatement>() {
-      @Override
-      public boolean value(PsiStatement statement) {
-        return statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null;
-      }
-    });
-    final List<PsiExpression> map = ContainerUtil.map(filter, new Function<PsiStatement, PsiExpression>() {
-      @Override
-      public PsiExpression fun(PsiStatement statement) {
-        return ((PsiReturnStatement)statement).getReturnValue();
-      }
-    });
+    final List<PsiStatement> filter = ContainerUtil.filter(myExitStatements, statement -> statement instanceof PsiReturnStatement && ((PsiReturnStatement)statement).getReturnValue() != null);
+    final List<PsiExpression> map = ContainerUtil.map(filter, statement -> ((PsiReturnStatement)statement).getReturnValue());
     return map.toArray(new PsiExpression[map.size()]);
   }
 
@@ -672,16 +660,13 @@ public class ExtractMethodProcessor implements MatchProvider {
 
       final String nameByComment = getNameByComment();
       final PsiField field = JavaPsiFacade.getElementFactory(myProject).createField("fieldNameToReplace", myReturnType instanceof PsiEllipsisType ? ((PsiEllipsisType)myReturnType).toArrayType() : myReturnType);
-      final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, new Function<String, String>() {
-        @Override
-        public String fun(String propertyName) {
-          if (!PsiNameHelper.getInstance(myProject).isIdentifier(propertyName)) {
-            LOG.info(propertyName + "; " + myExpression);
-            return null;
-          }
-          field.setName(propertyName);
-          return GenerateMembersUtil.suggestGetterName(field);
+      final List<String> getters = new ArrayList<String>(ContainerUtil.map(initialMethodNames, propertyName -> {
+        if (!PsiNameHelper.getInstance(myProject).isIdentifier(propertyName)) {
+          LOG.info(propertyName + "; " + myExpression);
+          return null;
         }
+        field.setName(propertyName);
+        return GenerateMembersUtil.suggestGetterName(field);
       }));
       ContainerUtil.addIfNotNull(nameByComment, getters);
       return ArrayUtil.toStringArray(getters);
@@ -727,6 +712,14 @@ public class ExtractMethodProcessor implements MatchProvider {
     myVariableDatum = new VariableData[myInputVariables.getInputVariables().size()];
     for (int i = 0; i < myInputVariables.getInputVariables().size(); i++) {
       myVariableDatum[i] = myInputVariables.getInputVariables().get(i);
+    }
+  }
+
+  @TestOnly
+  public void testTargetClass(PsiClass targetClass) {
+    if (targetClass != null) {
+      myTargetClass = targetClass;
+      myNeedChangeContext = true;
     }
   }
 
@@ -782,22 +775,14 @@ public class ExtractMethodProcessor implements MatchProvider {
                                         GlobalSearchScope.projectScope(myProject);
 
     final Map<PsiMethodCallExpression, PsiMethod> overloadsResolveMap = new HashMap<PsiMethodCallExpression, PsiMethod>();
-    final Runnable collectOverloads = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            Map<PsiMethodCallExpression, PsiMethod> overloads =
-              ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
-            overloadsResolveMap.putAll(overloads);
-          }
-        });
-      }
-    };
-    final Runnable extract = new Runnable() {
-      public void run() {
-        doExtract();
-        ExtractMethodUtil.decodeOverloadTargets(overloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
-      }
+    final Runnable collectOverloads = () -> ApplicationManager.getApplication().runReadAction(() -> {
+      Map<PsiMethodCallExpression, PsiMethod> overloads =
+        ExtractMethodUtil.encodeOverloadTargets(myTargetClass, processConflictsScope, myMethodName, myCodeFragmentMember);
+      overloadsResolveMap.putAll(overloads);
+    });
+    final Runnable extract = () -> {
+      doExtract();
+      ExtractMethodUtil.decodeOverloadTargets(overloadsResolveMap, myExtractedMethod, myCodeFragmentMember);
     };
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       collectOverloads.run();
@@ -1013,14 +998,18 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
 
-    myExtractedMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
+    myExtractedMethod = addExtractedMethod(newMethod);
     if (isNeedToChangeCallContext() && myNeedChangeContext) {
       ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
         final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
-        methodExpression.setQualifierExpression(RefactoringChangeUtil.createThisExpression(myManager, myTargetClass));
+        RefactoringChangeUtil.qualifyReference(methodExpression, myExtractedMethod, PsiUtil.getEnclosingStaticElement(methodExpression, myTargetClass) != null ? myTargetClass : null);
       }
     }
+  }
+
+  protected PsiMethod addExtractedMethod(PsiMethod newMethod) {
+    return (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
   }
 
   @Nullable
@@ -1128,7 +1117,8 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     PsiDeclarationStatement statement = myElementFactory.createVariableDeclarationStatement(name, type, myMethodCall);
-    statement = (PsiDeclarationStatement)addToMethodCallLocation(statement);
+    statement =
+      (PsiDeclarationStatement)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(addToMethodCallLocation(statement));
     PsiVariable var = (PsiVariable)statement.getDeclaredElements()[0];
     myMethodCall = (PsiMethodCallExpression)var.getInitializer();
     if (myOutputVariable != null) {
@@ -1216,8 +1206,12 @@ public class ExtractMethodProcessor implements MatchProvider {
     return result;
   }
 
-  public PsiElement processMatch(Match match) throws IncorrectOperationException {
+  @Override
+  public void prepareSignature(Match match) {
     MatchUtil.changeSignature(match, myExtractedMethod);
+  }
+
+  public PsiElement processMatch(Match match) throws IncorrectOperationException {
     if (RefactoringUtil.isInStaticContext(match.getMatchStart(), myExtractedMethod.getContainingClass())) {
       PsiUtil.setModifierProperty(myExtractedMethod, PsiModifier.STATIC, true);
     }
@@ -1278,12 +1272,26 @@ public class ExtractMethodProcessor implements MatchProvider {
   private void renameInputVariables() throws IncorrectOperationException {
     //when multiple input variables should have the same name, unique names are generated
     //without reverse, the second rename would rename variable without a prefix into second one though it was already renamed
+    LocalSearchScope localSearchScope = null;
     for (int i = myVariableDatum.length - 1; i >= 0;  i--) {
       VariableData data = myVariableDatum[i];
       PsiVariable variable = data.variable;
-      if (!data.name.equals(variable.getName())) {
-        for (PsiElement element : myElements) {
-          RefactoringUtil.renameVariableReferences(variable, data.name, new LocalSearchScope(element));
+      if (!data.name.equals(variable.getName()) || variable instanceof PsiField) {
+        if (localSearchScope == null) {
+          localSearchScope = new LocalSearchScope(myElements);
+        }
+
+        for (PsiReference reference : ReferencesSearch.search(variable, localSearchScope)) {
+          reference.handleElementRename(data.name);
+
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiReferenceExpression) {
+            final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+            final PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
+            if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
+              referenceExpression.setQualifierExpression(null);
+            }
+          }
         }
       }
     }
@@ -1504,7 +1512,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       if (classes.size() > 1) {
         final PsiClass[] psiClasses = classes.keySet().toArray(new PsiClass[classes.size()]);
         final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes.keySet(), psiClasses[0]);
-        NavigationUtil.getPsiElementPopup(psiClasses, new PsiClassListCellRenderer(), "Choose Destination Class", processor, preselection)
+        NavigationUtil.getPsiElementPopup(psiClasses, PsiClassListCellRenderer.INSTANCE, "Choose Destination Class", processor, preselection)
           .showInBestPositionFor(myEditor);
         return true;
       }

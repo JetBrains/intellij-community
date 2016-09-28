@@ -188,12 +188,9 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
       }
     });
 
-    UiNotifyConnector.doWhenFirstShown(myCenterPanel, new Runnable() {
-      @Override
-      public void run() {
-        enlargeDialogHeightIfNecessary();
-        preselectLastPathComponent(myBrowseFieldWithButton.getTextField());
-      }
+    UiNotifyConnector.doWhenFirstShown(myCenterPanel, () -> {
+      enlargeDialogHeightIfNecessary();
+      preselectLastPathComponent(myBrowseFieldWithButton.getTextField());
     });
     init();
   }
@@ -262,29 +259,14 @@ public class PyMoveModuleMembersDialog extends RefactoringDialog {
   @NotNull
   public List<PyElement> getSelectedTopLevelSymbols() {
     final Collection<PyModuleMemberInfo> selectedMembers = myMemberSelectionTable.getSelectedMemberInfos();
-    final List<PyElement> selectedElements = ContainerUtil.map(selectedMembers, new Function<PyModuleMemberInfo, PyElement>() {
-      @Override
-      public PyElement fun(PyModuleMemberInfo info) {
-        return info.getMember();
-      }
-    });
-    return ContainerUtil.sorted(selectedElements, new Comparator<PyElement>() {
-      @Override
-      public int compare(PyElement e1, PyElement e2) {
-        return PyPsiUtils.isBefore(e1, e2) ? -1 : 1;
-      }
-    });
+    final List<PyElement> selectedElements = ContainerUtil.map(selectedMembers, info -> info.getMember());
+    return ContainerUtil.sorted(selectedElements, (e1, e2) -> PyPsiUtils.isBefore(e1, e2) ? -1 : 1);
   }
 
   @NotNull
   private static List<PyModuleMemberInfo> collectModuleMemberInfos(@NotNull PyFile pyFile) {
     final List<PyElement> moduleMembers = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);
-    return ContainerUtil.mapNotNull(moduleMembers, new Function<PyElement, PyModuleMemberInfo>() {
-      @Override
-      public PyModuleMemberInfo fun(PyElement element) {
-        return new PyModuleMemberInfo(element);
-      }
-    });
+    return ContainerUtil.mapNotNull(moduleMembers, element -> new PyModuleMemberInfo(element));
   }
 
   @NotNull

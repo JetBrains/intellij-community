@@ -16,14 +16,11 @@
 package com.intellij.tasks.vcs;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTaskHandler;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
@@ -31,26 +28,30 @@ import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.PlatformTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 18.07.13
  */
-@SuppressWarnings("ConstantConditions")
 public abstract class TaskBranchesTest extends PlatformTestCase {
 
   private TaskManagerImpl myTaskManager;
-  private ChangeListManagerImpl myChangeListManager;
-  private VcsDirtyScopeManagerImpl myDirtyScopeManager;
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).waitEverythingDoneInTestMode();
+    }
+    finally {
+      super.tearDown();
+    }
+  }
 
   public void testVcsTaskHandler() throws Exception {
 
@@ -69,6 +70,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
 
     final String first = "first";
     VcsTaskHandler.TaskInfo firstInfo = handler.startNewTask(first);
+    repository.update();
     assertEquals(first, firstInfo.getName());
     assertEquals(2, firstInfo.getRepositories().size());
 
@@ -76,15 +78,18 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertEquals(first, repository.getCurrentBranchName());
 
     handler.switchToTask(defaultInfo, null);
+    repository.update();
     assertEquals(defaultBranchName, repository.getCurrentBranchName());
 
     final String second = "second";
     VcsTaskHandler.TaskInfo secondInfo = handler.startNewTask(second);
+    repository.update();
     assertEquals(3, getNumberOfBranches(repository));
     assertEquals(second, repository.getCurrentBranchName());
     handler.switchToTask(firstInfo, null);
-    commitChanges(repository);
+    createAndCommitChanges(repository);
     handler.closeTask(secondInfo, firstInfo);
+    repository.update();
     assertEquals(2, getNumberOfBranches(repository));
   }
 
@@ -94,7 +99,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertNotNull(defaultTask);
     LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
     LocalTask localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask), null);
     String defaultBranchName = getDefaultBranchName();
 
     assertEquals(4, localTask.getBranches().size());
@@ -110,11 +115,12 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
 
     foo = myTaskManager.createLocalTask("foo");
     localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask), null);
     assertEquals("foo", repository.getCurrentBranchName());
-    commitChanges(repository);
+    createAndCommitChanges(repository);
 
     myTaskManager.mergeBranch(localTask);
+    repository.update();
     assertEquals(defaultBranchName, repository.getCurrentBranchName());
     assertEquals(1, getNumberOfBranches(repository));
 
@@ -122,29 +128,15 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     myTaskManager.activateTask(foo, false);
   }
 
-  private void commitChanges(@NotNull Repository repository) throws IOException, VcsException {
-    VirtualFile root = repository.getRoot();
-    File file = new File(root.getPath(), "foo.txt");
-    assertTrue(file.createNewFile());
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    addFiles(getProject(), root, virtualFile);
-    myDirtyScopeManager.fileDirty(virtualFile);
-    myChangeListManager.ensureUpToDate(false);
-    Change change = myChangeListManager.getChange(virtualFile);
-    assertNotNull(change);
-    ProjectLevelVcsManager.getInstance(getProject()).getAllActiveVcss()[0].getCheckinEnvironment()
-      .commit(Collections.singletonList(change), "foo");
-  }
-
   public void testCommit() throws Exception {
     Repository repository = initRepository("foo");
     LocalTask defaultTask = myTaskManager.getActiveTask();
     LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
     final LocalTask localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
-    commitChanges(repository);
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask), null);
+    createAndCommitChanges(repository);
     myTaskManager.mergeBranch(localTask);
-
+    repository.update();
     assertEquals(getDefaultBranchName(), repository.getCurrentBranchName());
     assertEquals(1, getNumberOfBranches(repository));
   }
@@ -166,20 +158,22 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
   }
 
   public void testBranchBloating() throws Exception {
-    initRepository("foo");
+    Repository repository = initRepository("foo");
     LocalTask defaultTask = myTaskManager.getActiveTask();
     assertNotNull(defaultTask);
     assertEquals(0, defaultTask.getBranches().size());
     LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
     LocalTask localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask), null);
+    repository.update();
     assertEquals(2, localTask.getBranches().size());
     assertEquals(1, defaultTask.getBranches().size());
 
     myTaskManager.activateTask(localTask, false);
     LocalTaskImpl bar = myTaskManager.createLocalTask("bar");
     LocalTask barTask = myTaskManager.activateTask(bar, false);
-    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(barTask));
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(barTask), null);
+    repository.update();
     assertEquals(1, defaultTask.getBranches().size());
   }
 
@@ -190,7 +184,7 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     assertEquals(0, defaultTask.getBranches().size());
     LocalTaskImpl foo = myTaskManager.createLocalTask("foo");
     LocalTask localTask = myTaskManager.activateTask(foo, false);
-    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask));
+    myTaskManager.createBranch(localTask, defaultTask, myTaskManager.suggestBranchName(localTask), null);
     assertEquals(2, localTask.getBranches().size());
     assertEquals(1, defaultTask.getBranches().size());
 
@@ -199,8 +193,10 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
     info.name = "non-existing";
     info.repository = defaultTask.getBranches().get(0).repository;
     defaultTask.addBranch(info);
+    repository.update();
     assertEquals("foo", repository.getCurrentBranchName());
     myTaskManager.activateTask(defaultTask, false);
+    repository.update();
     assertEquals(getDefaultBranchName(), repository.getCurrentBranchName());
     // do not re-create "non-existing"
     assertEquals(2, getNumberOfBranches(repository));
@@ -236,20 +232,13 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
   }
 
   private List<Repository> initRepositories(String... names) {
-    return ContainerUtil.map(names, new Function<String, Repository>() {
-      @Override
-      public Repository fun(String s) {
-        return initRepository(s);
-      }
-    });
+    return ContainerUtil.map(names, this::initRepository);
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myTaskManager = (TaskManagerImpl)TaskManager.getManager(getProject());
-    myChangeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(getProject());
-    myDirtyScopeManager = ((VcsDirtyScopeManagerImpl)VcsDirtyScopeManager.getInstance(getProject()));
   }
 
   @NotNull
@@ -260,5 +249,5 @@ public abstract class TaskBranchesTest extends PlatformTestCase {
 
   protected abstract int getNumberOfBranches(@NotNull Repository repository);
 
-  protected abstract void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull VirtualFile file) throws VcsException;
+  protected abstract void createAndCommitChanges(@NotNull Repository repository) throws IOException, VcsException;
 }

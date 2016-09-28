@@ -82,11 +82,7 @@ public class UsageTrigger implements PersistentStateComponent<UsageTrigger.State
     public Set<UsageDescriptor> getUsages() {
       State state = getInstance().getState();
       assert state != null;
-      return ContainerUtil.map2Set(state.myValues.entrySet(), new Function<Map.Entry<String, Integer>, UsageDescriptor>() {
-        public UsageDescriptor fun(final Map.Entry<String, Integer> e) {
-          return new UsageDescriptor(e.getKey(), e.getValue());
-        }
-      });
+      return ContainerUtil.map2Set(state.myValues.entrySet(), e -> new UsageDescriptor(e.getKey(), e.getValue()));
     }
 
     @NotNull

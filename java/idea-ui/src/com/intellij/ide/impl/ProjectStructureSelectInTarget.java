@@ -73,15 +73,12 @@ public class ProjectStructureSelectInTarget extends SelectInTargetBase implement
       facet = fileIndex.isInSourceContent(file) ? null : findFacet(project, file);
     }
     if (module != null || facet != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (facet != null) {
-            ModulesConfigurator.showFacetSettingsDialog(facet, null);
-          }
-          else {
-            ProjectSettingsService.getInstance(project).openModuleSettings(module);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (facet != null) {
+          ModulesConfigurator.showFacetSettingsDialog(facet, null);
+        }
+        else {
+          ProjectSettingsService.getInstance(project).openModuleSettings(module);
         }
       });
       return;
@@ -89,12 +86,8 @@ public class ProjectStructureSelectInTarget extends SelectInTargetBase implement
 
     final OrderEntry orderEntry = LibraryUtil.findLibraryEntry(file, project);
     if (orderEntry != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(orderEntry);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> ProjectSettingsService.getInstance(project).openLibraryOrSdkSettings(orderEntry));
     }
   }
 

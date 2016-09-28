@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
+import com.intellij.openapi.options.SchemeDataHolder;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -29,14 +29,14 @@ import org.jetbrains.annotations.Nullable;
 public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme {
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
 
-  private Element myRootElement;
+  private SchemeDataHolder myDataHolder;
   private String myParentSchemeName;
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
 
-  public CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, Element rootElement) {
+  CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder dataHolder) {
     myName = name;
-    myRootElement = rootElement;
+    myDataHolder = dataHolder;
     myIsDefault = false;
     myParentSchemeName = parentSchemeName;
   }
@@ -45,13 +45,6 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     myName = name;
     myIsDefault = isDefault;
     init(parentScheme, null);
-  }
-
-  public void init(@NotNull CodeStyleSchemes schemesManager) {
-    LOG.assertTrue(myCodeStyleSettings == null, "Already initialized");
-    init(myParentSchemeName == null ? null : schemesManager.findSchemeByName(myParentSchemeName), myRootElement);
-    myParentSchemeName = null;
-    myRootElement = null;
   }
 
   private void init(@Nullable CodeStyleScheme parentScheme, Element root) {
@@ -68,7 +61,7 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     }
     if (root != null) {
       try {
-        readExternal(root);
+        myCodeStyleSettings.readExternal(root);
       }
       catch (InvalidDataException e) {
         LOG.error(e);
@@ -77,12 +70,23 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   @Override
-  public CodeStyleSettings getCodeStyleSettings(){
+  public CodeStyleSettings getCodeStyleSettings() {
+    if (myDataHolder != null) {
+      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), myDataHolder.read());
+      myParentSchemeName = null;
+      myDataHolder = null;
+    }
     return myCodeStyleSettings;
+  }
+
+  boolean isInitialized() {
+    return myDataHolder == null;
   }
 
   public void setCodeStyleSettings(@NotNull CodeStyleSettings codeStyleSettings){
     myCodeStyleSettings = codeStyleSettings;
+    myParentSchemeName = null;
+    myDataHolder = null;
   }
 
   @Override
@@ -90,11 +94,16 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     return myIsDefault;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException{
-    myCodeStyleSettings.writeExternal(element);
-  }
-
-  public void readExternal(Element element) throws InvalidDataException{
-    myCodeStyleSettings.readExternal(element);
+  @NotNull
+  public Element writeScheme() throws WriteExternalException {
+    if (myDataHolder == null) {
+      Element newElement = new Element("code_scheme");
+      newElement.setAttribute("name", getName());
+      myCodeStyleSettings.writeExternal(newElement);
+      return newElement;
+    }
+    else {
+      return myDataHolder.read();
+    }
   }
 }

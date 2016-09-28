@@ -110,12 +110,9 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
   @Override
   public void prepareRenaming(PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
     PyFunction function = (PyFunction) element;
-    PyOverridingMethodsSearch.search(function, true).forEach(new Processor<PyFunction>() {
-      @Override
-      public boolean process(PyFunction pyFunction) {
-        allRenames.put(pyFunction, newName);
-        return true;
-      }
+    PyOverridingMethodsSearch.search(function, true).forEach(pyFunction -> {
+      allRenames.put(pyFunction, newName);
+      return true;
     });
     final PyClass containingClass = function.getContainingClass();
     if (containingClass != null) {

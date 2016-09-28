@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatements
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.SSAConstructorSparseEx;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 
@@ -33,25 +34,27 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class VarVersionsProcessor {
-
+  private final StructMethod method;
   private Map<Integer, Integer> mapOriginalVarIndices = new HashMap<Integer, Integer>();
   private VarTypeProcessor typeProcessor;
 
-  public void setVarVersions(RootStatement root) {
-    StructMethod mt = (StructMethod)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD);
+  public VarVersionsProcessor(StructMethod mt, MethodDescriptor md) {
+    method = mt;
+    typeProcessor = new VarTypeProcessor(mt, md);
+  }
 
+  public void setVarVersions(RootStatement root) {
     SSAConstructorSparseEx ssa = new SSAConstructorSparseEx();
-    ssa.splitVariables(root, mt);
+    ssa.splitVariables(root, method);
 
     FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
     DirectGraph graph = flattenHelper.buildDirectGraph(root);
 
     mergePhiVersions(ssa, graph);
 
-    typeProcessor = new VarTypeProcessor();
     typeProcessor.calculateVarTypes(root, graph);
 
-    simpleMerge(typeProcessor, graph, mt);
+    simpleMerge(typeProcessor, graph, method);
 
     // FIXME: advanced merging
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 
@@ -26,7 +24,7 @@ import com.intellij.openapi.project.Project;
  */
 public final class ChangeSplitterOrientationAction extends SplitterActionBase {
   public void actionPerformed(final AnActionEvent event) {
-    final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    final Project project = event.getProject();
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     fileEditorManager.changeSplitterOrientation ();
   }

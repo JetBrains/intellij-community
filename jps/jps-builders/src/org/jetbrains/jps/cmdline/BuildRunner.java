@@ -28,6 +28,7 @@ import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetRegistryImpl;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
@@ -198,6 +199,13 @@ public class BuildRunner {
 
     final Timestamps timestamps = pd.timestamps.getStorage();
     if (!paths.isEmpty()) {
+      boolean forceBuildAllModuleBasedTargets = false;
+      for (BuildTargetType<?> type : targetTypesToForceBuild) {
+        if (type instanceof JavaModuleBuildTargetType) {
+          forceBuildAllModuleBasedTargets = true;
+          break;
+        }
+      }
       files = new HashMap<BuildTarget<?>, Set<File>>();
       for (String path : paths) {
         final File file = new File(path);
@@ -208,9 +216,12 @@ public class BuildRunner {
             fileSet = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
             files.put(descriptor.getTarget(), fileSet);
           }
-          fileSet.add(file);
-          if (targetTypesToForceBuild.contains(descriptor.getTarget().getTargetType())) {
-            pd.fsState.markDirty(null, file, descriptor, timestamps, false);
+          final boolean added = fileSet.add(file);
+          if (added) {
+            final BuildTargetType<?> targetType = descriptor.getTarget().getTargetType();
+            if (targetTypesToForceBuild.contains(targetType) || (forceBuildAllModuleBasedTargets && targetType instanceof ModuleBasedBuildTargetType)) {
+              pd.fsState.markDirty(null, file, descriptor, timestamps, false);
+            }
           }
         }
       }

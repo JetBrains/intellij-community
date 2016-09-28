@@ -39,12 +39,9 @@ public interface CellTransform {
         myRestoringNow = true;
         if (myActions.size() == 0) return ActionCallback.DONE;
         final ActionCallback topCallback = restore(0);
-        return topCallback.doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            myActions.clear();
-            myRestoringNow = false;
-          }
+        return topCallback.doWhenDone(() -> {
+          myActions.clear();
+          myRestoringNow = false;
         });
       }
 
@@ -52,14 +49,11 @@ public interface CellTransform {
         final ActionCallback result = new ActionCallback();
         final Restore action = myActions.get(index);
         final ActionCallback actionCalback = action.restoreInGrid();
-        actionCalback.doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            if (index < myActions.size() - 1) {
-              restore(index + 1).notifyWhenDone(result);
-            } else {
-              result.setDone();
-            }
+        actionCalback.doWhenDone(() -> {
+          if (index < myActions.size() - 1) {
+            restore(index + 1).notifyWhenDone(result);
+          } else {
+            result.setDone();
           }
         });
 

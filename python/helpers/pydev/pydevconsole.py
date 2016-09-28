@@ -21,7 +21,7 @@ import traceback
 from _pydev_bundle import fix_getpass
 fix_getpass.fix_getpass()
 
-from _pydevd_bundle import pydevd_vars
+from _pydevd_bundle import pydevd_vars, pydevd_save_locals
 
 from _pydev_bundle.pydev_imports import Exec, _queue
 
@@ -287,7 +287,8 @@ def start_console_server(host, port, interpreter):
             server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
     except:
-        sys.stderr.write('Error starting server with host: %s, port: %s, client_port: %s\n' % (host, port, interpreter.client_port))
+        sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))
+        sys.stderr.flush()
         raise
 
     # Tell UMD the proper default namespace
@@ -373,7 +374,7 @@ def get_completions(text, token, globals, locals):
 # Debugger integration
 #===============================================================================
 
-def exec_code(code, globals, locals):
+def exec_code(code, globals, locals, debugger):
     interpreterInterface = get_interpreter()
     interpreterInterface.interpreter.update(globals, locals)
 
@@ -382,7 +383,7 @@ def exec_code(code, globals, locals):
     if res:
         return True
 
-    interpreterInterface.add_exec(code)
+    interpreterInterface.add_exec(code, debugger)
 
     return False
 
@@ -442,7 +443,7 @@ class ConsoleWriter(InteractiveInterpreter):
             tblist = tb = None
         sys.stderr.write(''.join(lines))
 
-def console_exec(thread_id, frame_id, expression):
+def console_exec(thread_id, frame_id, expression, dbg):
     """returns 'False' in case expression is partially correct
     """
     frame = pydevd_vars.find_frame(thread_id, frame_id)
@@ -457,7 +458,11 @@ def console_exec(thread_id, frame_id, expression):
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
     if IPYTHON:
-        return exec_code(CodeFragment(expression), updated_globals, frame.f_locals)
+        need_more =  exec_code(CodeFragment(expression), updated_globals, frame.f_locals, dbg)
+        if not need_more:
+            pydevd_save_locals.save_locals(frame)
+        return need_more
+
 
     interpreter = ConsoleWriter()
 
@@ -481,7 +486,8 @@ def console_exec(thread_id, frame_id, expression):
         raise
     except:
         interpreter.showtraceback()
-
+    else:
+        pydevd_save_locals.save_locals(frame)
     return False
 
 #=======================================================================================================================
@@ -494,7 +500,7 @@ if __name__ == '__main__':
     #See: https://sw-brainwy.rhcloud.com/tracker/PyDev/446:
     #'Variables' and 'Expressions' views stopped working when debugging interactive console
     import pydevconsole
-    sys.stdin = pydevconsole.BaseStdIn()
+    sys.stdin = pydevconsole.BaseStdIn(sys.stdin)
     port, client_port = sys.argv[1:3]
     from _pydev_bundle import pydev_localhost
 

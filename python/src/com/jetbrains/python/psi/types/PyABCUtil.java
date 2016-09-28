@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ public class PyABCUtil {
   private PyABCUtil() {
   }
 
-  public static boolean isSubclass(@NotNull PyClass subClass, @NotNull PyClass superClass) {
+  public static boolean isSubclass(@NotNull PyClass subClass, @NotNull PyClass superClass, @Nullable TypeEvalContext context) {
     final String superName = superClass.getName();
     if (superName != null) {
-      return isSubclass(subClass, superName, true, null);
+      return isSubclass(subClass, superName, true, context);
     }
     return false;
   }
@@ -69,6 +69,19 @@ public class PyABCUtil {
     if (PyNames.MAPPING.equals(superClassName)) {
       return isSized && hasIter && isContainer && hasGetItem && hasMethod(subClass, PyNames.KEYS, inherited, context);
     }
+    if (PyNames.MUTABLE_MAPPING.equals(superClassName)) {
+      final boolean hasSetItem = hasMethod(subClass, PyNames.SETITEM, inherited, context);
+      final boolean hasUpdate = hasMethod(subClass, PyNames.UPDATE, inherited, context);
+      return isSized && hasIter && isContainer && hasGetItem && hasSetItem && hasUpdate;
+    }
+    if (PyNames.ABC_SET.equals(superClassName)) {
+      return isSized && hasIter && isContainer;
+    }
+    if (PyNames.ABC_MUTABLE_SET.equals(superClassName)) {
+      return isSized && hasIter && isContainer && 
+             hasMethod(subClass, "discard", inherited, context) &&
+             hasMethod(subClass, "add", inherited, context);
+    }
     if (PyNames.ABC_COMPLEX.equals(superClassName)) {
       return hasMethod(subClass, "__complex__", inherited, context);
     }
@@ -99,11 +112,11 @@ public class PyABCUtil {
         final PyClassLikeType metaClassType = classType.getMetaClassType(context, true);
         if (metaClassType instanceof PyClassType) {
           final PyClassType metaClass = (PyClassType)metaClassType;
-          return isSubclass(metaClass.getPyClass(), superClassName, true, null);
+          return isSubclass(metaClass.getPyClass(), superClassName, true, context);
         }
       }
       else {
-        return isSubclass(pyClass, superClassName, true, null);
+        return isSubclass(pyClass, superClassName, true, context);
       }
     }
     if (type instanceof PyUnionType) {

@@ -34,6 +34,15 @@ public class RegExpLexerTest extends LexerTestCase {
                     "CLASS_END (']')", lexer);
   }
 
+  public void testQE() {
+    final RegExpLexer lexer = new RegExpLexer(EnumSet.noneOf(RegExpCapability.class));
+    doTest("\\Q\r\n\\E", "QUOTE_BEGIN ('\\Q')\n" +
+                         "CHARACTER ('\n" +
+                         "')\n" +
+                         "CHARACTER ('\\n')\n" +
+                         "QUOTE_END ('\\E')", lexer);
+  }
+
   public void testIntersection() {
     final RegExpLexer lexer = new RegExpLexer(EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES));
     doTest("[a&&]", "CLASS_BEGIN ('[')\n" +

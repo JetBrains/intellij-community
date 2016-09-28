@@ -40,41 +40,38 @@ import java.util.List;
 public final class IterationState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.IterationState");
   
-  private static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = new Comparator<RangeHighlighterEx>() {
-    @Override
-    public int compare(RangeHighlighterEx o1, RangeHighlighterEx o2) {
-      final int result = LayerComparator.INSTANCE.compare(o1, o2);
-      if (result != 0) {
-        return result;
-      }
-      
-      // There is a possible case when more than one highlighter target the same region (e.g. 'identifier under caret' and 'identifier').
-      // We want to prefer the one that defines foreground color to the one that doesn't define (has either fore- or background colors
-      // while the other one has only foreground color). See IDEA-85697 for concrete example.
-      final TextAttributes a1 = o1.getTextAttributes();
-      final TextAttributes a2 = o2.getTextAttributes();
-      if (a1 == null ^ a2 == null) {
-        return a1 == null ? 1 : -1;
-      }
-
-      if (a1 == null) {
-        return result;
-      }
-      
-      final Color fore1 = a1.getForegroundColor();
-      final Color fore2 = a2.getForegroundColor();
-      if (fore1 == null ^ fore2 == null) {
-        return fore1 == null ? 1 : -1;
-      }
-
-      final Color back1 = a1.getBackgroundColor();
-      final Color back2 = a2.getBackgroundColor();
-      if (back1 == null ^ back2 == null) {
-        return back1 == null ? 1 : -1;
-      }
-
+  private static final Comparator<RangeHighlighterEx> BY_LAYER_THEN_ATTRIBUTES = (o1, o2) -> {
+    final int result = LayerComparator.INSTANCE.compare(o1, o2);
+    if (result != 0) {
       return result;
     }
+
+    // There is a possible case when more than one highlighter target the same region (e.g. 'identifier under caret' and 'identifier').
+    // We want to prefer the one that defines foreground color to the one that doesn't define (has either fore- or background colors
+    // while the other one has only foreground color). See IDEA-85697 for concrete example.
+    final TextAttributes a1 = o1.getTextAttributes();
+    final TextAttributes a2 = o2.getTextAttributes();
+    if (a1 == null ^ a2 == null) {
+      return a1 == null ? 1 : -1;
+    }
+
+    if (a1 == null) {
+      return result;
+    }
+
+    final Color fore1 = a1.getForegroundColor();
+    final Color fore2 = a2.getForegroundColor();
+    if (fore1 == null ^ fore2 == null) {
+      return fore1 == null ? 1 : -1;
+    }
+
+    final Color back1 = a1.getBackgroundColor();
+    final Color back2 = a2.getBackgroundColor();
+    if (back1 == null ^ back2 == null) {
+      return back1 == null ? 1 : -1;
+    }
+
+    return result;
   };
 
   private final TextAttributes myMergedAttributes = new TextAttributes();

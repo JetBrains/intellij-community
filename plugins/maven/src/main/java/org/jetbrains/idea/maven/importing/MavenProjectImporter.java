@@ -139,22 +139,20 @@ public class MavenProjectImporter {
     }
 
     if (hasChanges) {
-      MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
-        public void run() {
-          myModelsProvider.commit();
+      MavenUtil.invokeAndWaitWriteAction(myProject, () -> {
+        myModelsProvider.commit();
 
-          if (projectsHaveChanges) {
-            removeOutdatedCompilerConfigSettings();
+        if (projectsHaveChanges) {
+          removeOutdatedCompilerConfigSettings();
 
-            for (MavenProject mavenProject : myAllProjects) {
-              Module module = myMavenProjectToModule.get(mavenProject);
-              if (module != null && module.isDisposed()) {
-                module = null;
-              }
+          for (MavenProject mavenProject : myAllProjects) {
+            Module module = myMavenProjectToModule.get(mavenProject);
+            if (module != null && module.isDisposed()) {
+              module = null;
+            }
 
-              for (MavenModuleConfigurer configurer : MavenModuleConfigurer.getConfigurers()) {
-                configurer.configure(mavenProject, myProject, module);
-              }
+            for (MavenModuleConfigurer configurer : MavenModuleConfigurer.getConfigurers()) {
+              configurer.configure(mavenProject, myProject, module);
             }
           }
         }
@@ -168,11 +166,7 @@ public class MavenProjectImporter {
   }
 
   private void disposeModifiableModels() {
-    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
-      public void run() {
-        myModelsProvider.dispose();
-      }
-    });
+    MavenUtil.invokeAndWaitWriteAction(myProject, () -> myModelsProvider.dispose());
   }
 
   private boolean projectsToImportHaveChanges() {
@@ -244,20 +238,18 @@ public class MavenProjectImporter {
     if (incompatibleNotMavenized.isEmpty()) return changed;
 
     final int[] result = new int[1];
-    MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(), new Runnable() {
-      public void run() {
-        String message = ProjectBundle.message("maven.import.incompatible.modules",
-                                               incompatibleNotMavenized.size(),
-                                               formatProjectsWithModules(incompatibleNotMavenized));
-        String[] options = {
-          ProjectBundle.message("maven.import.incompatible.modules.recreate"),
-          ProjectBundle.message("maven.import.incompatible.modules.ignore")
-        };
+    MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(), () -> {
+      String message = ProjectBundle.message("maven.import.incompatible.modules",
+                                             incompatibleNotMavenized.size(),
+                                             formatProjectsWithModules(incompatibleNotMavenized));
+      String[] options = {
+        ProjectBundle.message("maven.import.incompatible.modules.recreate"),
+        ProjectBundle.message("maven.import.incompatible.modules.ignore")
+      };
 
-        result[0] = Messages.showOkCancelDialog(myProject, message,
-                                                ProjectBundle.message("maven.project.import.title"),
-                                                options[0], options[1], Messages.getQuestionIcon());
-      }
+      result[0] = Messages.showOkCancelDialog(myProject, message,
+                                              ProjectBundle.message("maven.project.import.title"),
+                                              options[0], options[1], Messages.getQuestionIcon());
     });
 
     if (result[0] == Messages.OK) {
@@ -296,17 +288,15 @@ public class MavenProjectImporter {
   }
 
   private static String formatProjectsWithModules(List<Pair<MavenProject, Module>> projectsWithModules) {
-    return StringUtil.join(projectsWithModules, new Function<Pair<MavenProject, Module>, String>() {
-        public String fun(Pair<MavenProject, Module> each) {
-          MavenProject project = each.first;
-          Module module = each.second;
-          return ModuleType.get(module).getName() +
-                 " '" +
-                 module.getName() +
-                 "' for Maven project " +
-                 project.getMavenId().getDisplayString();
-        }
-      }, "<br>");
+    return StringUtil.join(projectsWithModules, each -> {
+      MavenProject project = each.first;
+      Module module = each.second;
+      return ModuleType.get(module).getName() +
+             " '" +
+             module.getName() +
+             "' for Maven project " +
+             project.getMavenId().getDisplayString();
+    }, "<br>");
   }
 
   private boolean deleteObsoleteModules() {
@@ -316,14 +306,11 @@ public class MavenProjectImporter {
     setMavenizedModules(obsoleteModules, false);
 
     final int[] result = new int[1];
-    MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(), new Runnable() {
-      public void run() {
-        result[0] = Messages.showYesNoDialog(myProject,
-                                             ProjectBundle.message("maven.import.message.delete.obsolete", formatModules(obsoleteModules)),
-                                             ProjectBundle.message("maven.project.import.title"),
-                                             Messages.getQuestionIcon());
-      }
-    });
+    MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
+                            () -> result[0] = Messages.showYesNoDialog(myProject,
+                                                                                           ProjectBundle.message("maven.import.message.delete.obsolete", formatModules(obsoleteModules)),
+                                                                                           ProjectBundle.message("maven.project.import.title"),
+                                                                                           Messages.getQuestionIcon()));
 
     if (result[0] == Messages.NO) return false;// NO
 
@@ -483,11 +470,7 @@ public class MavenProjectImporter {
   }
 
   private void setMavenizedModules(final Collection<Module> modules, final boolean mavenized) {
-    MavenUtil.invokeAndWaitWriteAction(myProject, new Runnable() {
-      public void run() {
-        MavenProjectsManager.getInstance(myProject).setMavenizedModules(modules, mavenized);
-      }
-    });
+    MavenUtil.invokeAndWaitWriteAction(myProject, () -> MavenProjectsManager.getInstance(myProject).setMavenizedModules(modules, mavenized));
   }
 
   private boolean ensureModuleCreated(MavenProject project) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface SliceLanguageSupportProvider {
-
   @NotNull
   SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) ;
 
@@ -35,9 +34,9 @@ public interface SliceLanguageSupportProvider {
   @NotNull
   SliceUsageCellRendererBase getRenderer();
 
-  void startAnalyzeLeafValues(AbstractTreeStructure structure, Runnable finalRunnable);
+  void startAnalyzeLeafValues(@NotNull AbstractTreeStructure structure, @NotNull Runnable finalRunnable);
 
-  void startAnalyzeNullness(AbstractTreeStructure structure, Runnable finalRunnable);
+  void startAnalyzeNullness(@NotNull AbstractTreeStructure structure, @NotNull Runnable finalRunnable);
 
-  void registerExtraPanelActions(DefaultActionGroup group, SliceTreeBuilder builder);
+  void registerExtraPanelActions(@NotNull DefaultActionGroup group, @NotNull SliceTreeBuilder builder);
 }

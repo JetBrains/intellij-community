@@ -102,12 +102,7 @@ abstract class RenameChooser {
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          runRenameTemplate(ALL_OCCURRENCES.equals(list.getSelectedValue()) ? stringUsages : new ArrayList<Pair<PsiElement, TextRange>>());
-        }
-      })
+      .setItemChoosenCallback(() -> runRenameTemplate(ALL_OCCURRENCES.equals(list.getSelectedValue()) ? stringUsages : new ArrayList<Pair<PsiElement, TextRange>>()))
       .addListener(new JBPopupAdapter() {
         @Override
         public void onClosed(LightweightWindowEvent event) {

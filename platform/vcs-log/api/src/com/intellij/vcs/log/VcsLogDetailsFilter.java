@@ -10,5 +10,4 @@ import org.jetbrains.annotations.NotNull;
 public interface VcsLogDetailsFilter extends VcsLogFilter {
 
   boolean matches(@NotNull VcsCommitMetadata details);
-
 }

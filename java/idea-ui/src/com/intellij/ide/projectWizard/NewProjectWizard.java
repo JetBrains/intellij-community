@@ -35,7 +35,7 @@ public class NewProjectWizard extends AbstractProjectWizard {
   private final StepSequence mySequence = new StepSequence();
 
   public NewProjectWizard(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
-    super(project == null ? IdeBundle.message("title.new.project") : IdeBundle.message("title.add.module"), project, defaultPath);
+    super(IdeBundle.message(project == null ? "title.new.project" : "title.add.module"), project, defaultPath);
     init(modulesProvider);
   }
 

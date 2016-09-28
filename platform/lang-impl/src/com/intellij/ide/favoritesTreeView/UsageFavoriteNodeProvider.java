@@ -82,12 +82,9 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   }
 
   private static TreeSet<WorkingSetSerializable> createSet() {
-    return new TreeSet<WorkingSetSerializable>(new Comparator<WorkingSetSerializable>() {
-      @Override
-      public int compare(WorkingSetSerializable o1, WorkingSetSerializable o2) {
-        assert o1.getId().equals(o1.getId());
-        return Comparing.compare(o1.getVersion(), o2.getVersion());
-      }
+    return new TreeSet<WorkingSetSerializable>((o1, o2) -> {
+      assert o1.getId().equals(o1.getId());
+      return Comparing.compare(o1.getVersion(), o2.getVersion());
     });
   }
 

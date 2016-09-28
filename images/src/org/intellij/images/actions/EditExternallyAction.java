@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
@@ -36,7 +35,7 @@ import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
-import org.intellij.images.options.impl.OptionsConfigurabe;
+import org.intellij.images.options.impl.ImagesConfigurable;
 
 import java.io.File;
 import java.util.Map;
@@ -56,7 +55,7 @@ public final class EditExternallyAction extends AnAction {
       Messages.showErrorDialog(project,
                                ImagesBundle.message("error.empty.external.editor.path"),
                                ImagesBundle.message("error.title.empty.external.editor.path"));
-      OptionsConfigurabe.show(project);
+      ImagesConfigurable.show(project);
     }
     else {
       if (files != null) {
@@ -94,7 +93,7 @@ public final class EditExternallyAction extends AnAction {
         }
         catch (ExecutionException ex) {
           Messages.showErrorDialog(project, ex.getLocalizedMessage(), ImagesBundle.message("error.title.launching.external.editor"));
-          OptionsConfigurabe.show(project);
+          ImagesConfigurable.show(project);
         }
       }
     }

@@ -99,13 +99,11 @@ public class ProjectTypesList implements Disposable {
             }
           }
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              int index = myList.getSelectedIndex();
-              myModel.remove(myLoadingItem);
-              myModel.add(items);
-              myList.setSelectedIndex(index);
-            }
+          SwingUtilities.invokeLater(() -> {
+            int index = myList.getSelectedIndex();
+            myModel.remove(myLoadingItem);
+            myModel.add(items);
+            myList.setSelectedIndex(index);
           });
         }
         finally {

@@ -163,7 +163,7 @@ public class MergeChangeCollector {
     GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.DIFF);
     h.setSilent(true);
     // note that moves are not detected here
-    h.addParameters("--name-status", "--diff-filter=ADMRUX", revisions);
+    h.addParameters("--name-status", "--diff-filter=ADMRUX", "--no-renames", revisions);
     for (StringScanner s = new StringScanner(h.run()); s.hasMoreData();) {
       if (s.isEol()) {
         s.nextLine();

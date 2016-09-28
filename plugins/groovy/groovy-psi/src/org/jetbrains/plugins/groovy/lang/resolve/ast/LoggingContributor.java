@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,27 +20,26 @@ import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-
-import java.util.Collection;
+import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
+import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
 /**
  * @author peter
  */
-public class LoggingContributor extends AstTransformContributor {
+public class LoggingContributor implements AstTransformationSupport {
   private static final ImmutableMap<String, String> ourLoggers = ImmutableMap.<String, String>builder().
     put("groovy.util.logging.Log", "java.util.logging.Logger").
     put("groovy.util.logging.Commons", "org.apache.commons.logging.Log").
     put("groovy.util.logging.Log4j", "org.apache.log4j.Logger").
+    put("groovy.util.logging.Log4j2", "org.apache.logging.log4j.core.Logger").
     put("groovy.util.logging.Slf4j", "org.slf4j.Logger").
     build();
 
   @Override
-  public void collectFields(@NotNull GrTypeDefinition psiClass, @NotNull Collection<GrField> collector) {
-    GrModifierList modifierList = psiClass.getModifierList();
+  public void applyTransformation(@NotNull TransformationContext context) {
+    GrModifierList modifierList = context.getCodeClass().getModifierList();
     if (modifierList == null) return;
 
     for (GrAnnotation annotation : modifierList.getAnnotations()) {
@@ -48,11 +47,11 @@ public class LoggingContributor extends AstTransformContributor {
       String logger = ourLoggers.get(qname);
       if (logger != null) {
         String fieldName = PsiUtil.getAnnoAttributeValue(annotation, "value", "log");
-        GrLightField field = new GrLightField(psiClass, fieldName, logger);
+        GrLightField field = new GrLightField(fieldName, logger, context.getCodeClass());
         field.setNavigationElement(annotation);
         field.getModifierList().setModifiers(PsiModifier.PRIVATE, PsiModifier.FINAL, PsiModifier.STATIC);
         field.setOriginInfo("created by @" + annotation.getShortName());
-        collector.add(field);
+        context.addField(field);
       }
     }
   }

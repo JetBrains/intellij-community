@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,13 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
-import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryCollection;
+import org.jetbrains.jps.model.library.JpsLibraryRoot;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
@@ -102,7 +105,7 @@ public class JpsSdkTableSerializer {
     for (Element rootTypeElement : JDOMUtil.getChildren(roots)) {
       JpsLibraryRootTypeSerializer rootTypeSerializer = getRootTypeSerializer(rootTypeElement.getName());
       if (rootTypeSerializer != null) {
-        for (Element rootElement : JDOMUtil.getChildren(rootTypeElement)) {
+        for (Element rootElement : rootTypeElement.getChildren()) {
           loadRoots(rootElement, library, rootTypeSerializer.getType());
         }
       }
@@ -158,7 +161,7 @@ public class JpsSdkTableSerializer {
   private static void loadRoots(Element rootElement, JpsLibrary library, JpsOrderRootType rootType) {
     final String type = rootElement.getAttributeValue(TYPE_ATTRIBUTE);
     if (type.equals(COMPOSITE_TYPE)) {
-      for (Element element : JDOMUtil.getChildren(rootElement)) {
+      for (Element element : rootElement.getChildren()) {
         loadRoots(element, library, rootType);
       }
     }

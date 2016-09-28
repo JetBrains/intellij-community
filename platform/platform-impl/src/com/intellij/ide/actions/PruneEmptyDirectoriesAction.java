@@ -82,16 +82,14 @@ public class PruneEmptyDirectoriesAction extends AnAction {
   }
 
   private static void delete(final VirtualFile file) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        try {
-          file.delete(PruneEmptyDirectoriesAction.class);
-          //noinspection UseOfSystemOutOrSystemErr
-          System.out.println("Deleted: " + file.getPresentableUrl());
-        }
-        catch (IOException e) {
-          Messages.showErrorDialog("Cannot delete '" + file.getPresentableUrl() + "', " + e.getLocalizedMessage(), "IOException");
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        file.delete(PruneEmptyDirectoriesAction.class);
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("Deleted: " + file.getPresentableUrl());
+      }
+      catch (IOException e) {
+        Messages.showErrorDialog("Cannot delete '" + file.getPresentableUrl() + "', " + e.getLocalizedMessage(), "IOException");
       }
     });
   }

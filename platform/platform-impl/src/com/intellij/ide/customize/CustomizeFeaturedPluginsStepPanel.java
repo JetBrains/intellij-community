@@ -30,10 +30,9 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -48,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
   private static final int COLS = 3;
-  private static final ExecutorService ourService = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 4);
+  private static final ExecutorService ourService = AppExecutorUtil.createBoundedApplicationPoolExecutor(4);
 
   public final AtomicBoolean myCanceled = new AtomicBoolean(false);
   private final PluginGroups myPluginGroups;
@@ -58,12 +57,7 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
     setLayout(new GridLayout(1, 1));
     add(myInProgressLabel = new JLabel("Loading...", SwingConstants.CENTER));
     myPluginGroups = pluginGroups;
-    myPluginGroups.setLoadingCallback(new Runnable() {
-      @Override
-      public void run() {
-        onPluginGroupsLoaded();
-      }
-    });
+    myPluginGroups.setLoadingCallback(() -> onPluginGroupsLoaded());
   }
 
   private void onPluginGroupsLoaded() {
@@ -144,37 +138,26 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
         public void start() {
           myCanceled.set(false);
           super.start();
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              wrapperLayout.show(buttonWrapper, "progress");
-            }
-          });
+          SwingUtilities.invokeLater(() -> wrapperLayout.show(buttonWrapper, "progress"));
         }
 
         @Override
         public void processFinish() {
           super.processFinish();
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              wrapperLayout.show(buttonWrapper, "button");
-              installButton.setEnabled(false);
-              installButton.setText("Installed");
-            }
+          SwingUtilities.invokeLater(() -> {
+            wrapperLayout.show(buttonWrapper, "button");
+            installButton.setEnabled(false);
+            installButton.setText("Installed");
           });
         }
 
         @Override
         public void setFraction(final double fraction) {
           super.setFraction(fraction);
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              int value = (int)(100 * fraction + .5);
-              progressBar.setValue(value);
-              progressBar.setString(value + "%");
-            }
+          SwingUtilities.invokeLater(() -> {
+            int value = (int)(100 * fraction + .5);
+            progressBar.setValue(value);
+            progressBar.setString(value + "%");
           });
         }
 
@@ -183,13 +166,10 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
           stop();
           myCanceled.set(true);
           super.cancel();
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              wrapperLayout.show(buttonWrapper, "button");
-              progressBar.setValue(0);
-              progressBar.setString("0%");
-            }
+          SwingUtilities.invokeLater(() -> {
+            wrapperLayout.show(buttonWrapper, "button");
+            progressBar.setValue(0);
+            progressBar.setString("0%");
           });
         }
       };
@@ -216,13 +196,10 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
 
             void onFail() {
               //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  indicator.stop();
-                  wrapperLayout.show(buttonWrapper, "progress");
-                  progressBar.setString("Cannot download plugin");
-                }
+              SwingUtilities.invokeLater(() -> {
+                indicator.stop();
+                wrapperLayout.show(buttonWrapper, "progress");
+                progressBar.setString("Cannot download plugin");
               });
             }
           });

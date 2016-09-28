@@ -51,7 +51,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -63,7 +62,7 @@ import java.util.regex.Pattern;
  * User: dcheryasov
  * Date: Jul 25, 2010 3:23:50 PM
  */
-public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements PythonPathContributingFacet, LibraryContributingFacet {
+public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfiguration> implements PythonPathContributingFacet {
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.buildout.BuildoutFacet");
   @NonNls public static final String BUILDOUT_CFG = "buildout.cfg";
@@ -355,15 +354,12 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
       }
     }
     if (rootPath != null) {
-      final File[] scripts = new File(rootPath, "bin").listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          if (SystemInfo.isWindows) {
-            return name.endsWith("-script.py");
-          }
-          String ext = FileUtilRt.getExtension(name);
-          return ext.length() == 0 || FileUtil.namesEqual(ext, "py");
+      final File[] scripts = new File(rootPath, "bin").listFiles((dir, name) -> {
+        if (SystemInfo.isWindows) {
+          return name.endsWith("-script.py");
         }
+        String ext = FileUtilRt.getExtension(name);
+        return ext.length() == 0 || FileUtil.namesEqual(ext, "py");
       });
       if (scripts != null) {
         return Arrays.asList(scripts);

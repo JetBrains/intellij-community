@@ -33,23 +33,17 @@ public abstract class CloudApplicationRuntimeBase extends CloudApplicationRuntim
 
   @Override
   public void undeploy(@NotNull final UndeploymentTaskCallback callback) {
-    myTaskExecutor.submit(new ThrowableRunnable<Exception>() {
+    myTaskExecutor.submit(() -> getApplication().undeploy(new CloudAgentDeploymentCallback() {
+      @Override
+      public void succeeded() {
+        callback.succeeded();
+      }
 
       @Override
-      public void run() throws Exception {
-        getApplication().undeploy(new CloudAgentDeploymentCallback() {
-          @Override
-          public void succeeded() {
-            callback.succeeded();
-          }
-
-          @Override
-          public void errorOccurred(String errorMessage) {
-            callback.errorOccurred(errorMessage);
-          }
-        });
+      public void errorOccurred(String errorMessage) {
+        callback.errorOccurred(errorMessage);
       }
-    }, callback);
+    }), callback);
   }
 
   protected ServerTaskExecutor getTaskExecutor() {

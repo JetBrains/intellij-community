@@ -56,9 +56,9 @@ public class ColorIcon extends EmptyIcon {
     final int size = getColorSize();
     final int x = i + (iconWidth - size) / 2;
     final int y = j + (iconHeight - size) / 2;
-
+    
     g.fillRect(x, y, size, size);
-
+    
     if (myBorder) {
       g.setColor(Gray.x00.withAlpha(40));
       g.drawRect(x, y, size, size);

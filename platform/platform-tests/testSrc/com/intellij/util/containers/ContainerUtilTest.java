@@ -56,12 +56,7 @@ public class ContainerUtilTest extends TestCase {
   }
 
   public void testIterateWithCondition() throws Exception {
-    Condition<Integer> cond = new Condition<Integer>() {
-      @Override
-      public boolean value(Integer integer) {
-        return integer > 2;
-      }
-    };
+    Condition<Integer> cond = integer -> integer > 2;
 
     asserIterating(Arrays.asList(1, 4, 2, 5), cond, 4, 5);
     asserIterating(Arrays.asList(1, 2), cond);

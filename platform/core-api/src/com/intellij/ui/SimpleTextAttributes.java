@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.MagicConstant;
@@ -145,34 +146,34 @@ public final class SimpleTextAttributes {
    * @return whether text is struck out or not
    */
   public boolean isStrikeout() {
-    return (myStyle & STYLE_STRIKEOUT) != 0;
+    return BitUtil.isSet(myStyle, STYLE_STRIKEOUT);
   }
 
   /**
    * @return whether text is waved or not
    */
   public boolean isWaved() {
-    return (myStyle & STYLE_WAVED) != 0;
+    return BitUtil.isSet(myStyle, STYLE_WAVED);
   }
 
   public boolean isUnderline() {
-    return (myStyle & STYLE_UNDERLINE) != 0;
+    return BitUtil.isSet(myStyle, STYLE_UNDERLINE);
   }
 
   public boolean isBoldDottedLine() {
-    return (myStyle & STYLE_BOLD_DOTTED_LINE) != 0;
+    return BitUtil.isSet(myStyle, STYLE_BOLD_DOTTED_LINE);
   }
 
   public boolean isSearchMatch() {
-    return (myStyle & STYLE_SEARCH_MATCH) != 0;
+    return BitUtil.isSet(myStyle, STYLE_SEARCH_MATCH);
   }
   
   public boolean isSmaller() {
-    return (myStyle & STYLE_SMALLER) != 0;
+    return BitUtil.isSet(myStyle, STYLE_SMALLER);
   }
 
   public boolean isOpaque() {
-    return (myStyle & STYLE_OPAQUE) != 0;
+    return BitUtil.isSet(myStyle, STYLE_OPAQUE);
   }
 
   @NotNull

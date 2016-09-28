@@ -65,14 +65,11 @@ public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAwar
 
     count.set(0);
     totalSize.set(0);
-    ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        PersistentFS vfs = (PersistentFS)application.getComponent(ManagingFS.class);
-        VirtualFile[] roots = vfs.getRoots();
-        for (VirtualFile root : roots) {
-          iterateCached(root);
-        }
+    ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
+      PersistentFS vfs = (PersistentFS)application.getComponent(ManagingFS.class);
+      VirtualFile[] roots = vfs.getRoots();
+      for (VirtualFile root : roots) {
+        iterateCached(root);
       }
     }, "Loading", false, null);
 

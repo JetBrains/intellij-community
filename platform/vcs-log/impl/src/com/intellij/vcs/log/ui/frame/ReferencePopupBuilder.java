@@ -48,13 +48,10 @@ class ReferencePopupBuilder {
     myUi = ui;
 
     myRendererComponent = new SingleReferenceComponent(new VcsRefPainter(ui.getColorManager(), false));
-    myCellRenderer = new ListCellRenderer() {
-      @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        myRendererComponent.setReference((VcsRef)value);
-        myRendererComponent.setSelected(isSelected);
-        return myRendererComponent;
-      }
+    myCellRenderer = (list, value, index, isSelected, cellHasFocus) -> {
+      myRendererComponent.setReference((VcsRef)value);
+      myRendererComponent.setSelected(isSelected);
+      return myRendererComponent;
     };
 
     myList = createList(group);
@@ -97,18 +94,18 @@ class ReferencePopupBuilder {
   private JBPopup createPopup() {
     return JBPopupFactory.getInstance()
       .createComponentPopupBuilder(ListWithFilter.wrap(myList, ScrollPaneFactory.createScrollPane(myList), new Function<VcsRef, String>() {
-                                     @Override
-                                     public String fun(VcsRef vcsRef) {
-                                       return vcsRef.getName();
-                                     }
-                                   }), myList).
-      setCancelOnClickOutside(true).
-      setCancelOnWindowDeactivation(true).
-      setFocusable(true).
-      setRequestFocus(true).
-      setResizable(true).
-      setDimensionServiceKey(myUi.getProject(), "Vcs.Log.Branch.Panel.RefGroup.Popup", false).
-      createPopup();
+        @Override
+        public String fun(VcsRef vcsRef) {
+          return vcsRef.getName();
+        }
+      }), myList).
+        setCancelOnClickOutside(true).
+        setCancelOnWindowDeactivation(true).
+        setFocusable(true).
+        setRequestFocus(true).
+        setResizable(true).
+        setDimensionServiceKey(myUi.getProject(), "Vcs.Log.Branch.Panel.RefGroup.Popup", false).
+        createPopup();
   }
 
   private static DefaultListModel createListModel(RefGroup group) {

@@ -62,12 +62,7 @@ public class RelaxIncludeIndex {
   private static boolean processRelatedFiles(PsiFile file, VirtualFile[] files, PsiElementProcessor<XmlFile> processor) {
     Project project = file.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
-    final PsiFile[] psiFiles = ContainerUtil.map2Array(files, PsiFile.class, new NullableFunction<VirtualFile, PsiFile>() {
-      @Override
-      public PsiFile fun(VirtualFile file) {
-        return psiManager.findFile(file);
-      }
-    });
+    final PsiFile[] psiFiles = ContainerUtil.map2Array(files, PsiFile.class, (NullableFunction<VirtualFile, PsiFile>)file1 -> psiManager.findFile(file1));
 
     for (final PsiFile psiFile : psiFiles) {
       if (!processFile(psiFile, processor)) {

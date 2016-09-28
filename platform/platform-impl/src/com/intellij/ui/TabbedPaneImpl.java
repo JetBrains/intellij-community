@@ -230,12 +230,9 @@ public class TabbedPaneImpl extends JBTabbedPane implements TabbedPane {
          if (each.getClass().getName().contains("apple.laf.CUIAquaTabbedPane")) {
 
            //noinspection SSBasedInspection
-           SwingUtilities.invokeLater(new Runnable() {
-             @Override
-             public void run() {
-               revalidate();
-               repaint();
-             }
+           SwingUtilities.invokeLater(() -> {
+             revalidate();
+             repaint();
            });
 
            continue;

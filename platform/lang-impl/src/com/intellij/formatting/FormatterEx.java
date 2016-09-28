@@ -18,8 +18,8 @@ package com.intellij.formatting;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
@@ -113,8 +113,10 @@ public abstract class FormatterEx{
                                                  final CommonCodeStyleSettings.IndentOptions indentOptions,
                                                  final TextRange rangeToAdjust);
 
-  public abstract void formatAroundRange(final FormattingModel model, final CodeStyleSettings settings,
-                                         final TextRange textRange, final FileType fileType);
+  public abstract void formatAroundRange(final FormattingModel model,
+                                         final CodeStyleSettings settings,
+                                         final PsiFile file,
+                                         final TextRange textRange);
 
   public abstract void adjustTextRange(FormattingModel model,
                                        CodeStyleSettings settings,

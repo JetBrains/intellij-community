@@ -18,7 +18,6 @@ package com.intellij.codeInsight.inspections;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
@@ -34,13 +33,20 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import org.junit.Assert;
 
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.List;
 
 /**
  * @author Dmitry Batkovich
  */
 public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
+  private GuavaInspection myInspection;
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myInspection = new GuavaInspection();
+    myFixture.enableInspections(myInspection);
+  }
 
   @Override
   protected String getTestDataPath()  {
@@ -51,6 +57,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
     moduleBuilder.addLibraryJars("guava", PathManager.getHomePathFor(Assert.class) + "/lib/", "guava-17.0.jar");
+    moduleBuilder.addLibraryJars("jsr305", PathManager.getHomePathFor(Assert.class) + "/lib/", "jsr305.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
@@ -75,7 +82,7 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testFluentIterableChainWithoutVariable() {
-    doTestAllFile();;
+    doTestAllFile();
   }
 
   public void testChainedFluentIterableWithChainedInitializer() {
@@ -94,7 +101,6 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
-  @Bombed(day = 21, month = Calendar.MAY, user = "Dmitry")
   public void testTransformAndConcat3() {
     doTest();
   }
@@ -262,9 +268,27 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
     doTest();
   }
 
+  // for ex: javax.annotations.Nullable is runtime annotation
+  public void testFunctionAnnotatedWithRuntimeAnnotation() {
+    doTestAllFile();
+  }
+
+  public void testFunctionAnnotatedWithRuntimeAnnotation2() {
+    try {
+      myInspection.ignoreJavaxNullable = false;
+      doTestAllFile();
+    } finally {
+      myInspection.ignoreJavaxNullable = true;
+    }
+  }
+
+  public void testFluentIterableFromAndParenthesises() {
+    doTestAllFile();
+  }
+
   private void doTestNoQuickFixes(Class<? extends PsiElement>... highlightedElements) {
     myFixture.configureByFile(getTestName(true) + ".java");
-    myFixture.enableInspections(new GuavaInspection());
+
     myFixture.doHighlighting();
     for (IntentionAction action : myFixture.getAvailableIntentions()) {
       if (action instanceof GuavaInspection.MigrateGuavaTypeFix) {

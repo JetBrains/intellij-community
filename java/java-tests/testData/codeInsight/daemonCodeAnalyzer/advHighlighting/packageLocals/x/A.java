@@ -6,7 +6,7 @@ public class A extends D{
 class C extends x.sub.B {
     int n=<error descr="'k' is not public in 'x.A'. Cannot be accessed from outside package">k</error>;
 
-    // can call despite inherited through package local from other package
+    // can call despite inherited through package-private from other package
     void f() { A.staticF(); }
 }
 

@@ -83,12 +83,7 @@ public class ProjectConfigurationProblem extends ConfigurationError {
 
       @Override
       public PopupStep onChosen(final ConfigurationErrorQuickFix selectedValue, boolean finalChoice) {
-        return doFinalStep(new Runnable() {
-          @Override
-          public void run() {
-            selectedValue.performFix();
-          }
-        });
+        return doFinalStep(() -> selectedValue.performFix());
       }
     }).show(relativePoint);
   }

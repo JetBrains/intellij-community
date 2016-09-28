@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnonymousClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -60,9 +59,8 @@ import java.util.List;
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
-  private static final Function<GrNewExpressionImpl,PsiType> MY_TYPE_CALCULATOR = new NullableFunction<GrNewExpressionImpl, PsiType>() {
-    @Override
-    public PsiType fun(GrNewExpressionImpl newExpression) {
+  private static final Function<GrNewExpressionImpl,PsiType> MY_TYPE_CALCULATOR =
+    (NullableFunction<GrNewExpressionImpl, PsiType>)newExpression -> {
       final GrAnonymousClassDefinition anonymous = newExpression.getAnonymousClassDefinition();
       if (anonymous != null) {
         return new GrAnonymousClassType(LanguageLevel.JDK_1_5, anonymous.getResolveScope(),
@@ -86,8 +84,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       }
 
       return null;
-    }
-  };
+    };
 
   private static final ResolveCache.PolyVariantResolver<MyFakeReference> RESOLVER = new ResolveCache.PolyVariantResolver<MyFakeReference>() {
     @NotNull
@@ -136,22 +133,12 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
     return super.addNamedArgument(namedArgument);
   }
 
+  @Nullable
   @Override
   public GrArgumentList getArgumentList() {
     final GrAnonymousClassDefinition anonymous = getAnonymousClassDefinition();
     if (anonymous != null) return anonymous.getArgumentListGroovy();
     return super.getArgumentList();
-  }
-
-  @Override
-  @Nullable
-  public GrExpression getQualifier() {
-    final PsiElement[] children = getChildren();
-    for (PsiElement child : children) {
-      if (child instanceof GrExpression) return (GrExpression)child;
-      if (PsiKeyword.NEW.equals(child.getText())) return null;
-    }
-    return null;
   }
 
   @Override
@@ -192,18 +179,6 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   @Override
   public GrTypeArgumentList getConstructorTypeArguments() {
     return findChildByClass(GrTypeArgumentList.class);
-  }
-
-  @Override
-  @Nullable
-  public PsiMethod resolveMethod() {
-    return PsiImplUtil.extractUniqueElement(multiResolve(false));
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    return PsiImplUtil.extractUniqueResult(multiResolve(false));
   }
 
   @Override

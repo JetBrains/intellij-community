@@ -47,18 +47,10 @@ public class AbstractTreeBuilder implements Disposable {
   @NonNls private static final String TREE_BUILDER = "TreeBuilder";
   public static final boolean DEFAULT_UPDATE_INACTIVE = true;
   private final TransferToEDTQueue<Runnable>
-    myLaterInvocator = new TransferToEDTQueue<Runnable>("Tree later invocator", new Processor<Runnable>() {
-    @Override
-    public boolean process(Runnable runnable) {
+    myLaterInvocator = new TransferToEDTQueue<Runnable>("Tree later invocator", runnable -> {
       runnable.run();
       return true;
-    }
-  }, new Condition<Object>() {
-    @Override
-    public boolean value(Object o) {
-      return isDisposed();
-    }
-  }, 200);
+    }, o -> isDisposed(), 200);
 
 
   public AbstractTreeBuilder(@NotNull JTree tree,

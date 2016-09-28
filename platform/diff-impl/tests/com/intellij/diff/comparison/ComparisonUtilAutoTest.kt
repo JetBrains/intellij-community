@@ -16,9 +16,9 @@
 package com.intellij.diff.comparison
 
 import com.intellij.diff.DiffTestCase
-import com.intellij.diff.fragments.DiffFragment
-import com.intellij.diff.fragments.LineFragment
+import com.intellij.diff.fragments.*
 import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Couple
@@ -44,6 +44,10 @@ class ComparisonUtilAutoTest : DiffTestCase() {
 
   fun testLineTrimSquashed() {
     doTestLineTrimSquashed(System.currentTimeMillis(), 30, 300)
+  }
+
+  fun testMerge() {
+    doTestMerge(System.currentTimeMillis(), 30, 300)
   }
 
   private fun doTestLine(seed: Long, runs: Int, maxLength: Int) {
@@ -122,6 +126,30 @@ class ComparisonUtilAutoTest : DiffTestCase() {
     }
   }
 
+  private fun doTestMerge(seed: Long, runs: Int, maxLength: Int) {
+    val policies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
+
+    doTest3(seed, runs, maxLength, policies) { text1, text2, text3, policy, debugData ->
+      val sequence1 = text1.charsSequence
+      val sequence2 = text2.charsSequence
+      val sequence3 = text3.charsSequence
+
+      val fragments = ByLine.compareTwoStep(sequence1, sequence2, sequence3, policy, INDICATOR)
+
+      val fineFragments = fragments.map { f ->
+        val chunk1 = DiffUtil.getLinesContent(text1, f.startLine1, f.endLine1)
+        val chunk2 = DiffUtil.getLinesContent(text2, f.startLine2, f.endLine2)
+        val chunk3 = DiffUtil.getLinesContent(text3, f.startLine3, f.endLine3)
+
+        val wordFragments = ByWord.compare(chunk1, chunk2, chunk3, policy, INDICATOR);
+        MergeLineFragmentImpl(f, wordFragments);
+      }
+      debugData.put("Fragments", fineFragments)
+
+      checkResultMerge(text1, text2, text3, fineFragments, policy)
+    }
+  }
+
   private fun doTest(seed: Long, runs: Int, maxLength: Int, policies: List<ComparisonPolicy>,
                      test: (Document, Document, ComparisonPolicy, DiffTestCase.DebugData) -> Unit) {
     doAutoTest(seed, runs) { debugData ->
@@ -136,6 +164,26 @@ class ComparisonUtilAutoTest : DiffTestCase() {
       for (comparisonPolicy in policies) {
         debugData.put("Policy", comparisonPolicy)
         test(text1, text2, comparisonPolicy, debugData)
+      }
+    }
+  }
+
+  private fun doTest3(seed: Long, runs: Int, maxLength: Int, policies: List<ComparisonPolicy>,
+                      test: (Document, Document, Document, ComparisonPolicy, DiffTestCase.DebugData) -> Unit) {
+    doAutoTest(seed, runs) { debugData ->
+      debugData.put("MaxLength", maxLength)
+
+      val text1 = DocumentImpl(generateText(maxLength))
+      val text2 = DocumentImpl(generateText(maxLength))
+      val text3 = DocumentImpl(generateText(maxLength))
+
+      debugData.put("Text1", textToReadableFormat(text1.charsSequence))
+      debugData.put("Text2", textToReadableFormat(text2.charsSequence))
+      debugData.put("Text3", textToReadableFormat(text3.charsSequence))
+
+      for (comparisonPolicy in policies) {
+        debugData.put("Policy", comparisonPolicy)
+        test(text1, text2, text2, comparisonPolicy, debugData)
       }
     }
   }
@@ -158,14 +206,28 @@ class ComparisonUtilAutoTest : DiffTestCase() {
 
   private fun checkResultWord(text1: CharSequence, text2: CharSequence, fragments: List<DiffFragment>, policy: ComparisonPolicy) {
     checkDiffConsistency(fragments)
-
     checkUnchanged(text1, text2, fragments, policy, false)
   }
 
   private fun checkResultChar(text1: CharSequence, text2: CharSequence, fragments: List<DiffFragment>, policy: ComparisonPolicy) {
     checkDiffConsistency(fragments)
-
     checkUnchanged(text1, text2, fragments, policy, false)
+  }
+
+  private fun checkResultMerge(text1: Document, text2: Document, text3: Document, fragments: List<MergeLineFragment>, policy: ComparisonPolicy) {
+    checkLineConsistency3(text1, text2, text3, fragments)
+
+    for (f in fragments) {
+      val chunk1 = DiffUtil.getLinesContent(text1, f.startLine1, f.endLine1)
+      val chunk2 = DiffUtil.getLinesContent(text2, f.startLine2, f.endLine2)
+      val chunk3 = DiffUtil.getLinesContent(text3, f.startLine3, f.endLine3)
+
+      checkDiffConsistency3(f.innerFragments!!)
+      checkUnchanged3(chunk1, chunk2, chunk3, f.innerFragments!!, policy)
+    }
+
+    checkUnchanged3(text1, text2, text3, fragments, policy)
+    checkCantTrimLines3(text1, text2, text3, fragments, policy)
   }
 
   private fun checkLineConsistency(text1: Document, text2: Document, fragments: List<LineFragment>, allowNonSquashed: Boolean) {
@@ -209,6 +271,39 @@ class ComparisonUtilAutoTest : DiffTestCase() {
     }
   }
 
+  private fun checkLineConsistency3(text1: Document, text2: Document, text3: Document, fragments: List<MergeLineFragment>) {
+    var last1 = -1
+    var last2 = -1
+    var last3 = -1
+
+    for (fragment in fragments) {
+      val start1 = fragment.startLine1
+      val start2 = fragment.startLine2
+      val start3 = fragment.startLine3
+      val end1 = fragment.endLine1
+      val end2 = fragment.endLine2
+      val end3 = fragment.endLine3
+
+      assertTrue(start1 >= 0)
+      assertTrue(start2 >= 0)
+      assertTrue(start3 >= 0)
+      assertTrue(end1 <= getLineCount(text1))
+      assertTrue(end2 <= getLineCount(text2))
+      assertTrue(end3 <= getLineCount(text3))
+
+      assertTrue(start1 <= end1)
+      assertTrue(start2 <= end2)
+      assertTrue(start3 <= end3)
+      assertTrue(start1 != end1 || start2 != end2 || start3 != end3)
+
+      assertTrue(start1 != last1 || start2 != last2 || start3 != last3)
+
+      last1 = end1
+      last2 = end2
+      last3 = end3
+    }
+  }
+
   private fun checkDiffConsistency(fragments: List<DiffFragment>) {
     var last1 = -1
     var last2 = -1
@@ -227,6 +322,32 @@ class ComparisonUtilAutoTest : DiffTestCase() {
 
       last1 = end1
       last2 = end2
+    }
+  }
+
+  private fun checkDiffConsistency3(fragments: List<MergeWordFragment>) {
+    var last1 = -1
+    var last2 = -1
+    var last3 = -1
+
+    for (diffFragment in fragments) {
+      val start1 = diffFragment.startOffset1
+      val start2 = diffFragment.startOffset2
+      val start3 = diffFragment.startOffset3
+      val end1 = diffFragment.endOffset1
+      val end2 = diffFragment.endOffset2
+      val end3 = diffFragment.endOffset3
+
+      assertTrue(start1 <= end1)
+      assertTrue(start2 <= end2)
+      assertTrue(start3 <= end3)
+      assertTrue(start1 != end1 || start2 != end2 || start3 != end3)
+
+      assertTrue(start1 != last1 || start2 != last2 || start3 != last3)
+
+      last1 = end1
+      last2 = end2
+      last3 = end3
     }
   }
 
@@ -273,6 +394,68 @@ class ComparisonUtilAutoTest : DiffTestCase() {
     assertEqualsCharSequences(chunk1, chunk2, ignoreSpaces, skipNewline)
   }
 
+  private fun checkUnchanged3(text1: Document, text2: Document, text3: Document, fragments: List<MergeLineFragment>, policy: ComparisonPolicy) {
+    val ignoreSpaces = policy !== ComparisonPolicy.DEFAULT
+
+    var last1 = 0
+    var last2 = 0
+    var last3 = 0
+    for (fragment in fragments) {
+      val start1 = fragment.startLine1
+      val start2 = fragment.startLine2
+      val start3 = fragment.startLine3
+
+      val content1 = DiffUtil.getLinesContent(text1, last1, start1)
+      val content2 = DiffUtil.getLinesContent(text2, last2, start2)
+      val content3 = DiffUtil.getLinesContent(text3, last3, start3)
+
+      assertEqualsCharSequences(content2, content1, ignoreSpaces, false)
+      assertEqualsCharSequences(content2, content3, ignoreSpaces, false)
+
+      last1 = fragment.endLine1
+      last2 = fragment.endLine2
+      last3 = fragment.endLine3
+    }
+
+    val content1 = DiffUtil.getLinesContent(text1, last1, getLineCount(text1))
+    val content2 = DiffUtil.getLinesContent(text2, last2, getLineCount(text2))
+    val content3 = DiffUtil.getLinesContent(text3, last3, getLineCount(text3))
+
+    assertEqualsCharSequences(content2, content1, ignoreSpaces, false)
+    assertEqualsCharSequences(content2, content3, ignoreSpaces, false)
+  }
+
+  private fun checkUnchanged3(text1: CharSequence, text2: CharSequence, text3: CharSequence, fragments: List<MergeWordFragment>, policy: ComparisonPolicy) {
+    val ignoreSpaces = policy !== ComparisonPolicy.DEFAULT
+
+    var last1 = 0
+    var last2 = 0
+    var last3 = 0
+    for (fragment in fragments) {
+      val start1 = fragment.startOffset1
+      val start2 = fragment.startOffset2
+      val start3 = fragment.startOffset3
+
+      val content1 = text1.subSequence(last1, start1)
+      val content2 = text2.subSequence(last2, start2)
+      val content3 = text3.subSequence(last3, start3)
+
+      assertEqualsCharSequences(content2, content1, ignoreSpaces, false)
+      assertEqualsCharSequences(content2, content3, ignoreSpaces, false)
+
+      last1 = fragment.endOffset1
+      last2 = fragment.endOffset2
+      last3 = fragment.endOffset3
+    }
+
+    val content1 = text1.subSequence(last1, text1.length)
+    val content2 = text2.subSequence(last2, text2.length)
+    val content3 = text3.subSequence(last3, text3.length)
+
+    assertEqualsCharSequences(content2, content1, ignoreSpaces, false)
+    assertEqualsCharSequences(content2, content3, ignoreSpaces, false)
+  }
+
   private fun checkCantTrimLines(text1: Document, text2: Document, fragments: List<LineFragment>, policy: ComparisonPolicy, allowNonSquashed: Boolean) {
     for (fragment in fragments) {
       val sequence1 = getFirstLastLines(text1, fragment.startLine1, fragment.endLine1)
@@ -281,6 +464,18 @@ class ComparisonUtilAutoTest : DiffTestCase() {
 
       checkNonEqualsIfLongEnough(sequence1.first, sequence2.first, policy, allowNonSquashed)
       checkNonEqualsIfLongEnough(sequence1.second, sequence2.second, policy, allowNonSquashed)
+    }
+  }
+
+  private fun checkCantTrimLines3(text1: Document, text2: Document, text3: Document, fragments: List<MergeLineFragment>, policy: ComparisonPolicy) {
+    for (fragment in fragments) {
+      val sequence1 = getFirstLastLines(text1, fragment.startLine1, fragment.endLine1)
+      val sequence2 = getFirstLastLines(text2, fragment.startLine2, fragment.endLine2)
+      val sequence3 = getFirstLastLines(text3, fragment.startLine3, fragment.endLine3)
+      if (sequence1 == null || sequence2 == null || sequence3 == null) continue
+
+      assertFalse(MANAGER.isEquals(sequence2.first, sequence1.first, policy) && MANAGER.isEquals(sequence2.first, sequence3.first, policy))
+      assertFalse(MANAGER.isEquals(sequence2.second, sequence1.second, policy) && MANAGER.isEquals(sequence2.second, sequence3.second, policy))
     }
   }
 
@@ -318,4 +513,18 @@ class ComparisonUtilAutoTest : DiffTestCase() {
   private fun Document.subsequence(start: Int, end: Int): CharSequence {
     return this.charsSequence.subSequence(start, end)
   }
+
+  private val MergeLineFragment.startLine1: Int get() = this.getStartLine(ThreeSide.LEFT)
+  private val MergeLineFragment.startLine2: Int get() = this.getStartLine(ThreeSide.BASE)
+  private val MergeLineFragment.startLine3: Int get() = this.getStartLine(ThreeSide.RIGHT)
+  private val MergeLineFragment.endLine1: Int get() = this.getEndLine(ThreeSide.LEFT)
+  private val MergeLineFragment.endLine2: Int get() = this.getEndLine(ThreeSide.BASE)
+  private val MergeLineFragment.endLine3: Int get() = this.getEndLine(ThreeSide.RIGHT)
+
+  private val MergeWordFragment.startOffset1: Int get() = this.getStartOffset(ThreeSide.LEFT)
+  private val MergeWordFragment.startOffset2: Int get() = this.getStartOffset(ThreeSide.BASE)
+  private val MergeWordFragment.startOffset3: Int get() = this.getStartOffset(ThreeSide.RIGHT)
+  private val MergeWordFragment.endOffset1: Int get() = this.getEndOffset(ThreeSide.LEFT)
+  private val MergeWordFragment.endOffset2: Int get() = this.getEndOffset(ThreeSide.BASE)
+  private val MergeWordFragment.endOffset3: Int get() = this.getEndOffset(ThreeSide.RIGHT)
 }

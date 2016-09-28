@@ -28,6 +28,18 @@ public class JavaFxPackagerConstants {
   @NonNls public static final String DEFAULT_WEIGHT = "600";
 
   public enum NativeBundles {
-    none, all, deb, dmg, exe, image, msi, rpm
-  } 
+    none, all, deb, dmg, exe, image, msi, rpm;
+
+    public boolean isOnLinux() {
+      return this == all || this == deb || this == rpm;
+    }
+
+    public boolean isOnMac() {
+      return this == all || this == dmg;
+    }
+
+    public boolean isOnWindows() {
+      return this == all || this == exe || this == msi;
+    }
+  }
 }

@@ -32,7 +32,7 @@ public class PropertiesPsiCompletionUtil {
                                          final PropertiesFile propertiesFile,
                                          final Set<Object> variants) {
     if (propertiesFile == null) return;
-    if (!ProjectRootManager.getInstance(propertyReference.getElement().getProject()).getFileIndex().isInContent(propertiesFile.getVirtualFile())) return;
+    if (!ProjectRootManager.getInstance(propertiesFile.getProject()).getFileIndex().isInContent(propertiesFile.getVirtualFile())) return;
     List<? extends IProperty> properties = propertiesFile.getProperties();
     for (IProperty property : properties) {
       propertyReference.addKey(property, variants);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,12 +132,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   private KeyState myCurrentState = KeyState.waiting;
   private final Alarm myWaiterForSecondPress = new Alarm();
-  private final Runnable mySecondPressRunnable = new Runnable() {
-    @Override
-    public void run() {
-      if (myCurrentState != KeyState.hold) {
-        resetHoldState();
-      }
+  private final Runnable mySecondPressRunnable = () -> {
+    if (myCurrentState != KeyState.hold) {
+      resetHoldState();
     }
   };
   private final PropertyChangeListener myFocusListener;
@@ -151,12 +148,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private final Alarm myUpdateHeadersAlarm = new Alarm();
-  private final Runnable myUpdateHeadersRunnable = new Runnable() {
-    @Override
-    public void run() {
-      updateToolWindowHeaders();
-    }
-  };
+  private final Runnable myUpdateHeadersRunnable = () -> updateToolWindowHeaders();
 
   /**
    * invoked by reflection
@@ -312,7 +304,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
     Shortcut[] baseShortcut = keymap.getShortcuts("ActivateProjectToolWindow");
-    int baseModifiers = 0;
+    int baseModifiers = SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.ALT_MASK;
     for (Shortcut each : baseShortcut) {
       if (each instanceof KeyboardShortcut) {
         KeyStroke keyStroke = ((KeyboardShortcut)each).getFirstKeyStroke();
@@ -450,17 +442,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
     });
 
-    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent e) {
-        if (e instanceof KeyEvent) {
-          dispatchKeyEvent((KeyEvent)e);
-        }
-        if (e instanceof WindowEvent && (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) && e.getSource() == myFrame) {
-          resetHoldState();
-        }
-        return false;
+    IdeEventQueue.getInstance().addDispatcher(e -> {
+      if (e instanceof KeyEvent) {
+        dispatchKeyEvent((KeyEvent)e);
       }
+      if (e instanceof WindowEvent && (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) && e.getSource() == myFrame) {
+        resetHoldState();
+      }
+      return false;
     }, myProject);
   }
 
@@ -483,40 +472,39 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void registerToolWindowsFromBeans() {
-    ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
-    for (final ToolWindowEP bean : beans) {
-      final Condition<Project> condition = bean.getCondition();
-      if (condition == null) {
-        initToolWindow(bean);
-      }
-      else {
-        checkConditionInReadAction(bean, condition);
-      }
-    }
+    List<ToolWindowEP> beans = new ArrayList<>(Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME)));
+    Collections.reverse(beans);
+
+    checkConditionsInReadAction(beans, new ArrayList<>());
   }
 
-  private void checkConditionInReadAction(@NotNull final ToolWindowEP bean, @NotNull final Condition<Project> condition) {
+  private void checkConditionsInReadAction(@NotNull List<ToolWindowEP> beans, @NotNull List<ToolWindowEP> checkedSuccessfully) {
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
-
       @Nullable
       @Override
       public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-        if (!myProject.isDisposed() && condition.value(myProject)) {
-          return new Continuation(new Runnable() {
-            @Override
-            public void run() {
-              if (!myProject.isDisposed() && getToolWindow(bean.id) == null) {
+        for (int i = beans.size() - 1; i >= 0; i--) {
+          indicator.checkCanceled();
+          ToolWindowEP bean = beans.remove(i);
+          Condition<Project> condition = ObjectUtils.notNull(bean.getCondition(), Conditions.<Project>alwaysTrue());
+          if (!myProject.isDisposed() && condition.value(myProject)) {
+            checkedSuccessfully.add(bean);
+          }
+        }
+        return new Continuation(() -> {
+          if (!myProject.isDisposed()) {
+            for (ToolWindowEP bean : checkedSuccessfully) {
+              if (getToolWindow(bean.id) == null) {
                 initToolWindow(bean);
               }
             }
-          });
-        }
-        return null;
+          }
+        }, ModalityState.any());
       }
 
       @Override
       public void onCanceled(@NotNull ProgressIndicator indicator) {
-        checkConditionInReadAction(bean, condition);
+        checkConditionsInReadAction(beans, checkedSuccessfully);
       }
     });
   }
@@ -567,12 +555,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       runnable.run();
     }
     else {
-      UiNotifyConnector.doWhenFirstShown(label, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().invokeLater(runnable);
-        }
-      });
+      UiNotifyConnector.doWhenFirstShown(label, () -> ApplicationManager.getApplication().invokeLater(runnable));
     }
   }
 
@@ -684,50 +667,44 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void activateEditorComponentImpl(List<FinalizableCommand> commandList, final boolean forced) {
     final String active = getActiveToolWindowId();
     // Now we have to request focus into most recent focused editor
-    appendRequestFocusInEditorComponentCmd(commandList, forced).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+    appendRequestFocusInEditorComponentCmd(commandList, forced).doWhenDone(() -> {
+      final ArrayList<FinalizableCommand> commandList12 = new ArrayList<FinalizableCommand>();
 
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("editor activated");
-        }
-        deactivateWindows(null, commandList);
-        myActiveStack.clear();
-
-        execute(commandList);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("editor activated");
       }
-    }).doWhenRejected(new Runnable() {
-      @Override
-      public void run() {
-        if (forced) {
-          getFocusManagerImpl(myProject).requestFocus(new FocusCommand() {
-            @NotNull
-            @Override
-            public ActionCallback run() {
-              final ArrayList<FinalizableCommand> commandList = new ArrayList<FinalizableCommand>();
+      deactivateWindows(null, commandList12);
+      myActiveStack.clear();
 
-              final WindowInfoImpl toReactivate = getInfo(active);
-              final boolean reactivateLastActive = toReactivate != null && !isToHideOnDeactivation(toReactivate);
-              deactivateWindows(reactivateLastActive ? active : null, commandList);
-              execute(commandList);
+      execute(commandList12);
+    }).doWhenRejected(() -> {
+      if (forced) {
+        getFocusManagerImpl(myProject).requestFocus(new FocusCommand() {
+          @NotNull
+          @Override
+          public ActionCallback run() {
+            final ArrayList<FinalizableCommand> commandList1 = new ArrayList<FinalizableCommand>();
 
-              if (reactivateLastActive) {
-                activateToolWindow(active, false, true);
-              }
-              else {
-                if (active != null) {
-                  myActiveStack.remove(active, false);
-                }
+            final WindowInfoImpl toReactivate = getInfo(active);
+            final boolean reactivateLastActive = toReactivate != null && !isToHideOnDeactivation(toReactivate);
+            deactivateWindows(reactivateLastActive ? active : null, commandList1);
+            execute(commandList1);
 
-                if (!myActiveStack.isEmpty()) {
-                  activateToolWindow(myActiveStack.peek(), false, true);
-                }
-              }
-              return ActionCallback.DONE;
+            if (reactivateLastActive) {
+              activateToolWindow(active, false, true);
             }
-          }, false);
-        }
+            else {
+              if (active != null) {
+                myActiveStack.remove(active, false);
+              }
+
+              if (!myActiveStack.isEmpty()) {
+                activateToolWindow(myActiveStack.peek(), false, true);
+              }
+            }
+            return ActionCallback.DONE;
+          }
+        }, false);
       }
     });
   }
@@ -1489,18 +1466,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(text.replace("\n", "<br>"), icon, type.getPopupBackground(), listenerWrapper)
         .setHideOnClickOutside(false).setHideOnFrameResize(false).createBalloon();
-    FrameStateManager.getInstance().getApplicationActive().doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        final Alarm alarm = new Alarm();
-        alarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            ((BalloonImpl)balloon).setHideOnClickOutside(true);
-            Disposer.dispose(alarm);
-          }
-        }, 100);
-      }
+    FrameStateManager.getInstance().getApplicationActive().doWhenDone(() -> {
+      final Alarm alarm = new Alarm();
+      alarm.addRequest(() -> {
+        ((BalloonImpl)balloon).setHideOnClickOutside(true);
+        Disposer.dispose(alarm);
+      }, 100);
     });
     listenerWrapper.myBalloon = balloon;
     myWindow2Balloon.put(toolWindowId, balloon);
@@ -1528,61 +1499,53 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        type);
         if (button == null) return;
 
-        final Runnable show = new Runnable() {
-          @Override
-          public void run() {
-            if (button.isShowing()) {
-              PositionTracker<Balloon> tracker = new PositionTracker<Balloon>(button) {
-                @Override
-                @Nullable
-                public RelativePoint recalculateLocation(Balloon object) {
-                  Stripe twStripe = myToolWindowsPane.getStripeFor(toolWindowId);
-                  StripeButton twButton = twStripe != null ? twStripe.getButtonFor(toolWindowId) : null;
+        final Runnable show = () -> {
+          if (button.isShowing()) {
+            PositionTracker<Balloon> tracker = new PositionTracker<Balloon>(button) {
+              @Override
+              @Nullable
+              public RelativePoint recalculateLocation(Balloon object) {
+                Stripe twStripe = myToolWindowsPane.getStripeFor(toolWindowId);
+                StripeButton twButton = twStripe != null ? twStripe.getButtonFor(toolWindowId) : null;
 
-                  if (twButton == null) return null;
+                if (twButton == null) return null;
 
-                  if (getToolWindow(toolWindowId).getAnchor() != anchor) {
-                    object.hide();
-                    return null;
-                  }
-
-                  final Point point = new Point(twButton.getBounds().width / 2, twButton.getHeight() / 2 - 2);
-                  return new RelativePoint(twButton, point);
+                if (getToolWindow(toolWindowId).getAnchor() != anchor) {
+                  object.hide();
+                  return null;
                 }
-              };
-              if (!balloon.isDisposed()) {
-                balloon.show(tracker, position.get());
+
+                final Point point = new Point(twButton.getBounds().width / 2, twButton.getHeight() / 2 - 2);
+                return new RelativePoint(twButton, point);
               }
+            };
+            if (!balloon.isDisposed()) {
+              balloon.show(tracker, position.get());
             }
-            else {
-              final Rectangle bounds = myToolWindowsPane.getBounds();
-              final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
-              if (ToolWindowAnchor.TOP == anchor) {
-                target.y = 0;
-              }
-              else if (ToolWindowAnchor.BOTTOM == anchor) {
-                target.y = bounds.height - 3;
-              }
-              else if (ToolWindowAnchor.LEFT == anchor) {
-                target.x = 0;
-              }
-              else if (ToolWindowAnchor.RIGHT == anchor) {
-                target.x = bounds.width;
-              }
-              if (!balloon.isDisposed()) {
-                balloon.show(new RelativePoint(myToolWindowsPane, target), position.get());
-              }
+          }
+          else {
+            final Rectangle bounds = myToolWindowsPane.getBounds();
+            final Point target = UIUtil.getCenterPoint(bounds, new Dimension(1, 1));
+            if (ToolWindowAnchor.TOP == anchor) {
+              target.y = 0;
+            }
+            else if (ToolWindowAnchor.BOTTOM == anchor) {
+              target.y = bounds.height - 3;
+            }
+            else if (ToolWindowAnchor.LEFT == anchor) {
+              target.x = 0;
+            }
+            else if (ToolWindowAnchor.RIGHT == anchor) {
+              target.x = bounds.width;
+            }
+            if (!balloon.isDisposed()) {
+              balloon.show(new RelativePoint(myToolWindowsPane, target), position.get());
             }
           }
         };
 
         if (!button.isValid()) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              show.run();
-            }
-          });
+          SwingUtilities.invokeLater(() -> show.run());
         }
         else {
           show.run();
@@ -2222,8 +2185,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       Window frame = myWindowedDecorator.getFrame();
       if (!frame.isShowing()) return;
-      Rectangle bounds = frame.getBounds();
-      bounds.setLocation(frame.getLocationOnScreen());
+      Rectangle bounds = getRootBounds((JFrame)frame);
       info.setFloatingBounds(bounds);
     }
 
@@ -2242,6 +2204,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     public Condition getExpireCondition() {
       return ApplicationManager.getApplication().getDisposed();
     }
+  }
+
+  @NotNull
+  private static Rectangle getRootBounds(JFrame frame) {
+    JRootPane rootPane = frame.getRootPane();
+    Rectangle bounds = rootPane.getBounds();
+    bounds.setLocation(frame.getX() + rootPane.getX(), frame.getY() + rootPane.getY());
+    return bounds;
   }
 
   private final class EditorComponentFocusWatcher extends FocusWatcher {
@@ -2383,6 +2353,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (owner != null) {
           info.setFloatingBounds(owner.getBounds());
         }
+      }
+      else if (info.isWindowed()) {
+        WindowedDecorator decorator = getWindowedDecorator(info.getId());
+        Window frame = decorator != null ? decorator.getFrame() : null;
+        if (frame == null || !frame.isShowing()) return;
+        info.setFloatingBounds(getRootBounds((JFrame)frame));
       }
       else { // docked and sliding windows
         ToolWindowAnchor anchor = info.getAnchor();

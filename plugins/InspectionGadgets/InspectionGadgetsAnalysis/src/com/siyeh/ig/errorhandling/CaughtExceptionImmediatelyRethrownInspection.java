@@ -129,12 +129,9 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
       }
       final PsiType type = parameter.getType();
       final Set<PsiClass> parameterClasses = new THashSet();
-      processExceptionClasses(type, new Processor<PsiClass>() {
-        @Override
-        public boolean process(PsiClass aClass) {
-          parameterClasses.add(aClass);
-          return true;
-        }
+      processExceptionClasses(type, aClass -> {
+        parameterClasses.add(aClass);
+        return true;
       });
       if (parameterClasses.isEmpty()) {
         return false;
@@ -147,17 +144,14 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
           continue;
         }
         final PsiType nextType = nextParameter.getType();
-        processExceptionClasses(nextType, new Processor<PsiClass>() {
-          @Override
-          public boolean process(PsiClass aClass) {
-            for (PsiClass parameterClass : parameterClasses) {
-              if (parameterClass.isInheritor(aClass, true)) {
-                superClassExceptionType.set(Boolean.TRUE);
-                return false;
-              }
+        processExceptionClasses(nextType, aClass -> {
+          for (PsiClass parameterClass : parameterClasses) {
+            if (parameterClass.isInheritor(aClass, true)) {
+              superClassExceptionType.set(Boolean.TRUE);
+              return false;
             }
-            return true;
           }
+          return true;
         });
         if (superClassExceptionType.get().booleanValue()) {
           return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.AssignableToComponentAdapter;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
@@ -182,7 +182,7 @@ public class ServiceManagerImpl implements BaseComponent {
     private final ServiceDescriptor myDescriptor;
     private final PluginDescriptor myPluginDescriptor;
     private final ComponentManagerEx myComponentManager;
-    private volatile Object myInitializedComponentInstance = null;
+    private volatile Object myInitializedComponentInstance;
 
     public MyComponentAdapter(final ServiceDescriptor descriptor, final PluginDescriptor pluginDescriptor, ComponentManagerEx componentManager) {
       myDescriptor = descriptor;
@@ -263,7 +263,7 @@ public class ServiceManagerImpl implements BaseComponent {
           throw new RuntimeException(e);
         }
 
-        myDelegate = new ConstructorInjectionComponentAdapter(getComponentKey(), implClass, null, true);
+        myDelegate = new CachingConstructorInjectionComponentAdapter(getComponentKey(), implClass, null, true);
       }
       return myDelegate;
     }

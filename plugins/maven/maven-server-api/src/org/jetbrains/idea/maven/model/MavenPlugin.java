@@ -160,15 +160,25 @@ public class MavenPlugin implements Serializable {
     private final List<String> myGoals;
     private final Element myConfiguration;
     private final String myExecutionId;
+    private final String myPhase;
 
     public Execution(String executionId, List<String> goals, Element configuration) {
+      this(executionId, null, goals, configuration);
+    }
+
+    public Execution(String executionId, String phase, List<String> goals, Element configuration) {
       myGoals = goals;
       myConfiguration = configuration;
       myExecutionId = executionId;
+      myPhase = phase;
     }
 
     public String getExecutionId() {
       return myExecutionId;
+    }
+
+    public String getPhase() {
+      return myPhase;
     }
 
     public List<String> getGoals() {
@@ -189,6 +199,7 @@ public class MavenPlugin implements Serializable {
 
       if (myGoals != null ? !myGoals.equals(that.myGoals) : that.myGoals != null) return false;
       if (myExecutionId != null ? !myExecutionId.equals(that.myExecutionId) : that.myExecutionId != null) return false;
+      if (myPhase != null ? !myPhase.equals(that.myPhase) : that.myPhase != null) return false;
       if (!JDOMUtil.areElementsEqual(myConfiguration, that.myConfiguration)) return false;
 
       return true;
@@ -199,6 +210,9 @@ public class MavenPlugin implements Serializable {
       int result = myGoals != null ? myGoals.hashCode() : 0;
       if (myExecutionId != null) {
         result = 31 * result + myExecutionId.hashCode();
+      }
+      if (myPhase != null) {
+        result = 31 * result + myPhase.hashCode();
       }
 
       return result;

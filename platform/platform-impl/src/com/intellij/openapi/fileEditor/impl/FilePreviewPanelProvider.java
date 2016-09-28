@@ -66,12 +66,7 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
   @Override
   protected Pair<FileEditor[], FileEditorProvider[]> initComponent(VirtualFile file, boolean requestFocus) {
     Pair<FileEditor[], FileEditorProvider[]> result = myManager.openFileWithProviders(file, requestFocus, myWindow);
-    IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        myWindow.requestFocus(true);
-      }
-    });
+    IdeFocusManager.findInstance().doWhenFocusSettlesDown(() -> myWindow.requestFocus(true));
     return result;
   }
 

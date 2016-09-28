@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class ImplementOrExtendFix extends BaseFix {
         else if (extendsList.getReferenceElements().length == 1) {
           // check for explicit "extends Object" case
           PsiClassType javaLangObject = PsiType.getJavaLangObject(checkedClass.getManager(),
-                                                                        checkedClass.getResolveScope());
+                                                                  checkedClass.getResolveScope());
           if (extendsList.getReferencedTypes()[0].equals(javaLangObject)) {
             fix = new ImplementOrExtendFix(compClass, checkedClass, onTheFly);
           }
@@ -75,7 +75,7 @@ public class ImplementOrExtendFix extends BaseFix {
 
   @NotNull
   public String getFamilyName() {
-    return getName();
+    return "Implement/Extend required base class";
   }
 
   protected void doFix(Project project, ProblemDescriptor descriptor, boolean external) throws IncorrectOperationException {

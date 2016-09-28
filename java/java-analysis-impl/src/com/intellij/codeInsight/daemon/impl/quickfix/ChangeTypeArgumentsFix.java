@@ -60,12 +60,9 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
   @NotNull
   public String getText() {
     final PsiSubstitutor substitutor = inferTypeArguments();
-    return "Change type arguments to <" + StringUtil.join(myPsiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
-      @Override
-      public String fun(PsiTypeParameter typeParameter) {
-        final PsiType substituted = substitutor.substitute(typeParameter);
-        return substituted != null ? substituted.getPresentableText() : CommonClassNames.JAVA_LANG_OBJECT;
-      }
+    return "Change type arguments to <" + StringUtil.join(myPsiClass.getTypeParameters(), typeParameter -> {
+      final PsiType substituted = substitutor.substitute(typeParameter);
+      return substituted != null ? substituted.getPresentableText() : CommonClassNames.JAVA_LANG_OBJECT;
     }, ", ") + ">";
   }
 

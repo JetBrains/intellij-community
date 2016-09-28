@@ -50,9 +50,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,12 +80,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     final Project project = file.getProject();
 
     final List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<HighlightInfo.IntentionActionDescriptor>();
-    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, new Processor<HighlightInfo>() {
-      @Override
-      public boolean process(HighlightInfo info) {
-        addAvailableActionsForGroups(info, editor, file, result, passId, offset);
-        return true;
-      }
+    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true, info -> {
+      addAvailableActionsForGroups(info, editor, file, result, passId, offset);
+      return true;
     });
     return result;
   }
@@ -235,12 +232,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
       return;
     }
     myShowBulb = !myIntentionsInfo.guttersToShow.isEmpty() || !myIntentionsInfo.notificationActionsToShow.isEmpty() ||
-      ContainerUtil.exists(ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow), new Condition<HighlightInfo.IntentionActionDescriptor>() {
-        @Override
-        public boolean value(HighlightInfo.IntentionActionDescriptor descriptor) {
-          return IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction());
-        }
-      });
+      ContainerUtil.exists(ContainerUtil.concat(myIntentionsInfo.errorFixesToShow, myIntentionsInfo.inspectionFixesToShow,myIntentionsInfo.intentionsToShow),
+                           descriptor -> IntentionManagerSettings.getInstance().isShowLightBulb(descriptor.getAction()));
   }
 
   private static boolean appendCleanupCode(@NotNull List<HighlightInfo.IntentionActionDescriptor> actionDescriptors, @NotNull PsiFile file) {
@@ -301,12 +294,8 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
       Pair<PsiFile, Editor> place =
-        ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
-          @Override
-          public boolean process(PsiFile psiFile, Editor editor) {
-            return ShowIntentionActionsHandler.availableFor(psiFile, editor, action);
-          }
-        });
+        ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor,
+                                                                 (psiFile, editor) -> ShowIntentionActionsHandler.availableFor(psiFile, editor, action));
 
       if (place != null) {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
@@ -321,12 +310,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     final int line = hostDocument.getLineNumber(offset);
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, project, true);
-    CommonProcessors.CollectProcessor<RangeHighlighterEx> processor = new CommonProcessors.CollectProcessor<RangeHighlighterEx>();
+    List<RangeHighlighterEx> result = new ArrayList<>();
+    Processor<RangeHighlighterEx> processor = Processors.cancelableCollectProcessor(result);
     model.processRangeHighlightersOverlappingWith(hostDocument.getLineStartOffset(line),
                                                   hostDocument.getLineEndOffset(line),
                                                   processor);
 
-    for (RangeHighlighterEx highlighter : processor.getResults()) {
+    for (RangeHighlighterEx highlighter : result) {
       GutterIntentionAction.addActions(project, hostEditor, hostFile, highlighter, intentions.guttersToShow);
     }
 

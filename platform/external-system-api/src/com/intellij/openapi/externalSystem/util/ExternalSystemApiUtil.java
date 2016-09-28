@@ -111,20 +111,12 @@ public class ExternalSystemApiUtil {
     }
   };
 
-  @NotNull private static final NullableFunction<DataNode<?>, Key<?>> GROUPER = new NullableFunction<DataNode<?>, Key<?>>() {
-    @Override
-    public Key<?> fun(DataNode<?> node) {
-      return node.getKey();
-    }
-  };
+  @NotNull private static final NullableFunction<DataNode<?>, Key<?>> GROUPER = node -> node.getKey();
 
   @NotNull private static final TransferToEDTQueue<Runnable> TRANSFER_TO_EDT_QUEUE =
-    new TransferToEDTQueue<Runnable>("External System queue", new Processor<Runnable>() {
-      @Override
-      public boolean process(Runnable runnable) {
-        runnable.run();
-        return true;
-      }
+    new TransferToEDTQueue<Runnable>("External System queue", runnable -> {
+      runnable.run();
+      return true;
     }, Conditions.alwaysFalse(), 300);
 
   private ExternalSystemApiUtil() {
@@ -258,24 +250,12 @@ public class ExternalSystemApiUtil {
 
   @NotNull
   public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, final Class<K> moduleDataClass) {
-    return ContainerUtil.groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
-      @Nullable
-      @Override
-      public DataNode<K> fun(DataNode<V> node) {
-        return node.getParent(moduleDataClass);
-      }
-    });
+    return ContainerUtil.groupBy(nodes, node -> node.getParent(moduleDataClass));
   }
 
   @NotNull
   public static <K, V> MultiMap<DataNode<K>, DataNode<V>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
-    return ContainerUtil.groupBy(nodes, new NullableFunction<DataNode<V>, DataNode<K>>() {
-      @Nullable
-      @Override
-      public DataNode<K> fun(DataNode<V> node) {
-        return node.getDataNode(key);
-      }
-    });
+    return ContainerUtil.groupBy(nodes, node -> node.getDataNode(key));
   }
 
   @SuppressWarnings("unchecked")
@@ -358,12 +338,7 @@ public class ExternalSystemApiUtil {
                                                                @NotNull final Key<T> key) {
     if (node == null) return Collections.emptyList();
 
-    final Collection<DataNode<?>> nodes = findAllRecursively(node.getChildren(), new BooleanFunction<DataNode<?>>() {
-      @Override
-      public boolean fun(DataNode<?> node) {
-        return node.getKey().equals(key);
-      }
-    });
+    final Collection<DataNode<?>> nodes = findAllRecursively(node.getChildren(), node1 -> node1.getKey().equals(key));
     //noinspection unchecked
     return new SmartList(nodes);
   }
@@ -424,12 +399,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static void commitChangedModels(boolean synchronous, Project project, List<Library.ModifiableModel> models) {
-    final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, new Condition<Library.ModifiableModel>() {
-      @Override
-      public boolean value(Library.ModifiableModel model) {
-        return model.isChanged();
-      }
-    });
+    final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, model -> model.isChanged());
     if (!changedModels.isEmpty()) {
       executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
         @Override
@@ -483,16 +453,7 @@ public class ExternalSystemApiUtil {
   }
 
   public static void executeProjectChangeAction(boolean synchronous, @NotNull final DisposeAwareProjectChange task) {
-    executeOnEdt(synchronous, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            task.run();
-          }
-        });
-      }
-    });
+    executeOnEdt(synchronous, () -> ApplicationManager.getApplication().runWriteAction(() -> task.run()));
   }
 
   public static void executeOnEdt(boolean synchronous, @NotNull Runnable task) {
@@ -513,30 +474,16 @@ public class ExternalSystemApiUtil {
   public static <T> T executeOnEdt(@NotNull final Computable<T> task) {
     final Application app = ApplicationManager.getApplication();
     final Ref<T> result = Ref.create();
-    app.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        result.set(task.compute());
-      }
-    }, ModalityState.defaultModalityState());
+    app.invokeAndWait(() -> result.set(task.compute()), ModalityState.defaultModalityState());
     return result.get();
   }
 
   public static <T> T doWriteAction(@NotNull final Computable<T> task) {
-    return executeOnEdt(new Computable<T>() {
-      public T compute() {
-        return ApplicationManager.getApplication().runWriteAction(task);
-      }
-    });
+    return executeOnEdt(() -> ApplicationManager.getApplication().runWriteAction(task));
   }
 
   public static void doWriteAction(@NotNull final Runnable task) {
-    executeOnEdt(true, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(task);
-      }
-    });
+    executeOnEdt(true, () -> ApplicationManager.getApplication().runWriteAction(task));
   }
 
   /**

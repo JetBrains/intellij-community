@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.commands.Git;
 import git4idea.config.GitVcsSettings;
 import git4idea.merge.GitConflictResolver;
@@ -49,7 +48,6 @@ public class GitPreservingProcess {
   private static final Logger LOG = Logger.getInstance(GitPreservingProcess.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final Git myGit;
   @NotNull private final Collection<VirtualFile> myRootsToSave;
   @NotNull private final String myOperationTitle;
@@ -62,7 +60,6 @@ public class GitPreservingProcess {
   @NotNull private final AtomicBoolean myLoaded = new AtomicBoolean();
 
   public GitPreservingProcess(@NotNull Project project,
-                              @NotNull GitPlatformFacade facade,
                               @NotNull Git git,
                               @NotNull Collection<VirtualFile> rootsToSave,
                               @NotNull String operationTitle,
@@ -71,7 +68,6 @@ public class GitPreservingProcess {
                               @NotNull ProgressIndicator indicator,
                               @NotNull Runnable operation) {
     myProject = project;
-    myFacade = facade;
     myGit = git;
     myRootsToSave = rootsToSave;
     myOperationTitle = operationTitle;
@@ -114,7 +110,7 @@ public class GitPreservingProcess {
       }
     };
 
-    new GitFreezingProcess(myProject, myFacade, myOperationTitle, operation).execute();
+    new GitFreezingProcess(myProject, myOperationTitle, operation).execute();
   }
 
   /**
@@ -122,7 +118,7 @@ public class GitPreservingProcess {
    */
   @NotNull
   private GitChangesSaver configureSaver(@NotNull GitVcsSettings.UpdateChangesPolicy saveMethod) {
-    GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myFacade, myGit, myProgressIndicator, myStashMessage, saveMethod);
+    GitChangesSaver saver = GitChangesSaver.getSaver(myProject, myGit, myProgressIndicator, myStashMessage, saveMethod);
     MergeDialogCustomizer mergeDialogCustomizer = new MergeDialogCustomizer() {
       @Override
       public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {

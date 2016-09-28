@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Yura Cangea
- */
 package com.intellij.tools;
 
 import com.intellij.openapi.help.HelpManager;
@@ -58,7 +55,7 @@ public class OutputFiltersDialog extends DialogWrapper {
     myFiltersList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myFiltersList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         FilterInfo info = (FilterInfo)value;
         append(info.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }

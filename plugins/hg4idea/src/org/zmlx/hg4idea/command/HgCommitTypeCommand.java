@@ -76,7 +76,7 @@ public abstract class HgCommitTypeCommand {
   }
 
 
-  public void execute() throws HgCommandException, VcsException {
+  public void executeInCurrentThread() throws HgCommandException, VcsException {
     if (StringUtil.isEmptyOrSpaces(myMessage)) {
       throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
     }

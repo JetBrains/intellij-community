@@ -216,32 +216,21 @@ public class FocusTrackback {
       final IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
       cleanParentWindow();
       final Project finalProject = project;
-      focusManager.requestFocus(new MyFocusCommand(), myForcedRestore).doWhenProcessed(new Runnable() {
-        public void run() {
-          dispose();
-        }
-      }).doWhenRejected(new Runnable() {
+      focusManager.requestFocus(new MyFocusCommand(), myForcedRestore).doWhenProcessed(() -> dispose()).doWhenRejected(() -> focusManager.revalidateFocus(new ExpirableRunnable.ForProject(finalProject) {
         @Override
         public void run() {
-          focusManager.revalidateFocus(new ExpirableRunnable.ForProject(finalProject) {
-            @Override
-            public void run() {
-              if (UIUtil.isMeaninglessFocusOwner(focusManager.getFocusOwner())) {
-                focusManager.requestDefaultFocus(false);
-              }
-            }
-          });
+          if (UIUtil.isMeaninglessFocusOwner(focusManager.getFocusOwner())) {
+            focusManager.requestDefaultFocus(false);
+          }
         }
-      });
+      }));
     }
     else {
       // no ide focus manager, so no way -- do just later
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          _restoreFocus();
-          dispose();
-        }
+      SwingUtilities.invokeLater(() -> {
+        _restoreFocus();
+        dispose();
       });
     }
   }

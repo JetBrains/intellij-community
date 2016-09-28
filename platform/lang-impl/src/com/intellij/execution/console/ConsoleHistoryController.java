@@ -641,12 +641,9 @@ public class ConsoleHistoryController {
     }
     catch (final IOException e) {
       LOG.warn(e);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          String message = String.format("Unable to open '%s/%s'\nReason: %s", rootType.getId(), pathName, e.getLocalizedMessage());
-          Messages.showErrorDialog(message, "Unable to Open File");
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        String message = String.format("Unable to open '%s/%s'\nReason: %s", rootType.getId(), pathName, e.getLocalizedMessage());
+        Messages.showErrorDialog(message, "Unable to Open File");
       });
       return null;
     }

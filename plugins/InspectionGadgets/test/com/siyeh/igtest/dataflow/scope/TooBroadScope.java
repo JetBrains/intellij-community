@@ -92,6 +92,15 @@ public class TooBroadScope
         runnable.run();
     }
 
+    void doNotNarrowInsideLambda() {
+        final int[] counter = new int[1];
+        Runnable runnable = () -> {
+            counter[0] += 1;
+            System.out.println("counter = " + counter);
+        };
+        runnable.run();
+    }
+
     void switchLabel() {
         final int other = 4;
         switch (2)
@@ -116,5 +125,20 @@ public class TooBroadScope
                 System.out.println(ac);
             }
         }
+    }
+
+
+    final int NON_STATIC_CONSTANT = value();
+
+    private int value() {
+        return 1;
+    }
+
+    void useConstant() {
+        int <warning descr="Scope of variable 'yes' is too broad">yes</warning> = NON_STATIC_CONSTANT;
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println(yes);
     }
 }

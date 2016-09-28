@@ -1,0 +1,12 @@
+class A123  
+  def foo    
+    p "!"  
+  end
+  
+  def bar    
+    p '!'  
+  end
+end
+
+
+A123.new.foo

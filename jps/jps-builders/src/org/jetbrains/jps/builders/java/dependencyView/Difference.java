@@ -84,30 +84,32 @@ abstract class Difference {
 
     removed.removeAll(now);
 
-    final Set<Pair<T, Difference>> changed = new HashSet<Pair<T, Difference>>();
-    final Set<T> intersect = new HashSet<T>(past);
-    final Map<T, T> nowMap = new HashMap<T, T>();
+    final Set<Pair<T, Difference>> changed;
+    if (canContainChangedElements(past, now)) {
+      changed = new HashSet<Pair<T, Difference>>();
+      final Set<T> intersect = new HashSet<T>(past);
+      final Map<T, T> nowMap = new HashMap<T, T>();
 
-    for (T s : now) {
-      if (intersect.contains(s)) {
-        nowMap.put(s, s);
+      for (T s : now) {
+        if (intersect.contains(s)) {
+          nowMap.put(s, s);
+        }
       }
-    }
 
-    intersect.retainAll(now);
+      intersect.retainAll(now);
 
-    for (T x : intersect) {
-      final T y = nowMap.get(x);
-
-      if (x instanceof Proto) {
+      for (T x : intersect) {
         final Proto px = (Proto)x;
-        final Proto py = (Proto)y;
+        final Proto py = (Proto)nowMap.get(x);
         final Difference diff = py.difference(px);
 
         if (!diff.no()) {
           changed.add(Pair.create(x, diff));
         }
       }
+    }
+    else {
+      changed = Collections.emptySet();
     }
 
     return new Specifier<T>() {
@@ -127,6 +129,13 @@ abstract class Difference {
         return changed.isEmpty() && added.isEmpty() && removed.isEmpty();
       }
     };
+  }
+
+  private static <T> boolean canContainChangedElements(final Set<T> past, final Set<T> now) {
+    if (past != null && now != null && !past.isEmpty() && !now.isEmpty()) {
+      return past.iterator().next() instanceof Proto;
+    }
+    return false;
   }
 
   public abstract int base();

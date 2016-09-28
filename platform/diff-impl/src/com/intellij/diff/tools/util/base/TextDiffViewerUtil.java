@@ -18,6 +18,7 @@ package com.intellij.diff.tools.util.base;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
+import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
@@ -30,13 +31,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.ToggleActionButton;
 import com.intellij.util.EditorPopupHandler;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,7 +56,7 @@ public class TextDiffViewerUtil {
 
   @NotNull
   public static List<AnAction> createEditorPopupActions() {
-    List<AnAction> result = new ArrayList<AnAction>();
+    List<AnAction> result = new ArrayList<>();
     result.add(ActionManager.getInstance().getAction("CompareClipboardWithSelection"));
 
     result.add(Separator.getInstance());
@@ -98,6 +102,14 @@ public class TextDiffViewerUtil {
     return result;
   }
 
+  public static void installDocumentListeners(@NotNull DocumentListener listener,
+                                              @NotNull List<Document> documents,
+                                              @NotNull Disposable disposable) {
+    for (Document document : ContainerUtil.newHashSet(documents)) {
+      document.addDocumentListener(listener, disposable);
+    }
+  }
+
   public static void checkDifferentDocuments(@NotNull ContentDiffRequest request) {
     // Actually, this should be a valid case. But it has little practical sense and will require explicit checks everywhere.
     // Some listeners will be processed once instead of 2 times, some listeners will cause illegal document modifications.
@@ -125,6 +137,25 @@ public class TextDiffViewerUtil {
     }
   }
 
+  public static boolean areEqualLineSeparators(@NotNull List<? extends DiffContent> contents) {
+    return areEqualDocumentContentProperties(contents, DocumentContent::getLineSeparator);
+  }
+
+  public static boolean areEqualCharsets(@NotNull List<? extends DiffContent> contents) {
+    return areEqualDocumentContentProperties(contents, DocumentContent::getCharset);
+  }
+
+  private static <T> boolean areEqualDocumentContentProperties(@NotNull List<? extends DiffContent> contents,
+                                                               @NotNull Function<DocumentContent, T> propertyGetter) {
+    List<T> properties = ContainerUtil.mapNotNull(contents, (content) -> {
+      if (content instanceof EmptyContent) return null;
+      return propertyGetter.fun((DocumentContent)content);
+    });
+
+    if (properties.size() < 2) return true;
+    return ContainerUtil.newHashSet(properties).size() == 1;
+  }
+
   //
   // Actions
   //
@@ -132,10 +163,6 @@ public class TextDiffViewerUtil {
   // TODO: pretty icons ?
   public static abstract class ComboBoxSettingAction<T> extends ComboBoxAction implements DumbAware {
     private DefaultActionGroup myChildren;
-
-    public ComboBoxSettingAction() {
-      setEnabledInModalContext(true);
-    }
 
     @Override
     public void update(AnActionEvent e) {
@@ -181,7 +208,6 @@ public class TextDiffViewerUtil {
 
       public MyAction(@NotNull T setting) {
         super(getText(setting));
-        setEnabledInModalContext(true);
         mySetting = setting;
       }
 
@@ -272,7 +298,6 @@ public class TextDiffViewerUtil {
     public ToggleAutoScrollAction(@NotNull TextDiffSettings settings) {
       super("Synchronize Scrolling", AllIcons.Actions.SynchronizeScrolling);
       mySettings = settings;
-      setEnabledInModalContext(true);
     }
 
     @Override
@@ -292,7 +317,6 @@ public class TextDiffViewerUtil {
     public ToggleExpandByDefaultAction(@NotNull TextDiffSettings settings) {
       super("Collapse unchanged fragments", AllIcons.Actions.Collapseall);
       mySettings = settings;
-      setEnabledInModalContext(true);
     }
 
     @Override
@@ -324,7 +348,6 @@ public class TextDiffViewerUtil {
       super("Disable editing", null, AllIcons.Nodes.Padlock);
       myContext = context;
       mySettings = getTextSettings(context);
-      setEnabledInModalContext(true);
     }
 
     protected void applyDefaults() {
@@ -390,7 +413,7 @@ public class TextDiffViewerUtil {
     return ContainerUtil.filter(editors, new Condition<EditorEx>() {
       @Override
       public boolean value(EditorEx editor) {
-        return editor != null && !editor.isViewer();
+        return !editor.isViewer();
       }
     });
   }
@@ -405,10 +428,8 @@ public class TextDiffViewerUtil {
     }
 
     public void install(@NotNull Disposable disposable) {
-      if (ContainerUtil.skipNulls(myEditors).size() < 2) return;
-
+      if (myEditors.size() < 2) return;
       for (EditorEx editor : myEditors) {
-        if (editor == null) continue;
         editor.addPropertyChangeListener(this, disposable);
       }
     }
@@ -422,7 +443,7 @@ public class TextDiffViewerUtil {
       int fontSize = ((Integer)evt.getNewValue()).intValue();
 
       for (EditorEx editor : myEditors) {
-        if (editor != null && evt.getSource() != editor) updateEditor(editor, fontSize);
+        if (evt.getSource() != editor) updateEditor(editor, fontSize);
       }
     }
 
@@ -446,7 +467,6 @@ public class TextDiffViewerUtil {
 
     public void install(@NotNull List<? extends EditorEx> editors) {
       for (EditorEx editor : editors) {
-        if (editor == null) continue;
         editor.addEditorMouseListener(this);
         editor.setContextMenuGroupId(null); // disabling default context menu
       }

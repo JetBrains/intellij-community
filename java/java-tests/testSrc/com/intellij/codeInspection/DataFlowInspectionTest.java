@@ -84,6 +84,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testEqualsEnumConstant() throws Throwable { doTest(); }
   public void testSwitchEnumConstant() { doTest(); }
   public void testEnumConstantNotNull() throws Throwable { doTest(); }
+  public void testCheckEnumConstantConstructor() { doTest(); }
   public void testCompareToEnumConstant() throws Throwable { doTest(); }
   public void testEqualsConstant() throws Throwable { doTest(); }
   public void testDontSaveTypeValue() { doTest(); }
@@ -178,6 +179,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testMethodCallFlushesField() { doTest(); }
   public void testUnknownFloatMayBeNaN() { doTest(); }
+  public void testBoxedNaN() { doTest(); }
   public void testFloatEquality() { doTest(); }
   public void testLastConstantConditionInAnd() { doTest(); }
   

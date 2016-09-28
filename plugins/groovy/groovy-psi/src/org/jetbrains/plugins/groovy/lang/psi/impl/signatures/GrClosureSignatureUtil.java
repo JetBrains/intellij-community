@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,12 +98,7 @@ public class GrClosureSignatureUtil {
   public static GrClosureSignature createSignature(MethodSignature signature) {
     final PsiType[] types = signature.getParameterTypes();
     GrClosureParameter[] parameters = new GrClosureParameter[types.length];
-    ContainerUtil.map(types, new Function<PsiType, GrClosureParameter>() {
-      @Override
-      public GrClosureParameter fun(PsiType type) {
-        return new GrImmediateClosureParameterImpl(type, null, false, null);
-      }
-    }, parameters);
+    ContainerUtil.map(types, type -> new GrImmediateClosureParameterImpl(type, null, false, null), parameters);
     return new GrImmediateClosureSignatureImpl(parameters, null, false, false);
   }
 
@@ -113,17 +108,21 @@ public class GrClosureSignatureUtil {
     return new GrClosableSignatureImpl(block);
   }
 
-  public static GrClosureSignature createSignature(final PsiMethod method, PsiSubstitutor substitutor) {
-    return new GrMethodSignatureImpl(method, substitutor);
+  @NotNull
+  public static GrClosureSignature createSignature(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
+    return createSignature(method, substitutor, false);
+  }
+
+  @NotNull
+  public static GrClosureSignature createSignature(@NotNull PsiMethod method,
+                                                   @NotNull PsiSubstitutor substitutor,
+                                                   boolean eraseParameterTypes) {
+    return new GrMethodSignatureImpl(method, substitutor, eraseParameterTypes);
   }
 
   public static GrClosureSignature removeParam(final GrClosureSignature signature, int i) {
     final GrClosureParameter[] newParams = ArrayUtil.remove(signature.getParameters(), i);
     return new GrClosureSignatureWithNewParameters(signature, newParams);
-  }
-
-  public static GrClosureSignature createSignatureWithErasedParameterTypes(final PsiMethod method) {
-    return new GrMethodSignatureWithErasedTypes(method);
   }
 
   @NotNull
@@ -135,12 +134,9 @@ public class GrClosureSignatureUtil {
   public static GrClosureSignature rawSignature(@NotNull final GrClosureSignature signature) {
     final GrClosureParameter[] params = signature.getParameters();
 
-    final GrClosureParameter[] closureParams = ContainerUtil.map(params, new Function<GrClosureParameter, GrClosureParameter>() {
-      @Override
-      public GrClosureParameter fun(GrClosureParameter parameter) {
-        PsiType type = TypeConversionUtil.erasure(parameter.getType());
-        return new GrImmediateClosureParameterImpl(type, parameter.getName(), parameter.isOptional(), parameter.getDefaultInitializer());
-      }
+    final GrClosureParameter[] closureParams = ContainerUtil.map(params, parameter -> {
+      PsiType type = TypeConversionUtil.erasure(parameter.getType());
+      return new GrImmediateClosureParameterImpl(type, parameter.getName(), parameter.isOptional(), parameter.getDefaultInitializer());
     }, new GrClosureParameter[params.length]);
 
     return new GrClosureSignatureWithNewParameters(signature, closureParams);
@@ -366,12 +362,7 @@ public class GrClosureSignatureUtil {
   }
 
   private static <Arg> Function<ArgWrapper<Arg>, PsiType> ARG_WRAPPER_COMPUTER() {
-    return new Function<ArgWrapper<Arg>, PsiType>() {
-      @Override
-      public PsiType fun(ArgWrapper<Arg> argWrapper) {
-        return argWrapper.type;
-      }
-    };
+    return argWrapper -> argWrapper.type;
   }
 
   @Nullable
@@ -643,8 +634,7 @@ public class GrClosureSignatureUtil {
     final PsiElement element = resolveResult.getElement();
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     if (element instanceof PsiMethod) {
-      signature =
-        eraseArgs ? createSignatureWithErasedParameterTypes((PsiMethod)element) : createSignature((PsiMethod)element, substitutor);
+      signature = createSignature((PsiMethod)element, substitutor, eraseArgs);
       parameters = ((PsiMethod)element).getParameterList().getParameters();
     }
     else if (element instanceof GrClosableBlock) {
@@ -736,12 +726,7 @@ public class GrClosureSignatureUtil {
                                                                 boolean hasNamedArgs,
                                                                 boolean partial,
                                                                 @NotNull PsiElement context) {
-    final ArgInfo<InnerArg>[] innerMap = mapParametersToArguments(signature, innerArgs.toArray(new InnerArg[innerArgs.size()]), new Function<InnerArg, PsiType>() {
-        @Override
-        public PsiType fun(InnerArg o) {
-          return o.type;
-        }
-      }, context, partial);
+    final ArgInfo<InnerArg>[] innerMap = mapParametersToArguments(signature, innerArgs.toArray(new InnerArg[innerArgs.size()]), o -> o.type, context, partial);
     if (innerMap == null) return null;
 
     ArgInfo<PsiElement>[] map = new ArgInfo[innerMap.length];

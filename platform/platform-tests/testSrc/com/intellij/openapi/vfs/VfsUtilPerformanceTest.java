@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,9 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     }.execute();
 
     VirtualFile theChild = vDir.findChild("5111.txt");
+    assertNotNull(theChild);
+    UIUtil.pump(); // wait for all event handlers to calm down
+
     System.out.println("Start searching...");
     PlatformTestUtil.startPerformanceTest("find child is slow", 1000, () -> {
       for (int i = 0; i < 1000000; i++) {

@@ -84,68 +84,48 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
   }
 
   public static Factory<List<Pair<String, Icon>>> createResolvingFunction(final GenericDomValue<?> reference) {
-    return new Factory<List<Pair<String, Icon>>>() {
-      @Override
-      public List<Pair<String, Icon>> create() {
-        final Converter converter = reference.getConverter();
-        if (converter instanceof ResolvingConverter) {
-          final AbstractConvertContext context = new AbstractConvertContext() {
-            @Override
-            @NotNull
-            public DomElement getInvocationElement() {
-              return reference;
-            }
-          };
-          final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
-          final Collection<Object> variants = resolvingConverter.getVariants(context);
-          final List<Pair<String, Icon>> all =
-            new ArrayList<Pair<String, Icon>>(ContainerUtil.map(variants, new Function<Object, Pair<String, Icon>>() {
-              @Override
-              public Pair<String, Icon> fun(final Object s) {
-                return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
-              }
-            }));
-          all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), new Function() {
-            @Override
-            public Object fun(final Object s) {
-              return new Pair(s, null);
-            }
-          }));
-          return all;
-        }
-        return Collections.emptyList();
+    return () -> {
+      final Converter converter = reference.getConverter();
+      if (converter instanceof ResolvingConverter) {
+        final AbstractConvertContext context = new AbstractConvertContext() {
+          @Override
+          @NotNull
+          public DomElement getInvocationElement() {
+            return reference;
+          }
+        };
+        final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
+        final Collection<Object> variants = resolvingConverter.getVariants(context);
+        final List<Pair<String, Icon>> all =
+          new ArrayList<Pair<String, Icon>>(ContainerUtil.map(variants, s -> Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s))));
+        all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), new Function() {
+          @Override
+          public Object fun(Object s) {
+            return new Pair(s, null);
+          }
+        }));
+        return all;
       }
+      return Collections.emptyList();
     };
   }
 
   public static Factory<List<Pair<String, Icon>>> createPresentationFunction(final Factory<Collection<?>> variantFactory) {
-    return new Factory<List<Pair<String, Icon>>>() {
+    return () -> ContainerUtil.map(variantFactory.create(), new Function<Object, Pair<String, Icon>>() {
       @Override
-      public List<Pair<String, Icon>> create() {
-
-        return ContainerUtil.map(variantFactory.create(), new Function<Object, Pair<String, Icon>>() {
-          @Override
-          public Pair<String, Icon> fun(final Object s) {
-            return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
-          }
-        });
-
+      public Pair<String, Icon> fun(final Object s) {
+        return Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s));
       }
-    };
+    });
   }
 
   static Factory<List<Pair<String, Icon>>> createEnumFactory(final Class<? extends Enum> aClass) {
-    return new Factory<List<Pair<String, Icon>>>() {
+    return () -> ContainerUtil.map2List(aClass.getEnumConstants(), new Function<Enum, Pair<String, Icon>>() {
       @Override
-      public List<Pair<String, Icon>> create() {
-        return ContainerUtil.map2List(aClass.getEnumConstants(), new Function<Enum, Pair<String, Icon>>() {
-          @Override
-          public Pair<String, Icon> fun(final Enum s) {
-            return Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s));
-          }
-        });
+      public Pair<String, Icon> fun(final Enum s) {
+        return Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s));
       }
-    };
+    });
   }
 
   public static <T extends Enum> JComboBox createEnumComboBox(final Class<T> type) {
@@ -159,12 +139,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
       comboBox.addItem(new ComboBoxItem(pair));
       standardValues.add(pair.first);
     }
-    return initComboBox(comboBox, new Condition<String>() {
-      @Override
-      public boolean value(final String object) {
-        return standardValues.contains(object);
-      }
-    });
+    return initComboBox(comboBox, object -> standardValues.contains(object));
   }
 
   private static class ComboBoxItem extends Pair<String,Icon> {
@@ -207,12 +182,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
 
   @Override
   protected JComboBox createMainComponent(final JComboBox boundedComponent) {
-    return initComboBox(boundedComponent == null ? new JComboBox() : boundedComponent, new Condition<String>() {
-      @Override
-      public boolean value(final String object) {
-        return isValidValue(object);
-      }
-    });
+    return initComboBox(boundedComponent == null ? new JComboBox() : boundedComponent, object -> isValidValue(object));
   }
 
   public boolean isValidValue(final String object) {
@@ -296,39 +266,36 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     final JComboBox comboBox = getComponent();
 
     final Project project = getProject();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!project.isOpen()) return;
-        if (!getDomWrapper().isValid()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!project.isOpen()) return;
+      if (!getDomWrapper().isValid()) return;
 
-        final DomElement domElement = getDomElement();
-        if (domElement == null || !domElement.isValid()) return;
+      final DomElement domElement1 = getDomElement();
+      if (domElement1 == null || !domElement1.isValid()) return;
 
-        final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
-        final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement);
-        final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement);
-        final List<DomElementProblemDescriptor> warningProblems = holder.getProblems(domElement, true, HighlightSeverity.WARNING);
+      final DomElementAnnotationsManager manager = DomElementAnnotationsManager.getInstance(project);
+      final DomElementsProblemsHolder holder = manager.getCachedProblemHolder(domElement1);
+      final List<DomElementProblemDescriptor> errorProblems = holder.getProblems(domElement1);
+      final List<DomElementProblemDescriptor> warningProblems = holder.getProblems(domElement1, true, HighlightSeverity.WARNING);
 
-        Color background = getDefaultBackground();
-        comboBox.setToolTipText(null);
+      Color background = getDefaultBackground();
+      comboBox.setToolTipText(null);
 
-        if (errorProblems.size() > 0) {
-          background = getErrorBackground();
-          comboBox.setToolTipText(TooltipUtils.getTooltipText(errorProblems));
-        }
-        else if (warningProblems.size() > 0) {
-          background = getWarningBackground();
-          comboBox.setToolTipText(TooltipUtils.getTooltipText(warningProblems));
-        }
-
-            final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
-            final String s = pair == null ? null : pair.first;
-            background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
-
-        comboBox.setBackground(background);
-        comboBox.getEditor().getEditorComponent().setBackground(background);
+      if (errorProblems.size() > 0) {
+        background = getErrorBackground();
+        comboBox.setToolTipText(TooltipUtils.getTooltipText(errorProblems));
       }
+      else if (warningProblems.size() > 0) {
+        background = getWarningBackground();
+        comboBox.setToolTipText(TooltipUtils.getTooltipText(warningProblems));
+      }
+
+          final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
+          final String s = pair == null ? null : pair.first;
+          background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
+
+      comboBox.setBackground(background);
+      comboBox.getEditor().getEditorComponent().setBackground(background);
     });
 
   }

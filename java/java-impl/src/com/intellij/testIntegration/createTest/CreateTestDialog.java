@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -392,20 +393,14 @@ public class CreateTestDialog extends DialogWrapper {
 
     myFixLibraryButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              public void run() {
-                if (mySelectedFramework instanceof JavaTestFramework) {
-                  ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
-                } else {
-                  OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
-                }
-              }
-            });
-          }
-        });
+        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
+                                                () -> ApplicationManager.getApplication().runWriteAction(() -> {
+                                                  if (mySelectedFramework instanceof JavaTestFramework) {
+                                                    ((JavaTestFramework)mySelectedFramework).setupLibrary(myTargetModule);
+                                                  } else {
+                                                    OrderEntryFix.addJarToRoots(mySelectedFramework.getLibraryPath(), myTargetModule, null);
+                                                  }
+                                                }));
         myFixLibraryPanel.setVisible(false);
       }
     });
@@ -427,7 +422,7 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private static Insets insets(int top, int bottom) {
-    return new Insets(top, 8, bottom, 8);
+    return JBUI.insets(top, 8, bottom, 8);
   }
 
   public String getClassName() {

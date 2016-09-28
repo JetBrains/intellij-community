@@ -212,28 +212,20 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
 
   protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter, final boolean forceCompile,
                                    final boolean errorsExpected) {
-    return compile(errorsExpected, new ParameterizedRunnable<CompileStatusNotification>() {
-      @Override
-      public void run(CompileStatusNotification callback) {
-        final CompilerManager compilerManager = getCompilerManager();
-        if (forceCompile) {
-          Assert.assertSame("Only 'ALL' filter is supported for forced compilation", CompilerFilter.ALL, filter);
-          compilerManager.compile(scope, callback);
-        }
-        else {
-          compilerManager.make(scope, filter, callback);
-        }
+    return compile(errorsExpected, callback -> {
+      final CompilerManager compilerManager = getCompilerManager();
+      if (forceCompile) {
+        Assert.assertSame("Only 'ALL' filter is supported for forced compilation", CompilerFilter.ALL, filter);
+        compilerManager.compile(scope, callback);
+      }
+      else {
+        compilerManager.make(scope, filter, callback);
       }
     });
   }
 
   protected CompilationLog rebuild() {
-    return compile(false, new ParameterizedRunnable<CompileStatusNotification>() {
-      @Override
-      public void run(CompileStatusNotification compileStatusNotification) {
-        getCompilerManager().rebuild(compileStatusNotification);
-      }
-    });
+    return compile(false, compileStatusNotification -> getCompilerManager().rebuild(compileStatusNotification));
   }
 
   protected CompilationLog compile(final boolean errorsExpected, final ParameterizedRunnable<CompileStatusNotification> action) {

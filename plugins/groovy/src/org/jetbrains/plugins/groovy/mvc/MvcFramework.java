@@ -105,12 +105,8 @@ public abstract class MvcFramework {
 
   @NotNull
   public Map<String, Runnable> createConfigureActions(final @NotNull Module module) {
-    return Collections.<String, Runnable>singletonMap("Configure " + getFrameworkName() + " SDK", new Runnable() {
-      @Override
-      public void run() {
-        configureAsLibraryDependency(module);
-      }
-    });
+    return Collections.<String, Runnable>singletonMap("Configure " + getFrameworkName() + " SDK",
+                                                      () -> configureAsLibraryDependency(module));
   }
 
   protected void configureAsLibraryDependency(@NotNull Module module) {
@@ -164,18 +160,15 @@ public abstract class MvcFramework {
       final GeneralCommandLine commandLine = getCreationCommandLine(module);
       if (commandLine == null) return;
 
-      MvcConsole.executeProcess(module, commandLine, new Runnable() {
-        @Override
-        public void run() {
-          VirtualFile root = findAppRoot(module);
-          if (root == null) return;
+      MvcConsole.executeProcess(module, commandLine, () -> {
+        VirtualFile root = findAppRoot(module);
+        if (root == null) return;
 
-          PsiDirectory psiDir = PsiManager.getInstance(module.getProject()).findDirectory(root);
-          IdeView ide = LangDataKeys.IDE_VIEW.getData(DataManager.getInstance().getDataContext());
-          if (ide != null) ide.selectElement(psiDir);
+        PsiDirectory psiDir = PsiManager.getInstance(module.getProject()).findDirectory(root);
+        IdeView ide = LangDataKeys.IDE_VIEW.getData(DataManager.getInstance().getDataContext());
+        if (ide != null) ide.selectElement(psiDir);
 
-          //also here comes fileCreated(application.properties) which manages roots and run configuration
-        }
+        //also here comes fileCreated(application.properties) which manages roots and run configuration
       }, true);
     }
 
@@ -650,18 +643,15 @@ public abstract class MvcFramework {
 
     final Project project = module.getProject();
 
-    return CachedValuesManager.getManager(project).getCachedValue(module, new CachedValueProvider<MvcFramework>() {
-      @Override
-      public Result<MvcFramework> compute() {
-        final ModificationTracker tracker = MvcModuleStructureSynchronizer.getInstance(project).getFileAndRootsModificationTracker();
-        for (final MvcFramework framework : EP_NAME.getExtensions()) {
-          if (framework.hasSupport(module)) {
-            return Result.create(framework, tracker);
-          }
+    return CachedValuesManager.getManager(project).getCachedValue(module, () -> {
+      final ModificationTracker tracker = MvcModuleStructureSynchronizer.getInstance(project).getFileAndRootsModificationTracker();
+      for (final MvcFramework framework : EP_NAME.getExtensions()) {
+        if (framework.hasSupport(module)) {
+          return CachedValueProvider.Result.create(framework, tracker);
         }
-        return Result.create(null, tracker);
-
       }
+      return CachedValueProvider.Result.create(null, tracker);
+
     });
   }
 

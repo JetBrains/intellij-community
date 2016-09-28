@@ -335,12 +335,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     myBackInProgress = true;
     try {
-      executeCommand(new Runnable() {
-        @Override
-        public void run() {
-          gotoPlaceInfo(info);
-        }
-      }, "", null);
+      executeCommand(() -> gotoPlaceInfo(info), "", null);
     }
     finally {
       myBackInProgress = false;
@@ -356,12 +351,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     myForwardInProgress = true;
     try {
-      executeCommand(new Runnable() {
-        @Override
-        public void run() {
-          gotoPlaceInfo(target);
-        }
-      }, "", null);
+      executeCommand(() -> gotoPlaceInfo(target), "", null);
     } finally {
       myForwardInProgress = false;
     }
@@ -401,12 +391,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     int index = myCurrentIndex - 1;
     final PlaceInfo info = myChangePlaces.get(index - myStartIndex);
 
-    executeCommand(new Runnable() {
-      @Override
-      public void run() {
-        gotoPlaceInfo(info);
-      }
-    }, "", null);
+    executeCommand(() -> gotoPlaceInfo(info), "", null);
     myCurrentIndex = index;
   }
 
@@ -431,12 +416,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     int index = myCurrentIndex + 1;
     final PlaceInfo info = myChangePlaces.get(index - myStartIndex);
 
-    executeCommand(new Runnable() {
-      @Override
-      public void run() {
-        gotoPlaceInfo(info);
-      }
-    }, "", null);
+    executeCommand(() -> gotoPlaceInfo(info), "", null);
     myCurrentIndex = index;
   }
 

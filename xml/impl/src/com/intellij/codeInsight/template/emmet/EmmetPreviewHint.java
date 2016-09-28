@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -95,7 +96,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
       .setShowImmediately(true)
       .setPreferredPosition(position.second == HintManager.ABOVE ? Balloon.Position.above : Balloon.Position.below)
       .setTextBg(myParentEditor.getColorsScheme().getDefaultBackground())
-      .setBorderInsets(new Insets(1, 1, 1, 1));
+      .setBorderInsets(JBUI.insets(1));
 
     int hintFlags = HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     HintManagerImpl.getInstanceImpl().showEditorHint(this, myParentEditor, position.first, hintFlags, 0, false, hintHint);
@@ -103,22 +104,14 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
 
   public void updateText(@NotNull final Producer<String> contentProducer) {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (!isDisposed) {
-          final String newText = contentProducer.produce();
-          if (StringUtil.isEmpty(newText)) {
-            hide();
-          }
-          else if (!myEditor.getDocument().getText().equals(newText)) {
-            DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-              @Override
-              public void run() {
-                myEditor.getDocument().setText(newText);
-              }
-            });
-          }
+    myAlarm.addRequest(() -> {
+      if (!isDisposed) {
+        final String newText = contentProducer.produce();
+        if (StringUtil.isEmpty(newText)) {
+          hide();
+        }
+        else if (!myEditor.getDocument().getText().equals(newText)) {
+          DocumentUtil.writeInRunUndoTransparentAction(() -> myEditor.getDocument().setText(newText));
         }
       }
     }, 100);
@@ -200,12 +193,7 @@ public class EmmetPreviewHint extends LightweightHint implements Disposable {
   @Override
   public void hide(boolean ok) {
     super.hide(ok);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Disposer.dispose(EmmetPreviewHint.this);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(EmmetPreviewHint.this));
   }
 
   @Override

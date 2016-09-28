@@ -263,14 +263,14 @@ public class IfStatementWithIdenticalBranchesInspection
             }
             return;
           }
-          else if (!EquivalenceChecker.statementsAreEquivalent(
+          else if (!EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(
             statement, nextStatement)) {
             return;
           }
           nextStatement = getNextStatement(nextStatement);
         }
       }
-      else if (!EquivalenceChecker.statementsAreEquivalent(
+      else if (!EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalent(
         thenBranch, nextStatement)) {
         return;
       }

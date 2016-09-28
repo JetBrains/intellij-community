@@ -122,12 +122,7 @@ public abstract class PsiShortNamesCache {
 
   public boolean processMethodsWithName(@NonNls @NotNull String name, @NotNull final Processor<? super PsiMethod> processor,
                                                  @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
-    return processMethodsWithName(name, scope, new Processor<PsiMethod>() {
-      @Override
-      public boolean process(PsiMethod method) {
-        return processor.process(method);
-      }
-    });
+    return processMethodsWithName(name, scope, method -> processor.process(method));
   }
 
   public boolean processAllMethodNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {

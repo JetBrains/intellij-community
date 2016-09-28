@@ -286,11 +286,8 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
     }
   };
 
-  private static final Function<GrAssignmentExpressionImpl, PsiType> TYPE_CALCULATOR = new Function<GrAssignmentExpressionImpl, PsiType>() {
-    @Override
-    public PsiType fun(GrAssignmentExpressionImpl expression) {
-      final Function<GrBinaryFacade, PsiType> calculator = GrBinaryExpressionTypeCalculators.getTypeCalculator(expression.getFacade());
-      return calculator.fun(expression.getFacade());
-    }
+  private static final Function<GrAssignmentExpressionImpl, PsiType> TYPE_CALCULATOR = expression -> {
+    final Function<GrBinaryFacade, PsiType> calculator = GrBinaryExpressionTypeCalculators.getTypeCalculator(expression.getFacade());
+    return calculator.fun(expression.getFacade());
   };
 }

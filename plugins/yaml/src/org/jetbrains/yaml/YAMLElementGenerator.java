@@ -13,6 +13,7 @@ import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.impl.YAMLQuotedTextImpl;
 
 import java.util.List;
 
@@ -49,6 +50,12 @@ public class YAMLElementGenerator {
   public YAMLKeyValue createYamlKeyValue(@NotNull String keyName, @NotNull String valueText) {
     final PsiFile tempFile = createDummyYamlWithText(keyName +  ": " + valueText);
     return PsiTreeUtil.collectElementsOfType(tempFile, YAMLKeyValue.class).iterator().next();
+  }
+  
+  @NotNull
+  public YAMLQuotedTextImpl createYamlDoubleQuotedString() {
+    final YAMLFile tempFile = createDummyYamlWithText("\"foo\"");
+    return PsiTreeUtil.collectElementsOfType(tempFile, YAMLQuotedTextImpl.class).iterator().next();
   }
 
   @NotNull

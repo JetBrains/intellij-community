@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.ArrayUtil;
@@ -747,6 +748,11 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
    *         be used only for serializing of the <code>MouseShortcut</code>
    */
   private static String getMouseShortcutString(MouseShortcut shortcut) {
+
+    if (Registry.is("ide.mac.forceTouch") && shortcut instanceof PressureShortcut) {
+      return "Force touch";
+    }
+
     StringBuilder buffer = new StringBuilder();
 
     // modifiers

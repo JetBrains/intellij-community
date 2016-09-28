@@ -139,17 +139,8 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
 
   public void reset() {
     myDisplayName = myCopyrightProfile.getName();
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-          @Override
-          public void run() {
-            myEditor.getDocument().setText(EntityUtil.decode(myCopyrightProfile.getNotice()));
-          }
-        });
-      }
-    });
+    SwingUtilities.invokeLater(() -> DocumentUtil.writeInRunUndoTransparentAction(
+      () -> myEditor.getDocument().setText(EntityUtil.decode(myCopyrightProfile.getNotice()))));
     myKeywordTf.setText(myCopyrightProfile.getKeyword());
     myAllowReplaceTextField.setText(myCopyrightProfile.getAllowReplaceKeyword());
   }

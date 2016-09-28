@@ -69,12 +69,7 @@ public class XmlUnwrapDescriptor implements UnwrapDescriptor {
       }
     }
 
-    Collections.sort(result, new Comparator<Pair<PsiElement, Unwrapper>>() {
-      @Override
-      public int compare(Pair<PsiElement, Unwrapper> o1, Pair<PsiElement, Unwrapper> o2) {
-        return o2.first.getTextOffset() - o1.first.getTextOffset();
-      }
-    });
+    Collections.sort(result, (o1, o2) -> o2.first.getTextOffset() - o1.first.getTextOffset());
 
     return result;
   }

@@ -58,79 +58,69 @@ public class LoadContextAction extends BaseTaskAction {
     DefaultActionGroup group = new DefaultActionGroup();
     final WorkingContextManager manager = WorkingContextManager.getInstance(project);
     List<ContextInfo> history = manager.getContextHistory();
-    List<ContextHolder> infos = new ArrayList<ContextHolder>(ContainerUtil.map2List(history, new Function<ContextInfo, ContextHolder>() {
-      public ContextHolder fun(final ContextInfo info) {
-        return new ContextHolder() {
-          @Override
-          void load(final boolean clear) {
-            LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);
-            UndoableCommand.execute(project, undoableAction, "Load context " + info.comment, "Context");
-          }
+    List<ContextHolder> infos = new ArrayList<ContextHolder>(ContainerUtil.map2List(history, (Function<ContextInfo, ContextHolder>)info -> new ContextHolder() {
+      @Override
+      void load(final boolean clear) {
+        LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);
+        UndoableCommand.execute(project, undoableAction, "Load context " + info.comment, "Context");
+      }
 
-          @Override
-          void remove() {
-            manager.removeContext(info.name);
-          }
+      @Override
+      void remove() {
+        manager.removeContext(info.name);
+      }
 
-          @Override
-          Date getDate() {
-            return new Date(info.date);
-          }
+      @Override
+      Date getDate() {
+        return new Date(info.date);
+      }
 
-          @Override
-          String getComment() {
-            return info.comment;
-          }
+      @Override
+      String getComment() {
+        return info.comment;
+      }
 
-          @Override
-          Icon getIcon() {
-            return TasksIcons.SavedContext;
-          }
-        };
+      @Override
+      Icon getIcon() {
+        return TasksIcons.SavedContext;
       }
     }));
     final TaskManager taskManager = TaskManager.getManager(project);
     List<LocalTask> tasks = taskManager.getLocalTasks();
-    infos.addAll(ContainerUtil.mapNotNull(tasks, new NullableFunction<LocalTask, ContextHolder>() {
-      public ContextHolder fun(final LocalTask task) {
-        if (task.isActive()) {
-          return null;
-        }
-        return new ContextHolder() {
-          @Override
-          void load(boolean clear) {
-            LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, task);
-            UndoableCommand.execute(project, undoableAction, "Load context " + TaskUtil.getTrimmedSummary(task), "Context");
-          }
-
-          @Override
-          void remove() {
-            SwitchTaskAction.removeTask(project, task, taskManager);
-          }
-
-          @Override
-          Date getDate() {
-            return task.getUpdated();
-          }
-
-          @Override
-          String getComment() {
-            return TaskUtil.getTrimmedSummary(task);
-          }
-
-          @Override
-          Icon getIcon() {
-            return task.getIcon();
-          }
-        };
+    infos.addAll(ContainerUtil.mapNotNull(tasks, (NullableFunction<LocalTask, ContextHolder>)task -> {
+      if (task.isActive()) {
+        return null;
       }
+      return new ContextHolder() {
+        @Override
+        void load(boolean clear) {
+          LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, task);
+          UndoableCommand.execute(project, undoableAction, "Load context " + TaskUtil.getTrimmedSummary(task), "Context");
+        }
+
+        @Override
+        void remove() {
+          SwitchTaskAction.removeTask(project, task, taskManager);
+        }
+
+        @Override
+        Date getDate() {
+          return task.getUpdated();
+        }
+
+        @Override
+        String getComment() {
+          return TaskUtil.getTrimmedSummary(task);
+        }
+
+        @Override
+        Icon getIcon() {
+          return task.getIcon();
+        }
+      };
     }));
 
-    Collections.sort(infos, new Comparator<ContextHolder>() {
-      public int compare(ContextHolder o1, ContextHolder o2) {
-        return o2.getDate().compareTo(o1.getDate());
-      }
-    });
+    Collections.sort(infos, (o1, o2) -> o2.getDate().compareTo(o1.getDate()));
 
     final Ref<Boolean> shiftPressed = Ref.create(false);
     boolean today = true;

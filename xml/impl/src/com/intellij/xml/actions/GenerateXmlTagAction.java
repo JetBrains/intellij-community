@@ -82,49 +82,37 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
       XmlElementDescriptor currentTagDescriptor = contextTag.getDescriptor();
       assert currentTagDescriptor != null;
       final XmlElementDescriptor[] descriptors = currentTagDescriptor.getElementsDescriptors(contextTag);
-      Arrays.sort(descriptors, new Comparator<XmlElementDescriptor>() {
-        @Override
-        public int compare(XmlElementDescriptor o1, XmlElementDescriptor o2) {
-          return o1.getName().compareTo(o2.getName());
-        }
-      });
+      Arrays.sort(descriptors, (o1, o2) -> o1.getName().compareTo(o2.getName()));
       final JBList list = new JBList(descriptors);
       list.setCellRenderer(new MyListCellRenderer());
-      Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          final XmlElementDescriptor selected = (XmlElementDescriptor)list.getSelectedValue();
-          new WriteCommandAction.Simple(project, "Generate XML Tag", file) {
-            @Override
-            protected void run() {
-              if (selected == null) return;
-              XmlTag newTag = createTag(contextTag, selected);
+      Runnable runnable = () -> {
+        final XmlElementDescriptor selected = (XmlElementDescriptor)list.getSelectedValue();
+        new WriteCommandAction.Simple(project, "Generate XML Tag", file) {
+          @Override
+          protected void run() {
+            if (selected == null) return;
+            XmlTag newTag = createTag(contextTag, selected);
 
-              PsiElement anchor = getAnchor(contextTag, editor, selected);
-              if (anchor == null) { // insert it in the cursor position
-                int offset = editor.getCaretModel().getOffset();
-                Document document = editor.getDocument();
-                document.insertString(offset, newTag.getText());
-                PsiDocumentManager.getInstance(project).commitDocument(document);
-                newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset + 1), XmlTag.class, false);
-              }
-              else {
-                newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
-              }
-              if (newTag != null) {
-                generateTag(newTag, editor);
-              }
+            PsiElement anchor = getAnchor(contextTag, editor, selected);
+            if (anchor == null) { // insert it in the cursor position
+              int offset = editor.getCaretModel().getOffset();
+              Document document = editor.getDocument();
+              document.insertString(offset, newTag.getText());
+              PsiDocumentManager.getInstance(project).commitDocument(document);
+              newTag = PsiTreeUtil.getParentOfType(file.findElementAt(offset + 1), XmlTag.class, false);
             }
-          }.execute();
-        }
+            else {
+              newTag = (XmlTag)contextTag.addAfter(newTag, anchor);
+            }
+            if (newTag != null) {
+              generateTag(newTag, editor);
+            }
+          }
+        }.execute();
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        XmlElementDescriptor descriptor = ContainerUtil.find(descriptors, new Condition<XmlElementDescriptor>() {
-          @Override
-          public boolean value(XmlElementDescriptor xmlElementDescriptor) {
-            return xmlElementDescriptor.getName().equals(TEST_THREAD_LOCAL.get());
-          }
-        });
+        XmlElementDescriptor descriptor = ContainerUtil.find(descriptors,
+                                                             xmlElementDescriptor -> xmlElementDescriptor.getName().equals(TEST_THREAD_LOCAL.get()));
         list.setSelectedValue(descriptor, false);
         runnable.run();
       }
@@ -132,12 +120,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
         JBPopupFactory.getInstance().createListPopupBuilder(list)
           .setTitle("Choose Tag Name")
           .setItemChoosenCallback(runnable)
-          .setFilteringEnabled(new Function<Object, String>() {
-            @Override
-            public String fun(Object o) {
-              return ((XmlElementDescriptor)o).getName();
-            }
-          })
+          .setFilteringEnabled(o -> ((XmlElementDescriptor)o).getName())
           .createPopup()
           .showInBestPositionFor(editor);
       }

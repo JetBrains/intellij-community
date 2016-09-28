@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,9 @@ package com.intellij.lang.html.structureView;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.ide.structureView.impl.xml.XmlTagTreeElement;
 import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationPresentation {
   static final int MAX_TEXT_LENGTH = 50;
@@ -44,13 +41,7 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
   public Collection<StructureViewTreeElement> getChildrenBase() {
     final XmlTag tag = getElement();
     if (tag == null || !tag.isValid()) return Collections.emptyList();
-
-    return ContainerUtil.map2List(tag.getSubTags(), new Function<XmlTag, StructureViewTreeElement>() {
-      @Override
-      public StructureViewTreeElement fun(final XmlTag subTag) {
-        return new HtmlTagTreeElement(subTag);
-      }
-    });
+    return ContainerUtil.map2List(tag.getSubTags(), HtmlTagTreeElement::new);
   }
 
   @Override
@@ -59,7 +50,7 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
     if (tag == null) {
       return IdeBundle.message("node.structureview.invalid");
     }
-    return getTagPresentation(tag);
+    return HtmlUtil.getTagPresentation(tag);
   }
 
   @Nullable
@@ -93,24 +84,6 @@ class HtmlTagTreeElement extends PsiTreeElementBase<XmlTag> implements LocationP
   @Override
   public boolean isSearchInLocationString() {
     return true;
-  }
-
-  public static String getTagPresentation(final @NotNull XmlTag tag) {
-    StringBuilder builder = new StringBuilder(tag.getLocalName());
-
-    String id = XmlTagTreeElement.toCanonicalForm(tag.getAttributeValue(HtmlUtil.ID_ATTRIBUTE_NAME));
-    if (id != null) {
-      builder.append('#').append(id);
-    }
-
-    String classValue = tag.getAttributeValue(HtmlUtil.CLASS_ATTRIBUTE_NAME);
-    List<String> classValues = classValue == null ? Collections.<String>emptyList() : StringUtil.split(classValue, " ");
-    if (!classValues.isEmpty()) {
-      builder.append('.');
-      StringUtil.join(classValues, ".", builder);
-    }
-
-    return builder.toString();
   }
 
   @Nullable

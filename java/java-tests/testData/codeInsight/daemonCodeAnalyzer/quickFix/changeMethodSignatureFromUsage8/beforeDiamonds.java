@@ -1,4 +1,4 @@
-// "Change 1st parameter of method 'foo' from 'ArrayList<String>' to 'HashSet<E>'" "false"
+// "<html> Change signature of foo(<s>ArrayList&lt;String&gt;</s> <b>HashSet&lt;E&gt;</b>)</html>" "false"
 
 import java.util.ArrayList;
 import java.util.HashSet;

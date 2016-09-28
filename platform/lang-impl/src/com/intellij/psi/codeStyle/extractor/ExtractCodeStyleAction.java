@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,19 +34,20 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
-import com.intellij.psi.codeStyle.extractor.ui.ExtractedSettingsDialog;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
-import com.intellij.ui.BalloonLayout;
 import com.intellij.psi.codeStyle.extractor.processor.CodeStyleDeriveProcessor;
 import com.intellij.psi.codeStyle.extractor.processor.GenProcessor;
 import com.intellij.psi.codeStyle.extractor.ui.CodeStyleSettingsNameProvider;
+import com.intellij.psi.codeStyle.extractor.ui.ExtractedSettingsDialog;
 import com.intellij.psi.codeStyle.extractor.values.Value;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
+import com.intellij.ui.BalloonLayout;
 import org.jetbrains.annotations.NotNull;
-
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -137,16 +138,11 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
                     if (apply && myDialog != null) {
                       //create new settings named after the file
                       final ExtractedSettingsDialog finalMyDialog = myDialog;
-                      forSelection.applyConditioned(new Condition<Value>() {
-                        @Override
-                        public boolean value(Value value) {
-                          return finalMyDialog.valueIsSelectedInTree(value);
-                        }
-                      }, backup);
+                      forSelection.applyConditioned(value -> finalMyDialog.valueIsSelectedInTree(value), backup);
                       CodeStyleScheme derivedScheme = CodeStyleSchemes.getInstance().createNewScheme("Derived from " + file.getName(), null);
                       derivedScheme.getCodeStyleSettings().copyFrom(cloneSettings);
                       CodeStyleSchemes.getInstance().addScheme(derivedScheme);
-                      ((CodeStyleSchemesImpl) CodeStyleSchemes.getInstance()).getSchemeManager().setCurrent(derivedScheme);
+                      CodeStyleSchemesImpl.getSchemeManager().setCurrent(derivedScheme);
                       CodeStyleSettingsManager.getInstance(project).PREFERRED_PROJECT_CODE_STYLE = derivedScheme.getName();
                     }
                   }
@@ -159,18 +155,15 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
 
               ApplicationManager.getApplication().
 
-              invokeLater(new Runnable() {
-                @Override
-                public void run () {
-                  Window window = WindowManager.getInstance().getFrame(project);
-                  if (window == null) {
-                    window = JOptionPane.getRootFrame();
-                  }
-                  if (window instanceof IdeFrame) {
-                    BalloonLayout layout = ((IdeFrame) window).getBalloonLayout();
-                    if (layout != null) {
-                      layout.add(balloon);
-                    }
+              invokeLater(() -> {
+                Window window = WindowManager.getInstance().getFrame(project);
+                if (window == null) {
+                  window = JOptionPane.getRootFrame();
+                }
+                if (window instanceof IdeFrame) {
+                  BalloonLayout layout = ((IdeFrame) window).getBalloonLayout();
+                  if (layout != null) {
+                    layout.add(balloon);
                   }
                 }
               }

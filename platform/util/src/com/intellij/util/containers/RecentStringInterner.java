@@ -16,10 +16,10 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
-import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
 * User: Maxim.Mossienko
@@ -56,7 +56,7 @@ public class RecentStringInterner {
           super.putToProtectedQueue(value, value);
         }
       };
-      myStripeLocks[i] = new SequenceLock();
+      myStripeLocks[i] = new ReentrantLock();
     }
 
     assert Integer.highestOneBit(stripes) == stripes;

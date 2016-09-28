@@ -35,7 +35,6 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TFloatArrayList;
@@ -279,15 +278,12 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private void paintCustomRenderers(final Graphics2D g, final int startOffset, final int endOffset) {
-    myEditor.getMarkupModel().processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx highlighter) {
-        CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
-        if (customRenderer != null && startOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < endOffset) {
-          customRenderer.paint(myEditor, highlighter, g);
-        }
-        return true;
+    myEditor.getMarkupModel().processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+      CustomHighlighterRenderer customRenderer = highlighter.getCustomRenderer();
+      if (customRenderer != null && startOffset < highlighter.getEndOffset() && highlighter.getStartOffset() < endOffset) {
+        customRenderer.paint(myEditor, highlighter, g);
       }
+      return true;
     });
   }
 
@@ -296,12 +292,9 @@ class EditorPainter implements TextDrawingCallback {
                                           MarkupModelEx markupModel,
                                           int startOffset,
                                           int endOffset) {
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx highlighter) {
-        paintLineMarkerSeparator(highlighter, clip, g);
-        return true;
-      }
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+      paintLineMarkerSeparator(highlighter, clip, g);
+      return true;
     });
   }
 
@@ -372,6 +365,10 @@ class EditorPainter implements TextDrawingCallback {
         @Override
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
+          boolean allowBorder = fragment.getCurrentFoldRegion() != null;
+          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), allowBorder)) {
+            paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType(), allowBorder);
+          }
           if (attributes != null && attributes.getForegroundColor() != null) {
             g.setColor(attributes.getForegroundColor());
             fragment.draw(g, xStart, y, start, end);
@@ -383,10 +380,6 @@ class EditorPainter implements TextDrawingCallback {
               currentLogicalLine[0] = logicalLine;
             }
             paintWhitespace(g, text, xStart, y, start, end, whitespacePaintingStrategy, fragment, whiteSpaceStroke, whiteSpaceStrokeWidth);
-          }
-          boolean allowBorder = fragment.getCurrentFoldRegion() != null;
-          if (attributes != null && hasTextEffect(attributes.getEffectColor(), attributes.getEffectType(), allowBorder)) {
-            paintTextEffect(g, xStart, xEnd, y, attributes.getEffectColor(), attributes.getEffectType(), allowBorder);
           }
         }
 
@@ -406,18 +399,17 @@ class EditorPainter implements TextDrawingCallback {
       });
       visLinesIterator.advance();
     }
+    ComplexTextFragment.flushDrawingCache(g);
   }
 
   private float paintLineLayoutWithEffect(Graphics2D g, LineLayout layout, float x, float y, 
                                   @Nullable Color effectColor, @Nullable EffectType effectType) {
-    float initialX = x;
+    if (hasTextEffect(effectColor, effectType, false)) {
+      paintTextEffect(g, x, x + layout.getWidth(), (int)y, effectColor, effectType, false);
+    }
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
       fragment.draw(g, x, y);
       x = fragment.getEndX();
-
-    }
-    if (hasTextEffect(effectColor, effectType, false)) {
-      paintTextEffect(g, initialX, x, (int)y, effectColor, effectType, false);
     }
     return x;
   }
@@ -528,14 +520,11 @@ class EditorPainter implements TextDrawingCallback {
                                                MarkupModelEx markupModel,
                                                final int startOffset,
                                                int endOffset) {
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx highlighter) {
-        if (highlighter.getStartOffset() >= startOffset) {
-          paintHighlighterAfterEndOfLine(g, highlighter);
-        }
-        return true;
+    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+      if (highlighter.getStartOffset() >= startOffset) {
+        paintHighlighterAfterEndOfLine(g, highlighter);
       }
+      return true;
     });
   }
 
@@ -577,16 +566,13 @@ class EditorPainter implements TextDrawingCallback {
                                  MarkupModelEx markupModel,
                                  int clipStartOffset,
                                  int clipEndOffset) {
-    markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx rangeHighlighter) {
-        TextAttributes attributes = rangeHighlighter.getTextAttributes();
-        if (isBorder(attributes)) {
-          paintBorderEffect(g, clipDetector, rangeHighlighter.getAffectedAreaStartOffset(), rangeHighlighter.getAffectedAreaEndOffset(),
-                            attributes);
-        }
-        return true;
+    markupModel.processRangeHighlightersOverlappingWith(clipStartOffset, clipEndOffset, rangeHighlighter -> {
+      TextAttributes attributes = rangeHighlighter.getTextAttributes();
+      if (isBorder(attributes)) {
+        paintBorderEffect(g, clipDetector, rangeHighlighter.getAffectedAreaStartOffset(), rangeHighlighter.getAffectedAreaEndOffset(),
+                          attributes);
       }
+      return true;
     });
   }
 
@@ -846,6 +832,7 @@ class EditorPainter implements TextDrawingCallback {
               break;
             }
           }
+          ComplexTextFragment.flushDrawingCache(g);
         }
       }
     }

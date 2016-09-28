@@ -305,7 +305,11 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
     if (element.getTextOffset() != offset) {
       return Pair.create(null, CharArrayUtil.shiftForwardUntil(text, offset, "\n"));
     }
-    return Pair.create(element, element.getTextRange().getEndOffset());
+    return Pair.create(element, calculateOffsetToInsertClosingBraceInsideElement(element));
+  }
+
+  protected int calculateOffsetToInsertClosingBraceInsideElement(PsiElement element) {
+    return element.getTextRange().getEndOffset();
   }
 
   public static boolean isAfterUnmatchedLBrace(Editor editor, int offset, FileType fileType) {

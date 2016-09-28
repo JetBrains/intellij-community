@@ -168,12 +168,7 @@ public class JavaArrangementParseInfo {
   public List<JavaArrangementOverriddenMethodsInfo> getOverriddenMethods() {
     List<JavaArrangementOverriddenMethodsInfo> result = new ArrayList<JavaArrangementOverriddenMethodsInfo>();
     final TObjectIntHashMap<PsiMethod> weights = new TObjectIntHashMap<PsiMethod>();
-    Comparator<Pair<PsiMethod, PsiMethod>> comparator = new Comparator<Pair<PsiMethod, PsiMethod>>() {
-      @Override
-      public int compare(Pair<PsiMethod, PsiMethod> o1, Pair<PsiMethod, PsiMethod> o2) {
-        return weights.get(o1.first) - weights.get(o2.first);
-      }
-    };
+    Comparator<Pair<PsiMethod, PsiMethod>> comparator = (o1, o2) -> weights.get(o1.first) - weights.get(o2.first);
     for (Map.Entry<PsiClass, List<Pair<PsiMethod, PsiMethod>>> entry : myOverriddenMethods.entrySet()) {
       JavaArrangementOverriddenMethodsInfo info = new JavaArrangementOverriddenMethodsInfo(entry.getKey().getName());
       weights.clear();

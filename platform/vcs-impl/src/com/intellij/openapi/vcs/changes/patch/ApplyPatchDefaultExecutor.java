@@ -34,10 +34,7 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFilePatchInProgress> {
   protected final Project myProject;
@@ -54,13 +51,13 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
 
   @CalledInAwt
   @Override
-  public void apply(@NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroups,
+  public void apply(@NotNull List<FilePatch> remaining, @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
                     @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
     final CommitContext commitContext = new CommitContext();
     applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
-    final Collection<PatchApplier> appliers = getPatchAppliers(patchGroups, localList, commitContext);
+    final Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
     executeAndApplyAdditionalInfo(localList, additionalInfo, commitContext, appliers);
   }
 

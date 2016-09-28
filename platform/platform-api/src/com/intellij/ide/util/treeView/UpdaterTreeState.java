@@ -175,14 +175,11 @@ public class UpdaterTreeState {
     myUi._select(toSelect, new TreeRunnable("UpdaterTreeState.restore") {
       @Override
       public void perform() {
-        processUnsuccessfulSelections(toSelect, new Function<Object, Object>() {
-          @Override
-          public Object fun(final Object o) {
-            if (myUi.getTree().isRootVisible() || !myUi.getTreeStructure().getRootElement().equals(o)) {
-              addSelection(o);
-            }
-            return o;
+        processUnsuccessfulSelections(toSelect, o -> {
+          if (myUi.getTree().isRootVisible() || !myUi.getTreeStructure().getRootElement().equals(o)) {
+            addSelection(o);
           }
+          return o;
         }, originallySelected);
 
         processAjusted(adjusted, originallySelected).doWhenDone(new TreeRunnable("UpdaterTreeState.restore: on done") {
@@ -276,16 +273,13 @@ public class UpdaterTreeState {
         @Override
         public void perform() {
           final Set<Object> hangByParent = new HashSet<Object> ();
-          processUnsuccessfulSelections(newSelection, new Function<Object, Object>() {
-            @Override
-            public Object fun(final Object o) {
-              if (myUi.isInStructure(o) && !adjusted.get(o).value(o)) {
-                hangByParent.add(o);
-              } else {
-                addAdjustedSelection(o, adjusted.get(o), null);
-              }
-              return null;
+          processUnsuccessfulSelections(newSelection, o -> {
+            if (myUi.isInStructure(o) && !adjusted.get(o).value(o)) {
+              hangByParent.add(o);
+            } else {
+              addAdjustedSelection(o, adjusted.get(o), null);
             }
+            return null;
           }, originallySelected);
 
           processHangByParent(hangByParent).notify(result);

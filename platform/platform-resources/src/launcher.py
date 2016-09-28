@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import socket
 import struct
 import sys
+import os
 import time
 
 # see com.intellij.idea.SocketLock for the server side of this interface
@@ -92,7 +92,7 @@ if os.path.exists(port_path) and os.path.exists(token_path):
         launch_with_port(port, token)
     except:
         type, value, traceback = sys.exc_info()
-        print('No IDE instance has been found. New one will be started.') # todo error
+        print('Cannot activate a running instance: ' + str(value))
 else:
     print('No IDE instance has been found. New one will be started.')
     if sys.platform == "darwin":

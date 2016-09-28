@@ -116,19 +116,11 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
     if (!(resourceBundle instanceof ResourceBundleImpl) || files.size() < 2) {
       return null;
     }
-    List<Locale> bundleLocales = ContainerUtil.mapNotNull(files, new Function<PropertiesFile, Locale>() {
-      @Override
-      public Locale fun(PropertiesFile propertiesFile) {
-        final Locale locale = propertiesFile.getLocale();
-        return locale == PropertiesUtil.DEFAULT_LOCALE ? null : locale;
-      }
+    List<Locale> bundleLocales = ContainerUtil.mapNotNull(files, propertiesFile1 -> {
+      final Locale locale = propertiesFile1.getLocale();
+      return locale == PropertiesUtil.DEFAULT_LOCALE ? null : locale;
     });
-    bundleLocales = ContainerUtil.filter(bundleLocales, new Condition<Locale>() {
-      @Override
-      public boolean value(Locale locale) {
-        return !JAVA_LOCALES.getValue().contains(locale.getLanguage()) && !myAdditionalLanguages.contains(locale.getLanguage());
-      }
-    });
+    bundleLocales = ContainerUtil.filter(bundleLocales, locale -> !JAVA_LOCALES.getValue().contains(locale.getLanguage()) && !myAdditionalLanguages.contains(locale.getLanguage()));
     if (bundleLocales.isEmpty()) {
       return null;
     }

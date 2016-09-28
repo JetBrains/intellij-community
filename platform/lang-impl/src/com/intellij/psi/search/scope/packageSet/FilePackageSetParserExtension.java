@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
         pattern.append("/");
       }
       else if (lexer.getTokenType() == ScopeTokenTypes.IDENTIFIER || lexer.getTokenType() == ScopeTokenTypes.INTEGER_LITERAL) {
-        if (wasIdentifier) error(lexer, AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText(lexer)));
+        if (wasIdentifier) error(lexer, AnalysisScopeBundle.message("error.package.set.token.expectations", getTokenText(lexer)));
         wasIdentifier = lexer.getTokenType() == ScopeTokenTypes.IDENTIFIER;
         pattern.append(getTokenText(lexer));
       }
@@ -101,7 +101,7 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
     }
 
     if (pattern.length() == 0) {
-      error(lexer, AnalysisScopeBundle.message("error.packageset.pattern.expectations"));
+      error(lexer, AnalysisScopeBundle.message("error.package.set.pattern.expectations"));
     }
 
     return pattern.toString();
@@ -115,6 +115,6 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
 
   private static void error(Lexer lexer, String message) throws ParsingException {
     throw new ParsingException(
-      AnalysisScopeBundle.message("error.packageset.position.parsing.error", message, (lexer.getTokenStart() + 1)));
+      AnalysisScopeBundle.message("error.package.set.position.parsing.error", message, (lexer.getTokenStart() + 1)));
   }
 }

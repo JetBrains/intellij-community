@@ -138,15 +138,12 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
    */
   private void updateAutoShutdownTime() {
     myShutdownAlarm.cancelAllRequests();
-    myShutdownAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (myCallsInProgressNumber.get() > 0) {
-          updateAutoShutdownTime();
-          return;
-        }
-        System.exit(0);
+    myShutdownAlarm.addRequest(() -> {
+      if (myCallsInProgressNumber.get() > 0) {
+        updateAutoShutdownTime();
+        return;
       }
+      System.exit(0);
     }, (int)myTtlMs.get());
   }
 

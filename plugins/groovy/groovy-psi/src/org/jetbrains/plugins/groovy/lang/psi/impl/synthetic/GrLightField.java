@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collections;
@@ -45,7 +43,7 @@ import java.util.Map;
  */
 public class GrLightField extends GrLightVariable implements GrField {
 
-  private final PsiClass myContainingClass;
+  private PsiClass myContainingClass;
 
   public GrLightField(@NotNull PsiClass containingClass,
                       @NonNls String name,
@@ -60,6 +58,11 @@ public class GrLightField extends GrLightVariable implements GrField {
                       @NotNull String type) {
     super(containingClass.getManager(), name, type, containingClass);
     myContainingClass = containingClass;
+    setNavigationElement(this);
+  }
+
+  public GrLightField(@NotNull String name, @NotNull String type, @NotNull PsiElement context) {
+    super(context.getManager(), name, type, context);
     setNavigationElement(this);
   }
 
@@ -84,6 +87,11 @@ public class GrLightField extends GrLightVariable implements GrField {
     return myContainingClass;
   }
 
+  public GrLightField setContainingClass(@NotNull PsiClass containingClass) {
+    myContainingClass = containingClass;
+    return this;
+  }
+
   @Override
   public void setInitializer(@Nullable PsiExpression initializer) throws IncorrectOperationException {
     throw new IncorrectOperationException();
@@ -97,24 +105,12 @@ public class GrLightField extends GrLightVariable implements GrField {
   @Nullable
   @Override
   public GrAccessorMethod getSetter() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAccessorMethod>() {
-      @Nullable
-      @Override
-      public Result<GrAccessorMethod> compute() {
-        return Result.create(GrAccessorMethodImpl.createSetterMethod(GrLightField.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
-    });
+    return GrClassImplUtil.findSetter(this);
   }
   @NotNull
   @Override
   public GrAccessorMethod[] getGetters() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAccessorMethod[]>() {
-      @Nullable
-      @Override
-      public Result<GrAccessorMethod[]> compute() {
-        return Result.create(GrAccessorMethodImpl.createGetterMethods(GrLightField.this), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-      }
-    });
+    return GrClassImplUtil.findGetters(this);
   }
 
   @NotNull

@@ -39,10 +39,9 @@ public abstract class HTMLComposer {
   public abstract void appendListItem(StringBuffer buf, RefElement refElement);
 
   public static void appendHeading(@NonNls StringBuffer buf, String name){
-    buf.append("&nbsp;&nbsp;<font style=\"font-weight:bold; color:")
-      .append(UIUtil.isUnderDarcula() ? "#A5C25C" : "#005555").append(";\">")
-      .append(name)
-      .append("</font>");
+    buf.append("<p class=\"problem-description-group\">")
+       .append(name)
+       .append("</p>");
   }
 
   public abstract void appendElementReference(StringBuffer buf, RefElement refElement, boolean isPackageIncluded);
@@ -55,6 +54,10 @@ public abstract class HTMLComposer {
 
   public abstract void startListItem(@NonNls StringBuffer buf);
 
+  /**
+   * Use css for indentations
+   */
+  @Deprecated
   public static void appendAfterHeaderIndention(@NonNls StringBuffer buf) {
     buf.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
   }

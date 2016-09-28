@@ -62,7 +62,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
 
       private void onFileChange(@NotNull final VirtualFile file) {
         if (myMappingsProjectConfiguration.isRegisteredSchemaFile(file)) {
-          myService.reset();
+          myService.dropProviderFromCache(file);
         }
       }
     });

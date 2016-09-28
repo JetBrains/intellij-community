@@ -220,12 +220,7 @@ public class DetectedRootsChooser {
     column.setMaxWidth(width);
     myTable.updateColumnSizes();
     List<DetectedRootData> sortedRoots = new ArrayList<DetectedRootData>(roots);
-    Collections.sort(sortedRoots, new Comparator<DetectedRootData>() {
-      @Override
-      public int compare(DetectedRootData o1, DetectedRootData o2) {
-        return o1.getDirectory().compareTo(o2.getDirectory());
-      }
-    });
+    Collections.sort(sortedRoots, (o1, o2) -> o1.getDirectory().compareTo(o2.getDirectory()));
     myModel.setItems(sortedRoots);
   }
 

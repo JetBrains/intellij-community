@@ -78,14 +78,14 @@ class CollectConversion {
     }
 
     if (listType != null) {
-      consumer.consume(new MyLookupElement("toList", listType));
+      consumer.consume(new MyLookupElement("toList", listType, ref));
     }
     if (setType != null) {
-      consumer.consume(new MyLookupElement("toSet", setType));
+      consumer.consume(new MyLookupElement("toSet", setType, ref));
     }
 
     if (expectedTypes.isEmpty() || hasIterable) {
-      consumer.consume(new MyLookupElement("toCollection", factory.createType(collection, component)));
+      consumer.consume(new MyLookupElement("toCollection", factory.createType(collection, component), ref));
     }
   }
 
@@ -94,12 +94,22 @@ class CollectConversion {
     private final String myTypeText;
     private final String myMethodName;
     @NotNull private final PsiType myExpectedType;
+    private final boolean myHasImport;
 
-    MyLookupElement(String methodName, @NotNull PsiType expectedType) {
+    MyLookupElement(String methodName, @NotNull PsiType expectedType, @NotNull PsiElement context) {
       myMethodName = methodName;
       myExpectedType = expectedType;
-      myLookupString = "collect(Collectors." + myMethodName + "())";
       myTypeText = myExpectedType.getPresentableText();
+
+      PsiMethodCallExpression call = (PsiMethodCallExpression)
+        JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(methodName + "()", context);
+      myHasImport = ContainerUtil.or(call.getMethodExpression().multiResolve(true), result -> {
+        PsiElement element = result.getElement();
+        return element instanceof PsiMember &&
+               (JAVA_UTIL_STREAM_COLLECTORS + "." + myMethodName).equals(PsiUtil.getMemberQualifiedName((PsiMember)element));
+      });
+
+      myLookupString = "collect(" + (myHasImport ? "" : "Collectors.") + myMethodName + "())";
     }
 
     @NotNull
@@ -143,7 +153,7 @@ class CollectConversion {
 
     @NotNull
     private String getInsertString() {
-      return "collect(" + JAVA_UTIL_STREAM_COLLECTORS + "." + myMethodName + "())";
+      return "collect(" + (myHasImport ? "" : JAVA_UTIL_STREAM_COLLECTORS + ".") + myMethodName + "())";
     }
 
     @Override

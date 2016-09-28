@@ -21,7 +21,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
@@ -38,7 +37,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,7 +48,6 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
@@ -71,6 +68,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -80,6 +78,8 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotator.State, Pep8ExternalAnnotator.Results> {
+  // Taken directly from the sources of pycodestyle.py
+  private static final String DEFAULT_IGNORED_ERRORS = "E121,E123,E126,E226,E24,E704,W503";
   private static final Logger LOG = Logger.getInstance(Pep8ExternalAnnotator.class);
   private static final Pattern E303_LINE_COUNT_PATTERN = Pattern.compile(".*\\((\\d+)\\)$");
 
@@ -89,11 +89,29 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     private final String myCode;
     private final String myDescription;
 
-    public Problem(int line, int column, String code, String description) {
+    public Problem(int line, int column, @NotNull String code, @NotNull String description) {
       myLine = line;
       myColumn = column;
       myCode = code;
       myDescription = description;
+    }
+
+    public int getLine() {
+      return myLine;
+    }
+
+    public int getColumn() {
+      return myColumn;
+    }
+
+    @NotNull
+    public String getCode() {
+      return myCode;
+    }
+
+    @NotNull
+    public String getDescription() {
+      return myDescription;
     }
   }
 
@@ -171,7 +189,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
   }
 
   private static void reportMissingInterpreter() {
-    LOG.info("Found no suitable interpreter to run pep8.py. Available interpreters are: [");
+    LOG.info("Found no suitable interpreter to run pycodestyle.py. Available interpreters are: [");
     List<Sdk> allSdks = PythonSdkType.getAllSdks();
     Collections.sort(allSdks, PreferredSdkComparator.INSTANCE);
     for (Sdk sdk : allSdks) {
@@ -186,13 +204,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     if (collectedInfo == null) return null;
     ArrayList<String> options = Lists.newArrayList();
 
-    if (collectedInfo.ignoredErrors.size() > 0) {
-      options.add("--ignore=" + StringUtil.join(collectedInfo.ignoredErrors, ","));
+    if (!collectedInfo.ignoredErrors.isEmpty()) {
+      options.add("--ignore=" + DEFAULT_IGNORED_ERRORS + "," + StringUtil.join(collectedInfo.ignoredErrors, ","));
     }
     options.add("--max-line-length=" + collectedInfo.margin);
     options.add("-");
 
-    GeneralCommandLine cmd = PythonHelper.PEP8.newCommandLine(collectedInfo.interpreterPath, options);
+    GeneralCommandLine cmd = PythonHelper.PYCODESTYLE.newCommandLine(collectedInfo.interpreterPath, options);
 
     ProcessOutput output = PySdkUtil.getProcessOutput(cmd, new File(collectedInfo.interpreterPath).getParent(),
                                                       ImmutableMap.of("PYTHONBUFFERED", "1"),
@@ -201,7 +219,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
     Results results = new Results(collectedInfo.level);
     if (output.isTimeout()) {
-      LOG.info("Timeout running pep8.py");
+      LOG.info("Timeout running pycodestyle.py");
     }
     else if (output.getStderrLines().isEmpty()) {
       for (String line : output.getStdoutLines()) {
@@ -212,18 +230,14 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       }
     }
     else if (((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
-      LOG.info("Error running pep8.py: " + output.getStderr());
+      LOG.info("Error running pycodestyle.py: " + output.getStderr());
     }
     return results;
   }
 
   @Override
   public void apply(@NotNull PsiFile file, Results annotationResult, @NotNull AnnotationHolder holder) {
-    if (annotationResult == null) return;
-    if (!file.isValid()) {
-      LOG.info("Trying to apply diagnostics to invalid PsiFile, skipped");
-      return;
-    }
+    if (annotationResult == null || !file.isValid()) return;
     final String text = file.getText();
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
@@ -251,14 +265,14 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         problemElement = file.findElementAt(Math.max(0, offset - 1));
       }
 
-      if (ignoreDueToSettings(project, problem, problemElement)) {
+      if (ignoreDueToSettings(project, problem, problemElement) || ignoredDueToProblemSuppressors(project, problem, file, problemElement)) {
         continue;
       }
 
       if (problemElement != null) {
         TextRange problemRange = problemElement.getTextRange();
         // Multi-line warnings are shown only in the gutter and it's not the desired behavior from the usability point of view.
-        // So we register it only on that line where pep8.py found the problem originally.
+        // So we register it only on that line where pycodestyle.py found the problem originally.
         if (crossesLineBoundary(document, text, problemRange)) {
           final int lineEndOffset;
           if (document != null) {
@@ -296,14 +310,17 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         }
         annotation.registerFix(new IgnoreErrorFix(problem.myCode));
         annotation.registerFix(new CustomEditInspectionToolsSettingsAction(HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME),
-                                                                           new Computable<String>() {
-                                                                             @Override
-                                                                             public String compute() {
-                                                                               return "Edit inspection profile setting";
-                                                                             }
-                                                                           }));
+                                                                           () -> "Edit inspection profile setting"));
       }
     }
+  }
+
+  private static boolean ignoredDueToProblemSuppressors(@NotNull Project project,
+                                                        @NotNull Problem problem,
+                                                        @NotNull PsiFile file,
+                                                        @Nullable PsiElement element) {
+    final Pep8ProblemSuppressor[] suppressors = Pep8ProblemSuppressor.EP_NAME.getExtensions();
+    return Arrays.stream(suppressors).anyMatch(p -> p.isProblemSuppressed(problem, file, element));
   }
 
   private static boolean crossesLineBoundary(@Nullable Document document, String text, TextRange problemRange) {
@@ -381,7 +398,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       return new Problem(line, column, m.group(3), m.group(4));
     }
     if (((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
-      LOG.info("Failed to parse problem line from pep8.py: " + s);
+      LOG.info("Failed to parse problem line from pycodestyle.py: " + s);
     }
     return null;
   }
@@ -412,13 +429,10 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).modifyProfile(new Consumer<ModifiableModel>() {
-        @Override
-        public void consume(ModifiableModel model) {
-          PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
-          if (!tool.ignoredErrors.contains(myCode)) {
-            tool.ignoredErrors.add(myCode);
-          }
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile(file).modifyProfile(model -> {
+        PyPep8Inspection tool = (PyPep8Inspection)model.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
+        if (!tool.ignoredErrors.contains(myCode)) {
+          tool.ignoredErrors.add(myCode);
         }
       });
     }

@@ -77,51 +77,37 @@ public class ArrayIndexOutOfBoundsTest extends PsiTestCase {
   }
 
   private void restoreSources() {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          FileUtil.copyDir(new File(JavaTestUtil.getJavaTestDataPath() + "/psi/arrayIndexOutOfBounds/src"),
-                           VfsUtilCore.virtualToIoFile(myProjectRoot));
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-        VirtualFileManager.getInstance().syncRefresh();
+    Runnable runnable = () -> {
+      try {
+        FileUtil.copyDir(new File(JavaTestUtil.getJavaTestDataPath() + "/psi/arrayIndexOutOfBounds/src"),
+                         VfsUtilCore.virtualToIoFile(myProjectRoot));
       }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+      VirtualFileManager.getInstance().syncRefresh();
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable,  "", null);
   }
 
   private void deleteNewPackage() {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        final PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("anotherBla");
-        assertNotNull("Package anotherBla not found", aPackage);
-        WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-          @Override
-          public void run() {
-            aPackage.getDirectories()[0].delete();
-          }
-        });
-        VirtualFileManager.getInstance().syncRefresh();
-      }
+    Runnable runnable = () -> {
+      final PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("anotherBla");
+      assertNotNull("Package anotherBla not found", aPackage);
+      WriteCommandAction.runWriteCommandAction(null, () -> aPackage.getDirectories()[0].delete());
+      VirtualFileManager.getInstance().syncRefresh();
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable,  "", null);
   }
 
   private void renamePackage() {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("bla");
-        assertNotNull("Package bla not found", aPackage);
+    Runnable runnable = () -> {
+      PsiPackage aPackage = JavaPsiFacade.getInstance(myPsiManager.getProject()).findPackage("bla");
+      assertNotNull("Package bla not found", aPackage);
 
-        PsiDirectory dir = aPackage.getDirectories()[0];
-        new RenameProcessor(myProject, dir, "anotherBla", true, true).run();
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
+      PsiDirectory dir = aPackage.getDirectories()[0];
+      new RenameProcessor(myProject, dir, "anotherBla", true, true).run();
+      FileDocumentManager.getInstance().saveAllDocuments();
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable,  "", null);
   }

@@ -448,7 +448,6 @@ public class TreeChangeImpl implements TreeChange {
         optimizedResult = myLastOffsetInNewTree;
 
         myLastNode = node;
-        myLastOffsetInNewTree = optimizedResult;
         if (!ourDoChecks) return optimizedResult;
       }
     }

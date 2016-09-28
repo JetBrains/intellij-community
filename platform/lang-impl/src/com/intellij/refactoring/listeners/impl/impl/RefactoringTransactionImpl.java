@@ -85,16 +85,13 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
 
     @Override
     public void elementMoved(@NotNull final PsiElement newElement) {
-      myRunnables.add(new Runnable() {
-        @Override
-        public void run() {
-          for (RefactoringElementListener refactoringElementListener : myListenerList) {
-            try {
-              refactoringElementListener.elementMoved(newElement);
-            }
-            catch (Throwable e) {
-              LOG.error(e);
-            }
+      myRunnables.add(() -> {
+        for (RefactoringElementListener refactoringElementListener : myListenerList) {
+          try {
+            refactoringElementListener.elementMoved(newElement);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
           }
         }
       });
@@ -102,16 +99,13 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
 
     @Override
     public void elementRenamed(@NotNull final PsiElement newElement) {
-      myRunnables.add(new Runnable() {
-        @Override
-        public void run() {
-          for (RefactoringElementListener refactoringElementListener : myListenerList) {
-            try {
-              refactoringElementListener.elementRenamed(newElement);
-            }
-            catch (Throwable e) {
-              LOG.error(e);
-            }
+      myRunnables.add(() -> {
+        for (RefactoringElementListener refactoringElementListener : myListenerList) {
+          try {
+            refactoringElementListener.elementRenamed(newElement);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
           }
         }
       });

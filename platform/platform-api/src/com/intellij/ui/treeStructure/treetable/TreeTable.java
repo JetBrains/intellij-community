@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.ui.treeStructure.treetable;
 
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
 
 import javax.swing.*;
@@ -29,11 +30,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.EventObject;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This example shows how to create a simple JTreeTable component,
@@ -56,7 +54,6 @@ public class TreeTable extends JBTable {
 
   public TreeTable(TreeTableModel treeTableModel) {
     super();
-
     setModel(treeTableModel);
   }
 
@@ -96,7 +93,7 @@ public class TreeTable extends JBTable {
 
     // And update the height of the trees row to match that of the table.
     if (myTree.getRowHeight() < 1) {
-      setRowHeight(18);  // Metal looks better like this.
+      setRowHeight(JBUI.scale(18));  // Metal looks better like this.
     }
     else {
       setRowHeight(getRowHeight());
@@ -376,7 +373,7 @@ public class TreeTable extends JBTable {
     return editResult;
   }
 
-  boolean isTreeColumn(int column) {
+  protected boolean isTreeColumn(int column) {
     return TreeTableModel.class.isAssignableFrom(getColumnClass(column));
   }
 

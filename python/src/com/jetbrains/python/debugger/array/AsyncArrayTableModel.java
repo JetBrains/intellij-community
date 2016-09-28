@@ -24,9 +24,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.debugger.ArrayChunk;
-import com.jetbrains.python.debugger.PyDebugValue;
+import com.jetbrains.python.debugger.ArrayChunkBuilder;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 import java.util.concurrent.*;
 
 /**
@@ -39,29 +41,22 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   private int myRows;
   private int myColumns;
-  private final NumpyArrayTable myProvider;
+  private final TableChunkDatasource myProvider;
 
 
-  private final ExecutorService myExecutorService = Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory("Python async table"));
+  private final ExecutorService myExecutorService = ConcurrencyUtil.newSingleThreadExecutor("Python async table");
 
 
   private LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
     new CacheLoader<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>>() {
       @Override
-      public ListenableFuture<ArrayChunk> load(final Pair<Integer, Integer> key) throws Exception {
-        final PyDebugValue value = myProvider.getDebugValue();
-        final PyDebugValue slicedValue =
-          new PyDebugValue(myProvider.getSliceText(), value.getType(), value.getValue(), value.isContainer(), value.isErrorOnEval(),
-                           value.getParent(), value.getFrameAccessor());
+      public ListenableFuture<ArrayChunk> load(@NotNull final Pair<Integer, Integer> key) throws Exception {
 
-        ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(new Callable<ArrayChunk>() {
-          @Override
-          public ArrayChunk call() throws Exception {
-            return value.getFrameAccessor()
-              .getArrayItems(slicedValue, key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
-                             Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second),
-                             myProvider.getFormat());
-          }
+        ListenableFutureTask<ArrayChunk> task = ListenableFutureTask.create(() -> {
+          ArrayChunk chunk = myProvider.getChunk(key.first, key.second, Math.min(CHUNK_ROW_SIZE, getRowCount() - key.first),
+                                                 Math.min(CHUNK_COL_SIZE, getColumnCount() - key.second));
+          handleChunkAdded(key.first, key.second, chunk);
+          return chunk;
         });
 
         myExecutorService.execute(task);
@@ -70,7 +65,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
       }
     });
 
-  public AsyncArrayTableModel(int rows, int columns, NumpyArrayTable provider) {
+  public AsyncArrayTableModel(int rows, int columns, TableChunkDatasource provider) {
     myRows = rows;
     myColumns = columns;
     myProvider = provider;
@@ -78,14 +73,6 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   @Override
   public boolean isCellEditable(int row, int col) {
-    //Pair<Integer, Integer> key = itemToChunkKey(row, col);
-    //try {
-    //  return myChunkCache.get(key).isDone();
-    //}
-    //catch (ExecutionException e) {
-    //  return false;
-    //}
-    //TODO: make it editable
     return false;
   }
 
@@ -107,17 +94,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         }
       }
       else {
-        chunk.addListener(new Runnable() {
-          @Override
-          public void run() {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                fireTableCellUpdated(row, col);
-              }
-            });
-          }
-        }, myExecutorService);
+        chunk.addListener(() -> UIUtil.invokeLaterIfNeeded(() -> fireTableCellUpdated(row, col)), myExecutorService);
       }
       return EMPTY_CELL_VALUE;
     }
@@ -175,13 +152,11 @@ public class AsyncArrayTableModel extends AbstractTableModel {
         Pair<Integer, Integer> key = itemToChunkKey(roffset * CHUNK_ROW_SIZE, coffset * CHUNK_COL_SIZE);
         final Object[][] chunkData = new Object[CHUNK_ROW_SIZE][CHUNK_COL_SIZE];
         for (int r = 0; r < CHUNK_ROW_SIZE; r++) {
-          for (int c = 0; c < CHUNK_COL_SIZE; c++) {
-            chunkData[r][c] = data[roffset * CHUNK_ROW_SIZE + r][coffset * CHUNK_COL_SIZE + c];
-          }
+          System.arraycopy(data[roffset * CHUNK_ROW_SIZE + r], coffset * 30, chunkData[r], 0, CHUNK_COL_SIZE);
         }
         myChunkCache.put(key, new ListenableFuture<ArrayChunk>() {
           @Override
-          public void addListener(Runnable listener, Executor executor) {
+          public void addListener(@NotNull Runnable listener, @NotNull Executor executor) {
 
           }
 
@@ -202,15 +177,53 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
           @Override
           public ArrayChunk get() throws InterruptedException, ExecutionException {
-            return new ArrayChunk(chunk.getValue(), null, 0, 0, null, null, null, null, chunkData);
+            return new ArrayChunkBuilder().setValue(chunk.getValue()).setSlicePresentation(null).setRows(0).setColumns(0).setMax(null)
+              .setMin(null).setFormat(null).setType(null).setData(chunkData).createArrayChunk();
           }
 
           @Override
           public ArrayChunk get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-            return new ArrayChunk(chunk.getValue(), null, 0, 0, null, null, null, null, chunkData);
+            return new ArrayChunkBuilder().setValue(chunk.getValue()).setSlicePresentation(null).setRows(0).setColumns(0).setMax(null)
+              .setMin(null).setFormat(null).setType(null).setData(chunkData).createArrayChunk();
           }
         });
       }
+    }
+    handleChunkAdded(0, 0, chunk);
+  }
+
+  protected void handleChunkAdded(Integer rowOffset, Integer colOffset, ArrayChunk chunk) {
+
+  }
+
+  public TableModel getRowHeaderModel() {
+    return new RowNumberHeaderModel();
+  }
+
+
+  private class RowNumberHeaderModel extends AbstractTableModel {
+
+    @Override
+    public int getRowCount() {
+      return AsyncArrayTableModel.this.getRowCount();
+    }
+
+    @Override
+    public int getColumnCount() {
+      return 1;
+    }
+
+    @Override
+    public String getColumnName(int column) {
+      if (column == 0) {
+        return "   ";
+      }
+      throw new IllegalArgumentException("Table only has one column");
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+      return Integer.toString(rowIndex);
     }
   }
 }

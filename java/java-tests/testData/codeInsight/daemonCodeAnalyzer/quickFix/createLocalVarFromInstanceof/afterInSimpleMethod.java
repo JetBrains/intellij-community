@@ -2,7 +2,7 @@
 public abstract class A {
     public void getNodeElements(Object parent) {
         if (!(parent instanceof NodeInfo)) return;
-        NodeInfo nodeInfo = (NodeInfo) parent;
+        NodeInfo parent1 = (NodeInfo) parent;
         <caret>
     }
 

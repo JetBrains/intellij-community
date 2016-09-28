@@ -15,32 +15,18 @@
  */
 package com.intellij.util.ui;
 
-import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
 public final class TimedDeadzone {
-
   public static final Length DEFAULT = new Length(150);
   public static final Length NULL = new Length(-1);
   
-  private Alarm myAlarm;
   private Length myLength = NULL;
-
   private boolean myWithin;
-
-  private final Runnable myClear = new Runnable() {
-    public void run() {
-      clear();
-    }
-  };
-
-  public TimedDeadzone(Length zoneLength, Alarm.ThreadToUse thread) {
-    myLength = zoneLength;
-    myAlarm = new Alarm(thread);
-  }
+  private long myEntered = -1;
 
   public TimedDeadzone(Length zoneLength) {
-    this(zoneLength, Alarm.ThreadToUse.SWING_THREAD);
+    myLength = zoneLength;
   }
 
   public int getLength() {
@@ -59,17 +45,18 @@ public final class TimedDeadzone {
       return;
     }
 
-    myAlarm.cancelAllRequests();
+    myEntered = System.currentTimeMillis();
     myWithin = true;
-    myAlarm.addRequest(myClear, getLength());
   }
 
   public void clear() {
-    myAlarm.cancelAllRequests();
     myWithin = false;
   }
 
   public boolean isWithin() {
+    if (myWithin && System.currentTimeMillis() - myEntered > getLength()) {
+      myWithin = false;
+    }
     return myWithin;
   }
 

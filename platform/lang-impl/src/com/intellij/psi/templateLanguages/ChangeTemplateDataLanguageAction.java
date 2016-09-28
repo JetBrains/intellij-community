@@ -66,12 +66,9 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
 
   public static void editSettings(@NotNull Project project, @Nullable final VirtualFile virtualFile) {
     final TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-      @Override
-      public void run() {
-        if (virtualFile != null) {
-          configurable.selectFile(virtualFile);
-        }
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
+      if (virtualFile != null) {
+        configurable.selectFile(virtualFile);
       }
     });
   }

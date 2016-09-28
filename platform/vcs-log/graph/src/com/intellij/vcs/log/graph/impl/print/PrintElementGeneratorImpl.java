@@ -163,7 +163,6 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
           if (edgeSize >= myLongEdgeSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, myVisiblePartSize);
 
           if (edgeSize >= myEdgeWithArrowSize) addArrowIfNeeded(result, edge, position, upOffset, downOffset, 1);
-
         }
         else { // special edges
           switch (edge.getType()) {
@@ -248,5 +247,4 @@ public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
     cache.put(rowIndex, result);
     return result;
   }
-
 }

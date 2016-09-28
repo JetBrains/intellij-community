@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -381,6 +382,14 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     if (element instanceof GrPropertyForCompletion) {
       element = ((GrPropertyForCompletion)element).getOriginalAccessor();
     }
+
+    if (element != null) {
+      PsiElement delegate = element.getUserData(ResolveUtil.DOCUMENTATION_DELEGATE);
+      if (delegate != null) {
+        return delegate;
+      }
+    }
+
     return element;
   }
 
@@ -467,7 +476,7 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
   public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
     for (PsiElement e = startPoint; e != null; e = e.getParent()) {
       if (e instanceof GrDocCommentOwner) {
-        return Pair.<PsiElement, PsiComment>create(e, ((GrDocCommentOwner)e).getDocComment());
+        return Pair.create(e, ((GrDocCommentOwner)e).getDocComment());
       }
     }
     return null;

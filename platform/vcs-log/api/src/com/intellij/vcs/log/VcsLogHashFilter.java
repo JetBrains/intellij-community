@@ -23,5 +23,4 @@ public interface VcsLogHashFilter {
 
   @NotNull
   Collection<String> getHashes();
-
 }

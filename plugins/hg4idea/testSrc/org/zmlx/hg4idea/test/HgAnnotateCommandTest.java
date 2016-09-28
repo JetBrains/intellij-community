@@ -52,12 +52,6 @@ public class HgAnnotateCommandTest extends HgSingleUserTest {
   private File myOutputsDir;
   private List<HgAnnotationLine> myAnnotations;
 
-  @BeforeMethod
-  @Override
-  protected void setUp(Method testMethod) throws Exception {
-    super.setUp(testMethod);
-  }
-  
   @BeforeClass
   private void loadEthalonAnnotations() throws IOException {
     myPluginRoot = new File(PluginPathManager.getPluginHomePath(HgVcs.VCS_NAME));

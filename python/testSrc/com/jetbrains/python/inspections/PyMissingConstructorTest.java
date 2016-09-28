@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,42 +23,53 @@ import com.jetbrains.python.psi.LanguageLevel;
  */
 public class PyMissingConstructorTest extends PyTestCase {
   private static final String TEST_DIRECTORY = "inspections/PyMissingConstructorInspection/";
-  
+
   public void testBasic() {
     doTest();
   }
-  
-  public void testQualifiedName() { // PY-3278
-    doTest();
-  }
-  
-  public void testNoConstructor() {  // PY-3238
-    doTest();
-  }
-  
-  public void testDeepInheritance() {  // PY-3313
-    doTest();
-  }
-  
-  public void testInheritFromSelf() {  // PY-3395
+
+  // PY-3278
+  public void testQualifiedName() {
     doTest();
   }
 
-  public void testDunderClass() {  // PY-4038
+  // PY-3238
+  public void testNoConstructor() {
     doTest();
   }
 
-  public void testException() { // PY-7176
+  // PY-3313
+  public void testDeepInheritance() {
     doTest();
   }
 
-  public void testInnerClass() { //PY-7699
+  // PY-3395
+  public void testInheritFromSelf() {
     doTest();
   }
-  
+
+  // PY-4038
+  public void testExplicitDunderClass() {
+    doTest();
+  }
+
+  // PY-20038
+  public void testImplicitDunderClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+
+  // PY-7176
+  public void testException() {
+    doTest();
+  }
+
+  // PY-7699
+  public void testInnerClass() {
+    doTest();
+  }
+
   public void testPy3k() {
-    setLanguageLevel(LanguageLevel.PYTHON30);
-    doTest();
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
   private void doTest() {

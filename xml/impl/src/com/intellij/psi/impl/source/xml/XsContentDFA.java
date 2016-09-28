@@ -105,12 +105,8 @@ class XsContentDFA extends XmlContentDFA {
     for (Object o : vector) {
       if (o instanceof XSElementDecl) {
         final XSElementDecl elementDecl = (XSElementDecl)o;
-        XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors, new Condition<XmlElementDescriptor>() {
-          @Override
-          public boolean value(XmlElementDescriptor elementDescriptor) {
-            return elementDecl.getName().equals(elementDescriptor.getName());
-          }
-        });
+        XmlElementDescriptor descriptor = ContainerUtil.find(myElementDescriptors,
+                                                             elementDescriptor -> elementDecl.getName().equals(elementDescriptor.getName()));
         ContainerUtil.addIfNotNull(descriptor, list);
       }
     }
@@ -204,12 +200,7 @@ class XsContentDFA extends XmlContentDFA {
     }
     Grammar[] grammars = grammarPool.retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
 
-    return grammars.length == 0 ? null : ((XSGrammar)grammars[0]).toXSModel(ContainerUtil.map(grammars, new Function<Grammar, XSGrammar>() {
-      @Override
-      public XSGrammar fun(Grammar grammar) {
-        return (XSGrammar)grammar;
-      }
-    }, new XSGrammar[0]));
+    return grammars.length == 0 ? null : ((XSGrammar)grammars[0]).toXSModel(ContainerUtil.map(grammars, grammar -> (XSGrammar)grammar, new XSGrammar[0]));
   }
 
   private static class MyXSElementDeclHelper implements XSElementDeclHelper {

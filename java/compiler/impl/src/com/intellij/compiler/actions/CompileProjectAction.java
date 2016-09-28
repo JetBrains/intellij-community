@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.compiler.actions;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.CompileContext;
@@ -42,13 +41,12 @@ public class CompileProjectAction extends CompileActionBase {
     });
   }
 
-  public void update(AnActionEvent event) {
-    super.update(event);
-    Presentation presentation = event.getPresentation();
+  public void update(AnActionEvent e) {
+    super.update(e);
+    Presentation presentation = e.getPresentation();
     if (!presentation.isEnabled()) {
       return;
     }
-    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
-    presentation.setEnabled(project != null);
+    presentation.setEnabled(e.getProject() != null);
   }
 }

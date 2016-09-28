@@ -15,10 +15,11 @@
  */
 package com.intellij.refactoring.memberPushDown;
 
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
@@ -37,7 +38,7 @@ public class PushDownConflicts {
   private final MultiMap<PsiElement, String> myConflicts;
 
 
-  public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos) {
+  public PushDownConflicts(PsiClass aClass, MemberInfo[] memberInfos, MultiMap<PsiElement, String> conflicts) {
     myClass = aClass;
 
     myMovedMembers = new HashSet<PsiMember>();
@@ -52,7 +53,7 @@ public class PushDownConflicts {
       }
     }
 
-    myConflicts = new MultiMap<PsiElement, String>();
+    myConflicts = conflicts;
   }
 
   public boolean isAnyConflicts() {
@@ -70,9 +71,20 @@ public class PushDownConflicts {
         child.accept(new UsedMovedMembersConflictsCollector(child));
       }
     }
+
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(myClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
+    if (annotation != null && myMovedMembers.contains(LambdaUtil.getFunctionalInterfaceMethod(myClass))) {
+      myConflicts.putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
+    }
   }
 
-  public void checkTargetClassConflicts(final PsiClass targetClass, final boolean checkStatic, final PsiElement context) {
+  public void checkTargetClassConflicts(final PsiElement targetElement, final PsiElement context) {
+    if (targetElement instanceof PsiFunctionalExpression) {
+      myConflicts.putValue(targetElement, RefactoringBundle.message("functional.interface.broken"));
+      return;
+    }
+
+    final PsiClass targetClass = targetElement instanceof PsiClass ? (PsiClass)targetElement : null;
     if (targetClass != null) {
       for (final PsiMember movedMember : myMovedMembers) {
         checkMemberPlacementInTargetClassConflict(targetClass, movedMember);
@@ -112,7 +124,6 @@ public class PushDownConflicts {
               aClass = ((PsiClassType)qualifierType).resolve();
             }
             else {
-              if (!checkStatic) continue;
               if (qualifier instanceof PsiReferenceExpression) {
                 final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
                 if (resolved instanceof PsiClass) {
@@ -147,7 +158,7 @@ public class PushDownConflicts {
       assert modifierList != null;
       if (!modifierList.hasModifierProperty(PsiModifier.ABSTRACT)) {
         PsiMethod method = (PsiMethod)movedMember;
-        final PsiMethod overrider = targetClass.findMethodBySignature(method, false);
+        final PsiMethod overrider = MethodSignatureUtil.findMethodBySuperMethod(targetClass, method, false);
         if (overrider != null) {
           String message = RefactoringBundle.message("0.is.already.overridden.in.1",
                                                      RefactoringUIUtil.getDescription(method, true), RefactoringUIUtil.getDescription(targetClass, false));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -301,7 +301,7 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+      Project project = e.getProject();
       PropertyValue propValue = null;
       try {
         propValue = myVcs.getFactory(myFile).createPropertyClient()
@@ -343,7 +343,7 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+      Project project = e.getProject();
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[]{myFile}, null,
                                                        myFile.isDirectory());
       boolean recursive = false;
@@ -364,7 +364,7 @@ public class PropertiesComponent extends JPanel {
     }
 
     public void actionPerformed(AnActionEvent e) {
-      Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+      Project project = e.getProject();
       SetPropertyDialog dialog = new SetPropertyDialog(project, new File[]{myFile}, getSelectedPropertyName(), myFile.isDirectory());
       boolean recursive = false;
       if (dialog.showAndGet()) {
@@ -407,7 +407,7 @@ public class PropertiesComponent extends JPanel {
         File f = new File(vf.getPath());
         if (!f.equals(myFile)) {
           setFile(myVcs, f);
-          Project p = CommonDataKeys.PROJECT.getData(e.getDataContext());
+          Project p = e.getProject();
           ToolWindowManager.getInstance(p).getToolWindow(ID).setTitle(f.getName());
         }
 

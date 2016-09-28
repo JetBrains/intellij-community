@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.execution.RunProfileStarter;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,19 +35,11 @@ public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings>
                                @Nullable final Callback callback,
                                @NotNull final RunProfileState state) throws ExecutionException {
     prepare(environment, state)
-      .done(new Consumer<RunProfileStarter>() {
-        @Override
-        public void consume(@Nullable final RunProfileStarter result) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              if (!environment.getProject().isDisposed()) {
-                startRunProfile(environment, state, callback, result);
-              }
-            }
-          });
+      .done(result -> UIUtil.invokeLaterIfNeeded(() -> {
+        if (!environment.getProject().isDisposed()) {
+          startRunProfile(environment, state, callback, result);
         }
-      });
+      }));
   }
 
   /**

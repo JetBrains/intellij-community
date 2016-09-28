@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.*;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
@@ -37,7 +38,6 @@ import static org.jetbrains.java.decompiler.code.CodeConstants.*;
   }
 */
 public class StructMethod extends StructMember {
-
   private static final int[] opr_iconst = {-1, 0, 1, 2, 3, 4, 5};
   private static final int[] opr_loadstore = {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3};
   private static final int[] opcs_load = {opc_iload, opc_lload, opc_fload, opc_dload, opc_aload};
@@ -388,5 +388,14 @@ public class StructMethod extends StructMember {
 
   public InstructionSequence getInstructionSequence() {
     return seq;
+  }
+
+  public StructLocalVariableTableAttribute getLocalVariableAttr() {
+    return (StructLocalVariableTableAttribute)getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
+  }
+
+  @Override
+  public String toString() {
+    return name;
   }
 }

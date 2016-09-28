@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.settings.DiffOptionsPanel;
-import com.intellij.openapi.diff.impl.settings.DiffPreviewPanel;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -57,8 +55,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -80,7 +76,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
-  public static final String DIFF_GROUP = ApplicationBundle.message("title.diff");
   public static final String FILE_STATUS_GROUP = ApplicationBundle.message("title.file.status");
   public static final String SCOPES_GROUP = ApplicationBundle.message("title.scope.based");
 
@@ -137,6 +132,23 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private MyColorScheme getScheme(String name) {
     return mySchemes.get(name);
   }
+  
+  @NotNull
+  public String getUniqueName(@NotNull String preferredName) {
+    String name;
+    if (mySchemes.containsKey(preferredName)) {
+      for (int i = 1; ; i++) {
+        name = preferredName + " (" + i + ")";
+        if (!mySchemes.containsKey(name)) {
+          break;
+        }
+      }
+    }
+    else {
+      name = preferredName;
+    }
+    return name;
+  }
 
   public EditorColorsScheme getSelectedScheme() {
     return mySelectedScheme;
@@ -153,14 +165,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   @NotNull
   public String[] getSchemeNames() {
     List<MyColorScheme> schemes = new ArrayList<MyColorScheme>(mySchemes.values());
-    Collections.sort(schemes, new Comparator<MyColorScheme>() {
-      @Override
-      public int compare(@NotNull MyColorScheme o1, @NotNull MyColorScheme o2) {
-        if (isReadOnly(o1) && !isReadOnly(o2)) return -1;
-        if (!isReadOnly(o1) && isReadOnly(o2)) return 1;
+    Collections.sort(schemes, (o1, o2) -> {
+      if (isReadOnly(o1) && !isReadOnly(o2)) return -1;
+      if (!isReadOnly(o1) && isReadOnly(o2)) return 1;
 
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
+      return o1.getName().compareToIgnoreCase(o2.getName());
     });
 
     List<String> names = new ArrayList<String>(schemes.size());
@@ -363,27 +372,23 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       });
     }
     Collections.addAll(extensions, Extensions.getExtensions(ColorAndFontPanelFactory.EP_NAME));
-    Collections.sort(extensions, new Comparator<ColorAndFontPanelFactory>() {
-      @Override
-      public int compare(ColorAndFontPanelFactory f1, ColorAndFontPanelFactory f2) {
-        if (f1 instanceof DisplayPrioritySortable) {
-          if (f2 instanceof DisplayPrioritySortable) {
-            int result = ((DisplayPrioritySortable)f1).getPriority().compareTo(((DisplayPrioritySortable)f2).getPriority());
-            if (result != 0) return result;
-          }
-          else {
-            return 1;
-          }
+    Collections.sort(extensions, (f1, f2) -> {
+      if (f1 instanceof DisplayPrioritySortable) {
+        if (f2 instanceof DisplayPrioritySortable) {
+          int result1 = ((DisplayPrioritySortable)f1).getPriority().compareTo(((DisplayPrioritySortable)f2).getPriority());
+          if (result1 != 0) return result1;
         }
-        else if (f2 instanceof DisplayPrioritySortable) {
-          return -1;
+        else {
+          return 1;
         }
-        return f1.getPanelDisplayName().compareToIgnoreCase(f2.getPanelDisplayName());
       }
+      else if (f2 instanceof DisplayPrioritySortable) {
+        return -1;
+      }
+      return f1.getPanelDisplayName().compareToIgnoreCase(f2.getPanelDisplayName());
     });
     result.addAll(extensions);
 
-    result.add(new DiffColorsPageFactory());
     result.add(new FileStatusColorsPageFactory());
     result.add(new ScopeColorsPageFactory());
 
@@ -441,32 +446,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
      }
    }
 
-  private class DiffColorsPageFactory implements ColorAndFontPanelFactory {
-    @Override
-    @NotNull
-    public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
-      final DiffOptionsPanel optionsPanel = new DiffOptionsPanel(options);
-      SchemesPanel schemesPanel = new SchemesPanel(options);
-      final DiffPreviewPanel previewPanel = new DiffPreviewPanel(myDisposable);
-
-      schemesPanel.addListener(new ColorAndFontSettingsListener.Abstract() {
-        @Override
-        public void schemeChanged(final Object source) {
-          previewPanel.setColorScheme(getSelectedScheme());
-          optionsPanel.updateOptionsList();
-        }
-      });
-
-      return new NewColorAndFontPanel(schemesPanel, optionsPanel, previewPanel, DIFF_GROUP, null, null);
-    }
-
-    @Override
-    @NotNull
-    public String getPanelDisplayName() {
-      return DIFF_GROUP;
-    }
-  }
-
   private void initAll() {
     mySchemes = new THashMap<String, MyColorScheme>();
     for (EditorColorsScheme allScheme : EditorColorsManager.getInstance().getAllSchemes()) {
@@ -482,7 +461,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   private static void initScheme(@NotNull MyColorScheme scheme) {
     List<EditorSchemeAttributeDescriptor> descriptions = new ArrayList<EditorSchemeAttributeDescriptor>();
     initPluggedDescriptions(descriptions, scheme);
-    initDiffDescriptors(descriptions, scheme);
     initFileStatusDescriptors(descriptions, scheme);
     initScopesDescriptors(descriptions, scheme);
 
@@ -514,10 +492,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       ColorKey fore = descriptor.getKind() == ColorDescriptor.Kind.FOREGROUND ? descriptor.getKey() : null;
       addEditorSettingDescription(descriptions, descriptor.getDisplayName(), group, back, fore, scheme);
     }
-  }
-
-  private static void initDiffDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
-    DiffOptionsPanel.addSchemeDescriptions(descriptions, scheme);
   }
 
   private static void initFileStatusDescriptors(@NotNull List<EditorSchemeAttributeDescriptor> descriptions, MyColorScheme scheme) {
@@ -555,12 +529,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     List<Pair<NamedScope, NamedScopesHolder>> list = new ArrayList<Pair<NamedScope, NamedScopesHolder>>(namedScopes);
 
-    Collections.sort(list, new Comparator<Pair<NamedScope,NamedScopesHolder>>() {
-      @Override
-      public int compare(@NotNull final Pair<NamedScope,NamedScopesHolder> o1, @NotNull final Pair<NamedScope,NamedScopesHolder> o2) {
-        return o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName());
-      }
-    });
+    Collections.sort(list, (o1, o2) -> o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName()));
     for (Pair<NamedScope,NamedScopesHolder> pair : list) {
       NamedScope namedScope = pair.getFirst();
       String name = namedScope.getName();
@@ -869,7 +838,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     @Override
     public int getFontType() {
-      return 0;
+      return Font.PLAIN;
     }
 
     @Override

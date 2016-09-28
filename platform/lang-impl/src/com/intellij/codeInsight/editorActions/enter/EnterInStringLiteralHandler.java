@@ -16,17 +16,24 @@
 
 package com.intellij.codeInsight.editorActions.enter;
 
+import com.intellij.codeInsight.editorActions.EnterHandler;
 import com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler;
 import com.intellij.codeInsight.editorActions.QuoteHandler;
 import com.intellij.codeInsight.editorActions.TypedHandler;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lexer.StringLiteralLexer;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StringEscapesTokenTypes;
@@ -41,6 +48,8 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
                                 final EditorActionHandler originalHandler) {
     int caretOffset = caretOffsetRef.get().intValue();
     int caretAdvance = caretAdvanceRef.get().intValue();
+    if (!isInStringLiteral(editor, dataContext, caretOffset)) return Result.Continue;
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     PsiElement psiAtOffset = file.findElementAt(caretOffset);
     if (psiAtOffset != null && psiAtOffset.getTextOffset() < caretOffset) {
       Document document = editor.getDocument();
@@ -95,5 +104,22 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
     final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile(), editor);
     return fileTypeQuoteHandler instanceof JavaLikeQuoteHandler ?
                                                      (JavaLikeQuoteHandler) fileTypeQuoteHandler:null;
+  }
+  
+  private static boolean isInStringLiteral(@NotNull Editor editor, @NotNull DataContext dataContext, int offset) {
+    Language language = EnterHandler.getLanguage(dataContext);
+    if (offset > 0 && language != null) {
+      QuoteHandler quoteHandler = TypedHandler.getLanguageQuoteHandler(language);
+      if (quoteHandler == null) {
+        FileType fileType = language.getAssociatedFileType();
+        quoteHandler = fileType != null ? TypedHandler.getQuoteHandlerForType(fileType) : null;
+      }
+      if (quoteHandler != null) {
+        EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+        HighlighterIterator iterator = highlighter.createIterator(offset - 1);
+        return StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(iterator.getTokenType()) || quoteHandler.isInsideLiteral(iterator);
+      }
+    }
+    return false;
   }
 }

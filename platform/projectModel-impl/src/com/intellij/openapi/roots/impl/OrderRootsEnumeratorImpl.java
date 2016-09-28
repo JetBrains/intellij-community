@@ -104,40 +104,37 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   private Collection<VirtualFile> computeRoots() {
     final Collection<VirtualFile> result = new LinkedHashSet<VirtualFile>();
-    myOrderEnumerator.forEach(new PairProcessor<OrderEntry, List<OrderEnumerationHandler>>() {
-      @Override
-      public boolean process(OrderEntry orderEntry, List<OrderEnumerationHandler> customHandlers) {
-        OrderRootType type = getRootType(orderEntry);
+    myOrderEnumerator.forEach((orderEntry, customHandlers) -> {
+      OrderRootType type = getRootType(orderEntry);
 
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
-          collectModuleRoots(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, !myOrderEnumerator.isProductionOnly(),
-                             customHandlers);
-        }
-        else if (orderEntry instanceof ModuleOrderEntry) {
-          ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
-          final Module module = moduleOrderEntry.getModule();
-          if (module != null) {
-            ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
-            boolean productionOnTests = orderEntry instanceof ModuleOrderEntryImpl
-                                        && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency();
-            boolean includeTests = !myOrderEnumerator.isProductionOnly()
-                                   && myOrderEnumerator.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
-                                   || productionOnTests;
-            collectModuleRoots(type, rootModel, result, !productionOnTests, includeTests, customHandlers);
-          }
-        }
-        else {
-          if (myCustomRootProvider != null) {
-            Collections.addAll(result, myCustomRootProvider.fun(orderEntry));
-            return true;
-          }
-          if (myOrderEnumerator.addCustomRootsForLibrary(orderEntry, type, result, customHandlers)) {
-            return true;
-          }
-          Collections.addAll(result, orderEntry.getFiles(type));
-        }
-        return true;
+      if (orderEntry instanceof ModuleSourceOrderEntry) {
+        collectModuleRoots(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, !myOrderEnumerator.isProductionOnly(),
+                           customHandlers);
       }
+      else if (orderEntry instanceof ModuleOrderEntry) {
+        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+        final Module module = moduleOrderEntry.getModule();
+        if (module != null) {
+          ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
+          boolean productionOnTests = orderEntry instanceof ModuleOrderEntryImpl
+                                      && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency();
+          boolean includeTests = !myOrderEnumerator.isProductionOnly()
+                                 && myOrderEnumerator.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
+                                 || productionOnTests;
+          collectModuleRoots(type, rootModel, result, !productionOnTests, includeTests, customHandlers);
+        }
+      }
+      else {
+        if (myCustomRootProvider != null) {
+          Collections.addAll(result, myCustomRootProvider.fun(orderEntry));
+          return true;
+        }
+        if (myOrderEnumerator.addCustomRootsForLibrary(orderEntry, type, result, customHandlers)) {
+          return true;
+        }
+        Collections.addAll(result, orderEntry.getFiles(type));
+      }
+      return true;
     });
     return result;
   }
@@ -145,34 +142,31 @@ public class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   @NotNull
   private Collection<String> computeRootsUrls() {
     final Collection<String> result = new LinkedHashSet<String>();
-    myOrderEnumerator.forEach(new PairProcessor<OrderEntry, List<OrderEnumerationHandler>>() {
-      @Override
-      public boolean process(OrderEntry orderEntry, List<OrderEnumerationHandler> customHandlers) {
-        OrderRootType type = getRootType(orderEntry);
+    myOrderEnumerator.forEach((orderEntry, customHandlers) -> {
+      OrderRootType type = getRootType(orderEntry);
 
-        if (orderEntry instanceof ModuleSourceOrderEntry) {
-          collectModuleRootsUrls(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, !myOrderEnumerator.isProductionOnly());
-        }
-        else if (orderEntry instanceof ModuleOrderEntry) {
-          ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
-          final Module module = moduleOrderEntry.getModule();
-          if (module != null) {
-            ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
-            boolean productionOnTests = orderEntry instanceof ModuleOrderEntryImpl
-                                        && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency();
-            boolean includeTests = !myOrderEnumerator.isProductionOnly() && myOrderEnumerator.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
-                                   || productionOnTests;
-            collectModuleRootsUrls(type, rootModel, result, !productionOnTests, includeTests);
-          }
-        }
-        else {
-          if (myOrderEnumerator.addCustomRootUrlsForLibrary(orderEntry, type, result, customHandlers)) {
-            return true;
-          }
-          Collections.addAll(result, orderEntry.getUrls(type));
-        }
-        return true;
+      if (orderEntry instanceof ModuleSourceOrderEntry) {
+        collectModuleRootsUrls(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, !myOrderEnumerator.isProductionOnly());
       }
+      else if (orderEntry instanceof ModuleOrderEntry) {
+        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
+        final Module module = moduleOrderEntry.getModule();
+        if (module != null) {
+          ModuleRootModel rootModel = myOrderEnumerator.getRootModel(module);
+          boolean productionOnTests = orderEntry instanceof ModuleOrderEntryImpl
+                                      && ((ModuleOrderEntryImpl)orderEntry).isProductionOnTestDependency();
+          boolean includeTests = !myOrderEnumerator.isProductionOnly() && myOrderEnumerator.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
+                                 || productionOnTests;
+          collectModuleRootsUrls(type, rootModel, result, !productionOnTests, includeTests);
+        }
+      }
+      else {
+        if (myOrderEnumerator.addCustomRootUrlsForLibrary(orderEntry, type, result, customHandlers)) {
+          return true;
+        }
+        Collections.addAll(result, orderEntry.getUrls(type));
+      }
+      return true;
     });
     return result;
   }

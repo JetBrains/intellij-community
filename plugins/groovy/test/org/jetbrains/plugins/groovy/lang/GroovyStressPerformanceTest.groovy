@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,23 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection
 import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection
+import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
+import org.jetbrains.plugins.groovy.util.TestUtils
+
 /**
  * @author peter
  */
 class GroovyStressPerformanceTest extends LightGroovyTestCase {
 
-  final String basePath = ''
+  final String basePath = TestUtils.testDataPath + 'highlighting/'
 
   @Override
   @NotNull
@@ -487,4 +492,13 @@ ${(1..classMethodCount).collect({"void foo${it}() {}"}).join("\n")}
     }).cpuBound().attempts(2).assertTiming()
   }
 
+  public void testVeryLongDfaWithComplexGenerics() {
+    IdeaTestUtil.assertTiming("", 10000, 1, new Runnable() {
+      @Override
+      public void run() {
+        myFixture.enableInspections(new GroovyAssignabilityCheckInspection(), new UnusedDefInspection(), new GrUnusedIncDecInspection());
+        myFixture.testHighlighting(true, false, false, getTestName(false) + '.groovy');
+      }
+    });
+  }
 }

@@ -16,7 +16,6 @@
 
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -80,18 +79,13 @@ public class RncRenameTest extends HighlightingTestBase {
     final PsiFile file = PsiManager.getInstance(project).findFile(copy);
     assertNotNull(file);
 
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() throws Throwable {
-        myTestFixture.configureByFile("rename-in-include.rnc");
-        final RenameRefactoring refactoring = factory.createRename(file, "rename-after.rnc");
-        refactoring.setPreviewUsages(false);
-        refactoring.setSearchInComments(false);
-        refactoring.setSearchInNonJavaFiles(true);
-        refactoring.run();
-        myTestFixture.checkResultByFile("rename-in-include_after.rnc");
-      }
-    }.execute().throwException();
+    myTestFixture.configureByFile("rename-in-include.rnc");
+    final RenameRefactoring refactoring = factory.createRename(file, "rename-after.rnc");
+    refactoring.setPreviewUsages(false);
+    refactoring.setSearchInComments(false);
+    refactoring.setSearchInNonJavaFiles(true);
+    refactoring.run();
+    myTestFixture.checkResultByFile("rename-in-include_after.rnc");
 
     assertEquals("rename-after.rnc", file.getName());
   }

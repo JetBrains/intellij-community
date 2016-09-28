@@ -18,7 +18,7 @@ package org.jetbrains.plugins.github;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -28,18 +28,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThrowableConvertor;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubConnection;
-import org.jetbrains.plugins.github.api.GithubGist;
 import org.jetbrains.plugins.github.ui.GithubCreateGistDialog;
 import org.jetbrains.plugins.github.util.GithubAuthData;
 import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
@@ -149,15 +145,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     else {
       try {
-        return GithubUtil
-          .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubAuthDataHolder, IOException>() {
-                                 @NotNull
-                                 @Override
-                                 public GithubAuthDataHolder convert(ProgressIndicator indicator) throws IOException {
-                                   return GithubUtil.getValidAuthDataHolderFromConfig(project, indicator);
-                                 }
-                               }
-          );
+        return GithubUtil.computeValueInModalIO(project, "Access to GitHub", indicator ->
+          GithubUtil.getValidAuthDataHolderFromConfig(project, indicator)
+        );
       }
       catch (IOException e) {
         GithubNotifications.showError(project, "Can't create gist", e);
@@ -218,13 +208,8 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     try {
       final List<FileContent> finalContents = contents;
-      return GithubUtil.runTask(project, auth, indicator, new ThrowableConvertor<GithubConnection, GithubGist, IOException>() {
-        @NotNull
-        @Override
-        public GithubGist convert(@NotNull GithubConnection connection) throws IOException {
-          return GithubApiUtil.createGist(connection, finalContents, description, isPrivate);
-        }
-      }).getHtmlUrl();
+      return GithubUtil.runTask(project, auth, indicator, connection ->
+        GithubApiUtil.createGist(connection, finalContents, description, isPrivate)).getHtmlUrl();
     }
     catch (IOException e) {
       GithubNotifications.showError(project, FAILED_TO_CREATE_GIST, e);
@@ -234,14 +219,9 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Nullable
   private static String getContentFromEditor(@NotNull final Editor editor) {
-    String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      @Override
-      public String compute() {
-        return editor.getSelectionModel().getSelectedText();
-      }
+    String text = ReadAction.compute(() -> {
+      return editor.getSelectionModel().getSelectedText();
     });
-
     if (text == null) {
       text = editor.getDocument().getText();
     }
@@ -257,23 +237,19 @@ public class GithubCreateGistAction extends DumbAwareAction {
     if (file.isDirectory()) {
       return getContentFromDirectory(file, project, prefix);
     }
-    String content = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      @Override
-      public String compute() {
-        try {
-          Document document = FileDocumentManager.getInstance().getDocument(file);
-          if (document != null) {
-            return document.getText();
-          }
-          else {
-            return new String(file.contentsToByteArray(), file.getCharset());
-          }
+    String content = ReadAction.compute(() -> {
+      try {
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document != null) {
+          return document.getText();
         }
-        catch (IOException e) {
-          LOG.info("Couldn't read contents of the file " + file, e);
-          return null;
+        else {
+          return new String(file.contentsToByteArray(), file.getCharset());
         }
+      }
+      catch (IOException e) {
+        LOG.info("Couldn't read contents of the file " + file, e);
+        return null;
       }
     });
     if (content == null) {

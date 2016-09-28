@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class EclipseProjectFinder implements EclipseXml {
     final File file = new File(rootPath, DOT_PROJECT_EXT);
     if (file.isFile()) {
       try {
-        name = JDOMUtil.loadDocument(file).getRootElement().getChildText(NAME_TAG);
+        name = JDOMUtil.load(file).getChildText(NAME_TAG);
         if (StringUtil.isEmptyOrSpaces(name)) {
           return null;
         }
@@ -89,19 +89,19 @@ public class EclipseProjectFinder implements EclipseXml {
     final File file = new File(projectPath, DOT_PROJECT_EXT);
     if (file.isFile()) {
       try {
-        for (Object o : JDOMUtil.loadDocument(file).getRootElement().getChildren(LINKED_RESOURCES)) {
-          for (Object l : ((Element)o).getChildren(LINK)) {
-            if (Comparing.strEqual(((Element)l).getChildText(NAME_TAG), resourceName)) {
+        for (Element o : JDOMUtil.load(file).getChildren(LINKED_RESOURCES)) {
+          for (Element l : o.getChildren(LINK)) {
+            if (Comparing.strEqual(l.getChildText(NAME_TAG), resourceName)) {
               LinkedResource linkedResource = new LinkedResource();
               final String relativeToLinkedResourcePath =
                 independentPath.length() > resourceName.length() ? independentPath.substring(resourceName.length()) : "";
 
-              final Element locationURI = ((Element)l).getChild("locationURI");
+              final Element locationURI = l.getChild("locationURI");
               if (locationURI != null) {
                 linkedResource.setURI(FileUtil.toSystemIndependentName(locationURI.getText()) + relativeToLinkedResourcePath);
               }
 
-              final Element location = ((Element)l).getChild("location");
+              final Element location = l.getChild("location");
               if (location != null) {
                 linkedResource.setLocation(FileUtil.toSystemIndependentName(location.getText()) + relativeToLinkedResourcePath);
               }

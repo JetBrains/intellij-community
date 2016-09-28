@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ import java.util.List;
 public class PsiUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilCore");
   public static final PsiElement NULL_PSI_ELEMENT = new NullPsiElement();
-  private static class NullPsiElement implements PsiElement {
+  protected static class NullPsiElement implements PsiElement {
     @Override
     @NotNull
     public Project getProject() {

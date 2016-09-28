@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
@@ -41,7 +42,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectAttachProcessor;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,18 +55,15 @@ public class OpenFileAction extends AnAction implements DumbAware {
     final FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
     descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, showFiles);
 
-    FileChooser.chooseFiles(descriptor, project, VfsUtil.getUserHomeDir(), new Consumer<List<VirtualFile>>() {
-      @Override
-      public void consume(final List<VirtualFile> files) {
-        for (VirtualFile file : files) {
-          if (!descriptor.isFileSelectable(file)) {
-            String message = IdeBundle.message("error.dir.contains.no.project", file.getPresentableUrl());
-            Messages.showInfoMessage(project, message, IdeBundle.message("title.cannot.open.project"));
-            return;
-          }
+    FileChooser.chooseFiles(descriptor, project, VfsUtil.getUserHomeDir(), files -> {
+      for (VirtualFile file : files) {
+        if (!descriptor.isFileSelectable(file)) {
+          String message = IdeBundle.message("error.dir.contains.no.project", file.getPresentableUrl());
+          Messages.showInfoMessage(project, message, IdeBundle.message("title.cannot.open.project"));
+          return;
         }
-        doOpenFile(project, files);
       }
+      doOpenFile(project, files);
     });
   }
 
@@ -130,6 +127,8 @@ public class OpenFileAction extends AnAction implements DumbAware {
       return;
     }
 
+    NonProjectFileWritingAccessProvider.allowWriting(file);
+    
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file);
     FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }

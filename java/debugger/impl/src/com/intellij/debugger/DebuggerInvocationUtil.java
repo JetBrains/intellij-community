@@ -32,12 +32,9 @@ public class DebuggerInvocationUtil {
       return;
     }
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (!project.isDisposed()) {
-          runnable.run();
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (!project.isDisposed()) {
+        runnable.run();
       }
     });
   }
@@ -56,12 +53,9 @@ public class DebuggerInvocationUtil {
 
   public static void invokeAndWait(final Project project, @NotNull final Runnable runnable, ModalityState state) {
     if (project != null) {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          if (!project.isDisposed()) {
-            runnable.run();
-          }
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        if (!project.isDisposed()) {
+          runnable.run();
         }
       }, state);
     }
@@ -69,21 +63,18 @@ public class DebuggerInvocationUtil {
 
   public static <T> T commitAndRunReadAction(Project project, final EvaluatingComputable<T> computable) throws EvaluateException {
     final Throwable[] ex = new Throwable[]{null};
-    T result = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<T>() {
-      @Override
-      public T compute() {
-        try {
-          return computable.compute();
-        }
-        catch (RuntimeException e) {
-          ex[0] = e;
-        }
-        catch (Exception th) {
-          ex[0] = th;
-        }
-
-        return null;
+    T result = PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
+      try {
+        return computable.compute();
       }
+      catch (RuntimeException e) {
+        ex[0] = e;
+      }
+      catch (Exception th) {
+        ex[0] = th;
+      }
+
+      return null;
     });
 
     if (ex[0] != null) {

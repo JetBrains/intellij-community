@@ -31,19 +31,16 @@ import java.util.Set;
 public abstract class PyPackageManager {
   public static final Key<Boolean> RUNNING_PACKAGING_TASKS = Key.create("PyPackageRequirementsInspection.RunningPackagingTasks");
 
-  public static final String SETUPTOOLS = "setuptools";
-  public static final String PIP = "pip";
-  public static final String DISTRIBUTE = "distribute";
-
   public static final String USE_USER_SITE = "--user";
 
-  public static PyPackageManager getInstance(Sdk sdk) {
+  @NotNull
+  public static PyPackageManager getInstance(@NotNull Sdk sdk) {
     return PyPackageManagers.getInstance().forSdk(sdk);
   }
 
   public abstract void installManagement() throws ExecutionException;
 
-  public abstract boolean hasManagement(boolean cachedOnly) throws ExecutionException;
+  public abstract boolean hasManagement() throws ExecutionException;
 
   public abstract void install(@NotNull String requirementString) throws ExecutionException;
 
@@ -57,26 +54,14 @@ public abstract class PyPackageManager {
   public abstract String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException;
 
   @Nullable
-  public abstract List<PyPackage> getPackages(boolean cachedOnly) throws ExecutionException;
+  public abstract List<PyPackage> getPackages();
 
-  /**
-   * @param cachedOnly only search through cached packages. Cache may be empty just after project opened.
-   *                   <strong>warning</strong>: non-cache access may be slow on remote interpreters.
-   *                   Use {@link #findPackage(String)}: this method uses cache on remote interpreters and skips
-   *                   in local
-   */
-  @Nullable
-  public abstract PyPackage findPackage(@NotNull String name, boolean cachedOnly) throws ExecutionException;
-
-  /**
-   * Like {@link #findPackage(String, boolean)} but controls cache access based on intepreter remote/local type
-   */
-  @Nullable
-  public abstract PyPackage findPackage(@NotNull String name) throws ExecutionException;
+  @NotNull
+  public abstract List<PyPackage> refreshAndGetPackages(boolean alwaysRefresh) throws ExecutionException;
 
   @Nullable
   public abstract List<PyRequirement> getRequirements(@NotNull Module module);
 
-  @Nullable
+  @NotNull
   public abstract Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException;
 }

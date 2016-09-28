@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class PullUpMultifileTest extends MultiFileTestCase {
 
 
   public void testInaccessible() throws Exception {
-    doTest("Method <b><code>A.foo()</code></b> is package local and will not be accessible from method <b><code>method2Move()</code></b>.",
+    doTest("Method <b><code>A.foo()</code></b> is package-private and will not be accessible from method <b><code>method2Move()</code></b>.",
            "Method <b><code>method2Move()</code></b> uses method <b><code>A.foo()</code></b>, which is not moved to the superclass");
   }
 

@@ -32,6 +32,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,12 +76,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
 
   private static LookupElement createParametersLookupElement(final PsiMethod takeParametersFrom, PsiElement call, PsiMethod invoked) {
     final PsiParameter[] parameters = takeParametersFrom.getParameterList().getParameters();
-    final String lookupString = StringUtil.join(parameters, new Function<PsiParameter, String>() {
-      @Override
-      public String fun(PsiParameter psiParameter) {
-        return psiParameter.getName();
-      }
-    }, ", ");
+    final String lookupString = StringUtil.join(parameters, psiParameter -> psiParameter.getName(), ", ");
 
     final int w = PlatformIcons.PARAMETER_ICON.getIconWidth();
     LayeredIcon icon = new LayeredIcon(2);
@@ -112,14 +108,19 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
     } else {
       results = new JavaResolveResult[]{expression.resolveMethodGenerics()};
     }
-    
+
+    PsiMethod toExclude = ExpressionUtils.isConstructorInvocation(expression) ? PsiTreeUtil.getParentOfType(expression, PsiMethod.class)
+                                                                              : null;
+
     for (final JavaResolveResult candidate : results) {
       final PsiElement element = candidate.getElement();
       if (element instanceof PsiMethod) {
         final PsiClass psiClass = ((PsiMethod)element).getContainingClass();
         if (psiClass != null) {
           for (Pair<PsiMethod, PsiSubstitutor> overload : psiClass.findMethodsAndTheirSubstitutorsByName(((PsiMethod)element).getName(), true)) {
-            candidates.add(Pair.create(overload.first, candidate.getSubstitutor().putAll(overload.second)));
+            if (overload.first != toExclude) {
+              candidates.add(Pair.create(overload.first, candidate.getSubstitutor().putAll(overload.second)));
+            }
           }
           break;
         }

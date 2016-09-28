@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,17 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
+import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 
 public class LowLevelSearchUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
@@ -224,6 +229,9 @@ public class LowLevelSearchUtil {
     LOG.error(msg);
   }
 
+  // map (text to be scanned -> list of cached pairs of (searcher used to scan text, occurrences found))
+  // occurrences found is an int array of (startOffset used, endOffset used, occurrence 1 offset, occurrence 2 offset,...)
+  private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
   public static boolean processTextOccurrences(@NotNull CharSequence text,
                                                int startOffset,
                                                int endOffset,
@@ -231,15 +239,37 @@ public class LowLevelSearchUtil {
                                                @Nullable ProgressIndicator progress,
                                                @NotNull TIntProcedure processor) {
     if (endOffset > text.length()) {
-      throw new AssertionError("end>length");
+      throw new IllegalArgumentException("end: " + endOffset + " > length: "+text.length());
     }
-    for (int index = startOffset; index < endOffset; index++) {
-      if (progress != null) progress.checkCanceled();
-      //noinspection AssignmentToForLoopParameter
-      index = searcher.scan(text, index, endOffset);
-      if (index < 0) break;
-      if (checkJavaIdentifier(text, startOffset, endOffset, searcher, index)) {
-        if (!processor.execute(index)) return false;
+    Map<StringSearcher, int[]> cachedMap = cache.get(text);
+    int[] cachedOccurrences = cachedMap == null ? null : cachedMap.get(searcher);
+    boolean hasCachedOccurrences = cachedOccurrences != null && cachedOccurrences[0] <= startOffset && cachedOccurrences[1] >= endOffset;
+    if (!hasCachedOccurrences) {
+      TIntArrayList occurrences = new TIntArrayList();
+      int newStart = Math.min(startOffset, cachedOccurrences == null ? startOffset : cachedOccurrences[0]);
+      int newEnd = Math.max(endOffset, cachedOccurrences == null ? endOffset : cachedOccurrences[1]);
+      occurrences.add(newStart);
+      occurrences.add(newEnd);
+      for (int index = newStart; index < newEnd; index++) {
+        if (progress != null) progress.checkCanceled();
+        //noinspection AssignmentToForLoopParameter
+        index = searcher.scan(text, index, newEnd);
+        if (index < 0) break;
+        if (checkJavaIdentifier(text, 0, text.length(), searcher, index)) {
+          occurrences.add(index);
+        }
+      }
+      cachedOccurrences = occurrences.toNativeArray();
+      if (cachedMap == null) {
+        cachedMap = ConcurrencyUtil.cacheOrGet(cache, text, ContainerUtil.createConcurrentSoftMap());
+      }
+      cachedMap.put(searcher, cachedOccurrences);
+    }
+    for (int i = 2; i < cachedOccurrences.length; i++) {
+      int occurrence = cachedOccurrences[i];
+      if (occurrence > endOffset - searcher.getPatternLength()) break;
+      if (occurrence >= startOffset && !processor.execute(occurrence)) {
+        return false;
       }
     }
     return true;

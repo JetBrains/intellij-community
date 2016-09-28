@@ -19,7 +19,6 @@ import com.intellij.ide.browsers.OpenInBrowserRequest;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,7 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.BuiltinWebServerAccess;
+import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,14 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implements DumbAware {
-  private static final Logger LOG = Logger.getInstance(BuiltInWebBrowserUrlProvider.class);
-
   @NotNull
   public static List<Url> getUrls(@NotNull VirtualFile file, @NotNull Project project, @Nullable String currentAuthority) {
     return getUrls(file, project, currentAuthority, true);
@@ -54,30 +49,33 @@ public class BuiltInWebBrowserUrlProvider extends WebBrowserUrlProvider implemen
       return Collections.emptyList();
     }
 
-    String path = WebServerPathToFileManager.getInstance(project).getPath(file);
-    if (path == null) {
+    PathInfo info = WebServerPathToFileManager.getInstance(project).getPathInfo(file);
+    if (info == null) {
       return Collections.emptyList();
     }
 
     int effectiveBuiltInServerPort = BuiltInServerOptions.getInstance().getEffectiveBuiltInServerPort();
-    String userToken = null;
-    try {
-      userToken = BuiltinWebServerAccess.getUserAuthenticationToken();
-    } catch (IOException e){
-      LOG.warn(String.format("Unable to get User authentication token for launching path '%s'", path), e);
-      return Collections.emptyList();
+    String path = info.getPath();
+
+    String authority = currentAuthority == null ? "localhost:" + effectiveBuiltInServerPort : currentAuthority;
+    String query = appendAccessToken ? "?" + BuiltInWebServerKt.TOKEN_PARAM_NAME + "=" + BuiltInWebServerKt.acquireToken() : "";
+    List<Url> urls = new SmartList<>(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path, query));
+
+    String path2 = info.getRootLessPathIfPossible();
+    if (path2 != null) {
+      urls.add(Urls.newHttpUrl(authority, '/' + project.getName() + '/' + path2, query));
     }
 
-    Url url = Urls.newHttpUrl(currentAuthority == null
-        ? "localhost:" + effectiveBuiltInServerPort : currentAuthority,
-        '/' + userToken +'/' + project.getName() + '/' + path);
     int defaultPort = BuiltInServerManager.getInstance().getPort();
-    if (currentAuthority != null || defaultPort == effectiveBuiltInServerPort) {
-      return Collections.singletonList(url);
+    if (currentAuthority == null && defaultPort != effectiveBuiltInServerPort) {
+      String defaultAuthority = "localhost:" + defaultPort;
+      urls.add(Urls.newHttpUrl(defaultAuthority, '/' + project.getName() + '/' + path, query));
+      if (path2 != null) {
+        urls.add(Urls.newHttpUrl(defaultAuthority, '/' + project.getName() + '/' + path2, query));
+      }
     }
-    return Arrays.asList(url, Urls.newHttpUrl(currentAuthority == null
-        ? "localhost:" + defaultPort : currentAuthority,
-        '/' + userToken  +'/' + project.getName() + '/' + path));
+    
+    return urls;
   }
 
   public static boolean compareAuthority(@Nullable String currentAuthority) {

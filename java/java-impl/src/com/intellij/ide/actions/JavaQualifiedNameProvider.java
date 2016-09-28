@@ -259,18 +259,15 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
   }
 
   private static String getParameterString(PsiMethod method, final boolean erasure) {
-    return "(" + StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-      @Override
-      public String fun(PsiParameter parameter) {
-        PsiType type = parameter.getType();
-        if (erasure) {
-          final PsiType erased = TypeConversionUtil.erasure(type);
-          if (erased != null) {
-            type = erased;
-          }
+    return "(" + StringUtil.join(method.getParameterList().getParameters(), parameter -> {
+      PsiType type = parameter.getType();
+      if (erasure) {
+        final PsiType erased = TypeConversionUtil.erasure(type);
+        if (erased != null) {
+          type = erased;
         }
-        return type.getCanonicalText();
       }
+      return type.getCanonicalText();
     }, ", ") + ")";
   }
 

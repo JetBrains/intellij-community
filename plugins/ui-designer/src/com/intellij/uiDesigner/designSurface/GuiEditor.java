@@ -21,6 +21,7 @@ import com.intellij.designer.LightFillLayout;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.highlighter.XmlFileHighlighter;
 import com.intellij.ide.palette.impl.PaletteToolWindowManager;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -340,13 +341,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     gbc.weighty = 1.0;
 
     myScrollPane = ScrollPaneFactory.createScrollPane(myLayeredPane);
-    myScrollPane.setBackground(new JBColor(new NotNullProducer<Color>() {
-      @NotNull
-      @Override
-      public Color produce() {
-        return EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-      }
-    }));
+    myScrollPane.setBackground(new JBColor(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
     panel.add(myScrollPane, gbc);
     myHorzCaptionPanel.attachToScrollPane(myScrollPane);
     myVertCaptionPanel.attachToScrollPane(myScrollPane);
@@ -376,12 +371,11 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     ActionManager.getInstance().getAction("GuiDesigner.DecreaseIndent").registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_MASK)), myGlassLayer);
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        DesignerToolWindowManager.getInstance(myProject).bind(GuiEditor.this);
-        PaletteToolWindowManager.getInstance(myProject).bind(GuiEditor.this);
-      }
+    UsageTrigger.trigger("swing-designer.open");
+
+    UIUtil.invokeLaterIfNeeded(() -> {
+      DesignerToolWindowManager.getInstance(myProject).bind(GuiEditor.this);
+      PaletteToolWindowManager.getInstance(myProject).bind(GuiEditor.this);
     });
   }
 
@@ -485,12 +479,18 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
   }
 
   public void refreshAndSave(final boolean forceSync) {
+    DesignerToolWindow toolWindow = DesignerToolWindowManager.getInstance(this);
+    if (toolWindow == null) {
+      return;
+    }
+
     // Update property inspector
-    final PropertyInspector propertyInspector = DesignerToolWindowManager.getInstance(this).getPropertyInspector();
+    final PropertyInspector propertyInspector = toolWindow.getPropertyInspector();
     if (propertyInspector != null) {
       propertyInspector.synchWithTree(forceSync);
     }
 
+    UsageTrigger.trigger("swing-designer.edit");
     refresh();
     saveToFile();
     // TODO[yole]: install appropriate listeners so that the captions repaint themselves at correct time
@@ -535,7 +535,9 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
     // Standard Swing cut/copy/paste actions should work if user is editing something inside property inspector
     Project project = getProject();
     if (project.isDisposed()) return null;
-    final PropertyInspector inspector = DesignerToolWindowManager.getInstance(this).getPropertyInspector();
+    DesignerToolWindow toolWindow = DesignerToolWindowManager.getInstance(this);
+    if (toolWindow == null) return null;
+    final PropertyInspector inspector = toolWindow.getPropertyInspector();
     if (inspector != null && inspector.isEditing()) {
       return null;
     }
@@ -648,38 +650,32 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
   private void saveToFile() {
     LOG.debug("GuiEditor.saveToFile(): group ID=" + myNextSaveGroupId);
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            myInsideChange = true;
-            try {
-              final XmlWriter writer = new XmlWriter();
-              getRootContainer().write(writer);
-              final String newText = writer.getText();
-              final String oldText = myDocument.getText();
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      myInsideChange = true;
+      try {
+        final XmlWriter writer = new XmlWriter();
+        getRootContainer().write(writer);
+        final String newText = writer.getText();
+        final String oldText = myDocument.getText();
 
-              try {
-                final ReplaceInfo replaceInfo = findFragmentToChange(oldText, newText);
-                if (replaceInfo.getStartOffset() == -1) {
-                  // do nothing - texts are equal
-                }
-                else {
-                  myDocument.replaceString(replaceInfo.getStartOffset(), replaceInfo.getEndOffset(), replaceInfo.getReplacement());
-                }
-              }
-              catch (Exception e) {
-                LOG.error(e);
-                myDocument.replaceString(0, oldText.length(), newText);
-              }
-            }
-            finally {
-              myInsideChange = false;
-            }
+        try {
+          final ReplaceInfo replaceInfo = findFragmentToChange(oldText, newText);
+          if (replaceInfo.getStartOffset() == -1) {
+            // do nothing - texts are equal
           }
-        });
+          else {
+            myDocument.replaceString(replaceInfo.getStartOffset(), replaceInfo.getEndOffset(), replaceInfo.getReplacement());
+          }
+        }
+        catch (Exception e) {
+          LOG.error(e);
+          myDocument.replaceString(0, oldText.length(), newText);
+        }
       }
-    }, "UI Designer Save", myNextSaveGroupId);
+      finally {
+        myInsideChange = false;
+      }
+    }), "UI Designer Save", myNextSaveGroupId);
     myNextSaveGroupId = new Object();
 
     fireHierarchyChanged();
@@ -1129,11 +1125,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
       if (!GuiEditor.this.ensureEditable()) {
         return;
       }
-      CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-        public void run() {
-          FormEditingUtil.deleteSelection(GuiEditor.this);
-        }
-      }, UIDesignerBundle.message("command.delete.selection"), null);
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> FormEditingUtil.deleteSelection(GuiEditor.this), UIDesignerBundle.message("command.delete.selection"), null);
     }
 
     public boolean canDeleteElement(@NotNull final DataContext dataContext) {

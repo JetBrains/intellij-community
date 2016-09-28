@@ -26,6 +26,7 @@ import com.intellij.execution.remote.RemoteConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
@@ -140,39 +141,37 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
         }
       };
 
-      SwingUtilities.invokeAndWait(new Runnable() {
-        public void run() {
-          CompileScope scope;
-          final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-          if (forceMakeProject) {
-            // user explicitly requested whole-project make
+      TransactionGuard.submitTransaction(myProject, () -> {
+        CompileScope scope;
+        final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+        if (forceMakeProject) {
+          // user explicitly requested whole-project make
+          scope = compilerManager.createProjectCompileScope(myProject);
+        }
+        else {
+          final Module[] modules = runConfiguration.getModules();
+          if (modules.length > 0) {
+            for (Module module : modules) {
+              if (module == null) {
+                LOG.error("RunConfiguration should not return null modules. Configuration=" + runConfiguration.getName() + "; class=" +
+                          runConfiguration.getClass().getName());
+              }
+            }
+            scope = compilerManager.createModulesCompileScope(modules, true, true);
+          }
+          else {
             scope = compilerManager.createProjectCompileScope(myProject);
           }
-          else {
-            final Module[] modules = runConfiguration.getModules();
-            if (modules.length > 0) {
-              for (Module module : modules) {
-                if (module == null) {
-                  LOG.error("RunConfiguration should not return null modules. Configuration=" + runConfiguration.getName() + "; class=" +
-                            runConfiguration.getClass().getName());
-                }
-              }
-              scope = compilerManager.createModulesCompileScope(modules, true, true);
-            }
-            else {
-              scope = compilerManager.createProjectCompileScope(myProject);
-            }
-          }
+        }
 
-          if (!myProject.isDisposed()) {
-            scope.putUserData(RUN_CONFIGURATION, configuration);
-            scope.putUserData(RUN_CONFIGURATION_TYPE_ID, configuration.getType().getId());
-            ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
-            compilerManager.make(scope, callback);
-          }
-          else {
-            done.up();
-          }
+        if (!myProject.isDisposed()) {
+          scope.putUserData(RUN_CONFIGURATION, configuration);
+          scope.putUserData(RUN_CONFIGURATION_TYPE_ID, configuration.getType().getId());
+          ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.set(scope, ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env));
+          compilerManager.make(scope, callback);
+        }
+        else {
+          done.up();
         }
       });
       done.waitFor();

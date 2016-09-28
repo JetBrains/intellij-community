@@ -62,12 +62,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
     }
   };
 
-  private static final Factory<Couple<TemplateResource>> FACTORY = new Factory<Couple<TemplateResource>>() {
-    @Override
-    public Couple<TemplateResource> create() {
-      return Couple.of(new TemplateResource(), new TemplateResource());
-    }
-  };
+  private static final Factory<Couple<TemplateResource>> FACTORY = () -> Couple.of(new TemplateResource(), new TemplateResource());
 
   private static final Cloner<Couple<TemplateResource>> CLONER = new Cloner<Couple<TemplateResource>>() {
     @Override

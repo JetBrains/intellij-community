@@ -35,18 +35,17 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
@@ -57,7 +56,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -352,31 +354,23 @@ class PassExecutorService implements Disposable {
   }
 
   private static TextEditorHighlightingPass findPassById(final int id, @NotNull List<TextEditorHighlightingPass> textEditorHighlightingPasses) {
-    return ContainerUtil.find(textEditorHighlightingPasses, new Condition<TextEditorHighlightingPass>() {
-      @Override
-      public boolean value(TextEditorHighlightingPass pass) {
-        return pass.getId() == id;
-      }
-    });
+    return ContainerUtil.find(textEditorHighlightingPasses, pass -> pass.getId() == id);
   }
 
   private void submit(@NotNull ScheduledPass pass) {
     if (!pass.myUpdateProgress.isCanceled()) {
-      Job<Void> job = JobLauncher.getInstance().submitToJobThread(pass, new Consumer<Future>() {
-        @Override
-        public void consume(Future future) {
-          try {
-            if (!future.isCancelled()) { // for canceled task .get() generates CancellationException which is expensive
-              future.get();
-            }
+      Job<Void> job = JobLauncher.getInstance().submitToJobThread(pass, future -> {
+        try {
+          if (!future.isCancelled()) { // for canceled task .get() generates CancellationException which is expensive
+            future.get();
           }
-          catch (CancellationException ignored) {
-          }
-          catch (InterruptedException ignored) {
-          }
-          catch (ExecutionException e) {
-            LOG.error(e.getCause());
-          }
+        }
+        catch (CancellationException ignored) {
+        }
+        catch (InterruptedException ignored) {
+        }
+        catch (ExecutionException e) {
+          LOG.error(e.getCause());
         }
       });
       mySubmittedPasses.put(pass, job);
@@ -429,44 +423,38 @@ class PassExecutorService implements Disposable {
         }
       }
 
-      ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
-        @Override
-        public void run() {
-          boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(myPass)) {
-                  return;
-                }
-
-                if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
-                  myPass.collectInformation(myUpdateProgress);
-                }
-              }
-              catch (ProcessCanceledException e) {
-                log(myUpdateProgress, myPass, "Canceled ");
-
-                if (!myUpdateProgress.isCanceled()) {
-                  myUpdateProgress.cancel(e); //in case when some smart asses throw PCE just for fun
-                }
-              }
-              catch (RuntimeException e) {
-                myUpdateProgress.cancel(e);
-                LOG.error(e);
-                throw e;
-              }
-              catch (Error e) {
-                myUpdateProgress.cancel(e);
-                LOG.error(e);
-                throw e;
-              }
+      ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+        boolean success = ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+          try {
+            if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(myPass)) {
+              return;
             }
-          });
 
-          if (!success) {
-            myUpdateProgress.cancel();
+            if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
+              myPass.collectInformation(myUpdateProgress);
+            }
           }
+          catch (ProcessCanceledException e) {
+            log(myUpdateProgress, myPass, "Canceled ");
+
+            if (!myUpdateProgress.isCanceled()) {
+              myUpdateProgress.cancel(e); //in case when some smart asses throw PCE just for fun
+            }
+          }
+          catch (RuntimeException e) {
+            myUpdateProgress.cancel(e);
+            LOG.error(e);
+            throw e;
+          }
+          catch (Error e) {
+            myUpdateProgress.cancel(e);
+            LOG.error(e);
+            throw e;
+          }
+        });
+
+        if (!success) {
+          myUpdateProgress.cancel();
         }
       }, myUpdateProgress);
 
@@ -520,9 +508,17 @@ class PassExecutorService implements Disposable {
             pass.applyInformationToEditor();
           }
         }
-        catch (RuntimeException e) {
+        catch (ProcessCanceledException e) {
           log(updateProgress, pass, "Error " + e);
           throw e;
+        }
+        catch (RuntimeException e) {
+          Document document = pass.getDocument();
+          VirtualFile file = document == null ? null : FileDocumentManager.getInstance().getFile(document);
+          FileType fileType = file == null ? null : file.getFileType();
+          String message = "Exception while applying information to " + fileEditor + "("+fileType+")";
+          log(updateProgress, pass, message + e);
+          throw new RuntimeException(message, e);
         }
         if (threadsToStartCountdown.decrementAndGet() == 0) {
           log(updateProgress, pass, "Stopping ");
@@ -552,12 +548,7 @@ class PassExecutorService implements Disposable {
   }
 
   private static void sortById(@NotNull List<TextEditorHighlightingPass> result) {
-    ContainerUtil.quickSort(result, new Comparator<TextEditorHighlightingPass>() {
-      @Override
-      public int compare(@NotNull TextEditorHighlightingPass o1, @NotNull TextEditorHighlightingPass o2) {
-        return o1.getId() - o2.getId();
-      }
-    });
+    ContainerUtil.quickSort(result, (o1, o2) -> o1.getId() - o2.getId());
   }
 
   private static int getThreadNum() {

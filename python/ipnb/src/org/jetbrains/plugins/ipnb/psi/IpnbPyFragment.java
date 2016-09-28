@@ -23,7 +23,7 @@ public class IpnbPyFragment extends PyFileImpl {
   private FileViewProvider myViewProvider;
 
   public IpnbPyFragment(Project project, CharSequence text, boolean isPhysical, IpnbCodeSourcePanel codeSourcePanel) {
-    super(((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().createFileViewProvider(
+    super(PsiManagerEx.getInstanceEx(project).getFileManager().createFileViewProvider(
             new LightVirtualFile("code.py", IpnbPyLanguageDialect.getInstance(), text), isPhysical)
     );
     myPhysical = isPhysical;

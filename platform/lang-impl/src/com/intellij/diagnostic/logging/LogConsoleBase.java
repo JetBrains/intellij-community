@@ -391,12 +391,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private void filterConsoleOutput() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        computeSelectedLineAndFilter();
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> computeSelectedLineAndFilter());
   }
 
   private synchronized void computeSelectedLineAndFilter() {
@@ -424,12 +419,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         }
       }
     }
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        doFilter();
-      }
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> doFilter());
   }
 
   private synchronized void doFilter() {

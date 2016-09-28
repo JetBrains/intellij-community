@@ -242,17 +242,15 @@ public class GridBuildUtil {
   private static GridLayoutManager createOneDimensionGrid(final RadComponent[] selection, final boolean isVertical){
     Arrays.sort(
       selection,
-      new Comparator<RadComponent>() {
-        public int compare(final RadComponent o1, final RadComponent o2){
-          final Rectangle bounds1 = o1.getBounds();
-          final Rectangle bounds2 = o2.getBounds();
+      (o1, o2) -> {
+        final Rectangle bounds1 = o1.getBounds();
+        final Rectangle bounds2 = o2.getBounds();
 
-          if (isVertical) {
-            return (bounds1.y + bounds1.height / 2) - (bounds2.y + bounds2.height / 2);
-          }
-          else {
-            return (bounds1.x + bounds1.width / 2) - (bounds2.x + bounds2.width / 2);
-          }
+        if (isVertical) {
+          return (bounds1.y + bounds1.height / 2) - (bounds2.y + bounds2.height / 2);
+        }
+        else {
+          return (bounds1.x + bounds1.width / 2) - (bounds2.x + bounds2.width / 2);
         }
       }
     );

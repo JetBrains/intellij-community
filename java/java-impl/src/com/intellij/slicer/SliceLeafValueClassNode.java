@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import java.util.ArrayList;
 /**
  * User: cdr
  */
-public class SliceLeafValueClassNode extends SliceLeafValueRootNode {
+class SliceLeafValueClassNode extends SliceLeafValueRootNode {
   private final String myClassName;
 
-  public SliceLeafValueClassNode(@NotNull Project project, SliceNode root, String className) {
+  SliceLeafValueClassNode(@NotNull Project project, @NotNull SliceNode root, @NotNull String className) {
     super(project, root.getValue().getElement(), root, new ArrayList<SliceNode>(), root.getValue().params);
     myClassName = className;
   }

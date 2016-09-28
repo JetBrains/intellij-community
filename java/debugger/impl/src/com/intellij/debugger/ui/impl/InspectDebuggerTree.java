@@ -73,15 +73,13 @@ public class InspectDebuggerTree extends DebuggerTree{
       public void threadAction() {
         final DebuggerTreeNodeImpl node = getNodeFactory().createNode(myInspectDescriptor, context.createEvaluationContext());
 
-        DebuggerInvocationUtil.swingInvokeLater(getProject(), new Runnable() {
-          public void run() {
-            DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
-            root.removeAllChildren();
+        DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+          DebuggerTreeNodeImpl root = (DebuggerTreeNodeImpl) getModel().getRoot();
+          root.removeAllChildren();
 
-            root.add(node);
-            treeChanged();
-            root.getTree().expandRow(0);
-          }
+          root.add(node);
+          treeChanged();
+          root.getTree().expandRow(0);
         });
       }
     });

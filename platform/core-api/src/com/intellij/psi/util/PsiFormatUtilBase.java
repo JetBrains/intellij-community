@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.BitUtil;
 
 public abstract class PsiFormatUtilBase {
 
@@ -48,7 +49,7 @@ public abstract class PsiFormatUtilBase {
   }
 
   protected static boolean testOption(int options, int flag) {
-    return (options & flag) != 0;
+    return BitUtil.isSet(options, flag);
   }
 
   protected static boolean testOneOf(int options, int... flags) {

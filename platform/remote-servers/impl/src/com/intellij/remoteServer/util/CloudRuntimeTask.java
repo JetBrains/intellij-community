@@ -75,13 +75,9 @@ public abstract class CloudRuntimeTask<
         while (!indicator.isCanceled()) {
           if (semaphore.waitFor(500)) {
             if (mySuccess.get()) {
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-
-                @Override
-                public void run() {
-                  if (disposable == null || !Disposer.isDisposed(disposable)) {
-                    postPerform(result.get());
-                  }
+              UIUtil.invokeLaterIfNeeded(() -> {
+                if (disposable == null || !Disposer.isDisposed(disposable)) {
+                  postPerform(result.get());
                 }
               });
             }
@@ -144,20 +140,16 @@ public abstract class CloudRuntimeTask<
   }
 
   protected void run(final SR serverRuntime, final Semaphore semaphore, final AtomicReference<T> result) {
-    serverRuntime.getTaskExecutor().submit(new Runnable() {
-
-      @Override
-      public void run() {
-        try {
-          result.set(CloudRuntimeTask.this.run(serverRuntime));
-          mySuccess.set(true);
-        }
-        catch (ServerRuntimeException e) {
-          runtimeErrorOccurred(e.getMessage());
-        }
-        finally {
-          semaphore.up();
-        }
+    serverRuntime.getTaskExecutor().submit(() -> {
+      try {
+        result.set(CloudRuntimeTask.this.run(serverRuntime));
+        mySuccess.set(true);
+      }
+      catch (ServerRuntimeException e) {
+        runtimeErrorOccurred(e.getMessage());
+      }
+      finally {
+        semaphore.up();
       }
     });
   }

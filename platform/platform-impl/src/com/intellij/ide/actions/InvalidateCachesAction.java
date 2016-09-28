@@ -69,12 +69,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     }
     else {
       warnings += "The following items will also be cleared:\n"
-                  + StringUtil.join(descriptions, new Function<String, String>() {
-        @Override
-        public String fun(String s) {
-          return "  " + s;
-        }
-      }, "\n");
+                  + StringUtil.join(descriptions, s -> "  " + s, "\n");
     }
     
     String message = "The caches will be invalidated and rebuilt on the next startup.\n\n" +

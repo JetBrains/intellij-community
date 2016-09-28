@@ -17,7 +17,6 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
@@ -87,13 +86,7 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
 
         @Override
         public PopupStep onChosen(final CompositePackagingElementType selectedValue, boolean finalChoice) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              surroundWith(selectedValue, parent, selected, treeComponent);
-            }
-          });
-          return FINAL_CHOICE;
+          return doFinalStep(() -> surroundWith(selectedValue, parent, selected, treeComponent));
         }
       }).showInBestPositionFor(e.getDataContext());
     }
@@ -108,17 +101,14 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
     final String baseName = PathUtil.suggestFileName(elementName);
     final CompositePackagingElement<?> newParent = type.createComposite(parent, baseName, myArtifactEditor.getContext());
     if (newParent != null) {
-      treeComponent.editLayout(new Runnable() {
-        @Override
-        public void run() {
-          for (PackagingElement<?> element : selected) {
-            newParent.addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
-          }
-          for (PackagingElement<?> element : selected) {
-            parent.removeChild(element);
-          }
-          parent.addOrFindChild(newParent);
+      treeComponent.editLayout(() -> {
+        for (PackagingElement<?> element : selected) {
+          newParent.addOrFindChild(ArtifactUtil.copyWithChildren(element, project));
         }
+        for (PackagingElement<?> element : selected) {
+          parent.removeChild(element);
+        }
+        parent.addOrFindChild(newParent);
       });
       treeComponent.rebuildTree();
     }

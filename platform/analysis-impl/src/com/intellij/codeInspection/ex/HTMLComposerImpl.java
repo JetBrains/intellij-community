@@ -92,17 +92,13 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     if (refEntity instanceof RefElement) {
       RefElement refElement = (RefElement)refEntity;
 
-      appendHeading(buf, InspectionsBundle.message("inspection.offline.view.tool.display.name.title"));
-      buf.append(BR);
-      appendAfterHeaderIndention(buf);
-
-      appendShortName(buf, refElement);
-      buf.append(BR).append(BR);
-
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.capitalized.location"));
+      buf.append("<div class=\"location\">");
+      appendShortName(buf, refElement);
       buf.append(BR);
-      appendAfterHeaderIndention(buf);
+      buf.append("in ");
       appendLocation(buf, refElement);
+      buf.append("</div>");
       buf.append(BR).append(BR);
     }
   }
@@ -202,12 +198,9 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append(A_CLOSING);
   }
 
-  protected void appendQuickFix(@NonNls final StringBuffer buf, String text, int index) {
+  protected void appendQuickFix(@NonNls final StringBuffer buf, String text) {
     if (myExporter == null) {
-      buf.append("<a HREF=\"file://bred.txt#invoke:").append(index);
-      buf.append("\">");
       buf.append(text);
-      buf.append("</a>");
     }
   }
 
@@ -273,7 +266,6 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   @Override
   public void appendElementOutReferences(StringBuffer buf, RefElement refElement) {
     if (refElement.getOutReferences().size() > 0) {
-      buf.append(BR);
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.uses"));
       startList(buf);
       for (RefElement refCallee : refElement.getOutReferences()) {
@@ -300,8 +292,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     if (where instanceof RefElement && !where.isValid()) return;
     if (quickFixes != null) {
       boolean listStarted = false;
-      for (int i = 0; i < quickFixes.length; i++) {
-        final String text = quickFixes[i];
+      for (final String text : quickFixes) {
         if (text == null) continue;
         if (!listStarted) {
           appendHeading(buf, InspectionsBundle.message("inspection.problem.resolution"));
@@ -309,7 +300,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
           listStarted = true;
         }
         startListItem(buf);
-        appendQuickFix(buf, text, i);
+        appendQuickFix(buf, text);
         doneListItem(buf);
       }
 
@@ -322,6 +313,9 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void startList(@NonNls final StringBuffer buf) {
+    if (myListStackTop == -1) {
+      buf.append("<div class=\"problem-description\">");
+    }
     buf.append("<ul>");
     myListStackTop++;
     myListStack[myListStackTop] = 0;
@@ -332,6 +326,9 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append("</ul>");
     if (myListStack[myListStackTop] != 0) {
       buf.append("<table cellpadding=\"0\" border=\"0\" cellspacing=\"0\"><tr><td>&nbsp;</td></tr></table>");
+    }
+    if (myListStackTop == 0) {
+      buf.append("</div>");
     }
     myListStackTop--;
   }
@@ -348,11 +345,9 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
 
   @Override
   public void appendNoProblems(StringBuffer buf) {
-    buf.append(BR);
-    appendAfterHeaderIndention(buf);
-    buf.append(B_OPENING);
+    buf.append("<p class=\"problem-description-group\">");;
     buf.append(InspectionsBundle.message("inspection.export.results.no.problems.found"));
-    buf.append(B_CLOSING).append(BR);
+    buf.append("</p>");
   }
 
   @Override

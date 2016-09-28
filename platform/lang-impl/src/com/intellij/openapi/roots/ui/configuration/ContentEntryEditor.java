@@ -16,13 +16,16 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -285,12 +288,23 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   }
 
   public boolean isExcludedOrUnderExcludedDirectory(@NotNull final VirtualFile file) {
+    Project project = getModel().getProject();
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return false;
     }
-    for (VirtualFile excludedDir : contentEntry.getExcludeFolderFiles()) {
-      if (VfsUtilCore.isAncestor(excludedDir, file, false)) {
+    return isExcludedOrUnderExcludedDirectory(project, contentEntry, file);
+  }
+
+  public static boolean isExcludedOrUnderExcludedDirectory(@NotNull Project project,
+                                                           @NotNull ContentEntry entry,
+                                                           @NotNull VirtualFile file) {
+    List<VirtualFile> excludedFiles = ContainerUtil.newArrayList(entry.getExcludeFolderFiles());
+    for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
+      ContainerUtil.addAllNotNull(excludedFiles, policy.getExcludeRootsForProject());
+    }
+    for (VirtualFile excludedFile : excludedFiles) {
+      if (VfsUtilCore.isAncestor(excludedFile, file, false)) {
         return true;
       }
     }

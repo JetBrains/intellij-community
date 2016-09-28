@@ -33,28 +33,25 @@ public class AfterSuiteEvent extends AbstractTestEvent {
     final String testId = getTestId(eventXml);
     final TestEventResult result = getTestEventResultType(eventXml);
 
-    addToInvokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final SMTestProxy testProxy = findTestProxy(testId);
-        if (testProxy == null) return;
+    addToInvokeLater(() -> {
+      final SMTestProxy testProxy = findTestProxy(testId);
+      if (testProxy == null) return;
 
-        switch (result) {
-          case SUCCESS:
-            testProxy.setFinished();
-            break;
-          case FAILURE:
-            testProxy.setTestFailed("", null, false);
-            break;
-          case SKIPPED:
-            testProxy.setTestIgnored(null, null);
-            break;
-          case UNKNOWN_RESULT:
-            break;
-        }
-
-        getResultsViewer().onSuiteFinished(testProxy);
+      switch (result) {
+        case SUCCESS:
+          testProxy.setFinished();
+          break;
+        case FAILURE:
+          testProxy.setTestFailed("", null, false);
+          break;
+        case SKIPPED:
+          testProxy.setTestIgnored(null, null);
+          break;
+        case UNKNOWN_RESULT:
+          break;
       }
+
+      getResultsViewer().onSuiteFinished(testProxy);
     });
   }
 }

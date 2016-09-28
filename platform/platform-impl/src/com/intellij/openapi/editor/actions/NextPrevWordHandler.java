@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.Nullable;
 
 class NextPrevWordHandler extends EditorActionHandler {
@@ -37,21 +38,28 @@ class NextPrevWordHandler extends EditorActionHandler {
   @Override
   protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
     assert caret != null;
-    VisualPosition currentPosition = caret.getVisualPosition();
-    if (caret.isAtBidiRunBoundary() && (myNext ^ currentPosition.leansRight)) {
+    if (EditorUtil.isPasswordEditor(editor)) {
       int selectionStartOffset = caret.getLeadSelectionOffset();
-      VisualPosition selectionStartPosition = caret.getLeadSelectionPosition();
-      caret.moveToVisualPosition(currentPosition.leanRight(!currentPosition.leansRight));
-      if (myWithSelection) {
-        caret.setSelection(selectionStartPosition, selectionStartOffset, caret.getVisualPosition(), caret.getOffset());
-      }
+      caret.moveToOffset(myNext ? editor.getDocument().getTextLength() : 0);
+      if (myWithSelection) caret.setSelection(selectionStartOffset, caret.getOffset());
     }
     else {
-      if (myNext ^ caret.isAtRtlLocation()) {
-        EditorActionUtil.moveCaretToNextWord(editor, myWithSelection, myInDifferentHumpsMode ^ editor.getSettings().isCamelWords());
+      VisualPosition currentPosition = caret.getVisualPosition();
+      if (caret.isAtBidiRunBoundary() && (myNext ^ currentPosition.leansRight)) {
+        int selectionStartOffset = caret.getLeadSelectionOffset();
+        VisualPosition selectionStartPosition = caret.getLeadSelectionPosition();
+        caret.moveToVisualPosition(currentPosition.leanRight(!currentPosition.leansRight));
+        if (myWithSelection) {
+          caret.setSelection(selectionStartPosition, selectionStartOffset, caret.getVisualPosition(), caret.getOffset());
+        }
       }
       else {
-        EditorActionUtil.moveCaretToPreviousWord(editor, myWithSelection, myInDifferentHumpsMode ^ editor.getSettings().isCamelWords());
+        if (myNext ^ caret.isAtRtlLocation()) {
+          EditorActionUtil.moveCaretToNextWord(editor, myWithSelection, myInDifferentHumpsMode ^ editor.getSettings().isCamelWords());
+        }
+        else {
+          EditorActionUtil.moveCaretToPreviousWord(editor, myWithSelection, myInDifferentHumpsMode ^ editor.getSettings().isCamelWords());
+        }
       }
     }
   }

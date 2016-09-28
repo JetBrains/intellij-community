@@ -38,8 +38,8 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   private CompositeSettingsEditor<Settings> myOwner;
   private JComponent myEditorComponent;
 
-  protected abstract void resetEditorFrom(Settings s);
-  protected abstract void applyEditorTo(Settings s) throws ConfigurationException;
+  protected abstract void resetEditorFrom(@NotNull Settings s);
+  protected abstract void applyEditorTo(@NotNull Settings s) throws ConfigurationException;
 
   @NotNull
   protected abstract JComponent createEditor();

@@ -20,18 +20,14 @@ import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonBaseProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 public class PyCharmNewProjectStep extends AbstractNewProjectStep {
@@ -40,13 +36,17 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
     super(new Customization());
   }
 
-  private static class Customization extends AbstractNewProjectStep.Customization {
+  public PyCharmNewProjectStep(@NotNull AbstractNewProjectStep.Customization customization) {
+    super(customization);
+  }
+
+  protected static class Customization extends AbstractNewProjectStep.Customization {
     private final List<DirectoryProjectGenerator> pluginSpecificGenerators = Lists.newArrayList();
 
     @NotNull
     @Override
     protected NullableConsumer<ProjectSettingsStepBase> createCallback() {
-      return new GenerateProjectCallback();
+      return new PythonGenerateProjectCallback();
     }
 
     @NotNull
@@ -67,13 +67,10 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
     protected DirectoryProjectGenerator[] getProjectGenerators() {
       DirectoryProjectGenerator[] generators = super.getProjectGenerators();
 
-      Arrays.sort(generators, new Comparator<DirectoryProjectGenerator>() {
-        @Override
-        public int compare(DirectoryProjectGenerator o1, DirectoryProjectGenerator o2) {
-          if (o1 instanceof PyFrameworkProjectGenerator && !(o2 instanceof PyFrameworkProjectGenerator)) return -1;
-          if (!(o1 instanceof PyFrameworkProjectGenerator) && o2 instanceof PyFrameworkProjectGenerator) return 1;
-          return o1.getName().compareTo(o2.getName());
-        }
+      Arrays.sort(generators, (o1, o2) -> {
+        if (o1 instanceof PyFrameworkProjectGenerator && !(o2 instanceof PyFrameworkProjectGenerator)) return -1;
+        if (!(o1 instanceof PyFrameworkProjectGenerator) && o2 instanceof PyFrameworkProjectGenerator) return 1;
+        return o1.getName().compareTo(o2.getName());
       });
       return generators;
     }
@@ -107,31 +104,6 @@ public class PyCharmNewProjectStep extends AbstractNewProjectStep {
         return step.getChildren(null);
       }
       return AnAction.EMPTY_ARRAY;
-    }
-  }
-
-  private static class PythonGenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
-    @Override
-    public void consume(@Nullable ProjectSettingsStepBase base) {
-      if (base == null) return;
-      final DirectoryProjectGenerator generator = base.getProjectGenerator();
-      final NullableConsumer<ProjectSettingsStepBase> callback = new GenerateProjectCallback();
-      if (generator instanceof PythonProjectGenerator && base instanceof ProjectSpecificSettingsStep) {
-        final BooleanFunction<PythonProjectGenerator> beforeProjectGenerated = ((PythonProjectGenerator)generator).
-          beforeProjectGenerated(((ProjectSpecificSettingsStep)base).getSdk());
-        if (beforeProjectGenerated != null) {
-          final boolean result = beforeProjectGenerated.fun((PythonProjectGenerator)generator);
-          if (result) {
-            callback.consume(base);
-          }
-          else {
-            Messages.showWarningDialog("Project can not be generated", "Error in Project Generation");
-          }
-        }
-        else {
-          callback.consume(base);
-        }
-      }
     }
   }
 }

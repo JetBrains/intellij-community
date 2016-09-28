@@ -54,12 +54,7 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
 
   @Override
   public void saveContent(@NotNull final Url url, @NotNull final File file, @NotNull final DownloadingCallback callback) {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        downloadContent(url, file, callback);
-      }
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> downloadContent(url, file, callback));
   }
 
   private static void downloadContent(@NotNull final Url url, final File file, final DownloadingCallback callback) {

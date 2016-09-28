@@ -114,7 +114,8 @@ public class SemVer implements Comparable<SemVer> {
   }
 
   @NotNull
-  public static SemVer parseFromTextNonNullize(@NotNull final String text) {
+  public static SemVer parseFromTextNonNullize(@Nullable final String text) {
+    if (text == null) return UNKNOWN;
     final SemVer ver = parseFromText(text);
     return ver == null ? UNKNOWN : ver;
   }

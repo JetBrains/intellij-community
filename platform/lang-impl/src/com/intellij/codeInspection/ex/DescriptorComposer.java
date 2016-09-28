@@ -51,7 +51,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
     genPageHeader(buf, refEntity);
     if (myTool.getDescriptions(refEntity) != null) {
       appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
-
+      buf.append("<div class=\"problem-description\">");
       CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refEntity);
 
       LOG.assertTrue(descriptions != null);
@@ -66,6 +66,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
       }
 
       doneList(buf);
+      buf.append("</div>");
 
       appendResolution(buf,refEntity, quickFixTexts(refEntity, myTool));
     }
@@ -75,13 +76,13 @@ public class DescriptorComposer extends HTMLComposerImpl {
   }
 
   public static String[] quickFixTexts(RefEntity where, @NotNull InspectionToolPresentation toolPresentation){
-    QuickFixAction[] quickFixes = toolPresentation.getQuickFixes(new RefEntity[] {where});
+    QuickFixAction[] quickFixes = toolPresentation.getQuickFixes(new RefEntity[] {where}, null);
     if (quickFixes == null) {
       return null;
     }
     List<String> texts = new ArrayList<String>();
     for (QuickFixAction quickFix : quickFixes) {
-      String text = quickFix.getText(where);
+      String text = quickFix.getText();
       if (text == null) continue;
       texts.add(escapeQuickFixText(text));
     }

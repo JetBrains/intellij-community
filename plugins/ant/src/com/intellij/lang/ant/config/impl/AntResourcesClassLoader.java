@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,11 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
-*         Date: Oct 21, 2008
+ * @since Oct 21, 2008
 */
 public class AntResourcesClassLoader extends UrlClassLoader {
+  static { registerAsParallelCapable(); }
+
   private final Set<String> myMisses = new THashSet<String>();
 
   public AntResourcesClassLoader(final List<URL> urls, final ClassLoader parentLoader, final boolean canLockJars, final boolean canUseCache) {
@@ -35,15 +37,17 @@ public class AntResourcesClassLoader extends UrlClassLoader {
   }
 
   protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
-    if (myMisses.contains(name)) {
-      throw new ClassNotFoundException(name) {
-        @Override
-        public synchronized Throwable fillInStackTrace() {
-          return this;
-        }
-      };
+    synchronized (getClassLoadingLock(name)) {
+      if (myMisses.contains(name)) {
+        throw new ClassNotFoundException(name) {
+          @Override
+          public synchronized Throwable fillInStackTrace() {
+            return this;
+          }
+        };
+      }
+      return super.loadClass(name, resolve);
     }
-    return super.loadClass(name, resolve);
   }
 
   protected Class findClass(final String name) throws ClassNotFoundException {

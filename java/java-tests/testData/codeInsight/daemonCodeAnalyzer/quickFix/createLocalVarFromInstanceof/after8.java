@@ -2,7 +2,7 @@
 class C {
     void f(Object o) {
         if (o instanceof String) {
-            String s = (String) o;
+            String o1 = (String) o;
             <caret>
             o = "";
         }

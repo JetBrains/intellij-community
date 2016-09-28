@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,17 @@
  */
 package com.intellij.ide.externalComponents;
 
-import com.google.common.collect.Sets;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Component to keep track of the external components and component sources that can be updated by the updater.
- */
 public class ExternalComponentManagerImpl extends ExternalComponentManager {
-  private Set<ExternalComponentSource> mySources = Sets.newHashSet();
+  private final Set<ExternalComponentSource> mySources = new HashSet<>();
 
   @Override
   @NotNull
@@ -52,13 +48,6 @@ public class ExternalComponentManagerImpl extends ExternalComponentManager {
     }
   }
 
-  /**
-   * Finds an installed component that could be updated by the given component.
-   *
-   * @param update The potential update.
-   * @param source The source for the update.
-   * @return A component from the same source for which the given component is an update, or null if no such component is found.
-   */
   @Override
   @Nullable
   public UpdatableExternalComponent findExistingComponentMatching(@NotNull UpdatableExternalComponent update,

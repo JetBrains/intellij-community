@@ -65,19 +65,16 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
       final Collection<VirtualFile> files = fileBasedIndex.getContainingFiles(
         TodoIndex.NAME,
         new TodoIndexEntry(indexPattern.getPatternString(), indexPattern.isCaseSensitive()), GlobalSearchScope.allScope(myProject));
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          for (VirtualFile file : files) {
-            if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
-              continue;
-            }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        for (VirtualFile file : files) {
+          if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
+            continue;
+          }
 
-            if (projectFileIndex.isInContent(file)) {
-              final PsiFile psiFile = myPsiManager.findFile(file);
-              if (psiFile != null) {
-                allFiles.add(psiFile);
-              }
+          if (projectFileIndex.isInContent(file)) {
+            final PsiFile psiFile = myPsiManager.findFile(file);
+            if (psiFile != null) {
+              allFiles.add(psiFile);
             }
           }
         }

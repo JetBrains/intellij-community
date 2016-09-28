@@ -143,7 +143,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
 
     if (UIUtil.isUnderGTKLookAndFeel() ||
         UIUtil.isUnderNimbusLookAndFeel() && selected && hasFocus ||
-        tree != null && tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
+        tree != null && WideSelectionTreeUI.isWideSelection(tree)) {
       editorPane.setOpaque(false);
     }
     else {

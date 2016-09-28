@@ -17,7 +17,6 @@ package git4idea.rebase;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,7 +26,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
@@ -250,7 +248,7 @@ public class GitRebaser {
   private boolean handleRebaseFailure(final VirtualFile root, final GitLineHandler h, GitRebaseProblemDetector rebaseConflictDetector) {
     if (rebaseConflictDetector.isMergeConflict()) {
       LOG.info("handleRebaseFailure merge conflict");
-      return new GitConflictResolver(myProject, myGit, ServiceManager.getService(GitPlatformFacade.class), Collections.singleton(root), makeParamsForRebaseConflict()) {
+      return new GitConflictResolver(myProject, myGit, Collections.singleton(root), makeParamsForRebaseConflict()) {
         @Override protected boolean proceedIfNothingToMerge() {
           return continueRebase(root, "--continue");
         }
@@ -356,7 +354,7 @@ public class GitRebaser {
     @NotNull private final VirtualFile myRoot;
 
     public ConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull VirtualFile root, @NotNull GitRebaser rebaser) {
-      super(project, git, ServiceManager.getService(GitPlatformFacade.class), Collections.singleton(root), makeParams());
+      super(project, git, Collections.singleton(root), makeParams());
       myRebaser = rebaser;
       myRoot = root;
     }

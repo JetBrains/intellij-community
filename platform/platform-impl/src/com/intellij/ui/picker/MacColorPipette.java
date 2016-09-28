@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.color.ColorSpace;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorConvertOp;
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 
@@ -191,7 +193,7 @@ public class MacColorPipette extends ColorPipetteBase {
   }
 
   @Nullable
-  private static BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
+  static BufferedImage captureScreen(@Nullable Window belowWindow, @NotNull Rectangle rect) {
     ID pool = Foundation.invoke("NSAutoreleasePool", "new");
     try {
       ID windowId = belowWindow != null ? MacUtil.findWindowFromJavaWindow(belowWindow) : null;
@@ -213,7 +215,14 @@ public class MacColorPipette extends ColorPipetteBase {
       Foundation.invoke(nsImage, "release");
       byte[] b = new byte[byteBuffer.remaining()];
       byteBuffer.get(b);
-      return ImageIO.read(new ByteArrayInputStream(b));
+
+      BufferedImage result = ImageIO.read(new ByteArrayInputStream(b));
+      if (result != null) {
+        ColorSpace ics = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+        ColorConvertOp cco = new ColorConvertOp(ics, null);
+        return cco.filter(result, null);
+      }
+      return null;
     }
     catch (Throwable t) {
       LOG.error(t);

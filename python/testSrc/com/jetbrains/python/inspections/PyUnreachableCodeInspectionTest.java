@@ -26,22 +26,12 @@ public class PyUnreachableCodeInspectionTest extends PyTestCase {
 
   // All previous unreachable tests, feel free to split them
   public void testUnreachable() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
   // PY-7420
   public void testWithSuppressedExceptions() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
   private void doTest() {

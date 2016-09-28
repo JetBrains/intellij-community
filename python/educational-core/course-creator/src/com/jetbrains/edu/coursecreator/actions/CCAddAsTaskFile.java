@@ -1,68 +1,77 @@
 package com.jetbrains.edu.coursecreator.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+public class CCAddAsTaskFile extends CCTaskFileActionBase {
+  public static final String ACTION_NAME = "Make Visible to Student";
 
-public class CCAddAsTaskFile extends AnAction {
-  private static final Logger LOG = Logger.getInstance(CCAddAsTaskFile.class);
-
-  @Override
-  public void actionPerformed(final AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
-      return;
-    }
-    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    if (file == null) {
-      return;
-    }
-    Task task = CCProjectService.getInstance(project).getTask(file);
-    if (task == null) {
-      return;
-    }
-    task.addTaskFile(file.getName(), task.getTaskFiles().size());
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        String name = file.getNameWithoutExtension();
-        String extension = file.getExtension();
-        try {
-          file.rename(this, name + ".answer." + extension);
-        }
-        catch (IOException e1) {
-          LOG.error(e1);
-        }
-      }
-    });
+  public CCAddAsTaskFile() {
+    super(ACTION_NAME);
   }
 
 
-  @Override
-  public void update(AnActionEvent e) {
-    Project project = e.getProject();
-    Presentation presentation = e.getPresentation();
-    if (project == null) {
-      presentation.setEnabledAndVisible(false);
-      return;
+  protected void performAction(VirtualFile file, Task task, Course course, Project project) {
+    EduUtils.runUndoableAction(project, ACTION_NAME, new AddTaskFile(file, null, course, project, task));
+  }
+
+  protected boolean isAvailable(Project project, VirtualFile file) {
+    return StudyUtils.getTaskFile(project, file) == null && !CCUtils.isTestsFile(project, file);
+  }
+
+  private static class AddTaskFile implements UndoableAction {
+    private final VirtualFile myFile;
+    private TaskFile myTaskFile;
+    private final Course myCourse;
+    private final Project myProject;
+    private final Task myTask;
+
+    public AddTaskFile(VirtualFile file, TaskFile taskFile, Course course, Project project, Task task) {
+      myFile = file;
+      myTaskFile = taskFile;
+      myCourse = course;
+      myProject = project;
+      myTask = task;
     }
-    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    if (file == null || file.isDirectory() || CCProjectService.getInstance(project).isAnswerFile(file)) {
-      presentation.setEnabledAndVisible(false);
-      return;
+
+    @Override
+    public void undo() throws UnexpectedUndoException {
+      CCHideFromStudent.hideFromStudent(myFile, myProject, myTask.getTaskFiles(), myTaskFile);
+      ProjectView.getInstance(myProject).refresh();
     }
-    Task task = CCProjectService.getInstance(project).getTask(file);
-    if (task == null) {
-      presentation.setEnabledAndVisible(false);
+
+    @Override
+    public void redo() throws UnexpectedUndoException {
+      if (myTaskFile != null) {
+        myTask.addTaskFile(myTaskFile);
+      } else {
+        myTask.addTaskFile(myFile.getName(), myTask.getTaskFiles().size());
+        myTaskFile = myTask.getTaskFile(myFile.getName());
+      }
+      CCUtils.createResourceFile(myFile, myCourse, StudyUtils.getTaskDir(myFile));
+      ProjectView.getInstance(myProject).refresh();
+    }
+
+    @Nullable
+    @Override
+    public DocumentReference[] getAffectedDocuments() {
+      return new DocumentReference[0];
+    }
+
+    @Override
+    public boolean isGlobal() {
+      return true;
     }
   }
 }

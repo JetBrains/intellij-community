@@ -35,6 +35,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,8 +87,13 @@ public class ModuleRunConfigurationManagerTest extends LightPlatformTestCase {
 
   @Override
   public void tearDown() throws Exception {
-    myManager = null;
-    super.tearDown();
+    try {
+      ExecutionTestUtil.terminateAllRunningDescriptors(ExecutionManager.getInstance(getProject()));
+      myManager = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testInitComponentSubscribesForModulesTopic() throws Exception {
@@ -134,9 +140,10 @@ public class ModuleRunConfigurationManagerTest extends LightPlatformTestCase {
     descriptorToReuse.setActivateToolWindowWhenAdded(false);
     descriptorToReuse.setReuseToolWindowActivation(true);
     env.setContentToReuse(descriptorToReuse);
-    env.getRunner().execute(env);
-    RunContentDescriptor lastDescriptor = programRunner.getLastDescriptor();
-    assertNotNull(lastDescriptor);
+    ExecutionManager executionManager = ExecutionManager.getInstance(getProject());
+    executionManager.restartRunProfile(env);
+    UIUtil.dispatchAllInvocationEvents();
+    RunContentDescriptor lastDescriptor = ExecutionTestUtil.getSingleRunContentDescriptor(executionManager);
     assertFalse(lastDescriptor.isActivateToolWindowWhenAdded());
     Disposer.dispose(descriptorToReuse);
   }

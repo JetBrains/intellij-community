@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -104,7 +103,7 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
   }
 
   protected PsiManagerEx getPsiManager() {
-    return (PsiManagerEx)PsiManager.getInstance(getProject());
+    return PsiManagerEx.getInstanceEx(getProject());
   }
 
   public PsiElementFactory getElementFactory() {

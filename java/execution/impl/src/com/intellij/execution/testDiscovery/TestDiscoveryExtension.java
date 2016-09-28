@@ -89,12 +89,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
               if (myCompletedMethodNames.size() > 50) {
                 final String[] fullTestNames = ArrayUtil.toStringArray(myCompletedMethodNames);
                 myCompletedMethodNames.clear();
-                processTracesAlarm.addRequest(new Runnable() {
-                  @Override
-                  public void run() {
-                    processAvailableTraces(configuration, fullTestNames);
-                  }
-                }, 100);
+                processTracesAlarm.addRequest(() -> processAvailableTraces(configuration, fullTestNames), 100);
               }
             }
           }
@@ -104,12 +99,9 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
         public void onTestingFinished(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
           if (testsRoot.getHandler() == handler) {
             processTracesAlarm.cancelAllRequests();
-            processTracesAlarm.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                processAvailableTraces(configuration);
-                Disposer.dispose(processTracesAlarm);
-              }
+            processTracesAlarm.addRequest(() -> {
+              processAvailableTraces(configuration);
+              Disposer.dispose(processTracesAlarm);
             }, 0);
             connection.disconnect();
           }
@@ -164,12 +156,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     final TestDiscoveryIndex coverageIndex = TestDiscoveryIndex.getInstance(configuration.getProject());
     synchronized (ourTracesLock) {
       final File tracesDirectoryFile = new File(tracesDirectory);
-      final File[] testMethodTraces = tracesDirectoryFile.listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.endsWith(".tr");
-        }
-      });
+      final File[] testMethodTraces = tracesDirectoryFile.listFiles((dir, name) -> name.endsWith(".tr"));
       if (testMethodTraces != null) {
         for (File testMethodTrace : testMethodTraces) {
           try {

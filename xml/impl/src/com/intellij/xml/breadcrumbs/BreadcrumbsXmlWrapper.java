@@ -51,6 +51,8 @@ import com.intellij.psi.*;
 import com.intellij.ui.Gray;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
@@ -62,7 +64,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
 
 /**
  * @author spleaner
@@ -76,7 +81,6 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   private boolean myUserCaretChange;
   private final MergingUpdateQueue myQueue;
   private final BreadcrumbsInfoProvider myInfoProvider;
-  private final JPanel myWrapperPanel;
 
   public static final Key<BreadcrumbsXmlWrapper> BREADCRUMBS_COMPONENT_KEY = new Key<BreadcrumbsXmlWrapper>("BREADCRUMBS_KEY");
 
@@ -198,12 +202,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
     Disposer.register(this, new UiNotifyConnector(myComponent, myQueue));
     Disposer.register(this, myQueue);
 
-    myWrapperPanel = new JPanel();
-    myWrapperPanel.setLayout(new BorderLayout());
-    myWrapperPanel.setBorder(BorderFactory.createEmptyBorder(2, 0, 1, 2));
-    myWrapperPanel.setOpaque(false);
-
-    myWrapperPanel.add(myComponent, BorderLayout.CENTER);
+    myComponent.setBorder(new JBEmptyBorder(JBUI.insets(2, 0, 1, 2)));
     queueUpdate(editor);
   }
 
@@ -316,12 +315,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
                                                          final BreadcrumbsInfoProvider defaultInfoProvider) {
     if (file == null || !file.isValid()) return null;
 
-    PriorityQueue<PsiElement> leafs = new PriorityQueue<PsiElement>(3, new Comparator<PsiElement>() {
-      @Override
-      public int compare(final PsiElement o1, final PsiElement o2) {
-        return o2.getTextRange().getStartOffset() - o1.getTextRange().getStartOffset();
-      }
-    });
+    PriorityQueue<PsiElement> leafs = new PriorityQueue<PsiElement>(3, (o1, o2) -> o2.getTextRange().getStartOffset() - o1.getTextRange().getStartOffset());
     FileViewProvider viewProvider = findViewProvider(file, project);
     if (viewProvider == null) return null;
 
@@ -377,7 +371,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
   }
 
   public JComponent getComponent() {
-    return myWrapperPanel;
+    return myComponent;
   }
 
   @Override

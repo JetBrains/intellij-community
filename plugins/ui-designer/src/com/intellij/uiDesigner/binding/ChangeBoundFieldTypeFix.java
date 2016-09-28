@@ -55,21 +55,15 @@ public class ChangeBoundFieldTypeFix implements IntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    CommandProcessor.getInstance().executeCommand(myField.getProject(), new Runnable() {
-      public void run() {
-        try {
-          final PsiManager manager = myField.getManager();
-          myField.getTypeElement().replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeElement(myTypeToSet));
-        }
-        catch (final IncorrectOperationException e) {
-          ApplicationManager.getApplication().invokeLater(new Runnable(){
-            public void run() {
-              Messages.showErrorDialog(myField.getProject(),
-                                       QuickFixBundle.message("cannot.change.field.exception", myField.getName(), e.getLocalizedMessage()),
-                                       CommonBundle.getErrorTitle());
-            }
-          });
-        }
+    CommandProcessor.getInstance().executeCommand(myField.getProject(), () -> {
+      try {
+        final PsiManager manager = myField.getManager();
+        myField.getTypeElement().replace(JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createTypeElement(myTypeToSet));
+      }
+      catch (final IncorrectOperationException e) {
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myField.getProject(),
+                                                                                   QuickFixBundle.message("cannot.change.field.exception", myField.getName(), e.getLocalizedMessage()),
+                                                                                   CommonBundle.getErrorTitle()));
       }
     }, getText(), null);
   }

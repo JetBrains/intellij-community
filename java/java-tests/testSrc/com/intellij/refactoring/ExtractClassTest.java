@@ -24,7 +24,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
@@ -114,6 +113,10 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   public void testFieldInitializers() throws Exception {
+    doTestField(null);
+  }
+
+  public void testNonNormalizedFields() throws Exception {
     doTestField(null);
   }
 

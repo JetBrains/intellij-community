@@ -1,14 +1,15 @@
 <html>
 <body>
-Reports any variable declarations of which the scope can be narrowed. Especially
-useful for "Pascal style" declarations at the start of a method, but variables with too broad
+Reports any variable declarations which can be moved to a smaller scope. Especially
+useful for <i>Pascal style</i> declarations at the start of a method, but variables with too broad
 a scope are also often left over after refactorings.
 <!-- tooltip end -->
 <p>
-Use the checkbox below to enable this inspection to report variables which are initialized
-with a call to a constructor. This makes the inspection potentially unsafe in cases where the
-constructor has non-local side-effects, but make it more powerful in that it can find objects
-that are allocated before necessary, causing increased memory usage.
+Use the first checkbox below to only report variables that can be moved inside deeper code blocks.
+<p>
+Use the second checkbox below to report variables which are initialized
+with a new expression. This makes the inspection potentially unsafe in cases where the
+constructor has non-local side-effects.
 <p>
 
 </body>

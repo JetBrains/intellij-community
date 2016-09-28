@@ -118,12 +118,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     try {
       Icon icon = RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings);
       ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
-      List<RunContentDescriptor> runningDescriptors = executionManager.getRunningDescriptors(new Condition<RunnerAndConfigurationSettings>() {
-          @Override
-          public boolean value(RunnerAndConfigurationSettings s) {
-            return s == settings;
-          }
-        });
+      List<RunContentDescriptor> runningDescriptors = executionManager.getRunningDescriptors(s -> s == settings);
       if (runningDescriptors.size() == 1) {
         icon = ExecutionUtil.getLiveIndicator(icon);
       }

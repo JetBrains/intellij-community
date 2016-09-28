@@ -32,12 +32,12 @@ import com.intellij.testFramework.*
 import com.intellij.util.PathUtil
 import com.intellij.util.readText
 import com.intellij.util.systemIndependentPath
+import com.intellij.util.write
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.nio.file.Paths
 
 fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
@@ -50,7 +50,7 @@ fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((Virt
 
 private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean) {
   runInEdtAndWait {
-    var filePath: String
+    val filePath: String
     if (projectCreator == null) {
       filePath = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
     }
@@ -59,15 +59,9 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
     }
 
     val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
-    var project = if (projectCreator == null) projectManager.newProject(null, filePath, true, false)!! else projectManager.loadProject(filePath)!!
+    val project = if (projectCreator == null) createHeavyProject(filePath, true) else projectManager.loadProject(filePath)!!
     project.runInLoadComponentStateMode {
-      try {
-        projectManager.openTestProject(project)
-        task(project)
-      }
-      finally {
-        projectManager.closeProject(project, false, true, false)
-      }
+      project.use(task)
     }
   }
 }
@@ -110,8 +104,8 @@ internal class ProjectStoreTest {
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath((PathUtil.getParentPath(project.projectFilePath!!))))
 
       // test reload on external change
-      val file = File(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
-      file.writeText(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
+      val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
+      file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
       project.baseDir.refresh(false, true)
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedAlarm()

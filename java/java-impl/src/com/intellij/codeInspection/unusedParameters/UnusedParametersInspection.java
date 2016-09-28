@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,7 +123,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
             if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
               final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
               if (unusedParameters.isEmpty()) return;
-              PsiMethod[] derived = OverridingMethodsSearch.search(psiMethod, true).toArray(PsiMethod.EMPTY_ARRAY);
+              PsiMethod[] derived = OverridingMethodsSearch.search(psiMethod).toArray(PsiMethod.EMPTY_ARRAY);
               for (final RefParameter refParameter : unusedParameters) {
                 if (refMethod.isAbstract() && derived.length == 0) {
                   refParameter.parameterReferenced(false);
@@ -236,7 +237,7 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(EntryPointsManagerImpl.createConfigureAnnotationsButton(),
               new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 0, 0, 0), 0, 0));
+                                     JBUI.emptyInsets(), 0, 0));
     return panel;
   }
 
@@ -298,6 +299,11 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       }
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     private static void removeUnusedParameterViaChangeSignature(final PsiMethod psiMethod,
                                                                 final Collection<PsiElement> parametersToDelete) {
       ArrayList<ParameterInfoImpl> newParameters = new ArrayList<ParameterInfoImpl>();
@@ -316,5 +322,11 @@ public class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
       csp.run();
     }
+  }
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "unused";
   }
 }

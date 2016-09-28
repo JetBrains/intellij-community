@@ -90,22 +90,19 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
     myElementsToMove = PsiUtilCore.toPsiElementArray(toMove);
-    Arrays.sort(myElementsToMove, new Comparator<PsiElement>() {
-      @Override
-      public int compare(PsiElement o1, PsiElement o2) {
-        if (o1 instanceof PsiClass && o2 instanceof PsiClass) {
-          final PsiFile containingFile = o1.getContainingFile();
-          if (Comparing.equal(containingFile, o2.getContainingFile())) {
-            final VirtualFile virtualFile = containingFile.getVirtualFile();
-            if (virtualFile != null) {
-              final String fileName = virtualFile.getNameWithoutExtension();
-              if (Comparing.strEqual(fileName, ((PsiClass)o1).getName())) return -1;
-              if (Comparing.strEqual(fileName, ((PsiClass)o2).getName())) return 1;
-            }
+    Arrays.sort(myElementsToMove, (o1, o2) -> {
+      if (o1 instanceof PsiClass && o2 instanceof PsiClass) {
+        final PsiFile containingFile = o1.getContainingFile();
+        if (Comparing.equal(containingFile, o2.getContainingFile())) {
+          final VirtualFile virtualFile = containingFile.getVirtualFile();
+          if (virtualFile != null) {
+            final String fileName = virtualFile.getNameWithoutExtension();
+            if (Comparing.strEqual(fileName, ((PsiClass)o1).getName())) return -1;
+            if (Comparing.strEqual(fileName, ((PsiClass)o2).getName())) return 1;
           }
         }
-        return 0;
       }
+      return 0;
     });
     myMoveDestination = moveDestination;
     myTargetPackage = myMoveDestination.getTargetPackage();
@@ -395,27 +392,25 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(aClass.getContainingFile().getContainingDirectory());
     final GlobalSearchScope packageScope = aPackage == null ? aClass.getResolveScope() : PackageScope.packageScopeWithoutLibraries(aPackage, false);
     for (final ClassMemberWrapper memberWrapper : members) {
-      ReferencesSearch.search(memberWrapper.getMember(), packageScope, false).forEach(new Processor<PsiReference>() {
-        public boolean process(final PsiReference reference) {
-          final PsiElement element = reference.getElement();
-          if (element instanceof PsiReferenceExpression) {
-            final PsiReferenceExpression expression = (PsiReferenceExpression)element;
-            final PsiExpression qualifierExpression = expression.getQualifierExpression();
-            if (qualifierExpression != null) {
-              final PsiType type = qualifierExpression.getType();
-              if (type != null) {
-                final PsiClass resolvedTypeClass = PsiUtil.resolveClassInType(type);
-                if (isDescendantOf.value(resolvedTypeClass)) {
-                  instanceReferenceVisitor.visitMemberReference(memberWrapper.getMember(), expression, isDescendantOf);
-                }
+      ReferencesSearch.search(memberWrapper.getMember(), packageScope, false).forEach(reference -> {
+        final PsiElement element = reference.getElement();
+        if (element instanceof PsiReferenceExpression) {
+          final PsiReferenceExpression expression = (PsiReferenceExpression)element;
+          final PsiExpression qualifierExpression = expression.getQualifierExpression();
+          if (qualifierExpression != null) {
+            final PsiType type = qualifierExpression.getType();
+            if (type != null) {
+              final PsiClass resolvedTypeClass = PsiUtil.resolveClassInType(type);
+              if (isDescendantOf.value(resolvedTypeClass)) {
+                instanceReferenceVisitor.visitMemberReference(memberWrapper.getMember(), expression, isDescendantOf);
               }
             }
-            else {
-              instanceReferenceVisitor.visitMemberReference(memberWrapper.getMember(), expression, isDescendantOf);
-            }
           }
-          return true;
+          else {
+            instanceReferenceVisitor.visitMemberReference(memberWrapper.getMember(), expression, isDescendantOf);
+          }
         }
+        return true;
       });
     }
   }
@@ -504,6 +499,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           }
         }
       }
+
+      for (PsiElement element : myElementsToMove) {
+        if (element instanceof PsiClass) {
+          MoveClassesOrPackagesUtil.prepareMoveClass((PsiClass)element);
+        }
+      }
+
       final Map<PsiElement, PsiElement> oldToNewElementsMapping = new HashMap<PsiElement, PsiElement>();
       for (int idx = 0; idx < myElementsToMove.length; idx++) {
         PsiElement element = myElementsToMove[idx];
@@ -533,7 +535,6 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
         }
         else if (element instanceof PsiClass) {
           final PsiClass psiClass = (PsiClass)element;
-          MoveClassesOrPackagesUtil.prepareMoveClass(psiClass);
           final PsiClass newElement = MoveClassesOrPackagesUtil.doMoveClass(psiClass, myMoveDestination.getTargetDirectory(element.getContainingFile()), allClasses.get(psiClass));
           oldToNewElementsMapping.put(element, newElement);
           element = newElement;

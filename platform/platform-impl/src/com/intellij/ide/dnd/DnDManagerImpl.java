@@ -112,13 +112,11 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   }
 
   private void cleanup(@Nullable final DnDSource source, @Nullable final DnDTarget target, @Nullable final JComponent targetComponent) {
-    Runnable cleanup = new Runnable() {
-      public void run() {
-        if (shouldCancelCurrentDnDOperation(source, target, targetComponent)) {
-          myLastProcessedOverComponent = null;
-          myCurrentDragContext = null;
-          resetEvents("cleanup");
-        }
+    Runnable cleanup = () -> {
+      if (shouldCancelCurrentDnDOperation(source, target, targetComponent)) {
+        myLastProcessedOverComponent = null;
+        myCurrentDragContext = null;
+        resetEvents("cleanup");
       }
     };
 
@@ -423,16 +421,14 @@ public class DnDManagerImpl extends DnDManager implements Disposable {
   }
 
   private void queueTooltip(final DnDEvent aEvent, final JLayeredPane aLayeredPane, final Rectangle aRectangle) {
-    myHighlighterShowRequest = new Runnable() {
-      public void run() {
-        if (myCurrentEvent != aEvent) return;
-        Highlighters.hide(DnDEvent.DropTargetHighlightingType.TEXT | DnDEvent.DropTargetHighlightingType.ERROR_TEXT);
-        if (aEvent.isDropPossible()) {
-          Highlighters.show(DnDEvent.DropTargetHighlightingType.TEXT, aLayeredPane, aRectangle, aEvent);
-        }
-        else {
-          Highlighters.show(DnDEvent.DropTargetHighlightingType.ERROR_TEXT, aLayeredPane, aRectangle, aEvent);
-        }
+    myHighlighterShowRequest = () -> {
+      if (myCurrentEvent != aEvent) return;
+      Highlighters.hide(DnDEvent.DropTargetHighlightingType.TEXT | DnDEvent.DropTargetHighlightingType.ERROR_TEXT);
+      if (aEvent.isDropPossible()) {
+        Highlighters.show(DnDEvent.DropTargetHighlightingType.TEXT, aLayeredPane, aRectangle, aEvent);
+      }
+      else {
+        Highlighters.show(DnDEvent.DropTargetHighlightingType.ERROR_TEXT, aLayeredPane, aRectangle, aEvent);
       }
     };
     myTooltipTimer.restart();

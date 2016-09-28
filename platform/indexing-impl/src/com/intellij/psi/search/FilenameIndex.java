@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -43,7 +43,6 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   @NonNls public static final ID<String, Void> NAME = ID.create("FilenameIndex");
   private final MyDataIndexer myDataIndexer = new MyDataIndexer();
   private final MyInputFilter myInputFilter = new MyInputFilter();
-  private final EnumeratorStringDescriptor myKeyDescriptor = new EnumeratorStringDescriptor();
 
   @NotNull
   @Override
@@ -60,7 +59,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public KeyDescriptor<String> getKeyDescriptor() {
-    return myKeyDescriptor;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull
@@ -166,14 +165,11 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
                                                                     @Nullable final IdFilter idFilter) {
     final Set<String> keys = new THashSet<String>();
     final FileBasedIndex index = FileBasedIndex.getInstance();
-    index.processAllKeys(NAME, new Processor<String>() {
-      @Override
-      public boolean process(String value) {
-        if (name.equalsIgnoreCase(value)) {
-          keys.add(value);
-        }
-        return true;
+    index.processAllKeys(NAME, value -> {
+      if (name.equalsIgnoreCase(value)) {
+        keys.add(value);
       }
+      return true;
     }, scope, idFilter);
 
     // values accessed outside of provessAllKeys 
@@ -189,7 +185,8 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
                                          @NotNull final GlobalSearchScope scope,
                                          boolean includeDirs) {
     SmartList<PsiFileSystemItem> result = new SmartList<PsiFileSystemItem>();
-    processFilesByName(name, includeDirs, new CommonProcessors.CollectProcessor<PsiFileSystemItem>(result), scope, project, null);
+    Processor<PsiFileSystemItem> processor = Processors.cancelableCollectProcessor(result);
+    processFilesByName(name, includeDirs, processor, scope, project, null);
 
     if (includeDirs) {
       return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);

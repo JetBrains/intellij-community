@@ -51,17 +51,9 @@ public class TestDiscoveryIndex implements ProjectComponent {
     String path = TestDiscoveryExtension.baseTestDiscoveryPathForProject(myProject);
 
     if (new File(path).exists()) {
-      StartupManager.getInstance(project).registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              getHolder(); // proactively init with maybe io costly compact
-            }
-          });
-        }
-      });
+      StartupManager.getInstance(project).registerPostStartupActivity(() -> ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        getHolder(); // proactively init with maybe io costly compact
+      }));
     }
   }
 
@@ -256,22 +248,19 @@ public class TestDiscoveryIndex implements ProjectComponent {
         myMethodEnumeratorCache = new CachingEnumerator<String>(methodNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
         myClassEnumeratorCache = new CachingEnumerator<String>(classNameEnumerator, EnumeratorStringDescriptor.INSTANCE);
 
-        myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {
-          @Override
-          public void run() {
-            synchronized (ourLock) {
-              if (myDisposed) {
-                myFlushingFuture.cancel(false);
-                return;
-              }
-              for(PersistentEnumeratorDelegate dataFile:myConstructedDataFiles) {
-                if (dataFile.isDirty()) {
-                  dataFile.force();
-                }
-              }
-              myClassEnumeratorCache.clear();
-              myMethodEnumeratorCache.clear();
+        myFlushingFuture = FlushingDaemon.everyFiveSeconds(() -> {
+          synchronized (ourLock) {
+            if (myDisposed) {
+              myFlushingFuture.cancel(false);
+              return;
             }
+            for(PersistentEnumeratorDelegate dataFile:myConstructedDataFiles) {
+              if (dataFile.isDirty()) {
+                dataFile.force();
+              }
+            }
+            myClassEnumeratorCache.clear();
+            myMethodEnumeratorCache.clear();
           }
         });
       }

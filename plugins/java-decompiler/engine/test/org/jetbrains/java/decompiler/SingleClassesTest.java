@@ -46,6 +46,7 @@ public class SingleClassesTest {
   }
 
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
+  @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
   @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }
   @Test public void testClassLoop() { doTest("pkg/TestClassLoop"); }
   @Test public void testClassSwitch() { doTest("pkg/TestClassSwitch"); }
@@ -79,8 +80,17 @@ public class SingleClassesTest {
   @Test public void testShadowing() { doTest("pkg/TestShadowing", "pkg/Shadow", "ext/Shadow"); }
   @Test public void testStringConcat() { doTest("pkg/TestStringConcat"); }
   @Test public void testJava9StringConcat() { doTest("java9/TestJava9StringConcat"); }
+  @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
+  @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
+  @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
+  @Test public void testMoreAnnotations() { doTest("pkg/MoreAnnotations"); }
+  @Test public void testTypeAnnotations() { doTest("pkg/TypeAnnotations"); }
+  @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
+  @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
+  @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
+  @Test public void testIllegalVarName() { doTest("pkg/TestIllegalVarName"); }
 
-  protected void doTest(String testFile, String... companionFiles) {
+  private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
 
     File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
@@ -114,12 +124,7 @@ public class SingleClassesTest {
     File parent = classFile.getParentFile();
     if (parent != null) {
       final String pattern = classFile.getName().replace(".class", "") + "\\$.+\\.class";
-      File[] inner = parent.listFiles(new FilenameFilter() {
-        @Override
-        public boolean accept(File dir, String name) {
-          return name.matches(pattern);
-        }
-      });
+      File[] inner = parent.listFiles((dir, name) -> name.matches(pattern));
       if (inner != null) Collections.addAll(files, inner);
     }
 

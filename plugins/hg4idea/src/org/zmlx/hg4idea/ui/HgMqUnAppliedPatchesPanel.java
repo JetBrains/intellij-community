@@ -260,7 +260,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
           @Override
           public void run() {
             ProgressManager.getInstance().getProgressIndicator().setText("Deleting patches...");
-            new HgQDeleteCommand(myRepository).execute(names);
+            new HgQDeleteCommand(myRepository).executeInCurrentThread(names);
           }
         };
         updatePatchSeriesInBackground(deleteTask);

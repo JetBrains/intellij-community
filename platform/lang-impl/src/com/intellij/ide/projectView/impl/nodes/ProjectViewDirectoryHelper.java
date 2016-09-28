@@ -190,11 +190,21 @@ public class ProjectViewDirectoryHelper {
 
     for (VirtualFile root : prm.getContentRoots()) {
       VirtualFile parent = root.getParent();
-      if (parent == null || !index.isInContent(parent)) {
+      if (!isFileInContent(index, parent)) {
         topLevelContentRoots.add(root);
       }
     }
     return topLevelContentRoots;
+  }
+
+  private static boolean isFileInContent(ProjectFileIndex index, VirtualFile file) {
+    while (file != null) {
+      if (index.isInContent(file)) {
+        return true;
+      }
+      file = file.getParent();
+    }
+    return false;
   }
 
   private PsiElement[] directoryChildrenInProject(PsiDirectory psiDirectory, final ViewSettings settings) {

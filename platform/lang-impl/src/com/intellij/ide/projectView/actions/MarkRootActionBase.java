@@ -77,18 +77,11 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
         modifyRoots(file, entry);
       }
     }
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            model.commit();
-            module.getProject().save();
-          }
-        });
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
+                                            () -> ApplicationManager.getApplication().runWriteAction(() -> {
+                                              model.commit();
+                                              module.getProject().save();
+                                            }));
   }
 
   protected abstract void modifyRoots(VirtualFile file, ContentEntry entry);

@@ -256,13 +256,8 @@ public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
     all.addAll(methods);
 
     //make sure they are in predefined order
-    Collections.sort(all, new Comparator<PsiMethod>() {
-      @Override
-      public int compare(PsiMethod o1, PsiMethod o2) {
-        return o1.getContainingClass().getQualifiedName()
-          .compareTo(o2.getContainingClass().getQualifiedName());
-      }
-    });
+    Collections.sort(all, (o1, o2) -> o1.getContainingClass().getQualifiedName()
+      .compareTo(o2.getContainingClass().getQualifiedName()));
     final ImplementationViewComponent component =
       new ImplementationViewComponent(all.toArray(new PsiElement[all.size()]), 0);
     assertContent(component, new String[]{"a.java (AFoo)", "a.java (AFoo1 in AFoo)", "a.java (AFoo2 in AFoo)", "a.java (AFoo3 in AFoo)"});

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,14 +67,11 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         if (!isValid()) return;
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myUndoHelper.isShowing() && !getComponent().isShowing()) {
-              deselectNotify();
-            } else if (!myUndoHelper.isShowing() && getComponent().isShowing()) {
-              selectNotify();
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (myUndoHelper.isShowing() && !getComponent().isShowing()) {
+            deselectNotify();
+          } else if (!myUndoHelper.isShowing() && getComponent().isShowing()) {
+            selectNotify();
           }
         });
 
@@ -265,12 +262,6 @@ abstract public class PerspectiveFileEditor extends UserDataHolderBase implement
   @Override
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
-  }
-
-  @Override
-  @NotNull
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    return FileEditorState.INSTANCE;
   }
 
   @Override

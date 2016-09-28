@@ -87,20 +87,17 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       }
     }
 
-    Runnable runnable = !runnables.isEmpty() ? new Runnable() {
-      @Override
-      public void run() {
-        CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
-        try {
-          for (Runnable runnable : runnables) {
-            runnable.run();
-            retrieveAndStoreNotificationInfo(runnable);
-          }
-          putNotificationInfoIntoCollector();
+    Runnable runnable = !runnables.isEmpty() ? (Runnable)() -> {
+      CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
+      try {
+        for (Runnable runnable1 : runnables) {
+          runnable1.run();
+          retrieveAndStoreNotificationInfo(runnable1);
         }
-        finally {
-          CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
-        }
+        putNotificationInfoIntoCollector();
+      }
+      finally {
+        CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
       }
     } : EmptyRunnable.getInstance();
     return new FutureTask<Boolean>(runnable, true);

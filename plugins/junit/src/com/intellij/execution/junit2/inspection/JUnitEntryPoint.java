@@ -55,9 +55,10 @@ public class JUnitEntryPoint extends EntryPoint {
       if (psiElement instanceof PsiClass) {
         final PsiClass aClass = (PsiClass)psiElement;
         if (JUnitUtil.isTestClass(aClass, false, true)) {
-          if (!PsiClassUtil.isRunnableClass(aClass, true, true)) {
+          final boolean isJUnit5 = JUnitUtil.isJUnit5(aClass);
+          if (!PsiClassUtil.isRunnableClass(aClass, !isJUnit5, true)) {
             final PsiClass topLevelClass = PsiTreeUtil.getTopmostParentOfType(aClass, PsiClass.class);
-            if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, true, true)) {
+            if (topLevelClass != null && PsiClassUtil.isRunnableClass(topLevelClass, !isJUnit5, true)) {
               return true;
             }
             final CommonProcessors.FindProcessor<PsiClass> findProcessor = new CommonProcessors.FindProcessor<PsiClass>() {

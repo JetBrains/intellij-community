@@ -37,7 +37,6 @@ import java.util.Map;
  */
 public class FileTypeIndex extends ScalarIndexExtension<FileType>
   implements FileBasedIndex.InputFilter, KeyDescriptor<FileType>, DataIndexer<FileType, Void, FileContent> {
-  private static final EnumeratorStringDescriptor ENUMERATOR_STRING_DESCRIPTOR = new EnumeratorStringDescriptor();
 
   @NotNull
   public static Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
@@ -103,12 +102,12 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @Override
   public void save(@NotNull DataOutput out, FileType value) throws IOException {
-    ENUMERATOR_STRING_DESCRIPTOR.save(out, value.getName());
+    EnumeratorStringDescriptor.INSTANCE.save(out, value.getName());
   }
 
   @Override
   public FileType read(@NotNull DataInput in) throws IOException {
-    String read = ENUMERATOR_STRING_DESCRIPTOR.read(in);
+    String read = EnumeratorStringDescriptor.INSTANCE.read(in);
     return myFileTypeManager.findFileTypeByName(read);
   }
 
@@ -119,6 +118,8 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @Override
   public boolean isEqual(FileType val1, FileType val2) {
+    if (val1 instanceof SubstitutedFileType) val1 = ((SubstitutedFileType)val1).getOriginalFileType();
+    if (val2 instanceof SubstitutedFileType) val2 = ((SubstitutedFileType)val2).getOriginalFileType();
     return Comparing.equal(val1, val2);
   }
 

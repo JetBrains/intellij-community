@@ -253,12 +253,7 @@ public class XPath2Type extends XPathType {
     }
 
     public static List<XPath2Type> listSchemaTypes() {
-      return ContainerUtil.filter(ourMap.values(), new Condition<XPath2Type>() {
-        @Override
-        public boolean value(XPath2Type type) {
-          return type.getQName().getNamespaceURI().equals(XMLSCHEMA_NS) && !type.isAbstract();
-        }
-      });
+      return ContainerUtil.filter(ourMap.values(), type1 -> type1.getQName().getNamespaceURI().equals(XMLSCHEMA_NS) && !type1.isAbstract());
     }
   }
 }

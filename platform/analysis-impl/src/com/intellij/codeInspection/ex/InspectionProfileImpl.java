@@ -39,7 +39,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
@@ -82,7 +81,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Attribute("is_locked")
   private boolean myLockedProfile;
   private final InspectionProfileImpl myBaseProfile;
-  private String myEnabledTool = null;
+  private volatile String myToolShortName = null;
   private String[] myScopesOrder;
   private String myDescription;
   private boolean myModified;
@@ -144,12 +143,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
     };
     final InspectionProfileImpl profile = new InspectionProfileImpl(name, registrar, InspectionProfileManager.getInstance());
-    initAndDo(new Computable() {
-      @Override
-      public Object compute() {
-        profile.initInspectionTools(project);
-        return null;
-      }
+    initAndDo((Computable)() -> {
+      profile.initInspectionTools(project);
+      return null;
     });
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
       profile.enableTool(toolWrapper.getShortName(), project);
@@ -411,13 +407,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public <T extends InspectionProfileEntry> void modifyToolSettings(@NotNull final Key<T> shortNameKey,
                                                                     @NotNull final PsiElement psiElement,
                                                                     @NotNull final Consumer<T> toolConsumer) {
-    modifyProfile(new Consumer<ModifiableModel>() {
-      @Override
-      public void consume(@NotNull ModifiableModel model) {
-        InspectionProfileEntry tool = model.getUnwrappedTool(shortNameKey.toString(), psiElement);
-        //noinspection unchecked
-        toolConsumer.consume((T) tool);
-      }
+    modifyProfile(model -> {
+      InspectionProfileEntry tool = model.getUnwrappedTool(shortNameKey.toString(), psiElement);
+      //noinspection unchecked
+      toolConsumer.consume((T) tool);
     });
   }
 
@@ -458,20 +451,21 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     InspectionProfileManager.getInstance().fireProfileChanged(this);
   }
 
+  @Nullable
   @Override
-  public boolean isEditable() {
-    return myEnabledTool == null;
+  public String getSingleTool() {
+    return myToolShortName;
   }
 
   @Override
-  public void setEditable(final String displayName) {
-    myEnabledTool = displayName;
+  public void setSingleTool(@NotNull final String toolShortName) {
+    myToolShortName = toolShortName;
   }
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return isEditable() ? getName() : myEnabledTool;
+    return getName();
   }
 
   @Override
@@ -601,12 +595,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key == null) {
       final InspectionEP extension = toolWrapper.getExtension();
-      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<String>(toolWrapper.getDisplayName()) : new Computable<String>() {
-        @Override
-        public String compute() {
-          return extension.getDisplayName();
-        }
-      };
+      Computable<String> computable = extension == null ? new Computable.PredefinedValueComputable<String>(toolWrapper.getDisplayName()) : (Computable<String>)() -> extension.getDisplayName();
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
         key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(),
                                            ((LocalInspectionToolWrapper)toolWrapper).getAlternativeID());
@@ -659,13 +648,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   private List<InspectionToolWrapper> createTools(Project project) {
     if (mySource != null) {
-      return ContainerUtil.map(mySource.getDefaultStates(project), new Function<ScopeToolState, InspectionToolWrapper>() {
-        @NotNull
-        @Override
-        public InspectionToolWrapper fun(@NotNull ScopeToolState state) {
-          return state.getTool();
-        }
-      });
+      return ContainerUtil.map(mySource.getDefaultStates(project), state -> state.getTool());
     }
     return myRegistrar.createTools();
   }

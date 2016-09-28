@@ -20,26 +20,36 @@ import com.intellij.rt.execution.testFrameworks.ChildVMStarter;
 
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 
 public class JUnitForkedStarter extends ChildVMStarter {
 
   public static void main(String[] args) throws Exception {
-    new JUnitForkedStarter().startVM(args);
+    List argList = new ArrayList();
+    for (int i = 0; i < args.length; i++) {
+      final int count = RepeatCount.getCount(args[i]);
+      if (count > 0) {
+        JUnitStarter.ourCount = count;
+        continue;
+      }
+      argList.add(args[i]);
+    }
+    new JUnitForkedStarter().startVM((String[])argList.toArray(new String[argList.size()]));
   }
 
   protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err)
     throws InstantiationException, IllegalAccessException, ClassNotFoundException {
     final int lastIdx = Integer.parseInt(args[1]);
     final String[] childTestDescription = {args[2]};
-    final boolean isJUnit4 = args[3].equalsIgnoreCase("true");
+    final String argentName = args[3];
     final ArrayList listeners = new ArrayList();
     for (int i = 4, argsLength = args.length; i < argsLength; i++) {
       listeners.add(args[i]);
     }
-    IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(isJUnit4).newInstance();
+    IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(argentName).newInstance();
     //noinspection IOResourceOpenedButNotSafelyClosed
     testRunner.setStreams(new SegmentedOutputStream(out, true), new SegmentedOutputStream(err, true), lastIdx);
-    System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, 1, false));
+    System.exit(testRunner.startRunnerWithArgs(childTestDescription, listeners, null, JUnitStarter.ourCount, false));
   }
 
 }

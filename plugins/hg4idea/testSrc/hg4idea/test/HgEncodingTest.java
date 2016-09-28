@@ -43,7 +43,7 @@ public class HgEncodingTest extends HgPlatformTest {
     echo("file.txt", "lalala");
     HgRepository hgRepo = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
     HgCommitCommand commitCommand = new HgCommitCommand(myProject, hgRepo, "сообщение");
-    commitCommand.execute();
+    commitCommand.executeInCurrentThread();
   }
 
   //test SpecialCharacters in commit message for default EncodingProject settings
@@ -55,7 +55,7 @@ public class HgEncodingTest extends HgPlatformTest {
     String comment = "öäüß";
     HgRepository hgRepo = HgRepositoryImpl.getInstance(myRepository, myProject, myProject);
     HgCommitCommand commitCommand = new HgCommitCommand(myProject, hgRepo, comment);
-    commitCommand.execute();
+    commitCommand.executeInCurrentThread();
     HgLogCommand logCommand = new HgLogCommand(myProject);
     myRepository.refresh(false, true);
     VirtualFile file = myRepository.findChild(fileName);

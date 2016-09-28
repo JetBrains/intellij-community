@@ -89,20 +89,12 @@ public class FormSourceCodeGeneratorTest extends PsiTestCase {
   private void doTest() throws IOException {
     final VirtualFile form = myTestProjectRoot.findChild("Test.form");
     assertNotNull(form);
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              myGenerator.generate(form);
-            }
-          });
-        }
-        catch (Exception e) {
-          fail(e.getMessage());
-        }
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      try {
+        ApplicationManager.getApplication().runWriteAction(() -> myGenerator.generate(form));
+      }
+      catch (Exception e) {
+        fail(e.getMessage());
       }
     }, "", null);
 

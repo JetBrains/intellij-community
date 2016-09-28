@@ -31,7 +31,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.ui.*;
-import com.jediterm.terminal.ui.settings.SettingsProvider;
+import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
@@ -116,7 +116,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
   }
 
   @Override
-  protected JediTermWidget createInnerTerminalWidget(SettingsProvider settingsProvider) {
+  protected JediTermWidget createInnerTerminalWidget(TabbedSettingsProvider settingsProvider) {
     return new JBTerminalWidget(mySettingsProvider, myParent);
   }
 
@@ -173,6 +173,17 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     @Override
     public void setTabComponentAt(int index, Component component) {
       //nop
+    }
+
+    @Override
+    public int indexOfComponent(Component component) {
+      for (int i = 0; i<myTabs.getTabCount(); i++) {
+        if (component.equals(myTabs.getTabAt(i).getComponent())) {
+          return i;
+        }
+      }
+      
+      return -1;
     }
 
     @Override

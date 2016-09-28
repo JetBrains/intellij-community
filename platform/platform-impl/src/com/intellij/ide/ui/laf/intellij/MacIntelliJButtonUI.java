@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
 import sun.swing.SwingUtilities2;
@@ -95,6 +96,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         if (v != null) {
           v.paint(g, textRect);
         } else {
+          UISettings.setupAntialiasing(g);
           paintText(g, b, textRect, text);
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,6 @@ import com.intellij.application.options.ImportSourceChooserDialog;
 import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
-import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -34,21 +31,18 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -75,39 +69,14 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     mySchemesTableModel = new MySchemesTableModel(schemesModel);
     mySchemesTable.setModel(mySchemesTableModel);
     mySchemesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    mySchemesTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(@NotNull ListSelectionEvent e) {
-        updateActions();
-      }
-    });
+    mySchemesTable.getSelectionModel().addListSelectionListener(e -> updateActions());
     setDefaultSelection();
 
 
-    myDeleteButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        deleteSelected();
-      }
-    });
-    mySaveAsButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        onSaveAs();
-      }
-    });
-    myCopyToProjectButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        onCopyToProject();
-      }
-    });
-    myCloseButton.addActionListener(new ActionListener(){
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        doCancelAction();
-      }
-    });
+    myDeleteButton.addActionListener(e -> deleteSelected());
+    mySaveAsButton.addActionListener(e -> onSaveAs());
+    myCopyToProjectButton.addActionListener(e -> onCopyToProject());
+    myCloseButton.addActionListener(e -> doCancelAction());
 
     myExportButton.setVisible(false);
 
@@ -116,12 +85,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     }
     else {
       myImportButton.setVisible(true);
-      myImportButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull final ActionEvent e) {
-          chooseAndImport();
-        }
-      });
+      myImportButton.addActionListener(e -> chooseAndImport());
     }
 
     if (SchemeExporterEP.getExtensions(CodeStyleScheme.class).isEmpty()) {
@@ -129,12 +93,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     }
     else {
       myExportButton.setVisible(true);
-      myExportButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          exportSelectedScheme();
-        }
-      });
+      myExportButton.addActionListener(e -> exportSelectedScheme());
     }
 
     init();
@@ -163,39 +122,29 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
             final CodeStyleScheme scheme = importExternalCodeStyle(importer);
             if (scheme != null) {
               final String additionalImportInfo = StringUtil.notNullize(importer.getAdditionalImportInfo(scheme));
-              showStatus(myImportButton,
+              SchemeImportUtil
+                .showStatus(myImportButton,
                          ApplicationBundle.message("message.code.style.scheme.import.success", selectedImporterName, scheme.getName(), additionalImportInfo),
                          MessageType.INFO);
             }
           }
           catch (SchemeImportException e) {
             if (e.isWarning()) {
-              showStatus(myImportButton, e.getMessage(), MessageType.WARNING);
+              SchemeImportUtil.showStatus(myImportButton, e.getMessage(), MessageType.WARNING);
               return;
             }
             final String message = ApplicationBundle.message("message.code.style.scheme.import.failure", selectedImporterName, e.getMessage());
-            showStatus(myImportButton, message, MessageType.ERROR);
+            SchemeImportUtil.showStatus(myImportButton, message, MessageType.ERROR);
           }
         }
       }
     }
   }
 
-  private static void showStatus(final JComponent component, final String message, MessageType messageType) {
-    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
-                                    messageType.getPopupBackground(), null);
-    balloonBuilder.setFadeoutTime(5000);
-    final Balloon balloon = balloonBuilder.createBalloon();
-    final Rectangle rect = component.getBounds();
-    final Point p = new Point(rect.x, rect.y + rect.height);
-    balloon.showInCenterOf(component);
-    Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
-  }  
-  
   @Nullable
   private CodeStyleScheme importExternalCodeStyle(final SchemeImporter<CodeStyleScheme> importer) throws SchemeImportException {
-    final VirtualFile selectedFile = selectImportSource(importer.getSourceExtensions());
+    final VirtualFile selectedFile = SchemeImportUtil
+      .selectImportSource(importer.getSourceExtensions(), myContentPane, CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
     if (selectedFile != null) {
       CodeStyleSchemesUIConfiguration.Util.setRecentImportFile(selectedFile);
       final SchemeCreator schemeCreator = new SchemeCreator();
@@ -208,27 +157,6 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       }
     }
     return null;
-  }
-
-  @Nullable
-  private VirtualFile selectImportSource(final String[] sourceExtensions) {
-    final Set<String> extensions = new HashSet<String>(Arrays.asList(sourceExtensions));
-    FileChooserDialog fileChooser = FileChooserFactory.getInstance()
-      .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false) {
-        @Override
-        public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-          return file.isDirectory() || extensions.contains(file.getExtension());
-        }
-
-        @Override
-        public boolean isFileSelectable(VirtualFile file) {
-          return !file.isDirectory() && extensions.contains(file.getExtension());
-        }
-      }, null, myContentPane);
-    final VirtualFile[] virtualFiles = fileChooser.choose(null, CodeStyleSchemesUIConfiguration.Util.getRecentImportFile());
-    if (virtualFiles.length != 1) return null;
-    virtualFiles[0].refresh(false, false);
-    return virtualFiles[0];
   }
 
   private void updateActions() {
@@ -441,7 +369,6 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
     public boolean isProjectScheme(CodeStyleScheme scheme) {
       return mySchemesModel.isProjectScheme(scheme);
     }
-
   }
 
   private void onSaveAs() {
@@ -452,11 +379,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
       }
     }
     else {
-      CodeStyleScheme[] schemes = CodeStyleSchemes.getInstance().getSchemes();
-      ArrayList<String> names = new ArrayList<String>();
-      for (CodeStyleScheme scheme : schemes) {
-        names.add(scheme.getName());
-      }
+      Collection<String> names = CodeStyleSchemesImpl.getSchemeManager().getAllSchemeNames();
       String selectedName = getSelectedScheme().getName();
       SaveSchemeDialog saveDialog =
         new SaveSchemeDialog(myParent, ApplicationBundle.message("title.save.code.style.scheme.as"), names, selectedName);
@@ -482,11 +405,7 @@ public class ManageCodeStyleSchemesDialog extends DialogWrapper {
   }
 
   private void exportSelectedScheme() {
-    new CodeStyleSchemeExporterUI(myExportButton, getSelectedScheme(), new CodeStyleSchemeExporterUI.StatusCallback() {
-      @Override
-      public void showMessage(@NotNull String message, @NotNull MessageType messageType) {
-        showStatus(myExportButton, message, messageType);
-      }
-    }).export();
+    new CodeStyleSchemeExporterUI(myExportButton, getSelectedScheme(),
+                                  (message, messageType) -> SchemeImportUtil.showStatus(myExportButton, message, messageType)).export();
   }
 }

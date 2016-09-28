@@ -124,13 +124,10 @@ public class TokenSetTest {
     final TokenSet set = TokenSet.create();
     final int shift = new Random().nextInt(500000);
 
-    PlatformTestUtil.startPerformanceTest("TokenSet.contains() performance", 25, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        for (int i = 0; i < 1000000; i++) {
-          final IElementType next = elementTypes[((i + shift) % elementTypes.length)];
-          assertFalse(set.contains(next));
-        }
+    PlatformTestUtil.startPerformanceTest("TokenSet.contains() performance", 25, () -> {
+      for (int i = 0; i < 1000000; i++) {
+        final IElementType next = elementTypes[((i + shift) % elementTypes.length)];
+        assertFalse(set.contains(next));
       }
     }).cpuBound().useLegacyScaling().assertTiming();
   }

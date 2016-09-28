@@ -57,12 +57,7 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
 
   public Collection<PsiPackage> resolvePackageName(@Nullable PsiPackage context, final String packageName) {
     if (context != null) {
-      return ContainerUtil.filter(context.getSubPackages(getResolveScope()), new Condition<PsiPackage>() {
-        @Override
-        public boolean value(PsiPackage aPackage) {
-          return Comparing.equal(aPackage.getName(), packageName);
-        }
-      });
+      return ContainerUtil.filter(context.getSubPackages(getResolveScope()), aPackage -> Comparing.equal(aPackage.getName(), packageName));
     }
     return Collections.emptyList();
   }
@@ -77,12 +72,8 @@ public class PackageReferenceSet extends ReferenceSetBase<PsiPackageReference> {
     if (packageReference == null) {
       return Collections.emptyList();
     }
-    return ContainerUtil.map2List(packageReference.multiResolve(false), new NullableFunction<ResolveResult, PsiPackage>() {
-      @Override
-      public PsiPackage fun(final ResolveResult resolveResult) {
-        return (PsiPackage)resolveResult.getElement();
-      }
-    });
+    return ContainerUtil.map2List(packageReference.multiResolve(false),
+                                  (NullableFunction<ResolveResult, PsiPackage>)resolveResult -> (PsiPackage)resolveResult.getElement());
   }
 
   public Set<PsiPackage> getInitialContext() {

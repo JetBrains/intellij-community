@@ -40,27 +40,23 @@ import java.util.List;
  */
 public class DefaultArrangementEntryMatcherSerializer {
 
-  private static final Comparator<ArrangementMatchCondition> CONDITION_COMPARATOR = new Comparator<ArrangementMatchCondition>() {
-
-    @Override
-    public int compare(ArrangementMatchCondition c1, ArrangementMatchCondition c2) {
-      boolean isAtom1 = c1 instanceof ArrangementAtomMatchCondition;
-      boolean isAtom2 = c2 instanceof ArrangementAtomMatchCondition;
-      if (isAtom1 ^ isAtom2) {
-        return isAtom1 ? 1 : -1; // Composite conditions before atom conditions.
-      }
-      else if (!isAtom1) {
-        return 0;
-      }
-
-      ArrangementAtomMatchCondition atom1 = (ArrangementAtomMatchCondition)c1;
-      ArrangementAtomMatchCondition atom2 = (ArrangementAtomMatchCondition)c2;
-      int cmp = atom1.getType().compareTo(atom2.getType());
-      if (cmp == 0) {
-        cmp = atom1.getValue().toString().compareTo(atom2.getValue().toString());
-      }
-      return cmp;
+  private static final Comparator<ArrangementMatchCondition> CONDITION_COMPARATOR = (c1, c2) -> {
+    boolean isAtom1 = c1 instanceof ArrangementAtomMatchCondition;
+    boolean isAtom2 = c2 instanceof ArrangementAtomMatchCondition;
+    if (isAtom1 ^ isAtom2) {
+      return isAtom1 ? 1 : -1; // Composite conditions before atom conditions.
     }
+    else if (!isAtom1) {
+      return 0;
+    }
+
+    ArrangementAtomMatchCondition atom1 = (ArrangementAtomMatchCondition)c1;
+    ArrangementAtomMatchCondition atom2 = (ArrangementAtomMatchCondition)c2;
+    int cmp = atom1.getType().compareTo(atom2.getType());
+    if (cmp == 0) {
+      cmp = atom1.getValue().toString().compareTo(atom2.getValue().toString());
+    }
+    return cmp;
   };
 
   @NotNull private static final Logger LOG = Logger.getInstance("#" + DefaultArrangementEntryMatcherSerializer.class.getName());

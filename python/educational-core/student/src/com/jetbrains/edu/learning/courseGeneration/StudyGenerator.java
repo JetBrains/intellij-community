@@ -4,17 +4,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.Lesson;
-import com.jetbrains.edu.courseFormat.Task;
-import com.jetbrains.edu.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.Task;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +22,7 @@ public class StudyGenerator {
   private StudyGenerator() {
 
   }
+
   private static final Logger LOG = Logger.getInstance(StudyGenerator.class.getName());
 
   /**
@@ -70,7 +70,7 @@ public class StudyGenerator {
           File resourceFile = new File(newResourceRoot, fileName);
           File fileInProject = new File(taskDir.getCanonicalPath(), fileName);
           FileUtil.copy(resourceFile, fileInProject);
-          if (!StudyUtils.isTestsFile(project, fileName) && !EduNames.TASK_HTML.equals(fileName)) {
+          if (!StudyUtils.isTestsFile(project, fileName) && !StudyUtils.isTaskDescriptionFile(fileName)) {
             StudyTaskManager.getInstance(project).addInvisibleFiles(FileUtil.toSystemIndependentName(fileInProject.getPath()));
           }
         }
@@ -107,34 +107,30 @@ public class StudyGenerator {
   public static void createCourse(@NotNull final Course course, @NotNull final VirtualFile baseDir, @NotNull final File resourceRoot,
                                   @NotNull final Project project) {
 
-              try {
-                final List<Lesson> lessons = course.getLessons();
-                for (int i = 1; i <= lessons.size(); i++) {
-                  Lesson lesson = lessons.get(i - 1);
-                  lesson.setIndex(i);
-                  createLesson(lesson, baseDir, resourceRoot, project);
-                }
-                baseDir.createChildDirectory(project, EduNames.SANDBOX_DIR);
-                File[] files = resourceRoot.listFiles(new FilenameFilter() {
-                  @Override
-                  public boolean accept(File dir, String name) {
-                    return !name.contains(EduNames.LESSON) && !name.equals(EduNames.COURSE_META_FILE) && !name.equals(EduNames.HINTS);
-                  }
-                });
-                for (File file : files) {
-                  File dir = new File(baseDir.getPath(), file.getName());
-                  if (file.isDirectory()) {
-                    FileUtil.copyDir(file, dir);
-                    continue;
-                  }
-
-                  FileUtil.copy(file, dir);
-
-                }
-              }
-              catch (IOException e) {
-                LOG.error(e);
-              }
+    try {
+      final List<Lesson> lessons = course.getLessons();
+      for (int i = 1; i <= lessons.size(); i++) {
+        Lesson lesson = lessons.get(i - 1);
+        lesson.setIndex(i);
+        createLesson(lesson, baseDir, resourceRoot, project);
+      }
+      baseDir.createChildDirectory(project, EduNames.SANDBOX_DIR);
+      File[] files = resourceRoot.listFiles(
+        (dir, name) -> !name.contains(EduNames.LESSON) && !name.equals(EduNames.COURSE_META_FILE) && !name.equals(EduNames.HINTS));
+      if (files != null) {
+        for (File file : files) {
+          File dir = new File(baseDir.getPath(), file.getName());
+          if (file.isDirectory()) {
+            FileUtil.copyDir(file, dir);
+            continue;
+          }
+          FileUtil.copy(file, dir);
+        }
+      }
+    }
+    catch (IOException e) {
+      LOG.error(e);
+    }
   }
 
 }

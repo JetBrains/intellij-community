@@ -21,7 +21,9 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +36,6 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.BidirectionalMap;
 import org.jdom.Element;
@@ -58,6 +59,8 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   private final BidirectionalMap<Boolean, QuickFix> myQuickFixes = new BidirectionalMap<Boolean, QuickFix>();
 
   public final JDOMExternalizableStringList EXCLUDE_ANNOS = new JDOMExternalizableStringList();
+  @SuppressWarnings("PublicField")
+  public boolean commentsAreContent = false;
   @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.empty.method.delete.quickfix");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.emptyMethod.EmptyMethodInspection");
 
@@ -135,16 +138,15 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     if (message != null) {
       final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
       fixes.add(getFix(processor, needToDeleteHierarchy));
-      SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(refMethod.getElement(), new Processor<String>() {
-        @Override
-        public boolean process(final String qualifiedName) {
+      if (globalContext instanceof GlobalInspectionContextBase && ((GlobalInspectionContextBase)globalContext).getCurrentProfile().getSingleTool() == null) {
+        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(refMethod.getElement(), qualifiedName -> {
           fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
             QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
             QuickFixBundle.message("fix.add.special.annotation.family"),
             EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
           return true;
-        }
-      });
+        });
+      }
 
       final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, false,
                                                                            fixes.toArray(new LocalQuickFix[fixes.size()]),
@@ -170,6 +172,10 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       if (((Condition<RefMethod>) extension).value(refMethod)) {
         return false;
       }
+    }
+
+    if (commentsAreContent && PsiTreeUtil.findChildOfType(owner, PsiComment.class) != null) {
+      return false;
     }
 
     return true;
@@ -251,7 +257,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    if (!EXCLUDE_ANNOS.isEmpty()) {
+    if (!EXCLUDE_ANNOS.isEmpty() || commentsAreContent) {
       super.writeSettings(node);
     }
   }
@@ -289,6 +295,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       .createSpecialAnnotationsListControl(EXCLUDE_ANNOS, InspectionsBundle.message("special.annotations.annotations.list"));
 
     final JPanel panel = new JPanel(new BorderLayout(2, 2));
+    panel.add(new SingleCheckboxOptionsPanel("Comments and javadoc count as content", this, "commentsAreContent"), BorderLayout.NORTH);
     panel.add(listPanel, BorderLayout.CENTER);
     return panel;
   }
@@ -320,23 +327,15 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
         psiElements.add(psiMethod);
         if (Boolean.valueOf(myHint).booleanValue()) {
           final Query<Pair<PsiMethod, PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
-          query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
-            @Override
-            public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
-              if (pair.first == psiMethod) {
-                psiElements.add(pair.second);
-              }
-              return true;
+          query.forEach(pair -> {
+            if (pair.first == psiMethod) {
+              psiElements.add(pair.second);
             }
+            return true;
           });
         }
 
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false);
-          }
-        }, project.getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false), project.getDisposed());
       }
     }
   }
@@ -400,12 +399,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
           }
         }
       }
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews);
-        }
-      }, project.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews), project.getDisposed());
     }
   }
 }

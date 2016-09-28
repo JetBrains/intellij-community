@@ -46,6 +46,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
+  private static final Logger LOG = Logger.getInstance("#" + UpdatePsiFileCopyright.class.getName());
   private final CopyrightProfile myOptions;
 
   protected UpdatePsiFileCopyright(Project project, Module module, VirtualFile root, CopyrightProfile options) {
@@ -359,9 +360,10 @@ public abstract class UpdatePsiFileCopyright extends AbstractUpdateCopyright {
   }
 
   private static class CommentRange {
-    public CommentRange(PsiElement first, PsiElement last) {
+    public CommentRange(@NotNull PsiElement first, @NotNull PsiElement last) {
       this.first = first;
       this.last = last;
+      LOG.assertTrue(first.getContainingFile() == last.getContainingFile());
     }
 
     public PsiElement getFirst() {

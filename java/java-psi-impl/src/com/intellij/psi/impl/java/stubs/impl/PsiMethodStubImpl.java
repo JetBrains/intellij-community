@@ -69,7 +69,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   }
 
   public static boolean isAnnotationMethod(final byte flags) {
-    return (flags & ANNOTATION) != 0;
+    return BitUtil.isSet(flags, ANNOTATION);
   }
 
   @Override
@@ -85,17 +85,17 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
 
   @Override
   public boolean isDeprecated() {
-    return (myFlags & DEPRECATED) != 0;
+    return BitUtil.isSet(myFlags, DEPRECATED);
   }
 
   @Override
   public boolean hasDeprecatedAnnotation() {
-    return (myFlags & DEPRECATED_ANNOTATION) != 0;
+    return BitUtil.isSet(myFlags, DEPRECATED_ANNOTATION);
   }
 
   @Override
   public boolean hasDocComment() {
-    return (myFlags & HAS_DOC_COMMENT) != 0;
+    return BitUtil.isSet(myFlags, HAS_DOC_COMMENT);
   }
 
   @Override

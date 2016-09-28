@@ -86,12 +86,7 @@ public class SendStatisticsComponent implements ApplicationComponent {
         @Override
         public void onFrameActivated() {
           if (isEmpty(((WindowManagerEx)WindowManager.getInstance()).getMostRecentFocusedWindow())) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                StatisticsNotificationManager.showNotification(statisticsService);
-              }
-            });
+            ApplicationManager.getApplication().invokeLater(() -> StatisticsNotificationManager.showNotification(statisticsService));
             myFrameStateManager.removeListener(this);
           }
         }
@@ -103,12 +98,7 @@ public class SendStatisticsComponent implements ApplicationComponent {
   }
 
   private void runWithDelay(final @NotNull StatisticsService statisticsService) {
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        statisticsService.send();
-      }
-    }, Time.MINUTE * DELAY_IN_MIN);
+    myAlarm.addRequest(() -> statisticsService.send(), Time.MINUTE * DELAY_IN_MIN);
   }
 
   @Override

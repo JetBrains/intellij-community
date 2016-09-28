@@ -15,28 +15,27 @@
  */
 package com.jetbrains.python.editor;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Set;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -45,9 +44,50 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
+  /**
+   * Keywords that start multiline block statements
+   */
+  private static final Set<String> START_KEYWORDS = ImmutableSet.of("async",
+                                                                    "def",
+                                                                    "class",
+                                                                    "with",
+                                                                    "if", "elif", "else",
+                                                                    "while", "for",
+                                                                    "try", "except", "finally");
+
   @Nullable
   @Override
   public String preprocessOnCopy(PsiFile file, int[] startOffsets, int[] endOffsets, String text) {
+    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || file.getLanguage() != PythonLanguage.getInstance()) {
+      return null;
+    }
+    // Expand copied text if it can cause indentation ambiguity
+    
+    // Text was selected with a single caret and might begin with a block statement 
+    if (startOffsets.length == 1 && endOffsets.length == 1 && fragmentBeginsWithBlockStatement(text)) {
+      final int start = startOffsets[0];
+      final int end = endOffsets[0];
+
+      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      if (document != null) {
+        final int startLine = document.getLineNumber(start);
+        final int startLineOffset = getLineStartSafeOffset(document, startLine);
+        if (start != startLineOffset && startLine != document.getLineNumber(end)) {
+          final PsiElement keyword = file.findElementAt(start);
+          if (keyword != null && START_KEYWORDS.contains(keyword.getText())) {
+            final PyStatementListContainer block = PsiTreeUtil.getParentOfType(keyword, PyStatementListContainer.class);
+            // Statement body is in selection
+            if (block != null && end > block.getStatementList().getTextOffset()) {
+              final String linePrefix = document.getText(TextRange.create(startLineOffset, start));
+              if (StringUtil.isEmptyOrSpaces(linePrefix)) {
+                return linePrefix + text;
+              }
+            }
+          }
+        }
+      }
+    }
+    
     return null;
   }
 
@@ -61,15 +101,6 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || file.getLanguage() != PythonLanguage.getInstance()) {
       return text;
     }
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-    final boolean useTabs = codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE);
-    final int indentSize = codeStyleSettings.getIndentSize(PythonFileType.INSTANCE);
-    CharFilter NOT_INDENT_FILTER = new CharFilter() {
-      public boolean accept(char ch) {
-        return ch != (useTabs ? '\t' : ' ');
-      }
-    };
-    final String indentChar = useTabs ? "\t" : " ";
 
     final CaretModel caretModel = editor.getCaretModel();
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -86,7 +117,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final PsiElement element = file.findElementAt(caretOffset);
     if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
 
-    text = addLeadingSpaces(text, NOT_INDENT_FILTER, indentSize, indentChar);
+    text = addLeadingSpacesToNormalizeSelection(project, text);
     final String indentText = getIndentText(file, document, caretOffset, lineNumber);
 
     final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
@@ -95,12 +126,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       editor.getSelectionModel().setSelection(lineStartOffset, selectionModel.getSelectionEnd());
 
       if (StringUtil.isEmptyOrSpaces(line)) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            document.deleteString(lineStartOffset, lineEndOffset);
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> document.deleteString(lineStartOffset, lineEndOffset));
       }
     }
 
@@ -112,25 +138,45 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       newText = text;
     }
 
+    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(project);
     if (addLinebreak(text, line, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd()) {
       newText += "\n";
     }
     return newText;
   }
 
-  private static String addLeadingSpaces(String text, final CharFilter filter, int indentSize, String indentChar) {
-    final List<String> strings = StringUtil.split(text, "\n", false);
-    if (strings.size() > 1) {
-      int firstLineIndent = StringUtil.findFirst(strings.get(0), filter);
-      int secondLineIndent = StringUtil.findFirst(strings.get(1), filter);
-      final int diff = secondLineIndent - firstLineIndent;
-      if (diff > indentSize) {
-        text = StringUtil.repeat(indentChar, diff - indentSize) + text;
-      }
+  @NotNull
+  private static String addLeadingSpacesToNormalizeSelection(@NotNull Project project, @NotNull String text) {
+    if (!fragmentBeginsWithBlockStatement(text)) {
+      return text;
+    }
+
+    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "dummy.py", text, false);
+    //fragment.setContext(file);
+    final PyStatementListContainer statement = as(fragment.getFirstChild(), PyStatementListContainer.class);
+    if (statement == null) {
+      return text;
+    }
+
+    final String statementIndent = PyIndentUtil.getElementIndent(statement);
+    if (!statementIndent.isEmpty()) {
+      return text;
+    }
+    
+    final String indentStep = PyIndentUtil.getIndentFromSettings(project);
+    final String bodyIndent = PyIndentUtil.getElementIndent(statement.getStatementList());
+    final String expectedBodyIndent = statementIndent + indentStep;
+    if (bodyIndent.startsWith(expectedBodyIndent)) {
+      return bodyIndent.substring(0, bodyIndent.length() - indentStep.length()) + text;
     }
     return text;
   }
 
+  private static boolean fragmentBeginsWithBlockStatement(@NotNull String text) {
+    return ContainerUtil.exists(START_KEYWORDS, keyword -> text.startsWith(keyword + " ") || text.startsWith(keyword + ":"));
+  }
+
+  @NotNull
   private static String getIndentText(@NotNull final PsiFile file,
                                       @NotNull final Document document,
                                       int caretOffset,
@@ -199,7 +245,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   private static boolean shouldPasteOnPreviousLine(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
-    final boolean useTabs = CodeStyleSettingsManager.getSettings(file.getProject()).useTabCharacter(PythonFileType.INSTANCE);
+    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file.getProject());
     final PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS == null || text.endsWith("\n")) {
       return true;

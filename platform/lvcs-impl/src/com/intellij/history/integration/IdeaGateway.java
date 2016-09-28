@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -207,8 +208,7 @@ public class IdeaGateway {
     if (!file.isDirectory()) {
       if (!isVersioned(file)) return null;
 
-      Pair<StoredContent, Long> contentAndStamps = getActualContentNoAcquire(file);
-      return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+      return doCreateFileEntry(file, getActualContentNoAcquire(file));
     }
     DirectoryEntry newDir = new DirectoryEntry(file.getName());
     doCreateChildrenForPathOnly(newDir, path, iterateDBChildren(file));
@@ -242,36 +242,49 @@ public class IdeaGateway {
       else {
         contentAndStamps = getActualContentNoAcquire(file);
       }
-      return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+
+      return doCreateFileEntry(file, contentAndStamps);
     }
-    DirectoryEntry newDir = new DirectoryEntry(file.getName());
+
+    DirectoryEntry newDir = null;
+    if (file instanceof VirtualFileSystemEntry) {
+      int nameId = ((VirtualFileSystemEntry)file).getNameId();
+      if (nameId > 0) {
+        newDir = new DirectoryEntry(nameId);
+      }
+    }
+
+    if (newDir == null) {
+      newDir = new DirectoryEntry(file.getName());
+    }
+
     doCreateChildren(newDir, iterateDBChildren(file), forDeletion);
     if (!isVersioned(file) && newDir.getChildren().isEmpty()) return null;
     return newDir;
   }
 
+  @NotNull
+  private Entry doCreateFileEntry(@NotNull VirtualFile file, Pair<StoredContent, Long> contentAndStamps) {
+    if (file instanceof VirtualFileSystemEntry) {
+      return new FileEntry(((VirtualFileSystemEntry)file).getNameId(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+    }
+    return new FileEntry(file.getName(), contentAndStamps.first, contentAndStamps.second, !file.isWritable());
+  }
+
   private void doCreateChildren(@NotNull DirectoryEntry parent, Iterable<VirtualFile> children, final boolean forDeletion) {
-    List<Entry> entries = ContainerUtil.mapNotNull(children, new NullableFunction<VirtualFile, Entry>() {
-      @Override
-      public Entry fun(@NotNull VirtualFile each) {
-        return doCreateEntry(each, forDeletion);
-      }
-    });
+    List<Entry> entries = ContainerUtil.mapNotNull(children, (NullableFunction<VirtualFile, Entry>)each -> doCreateEntry(each, forDeletion));
     parent.addChildren(entries);
   }
 
   public void registerUnsavedDocuments(@NotNull final LocalHistoryFacade vcs) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        vcs.beginChangeSet();
-        for (Document d : FileDocumentManager.getInstance().getUnsavedDocuments()) {
-          VirtualFile f = getFile(d);
-          if (!shouldRegisterDocument(f)) continue;
-          registerDocumentContents(vcs, f, d);
-        }
-        vcs.endChangeSet(null);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      vcs.beginChangeSet();
+      for (Document d : FileDocumentManager.getInstance().getUnsavedDocuments()) {
+        VirtualFile f = getFile(d);
+        if (!shouldRegisterDocument(f)) continue;
+        registerDocumentContents(vcs, f, d);
       }
+      vcs.endChangeSet(null);
     });
   }
 

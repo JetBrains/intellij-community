@@ -1,0 +1,7 @@
+public class B {
+    public final Foo bar = null;
+}
+
+class D {
+    public final Foo bar = null;
+}

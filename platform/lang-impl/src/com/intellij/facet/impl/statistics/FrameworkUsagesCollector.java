@@ -50,11 +50,6 @@ public class FrameworkUsagesCollector extends AbstractApplicationUsagesCollector
       }
     }
 
-    return ContainerUtil.map2Set(facets, new Function<String, UsageDescriptor>() {
-      @Override
-      public UsageDescriptor fun(String facet) {
-        return new UsageDescriptor(facet, 1);
-      }
-    });
+    return ContainerUtil.map2Set(facets, facet -> new UsageDescriptor(facet, 1));
   }
 }

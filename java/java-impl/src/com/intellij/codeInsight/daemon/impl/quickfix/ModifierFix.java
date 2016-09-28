@@ -145,15 +145,12 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     final PsiFile containingFile = myModifierList.getContainingFile();
     final PsiModifierList modifierList;
     if (variable != null && variable.isValid()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            variable.normalizeDeclaration();
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          variable.normalizeDeclaration();
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       });
       modifierList = variable.getModifierList();
@@ -185,27 +182,21 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                                    QuickFixBundle.message("change.inheritors.visibility.warning.text"),
                                    QuickFixBundle.message("change.inheritors.visibility.warning.title"),
                                    Messages.getQuestionIcon()) == Messages.YES) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!FileModificationService.getInstance().preparePsiElementsForWrite(modifierLists)) {
-              return;
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          if (!FileModificationService.getInstance().preparePsiElementsForWrite(modifierLists)) {
+            return;
+          }
 
-            for (final PsiModifierList modifierList : modifierLists) {
-              changeModifierList(modifierList);
-            }
+          for (final PsiModifierList modifierList1 : modifierLists) {
+            changeModifierList(modifierList1);
           }
         });
       }
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        changeModifierList(modifierList);
-        UndoUtil.markPsiFileForUndo(containingFile);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      changeModifierList(modifierList);
+      UndoUtil.markPsiFileForUndo(containingFile);
     });
   }
 

@@ -46,7 +46,7 @@ import java.util.List;
  * @author dcheryasov
  */
 // visibility is intentionally package-level
-class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
+public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
   private final PsiElement myImportable;
   private final PyImportElement myImportElement;
   private final PsiFileSystemItem myFile;
@@ -140,12 +140,8 @@ class ImportCandidateHolder implements Comparable<ImportCandidateHolder> {
       sb.append(((PyFunction)myImportable).getParameterList().getPresentableText(false));
     }
     else if (myImportable instanceof PyClass) {
-      final List<String> supers = ContainerUtil.mapNotNull(((PyClass)myImportable).getSuperClasses(null), new Function<PyClass, String>() {
-          @Override
-          public String fun(PyClass cls) {
-            return PyUtil.isObjectClass(cls) ? null : cls.getName();
-          }
-        });
+      final List<String> supers = ContainerUtil.mapNotNull(((PyClass)myImportable).getSuperClasses(null),
+                                                           cls -> PyUtil.isObjectClass(cls) ? null : cls.getName());
       if (!supers.isEmpty()) {
         sb.append("(");
         StringUtil.join(supers, ", ", sb);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.util.BitUtil;
 import org.intellij.lang.annotations.JdkConstants;
 
 import java.awt.event.InputEvent;
@@ -25,7 +26,7 @@ import java.awt.event.MouseWheelEvent;
  * A mouse shortcut, which can consist of a specific mouse button, click count and modifier keys
  * (Shift, Ctrl or Alt).
  */
-public final class MouseShortcut extends Shortcut {
+public class MouseShortcut extends Shortcut {
   public static final int BUTTON_WHEEL_UP = 143;
   public static final int BUTTON_WHEEL_DOWN = 142;
   private final int myButton;
@@ -80,19 +81,19 @@ public final class MouseShortcut extends Shortcut {
 
   @JdkConstants.InputEventMask
   private static int mapOldModifiers(@JdkConstants.InputEventMask int modifiers) {
-    if ((modifiers & InputEvent.SHIFT_MASK) != 0) {
+    if (BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)) {
       modifiers |= InputEvent.SHIFT_DOWN_MASK;
     }
-    if ((modifiers & InputEvent.ALT_MASK) != 0) {
+    if (BitUtil.isSet(modifiers, InputEvent.ALT_MASK)) {
       modifiers |= InputEvent.ALT_DOWN_MASK;
     }
-    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) {
+    if (BitUtil.isSet(modifiers, InputEvent.ALT_GRAPH_MASK)) {
       modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
     }
-    if ((modifiers & InputEvent.CTRL_MASK) != 0) {
+    if (BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)) {
       modifiers |= InputEvent.CTRL_DOWN_MASK;
     }
-    if ((modifiers & InputEvent.META_MASK) != 0) {
+    if (BitUtil.isSet(modifiers, InputEvent.META_MASK)) {
       modifiers |= InputEvent.META_DOWN_MASK;
     }
 

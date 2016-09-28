@@ -93,7 +93,7 @@ public class PrivateMemberAccessBetweenOuterAndInnerClassInspection extends Base
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Make package-local";
+      return "Make package-private";
     }
 
     @Override

@@ -38,12 +38,8 @@ public class NewElementToolbarAction extends NewElementAction {
     if (e.getData(LangDataKeys.IDE_VIEW) == null) {
       final Project project = e.getData(CommonDataKeys.PROJECT);
       final PsiFileSystemItem psiFile = e.getData(CommonDataKeys.PSI_FILE).getParent();
-      ProjectViewImpl.getInstance(project).selectCB(psiFile, psiFile.getVirtualFile(), true).doWhenDone(new Runnable() {
-        @Override
-        public void run() {
-          showPopup(DataManager.getInstance().getDataContext());
-        }
-      });
+      ProjectViewImpl.getInstance(project).selectCB(psiFile, psiFile.getVirtualFile(), true).doWhenDone(
+        () -> showPopup(DataManager.getInstance().getDataContext()));
     }
     else {
       super.actionPerformed(e);

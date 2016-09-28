@@ -209,35 +209,26 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
       return;
     }
     
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        final Runnable action = new Runnable() {
-          @Override
-          public void run() {
-            String directoryName = myTargetDirectoryField.getChildComponent().getText().replace(File.separatorChar, '/');
-            try {
-              myTargetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), directoryName);
-            }
-            catch (IncorrectOperationException e) {
-              // ignore
-            }
-          }
-        };
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      final Runnable action = () -> {
+        String directoryName = myTargetDirectoryField.getChildComponent().getText().replace(File.separatorChar, '/');
+        try {
+          myTargetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), directoryName);
+        }
+        catch (IncorrectOperationException e) {
+          // ignore
+        }
+      };
 
-        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-          @Override
-          public void run() {
-            ApplicationManager.getApplication().runWriteAction(action);
-            if (myTargetDirectory == null) {
-              CommonRefactoringUtil.showErrorMessage(getTitle(),
-                                                     RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
-              return;
-            }
-            myCallback.run(MoveFilesOrDirectoriesDialog.this);
-          }
-        });
-      }
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
+        ApplicationManager.getApplication().runWriteAction(action);
+        if (myTargetDirectory == null) {
+          CommonRefactoringUtil.showErrorMessage(getTitle(),
+                                                 RefactoringBundle.message("cannot.create.directory"), myHelpID, myProject);
+          return;
+        }
+        myCallback.run(MoveFilesOrDirectoriesDialog.this);
+      });
     }, RefactoringBundle.message("move.title"), null);
   }
 
@@ -247,12 +238,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        MoveFilesOrDirectoriesDialog.super.show();
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> MoveFilesOrDirectoriesDialog.super.show());
   }
 
 }

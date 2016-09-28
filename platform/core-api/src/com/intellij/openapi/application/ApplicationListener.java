@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.intellij.openapi.application;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -35,15 +37,15 @@ public interface ApplicationListener extends EventListener {
   /**
    * Is called before action start.
    */
-  void beforeWriteActionStart(Object action);
+  void beforeWriteActionStart(@NotNull Object action);
 
   /**
    * Is called on action start.
    */
-  void writeActionStarted(Object action);
+  void writeActionStarted(@NotNull Object action);
 
   /**
    *  Is called on action finish.
    */
-  void writeActionFinished(Object action);
+  void writeActionFinished(@NotNull Object action);
 }

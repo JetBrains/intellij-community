@@ -1037,12 +1037,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
                                          "</profiles>");
 
     MavenModel p = readProject(module);
-    assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), new Function<MavenProfile, Object>() {
-      @Override
-      public Object fun(MavenProfile profile) {
-        return profile.getId();
-      }
-    }), "profileFromChild", "profileFromParent");
+    assertOrderedElementsAreEqual(ContainerUtil.map(p.getProfiles(), (Function<MavenProfile, Object>)profile -> profile.getId()), "profileFromChild", "profileFromParent");
   }
 
   public void testCorrectlyCollectProfilesFromDifferentSources() throws Exception {

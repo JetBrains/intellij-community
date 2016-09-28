@@ -16,12 +16,17 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.psi.*;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.AttributeValueSelfReference;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
@@ -47,7 +52,9 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
         }
       }
     }
-    return new PsiReference[]{new JavaFxControllerFieldRef(xmlAttributeValue, fieldOrGetterMethod, aClass)};
+    return new PsiReference[]{
+      new JavaFxControllerFieldRef(xmlAttributeValue, fieldOrGetterMethod, aClass),
+      new AttributeValueSelfReference(xmlAttributeValue)};
   }
 
   public static class JavaFxControllerFieldRef extends PsiReferenceBase<XmlAttributeValue> {
@@ -89,16 +96,59 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
     @NotNull
     @Override
     public Object[] getVariants() {
+      final PsiClass exactTagClass = JavaFxPsiUtil.getTagClass(myXmlAttributeValue);
+      final PsiClass guessedTagClass = exactTagClass == null ? getGuessedTagClass() : null;
+
       final List<Object> fieldsToSuggest = new ArrayList<Object>();
-      final PsiField[] fields = myAClass.getFields();
+      final PsiField[] fields = myAClass.getAllFields();
       for (PsiField psiField : fields) {
         if (!psiField.hasModifierProperty(PsiModifier.STATIC)) {
           if (JavaFxPsiUtil.isVisibleInFxml(psiField)) {
-            fieldsToSuggest.add(psiField);
+            final PsiType fieldType = psiField.getType();
+            final PsiClass fieldClass = (fieldType instanceof PsiClassType) ? ((PsiClassType)fieldType).resolve() : null;
+            if (fieldClass == null) {
+              fieldsToSuggest.add(psiField);
+            }
+            else if (exactTagClass != null) {
+              if (InheritanceUtil.isInheritorOrSelf(exactTagClass, fieldClass, true)) {
+                fieldsToSuggest.add(psiField);
+              }
+            }
+            else if (guessedTagClass == null || InheritanceUtil.isInheritorOrSelf(fieldClass, guessedTagClass, true)) {
+              fieldsToSuggest.add(psiField);
+            }
           }
         }
       }
       return ArrayUtil.toObjectArray(fieldsToSuggest);
+    }
+
+    @Override
+    public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      final String newPropertyName = JavaFxPsiUtil.getPropertyName(newElementName, myFieldOrMethod instanceof PsiMethod);
+      return super.handleElementRename(newPropertyName);
+    }
+
+    private PsiClass getGuessedTagClass() {
+      final PsiElement xmlAttribute = myXmlAttributeValue.getParent();
+      final XmlTag xmlTag = ((XmlAttribute)xmlAttribute).getParent();
+      if (xmlTag == null) return null;
+      final PsiElement parentTag = xmlTag.getParent();
+      if (parentTag == null) return null;
+
+      String className = null;
+      if (parentTag instanceof XmlDocument) {
+        className = JavaFxCommonNames.JAVAFX_SCENE_LAYOUT_PANE;
+      }
+      else if (parentTag.getParent() instanceof XmlDocument) {
+        final String name = xmlTag.getName();
+        if (!FxmlConstants.FX_BUILT_IN_TAGS.contains(name)) {
+          className = JavaFxCommonNames.JAVAFX_SCENE_NODE;
+        }
+      }
+      if (className == null) return null;
+
+      return JavaPsiFacade.getInstance(myAClass.getProject()).findClass(className, GlobalSearchScope.allScope(myAClass.getProject()));
     }
   }
 }

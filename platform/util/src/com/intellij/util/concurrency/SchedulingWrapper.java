@@ -234,7 +234,8 @@ class SchedulingWrapper implements ScheduledExecutorService {
 
     @Override
     public String toString() {
-      return "Delay: " + getDelay(TimeUnit.MILLISECONDS) + "ms; " + BoundedTaskExecutor.info(this);
+      Object info = BoundedTaskExecutor.info(this);
+      return "Delay: " + getDelay(TimeUnit.MILLISECONDS) + "ms; " + (info == this ? super.toString() : info);
     }
 
     @NotNull
@@ -321,7 +322,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
                                                 long initialDelay,
                                                 long period,
                                                 @NotNull TimeUnit unit) {
-    throw new IncorrectOperationException("Not supported because it's bad for hibernation; use scheduleWithFixedDelay() instead.");
+    throw new IncorrectOperationException("Not supported because it's bad for hibernation; use scheduleWithFixedDelay() with the same parameters instead.");
   }
 
   @NotNull

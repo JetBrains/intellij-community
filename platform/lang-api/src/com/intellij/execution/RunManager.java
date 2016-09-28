@@ -20,6 +20,10 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +40,8 @@ import java.util.regex.Pattern;
  * @see ExecutionManager
  */
 public abstract class RunManager {
+  public static final String UNNAMED = "Unnamed";
+
   public static RunManager getInstance(final Project project) {
     return project.getComponent(RunManager.class);
   }
@@ -229,5 +235,33 @@ public abstract class RunManager {
       if (!currentNames.contains(newName)) return newName;
       i++;
     }
+  }
+
+  public String suggestUniqueName(@Nullable String name, @Nullable ConfigurationType type) {
+    List<RunnerAndConfigurationSettings> settingsList = type != null ? getConfigurationSettingsList(type) : getAllSettings();
+    List<String> names = ContainerUtil.map(settingsList, settings -> settings.getName());
+    return suggestUniqueName(StringUtil.notNullize(name, UNNAMED), names);
+  }
+
+  /**
+   * Sets unique name if existing one is not 'unique'
+   * If settings type is not null (for example settings may be provided by plugin that is unavailable after IDE restart, so type would be suddenly null)
+   * name will be chosen unique for certain type otherwise name will be unique among all configurations
+   * @return <code>true</code> if name was changed
+   */
+  public boolean setUniqueNameIfNeed(@NotNull RunnerAndConfigurationSettings settings) {
+    String oldName = settings.getName();
+    settings.setName(suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), settings.getType()));
+    return !Comparing.equal(oldName, settings.getName());
+  }
+
+  /**
+   * Sets unique name if existing one is not 'unique' for corresponding configuration type
+   * @return <code>true</code> if name was changed
+   */
+  public boolean setUniqueNameIfNeed(@NotNull RunConfiguration configuration) {
+    String oldName = configuration.getName();
+    configuration.setName(suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.getType()));
+    return !Comparing.equal(oldName, configuration.getName());
   }
 }

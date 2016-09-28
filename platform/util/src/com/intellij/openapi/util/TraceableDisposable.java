@@ -15,8 +15,11 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Traces creation and disposal by storing corresponding stacktraces.
+ * Traces creation and disposal by storing corresponding stack traces.
  * In constructor it saves creation stacktrace
  * In kill() it saves disposal stacktrace
  */
@@ -38,6 +41,7 @@ public class TraceableDisposable {
   private Throwable KILL_TRACE;
 
   public TraceableDisposable(boolean debug) {
+    //noinspection ThrowableResultOfMethodCallIgnored
     CREATE_TRACE = debug ? ThrowableInterner.intern(new Throwable()) : null;
   }
 
@@ -60,19 +64,26 @@ public class TraceableDisposable {
     throw new ObjectNotDisposedException(msg);
   }
 
-  private class ObjectNotDisposedException extends AbstractDisposalException {
+  private class ObjectNotDisposedException extends RuntimeException {
 
     ObjectNotDisposedException(@Nullable @NonNls final String msg) {
       super(msg);
     }
 
+    @Override
+    public void printStackTrace(@NotNull PrintStream s) {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      PrintWriter writer = new PrintWriter(s);
+      printStackTrace(writer);
+      writer.flush();
+    }
 
     @SuppressWarnings("HardCodedStringLiteral")
     @Override
     public void printStackTrace(PrintWriter s) {
       final List<StackTraceElement> stack = new ArrayList<StackTraceElement>(Arrays.asList(CREATE_TRACE.getStackTrace()));
       stack.remove(0); // this line is useless it stack
-     s.write(ObjectNotDisposedException.class.getCanonicalName() + ": See stack trace responsible for creation of unreleased object below \n\tat " + StringUtil.join(stack, "\n\tat "));
+      s.write(ObjectNotDisposedException.class.getCanonicalName() + ": See stack trace responsible for creation of unreleased object below \n\tat " + StringUtil.join(stack, "\n\tat "));
     }
   }
 
@@ -83,45 +94,40 @@ public class TraceableDisposable {
     throw new DisposalException(msg);
   }
 
-  private abstract class AbstractDisposalException extends RuntimeException {
-    protected AbstractDisposalException(String message) {
-      super(message);
-    }
-
-    @Override
-    public void printStackTrace(@NotNull PrintStream s) {
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      PrintWriter writer = new PrintWriter(s);
-      printStackTrace(writer);
-      writer.flush();
-    }
-  }
-
-  private class DisposalException extends AbstractDisposalException {
+  private class DisposalException extends RuntimeException implements ExceptionWithAttachments {
     private DisposalException(String message) {
       super(message);
     }
 
-    @SuppressWarnings("HardCodedStringLiteral")
+    @NotNull
     @Override
-    public void printStackTrace(PrintWriter s) {
+    public Attachment[] getAttachments() {
+      List<Attachment> answer = ContainerUtil.newSmartList();
       if (CREATE_TRACE != null) {
-        s.println("--------------Creation trace: ");
-        CREATE_TRACE.printStackTrace(s);
+        answer.add(new Attachment("creation", CREATE_TRACE));
       }
       if (KILL_TRACE != null) {
-        s.println("--------------Kill trace: ");
-        KILL_TRACE.printStackTrace(s);
+        answer.add(new Attachment("kill", KILL_TRACE));
       }
-      s.println("-------------Own trace:");
-      super.printStackTrace(s);
+      return answer.toArray(Attachment.EMPTY_ARRAY);
     }
   }
 
   @NotNull
   public String getStackTrace() {
-    StringWriter out = new StringWriter();
-    new DisposalException("").printStackTrace(new PrintWriter(out));
-    return out.toString();
+    StringWriter s = new StringWriter();
+    PrintWriter out = new PrintWriter(s);
+    if (CREATE_TRACE != null) {
+      out.println("--------------Creation trace: ");
+      CREATE_TRACE.printStackTrace(out);
+    }
+    if (KILL_TRACE != null) {
+      out.println("--------------Kill trace: ");
+      KILL_TRACE.printStackTrace(out);
+    }
+    out.println("-------------Own trace:");
+    new DisposalException("").printStackTrace(out);
+    out.flush();
+    return s.toString();
   }
 }

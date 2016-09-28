@@ -18,11 +18,9 @@ package org.jetbrains.plugins.groovy.codeInspection.type;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +33,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.*;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -380,7 +379,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         });
       }
       final PsiMethod staticMethod = ((GrGdkMethod)method).getStaticMethod();
-      final PsiType qualifierType = info.getQualifierInstanceType();
+      PsiType qualifierType = info.getQualifierInstanceType();
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        qualifierType = ResolveUtil.unwrapClassType(qualifierType);
+      }
 
       //check methods processed by @Category(ClassWhichProcessMethod) annotation
       if (qualifierType != null &&
@@ -475,6 +477,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     Map<String, NamedArgumentDescriptor> map = GroovyNamedArgumentProvider.getNamedArgumentsFromAllProviders(call, null, false);
     if (map == null) return;
 
+    checkNamedArguments(call, namedArguments, map);
+  }
+
+  private void checkNamedArguments(GroovyPsiElement context, GrNamedArgument[] namedArguments, Map<String, NamedArgumentDescriptor> map) {
     for (GrNamedArgument namedArgument : namedArguments) {
       String labelName = namedArgument.getLabelName();
 
@@ -489,10 +495,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
       if (PsiUtil.isRawClassMemberAccess(namedArgumentExpression)) continue;
 
-      PsiType expressionType = TypesUtil.boxPrimitiveType(namedArgumentExpression.getType(), call.getManager(), call.getResolveScope());
+      PsiType expressionType = TypesUtil.boxPrimitiveType(namedArgumentExpression.getType(), context.getManager(), context.getResolveScope());
       if (expressionType == null) continue;
 
-      if (!descriptor.checkType(expressionType, call)) {
+      if (!descriptor.checkType(expressionType, context)) {
         registerError(
           namedArgumentExpression,
           ProblemHighlightType.GENERIC_ERROR,
@@ -919,24 +925,16 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     GrParameter[] parameters = parameterList.getParameters();
     if (parameters.length > 0) {
       List<PsiType[]> signatures = ClosureParamsEnhancer.findFittingSignatures((GrClosableBlock)parent);
-      final List<PsiType> paramTypes = ContainerUtil.map(parameters, new Function<GrParameter, PsiType>() {
-        @Override
-        public PsiType fun(GrParameter parameter) {
-          return parameter.getType();
-        }
-      });
+      final List<PsiType> paramTypes = ContainerUtil.map(parameters, parameter -> parameter.getType());
 
       if (signatures.size() > 1) {
-        final PsiType[] fittingSignature = ContainerUtil.find(signatures, new Condition<PsiType[]>() {
-          @Override
-          public boolean value(PsiType[] types) {
-            for (int i = 0; i < types.length; i++) {
-              if (!typesAreEqual(types[i], paramTypes.get(i), parameterList)) {
-                return false;
-              }
+        final PsiType[] fittingSignature = ContainerUtil.find(signatures, types -> {
+          for (int i = 0; i < types.length; i++) {
+            if (!typesAreEqual(types[i], paramTypes.get(i), parameterList)) {
+              return false;
             }
-            return true;
           }
+          return true;
         });
         if (fittingSignature == null) {
           registerError(
@@ -1010,6 +1008,19 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (initializer == null) return;
 
     processAssignment(varType, initializer, variable.getNameIdentifierGroovy(), "cannot.assign", variable, ApplicableTo.ASSIGNMENT);
+  }
+
+  @Override
+  public void visitListOrMap(GrListOrMap listOrMap) {
+    super.visitListOrMap(listOrMap);
+
+    Map<String, NamedArgumentDescriptor> descriptors = NamedArgumentUtilKt.getDescriptors(listOrMap);
+    if (descriptors.isEmpty()) return;
+
+    GrNamedArgument[] namedArguments = listOrMap.getNamedArguments();
+    if (namedArguments.length == 0) return;
+
+    checkNamedArguments(listOrMap, namedArguments, descriptors);
   }
 
   @Override

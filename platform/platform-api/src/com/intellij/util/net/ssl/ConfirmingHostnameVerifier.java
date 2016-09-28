@@ -84,12 +84,7 @@ class ConfirmingHostnameVerifier implements X509HostnameVerifier {
   }
 
   private static boolean accepted(final String host, final X509Certificate cert) {
-    return CertificateManager.showAcceptDialog(new Callable<DialogWrapper>() {
-      @Override
-      public DialogWrapper call() throws Exception {
-        return CertificateWarningDialog.createHostnameMismatchWarning(cert, host);
-      }
-    });
+    return CertificateManager.showAcceptDialog(() -> CertificateWarningDialog.createHostnameMismatchWarning(cert, host));
   }
 
   // Copied from httpclient 4.2 sources, read class level commentary for explanation.

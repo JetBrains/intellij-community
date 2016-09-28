@@ -195,8 +195,20 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     classMember = resolveClassMember(myClass, myIsDefinition, name, location);
+
+    if (PyNames.__CLASS__.equals(name)) {
+      return resolveDunderClass(context, classMember);
+    }
+
     if (classMember != null) {
       return ResolveResultList.to(classMember);
+    }
+
+    if (PyNames.DOC.equals(name)) {
+      return Optional
+        .ofNullable(PyBuiltinCache.getInstance(myClass).getObjectType())
+        .map(type -> type.resolveMember(name, location, direction, resolveContext))
+        .orElse(Collections.emptyList());
     }
 
     classMember = resolveByOverridingAncestorsMembersProviders(this, name, location);
@@ -294,6 +306,36 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
+  private List<? extends RatedResolveResult> resolveDunderClass(@NotNull TypeEvalContext context, @Nullable PsiElement classMember) {
+    final boolean newStyleClass = myClass.isNewStyleClass(context);
+
+    if (!myIsDefinition) {
+      if (newStyleClass && classMember != null) {
+        return ResolveResultList.to(classMember);
+      }
+
+      return ResolveResultList.to(
+        myClass.getAncestorClasses(context)
+        .stream()
+        .filter(cls -> !PyUtil.isObjectClass(cls))
+        .<PsiElement>map(cls -> cls.findClassAttribute(PyNames.__CLASS__, true, context))
+        .filter(target -> target != null)
+        .findFirst()
+        .orElse(myClass)
+      );
+    }
+
+    if (LanguageLevel.forElement(myClass).isOlderThan(LanguageLevel.PYTHON30) && !newStyleClass) {
+      return ResolveResultList.to(classMember);
+    }
+
+    return Optional
+      .ofNullable(PyBuiltinCache.getInstance(myClass).getTypeType())
+      .map(typeType -> ResolveResultList.to(typeType.getPyClass()))
+      .orElse(null);
+  }
+
+  @Nullable
   @Override
   public PyClassLikeType getMetaClassType(@NotNull final TypeEvalContext context, boolean inherited) {
     if (!inherited) {
@@ -311,21 +353,18 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return null;
     }
     try {
-      return Collections.max(classTypes, new Comparator<PyClassLikeType>() {
-        @Override
-        public int compare(@Nullable PyClassLikeType t1, @Nullable PyClassLikeType t2) {
-          if (t1 == t2 || t1 != null && t1.equals(t2)) {
-            return 0;
-          }
-          else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
-            return 1;
-          }
-          else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
-            return -1;
-          }
-          else {
-            throw new NotDerivedClassTypeException();
-          }
+      return Collections.max(classTypes, (t1, t2) -> {
+        if (t1 == t2 || t1 != null && t1.equals(t2)) {
+          return 0;
+        }
+        else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
+          return 1;
+        }
+        else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
+          return -1;
+        }
+        else {
+          throw new NotDerivedClassTypeException();
         }
       });
     }

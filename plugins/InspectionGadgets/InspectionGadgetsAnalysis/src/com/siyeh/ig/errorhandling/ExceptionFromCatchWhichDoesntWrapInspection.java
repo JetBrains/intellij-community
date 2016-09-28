@@ -152,26 +152,23 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
         if (target instanceof PsiLocalVariable) {
           final PsiLocalVariable variable = (PsiLocalVariable)target;
           final Query<PsiReference> query = ReferencesSearch.search(variable, variable.getUseScope(), false);
-          query.forEach(new Processor<PsiReference>() {
-            @Override
-            public boolean process(PsiReference reference) {
-              final PsiElement element = reference.getElement();
-              final PsiElement parent = PsiTreeUtil.skipParentsOfType(element, PsiParenthesizedExpression.class);
-              if (!(parent instanceof PsiReferenceExpression)) {
-                return true;
-              }
-              final PsiElement grandParent = parent.getParent();
-              if (!(grandParent instanceof PsiMethodCallExpression)) {
-                return true;
-              }
-              final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
-              final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-              final PsiExpression[] arguments = argumentList.getExpressions();
-              for (PsiExpression argument : arguments) {
-                argument.accept(ReferenceFinder.this);
-              }
+          query.forEach(reference -> {
+            final PsiElement element = reference.getElement();
+            final PsiElement parent = PsiTreeUtil.skipParentsOfType(element, PsiParenthesizedExpression.class);
+            if (!(parent instanceof PsiReferenceExpression)) {
               return true;
             }
+            final PsiElement grandParent = parent.getParent();
+            if (!(grandParent instanceof PsiMethodCallExpression)) {
+              return true;
+            }
+            final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+            final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+            final PsiExpression[] arguments = argumentList.getExpressions();
+            for (PsiExpression argument : arguments) {
+              argument.accept(ReferenceFinder.this);
+            }
+            return true;
           });
           final PsiExpression initializer = variable.getInitializer();
           if (initializer != null) {

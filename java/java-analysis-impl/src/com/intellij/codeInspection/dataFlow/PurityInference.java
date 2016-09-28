@@ -15,17 +15,15 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -43,18 +41,9 @@ public class PurityInference {
       return false;
     }
 
-    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<Boolean>() {
-      @Nullable
-      @Override
-      public Result<Boolean> compute() {
-        boolean pure = RecursionManager.doPreventingRecursion(method, true, new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return doInferPurity(method);
-          }
-        }) == Boolean.TRUE;
-        return Result.create(pure, method);
-      }
+    return CachedValuesManager.getCachedValue(method, () -> {
+      boolean pure = RecursionManager.doPreventingRecursion(method, true, () -> doInferPurity(method)) == Boolean.TRUE;
+      return CachedValueProvider.Result.create(pure, method);
     });
   }
 
@@ -68,7 +57,7 @@ public class PurityInference {
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        if (!isLocalVarReference(expression.getLExpression())) {
+        if (!isLocalVarReference(expression.getLExpression(), method)) {
           impureFound.set(true);
         }
         super.visitAssignmentExpression(expression);
@@ -84,7 +73,7 @@ public class PurityInference {
 
       @Override
       public void visitPrefixExpression(PsiPrefixExpression expression) {
-        if (isMutatingOperation(expression.getOperationTokenType()) && !isLocalVarReference(expression.getOperand())) {
+        if (isMutatingOperation(expression.getOperationTokenType()) && !isLocalVarReference(expression.getOperand(), method)) {
           impureFound.set(true);
         }
         super.visitPrefixExpression(expression);
@@ -96,7 +85,7 @@ public class PurityInference {
 
       @Override
       public void visitPostfixExpression(PsiPostfixExpression expression) {
-        if (isMutatingOperation(expression.getOperationTokenType()) && !isLocalVarReference(expression.getOperand())) {
+        if (isMutatingOperation(expression.getOperationTokenType()) && !isLocalVarReference(expression.getOperand(), method)) {
           impureFound.set(true);
         }
         super.visitPostfixExpression(expression);
@@ -118,14 +107,33 @@ public class PurityInference {
     return called != null && ControlFlowAnalyzer.isPure(called);
   }
 
-  private static boolean isLocalVarReference(PsiExpression expression) {
+  private static boolean isLocalVarReference(PsiExpression expression, PsiMethod scope) {
     if (expression instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)expression).resolve();
       return target instanceof PsiLocalVariable || target instanceof PsiParameter;
     }
     if (expression instanceof PsiArrayAccessExpression) {
-      return isLocalVarReference(((PsiArrayAccessExpression)expression).getArrayExpression());
+      PsiExpression array = ((PsiArrayAccessExpression)expression).getArrayExpression();
+      PsiElement target = array instanceof PsiReferenceExpression ? ((PsiReferenceExpression)array).resolve() : null;
+      return target instanceof PsiLocalVariable && isLocallyCreatedArray(scope, (PsiLocalVariable)target);
     }
     return false;
+  }
+
+  private static boolean isLocallyCreatedArray(PsiMethod scope, PsiLocalVariable target) {
+    PsiExpression initializer = target.getInitializer();
+    if (initializer != null && !(initializer instanceof PsiNewExpression)) {
+      return false;
+    }
+
+    for (PsiReference ref : ReferencesSearch.search(target, new LocalSearchScope(scope)).findAll()) {
+      if (ref instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiReferenceExpression)ref)) {
+        PsiAssignmentExpression assign = PsiTreeUtil.getParentOfType((PsiReferenceExpression)ref, PsiAssignmentExpression.class);
+        if (assign == null || !(assign.getRExpression() instanceof PsiNewExpression)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

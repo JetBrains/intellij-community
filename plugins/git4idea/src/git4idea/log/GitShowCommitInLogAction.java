@@ -38,7 +38,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
-import com.intellij.vcs.log.impl.VcsLogManager;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -106,12 +106,12 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
       return;
     }
 
-    VcsLogManager logManager = VcsLogContentProvider.findLogManager(project);
-    if (logManager == null) {
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+    if (projectLog == null) {
       showLogNotReadyMessage(project);
       return;
     }
-    VcsLogUiImpl logUi = logManager.getLogUi();
+    VcsLogUiImpl logUi = projectLog.getMainLogUi();
     if (logUi == null) {
       showLogNotReadyMessage(project);
       return;
@@ -144,17 +144,17 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Project project = e.getProject();
-    e.getPresentation().setEnabledAndVisible(project != null &&
-                                             VcsLogContentProvider.findLogManager(project) != null &&
-                                             getRevisionNumber(e) != null &&
-                                             Comparing.equal(getVcsKey(e), GitVcs.getKey()));
+    e.getPresentation().setEnabled(project != null &&
+                                   VcsProjectLog.getInstance(project) != null &&
+                                   getRevisionNumber(e) != null &&
+                                   Comparing.equal(getVcsKey(e), GitVcs.getKey()));
   }
 
   @Nullable
   private static VcsLog findLog(@NotNull Project project) {
-    VcsLogManager manager = VcsLogContentProvider.findLogManager(project);
-    if (manager != null) {
-      VcsLogUiImpl ui = manager.getLogUi();
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
+    if (projectLog != null) {
+      VcsLogUiImpl ui = projectLog.getMainLogUi();
       if (ui != null) {
         return ui.getVcsLog();
       }

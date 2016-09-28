@@ -40,6 +40,7 @@ public class ResolveResultList extends ArrayList<RatedResolveResult> {
   // Allows to add non-null elements and discard nulls in a hassle-free way.
 
   public boolean poke(final PsiElement what, final int rate) {
+    PyPsiUtils.assertValid(what);
     if (what == null) return false;
     if (!(what instanceof LightElement) && !what.isValid()) {
       throw new PsiInvalidElementAccessException(what, "Trying to resolve a reference to an invalid element");

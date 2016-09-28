@@ -18,29 +18,33 @@ package com.jetbrains.edu.coursecreator.actions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.util.LabeledEditor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.JBColor;
-import com.jetbrains.edu.EduAnswerPlaceholderPainter;
-import com.jetbrains.edu.EduUtils;
-import com.jetbrains.edu.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.courseFormat.Course;
-import com.jetbrains.edu.courseFormat.TaskFile;
-import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,21 +54,25 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 public class CCShowPreview extends DumbAwareAction {
-  private static final Logger LOG = Logger.getInstance(CCShowPreview.class.getName());
+  public static final String SHOW_PREVIEW = "Show Preview";
 
   public CCShowPreview() {
-    super("Show Preview", "Show Preview", null);
+    super(SHOW_PREVIEW, SHOW_PREVIEW, null);
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (!CCProjectService.setCCActionAvailable(e)) {
-      return;
-    }
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(false);
+    Project project = e.getProject();
+    if (project == null) {
+      return;
+    }
+    if (!CCUtils.isCourseCreator(project)) {
+      return;
+    }
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    if (file != null && file.getName().contains(".answer")) {
+    if (file != null && StudyUtils.getTaskFile(project, file.getVirtualFile()) != null) {
       presentation.setEnabledAndVisible(true);
     }
   }
@@ -72,11 +80,21 @@ public class CCShowPreview extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
-    if (project == null) {
+    Module module = LangDataKeys.MODULE.getData(e.getDataContext());
+    if (project == null || module == null) {
       return;
     }
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    if (file == null || !file.getName().contains(".answer")) {
+    if (file == null) {
+      return;
+    }
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return;
+    }
+    VirtualFile virtualFile = file.getVirtualFile();
+    TaskFile taskFile = StudyUtils.getTaskFile(project, virtualFile);
+    if (taskFile == null) {
       return;
     }
     final PsiDirectory taskDir = file.getContainingDirectory();
@@ -87,42 +105,34 @@ public class CCShowPreview extends DumbAwareAction {
     if (lessonDir == null) {
       return;
     }
-    final CCProjectService service = CCProjectService.getInstance(project);
-    Course course = service.getCourse();
-    if (course == null) {
-      return;
-    }
-    TaskFile taskFile = service.getTaskFile(file.getVirtualFile());
-    if (taskFile == null) {
-      return;
-    }
+
+
     if (taskFile.getAnswerPlaceholders().isEmpty()) {
       Messages.showInfoMessage("Preview is available for task files with answer placeholders only", "No Preview for This File");
-    }
-    final TaskFile taskFileCopy = new TaskFile();
-    TaskFile.copy(taskFile, taskFileCopy);
-    final String taskFileName = CCProjectService.getRealTaskFileName(file.getVirtualFile().getName());
-    if (taskFileName == null) {
       return;
     }
+
+    VirtualFile generatedFilesFolder = CCUtils.getGeneratedFilesFolder(project, module);
+
+    if (generatedFilesFolder == null) {
+      return;
+    }
+
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        EduUtils.createStudentFileFromAnswer(project, taskDir.getVirtualFile(), taskDir.getVirtualFile(), taskFileName, taskFileCopy);
+        Pair<VirtualFile, TaskFile> pair =
+          EduUtils.createStudentFile(this, project, virtualFile, generatedFilesFolder, null);
+        if (pair != null) {
+          showPreviewDialog(project, pair.getFirst(), pair.getSecond());
+        }
       }
     });
+  }
 
-    String userFileName = CCProjectService.getRealTaskFileName(file.getName());
-    if (userFileName == null) {
-      return;
-    }
-    VirtualFile userFile = taskDir.getVirtualFile().findChild(userFileName);
-    if (userFile == null) {
-      LOG.info("Generated file " + userFileName + "was not found");
-      return;
-    }
+  private static void showPreviewDialog(@NotNull Project project, @NotNull VirtualFile userFile, @NotNull TaskFile taskFile) {
     final FrameWrapper showPreviewFrame = new FrameWrapper(project);
-    showPreviewFrame.setTitle(userFileName);
+    showPreviewFrame.setTitle(userFile.getName());
     LabeledEditor labeledEditor = new LabeledEditor(null);
     final EditorFactory factory = EditorFactory.getInstance();
     Document document = FileDocumentManager.getInstance().getDocument(userFile);
@@ -135,8 +145,9 @@ public class CCShowPreview extends DumbAwareAction {
         factory.releaseEditor(createdEditor);
       }
     });
-    for (AnswerPlaceholder answerPlaceholder : taskFileCopy.getAnswerPlaceholders()) {
-      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, true, JBColor.BLUE);
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
+      answerPlaceholder.setUseLength(true);
+      EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, JBColor.BLUE);
     }
     JPanel header = new JPanel();
     header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));

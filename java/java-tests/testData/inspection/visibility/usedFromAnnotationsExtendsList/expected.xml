@@ -7,7 +7,7 @@
     <hints>
       <hint value="packageLocal" />
     </hints>
-    <description>Can be package local</description>
+    <description>Can be package-private</description>
   </problem>
   <problem>
     <file>ThisClass.java</file>
@@ -16,7 +16,7 @@
     <hints>
       <hint value="packageLocal" />
     </hints>
-    <description>Can be package local</description>
+    <description>Can be package-private</description>
   </problem>
 </problems>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,21 @@ package com.intellij.application.options;
 /**
  * @author Denis Zhdanov
  * @since 4/25/11 4:23 PM
+ * @deprecated
+ * @use com.intellij.application.options.EditorFontsConstants
  */
 public class OptionsConstants {
-
+  @Deprecated
   public static final int MIN_EDITOR_FONT_SIZE     = 4;
+  @Deprecated
   public static final int MAX_EDITOR_FONT_SIZE     = 40;
+  @Deprecated
   public static final int DEFAULT_EDITOR_FONT_SIZE = 12;
+  @Deprecated
   public static final float MIN_EDITOR_LINE_SPACING =   .6F;
+  @Deprecated
   public static final float MAX_EDITOR_LINE_SPACING =     3;
+  @Deprecated
   public static final float DEFAULT_EDITOR_LINE_SPACING = 1;
 
   private OptionsConstants() {

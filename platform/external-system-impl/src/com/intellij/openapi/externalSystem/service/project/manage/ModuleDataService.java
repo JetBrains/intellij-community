@@ -54,25 +54,22 @@ public class ModuleDataService extends AbstractModuleDataService<ModuleData> {
                                                           @NotNull final ProjectData projectData,
                                                           @NotNull final Project project,
                                                           @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    return new Computable<Collection<Module>>() {
-      @Override
-      public Collection<Module> compute() {
-        List<Module> orphanIdeModules = ContainerUtil.newSmartList();
+    return () -> {
+      List<Module> orphanIdeModules = ContainerUtil.newSmartList();
 
-        for (Module module : modelsProvider.getModules()) {
-          if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectData.getOwner(), module)) continue;
-          if (ExternalSystemApiUtil.getExternalModuleType(module) != null) continue;
+      for (Module module : modelsProvider.getModules()) {
+        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(projectData.getOwner(), module)) continue;
+        if (ExternalSystemApiUtil.getExternalModuleType(module) != null) continue;
 
-          final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
-          if (projectData.getLinkedExternalProjectPath().equals(rootProjectPath)) {
-            if (module.getUserData(AbstractModuleDataService.MODULE_DATA_KEY) == null) {
-              orphanIdeModules.add(module);
-            }
+        final String rootProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module);
+        if (projectData.getLinkedExternalProjectPath().equals(rootProjectPath)) {
+          if (module.getUserData(AbstractModuleDataService.MODULE_DATA_KEY) == null) {
+            orphanIdeModules.add(module);
           }
         }
-
-        return orphanIdeModules;
       }
+
+      return orphanIdeModules;
     };
   }
 }

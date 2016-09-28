@@ -20,6 +20,9 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
@@ -58,7 +61,7 @@ public class GrConcatenationInjector implements MultiHostInjector {
   }
 
   public static void processInPlace(MultiHostRegistrar registrar, GrLiteral literal) {
-    BaseInjection injection = findLanguageParams(literal, Configuration.getInstance());
+    BaseInjection injection = findLanguageParams(literal);
 
     if (injection != null) {
       LanguageInjectionSupport support = InjectorUtils.findInjectionSupport(GroovyLanguageInjectionSupport.GROOVY_SUPPORT_ID);
@@ -66,19 +69,19 @@ public class GrConcatenationInjector implements MultiHostInjector {
     }
   }
 
-  public static BaseInjection findLanguageParams(PsiElement place, Configuration configuration) {
+  private static BaseInjection findLanguageParams(PsiElement place) {
     PsiElement parent = place.getParent();
     if (parent instanceof GrAssignmentExpression && ((GrAssignmentExpression)parent).getRValue() == place) {
       final GrExpression lvalue = ((GrAssignmentExpression)parent).getLValue();
       if (lvalue instanceof GrReferenceExpression) {
         final PsiElement resolved = ((GrReferenceExpression)lvalue).resolve();
         if (resolved instanceof PsiModifierListOwner) {
-          return getLanguageParams((PsiModifierListOwner)resolved, configuration);
+          return getLanguageParams((PsiModifierListOwner)resolved);
         }
       }
     }
     else if (parent instanceof GrVariable) {
-      return getLanguageParams((PsiModifierListOwner)parent, configuration);
+      return getLanguageParams((PsiModifierListOwner)parent);
     }
     else if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();
@@ -93,7 +96,7 @@ public class GrConcatenationInjector implements MultiHostInjector {
 
           if (map != null) {
             final Pair<PsiParameter, PsiType> pair = map.get(place);
-            return getLanguageParams(pair.first, configuration);
+            return getLanguageParams(pair.first);
           }
         }
       }
@@ -102,7 +105,13 @@ public class GrConcatenationInjector implements MultiHostInjector {
   }
 
   @Nullable
-  private static BaseInjection getLanguageParams(PsiModifierListOwner annotationOwner, Configuration configuration) {
+  private static BaseInjection getLanguageParams(PsiModifierListOwner annotationOwner) {
+    return CachedValuesManager.getCachedValue(annotationOwner, () ->
+      CachedValueProvider.Result.create(calcLanguageParams(annotationOwner), PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  @Nullable
+  private static BaseInjection calcLanguageParams(PsiModifierListOwner annotationOwner) {
     final Pair<String, ? extends Set<String>> pair = Configuration.getInstance().getAdvancedConfiguration().getLanguageAnnotationPair();
     final PsiAnnotation[] annotations = getAnnotationFrom(annotationOwner, pair, true, true);
     if (annotations.length > 0) {
@@ -118,8 +127,8 @@ public class GrConcatenationInjector implements MultiHostInjector {
       }
     }
 
-    if (annotationOwner instanceof PsiParameter && annotationOwner.getParent() instanceof PsiParameterList &&annotationOwner.getParent().getParent() instanceof PsiMethod) {
-      List<BaseInjection> injections = configuration.getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
+    if (annotationOwner instanceof PsiParameter && annotationOwner.getParent() instanceof PsiParameterList && annotationOwner.getParent().getParent() instanceof PsiMethod) {
+      List<BaseInjection> injections = Configuration.getInstance().getInjections(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
       for (BaseInjection injection : injections) {
         if (injection.acceptsPsiElement(annotationOwner)) {
           return injection;

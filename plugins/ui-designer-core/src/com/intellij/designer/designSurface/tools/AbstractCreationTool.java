@@ -18,7 +18,6 @@ package com.intellij.designer.designSurface.tools;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Cursors;
-import com.intellij.openapi.application.ApplicationManager;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -33,9 +32,6 @@ public abstract class AbstractCreationTool extends TargetingTool {
   protected AbstractCreationTool(boolean canUnload) {
     myCanUnload = canUnload;
     setDefaultCursor(Cursors.getCopyCursor());
-    if (ApplicationManager.getApplication().isUnitTestMode() && GraphicsEnvironment.isHeadless()) {
-      return;
-    }
     setDisabledCursor(Cursors.getNoCursor());
   }
 

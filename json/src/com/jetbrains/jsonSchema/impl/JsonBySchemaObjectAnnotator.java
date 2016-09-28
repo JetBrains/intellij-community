@@ -10,7 +10,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -251,12 +250,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       for (Object object : objects) {
         if (object.toString().equalsIgnoreCase(text)) return true;
       }
-      error("Value should be one of: [" + StringUtil.join(objects, new Function<Object, String>() {
-        @Override
-        public String fun(Object o) {
-          return o.toString();
-        }
-      }, ", ") + "]", value);
+      error("Value should be one of: [" + StringUtil.join(objects, o -> o.toString(), ", ") + "]", value);
       return false;
     }
 
@@ -338,12 +332,12 @@ class JsonBySchemaObjectAnnotator implements Annotator {
         }
       }
       // todo: regular expressions, format
-      if (schema.getPattern() != null) {
+      /*if (schema.getPattern() != null) {
         LOG.info("Unsupported property used: 'pattern'");
       }
       if (schema.getFormat() != null) {
         LOG.info("Unsupported property used: 'format'");
-      }
+      }*/
     }
 
     private void checkNumber(JsonValue propValue, JsonSchemaObject schema, JsonSchemaType schemaType) {
@@ -455,7 +449,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           }
           ++ cntCorrect;
         } else {
-          if (errors.isEmpty() || !checker.getErrors().containsKey(value)) {
+          if (errors.isEmpty() || notTypeError(value, checker)) {
             errors.clear();
             errors.putAll(checker.getErrors());
           }
@@ -473,6 +467,11 @@ class JsonBySchemaObjectAnnotator implements Annotator {
       }
     }
 
+    private static boolean notTypeError(JsonValue value, BySchemaChecker checker) {
+      if (!checker.isHadTypeError()) return true;
+      return !checker.getErrors().containsKey(value);
+    }
+
     private void processAnyOf(JsonValue value, JsonSchemaObject schema, Set<String> validatedProperties) {
       final List<JsonSchemaObject> anyOf = schema.getAnyOf();
       final Map<PsiElement, String> errors = new HashMap<PsiElement, String>();
@@ -484,7 +483,7 @@ class JsonBySchemaObjectAnnotator implements Annotator {
           validatedProperties.addAll(local);
           return;
         }
-        if (errors.isEmpty() && !checker.getErrors().containsKey(value)) {
+        if (errors.isEmpty() && notTypeError(value, checker)) {
           errors.clear();
           errors.putAll(checker.getErrors());
         }

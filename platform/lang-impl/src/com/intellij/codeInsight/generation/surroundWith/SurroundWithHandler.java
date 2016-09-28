@@ -63,6 +63,7 @@ import java.util.*;
 public class SurroundWithHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler");
   private static final String CHOOSER_TITLE = CodeInsightBundle.message("surround.with.chooser.title");
+  public static final TextRange CARET_IS_OK = new TextRange(0, 0);
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
@@ -93,7 +94,8 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   @Nullable
   public static List<AnAction> buildSurroundActions(final Project project, final Editor editor, PsiFile file, @Nullable Surrounder surrounder){
     SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection()) {
+    boolean hasSelection = selectionModel.hasSelection();
+    if (!hasSelection) {
       selectionModel.selectLineAtCaret();
     }
     int startOffset = selectionModel.getSelectionStart();
@@ -108,7 +110,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
 
     TextRange textRange = new TextRange(startOffset, endOffset);
     for(SurroundWithRangeAdjuster adjuster: Extensions.getExtensions(SurroundWithRangeAdjuster.EP_NAME)) {
-      textRange = adjuster.adjustSurroundWithRange(file, textRange);
+      textRange = adjuster.adjustSurroundWithRange(file, textRange, hasSelection);
       if (textRange == null) return null;
     }
     startOffset = textRange.getStartOffset();
@@ -199,16 +201,19 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
         editor.getCaretModel().moveToLogicalPosition(pos);
       }
       TextRange range = surrounder.surroundElements(project, editor, elements);
-      if (TemplateManager.getInstance(project).getActiveTemplate(editor) == null && InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
-        LogicalPosition pos1 = new LogicalPosition(line, col);
-        editor.getCaretModel().moveToLogicalPosition(pos1);
-      }
-      if (range != null) {
-        int offset = range.getStartOffset();
-        editor.getCaretModel().removeSecondaryCarets();
-        editor.getCaretModel().moveToOffset(offset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-        editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      if (range != CARET_IS_OK) {
+        if (TemplateManager.getInstance(project).getActiveTemplate(editor) == null &&
+            InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
+          LogicalPosition pos1 = new LogicalPosition(line, col);
+          editor.getCaretModel().moveToLogicalPosition(pos1);
+        }
+        if (range != null) {
+          int offset = range.getStartOffset();
+          editor.getCaretModel().removeSecondaryCarets();
+          editor.getCaretModel().moveToOffset(offset);
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+        }
       }
     }
     catch (IncorrectOperationException e) {

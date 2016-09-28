@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.parser;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.stubs.*;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
@@ -417,6 +418,11 @@ public interface GroovyElementTypes {
       @Override
       public GrVariableDeclaration createPsi(@NotNull EmptyStub stub) {
         return new GrVariableDeclarationImpl(stub);
+      }
+
+      @Override
+      public boolean shouldCreateStub(ASTNode node) {
+        return SharedImplUtil.getParent(node) instanceof GrTypeDefinitionBody;
       }
     };
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");

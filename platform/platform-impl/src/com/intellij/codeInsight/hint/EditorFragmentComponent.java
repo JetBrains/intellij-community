@@ -34,6 +34,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -62,10 +63,9 @@ public class EditorFragmentComponent extends JPanel {
     boolean newRendering = editor instanceof EditorImpl && ((EditorImpl)editor).myUseNewRendering;
     int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
     final int textImageWidth = Math.min(
-      editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment, 
-      ScreenUtil.getScreenRectangle(1, 1).width
+      editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
+      getWidthLimit(editor)
     );
-    LOG.assertTrue(textImageWidth > 0, "TextWidth: "+textImageWidth+"; startLine:" + startLine + "; endLine:" + endLine + ";");
 
     FoldingModelEx foldingModel = editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
@@ -155,6 +155,14 @@ public class EditorFragmentComponent extends JPanel {
     Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
     Border insideBorder = JBUI.Borders.empty(EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS);
     setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
+  }
+
+  private static int getWidthLimit(@NotNull Editor editor) {
+    Component component = editor.getComponent();
+    int screenWidth = ScreenUtil.getScreenRectangle(component).width;
+    if (screenWidth > 0) return screenWidth;
+    Window window = SwingUtilities.getWindowAncestor(component);
+    return window == null ? Integer.MAX_VALUE : window.getWidth();
   }
 
   /**
@@ -279,12 +287,7 @@ public class EditorFragmentComponent extends JPanel {
       // needed for Alt-Q multiple times
       // Q: not good?
       SwingUtilities.invokeLater(
-        new Runnable() {
-          @Override
-          public void run() {
-            MyComponentHint.super.hide();
-          }
-        }
+        () -> MyComponentHint.super.hide()
       );
     }
   }

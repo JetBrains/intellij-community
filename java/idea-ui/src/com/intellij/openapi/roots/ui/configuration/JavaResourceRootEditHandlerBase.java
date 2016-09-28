@@ -87,16 +87,13 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
     final IconActionComponent iconComponent = new IconActionComponent(AllIcons.Modules.SetPackagePrefix,
                                                                       AllIcons.Modules.SetPackagePrefixRollover,
                                                                       ProjectBundle.message("module.paths.edit.properties.tooltip"),
-                                                                      new Runnable() {
-                                                                        @Override
-                                                                        public void run() {
-                                                                          JavaResourceRootProperties properties = folder.getJpsElement().getProperties( JavaModuleSourceRootTypes.RESOURCES);
-                                                                          assert properties != null;
-                                                                          ResourceRootPropertiesDialog
-                                                                            dialog = new ResourceRootPropertiesDialog(parentComponent, properties);
-                                                                          if (dialog.showAndGet()) {
-                                                                            callback.onSourceRootPropertiesChanged(folder);
-                                                                          }
+                                                                      () -> {
+                                                                        JavaResourceRootProperties properties = folder.getJpsElement().getProperties( JavaModuleSourceRootTypes.RESOURCES);
+                                                                        assert properties != null;
+                                                                        ResourceRootPropertiesDialog
+                                                                          dialog = new ResourceRootPropertiesDialog(parentComponent, properties);
+                                                                        if (dialog.showAndGet()) {
+                                                                          callback.onSourceRootPropertiesChanged(folder);
                                                                         }
                                                                       });
     final JPanel panel = new JPanel(new BorderLayout());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Project project = e.getProject();
     List<String> fileNames = findTestDataFiles(dataContext);
     if (fileNames == null || fileNames.isEmpty()) {
       String testData = guessTestData(dataContext);

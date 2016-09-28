@@ -32,10 +32,13 @@ public abstract class StripTrailingSpacesFilterFactory {
    *
    * @param project The current project or null if there is no project context.
    * @param document The document to be processed.
-   * @return The filter as defined in {@link StripTrailingSpacesFilter}. The factory may return one of the several predefined filters:
-   *         {@link StripTrailingSpacesFilter#NOT_ALLOWED}, {@link StripTrailingSpacesFilter#POSTPONED} or 
-   *         {@link StripTrailingSpacesFilter#ALL_LINES}. The latter can be returned, for example, if a language-specific logic is not
-   *         applicable to the document.
+   * @return The filter which will be called on document save. The factory may return one of the several predefined filters:<ul>
+   *         <li>{@link StripTrailingSpacesFilter#NOT_ALLOWED}</li> No stripping allowed. IDEA will not try to strip any whitespace at all in this case.
+   *         <li>{@link StripTrailingSpacesFilter#POSTPONED}</li> The stripping is not possible at the moment. For example, the caret
+   *         is in the way and the "Settings|General|Editor|Allow caret after end of the line" is off. In this case the IDEA will try to restart
+   *         the stripping later.
+   *         <li>{@link StripTrailingSpacesFilter#ALL_LINES}</li> Allow stripping with no restrictions. Return this value by default.
+   *         </ul>
    */
   @NotNull
   public abstract StripTrailingSpacesFilter createFilter(@Nullable Project project, @NotNull Document document);

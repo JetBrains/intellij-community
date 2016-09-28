@@ -18,6 +18,7 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -208,15 +209,22 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             return;
           }
 
-          final String commandName = RefactoringBundle
-            .message("renaming.0.1.to.2", UsageViewUtil.getType(variable), DescriptiveNameUtil.getDescriptiveName(variable), newName);
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            @Override
-            public void run() {
+          Runnable performRunnable = () -> {
+            final String commandName = RefactoringBundle.message("renaming.0.1.to.2",
+                                                                 UsageViewUtil.getType(variable),
+                                                                 DescriptiveNameUtil.getDescriptiveName(variable), newName);
+            CommandProcessor.getInstance().executeCommand(myProject, () -> {
               performRenameInner(substituted, newName);
               PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            }
-          }, commandName, null);
+            }, commandName, null);
+          };
+
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            performRunnable.run();
+          }
+          else {
+            ApplicationManager.getApplication().invokeLater(performRunnable);
+          }
         }
       }
     }

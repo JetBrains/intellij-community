@@ -166,7 +166,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
   @Nullable
   @Override
   public String getHelpTopic() {
-    return HELP_TOPIC_ID;
+    return myServer.getType().getHelpTopic();
   }
 
   @Override
@@ -242,13 +242,9 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
           if (connected == null) {
             return;
           }
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-
-            @Override
-            public void run() {
-              if (myConnectionTester == ConnectionTester.this) {
-                setConnectionStatus(!connected, connected, connected ? "Connection successful" : "Cannot connect: " + connection.getStatusText());
-              }
+          UIUtil.invokeLaterIfNeeded(() -> {
+            if (myConnectionTester == ConnectionTester.this) {
+              setConnectionStatus(!connected, connected, connected ? "Connection successful" : "Cannot connect: " + connection.getStatusText());
             }
           });
         }

@@ -394,7 +394,9 @@ public class MavenIndex {
         myUpdateTimestamp = System.currentTimeMillis();
       }
 
-      oldData.close(true);
+      if(oldData != null) {
+        oldData.close(true);
+      }
 
       for (File each : FileUtil.notNullize(myDir.listFiles())) {
         if (each.getName().startsWith(DATA_DIR_PREFIX) && !each.getName().equals(myDataDirName)) {
@@ -669,7 +671,7 @@ public class MavenIndex {
     }
 
     private PersistentHashMap<String, Set<String>> createPersistentMap(final File f) throws IOException {
-      return new PersistentHashMap<String, Set<String>>(f, new EnumeratorStringDescriptor(), new SetDescriptor());
+      return new PersistentHashMap<String, Set<String>>(f, EnumeratorStringDescriptor.INSTANCE, new SetDescriptor());
     }
 
     public void close(boolean releaseIndexContext) throws MavenIndexException {

@@ -60,8 +60,8 @@
     <group id="AnalyzeJavaMenu">
       <action id="ShowPackageCycles" class="com.intellij.cyclicDependencies.actions.CyclicDependenciesAction"/>
       <separator/>
-      <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
-      <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>
+      <reference id="SliceBackward"/>
+      <reference id="SliceForward"/>
       <separator/>
       <action id="Unscramble" class="com.intellij.unscramble.UnscrambleAction"/>
       <add-to-group group-id="AnalyzeMenu" anchor="last"/>
@@ -88,12 +88,8 @@
     </action>
 
     <action id="IntroduceFunctionalParameter" class="com.intellij.refactoring.actions.IntroduceFunctionalParameterAction">
-      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceParameter"/>
+      <add-to-group group-id="IntroduceActionsGroup" anchor="before" relative-to-action="IntroduceParameterObject"/>
       <keyboard-shortcut first-keystroke="control shift alt P" keymap="$default"/>
-    </action>
-
-    <action id="IntroduceParameterObject" class="com.intellij.refactoring.actions.IntroduceParameterObjectAction">
-      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceFunctionalParameter"/>
     </action>
 
     <action id="RenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
@@ -174,7 +170,6 @@
     </action>
 
     <group id="JavaDebuggerActions">
-      <!--<action id="Debugger.Inspect" class="com.intellij.debugger.actions.InspectAction"/>-->
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="last"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="last"/>
@@ -185,7 +180,7 @@
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
       </action>
-      <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction"/>
+      <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <action id="Debugger.EditNodeSource" class="com.intellij.debugger.actions.EditSourceAction"/>
       <action id="Debugger.EditTypeSource" class="com.intellij.debugger.actions.JumpToObjectAction"/>
       <reference ref="Debugger.PopFrame"/>
@@ -234,7 +229,9 @@
       <add-to-group group-id="StructureViewCompileGroup" anchor="first"/>
     </group>
 
-    <action id="TypeHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction">
+    <action id="TypeHierarchy.BaseOnThisType"
+            class="com.intellij.ide.hierarchy.type.TypeHierarchyBrowser$BaseOnThisTypeAction"
+            use-shortcut-of="TypeHierarchy">
       <add-to-group group-id="TypeHierarchyPopupMenu" anchor="first"/>
     </action>
 
@@ -247,11 +244,15 @@
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
 
-    <action id="MethodHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction">
+    <action id="MethodHierarchy.BaseOnThisType"
+            class="com.intellij.ide.hierarchy.method.MethodHierarchyBrowser$BaseOnThisMethodAction"
+            use-shortcut-of="MethodHierarchy">
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </action>
 
-    <action id="CallHierarchy.BaseOnThisType" class="com.intellij.ide.hierarchy.call.CallHierarchyBrowser$BaseOnThisMethodAction">
+    <action id="CallHierarchy.BaseOnThisType"
+            class="com.intellij.ide.hierarchy.call.CallHierarchyBrowser$BaseOnThisMethodAction"
+            use-shortcut-of="CallHierarchy">
       <add-to-group group-id="CallHierarchyPopupMenu" anchor="first"/>
     </action>
 

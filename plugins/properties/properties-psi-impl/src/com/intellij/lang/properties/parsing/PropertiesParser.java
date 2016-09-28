@@ -30,26 +30,21 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PropertiesParser implements PsiParser {
   private static final TripleFunction<ASTNode,LighterASTNode,FlyweightCapableTreeStructure<LighterASTNode>,ThreeState>
-          MATCH_BY_KEY = new TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>() {
-    @Override
-    public ThreeState fun(ASTNode oldNode,
-                          LighterASTNode newNode,
-                          FlyweightCapableTreeStructure<LighterASTNode> structure) {
-      if (oldNode.getElementType() == PropertiesElementTypes.PROPERTY) {
-        ASTNode oldName = oldNode.findChildByType(PropertiesTokenTypes.KEY_CHARACTERS);
-        if (oldName != null) {
-          CharSequence oldNameStr = oldName.getChars();
-          CharSequence newNameStr = findKeyCharacters(newNode, structure);
+          MATCH_BY_KEY = (oldNode, newNode, structure) -> {
+            if (oldNode.getElementType() == PropertiesElementTypes.PROPERTY) {
+              ASTNode oldName = oldNode.findChildByType(PropertiesTokenTypes.KEY_CHARACTERS);
+              if (oldName != null) {
+                CharSequence oldNameStr = oldName.getChars();
+                CharSequence newNameStr = findKeyCharacters(newNode, structure);
 
-          if (oldNameStr != null && !Comparing.equal(oldNameStr, newNameStr)) {
-            return ThreeState.NO;
-          }
-        }
-      }
+                if (oldNameStr != null && !Comparing.equal(oldNameStr, newNameStr)) {
+                  return ThreeState.NO;
+                }
+              }
+            }
 
-      return ThreeState.UNSURE;
-    }
-  };
+            return ThreeState.UNSURE;
+          };
 
   private static CharSequence findKeyCharacters(LighterASTNode newNode, FlyweightCapableTreeStructure<LighterASTNode> structure) {
     Ref<LighterASTNode[]> childrenRef = Ref.create(null);

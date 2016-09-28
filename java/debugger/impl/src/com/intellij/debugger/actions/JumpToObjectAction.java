@@ -85,13 +85,8 @@ public class JumpToObjectAction extends DebuggerAction{
   }
 
   private static SourcePosition calcPosition(final ValueDescriptor descriptor, final DebugProcessImpl debugProcess) throws ClassNotLoadedException {
-    final Value value = descriptor.getValue();
-    if(value == null) {
-      return null;
-    }
-
-    Type type = value.type();
-    if(type == null) {
+    Type type = descriptor.getType();
+    if (type == null) {
       return null;
     }
 

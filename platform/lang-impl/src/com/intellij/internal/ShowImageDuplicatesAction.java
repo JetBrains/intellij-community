@@ -40,12 +40,7 @@ public class ShowImageDuplicatesAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
     assert project != null;
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        collectAndShowDuplicates(project);
-      }
-    }, "Gathering images", true, project);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> collectAndShowDuplicates(project), "Gathering images", true, project);
   }
 
   private static void collectAndShowDuplicates(final Project project) {
@@ -120,12 +115,7 @@ public class ShowImageDuplicatesAction extends AnAction {
       }
     }
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        new ImageDuplicateResultsDialog(project, images, realDuplicates).show();
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> new ImageDuplicateResultsDialog(project, images, realDuplicates).show());
 
   }
 

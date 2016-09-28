@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * @author Nadya Zabrodina
@@ -41,10 +41,10 @@ public class HgBranchCreateCommand {
     this.branchName = branchName;
   }
 
-  public void execute(@Nullable HgCommandResultHandler resultHandler) throws HgCommandException {
+  public HgCommandResult executeInCurrentThread() throws HgCommandException {
     if (StringUtil.isEmptyOrSpaces(branchName)) {
       throw new HgCommandException("branch name is empty");
     }
-    new HgCommandExecutor(project).execute(repo, "branch", Arrays.asList(branchName), resultHandler);
+    return new HgCommandExecutor(project).executeInCurrentThread(repo, "branch", Collections.singletonList(branchName));
   }
 }

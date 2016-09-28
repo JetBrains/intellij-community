@@ -65,12 +65,8 @@ public final class BindingEditor extends ComboBoxPropertyEditor<String> {
         if (!myCbx.isPopupVisible()) {
           fireEditingCancelled();
           SwingUtilities.invokeLater(
-            new Runnable(){
-              public void run(){
-                DesignerToolWindowManager.getInstance(DesignerToolWindowManager.getInstance(project).getActiveFormEditor())
-                  .getPropertyInspector().requestFocus();
-              }
-            }
+            () -> DesignerToolWindowManager.getInstance(DesignerToolWindowManager.getInstance(project).getActiveFormEditor())
+              .getPropertyInspector().requestFocus()
           );
         }
       }

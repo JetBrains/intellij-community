@@ -15,15 +15,18 @@
  */
 package com.intellij.openapi.application;
 
-public abstract class AccessToken {
-  protected void acquired() {
-  }
+import java.io.Closeable;
 
-  protected void released() {
+// should implement AutoCloseable instead of Closeable, if it ever is compiled against Java 8
+public abstract class AccessToken implements Closeable {
+  @Override
+  public final void close() {
+    finish();
   }
 
   public abstract void finish();
 
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static final AccessToken EMPTY_ACCESS_TOKEN = new AccessToken() {
     @Override
     public void finish() {}

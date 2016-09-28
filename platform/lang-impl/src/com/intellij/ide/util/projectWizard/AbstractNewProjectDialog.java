@@ -67,12 +67,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
       }
     }.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, component);
     myList = panel.second;
-    UiNotifyConnector.doWhenFirstShown(myList, new Runnable() {
-      @Override
-      public void run() {
-        ScrollingUtil.ensureSelectionExists(myList);
-      }
-    });
+    UiNotifyConnector.doWhenFirstShown(myList, () -> ScrollingUtil.ensureSelectionExists(myList));
     return component;
   }
 
@@ -98,7 +93,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
 
   @Override
   protected String getHelpId() {
-    return null;
+    return "create_new_project_dialog";
   }
 
   @NotNull
@@ -108,11 +103,6 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
 
   @Override
   public void show() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        AbstractNewProjectDialog.super.show();
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, super::show);
   }
 }

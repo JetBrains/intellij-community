@@ -50,4 +50,31 @@ class PrivateClassTest {
          f(b, param);
        }
     }
+
+
+  class IncrementedButNeverAccessed {
+    private int <warning descr="Private field 'ffff' is assigned but never accessed">ffff</warning>;
+
+    void foo(int p) {
+      if (p == 0) return;
+      ffff++;
+    }
+  }
+  class IncrementedAndPassed {
+    private int ffff;
+
+    void foo(int p) {
+      if (p == 0) return;
+      foo(ffff++);
+    }
+  }
+  class IncrementedAndRead{
+    private int ffff;
+
+    void foo(int p) {
+      if (p == 0) return;
+      p = ffff++;
+      if (p == 0) foo(p);
+    }
+  }
 }

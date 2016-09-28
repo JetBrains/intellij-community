@@ -54,7 +54,7 @@ import static com.intellij.execution.ui.ConsoleViewContentType.registerNewConsol
 public class ConsoleViewUtil {
 
   public static final Key<Boolean> EDITOR_IS_CONSOLE_VIEW = Key.create("EDITOR_IS_CONSOLE_VIEW");
-
+  private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
 
   public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
@@ -66,31 +66,28 @@ public class ConsoleViewUtil {
   }
 
   public static void setupConsoleEditor(@NotNull final EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
 
-        final EditorSettings editorSettings = editor.getSettings();
-        editorSettings.setLineMarkerAreaShown(lineMarkerAreaShown);
-        editorSettings.setIndentGuidesShown(false);
-        editorSettings.setLineNumbersShown(false);
-        editorSettings.setFoldingOutlineShown(foldingOutlineShown);
-        editorSettings.setAdditionalPageAtBottom(false);
-        editorSettings.setAdditionalColumnsCount(0);
-        editorSettings.setAdditionalLinesCount(0);
-        editorSettings.setRightMarginShown(false);
-        editorSettings.setCaretRowShown(false);
-        editor.getGutterComponentEx().setPaintBackground(false);
+      final EditorSettings editorSettings = editor.getSettings();
+      editorSettings.setLineMarkerAreaShown(lineMarkerAreaShown);
+      editorSettings.setIndentGuidesShown(false);
+      editorSettings.setLineNumbersShown(false);
+      editorSettings.setFoldingOutlineShown(foldingOutlineShown);
+      editorSettings.setAdditionalPageAtBottom(false);
+      editorSettings.setAdditionalColumnsCount(0);
+      editorSettings.setAdditionalLinesCount(0);
+      editorSettings.setRightMarginShown(false);
+      editorSettings.setCaretRowShown(false);
+      editor.getGutterComponentEx().setPaintBackground(false);
 
-        editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
+      editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
 
-        final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
-        if (UISettings.getInstance().PRESENTATION_MODE) {
-          scheme.setEditorFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
-        }
-        editor.setColorsScheme(scheme);
+      final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
+      if (UISettings.getInstance().PRESENTATION_MODE) {
+        scheme.setEditorFontSize(UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
       }
+      editor.setColorsScheme(scheme);
     });
   }
 
@@ -139,6 +136,14 @@ public class ConsoleViewUtil {
 
   public static boolean isConsoleViewEditor(@NotNull Editor editor) {
     return editor.getUserData(EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE;
+  }
+
+  public static boolean isReplaceActionEnabledForConsoleViewEditor(@NotNull Editor editor) {
+    return editor.getUserData(REPLACE_ACTION_ENABLED) == Boolean.TRUE;
+  }
+
+  public static void enableReplaceActionForConsoleViewEditor(@NotNull Editor editor) {
+    editor.putUserData(REPLACE_ACTION_ENABLED, true);
   }
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")

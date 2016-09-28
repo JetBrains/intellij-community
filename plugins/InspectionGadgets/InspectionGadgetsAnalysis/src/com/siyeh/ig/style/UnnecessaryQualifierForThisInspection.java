@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -41,8 +42,9 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.qualifier.for.this.problem.descriptor");
+    return InspectionGadgetsBundle.message(infos[0] instanceof PsiThisExpression
+                                           ? "unnecessary.qualifier.for.this.problem.descriptor"
+                                           : "unnecessary.qualifier.for.super.problem.descriptor");
   }
 
   @Override
@@ -55,8 +57,7 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
     return new UnnecessaryQualifierForThisFix();
   }
 
-  private static class UnnecessaryQualifierForThisFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessaryQualifierForThisFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -72,24 +73,24 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement qualifier = descriptor.getPsiElement();
-      final PsiThisExpression thisExpression =
-        (PsiThisExpression)qualifier.getParent();
-      PsiReplacementUtil.replaceExpression(thisExpression, PsiKeyword.THIS);
+      final PsiElement parent = qualifier.getParent();
+      if (parent instanceof PsiThisExpression) {
+        PsiReplacementUtil.replaceExpression((PsiThisExpression)parent, PsiKeyword.THIS);
+      }
+      else if (parent instanceof PsiSuperExpression) {
+        PsiReplacementUtil.replaceExpression((PsiSuperExpression)parent, PsiKeyword.SUPER);
+      }
     }
   }
 
-  private static class UnnecessaryQualifierForThisVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessaryQualifierForThisVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThisExpression(
-      @NotNull PsiThisExpression thisExpression) {
+    public void visitThisExpression(@NotNull PsiThisExpression thisExpression) {
       super.visitThisExpression(thisExpression);
-      final PsiJavaCodeReferenceElement qualifier =
-        thisExpression.getQualifier();
+      final PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
       if (qualifier == null) {
         return;
       }
@@ -97,15 +98,43 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
       if (!(referent instanceof PsiClass)) {
         return;
       }
-      final PsiClass containingClass =
-        ClassUtils.getContainingClass(thisExpression);
-      if (containingClass == null) {
+      final PsiClass containingClass = ClassUtils.getContainingClass(thisExpression);
+      if (containingClass == null || !containingClass.equals(referent)) {
         return;
       }
-      if (!containingClass.equals(referent)) {
+      registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, thisExpression);
+    }
+
+    @Override
+    public void visitSuperExpression(PsiSuperExpression expression) {
+      super.visitSuperExpression(expression);
+      final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
+      if (qualifier == null) {
         return;
       }
-      registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+
+      final PsiElement resolve = qualifier.resolve();
+      if (!(resolve instanceof PsiClass)) {
+        return;
+      }
+
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression copy;
+        final PsiElement gParent = parent.getParent();
+        if (gParent instanceof PsiMethodCallExpression) {
+          copy = ((PsiMethodCallExpression)gParent.copy()).getMethodExpression();
+        }
+        else {
+          copy = (PsiReferenceExpression)parent.copy();
+        }
+        final PsiExpression copyQualifierExpression = copy.getQualifierExpression();
+        assert copyQualifierExpression != null;
+        PsiReplacementUtil.replaceExpression(copyQualifierExpression, PsiKeyword.SUPER);
+        if (copy.resolve() == ((PsiReferenceExpression)parent).resolve()) {
+          registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, expression);
+        }
+      }
     }
   }
 }

@@ -113,10 +113,23 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
 
   @Override
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+    setValueAt(aValue, rowIndex, columnIndex, true);
+  }
+
+  /**
+   * Sets the value in the cell at {@code columnIndex} and {@code rowIndex} to {@code aValue}.
+   * This method allows to choose will the model listeners notified or not.
+   *
+   * @param aValue          the new value
+   * @param rowIndex        the row whose value is to be changed
+   * @param columnIndex     the column whose value is to be changed
+   * @param notifyListeners indicates whether the model listeners are notified
+   */
+  public void setValueAt(Object aValue, int rowIndex, int columnIndex, boolean notifyListeners) {
     if (rowIndex < myItems.size()) {
       myColumnInfos[columnIndex].setValue(getItem(rowIndex), aValue);
     }
-    fireTableCellUpdated(rowIndex, columnIndex);
+    if (notifyListeners) fireTableCellUpdated(rowIndex, columnIndex);
   }
 
   /**

@@ -88,13 +88,8 @@ public class TestPackage extends TestObject {
         myFoundTests = !myClasses.isEmpty();
 
         try {
-          addClassesListToJavaParameters(myClasses, new Function<PsiClass, String>() {
-            @Override
-            @Nullable
-            public String fun(final PsiClass psiClass) {
-              return psiClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(psiClass) : null;
-            }
-          }, getPackageName(data), createTempFiles(), getJavaParameters());
+          addClassesListToJavaParameters(myClasses,
+                                         psiClass -> psiClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(psiClass) : null, getPackageName(data), createTempFiles(), getJavaParameters());
         }
         catch (ExecutionException ignored) {}
       }
@@ -113,10 +108,14 @@ public class TestPackage extends TestObject {
   protected JavaParameters createJavaParameters() throws ExecutionException {
     final JavaParameters javaParameters = super.createJavaParameters();
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    final DumbService dumbService = DumbService.getInstance(getConfiguration().getProject());
+    final Project project = getConfiguration().getProject();
+    final DumbService dumbService = DumbService.getInstance(project);
     try {
       dumbService.setAlternativeResolveEnabled(true);
-      getClassFilter(data);//check if junit found
+      final SourceScope sourceScope = data.getScope().getSourceScope(getConfiguration());
+      if (sourceScope == null || !JUnitUtil.isJUnit5(sourceScope.getLibrariesScope(), project)) { //check for junit 5
+        getClassFilter(data);//check if junit 4 found
+      }
     }
     finally {
       dumbService.setAlternativeResolveEnabled(false);

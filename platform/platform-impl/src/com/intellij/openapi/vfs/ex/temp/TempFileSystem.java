@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -365,17 +365,6 @@ public class TempFileSystem extends LocalFileSystemBase {
     if (item == null) return null;
     final long length = item instanceof FSFile ? ((FSFile)item).myContent.length : 0;
     return new FileAttributes(item.isDirectory(), false, false, false, length, item.myTimestamp, item.myWritable);
-  }
-
-  @NotNull
-  @Override
-  public Set<WatchRequest> addRootsToWatch(@NotNull Collection<String> rootPaths, boolean watchRecursively) {
-    throw new IncorrectOperationException();
-  }
-
-  @Override
-  public void removeWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
-    throw new IncorrectOperationException();
   }
 
   @NotNull

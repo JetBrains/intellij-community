@@ -27,5 +27,4 @@ public interface VcsLogTextFilter extends VcsLogDetailsFilter {
    */
   @NotNull
   String getText();
-
 }

@@ -203,6 +203,8 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         if (existing != null) {
           toImport.remove(existing);
           orderEntryDataMap.put(entry, existing);
+          libraryOrderEntry.setExported(existing.isExported());
+          libraryOrderEntry.setScope(existing.getScope());
         }
         else if (!hasUnresolvedLibraries) {
           // There is a possible case that a project has been successfully imported from external model and after

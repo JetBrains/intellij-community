@@ -60,7 +60,12 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public static <E> JBIterator<E> from(@NotNull final Iterator<E> it) {
-    return it instanceof JBIterator ? (JBIterator<E>)it : new JBIterator<E>() {
+    return it instanceof JBIterator ? (JBIterator<E>)it : wrap(it);
+  }
+
+  @NotNull
+  static <E> JBIterator<E> wrap(@NotNull final Iterator<E> it) {
+    return new JBIterator<E>() {
       @Override
       protected E nextImpl() {
         return it.hasNext() ? it.next() : stop();
@@ -71,7 +76,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   private Object myCurrent = NONE;
   private Object myNext = NONE;
 
-  private final Op myFirstOp = new Op(null);
+  private Op myFirstOp = new Op(null);
   private Op myLastOp = myFirstOp;
 
   /**
@@ -141,7 +146,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
     if (myNext != NONE) return;
     Object o = NONE;
     for (Op op = myFirstOp; op != null; op = op == null ? myFirstOp : op.nextOp) {
-      o = op == myFirstOp ? nextImpl() : op.apply(o);
+      o = op.impl == null ? nextImpl() : op.apply(o);
       if (myNext == SKIP) {
         o = myNext = NONE;
         op = null;
@@ -153,42 +158,23 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public final <T> JBIterator<T> transform(@NotNull Function<? super E, T> function) {
-    return addOp(new Op<Function<? super E, T>>(function) {
-      @Override
-      public Object apply(Object o) {
-        return impl.fun((E)o);
-      }
-    });
+    return addOp(true, new TransformOp<E, T>(function));
   }
 
   @NotNull
   public final JBIterator<E> filter(@NotNull Condition<? super E> condition) {
-    return addOp(new Op<Condition<? super E>>(condition) {
-      @Override
-      public Object apply(Object o) {
-        return impl.value((E)o) ? o : skip();
-      }
-    });
+    return addOp(true, new FilterOp<E>(condition));
   }
 
   @NotNull
   public final JBIterator<E> take(int count) {
-    return takeWhile(new CountDown<E>(count));
+    // add first so that the underlying iterator stay on 'count' position
+    return addOp(myLastOp.impl != null, new WhileOp<E>(new CountDown<E>(count)));
   }
 
   @NotNull
   public final JBIterator<E> takeWhile(@NotNull Condition<? super E> condition) {
-    return addOp(new Op<Condition<? super E>>(condition) {
-      @Override
-      public Object apply(Object o) {
-        return impl.value((E)o) ? o : stop();
-      }
-
-      @Override
-      public String toString() {
-        return "takeWhile:" + super.toString();
-      }
-    });
+    return addOp(true, new WhileOp<E>(condition));
   }
 
   @NotNull
@@ -198,28 +184,19 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public final JBIterator<E> skipWhile(@NotNull final Condition<? super E> condition) {
-    return addOp(new Op<Condition<? super E>>(condition) {
-
-      boolean active = true;
-
-      @Override
-      public Object apply(Object o) {
-        if (active && condition.value((E)o)) return skip();
-        active = false;
-        return o;
-      }
-
-      @Override
-      public String toString() {
-        return "skipWhile:" + super.toString();
-      }
-    });
+    return addOp(true, new SkipOp<E>(condition));
   }
 
   @NotNull
-  private <T> T addOp(@NotNull Op op) {
-    myLastOp.nextOp = op;
-    myLastOp = myLastOp.nextOp;
+  private <T> T addOp(boolean last, @NotNull Op op) {
+    if (last) {
+      myLastOp.nextOp = op;
+      myLastOp = myLastOp.nextOp;
+    }
+    else {
+      op.nextOp = myFirstOp;
+      myFirstOp = op;
+    }
     return (T)this;
   }
 
@@ -299,6 +276,55 @@ public abstract class JBIterator<E> implements Iterator<E> {
     @Override
     public boolean value(A a) {
       return cur > 0 && cur-- != 0;
+    }
+  }
+
+  private static class TransformOp<E, T> extends Op<Function<? super E, T>> {
+    TransformOp(Function<? super E, T> function) {
+      super(function);
+    }
+
+    @Override
+    public Object apply(Object o) {
+      return impl.fun((E)o);
+    }
+  }
+
+  private class FilterOp<E> extends Op<Condition<? super E>> {
+    FilterOp(Condition<? super E> condition) {
+      super(condition);
+    }
+
+    @Override
+    public Object apply(Object o) {
+      return impl.value((E)o) ? o : skip();
+    }
+  }
+
+  private class WhileOp<E> extends Op<Condition<? super E>> {
+
+    WhileOp(Condition<? super E> condition) {
+      super(condition);
+    }
+    @Override
+    public Object apply(Object o) {
+      return impl.value((E)o) ? o : stop();
+    }
+  }
+
+  private class SkipOp<E> extends Op<Condition<? super E>> {
+    boolean active;
+
+    SkipOp(Condition<? super E> condition) {
+      super(condition);
+      active = true;
+    }
+
+    @Override
+    public Object apply(Object o) {
+      if (active && impl.value((E)o)) return skip();
+      active = false;
+      return o;
     }
   }
 }

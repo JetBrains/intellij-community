@@ -25,6 +25,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -100,6 +101,10 @@ public class ConsoleViewContentType {
     else {
       return SYSTEM_OUTPUT;
     }
+  }
+
+  public static synchronized Collection<ConsoleViewContentType> getRegisteredTypes() {
+    return ourRegisteredTypes.values();
   }
 
 }

@@ -23,6 +23,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.EnumSet;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
+
 public final class GroovyResolverProcessorBuilder {
 
   private boolean myIncomplete = false;
@@ -64,15 +66,15 @@ public final class GroovyResolverProcessorBuilder {
 
   @NotNull
   private static EnumSet<GroovyResolveKind> computeKinds(@NotNull GrReferenceExpression ref) {
-    if (ref.hasAt()) return EnumSet.of(GroovyResolveKind.FIELD);
-    if (ref.hasMemberPointer()) return EnumSet.of(GroovyResolveKind.METHOD);
+    if (ref.hasAt()) return EnumSet.of(FIELD);
+    if (ref.hasMemberPointer()) return EnumSet.of(METHOD);
 
     final EnumSet<GroovyResolveKind> result = EnumSet.allOf(GroovyResolveKind.class);
 
-    if (!ResolveUtil.canBeClass(ref)) result.remove(GroovyResolveKind.CLASS);
-    if (!ResolveUtil.canBePackage(ref)) result.remove(GroovyResolveKind.PACKAGE);
-    if (ref.isQualified()) result.remove(GroovyResolveKind.BINDING);
-    if (!(ref.getParent() instanceof GrMethodCall)) result.remove(GroovyResolveKind.METHOD);
+    if (!ResolveUtil.canBeClass(ref)) result.remove(CLASS);
+    if (!ResolveUtil.canBePackage(ref)) result.remove(PACKAGE);
+    if (ref.isQualified()) result.remove(BINDING);
+    if (!(ref.getParent() instanceof GrMethodCall)) result.remove(METHOD);
 
     return result;
   }

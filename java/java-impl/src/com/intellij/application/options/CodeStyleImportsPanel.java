@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,17 @@
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
-import com.intellij.ui.*;
+import com.intellij.ui.OptionGroup;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class CodeStyleImportsPanel extends JPanel {
   private JCheckBox myCbUseFQClassNames;
@@ -92,16 +91,16 @@ public class CodeStyleImportsPanel extends JPanel {
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.add(new JLabel(ApplicationBundle.message("editbox.class.count.to.use.import.with.star")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                     new Insets(0, 3, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(3), 0, 0));
     panel.add(myClassCountField,
               new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                     new Insets(0, 1, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(1), 0, 0));
     panel.add(new JLabel(ApplicationBundle.message("editbox.names.count.to.use.static.import.with.star")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                     new Insets(0, 3, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(3), 0, 0));
     panel.add(myNamesCountField,
               new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                     new Insets(0, 1, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(1), 0, 0));
 
     group.add(panel);
     return group.createPanel();

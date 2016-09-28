@@ -168,35 +168,30 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     StartupManagerEx startupManager = StartupManagerEx.getInstanceEx(myProject);
 
-    startupManager.registerStartupActivity(new Runnable() {
-      public void run() {
-        boolean wasMavenized = !myState.originalFiles.isEmpty();
-        if (!wasMavenized) return;
-        initMavenized();
-      }
+    startupManager.registerStartupActivity(() -> {
+      boolean wasMavenized = !myState.originalFiles.isEmpty();
+      if (!wasMavenized) return;
+      initMavenized();
     });
 
-    startupManager.registerPostStartupActivity(new Runnable() {
-      @Override
-      public void run() {
-        if (!isMavenizedProject()) {
-          showNotificationOrphanMavenProject(myProject);
-        }
-        CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
-          @Override
-          public boolean execute(CompileContext context) {
-            AccessToken token = ReadAction.start();
-
-            try {
-              new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild());
-            }
-            finally {
-              token.finish();
-            }
-            return true;
-          }
-        });
+    startupManager.registerPostStartupActivity(() -> {
+      if (!isMavenizedProject()) {
+        showNotificationOrphanMavenProject(myProject);
       }
+      CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
+        @Override
+        public boolean execute(CompileContext context) {
+          AccessToken token = ReadAction.start();
+
+          try {
+            new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild());
+          }
+          finally {
+            token.finish();
+          }
+          return true;
+        }
+      });
     });
   }
 
@@ -252,12 +247,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                           @NotNull final NotificationGroup group,
                           @NotNull final NotificationType type,
                           @Nullable final NotificationListener listener) {
-    AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
-      @Override
-      public void run() {
-        group.createNotification(title, message, type, listener).notify(myProject);
-      }
-    });
+    group.createNotification(title, message, type, listener).notify(myProject);
   }
 
   private void initMavenized() {
@@ -580,16 +570,13 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       myWatcher.addManagedFilesWithProfiles(files, profiles);
     }
 
-    MavenUtil.invokeLater(myProject, new Runnable() {
-      @Override
-      public void run() {
-        if (myProject == null || !myProject.isDefault() && !myProject.isDisposed()) {
-          for (Notification notification : EventLog.getLogModel(myProject).getNotifications()) {
-            if (NON_MANAGED_POM_NOTIFICATION_GROUP_ID.equals(notification.getGroupId())) {
-              for (VirtualFile file : files) {
-                if (StringUtil.startsWith(notification.getContent(), file.getPresentableUrl())) {
-                  notification.expire();
-                }
+    MavenUtil.invokeLater(myProject, () -> {
+      if (myProject == null || !myProject.isDefault() && !myProject.isDisposed()) {
+        for (Notification notification : EventLog.getLogModel(myProject).getNotifications()) {
+          if (NON_MANAGED_POM_NOTIFICATION_GROUP_ID.equals(notification.getGroupId())) {
+            for (VirtualFile file : files) {
+              if (StringUtil.startsWith(notification.getContent(), file.getPresentableUrl())) {
+                notification.expire();
               }
             }
           }
@@ -851,84 +838,74 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private AsyncPromise<List<Module>> scheduleResolve() {
     final AsyncPromise<List<Module>> result = new AsyncPromise<List<Module>>();
-    runWhenFullyOpen(new Runnable() {
-      public void run() {
-        LinkedHashSet<MavenProject> toResolve;
-        synchronized (myImportingDataLock) {
-          toResolve = new LinkedHashSet<MavenProject>(myProjectsToResolve);
-          myProjectsToResolve.clear();
-        }
-        if(toResolve.isEmpty()) return;
+    runWhenFullyOpen(() -> {
+      LinkedHashSet<MavenProject> toResolve;
+      synchronized (myImportingDataLock) {
+        toResolve = new LinkedHashSet<MavenProject>(myProjectsToResolve);
+        myProjectsToResolve.clear();
+      }
+      if(toResolve.isEmpty()) return;
 
-        final ResolveContext context = new ResolveContext();
-        Runnable onCompletion = new Runnable() {
-          @Override
-          public void run() {
-            if (hasScheduledProjects()) {
-              scheduleImport().processed(result);
-            }
-            else {
-              result.setResult(Collections.<Module>emptyList());
-            }
-          }
-        };
-
-        final boolean useSinglePomResolver = Boolean.getBoolean("idea.maven.use.single.pom.resolver");
-        if (useSinglePomResolver) {
-          Iterator<MavenProject> it = toResolve.iterator();
-          while (it.hasNext()) {
-            MavenProject each = it.next();
-            myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(
-              Collections.singleton(each), myProjectsTree, getGeneralSettings(), it.hasNext() ? null : onCompletion, context));
-          }
+      final ResolveContext context = new ResolveContext();
+      Runnable onCompletion = () -> {
+        if (hasScheduledProjects()) {
+          scheduleImport().processed(result);
         }
         else {
-          myResolvingProcessor.scheduleTask(
-            new MavenProjectsProcessorResolvingTask(toResolve, myProjectsTree, getGeneralSettings(), onCompletion, context));
+          result.setResult(Collections.<Module>emptyList());
         }
+      };
+
+      final boolean useSinglePomResolver = Boolean.getBoolean("idea.maven.use.single.pom.resolver");
+      if (useSinglePomResolver) {
+        Iterator<MavenProject> it = toResolve.iterator();
+        while (it.hasNext()) {
+          MavenProject each = it.next();
+          myResolvingProcessor.scheduleTask(new MavenProjectsProcessorResolvingTask(
+            Collections.singleton(each), myProjectsTree, getGeneralSettings(), it.hasNext() ? null : onCompletion, context));
+        }
+      }
+      else {
+        myResolvingProcessor.scheduleTask(
+          new MavenProjectsProcessorResolvingTask(toResolve, myProjectsTree, getGeneralSettings(), onCompletion, context));
       }
     });
     return result;
   }
 
   public void evaluateEffectivePom(@NotNull final MavenProject mavenProject, @NotNull final NullableConsumer<String> consumer) {
-    runWhenFullyOpen(new Runnable() {
+    runWhenFullyOpen(() -> myResolvingProcessor.scheduleTask(new MavenProjectsProcessorTask() {
       @Override
-      public void run() {
-        myResolvingProcessor.scheduleTask(new MavenProjectsProcessorTask() {
-          @Override
-          public void perform(Project project,
-                              MavenEmbeddersManager embeddersManager,
-                              MavenConsole console,
-                              MavenProgressIndicator indicator)
-            throws MavenProcessCanceledException {
+      public void perform(Project project,
+                          MavenEmbeddersManager embeddersManager,
+                          MavenConsole console,
+                          MavenProgressIndicator indicator)
+        throws MavenProcessCanceledException {
 
-            indicator.setText("Evaluating effective POM");
+        indicator.setText("Evaluating effective POM");
 
-            myProjectsTree.executeWithEmbedder(mavenProject,
-                                               getEmbeddersManager(),
-                                               MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE,
-                                               console,
-                                               indicator,
-                                               new MavenProjectsTree.EmbedderTask() {
-                                                 @Override
-                                                 public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
-                                                   try {
-                                                     MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
-                                                     String res =
-                                                       embedder.evaluateEffectivePom(mavenProject.getFile(), profiles.getEnabledProfiles(),
-                                                                                     profiles.getDisabledProfiles());
-                                                     consumer.consume(res);
-                                                   }
-                                                   catch (UnsupportedOperationException e) {
-                                                     consumer.consume(null); // null means UnsupportedOperationException
-                                                   }
-                                                 }
-                                               });
-          }
-        });
+        myProjectsTree.executeWithEmbedder(mavenProject,
+                                           getEmbeddersManager(),
+                                           MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE,
+                                           console,
+                                           indicator,
+                                           new MavenProjectsTree.EmbedderTask() {
+                                             @Override
+                                             public void run(MavenEmbedderWrapper embedder) throws MavenProcessCanceledException {
+                                               try {
+                                                 MavenExplicitProfiles profiles = mavenProject.getActivatedProfilesIds();
+                                                 String res =
+                                                   embedder.evaluateEffectivePom(mavenProject.getFile(), profiles.getEnabledProfiles(),
+                                                                                 profiles.getDisabledProfiles());
+                                                 consumer.consume(res);
+                                               }
+                                               catch (UnsupportedOperationException e) {
+                                                 consumer.consume(null); // null means UnsupportedOperationException
+                                               }
+                                             }
+                                           });
       }
-    });
+    }));
   }
 
   @TestOnly
@@ -943,20 +920,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void scheduleFoldersResolve(final Collection<MavenProject> projects) {
-    runWhenFullyOpen(new Runnable() {
-      public void run() {
-        Iterator<MavenProject> it = projects.iterator();
-        while (it.hasNext()) {
-          MavenProject each = it.next();
-          Runnable onCompletion = it.hasNext() ? null : new Runnable() {
-            @Override
-            public void run() {
-              if (hasScheduledProjects()) scheduleImport();
-            }
-          };
-          myFoldersResolvingProcessor.scheduleTask(
-            new MavenProjectsProcessorFoldersResolvingTask(each, getImportingSettings(), myProjectsTree, onCompletion));
-        }
+    runWhenFullyOpen(() -> {
+      Iterator<MavenProject> it = projects.iterator();
+      while (it.hasNext()) {
+        MavenProject each = it.next();
+        Runnable onCompletion = it.hasNext() ? null : (Runnable)() -> {
+          if (hasScheduledProjects()) scheduleImport();
+        };
+        myFoldersResolvingProcessor.scheduleTask(
+          new MavenProjectsProcessorFoldersResolvingTask(each, getImportingSettings(), myProjectsTree, onCompletion));
       }
     });
   }
@@ -966,12 +938,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void schedulePluginsResolve(final MavenProject project, final NativeMavenProjectHolder nativeMavenProject) {
-    runWhenFullyOpen(new Runnable() {
-      public void run() {
-        myPluginsResolvingProcessor
-          .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree));
-      }
-    });
+    runWhenFullyOpen(() -> myPluginsResolvingProcessor
+      .scheduleTask(new MavenProjectsProcessorPluginsResolvingTask(project, nativeMavenProject, myProjectsTree)));
   }
 
   public void scheduleArtifactsDownloading(final Collection<MavenProject> projects,
@@ -980,12 +948,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                            @Nullable final AsyncResult<MavenArtifactDownloader.DownloadResult> result) {
     if (!sources && !docs) return;
 
-    runWhenFullyOpen(new Runnable() {
-      public void run() {
-        myArtifactsDownloadingProcessor
-          .scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(projects, artifacts, myProjectsTree, sources, docs, result));
-      }
-    });
+    runWhenFullyOpen(() -> myArtifactsDownloadingProcessor
+      .scheduleTask(new MavenProjectsProcessorArtifactsDownloadingTask(projects, artifacts, myProjectsTree, sources, docs, result)));
   }
 
   private void scheduleImportSettings() {
@@ -1001,15 +965,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private Promise<List<Module>> scheduleImport() {
     final AsyncPromise<List<Module>> result = new AsyncPromise<List<Module>>();
-    runWhenFullyOpen(new Runnable() {
+    runWhenFullyOpen(() -> myImportingQueue.queue(new Update(MavenProjectsManager.this) {
       public void run() {
-        myImportingQueue.queue(new Update(MavenProjectsManager.this) {
-          public void run() {
-            result.setResult(importProjects());
-          }
-        });
+        result.setResult(importProjects());
       }
-    });
+    }));
     return result;
   }
 
@@ -1061,11 +1021,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   @TestOnly
   public void performScheduledImportInTests() {
     if (!isInitialized()) return;
-    runWhenFullyOpen(new Runnable() {
-      public void run() {
-        myImportingQueue.flush();
-      }
-    });
+    runWhenFullyOpen(() -> myImportingQueue.flush());
   }
 
   private void runWhenFullyOpen(final Runnable runnable) {
@@ -1077,19 +1033,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     final Ref<Runnable> wrapper = new Ref<Runnable>();
-    wrapper.set(new Runnable() {
-      public void run() {
-        if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
-          myInitializationAlarm.addRequest(new Runnable() { // should not remove previously schedules tasks
-
-            public void run() {
-              wrapper.get().run();
-            }
-          }, 1000);
-          return;
-        }
-        runnable.run();
+    wrapper.set(() -> {
+      if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
+        myInitializationAlarm.addRequest(() -> wrapper.get().run(), 1000);
+        return;
       }
+      runnable.run();
     });
     MavenUtil.runWhenInitialized(myProject, wrapper.get());
   }
@@ -1153,13 +1102,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void updateProjectTargetFolders() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProject.isDisposed()) return;
 
-        MavenFoldersImporter.updateProjectFolders(myProject, true);
-        VirtualFileManager.getInstance().asyncRefresh(null);
-      }
+      MavenFoldersImporter.updateProjectFolders(myProject, true);
+      VirtualFileManager.getInstance().asyncRefresh(null);
     });
   }
 
@@ -1180,28 +1127,26 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     final Ref<MavenProjectImporter> importer = new Ref<MavenProjectImporter>();
     final Ref<List<MavenProjectsProcessorTask>> postTasks = new Ref<List<MavenProjectsProcessorTask>>();
 
-    final Runnable r = new Runnable() {
-      public void run() {
-        MavenProjectImporter projectImporter = new MavenProjectImporter(myProject,
-                                                                        myProjectsTree,
-                                                                        getFileToModuleMapping(new MavenModelsProvider() {
-                                                                          @Override
-                                                                          public Module[] getModules() {
-                                                                            return modelsProvider.getModules();
-                                                                          }
+    final Runnable r = () -> {
+      MavenProjectImporter projectImporter = new MavenProjectImporter(myProject,
+                                                                      myProjectsTree,
+                                                                      getFileToModuleMapping(new MavenModelsProvider() {
+                                                                        @Override
+                                                                        public Module[] getModules() {
+                                                                          return modelsProvider.getModules();
+                                                                        }
 
-                                                                          @Override
-                                                                          public VirtualFile[] getContentRoots(Module module) {
-                                                                            return modelsProvider.getContentRoots(module);
-                                                                          }
-                                                                        }),
-                                                                        projectsToImportWithChanges,
-                                                                        importModuleGroupsRequired,
-                                                                        modelsProvider,
-                                                                        getImportingSettings());
-        importer.set(projectImporter);
-        postTasks.set(projectImporter.importProject());
-      }
+                                                                        @Override
+                                                                        public VirtualFile[] getContentRoots(Module module) {
+                                                                          return modelsProvider.getContentRoots(module);
+                                                                        }
+                                                                      }),
+                                                                      projectsToImportWithChanges,
+                                                                      importModuleGroupsRequired,
+                                                                      modelsProvider,
+                                                                      getImportingSettings());
+      importer.set(projectImporter);
+      postTasks.set(projectImporter.importProject());
     };
 
     // called from wizard or ui

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,12 +28,13 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import javax.swing.*;
 import java.util.List;
 
 public class ThrowFromFinallyBlockInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean warnOnAllExceptions = false;
 
   @Override
   @NotNull
@@ -44,6 +46,13 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
   @Override
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("throw,from.finally.block.everywhere.option"),
+                                          this, "warnOnAllExceptions");
   }
 
   @Override
@@ -63,11 +72,14 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
     return new ThrowFromFinallyBlockVisitor();
   }
 
-  private static class ThrowFromFinallyBlockVisitor extends BaseInspectionVisitor {
+  private class ThrowFromFinallyBlockVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
+    public void visitCallExpression(PsiCallExpression expression) {
+      super.visitCallExpression(expression);
+      if (!warnOnAllExceptions) {
+        return;
+      }
       final List<PsiClassType> exceptions = ExceptionUtil.getThrownExceptions(expression);
       if (exceptions.isEmpty()) {
         return;
@@ -75,7 +87,12 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
       for (PsiClassType exception : exceptions) {
         final PsiCodeBlock finallyBlock = getContainingFinallyBlock(expression, exception);
         if (finallyBlock != null && isHidingOfPreviousException(finallyBlock, expression)) {
-          registerMethodCallError(expression, exception);
+          if (expression instanceof PsiMethodCallExpression) {
+            registerMethodCallError((PsiMethodCallExpression)expression, exception);
+          }
+          else if (expression instanceof PsiNewExpression) {
+            registerNewExpressionError((PsiNewExpression)expression, exception);
+          }
           return;
         }
       }
@@ -109,7 +126,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
       }
     }
 
-    private static boolean isHidingOfPreviousException(PsiCodeBlock finallyBlock, PsiElement throwElement) {
+    private boolean isHidingOfPreviousException(PsiCodeBlock finallyBlock, PsiElement throwElement) {
       final PsiElement parent = finallyBlock.getParent();
       if (!(parent instanceof PsiTryStatement)) {
         // never reached
@@ -142,9 +159,7 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
     }
 
     @Nullable
-    public static <T extends PsiElement> T getParentOfType(@Nullable PsiElement element,
-                                                           @NotNull Class<T> aClass,
-                                                           @NotNull PsiElement stopAt) {
+    public <T extends PsiElement> T getParentOfType(@Nullable PsiElement element, @NotNull Class<T> aClass, @NotNull PsiElement stopAt) {
       if (element == null || element instanceof PsiFile) return null;
       element = element.getParent();
 

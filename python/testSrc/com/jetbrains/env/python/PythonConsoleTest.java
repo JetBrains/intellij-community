@@ -2,18 +2,24 @@ package com.jetbrains.env.python;
 
 import com.google.common.collect.Sets;
 import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.console.PyConsoleTask;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author traff
  */
 public class PythonConsoleTest extends PyEnvTestCase {
+  @Test
   public void testConsolePrint() throws Exception {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -27,6 +33,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testExecuteMultiline() throws Exception {   //PY-4329
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -47,6 +54,8 @@ public class PythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  @Staging
   public void testInterruptAsync() throws Exception {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -70,6 +79,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testLineByLineInput() throws Exception {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -86,6 +96,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
   }
 
 
+  @Test
   public void testVariablesView() throws Exception {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -93,13 +104,14 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("x = 1");
         exec("print(x)");
         waitForOutput("1");
-        
-        assertTrue("Variable has wrong value", 
+
+        assertTrue("Variable has wrong value",
                    hasValue("x", "1"));
       }
     });
   }
 
+  @Test
   public void testCompoundVariable() throws Exception {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -115,6 +127,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testChangeVariable() throws Exception {
     runPythonTest(new PyConsoleTask() {
       @Override
@@ -122,7 +135,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("x = 1");
         exec("print(x)");
         waitForOutput("1");
-        
+
         setValue("x", "2");
 
         exec("print(x)");

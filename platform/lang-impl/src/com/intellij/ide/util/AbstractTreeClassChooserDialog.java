@@ -386,13 +386,10 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
 
   private void selectElementInTree(@NotNull final PsiElement element) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myBuilder == null) return;
-        final VirtualFile vFile = PsiUtilBase.getVirtualFile(element);
-        myBuilder.select(element, vFile, false);
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myBuilder == null) return;
+      final VirtualFile vFile = PsiUtilBase.getVirtualFile(element);
+      myBuilder.select(element, vFile, false);
     }, getModalityState());
   }
 

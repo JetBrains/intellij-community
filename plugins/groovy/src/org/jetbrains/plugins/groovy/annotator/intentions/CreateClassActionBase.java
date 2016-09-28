@@ -118,14 +118,9 @@ public abstract class CreateClassActionBase extends Intention {
         }
       }
       catch (final IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            Messages.showErrorDialog(
-              GroovyBundle.message("cannot.create.class.error.text", name, e.getLocalizedMessage()),
-              GroovyBundle.message("cannot.create.class.error.title"));
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(
+          GroovyBundle.message("cannot.create.class.error.text", name, e.getLocalizedMessage()),
+          GroovyBundle.message("cannot.create.class.error.title")));
         return null;
       }
       PsiModifierList modifiers = targetClass.getModifierList();

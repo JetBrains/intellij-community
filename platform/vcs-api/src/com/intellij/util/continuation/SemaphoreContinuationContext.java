@@ -22,6 +22,7 @@ import com.intellij.util.concurrency.Semaphore;
  *         Date: 6/28/11
  *         Time: 3:23 PM
  */
+@Deprecated
 public class SemaphoreContinuationContext implements ContinuationPause {
   private final Semaphore mySemaphore;
 

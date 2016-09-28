@@ -15,7 +15,9 @@
  */
 package com.intellij.psi.codeStyle.autodetect;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingModel;
+import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.PsiDocumentManager;

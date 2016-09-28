@@ -74,17 +74,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       indicator.checkCanceled();
       started = System.currentTimeMillis();
       final MinusculeMatcher matcher = buildPatternMatcher(matchingPattern, NameUtil.MatchingCaseSensitivity.NONE);
-      ((ChooseByNameModelEx)model).processNames(new Processor<String>() {
-        @Override
-        public boolean process(String sequence) {
-          indicator.checkCanceled();
-          MatchResult result = matches(base, pattern, matcher, sequence);
-          if (result != null) {
-            collect.consume(result);
-            return true;
-          }
-          return false;
+      ((ChooseByNameModelEx)model).processNames(sequence -> {
+        indicator.checkCanceled();
+        MatchResult result = matches(base, pattern, matcher, sequence);
+        if (result != null) {
+          collect.consume(result);
+          return true;
         }
+        return false;
       }, everywhere);
       if (LOG.isDebugEnabled()) {
         LOG.debug("loaded + matched:"+ (System.currentTimeMillis() - started)+ "," + collect.getResult().size());
@@ -285,13 +282,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   @NotNull
   private static List<Pair<String, MinusculeMatcher>> getPatternsAndMatchers(@NotNull String qualifierPattern, @NotNull final ChooseByNameBase base) {
-    return ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, MinusculeMatcher>>() {
-      @NotNull
-      @Override
-      public Pair<String, MinusculeMatcher> fun(String s) {
-        String namePattern = addSearchAnywherePatternDecorationIfNeeded(base, getNamePattern(base, s));
-        return Pair.create(namePattern, buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE));
-      }
+    return ContainerUtil.map2List(split(qualifierPattern, base), s -> {
+      String namePattern = addSearchAnywherePatternDecorationIfNeeded(base, getNamePattern(base, s));
+      return Pair.create(namePattern, buildPatternMatcher(namePattern, NameUtil.MatchingCaseSensitivity.NONE));
     });
   }
 
@@ -302,12 +295,9 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     if (pattern == null) return Collections.emptyList();
 
     final List<String> filtered = new ArrayList<String>();
-    processNamesByPattern(base, names, pattern, ProgressIndicatorProvider.getGlobalProgressIndicator(), new Consumer<MatchResult>() {
-      @Override
-      public void consume(MatchResult result) {
-        synchronized (filtered) {
-          filtered.add(result.elementName);
-        }
+    processNamesByPattern(base, names, pattern, ProgressIndicatorProvider.getGlobalProgressIndicator(), result -> {
+      synchronized (filtered) {
+        filtered.add(result.elementName);
       }
     });
     synchronized (filtered) {
@@ -321,16 +311,13 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
                                             final ProgressIndicator indicator,
                                             @NotNull final Consumer<MatchResult> consumer) {
     final MinusculeMatcher matcher = buildPatternMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
-    Processor<String> processor = new Processor<String>() {
-      @Override
-      public boolean process(String name) {
-        ProgressManager.checkCanceled();
-        MatchResult result = matches(base, pattern, matcher, name);
-        if (result != null) {
-          consumer.consume(result);
-        }
-        return true;
+    Processor<String> processor = name -> {
+      ProgressManager.checkCanceled();
+      MatchResult result = matches(base, pattern, matcher, name);
+      if (result != null) {
+        consumer.consume(result);
       }
+      return true;
     };
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(names), indicator, false, true, processor)) {
       throw new ProcessCanceledException();

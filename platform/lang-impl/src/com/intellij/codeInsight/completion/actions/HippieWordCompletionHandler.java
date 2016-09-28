@@ -436,12 +436,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
   @NotNull
   private static List<Integer> getCaretOffsets(Editor editor) {
-    return ContainerUtil.map(editor.getCaretModel().getAllCarets(), new Function<Caret, Integer>() {
-      @Override
-      public Integer fun(Caret caret) {
-        return caret.getOffset();
-      }
-    });
+    return ContainerUtil.map(editor.getCaretModel().getAllCarets(), caret -> caret.getOffset());
   }
 
   private static class CompletionState {

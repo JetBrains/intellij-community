@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -46,14 +47,14 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
 
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
-  private final FontRenderContext myFontRenderContext;
   private final EditorPainter myPainter;
   private final EditorCoordinateMapper myMapper;
   private final EditorSizeManager mySizeManager;
   private final TextLayoutCache myTextLayoutCache;
   private final LogicalPositionCache myLogicalPositionCache;
   private final TabFragment myTabFragment;
-  
+
+  private FontRenderContext myFontRenderContext;
   private String myPrefixText; // accessed only in EDT
   private LineLayout myPrefixLayout; // guarded by myLock
   private TextAttributes myPrefixAttributes; // accessed only in EDT
@@ -68,7 +69,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   private final Object myLock = new Object();
   
   public EditorView(EditorImpl editor) {
-    myFontRenderContext = createFontRenderContext();
+    setFontRenderContext();
     myEditor = editor;
     myDocument = editor.getDocument();
     
@@ -138,6 +139,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean beforeSoftWrap) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.logicalToVisualPosition(pos, beforeSoftWrap);
   }
@@ -145,6 +147,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualToLogicalPosition(pos);
   }
@@ -152,24 +155,28 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public VisualPosition offsetToVisualPosition(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToVisualPosition(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
 
   public int visualPositionToOffset(VisualPosition visualPosition) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualPositionToOffset(visualPosition);
   }
 
   public int offsetToVisualLine(int offset, boolean beforeSoftWrap) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToVisualLine(offset, beforeSoftWrap);
   }
   
   public int visualLineToOffset(int visualLine) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualLineToOffset(visualLine);
   }
@@ -177,6 +184,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public VisualPosition xyToVisualPosition(@NotNull Point p) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.xyToVisualPosition(p);
   }
@@ -184,6 +192,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public Point visualPositionToXY(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.visualPositionToXY(pos);
   }
@@ -191,6 +200,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   @NotNull
   public Point offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
     assertIsDispatchThread();
+    assertNotInBulkMode();
     myEditor.getSoftWrapModel().prepareToMapping();
     return myMapper.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
@@ -278,6 +288,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
       myMaxCharWidth = -1;
       myTabSize = -1;
     }
+    setFontRenderContext();
     myLogicalPositionCache.reset(false);
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
@@ -426,10 +437,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
     }
   }
 
-  private static FontRenderContext createFontRenderContext() {
+  private void setFontRenderContext() {
     Graphics2D g = FontInfo.createReferenceGraphics();
     try {
-      return g.getFontRenderContext();
+      myFontRenderContext = g.getFontRenderContext();
     }
     finally {
       g.dispose();
@@ -484,5 +495,15 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
            " ,size manager: " + mySizeManager.dumpState() + 
            " ,logical position cache: " + myLogicalPositionCache.dumpState() +
            "]";
+  }
+
+  @TestOnly
+  public void validateState() {
+    myLogicalPositionCache.validateState();
+    mySizeManager.validateState();
+  }
+
+  private void assertNotInBulkMode() {
+    if (myDocument.isInBulkUpdate()) throw new IllegalStateException("Current operation is not available in bulk mode");
   }
 }

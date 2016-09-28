@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * User: cdr
+ * @author cdr
  */
 public class NumericOverflowInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
@@ -71,7 +71,10 @@ public class NumericOverflowInspection extends BaseJavaBatchLocalInspectionTool 
   }
 
   private static boolean hasOverflow(PsiExpression expr, @NotNull Project project) {
-    if (!TypeConversionUtil.isNumericType(expr.getType())) return false;
+    if (!TypeConversionUtil.isNumericType(expr.getType())) {
+      return false;
+    }
+
     boolean overflow = false;
     try {
       if (expr.getUserData(HAS_OVERFLOW_IN_CHILD) == null) {
@@ -93,5 +96,4 @@ public class NumericOverflowInspection extends BaseJavaBatchLocalInspectionTool 
 
     return overflow;
   }
-
 }

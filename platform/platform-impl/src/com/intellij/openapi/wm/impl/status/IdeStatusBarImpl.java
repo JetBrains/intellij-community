@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotificationPopup;
 import com.intellij.util.ArrayUtil;
@@ -166,10 +167,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     updateUI();
 
     if (master == null) {
-      Disposer.register(Disposer.get("ui"), this);
-    }
-
-    if (master == null) {
       addWidget(new ToolWindowsWidget(this), Position.LEFT);
     }
 
@@ -186,7 +183,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     if (size == null) return null;
-    
+
     Insets insets = getInsets();
     int minHeight = insets.top + insets.bottom + MIN_ICON_HEIGHT;
     return new Dimension(size.width, Math.max(size.height, minHeight));
@@ -194,31 +191,16 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public void addWidget(@NotNull final StatusBarWidget widget) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        addWidget(widget, Position.RIGHT, "__AUTODETECT__");
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.RIGHT, "__AUTODETECT__"));
   }
 
   @Override
   public void addWidget(@NotNull final StatusBarWidget widget, @NotNull final String anchor) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        addWidget(widget, Position.RIGHT, anchor);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, Position.RIGHT, anchor));
   }
 
   private void addWidget(@NotNull final StatusBarWidget widget, @NotNull final Position pos) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        addWidget(widget, pos, "__IGNORED__");
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> addWidget(widget, pos, "__IGNORED__"));
   }
 
   @Override
@@ -439,12 +421,9 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       updateChildren(new ChildAction() {
         @Override
         public void update(final IdeStatusBarImpl child) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              StatusBarWidget widgetCopy = mfw.copy();
-              child.addWidget(widgetCopy, pos, anchor);
-            }
+          UIUtil.invokeLaterIfNeeded(() -> {
+            StatusBarWidget widgetCopy = mfw.copy();
+            child.addWidget(widgetCopy, pos, anchor);
           });
         }
       });
@@ -481,14 +460,11 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public void setInfo(@Nullable final String s, @Nullable final String requestor) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myInfoAndProgressPanel != null) {
-          Couple<String> pair = myInfoAndProgressPanel.setText(s, requestor);
-          myInfo = pair.first;
-          myRequestor = pair.second;
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myInfoAndProgressPanel != null) {
+        Couple<String> pair = myInfoAndProgressPanel.setText(s, requestor);
+        myInfo = pair.first;
+        myRequestor = pair.second;
       }
     });
   }
@@ -692,25 +668,22 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
 
   @Override
   public void updateWidget(@NotNull final String id) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        final WidgetBean bean = myWidgetMap.get(id);
-        if (bean != null) {
-          if (bean.component instanceof StatusBarWrapper) {
-            ((StatusBarWrapper)bean.component).beforeUpdate();
-          }
-
-          bean.component.repaint();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      final WidgetBean bean = myWidgetMap.get(id);
+      if (bean != null) {
+        if (bean.component instanceof StatusBarWrapper) {
+          ((StatusBarWrapper)bean.component).beforeUpdate();
         }
 
-        updateChildren(new ChildAction() {
-          @Override
-          public void update(IdeStatusBarImpl child) {
-            child.updateWidget(id);
-          }
-        });
+        bean.component.repaint();
       }
+
+      updateChildren(new ChildAction() {
+        @Override
+        public void update(IdeStatusBarImpl child) {
+          child.updateWidget(id);
+        }
+      });
     });
   }
 
@@ -724,7 +697,7 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
     void beforeUpdate();
   }
 
-  private static final class MultipleTextValuesPresentationWrapper extends TextPanel implements StatusBarWrapper {
+  private static final class MultipleTextValuesPresentationWrapper extends SimpleColoredComponent implements StatusBarWrapper {
     private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
@@ -745,33 +718,24 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
         }
       }.installOn(this);
 
-
-      setOpaque(false);
+      setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label());
+      setIconOnTheRight(true);
     }
 
     @Override
     public void beforeUpdate() {
-      setText(myPresentation.getSelectedValue());
+      clear();
+      String value = myPresentation.getSelectedValue();
+      if (value != null) {
+        append(value);
+        setIcon(AllIcons.Ide.Statusbar_arrows);
+      }
     }
 
     @Override
     @Nullable
     public String getToolTipText() {
       return myPresentation.getTooltipText();
-    }
-
-    @Override
-    protected void paintComponent(@NotNull final Graphics g) {
-      super.paintComponent(g);
-
-      if (getText() != null) {
-        final Rectangle r = getBounds();
-        final Insets insets = getInsets();
-        Icon icon = AllIcons.Ide.Statusbar_arrows;
-        icon.paintIcon(this, g,
-                       r.width - insets.right - icon.getIconWidth() + 1,
-                       r.height / 2 - icon.getIconHeight() / 2);
-      }
     }
   }
 

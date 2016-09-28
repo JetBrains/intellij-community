@@ -94,28 +94,25 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     }
 
     ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          if (!FileModificationService.getInstance().prepareFileForWrite(targetMethod.getContainingFile())) return;
+      () -> {
+        if (!FileModificationService.getInstance().prepareFileForWrite(targetMethod.getContainingFile())) return;
+        if (processSuperMethods) {
+          for (PsiMethod superMethod : superMethods) {
+            if (!FileModificationService.getInstance().prepareFileForWrite(superMethod.getContainingFile())) return;
+          }
+        }
+
+        try {
+          processMethod(project, targetMethod, unhandledExceptions);
+
           if (processSuperMethods) {
             for (PsiMethod superMethod : superMethods) {
-              if (!FileModificationService.getInstance().prepareFileForWrite(superMethod.getContainingFile())) return;
+              processMethod(project, superMethod, unhandledExceptions);
             }
           }
-
-          try {
-            processMethod(project, targetMethod, unhandledExceptions);
-
-            if (processSuperMethods) {
-              for (PsiMethod superMethod : superMethods) {
-                processMethod(project, superMethod, unhandledExceptions);
-              }
-            }
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       }
     );

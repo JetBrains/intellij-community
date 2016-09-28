@@ -211,12 +211,7 @@ public class DataManagerImpl extends DataManager {
   public AsyncResult<DataContext> getDataContextFromFocus() {
     final AsyncResult<DataContext> context = new AsyncResult<DataContext>();
 
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        context.setDone(getDataContext());
-      }
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> context.setDone(getDataContext()));
 
     return context;
   }

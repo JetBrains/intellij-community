@@ -29,12 +29,7 @@ public final class GotoModuleDirectory extends FileChooserAction {
   protected void actionPerformed(final FileSystemTree fileSystemTree, final AnActionEvent e) {
     final VirtualFile moduleDir = getModuleDir(e);
     if (moduleDir != null) {
-      fileSystemTree.select(moduleDir, new Runnable() {
-        @Override
-        public void run() {
-          fileSystemTree.expand(moduleDir, null);
-        }
-      });
+      fileSystemTree.select(moduleDir, () -> fileSystemTree.expand(moduleDir, null));
     }
   }
 

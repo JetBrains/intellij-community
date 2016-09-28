@@ -21,16 +21,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,157 +41,131 @@ import org.jetbrains.ide.script.IdeScriptEngineManager;
 import org.jetbrains.ide.script.IdeScriptException;
 
 import java.io.IOException;
-import java.util.Comparator;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 class IdeStartupScripts extends ApplicationComponent.Adapter {
-  @SuppressWarnings("FieldCanBeLocal")
-  private static String SCRIPT_DIR_NAME = "startup";
+  private static final Logger LOG = Logger.getInstance(IdeStartupScripts.class);
 
-  private static Logger LOG = Logger.getInstance(IdeStartupScripts.class);
+  private static final String SCRIPT_DIR = "startup";
 
   @Override
   public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
-    List<VirtualFile> scripts = getScripts();
-    if (scripts.isEmpty()) {
-      LOG.debug("No startup scripts detected");
-    }
-    else {
-      scheduleStartupScriptsExecution(scripts);
-    }
+    scheduleStartupScriptsExecution();
   }
 
-  private static void scheduleStartupScriptsExecution(@NotNull List<VirtualFile> scripts) {
+  private static void scheduleStartupScriptsExecution() {
+    List<VirtualFile> scripts = getScripts();
+    LOG.info(scripts.size() + " startup script(s) found");
+    if (scripts.isEmpty()) return;
+
     final Future<List<Pair<VirtualFile, IdeScriptEngine>>> scriptsAndEnginesFuture = prepareScriptEnginesAsync(scripts);
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
-      private final AtomicBoolean myScriptsExecutionStarted = new AtomicBoolean();
+      final AtomicBoolean myScriptsExecutionStarted = new AtomicBoolean();
 
       @Override
       public void projectOpened(final Project project) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-          @Override
-          public void run() {
-            if (myScriptsExecutionStarted.compareAndSet(false, true)) {
-              executeScriptsAndDispose(project);
-            }
-          }
+        StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+          if (project.isDisposed()) return;
+          if (!myScriptsExecutionStarted.compareAndSet(false, true)) return;
+          ProjectManager.getInstance().removeProjectManagerListener(this);
+          runAllScriptsImpl(project);
         });
       }
 
-      private void executeScriptsAndDispose(@NotNull Project project) {
-        for (Pair<VirtualFile, IdeScriptEngine> scriptAndEngine : getScriptsAndEngines()) {
-          executeScript(project.isDisposed() ? null : project, scriptAndEngine.first, scriptAndEngine.second);
-        }
-        ProjectManager.getInstance().removeProjectManagerListener(this);
-      }
-
-      @NotNull
-      private List<Pair<VirtualFile, IdeScriptEngine>> getScriptsAndEngines() {
+      private void runAllScriptsImpl(@NotNull Project project) {
         try {
-          return scriptsAndEnginesFuture.get();
+          for (Pair<VirtualFile, IdeScriptEngine> pair : scriptsAndEnginesFuture.get()) {
+            try {
+              if (pair.second == null) {
+                LOG.warn(pair.first.getPath() + " not supported (no script engine)");
+              }
+              else {
+                runImpl(project, pair.first, pair.second);
+              }
+            }
+            catch (Exception e) {
+              LOG.warn(e);
+            }
+          }
+        }
+        catch (ProcessCanceledException e) {
+          LOG.warn("... cancelled");
         }
         catch (InterruptedException e) {
-          LOG.info("Script engines initialization cancelled");
+          LOG.warn("... interrupted");
         }
-        catch (ExecutionException e) {
-          LOG.error("Failed to initialize script engines", e);
+        catch (Exception e) {
+          LOG.error(e);
         }
-        return ContainerUtil.emptyList();
       }
     });
   }
 
   @NotNull
   private static Future<List<Pair<VirtualFile, IdeScriptEngine>>> prepareScriptEnginesAsync(@NotNull final List<VirtualFile> scripts) {
-    return PooledThreadExecutor.INSTANCE.submit(new Callable<List<Pair<VirtualFile, IdeScriptEngine>>>() {
-      @Override
-      public List<Pair<VirtualFile, IdeScriptEngine>> call() throws Exception {
-        return prepareScriptEngines(scripts);
-      }
-    });
+    return PooledThreadExecutor.INSTANCE.submit(() -> prepareScriptEngines(scripts));
   }
 
   @NotNull
-  private static List<Pair<VirtualFile, IdeScriptEngine>> prepareScriptEngines(@NotNull final List<VirtualFile> scripts) {
-    final IdeScriptEngineManager scriptEngineManager = IdeScriptEngineManager.getInstance();
-    return ContainerUtil.map(scripts, new Function<VirtualFile, Pair<VirtualFile, IdeScriptEngine>>() {
-      @Override
-      public Pair<VirtualFile, IdeScriptEngine> fun(VirtualFile script) {
-        String extension = script.getExtension();
-        return Pair.create(script, extension != null ? scriptEngineManager.getEngineForFileExtension(extension, null) : null);
-      }
-    });
+  private static List<Pair<VirtualFile, IdeScriptEngine>> prepareScriptEngines(@NotNull List<VirtualFile> scripts) {
+    IdeScriptEngineManager scriptEngineManager = IdeScriptEngineManager.getInstance();
+    List<Pair<VirtualFile, IdeScriptEngine>> result = ContainerUtil.newArrayList();
+    for (VirtualFile script : scripts) {
+      String extension = script.getExtension();
+      IdeScriptEngine engine = extension != null ? scriptEngineManager.getEngineForFileExtension(extension, null) : null;
+      result.add(Pair.create(script, engine));
+    }
+    return result;
   }
 
-  private static void executeScript(@Nullable Project project, @NotNull VirtualFile script, @Nullable IdeScriptEngine scriptEngine) {
-    if (scriptEngine == null) {
-      LOG.warn("No script engine found for script: " + script.getPath());
-      return;
-    }
+  private static void runImpl(@NotNull Project project,
+                              @NotNull VirtualFile script,
+                              @NotNull IdeScriptEngine engine) throws ExecutionException, IOException, IdeScriptException {
+    String scriptText = VfsUtilCore.loadText(script);
+    IdeScriptBindings.ensureIdeIsBound(project, engine);
 
-    String scriptText;
-    try {
-      scriptText = VfsUtilCore.loadText(script);
-    }
-    catch (IOException e) {
-      LOG.warn("Cannot load script: " + script.getPath(), e);
-      return;
-    }
-
-    IdeScriptBindings.ensureIdeIsBound(project, scriptEngine);
-
+    LOG.info(script.getPath());
     long start = System.currentTimeMillis();
     try {
-      LOG.info("Running script: " + script.getPath());
-      scriptEngine.eval(scriptText);
-    }
-    catch (IdeScriptException e) {
-      LOG.error("Error in script: " + script.getPath(), e);
+      engine.eval(scriptText);
     }
     finally {
-      long end = System.currentTimeMillis();
-      LOG.info(script.getPath() + " completed in " + (end - start) + " ms");
+      LOG.info("... completed in " + StringUtil.formatDuration(System.currentTimeMillis() - start));
     }
   }
 
   @NotNull
   private static List<VirtualFile> getScripts() {
-    VirtualFile root = getScriptsRootDirectory();
-    if (root == null) return ContainerUtil.emptyList();
+    List<VirtualFile> scripts;
+    try {
+      VirtualFile scriptDir = getScriptsRootDirectory();
+      VirtualFile[] scriptDirChildren = scriptDir != null ? scriptDir.getChildren() : VirtualFile.EMPTY_ARRAY;
+      Condition<VirtualFile> regularFileFilter = ExtensionsRootType.regularFileFilter();
+      scripts = Arrays.stream(scriptDirChildren).filter(regularFileFilter::value).collect(Collectors.toList());
+    }
+    catch (IOException ignore) {
+      return Collections.emptyList();
+    }
 
-    VfsUtil.markDirtyAndRefresh(false, true, true, root);
-    List<VirtualFile> scripts = VfsUtil.collectChildrenRecursively(root);
-    scripts = ContainerUtil.filter(scripts, ExtensionsRootType.regularFileFilter());
-    ContainerUtil.sort(scripts, new FileNameComparator());
+    ContainerUtil.sort(scripts, (f1, f2) -> {
+      String f1Name = f1 != null ? f1.getName() : null;
+      String f2Name = f2 != null ? f2.getName() : null;
+      return StringUtil.compare(f1Name, f2Name, false);
+    });
     return scripts;
   }
 
   @Nullable
-  private static VirtualFile getScriptsRootDirectory() {
-    try {
-      PluginId corePlugin = ObjectUtils.assertNotNull(PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID));
-      return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR_NAME, false);
-    }
-    catch (IOException e) {
-      LOG.warn("Failed to open/create startup scripts directory", e);
-    }
-    return null;
-  }
-
-  private static class FileNameComparator implements Comparator<VirtualFile> {
-    @Override
-    public int compare(VirtualFile f1, VirtualFile f2) {
-      String f1Name = f1 != null ? f1.getName() : null;
-      String f2Name = f2 != null ? f2.getName() : null;
-      return StringUtil.compare(f1Name, f2Name, false);
-    }
+  private static VirtualFile getScriptsRootDirectory() throws IOException {
+    PluginId corePlugin = ObjectUtils.assertNotNull(PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID));
+    return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR, false);
   }
 }

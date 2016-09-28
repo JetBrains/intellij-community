@@ -213,16 +213,13 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
 
     private static List<PsiElement> convertJunitAnnotations(final PsiElementFactory factory, final PsiMethod method) throws IncorrectOperationException {
       PsiAnnotation[] annotations = method.getModifierList().getAnnotations();
-      return ContainerUtil.mapNotNull(annotations, new Function<PsiAnnotation, PsiElement>() {
-        @Override
-        public PsiElement fun(PsiAnnotation annotation) {
-          final String testNgAnnotation = ANNOTATIONS_MAP.get(annotation.getQualifiedName());
-          if (testNgAnnotation != null) {
-            final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.Test", method);
-            return annotation.replace(newAnnotation);
-          }
-          return null;
+      return ContainerUtil.mapNotNull(annotations, annotation -> {
+        final String testNgAnnotation = ANNOTATIONS_MAP.get(annotation.getQualifiedName());
+        if (testNgAnnotation != null) {
+          final PsiAnnotation newAnnotation = factory.createAnnotationFromText("@org.testng.annotations.Test", method);
+          return annotation.replace(newAnnotation);
         }
+        return null;
       });
     }
 

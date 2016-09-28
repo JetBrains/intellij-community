@@ -51,12 +51,9 @@ public class AnnotationCollectorChecker extends CustomAnnotationChecker {
   private static boolean isInAliasDeclaration(GrAnnotation annotation) {
     final PsiElement parent = annotation.getParent();
     if (parent instanceof GrModifierList) {
-      final GrAnnotation collector = ContainerUtil.find(((GrModifierList)parent).getRawAnnotations(), new Condition<GrAnnotation>() {
-        @Override
-        public boolean value(GrAnnotation annotation) {
-          return GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR.equals(annotation.getQualifiedName());
-        }
-      });
+      final GrAnnotation collector = ContainerUtil.find(((GrModifierList)parent).getRawAnnotations(),
+                                                        annotation1 -> GroovyCommonClassNames.GROOVY_TRANSFORM_ANNOTATION_COLLECTOR.equals(
+                                                          annotation1.getQualifiedName()));
       if (collector != null) {
         return true;
       }

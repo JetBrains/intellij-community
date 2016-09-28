@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
   @NotNull
   public PsiClass[] getClassesByName(@NotNull @NonNls String name, @NotNull GlobalSearchScope scope) {
     Collection<PsiClass> allClasses = new SmartList<PsiClass>();
-    processClassesWithName(name, new CommonProcessors.CollectProcessor<PsiClass>(allClasses), scope, null);
+    processClassesWithName(name, Processors.cancelableCollectProcessor(allClasses), scope, null);
     if (allClasses.isEmpty()) return PsiClass.EMPTY_ARRAY;
     return allClasses.toArray(new PsiClass[allClasses.size()]);
   }

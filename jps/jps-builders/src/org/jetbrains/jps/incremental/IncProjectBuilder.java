@@ -808,15 +808,11 @@ public class IncProjectBuilder {
     }
 
     private void queueTasks(List<BuildChunkTask> tasks) {
-      List<BuildTargetChunk> chunksToLog = LOG.isDebugEnabled() ? new ArrayList<BuildTargetChunk>() : null;
-      for (BuildChunkTask task : tasks) {
-        if (chunksToLog != null) {
+      if (LOG.isDebugEnabled() && !tasks.isEmpty()) {
+        final List<BuildTargetChunk> chunksToLog = new ArrayList<BuildTargetChunk>();
+        for (BuildChunkTask task : tasks) {
           chunksToLog.add(task.getChunk());
         }
-        queueTask(task);
-      }
-
-      if (chunksToLog != null && !chunksToLog.isEmpty()) {
         final StringBuilder logBuilder = new StringBuilder("Queuing " + chunksToLog.size() + " chunks in parallel: ");
         Collections.sort(chunksToLog, new Comparator<BuildTargetChunk>() {
           public int compare(final BuildTargetChunk o1, final BuildTargetChunk o2) {
@@ -827,6 +823,9 @@ public class IncProjectBuilder {
           logBuilder.append(chunk.toString()).append("; ");
         }
         LOG.debug(logBuilder.toString());
+      }
+      for (BuildChunkTask task : tasks) {
+        queueTask(task);
       }
     }
 

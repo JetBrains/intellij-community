@@ -25,5 +25,5 @@ package com.intellij.openapi.editor.impl.softwrap;
  * @since 9/30/10 7:32 PM
  */
 public enum SoftWrapAppliancePlaces {
-  MAIN_EDITOR, CONSOLE
+  MAIN_EDITOR, CONSOLE, PREVIEW
 }

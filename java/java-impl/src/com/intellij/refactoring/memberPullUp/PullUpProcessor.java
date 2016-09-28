@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,8 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   private final PsiClass myTargetSuperClass;
   private final MemberInfo[] myMembersToMove;
   private final DocCommentPolicy myJavaDocPolicy;
-  private Set<PsiMember> myMembersAfterMove = null;
-  private Set<PsiMember> myMovedMembers = null;
+  private Set<PsiMember> myMembersAfterMove;
+  private Set<PsiMember> myMovedMembers;
   private final Map<Language, PullUpHelper<MemberInfo>> myProcessors = ContainerUtil.newHashMap();
 
   public PullUpProcessor(PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
@@ -110,12 +110,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   protected RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(mySourceClass);
-    data.addMembers(myMembersToMove, new Function<MemberInfo, PsiElement>() {
-      @Override
-      public PsiElement fun(MemberInfo info) {
-        return info.getMember();
-      }
-    });
+    data.addMembers(myMembersToMove, info -> info.getMember());
     return data;
   }
 
@@ -136,47 +131,36 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
       if (element == null) continue;
 
       PullUpHelper<MemberInfo> processor = getProcessor(element);
+      if (processor == null) continue;
+
       processor.updateUsage(element);
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        processMethodsDuplicates();
-      }
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
   private void processMethodsDuplicates() {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            if (!myTargetSuperClass.isValid()) return;
-            final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
-            final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
-            for (PsiClass aClass : search) {
-              final PsiFile containingFile = aClass.getContainingFile();
-              if (containingFile != null) {
-                final VirtualFile virtualFile = containingFile.getVirtualFile();
-                if (virtualFile != null) {
-                  hierarchyFiles.add(virtualFile);
-                }
-              }
-            }
-            final Set<PsiMember> methodsToSearchDuplicates = new HashSet<PsiMember>();
-            for (PsiMember psiMember : myMembersAfterMove) {
-              if (psiMember instanceof PsiMethod && psiMember.isValid() && ((PsiMethod)psiMember).getBody() != null) {
-                methodsToSearchDuplicates.add(psiMember);
-              }
-            }
-
-            MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      if (!myTargetSuperClass.isValid()) return;
+      final Query<PsiClass> search = ClassInheritorsSearch.search(myTargetSuperClass);
+      final Set<VirtualFile> hierarchyFiles = new HashSet<VirtualFile>();
+      for (PsiClass aClass : search) {
+        final PsiFile containingFile = aClass.getContainingFile();
+        if (containingFile != null) {
+          final VirtualFile virtualFile = containingFile.getVirtualFile();
+          if (virtualFile != null) {
+            hierarchyFiles.add(virtualFile);
           }
-        });
+        }
       }
-    }, MethodDuplicatesHandler.REFACTORING_NAME, true, myProject);
+      final Set<PsiMember> methodsToSearchDuplicates = new HashSet<PsiMember>();
+      for (PsiMember psiMember : myMembersAfterMove) {
+        if (psiMember instanceof PsiMethod && psiMember.isValid() && ((PsiMethod)psiMember).getBody() != null) {
+          methodsToSearchDuplicates.add(psiMember);
+        }
+      }
+
+      MethodDuplicatesHandler.invokeOnScope(myProject, methodsToSearchDuplicates, new AnalysisScope(myProject, hierarchyFiles), true);
+    }), MethodDuplicatesHandler.REFACTORING_NAME, true, myProject);
   }
 
   @Override
@@ -198,6 +182,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     for (MemberInfo info : myMembersToMove) {
       PullUpHelper<MemberInfo> processor = getProcessor(info);
 
+      LOG.assertTrue(processor != null, info.getMember());
       if (!(info.getMember() instanceof PsiClass) || info.getOverrides() == null) {
         processor.setCorrectVisibility(info);
         processor.encodeContextInfo(info);
@@ -207,27 +192,37 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     }
 
     for (PsiMember member : myMembersAfterMove) {
-      getProcessor(member).postProcessMember(member);
+      PullUpHelper<MemberInfo> processor = getProcessor(member);
+      LOG.assertTrue(processor != null, member);
+
+      processor.postProcessMember(member);
 
       final JavaRefactoringListenerManager listenerManager = JavaRefactoringListenerManager.getInstance(myProject);
       ((JavaRefactoringListenerManagerImpl)listenerManager).fireMemberMoved(mySourceClass, member);
     }
   }
 
+  @Nullable
   private PullUpHelper<MemberInfo> getProcessor(@NotNull PsiElement element) {
     Language language = element.getLanguage();
     return getProcessor(language);
   }
 
+  @Nullable
   private PullUpHelper<MemberInfo> getProcessor(Language language) {
     PullUpHelper<MemberInfo> helper = myProcessors.get(language);
     if (helper == null) {
-      helper = PullUpHelper.INSTANCE.forLanguage(language).createPullUpHelper(this);
+      PullUpHelperFactory helperFactory = PullUpHelper.INSTANCE.forLanguage(language);
+      if (helperFactory == null) {
+        return null;
+      }
+      helper = helperFactory.createPullUpHelper(this);
       myProcessors.put(language, helper);
     }
     return helper;
   }
 
+  @Nullable
   private PullUpHelper<MemberInfo> getProcessor(@NotNull MemberInfo info) {
     PsiReferenceList refList = info.getSourceReferenceList();
     if (refList != null) {
@@ -265,7 +260,9 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
 
     if (movedFields.isEmpty()) return;
 
-    getProcessor(myTargetSuperClass).moveFieldInitializations(movedFields);
+    PullUpHelper<MemberInfo> processor = getProcessor(myTargetSuperClass);
+    LOG.assertTrue(processor != null, myTargetSuperClass);
+    processor.moveFieldInitializations(movedFields);
   }
 
   public static boolean checkedInterfacesContain(Collection<? extends MemberInfoBase<? extends PsiMember>> memberInfos, PsiMethod psiMethod) {
@@ -279,6 +276,12 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
       }
     }
     return false;
+  }
+
+  @NotNull
+  @Override
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+    return Collections.singletonList(mySourceClass);
   }
 
   @Override
@@ -314,13 +317,13 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   private class PullUpUsageViewDescriptor implements UsageViewDescriptor {
     @Override
     public String getProcessedElementsHeader() {
-      return "Pull up members from";
+      return "Pull up members from class " + DescriptiveNameUtil.getDescriptiveName(mySourceClass);
     }
 
     @Override
     @NotNull
     public PsiElement[] getElements() {
-      return new PsiElement[]{mySourceClass};
+      return ContainerUtil.map(myMembersToMove, info -> info.getMember(), PsiElement.EMPTY_ARRAY);
     }
 
     @Override

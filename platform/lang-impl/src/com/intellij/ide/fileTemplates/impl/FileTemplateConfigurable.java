@@ -419,7 +419,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     private final Lexer myLexer;
 
     public TemplateHighlighter() {
-      myLexer = new MergingLexerAdapter(new FlexAdapter(new FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
+      myLexer = new MergingLexerAdapter(new FlexAdapter(new _FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
     }
 
     @NotNull

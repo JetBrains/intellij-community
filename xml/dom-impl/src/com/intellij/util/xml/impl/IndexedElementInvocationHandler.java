@@ -87,16 +87,13 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
     }
 
     final XmlTag[] newTag = new XmlTag[1];
-    getManager().runChange(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final XmlTag parentTag = parent.getXmlTag();
-          newTag[0] = (XmlTag)parentTag.add(parent.createChildTag(getXmlName()));
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    getManager().runChange(() -> {
+      try {
+        final XmlTag parentTag = parent.getXmlTag();
+        newTag[0] = (XmlTag)parentTag.add(parent.createChildTag(getXmlName()));
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
     return newTag[0];
@@ -156,12 +153,8 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
   public final DomElement createPathStableCopy() {
     final DomFixedChildDescription description = getChildDescription();
     final DomElement parentCopy = getParent().createStableCopy();
-    return getManager().createStableValue(new Factory<DomElement>() {
-      @Override
-      public DomElement create() {
-        return parentCopy.isValid() ? description.getValues(parentCopy).get(myIndex) : null;
-      }
-    });
+    return getManager().createStableValue(
+      (Factory<DomElement>)() -> parentCopy.isValid() ? description.getValues(parentCopy).get(myIndex) : null);
   }
 
 }

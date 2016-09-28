@@ -85,12 +85,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     if (list == null) {
       return ContainerUtil.emptyList();
     }
-    return ContainerUtil.map2List(list, new Function<Object, Object>() {
-      @Override
-      public Object fun(Object o) {
-        return o.toString();
-      }
-    }).subList(0, Math.min(list.size(), max));
+    return ContainerUtil.map2List(list, (Function<Object, Object>)o -> o.toString()).subList(0, Math.min(list.size(), max));
   }
 
   @Nullable

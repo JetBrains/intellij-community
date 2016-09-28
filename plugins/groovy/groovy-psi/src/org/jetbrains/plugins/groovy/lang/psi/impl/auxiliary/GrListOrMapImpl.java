@@ -55,8 +55,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
   private static final Function<GrListOrMapImpl, PsiType> TYPES_CALCULATOR = new MyTypesCalculator();
 
   private final PsiReference myLiteralReference = new LiteralConstructorReference(this);
-  private volatile GrExpression[] myInitializers = null;
-  private volatile GrNamedArgument[] myNamedArguments = null;
+  private volatile GrExpression[] myInitializers;
+  private volatile GrNamedArgument[] myNamedArguments;
 
   public GrListOrMapImpl(@NotNull ASTNode node) {
     super(node);
@@ -228,17 +228,8 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
         @NotNull
         @Override
         protected PsiType[] inferComponents() {
-          return ContainerUtil.map(initializers, new Function<GrExpression, PsiType>() {
-            @Override
-            public PsiType fun(final GrExpression expression) {
-              return RecursionManager.doPreventingRecursion(expression, false, new Computable<PsiType>() {
-                @Override
-                public PsiType compute() {
-                  return TypesUtil.boxPrimitiveType(expression.getType(), expression.getManager(), myScope);
-                }
-              });
-            }
-          }, new PsiType[initializers.length]);
+          return ContainerUtil.map(initializers, expression -> RecursionManager.doPreventingRecursion(expression, false,
+                                                                                                      () -> TypesUtil.boxPrimitiveType(expression.getType(), expression.getManager(), myScope)), new PsiType[initializers.length]);
         }
 
         @Override

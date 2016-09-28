@@ -60,18 +60,8 @@ public class PluginTable extends JBTable {
       protected Transferable createTransferable(JComponent c) {
         final IdeaPluginDescriptor[] selectedValues = getSelectedObjects();
         if (selectedValues == null) return null;
-        final String text = StringUtil.join(selectedValues, new Function<IdeaPluginDescriptor, String>() {
-          @Override
-          public String fun(IdeaPluginDescriptor descriptor) {
-            return descriptor.getName();
-          }
-        }, ", ");
-        final String htmlText = "<body>\n<ul>\n" + StringUtil.join(selectedValues, new Function<IdeaPluginDescriptor, String>() {
-          @Override
-          public String fun(IdeaPluginDescriptor descriptor) {
-            return descriptor.getName();
-          }
-        }, "</li>\n<li>") + "</ul>\n</body>\n";
+        final String text = StringUtil.join(selectedValues, descriptor -> descriptor.getName(), ", ");
+        final String htmlText = "<body>\n<ul>\n" + StringUtil.join(selectedValues, descriptor -> descriptor.getName(), "</li>\n<li>") + "</ul>\n</body>\n";
         return new TextTransferable(XmlStringUtil.wrapInHtml(htmlText), text);
       }
 

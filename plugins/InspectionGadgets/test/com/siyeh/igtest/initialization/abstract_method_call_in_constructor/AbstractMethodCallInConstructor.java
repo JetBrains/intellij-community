@@ -6,7 +6,7 @@ abstract class A {
         foo();
       }
     };
-
+    <warning descr="Call to 'abstract' method 'foo()' during object construction">foo</warning>();
   }
 
   abstract void foo();

@@ -140,12 +140,7 @@ public abstract class OccurrencesChooser<T> {
       .setMovable(true)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          callback.pass((ReplaceChoice)list.getSelectedValue());
-        }
-      })
+      .setItemChoosenCallback(() -> callback.pass((ReplaceChoice)list.getSelectedValue()))
       .addListener(new JBPopupAdapter() {
         @Override
         public void onClosed(LightweightWindowEvent event) {

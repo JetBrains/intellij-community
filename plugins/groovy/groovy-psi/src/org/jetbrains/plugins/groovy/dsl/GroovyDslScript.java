@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -34,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.holders.CustomMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ContextFilter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 
 import java.util.List;
 
@@ -62,13 +62,12 @@ public class GroovyDslScript {
                                  final PsiType psiType,
                                  final PsiElement place,
                                  final PsiFile placeFile,
-                                 final String qname,
-                                 ResolveState state) {
-    CustomMembersHolder holder = myFactorTree.retrieve(place, placeFile, qname);
+                                 ResolveState state, NotNullLazyValue<String> typeText) {
+    CustomMembersHolder holder = myFactorTree.retrieve(place, placeFile, typeText);
     GroovyClassDescriptor descriptor = new GroovyClassDescriptor(psiType, place, placeFile);
     try {
       if (holder == null) {
-        holder = addGdslMembers(descriptor, qname, psiType);
+        holder = addGdslMembers(descriptor, psiType);
         myFactorTree.cache(descriptor, holder);
       }
 
@@ -83,9 +82,8 @@ public class GroovyDslScript {
     }
   }
 
-  private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, String qname, final PsiType psiType) {
+  private CustomMembersHolder addGdslMembers(GroovyClassDescriptor descriptor, final PsiType psiType) {
     final ProcessingContext ctx = new ProcessingContext();
-    ctx.put(ClassUtil.getClassKey(qname), psiType);
     ctx.put(GdslUtil.INITIAL_CONTEXT, descriptor);
     try {
       if (!isApplicable(executor, descriptor, ctx)) {
@@ -149,7 +147,7 @@ public class GroovyDslScript {
     return "GroovyDslScript: " + myPath;
   }
 
-  @Nullable
+  @NotNull
   public MultiMap getStaticInfo() {
     return executor.getStaticInfo();
   }

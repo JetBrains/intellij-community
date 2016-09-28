@@ -155,6 +155,7 @@ public class GrParameterInfo implements JavaParameterInfo {
     myName = newName;
   }
 
+  @Override
   public void setType(@Nullable PsiType type) {
     myTypeWrapper = type == null ? null : CanonicalTypes.createTypeWrapper(type);
   }

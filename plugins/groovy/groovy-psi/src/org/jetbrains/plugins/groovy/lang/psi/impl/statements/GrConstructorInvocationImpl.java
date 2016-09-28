@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrCallImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -115,17 +115,6 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   }
 
   @Override
-  public PsiMethod resolveMethod() {
-    return PsiImplUtil.extractUniqueElement(multiResolve(false));
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    return PsiImplUtil.extractUniqueResult(multiResolve(false));
-  }
-
-  @Override
   @Nullable
   public PsiClass getDelegatedClass() {
     PsiClass typeDefinition = PsiUtil.getContextClass(this);
@@ -139,5 +128,11 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
   @Override
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
     return multiResolve(true);
+  }
+
+  @NotNull
+  @Override
+  public GrArgumentList getArgumentList() {
+    return findNotNullChildByClass(GrArgumentList.class);
   }
 }

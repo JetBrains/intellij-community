@@ -19,11 +19,9 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Comparator;
 
 /**
  * @author Aleksey Pivovarov
@@ -34,12 +32,7 @@ public class GithubSelectForkPanel {
   private ComboBox myComboBox;
 
   public GithubSelectForkPanel() {
-    myModel = new SortedComboBoxModel<String>(new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return StringUtil.naturalCompare(o1, o2);
-      }
-    });
+    myModel = new SortedComboBoxModel<String>(StringUtil::naturalCompare);
 
     myComboBox.setModel(myModel);
   }

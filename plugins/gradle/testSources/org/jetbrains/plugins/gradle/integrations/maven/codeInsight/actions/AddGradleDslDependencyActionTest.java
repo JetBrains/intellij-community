@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -40,7 +41,7 @@ public class AddGradleDslDependencyActionTest extends LightPlatformCodeInsightFi
   }
 
   private void doTest(String file) {
-    CodeInsightTestUtil.doActionTest(new AddGradleDslDependencyAction(), file, myFixture);
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeInsightTestUtil.doActionTest(new AddGradleDslDependencyAction(), file, myFixture));
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,11 @@ public class StatefulEpInspection extends DevKitInspectionBase {
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     PsiField[] fields = psiClass.getFields();
     if (fields.length == 0) return super.checkClass(psiClass, manager, isOnTheFly);
+
     final boolean isQuickFix = InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getCanonicalName());
-    final boolean isProjectComponent = InheritanceUtil.isInheritor(psiClass, ProjectComponent.class.getCanonicalName());
     if (isQuickFix || ExtensionPointLocator.isRegisteredExtension(psiClass)) {
+      final boolean isProjectComponent = InheritanceUtil.isInheritor(psiClass, ProjectComponent.class.getCanonicalName());
+
       List<ProblemDescriptor> result = ContainerUtil.newArrayList();
       for (final PsiField field : fields) {
         for (Class c : new Class[]{PsiElement.class, PsiReference.class, Project.class}) {
@@ -46,7 +48,7 @@ public class StatefulEpInspection extends DevKitInspectionBase {
           String message = c == PsiElement.class
                            ? "Potential memory leak: don't hold PsiElement, use SmartPsiElementPointer instead" +
                              (isQuickFix ? "; also see LocalQuickFixOnPsiElement" : "")
-                           : "Don't use " + c.getSimpleName() + " as a field in extension";
+                           : "Don't use " + c.getSimpleName() + " as a field in " + ( isQuickFix ? "quick fix" : "extension");
           if (InheritanceUtil.isInheritor(field.getType(), c.getCanonicalName())) {
             result.add(manager.createProblemDescriptor(field, message, true, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly));
           }

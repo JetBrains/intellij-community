@@ -94,12 +94,8 @@ public class MavenDomElementDescriptorHolder {
   private XmlNSDescriptorImpl tryGetOrCreateDescriptor(final FileKind kind) {
     CachedValue<XmlNSDescriptorImpl> result = myDescriptorsMap.get(kind);
     if (result == null) {
-      result = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<XmlNSDescriptorImpl>() {
-        @Override
-        public Result<XmlNSDescriptorImpl> compute() {
-          return Result.create(doCreateDescriptor(kind), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-        }
-      }, false);
+      result = CachedValuesManager.getManager(myProject).createCachedValue(
+        () -> CachedValueProvider.Result.create(doCreateDescriptor(kind), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT), false);
       myDescriptorsMap.put(kind, result);
     }
     return result.getValue();

@@ -211,12 +211,7 @@ public abstract class ExecutableValidator {
 
     if (!isExecutableValid(getCurrentExecutable())) {
       if (Messages.OK == showMessage(parentComponent)) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            showSettings();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> showSettings());
       }
       return false;
     }

@@ -264,10 +264,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testAlreadyHandled() {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
-           method -> {
-             return new ThrownExceptionInfo[]{
-               new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
-             };
+           method -> new ThrownExceptionInfo[]{
+             new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
            },
            false
     );
@@ -275,10 +273,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testConstructorException() {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
-           method -> {
-             return new ThrownExceptionInfo[]{
-               new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.io.IOException", method.getResolveScope()))
-             };
+           method -> new ThrownExceptionInfo[]{
+             new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.io.IOException", method.getResolveScope()))
            },
            false
     );
@@ -286,10 +282,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testAddRuntimeException() {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
-           method -> {
-             return new ThrownExceptionInfo[]{
-               new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
-             };
+           method -> new ThrownExceptionInfo[]{
+             new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.RuntimeException", method.getResolveScope()))
            },
            false
     );
@@ -297,10 +291,8 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testAddException() {
     doTest(null, null, null, new SimpleParameterGen(new ParameterInfoImpl[0]),
-           method -> {
-             return new ThrownExceptionInfo[]{
-               new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
-             };
+           method -> new ThrownExceptionInfo[]{
+             new JavaThrownExceptionInfo(-1, myFactory.createTypeByFQClassName("java.lang.Exception", method.getResolveScope()))
            },
            false
     );
@@ -374,6 +366,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     getJavaSettings().ALIGN_MULTILINE_PARAMETERS = true;
     getJavaSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest(null, null, "Exception", new SimpleParameterGen(), new SimpleExceptionsGen(), false);
+  }
+
+  public void testRemoveOverride() {
+    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
+  }
+
+  public void testPreserveOverride() {
+    doTest(null, null, null, new ParameterInfoImpl[0], new ThrownExceptionInfo[0], false);
   }
 
   public void testVisibilityOfOverriddenMethod() {

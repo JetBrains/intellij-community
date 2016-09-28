@@ -2,7 +2,6 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBranchFilter;
 import org.jetbrains.annotations.NotNull;
@@ -96,25 +95,10 @@ public class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
     List<String> result = new ArrayList<String>();
 
     result.addAll(myBranches);
-    result.addAll(ContainerUtil.map(myPatterns, new Function<Pattern, String>() {
-      @Override
-      public String fun(Pattern pattern) {
-        return pattern.pattern();
-      }
-    }));
+    result.addAll(ContainerUtil.map(myPatterns, pattern -> pattern.pattern()));
 
-    result.addAll(ContainerUtil.map(myExcludedBranches, new Function<String, String>() {
-      @Override
-      public String fun(String branchName) {
-        return "-" + branchName;
-      }
-    }));
-    result.addAll(ContainerUtil.map(myExcludedPatterns, new Function<Pattern, String>() {
-      @Override
-      public String fun(Pattern pattern) {
-        return "-" + pattern.pattern();
-      }
-    }));
+    result.addAll(ContainerUtil.map(myExcludedBranches, branchName -> "-" + branchName));
+    result.addAll(ContainerUtil.map(myExcludedPatterns, pattern -> "-" + pattern.pattern()));
 
     return result;
   }

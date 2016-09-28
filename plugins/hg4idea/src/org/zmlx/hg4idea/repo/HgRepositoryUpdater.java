@@ -24,9 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.QueueProcessor;
+import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +42,12 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
   private final Project myProject;
   @NotNull private final HgRepositoryFiles myRepositoryFiles;
   @Nullable private final MessageBusConnection myMessageBusConnection;
-  @NotNull private final QueueProcessor<Object> myUpdateQueue;
+  @NotNull private final MergingUpdateQueue myUpdateQueue;
   @Nullable private final VirtualFile myBranchHeadsDir;
+  private static final int TIME_SPAN = 300;
   @Nullable private VirtualFile myMqDir;
   @Nullable private final LocalFileSystem.WatchRequest myWatchRequest;
-  @NotNull private final QueueProcessor<Object> myUpdateConfigQueue;
+  @NotNull private final MergingUpdateQueue myUpdateConfigQueue;
   private final HgRepository myRepository;
   private final VcsDirtyScopeManager myDirtyScopeManager;
 
@@ -62,13 +64,8 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
 
     myProject = repository.getProject();
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    myUpdateQueue = new QueueProcessor<Object>(new DvcsUtil.Updater(repository), myProject.getDisposed());
-    myUpdateConfigQueue = new QueueProcessor<Object>(new Consumer<Object>() {
-      @Override
-      public void consume(Object dummy) {
-        repository.updateConfig();
-      }
-    }, myProject.getDisposed());
+    myUpdateQueue = new MergingUpdateQueue("HgRepositoryUpdate", TIME_SPAN, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
+    myUpdateConfigQueue = new MergingUpdateQueue("HgConfigUpdate", TIME_SPAN, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD);
     if (!myProject.isDisposed()) {
       myMessageBusConnection = myProject.getMessageBus().connect();
       myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, this);
@@ -83,6 +80,8 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     if (myWatchRequest != null) {
       LocalFileSystem.getInstance().removeWatchedRoot(myWatchRequest);
     }
+    myUpdateQueue.cancelAllUpdates();
+    myUpdateConfigQueue.cancelAllUpdates();
     if (myMessageBusConnection != null) {
       myMessageBusConnection.disconnect();
     }
@@ -156,16 +155,32 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     if (branchHeadsChanged || branchFileChanged || dirstateFileChanged || mergeFileChanged || rebaseFileChanged ||
         bookmarksFileChanged || currentBookmarkFileChanged || tagsFileChanged || localTagsFileChanged ||
         mqChanged) {
-      myUpdateQueue.add(Void.TYPE);
+      myUpdateQueue.queue(new MyUpdater("hgrepositoryUpdate"));
     }
     if (configHgrcChanged) {
-      myUpdateConfigQueue.add(Void.TYPE);
+      myUpdateConfigQueue.queue(new MyUpdater("hgconfigUpdate"));
     }
     if (dirstateFileChanged) {
       final VirtualFile root = myRepository.getRoot();
       myDirtyScopeManager.dirDirtyRecursively(root);
       //update async incoming/outgoing model
       myProject.getMessageBus().syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, root);
+    }
+  }
+
+  private class MyUpdater extends Update {
+    public MyUpdater(String name) {
+      super(name);
+    }
+
+    @Override
+    public boolean canEat(Update update) {
+      return true;
+    }
+
+    @Override
+    public void run() {
+      myRepository.update();
     }
   }
 }

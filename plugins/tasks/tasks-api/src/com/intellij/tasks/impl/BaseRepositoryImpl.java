@@ -81,7 +81,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
       client.getHostConfiguration().setProxy(proxy.PROXY_HOST, proxy.PROXY_PORT);
       if (proxy.PROXY_AUTHENTICATION) {
         AuthScope authScope = new AuthScope(proxy.PROXY_HOST, proxy.PROXY_PORT);
-        Credentials credentials = getCredentials(proxy.PROXY_LOGIN, proxy.getPlainProxyPassword(), proxy.PROXY_HOST);
+        Credentials credentials = getCredentials(proxy.getProxyLogin(), proxy.getPlainProxyPassword(), proxy.PROXY_HOST);
         client.getState().setProxyCredentials(authScope, credentials);
       }
     }

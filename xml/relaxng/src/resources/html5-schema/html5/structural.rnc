@@ -17,10 +17,12 @@
 			|	common.attrs.aria.role.marquee
 			|	common.attrs.aria.role.region
 			|	common.attrs.aria.role.status
-			|	common.attrs.aria.role.presentation
 			|	common.attrs.aria.landmark.application
+			|	common.attrs.aria.landmark.banner
+			|	common.attrs.aria.landmark.complementary
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.landmark.main
+			|	common.attrs.aria.landmark.navigation
 			|	common.attrs.aria.landmark.search
 			)?
 		)

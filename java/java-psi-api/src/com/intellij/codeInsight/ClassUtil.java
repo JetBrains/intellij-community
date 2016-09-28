@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Alexey
- */
 package com.intellij.codeInsight;
 
 import com.intellij.psi.*;
@@ -48,7 +45,7 @@ public class ClassUtil {
   @Nullable
   public static PsiMethod getAnyMethodToImplement(@NotNull PsiClass aClass) {
     final PsiClass superClass = aClass instanceof PsiAnonymousClass ? PsiUtil.resolveClassInClassTypeOnly(((PsiAnonymousClass)aClass).getBaseClassType()) : aClass.getSuperClass();
-    if (superClass != null && !superClass.hasModifierProperty(PsiModifier.ABSTRACT) && aClass.getImplementsListTypes().length == 0) {
+    if (superClass != null && !superClass.hasModifierProperty(PsiModifier.ABSTRACT) && !superClass.isEnum() && aClass.getImplementsListTypes().length == 0) {
       return null;
     }
     Set<PsiMethod> alreadyImplemented = new THashSet<PsiMethod>();
@@ -85,7 +82,7 @@ public class ClassUtil {
 
   @Nullable
   private static PsiMethod checkPackageLocalInSuperClass(@NotNull PsiClass aClass) {
-    // super class can have package local abstract methods not accessible for overriding
+    // super class can have package-private abstract methods not accessible for overriding
     PsiClass superClass = aClass.getSuperClass();
     if (superClass == null) return null;
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) return null;

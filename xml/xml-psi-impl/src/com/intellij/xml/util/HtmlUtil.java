@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ import com.intellij.psi.impl.source.html.HtmlDocumentImpl;
 import com.intellij.psi.impl.source.html.dtd.HtmlAttributeDescriptorImpl;
 import com.intellij.psi.impl.source.parsing.xml.HtmlBuilderDriver;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
+import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -57,10 +59,7 @@ import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.documentation.MimeTypeDictionary;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.nio.charset.Charset;
 import java.util.*;
@@ -615,6 +614,7 @@ public class HtmlUtil {
     Language language = file.getLanguage();
     while (language != null) {
       if ("JavaScript".equals(language.getID())) return true;
+      if ("Dart".equals(language.getID())) return true;
       language = language.getBaseLanguage();
     }
 
@@ -630,7 +630,7 @@ public class HtmlUtil {
 
   public static boolean isHtmlFile(@NotNull PsiElement element) {
     Language language = element.getLanguage();
-    return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;
+    return language.isKindOf(HTMLLanguage.INSTANCE) || language == XHTMLLanguage.INSTANCE;
   }
 
   public static boolean isHtmlFile(@NotNull VirtualFile file) {
@@ -692,5 +692,69 @@ public class HtmlUtil {
     public boolean allowElementsFromNamespace(final String namespace, final XmlTag context) {
       return true;
     }
+  }
+
+  @Nullable
+  public static Iterable<String> splitClassNames(@Nullable String classAttributeValue) {
+    // comma is useduse as separator because class name cannot contain comma but it can be part of JSF classes attributes
+    return classAttributeValue != null ? StringUtil.tokenize(classAttributeValue, " \t,") : Collections.emptyList();
+  }
+
+  @Contract("!null -> !null")
+  public static String getTagPresentation(final @Nullable XmlTag tag) {
+    if (tag == null) return null;
+    StringBuilder builder = new StringBuilder(tag.getLocalName());
+    String idValue = getAttributeValue(tag, ID_ATTRIBUTE_NAME);
+    if (idValue != null) {
+      builder.append('#').append(idValue);
+    }
+    String classValue = getAttributeValue(tag, CLASS_ATTRIBUTE_NAME);
+    if (classValue != null) {
+      for (String className : splitClassNames(classValue)) {
+        builder.append('.').append(className);
+      }
+    }
+    return builder.toString();
+  }
+
+  @Nullable
+  private static String getAttributeValue(@NotNull XmlTag tag, @NotNull String attrName) {
+    XmlAttribute classAttribute = getAttributeByName(tag, attrName);
+    if (classAttribute != null && !containsOuterLanguageElements(classAttribute)) {
+      String value = classAttribute.getValue();
+      if (!StringUtil.isEmptyOrSpaces(value)) return value;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static XmlAttribute getAttributeByName(@NotNull XmlTag tag, @NotNull String name) {
+    PsiElement child = tag.getFirstChild();
+    while (child != null) {
+      if (child instanceof XmlAttribute) {
+        PsiElement nameElement = child.getFirstChild();
+        if (nameElement != null &&
+            nameElement.getNode().getElementType() == XmlTokenType.XML_NAME &&
+            name.equalsIgnoreCase(nameElement.getText())) {
+          return (XmlAttribute)child;
+        }
+      }
+      child = child.getNextSibling();
+    }
+    return null;
+  }
+
+  private static boolean containsOuterLanguageElements(@NotNull PsiElement element) {
+    PsiElement child = element.getFirstChild();
+    while (child != null) {
+      if (child instanceof CompositeElement) {
+        return containsOuterLanguageElements(child);
+      }
+      else if (child instanceof OuterLanguageElement) {
+        return true;
+      }
+      child = child.getNextSibling();
+    }
+    return false;
   }
 }

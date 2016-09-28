@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.refactoring.introduceVariable;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.PsiType;
@@ -30,6 +29,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.*;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,7 +48,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
   private NameSuggestionsField myNameField;
   private JCheckBox myCbReplaceAll;
-  private StateRestoringCheckBox myCbReplaceWrite = null;
+  private StateRestoringCheckBox myCbReplaceWrite;
   private JCheckBox myCbFinal;
   private boolean myCbFinalState;
   private TypeSelector myTypeSelector;
@@ -132,7 +132,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
 
-    gbConstraints.insets = new Insets(4, 4, 4, 4);
+    gbConstraints.insets = JBUI.insets(4);
     gbConstraints.anchor = GridBagConstraints.WEST;
     gbConstraints.fill = GridBagConstraints.BOTH;
 
@@ -183,7 +183,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    gbConstraints.insets = JBUI.emptyInsets();
 
     if (myOccurrencesCount > 1) {
       myCbReplaceAll = new NonFocusableCheckBox();
@@ -200,7 +200,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
       if (myAnyLValueOccurences) {
         myCbReplaceWrite = new StateRestoringCheckBox();
         myCbReplaceWrite.setText(RefactoringBundle.message("replace.write.access.occurrences"));
-        gbConstraints.insets = new Insets(0, 8, 0, 0);
+        gbConstraints.insets = JBUI.insetsLeft(8);
         gbConstraints.gridy++;
         panel.add(myCbReplaceWrite, gbConstraints);
         myCbReplaceWrite.addItemListener(myReplaceAllListener);
@@ -214,7 +214,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
                      CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_LOCALS :
                      createFinals.booleanValue();
 
-    gbConstraints.insets = new Insets(0, 0, 0, 0);
+    gbConstraints.insets = JBUI.emptyInsets();
     gbConstraints.gridy++;
     panel.add(myCbFinal, gbConstraints);
     myFinalListener = new ItemListener() {

@@ -61,12 +61,7 @@ class PersistentFileSetManager implements PersistentStateComponent<Element> {
   private Collection<VirtualFile> getSortedFiles() {
     List<VirtualFile> sortedFiles = new ArrayList<VirtualFile>();
     sortedFiles.addAll(myFiles);
-    Collections.sort(sortedFiles, new Comparator<VirtualFile>() {
-      @Override
-      public int compare(final VirtualFile file1, final VirtualFile file2) {
-        return file1.getPath().toLowerCase().compareTo(file2.getPath().toLowerCase());
-      }
-    });
+    Collections.sort(sortedFiles, (file1, file2) -> file1.getPath().toLowerCase().compareTo(file2.getPath().toLowerCase()));
     return sortedFiles;
   }
   

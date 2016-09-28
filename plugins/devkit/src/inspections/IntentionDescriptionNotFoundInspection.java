@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,12 +41,6 @@ public class IntentionDescriptionNotFoundInspection extends DescriptionNotFoundI
   @NotNull
   protected String getHasNotBeforeAfterError() {
     return "Intention must have 'before.*.template' and 'after.*.template' beside 'description.html'";
-  }
-
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Intention Description Checker";
   }
 
   @NotNull

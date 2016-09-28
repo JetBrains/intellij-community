@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addIfDiffers(set, es.isAdditionalPageAtBottom(), false, "virtualSpaceAtFileBottom");
     addIfDiffers(set, es.isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR), false, "softWraps");
     addIfDiffers(set, es.isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE), false, "softWraps.console");
+    addIfDiffers(set, es.isUseSoftWraps(SoftWrapAppliancePlaces.PREVIEW), false, "softWraps.preview");
     addIfDiffers(set, es.isUseCustomSoftWrapIndent(), false, "softWraps.relativeIndent");
     addIfDiffers(set, es.isAllSoftWrapsShown(), false, "softWraps.showAll");
     addIfDiffers(set, es.getStripTrailingSpaces(), EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED, "stripTrailingSpaces");
@@ -57,6 +58,7 @@ class EditorSettingsStatisticsCollector extends UsagesCollector {
     addIfDiffers(set, es.isBlockCursor(), false, "blockCaret");
     addIfDiffers(set, es.isRightMarginShown(), true, "noRightMargin");
     addIfDiffers(set, es.isLineNumbersShown(), false, "lineNumbers");
+    addIfDiffers(set, es.areGutterIconsShown(), true, "gutterIcons");
     addIfDiffers(set, es.isFoldingOutlineShown(), true, "noFoldingOutline");
     addIfDiffers(set, es.isWhitespacesShown() && es.isLeadingWhitespacesShown(), false, "showLeadingWhitespace");
     addIfDiffers(set, es.isWhitespacesShown() && es.isInnerWhitespacesShown(), false, "showInnerWhitespace");

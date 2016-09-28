@@ -121,9 +121,9 @@ public abstract class MoveDirectoryWithClassesHelper {
     }
 
     private static class MyUsageInfo extends UsageInfo {
-      private final PsiFileSystemItem myFile;
+      private final @NotNull PsiFileSystemItem myFile;
 
-      public MyUsageInfo(@NotNull PsiReference reference, PsiFileSystemItem file) {
+      public MyUsageInfo(@NotNull PsiReference reference, @NotNull PsiFileSystemItem file) {
         super(reference);
         myFile = file;
       }

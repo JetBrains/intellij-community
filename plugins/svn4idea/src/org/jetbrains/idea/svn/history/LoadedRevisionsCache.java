@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.committed.ChangesBunch;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesAdapter;
@@ -63,7 +62,6 @@ public class LoadedRevisionsCache implements Disposable {
         });
       }
     });
-    Disposer.register(myProject, this);
     setRefreshTime(0);
   }
 

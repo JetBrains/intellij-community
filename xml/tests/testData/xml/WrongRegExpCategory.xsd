@@ -2,7 +2,9 @@
 <xs:simpleType name="TestType">
   <xs:restriction base="xs:string">
   <xs:pattern value="[\p{IsBasicLatin}]*"/>
-  <xs:pattern value="[\p{IsUnknown}]*"/>
+  <xs:pattern value="[\p{<error descr="Unknown character category">IsUnknown</error>}]*"/>
+  <xs:pattern value="\p{Cc}+"/>
+  <xs:pattern value="\p{<error descr="Unknown character category">IsCc</error>}+"/>
   </xs:restriction>
 </xs:simpleType>
 

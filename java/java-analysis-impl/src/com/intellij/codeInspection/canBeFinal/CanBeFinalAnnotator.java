@@ -126,10 +126,10 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         Set<PsiVariable> allFields = new HashSet<PsiVariable>();
         ContainerUtil.addAll(allFields, psiFields);
         List<PsiVariable> instanceInitializerInitializedFields = new ArrayList<PsiVariable>();
-        boolean hasInitializers = false;
+        Set<PsiField> fieldsInitializedInInitializers = null;
+
         for (PsiClassInitializer initializer : psiClass.getInitializers()) {
           PsiCodeBlock body = initializer.getBody();
-          hasInitializers = true;
           ControlFlow flow;
           try {
             flow = ControlFlowFactory.getInstance(body.getProject())
@@ -140,6 +140,9 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           }
           Collection<PsiVariable> writtenVariables = new ArrayList<PsiVariable>();
           ControlFlowUtil.getWrittenVariables(flow, 0, flow.getSize(), false, writtenVariables);
+          if (fieldsInitializedInInitializers == null) {
+            fieldsInitializedInInitializers = new HashSet<>();
+          }
           for (PsiVariable psiVariable : writtenVariables) {
             if (allFields.contains(psiVariable)) {
               if (instanceInitializerInitializedFields.contains(psiVariable)) {
@@ -149,6 +152,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
               else {
                 instanceInitializerInitializedFields.add(psiVariable);
               }
+              fieldsInitializedInInitializers.add((PsiField)psiVariable);
             }
           }
           for (PsiVariable psiVariable : writtenVariables) {
@@ -162,7 +166,6 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
           if (psiMethod.isConstructor()) {
             PsiCodeBlock body = psiMethod.getBody();
             if (body != null) {
-              hasInitializers = true;
               ControlFlow flow;
               try {
                 flow = ControlFlowFactory.getInstance(body.getProject())
@@ -194,7 +197,8 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
         }
 
         for (PsiField psiField : psiFields) {
-          if ((!hasInitializers || !allFields.contains(psiField)) && psiField.getInitializer() == null) {
+          if ((fieldsInitializedInInitializers != null && !fieldsInitializedInInitializers.contains(psiField) ||
+               !allFields.contains(psiField)) && psiField.getInitializer() == null) {
             final RefFieldImpl refField = (RefFieldImpl)myManager.getReference(psiField);
             if (refField != null) {
               refField.setFlag(false, CAN_BE_FINAL_MASK);

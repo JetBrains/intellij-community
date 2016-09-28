@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public void checkSetName(String name) throws IncorrectOperationException {
-    //CheckUtil.checkIsIdentifier(name);
     CheckUtil.checkWritable(this);
     VirtualFile parentFile = myFile.getParent();
     if (parentFile == null) {
@@ -153,7 +152,7 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   @Override
   @NotNull
   public PsiFile[] getFiles() {
-    LOG.assertTrue(myFile.isValid());
+    if (!myFile.isValid()) throw new InvalidVirtualFileAccessException(myFile);
     VirtualFile[] files = myFile.getChildren();
     ArrayList<PsiFile> psiFiles = new ArrayList<PsiFile>();
     for (VirtualFile file : files) {
@@ -264,13 +263,13 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public String getText() {
-    return ""; // TODO throw new InsupportedOperationException()
+    return "";
   }
 
   @Override
   @NotNull
   public char[] textToCharArray() {
-    return ArrayUtil.EMPTY_CHAR_ARRAY; // TODO throw new InsupportedOperationException()
+    return ArrayUtil.EMPTY_CHAR_ARRAY;
   }
 
   @Override
@@ -293,15 +292,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     return !(myFile.getFileSystem() instanceof NonPhysicalFileSystem) && !myFile.getFileSystem().getProtocol().equals("temp");
   }
 
-  /**
-   * @not_implemented
-   */
   @Override
   public PsiElement copy() {
-    LOG.error("not implemented");
-    return null;
+    throw new IncorrectOperationException();
   }
-
 
   @Override
   @NotNull
@@ -321,8 +315,6 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
   @Override
   public void checkCreateSubdirectory(@NotNull String name) throws IncorrectOperationException {
-    // TODO : another check?
-    //CheckUtil.checkIsIdentifier(name);
     VirtualFile existingFile = getVirtualFile().findChild(name);
     if (existingFile != null) {
       throw new IncorrectOperationException(VfsBundle.message("file.already.exists.error", existingFile.getPresentableUrl()));
@@ -337,7 +329,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
 
     try {
       VirtualFile vFile = getVirtualFile().createChildData(myManager, name);
-      return myManager.findFile(vFile);
+      PsiFile psiFile = myManager.findFile(vFile);
+      assert psiFile != null : vFile.getPath();
+      return psiFile;
     }
     catch (IOException e) {
       throw new IncorrectOperationException(e.toString());
@@ -357,7 +351,8 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     final VirtualFile parent = getVirtualFile();
     try {
       final VirtualFile vFile = originalFile.getVirtualFile();
-      if (vFile == null) throw new IncorrectOperationException("Cannot copy nonphysical file");
+      if (vFile == null) throw new IncorrectOperationException("Cannot copy non-physical file: " + originalFile);
+
       VirtualFile copyVFile;
       if (parent.getFileSystem() == vFile.getFileSystem()) {
         copyVFile = vFile.copy(this, parent, newName);
@@ -369,11 +364,10 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
       else {
         copyVFile = VfsUtilCore.copyFile(this, vFile, parent, newName);
       }
-      LOG.assertTrue(copyVFile != null, "File was not copied: " + vFile);
+      if (copyVFile == null) throw new IncorrectOperationException("File was not copied: " + vFile);
+
       final PsiFile copyPsi = myManager.findFile(copyVFile);
-      if (copyPsi == null) {
-        LOG.error("Could not find file '" + copyVFile + "' after copying '" + vFile + "'");
-      }
+      if (copyPsi == null) throw new IncorrectOperationException("Could not find file " + copyVFile + " after copying " + vFile);
       updateAddedFile(copyPsi);
       return copyPsi;
     }
@@ -405,15 +399,11 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     CheckUtil.checkWritable(this);
   }
 
-
   @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
     checkAdd(element);
-    if (element instanceof PsiDirectory) {
-      LOG.error("not implemented");
-      return null;
-    }
-    else if (element instanceof PsiFile) {
+
+    if (element instanceof PsiFile) {
       PsiFile originalFile = (PsiFile)element;
 
       try {
@@ -451,18 +441,16 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
         psiDocumentManager.commitAllDocuments();
 
         PsiFile newFile = myManager.findFile(newVFile);
+        if (newFile == null) throw new IncorrectOperationException("Could not find file " + newVFile);
         updateAddedFile(newFile);
-
         return newFile;
       }
       catch (IOException e) {
         throw new IncorrectOperationException(e);
       }
     }
-    else {
-      LOG.assertTrue(false);
-      return null;
-    }
+
+    throw new IncorrectOperationException(element + " (" + element.getClass() + ")");
   }
 
   @Override
@@ -503,30 +491,12 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   @Override
   public void delete() throws IncorrectOperationException {
     checkDelete();
-    //PsiDirectory parent = getParentDirectory();
-
-    /*
-    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-    event.setParent(parent);
-    event.setChild(this);
-    myManager.beforeChildRemoval(event);
-    */
-
     try {
       myFile.delete(myManager);
     }
     catch (IOException e) {
       throw new IncorrectOperationException(e);
     }
-
-    /*
-    //TODO : allow undo
-    PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
-    treeEvent.setParent(parent);
-    treeEvent.setChild(this);
-    treeEvent.setUndoableAction(null);
-    myManager.childRemoved(treeEvent);
-    */
   }
 
   @Override
@@ -534,13 +504,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
     CheckUtil.checkDelete(myFile);
   }
 
-  /**
-   * @not_implemented
-   */
   @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
-    LOG.error("not implemented");
-    return null;
+    throw new IncorrectOperationException();
   }
 
   @Override

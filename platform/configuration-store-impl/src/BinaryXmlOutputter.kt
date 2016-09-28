@@ -1,41 +1,53 @@
 package com.intellij.configurationStore
 
-import com.intellij.util.containers.isNullOrEmpty
 import org.jdom.*
+import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 
 private enum class TypeMarker {
   ELEMENT, CDATA, TEXT, ELEMENT_END
 }
 
-fun output(doc: Document, out: DataOutputStream) {
-  val content = doc.content
-  val size = content.size
-  for (i in 0..size - 1) {
-    val obj = content[i]
-    when (obj) {
-      is Element -> printElement(out, doc.rootElement)
-    }
-  }
-
-  out.flush()
+fun writeElement(element: Element, out: OutputStream) {
+  writeElement(element, DataOutputStream(out))
 }
 
 fun writeElement(element: Element, out: DataOutputStream) {
-  printElement(out, element)
-  out.flush()
+  writeElement(out, element)
 }
 
-private fun printElement(out: DataOutputStream, element: Element) {
-  out.writeByte(TypeMarker.ELEMENT.ordinal)
+fun readElement(input: InputStream) = readElement(DataInputStream(input))
+
+fun readElement(input: DataInputStream): Element {
+  val element = Element(input.readUTF())
+  readAttributes(element, input)
+  readContent(element, input)
+  return element
+}
+
+private fun readContent(element: Element, input: DataInputStream) {
+  while (true) {
+    when (input.read()) {
+      TypeMarker.ELEMENT.ordinal -> element.addContent(readElement(input))
+      TypeMarker.TEXT.ordinal -> element.addContent(Text(input.readUTF()))
+      TypeMarker.CDATA.ordinal -> element.addContent(CDATA(input.readUTF()))
+      TypeMarker.ELEMENT_END.ordinal -> return
+    }
+  }
+}
+
+private fun writeElement(out: DataOutputStream, element: Element) {
   out.writeUTF(element.name)
 
-  val content = element.content
-  printAttributes(out, element.attributes)
+  writeAttributes(out, element.attributes)
 
+  val content = element.content
   for (item in content) {
     if (item is Element) {
-      printElement(out, item)
+      out.writeByte(TypeMarker.ELEMENT.ordinal)
+      writeElement(out, item)
     }
     else if (item is Text) {
       if (!isAllWhitespace(item)) {
@@ -51,19 +63,28 @@ private fun printElement(out: DataOutputStream, element: Element) {
   out.writeByte(TypeMarker.ELEMENT_END.ordinal)
 }
 
-private fun printAttributes(out: DataOutputStream, attributes: List<Attribute>?) {
-  if (attributes.isNullOrEmpty()) {
-    val size = attributes?.size ?: 0
-    if (size > 255) {
-      throw UnsupportedOperationException("attributes size > 255")
-    }
-    out.writeByte(size)
+private fun writeAttributes(out: DataOutputStream, attributes: List<Attribute>?) {
+  val size = attributes?.size ?: 0
+  out.write(size)
+  if (size == 0) {
     return
   }
 
-  for (attribute in attributes!!) {
-    out.writeUTF(attribute.name)
-    out.writeUTF(attribute.value)
+  if (size > 255) {
+    throw UnsupportedOperationException("attributes size > 255")
+  }
+  else {
+    for (attribute in attributes!!) {
+      out.writeUTF(attribute.name)
+      out.writeUTF(attribute.value)
+    }
+  }
+}
+
+private fun readAttributes(element: Element, input: DataInputStream) {
+  val size = input.readUnsignedByte()
+  for (i in 0..size - 1) {
+    element.setAttribute(Attribute(input.readUTF(), input.readUTF()))
   }
 }
 

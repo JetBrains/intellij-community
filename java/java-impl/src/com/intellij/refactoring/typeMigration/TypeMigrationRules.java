@@ -27,26 +27,39 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author db
  * Date: Oct 2, 2004
  */
 public class TypeMigrationRules {
-  private final LinkedList<TypeConversionRule> myConversionRules = new LinkedList<TypeConversionRule>();
+  private final List<TypeConversionRule> myConversionRules;
+  private final Map<Class, Object> myConversionCustomSettings = new HashMap<>();
   private SearchScope mySearchScope;
 
-  private final MigrateGetterNameSetting myMigrateGetterNameSetting = new MigrateGetterNameSetting();
-
   public TypeMigrationRules() {
+    final TypeConversionRule[] extensions = Extensions.getExtensions(TypeConversionRule.EP_NAME);
+    myConversionRules = new ArrayList<>(extensions.length + 2);
     myConversionRules.add(new RootTypeConversionRule());
     myConversionRules.add(new DisjunctionTypeConversionRule());
-    ContainerUtil.addAll(myConversionRules, Extensions.getExtensions(TypeConversionRule.EP_NAME));
+    ContainerUtil.addAll(myConversionRules, extensions);
+    addConversionRuleSettings(new MigrateGetterNameSetting());
   }
 
   public void addConversionDescriptor(TypeConversionRule rule) {
     myConversionRules.add(rule);
+  }
+
+  public void addConversionRuleSettings(Object settings) {
+    myConversionCustomSettings.put(settings.getClass(), settings);
+  }
+
+  public <T> T getConversionSettings(Class<T> aClass) {
+    return (T)myConversionCustomSettings.get(aClass);
   }
 
   @NonNls
@@ -82,10 +95,6 @@ public class TypeMigrationRules {
 
   public SearchScope getSearchScope() {
     return mySearchScope;
-  }
-
-  public MigrateGetterNameSetting getMigrateGetterNameSetting() {
-    return myMigrateGetterNameSetting;
   }
 
   @Nullable

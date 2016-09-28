@@ -22,7 +22,7 @@ public class CCItemPositionPanel extends JPanel {
     group.add(myAfterButton);
     myBeforeButton.setText("before " + postfix);
     myAfterButton.setText("after " + postfix);
-    myBeforeButton.setSelected(true);
+    myAfterButton.setSelected(true);
   }
 
   public int getIndexDelta() {

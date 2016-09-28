@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -66,12 +67,13 @@ abstract class JavaFxImportClassFix extends ImportClassFixBase<XmlTag, JavaFxTag
 
   @Override
   protected boolean isAccessible(PsiMember member, XmlTag reference) {
-    return member instanceof PsiClass && JavaFxPsiUtil.isClassAcceptable(reference.getParentTag(), (PsiClass)member) == null;
+    return member instanceof PsiClass && JavaFxPsiUtil.isClassAcceptable(reference.getParentTag(), (PsiClass)member);
   }
 
   @Override
   protected String getQualifiedName(XmlTag tag) {
-    return tag.getDescriptor().getQualifiedName();
+    final XmlElementDescriptor descriptor = tag.getDescriptor();
+    return descriptor != null ? descriptor.getQualifiedName() : tag.getName();
   }
 
   @Override

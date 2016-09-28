@@ -590,7 +590,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
       ClassReader reader = new ClassReader(bytes);
       String className = file.getNameWithoutExtension();
       String packageName = getPackageName(reader.getClassName());
-      PsiJavaFileStubImpl stub = new PsiJavaFileStubImpl(packageName, true);
+      PsiJavaFileStub stub = new PsiJavaFileStubImpl(packageName, true);
 
       try {
         StubBuildingVisitor<VirtualFile> visitor = new StubBuildingVisitor<VirtualFile>(file, STRATEGY, stub, 0, className);

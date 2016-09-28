@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@ package com.intellij.psi.impl.source.javadoc;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -56,17 +55,17 @@ class SimpleDocTagInfo implements JavadocTagInfo {
   }
 
   @Override
+  public boolean isInline() {
+    return myInline;
+  }
+
+  @Override
   public boolean isValidInContext(PsiElement element) {
     if (element != null && PsiUtil.getLanguageLevel(element).compareTo(myLanguageLevel) < 0) {
       return false;
     }
 
     return myContext.isInstance(element) || (myAdditionalContext != null && myAdditionalContext.isInstance(element));
-  }
-
-  @Override
-  public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
@@ -77,10 +76,5 @@ class SimpleDocTagInfo implements JavadocTagInfo {
   @Override
   public PsiReference getReference(PsiDocTagValue value) {
     return null;
-  }
-
-  @Override
-  public boolean isInline() {
-    return myInline;
   }
 }

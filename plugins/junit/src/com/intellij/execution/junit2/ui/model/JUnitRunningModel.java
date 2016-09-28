@@ -210,13 +210,11 @@ public class JUnitRunningModel implements TestFrameworkRunningModel {
     }
 
     public void focusGained(final FocusEvent e) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              if (!myTreeBuilder.isDisposed()) {
-                myNotifier.fireTestSelected((TestProxy)getTreeView().getSelectedTest());
-              }
-            }
-          });
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myTreeBuilder.isDisposed()) {
+          myNotifier.fireTestSelected((TestProxy)getTreeView().getSelectedTest());
+        }
+      });
     }
 
     public void install() {

@@ -6,6 +6,11 @@ class Conditional {
     int a2 = b ? null : 1;
     int a3 = b ? null : f1();
     int a4 = b ? null : f2();
+    Long someNum = b ? getNum(5L) : <error descr="Incompatible types. Found: 'int', required: 'java.lang.Long'">0</error>;
+  }
+
+  private static <T> T getNum(T num) {
+    return num;
   }
 
   private static <T> T f() {

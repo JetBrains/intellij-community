@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,12 @@ public class SequenceIterator<T> implements Iterator<T> {
   private int myCurrentIndex;
 
   public SequenceIterator(@NotNull Iterator<T>... iterators){
+    //noinspection unchecked
     myIterators = new Iterator[iterators.length];
     System.arraycopy(iterators, 0, myIterators, 0, iterators.length);
   }
   public SequenceIterator(@NotNull Collection<Iterator<T>> iterators) {
+    //noinspection unchecked
     this(iterators.toArray(new Iterator[iterators.size()]));
   }
 
@@ -61,12 +63,14 @@ public class SequenceIterator<T> implements Iterator<T> {
     myIterators[myCurrentIndex].remove();
   }
 
-  public static <T> SequenceIterator<T> create(Iterator<T> first, Iterator<T> second) {
-    return new SequenceIterator<T>(new Iterator[]{first, second});
+  @NotNull
+  public static <T> SequenceIterator<T> create(@NotNull Iterator<T> first, @NotNull Iterator<T> second) {
+    return new SequenceIterator<T>(first, second);
   }
 
-  public static <T> SequenceIterator<T> create(Iterator<T> first, Iterator<T> second, Iterator<T> third) {
-    return new SequenceIterator<T>(new Iterator[]{first, second, third});
+  @NotNull
+  public static <T> SequenceIterator<T> create(@NotNull Iterator<T> first, @NotNull Iterator<T> second, @NotNull Iterator<T> third) {
+    return new SequenceIterator<T>(first, second, third);
   }
 }
 

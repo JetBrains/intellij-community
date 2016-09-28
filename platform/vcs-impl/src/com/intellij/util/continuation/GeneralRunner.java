@@ -85,12 +85,6 @@ abstract class GeneralRunner implements ContinuationContext {
     return myProject;
   }
 
-  public void clearDisasters() {
-    synchronized (myQueueLock) {
-      myDisasters.clear();
-    }
-  }
-
   @Override
   public boolean handleException(Exception e, boolean cancelEveryThing) {
     synchronized (myQueueLock) {

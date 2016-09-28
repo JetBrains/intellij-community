@@ -26,16 +26,12 @@ public class SvnFileStatus {
   private SvnFileStatus() {
   }
 
-  public static final FileStatus EXTERNAL =
-    FileStatusFactory.getInstance()
-      .createFileStatus("IDEA_SVN_FILESTATUS_EXTERNAL", SvnBundle.message("file.status.external"), new Color(0x72A038));
+  public static final FileStatus EXTERNAL = FileStatusFactory.getInstance()
+    .createFileStatus("IDEA_SVN_FILESTATUS_EXTERNAL", SvnBundle.message("file.status.external"), new Color(0x72A038));
 
-  public static final FileStatus OBSTRUCTED =
-    FileStatusFactory.getInstance()
-      .createFileStatus("IDEA_SVN_FILESTATUS_OBSTRUCTED", SvnBundle.message("file.status.obstructed"), new Color(0x727238));
+  public static final FileStatus OBSTRUCTED = FileStatusFactory.getInstance()
+    .createFileStatus("IDEA_SVN_FILESTATUS_OBSTRUCTED", SvnBundle.message("file.status.obstructed"), new Color(0x727238));
 
-  public static final FileStatus REPLACED =
-    FileStatusFactory.getInstance().createFileStatus("IDEA_SVN_REPLACED",
-                                                                      SvnBundle.message("file.status.replaced"),
-                                                                      FileStatus.COLOR_ADDED);
+  public static final FileStatus REPLACED = FileStatusFactory.getInstance()
+    .createFileStatus("IDEA_SVN_REPLACED", SvnBundle.message("file.status.replaced"), FileStatus.ADDED.getColor());
 }

@@ -34,5 +34,4 @@ public interface RowInfo<Id> {
 
   @NotNull
   RowType getRowType();
-
 }

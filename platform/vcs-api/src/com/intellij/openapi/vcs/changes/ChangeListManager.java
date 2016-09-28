@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -112,6 +113,9 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract Collection<Change> getChangesIn(FilePath path);
 
+  @Nullable
+  public abstract AbstractVcs getVcsFor(@NotNull Change change);
+
 //  public abstract void removeChangeList(final LocalChangeList list);
 
 //  public abstract void moveChangesTo(final LocalChangeList list, final Change[] changes);
@@ -143,7 +147,10 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Nullable
   public abstract String getSwitchedBranch(VirtualFile file);
   public abstract String getDefaultListName();
+
+  @Deprecated
   public abstract void freeze(final ContinuationPause context, String reason);
+
   public abstract void letGo();
   public abstract String isFreezed();
   public abstract boolean isFreezedWithNotification(@Nullable String modalTitle);

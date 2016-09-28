@@ -208,21 +208,18 @@ public class PatternValidator extends LocalInspectionTool {
     // cache compiled pattern with annotation
     CachedValue<Pattern> p = psiAnnotation.getUserData(COMPLIED_PATTERN);
     if (p == null) {
-      final CachedValueProvider<Pattern> provider = new CachedValueProvider<Pattern>() {
-        @Override
-        public Result<Pattern> compute() {
-          final String pattern = AnnotationUtilEx.calcAnnotationValue(psiAnnotation, "value");
-          Pattern p = null;
-          if (pattern != null) {
-            try {
-              p = Pattern.compile(pattern);
-            }
-            catch (PatternSyntaxException e) {
-              // pattern stays null
-            }
+      final CachedValueProvider<Pattern> provider = () -> {
+        final String pattern = AnnotationUtilEx.calcAnnotationValue(psiAnnotation, "value");
+        Pattern p1 = null;
+        if (pattern != null) {
+          try {
+            p1 = Pattern.compile(pattern);
           }
-          return Result.create(p, (Object[])annotations);
+          catch (PatternSyntaxException e) {
+            // pattern stays null
+          }
         }
+        return CachedValueProvider.Result.create(p1, (Object[])annotations);
       };
       p = CachedValuesManager.getManager(expression.getProject()).createCachedValue(provider, false);
       psiAnnotation.putUserData(COMPLIED_PATTERN, p);
@@ -275,10 +272,10 @@ public class PatternValidator extends LocalInspectionTool {
 
           final String classname = myConfiguration.getAdvancedConfiguration().getSubstAnnotationPair().first;
           final AnnotateFix fix = new AnnotateFix((PsiModifierListOwner)e, classname);
-          quickFix = fix.canApply() ? fix : new IntroduceVariableFix(expr);
+          quickFix = fix.canApply() ? fix : new IntroduceVariableFix();
         }
         else {
-          quickFix = new IntroduceVariableFix(expr);
+          quickFix = new IntroduceVariableFix();
         }
         holder.registerProblem(expr, "Unsubstituted expression", quickFix);
       }
@@ -286,16 +283,13 @@ public class PatternValidator extends LocalInspectionTool {
   }
 
   private static class IntroduceVariableFix implements LocalQuickFix {
-    private final PsiExpression myExpr;
 
-    public IntroduceVariableFix(PsiExpression expr) {
-      myExpr = expr;
-    }
+    public IntroduceVariableFix() {}
 
     @Override
     @NotNull
     public String getName() {
-      return "Introduce Variable";
+      return "Introduce variable";
     }
 
     @Override
@@ -306,15 +300,21 @@ public class PatternValidator extends LocalInspectionTool {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
       final RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createIntroduceVariableHandler();
       final AsyncResult<DataContext> dataContextContainer = DataManager.getInstance().getDataContextFromFocus();
       dataContextContainer.doWhenDone(new Consumer<DataContext>() {
         @Override
         public void consume(DataContext dataContext) {
-          handler.invoke(project, new PsiElement[]{myExpr}, dataContext);
+          handler.invoke(project, new PsiElement[]{element}, dataContext);
         }
       });
       // how to automatically annotate the variable after it has been introduced?
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 }

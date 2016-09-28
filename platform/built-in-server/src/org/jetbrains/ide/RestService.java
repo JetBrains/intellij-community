@@ -49,6 +49,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.BuiltInWebServerKt;
 import org.jetbrains.io.NettyKt;
 import org.jetbrains.io.Responses;
 
@@ -131,10 +132,10 @@ public abstract class RestService extends HttpRequestHandler {
     return false;
   }
 
-  @NotNull
   /**
    * Use human-readable name or UUID if it is an internal service.
    */
+  @NotNull
   protected abstract String getServiceName();
 
   protected abstract boolean isMethodSupported(@NotNull HttpMethod method);
@@ -144,18 +145,18 @@ public abstract class RestService extends HttpRequestHandler {
     try {
       AtomicInteger counter = abuseCounter.get(((InetSocketAddress)context.channel().remoteAddress()).getAddress());
       if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
-        Responses.sendStatus(HttpResponseStatus.OK, context.channel(), request);
+        Responses.send(Responses.orInSafeMode(HttpResponseStatus.TOO_MANY_REQUESTS, HttpResponseStatus.OK), context.channel(), request);
         return true;
       }
 
       if (!isHostTrusted(request)) {
-        Responses.sendStatus(HttpResponseStatus.OK, context.channel(), request);
+        Responses.send(Responses.orInSafeMode(HttpResponseStatus.FORBIDDEN, HttpResponseStatus.OK), context.channel(), request);
         return true;
       }
 
       String error = execute(urlDecoder, request, context);
       if (error != null) {
-        Responses.sendStatus(HttpResponseStatus.BAD_REQUEST, context.channel(), error, request);
+        Responses.send(HttpResponseStatus.BAD_REQUEST, context.channel(), request, error);
       }
     }
     catch (Throwable e) {
@@ -170,13 +171,17 @@ public abstract class RestService extends HttpRequestHandler {
         LOG.error(e);
         status = HttpResponseStatus.INTERNAL_SERVER_ERROR;
       }
-      Responses.sendStatus(status, context.channel(), ExceptionUtil.getThrowableText(e), request);
+      Responses.send(status, context.channel(), request, ExceptionUtil.getThrowableText(e));
     }
     return true;
   }
 
   // e.g. upsource trust to configured host
   protected boolean isHostTrusted(@NotNull FullHttpRequest request) throws InterruptedException, InvocationTargetException {
+    if (BuiltInWebServerKt.isSignedRequest(request)) {
+      return true;
+    }
+
     String referrer = NettyKt.getOrigin(request);
     if (referrer == null) {
       referrer = NettyKt.getReferrer(request);
@@ -220,10 +225,10 @@ public abstract class RestService extends HttpRequestHandler {
     }
   }
 
-  @Nullable("error text or null if successful")
   /**
    * Return error or send response using {@link #sendOk(FullHttpRequest, ChannelHandlerContext)}, {@link #send(BufferExposingByteArrayOutputStream, FullHttpRequest, ChannelHandlerContext)}
    */
+  @Nullable("error text or null if successful")
   public abstract String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context) throws IOException;
 
   @NotNull

@@ -37,12 +37,9 @@ public class ManuallySetupExtResourceAction extends BaseExtResourceAction {
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
     final MapExternalResourceDialog dialog = new MapExternalResourceDialog(uri, file.getProject(), file, null);
     if (dialog.showAndGet()) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          String location = dialog.getResourceLocation();
-          ExternalResourceManager.getInstance().addResource(dialog.getUri(), location);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        String location = dialog.getResourceLocation();
+        ExternalResourceManager.getInstance().addResource(dialog.getUri(), location);
       });
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.ui.RowIcon;
+import com.intellij.util.BitUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.VisibilityIcons;
 import gnu.trove.TIntObjectHashMap;
@@ -208,9 +209,9 @@ public class ElementPresentationUtil implements PlatformIcons {
         adj += " " + provider.getLayerDescription();
       }
     }
-    if ((flags & FLAGS_ABSTRACT) != 0) adj += " " + CodeInsightBundle.message("node.abstract.flag.tooltip");
-    if ((flags & FLAGS_FINAL) != 0) adj += " " + CodeInsightBundle.message("node.final.flag.tooltip");
-    if ((flags & FLAGS_STATIC) != 0) adj += " " + CodeInsightBundle.message("node.static.flag.tooltip");
+    if (BitUtil.isSet(flags, FLAGS_ABSTRACT)) adj += " " + CodeInsightBundle.message("node.abstract.flag.tooltip");
+    if (BitUtil.isSet(flags, FLAGS_FINAL)) adj += " " + CodeInsightBundle.message("node.final.flag.tooltip");
+    if (BitUtil.isSet(flags, FLAGS_STATIC)) adj += " " + CodeInsightBundle.message("node.static.flag.tooltip");
     PsiModifierList list = aClass.getModifierList();
     if (list != null) {
       int level = PsiUtil.getAccessLevel(list);
@@ -230,7 +231,7 @@ public class ElementPresentationUtil implements PlatformIcons {
   }
 
   public static Icon addVisibilityIcon(final PsiModifierListOwner element, final int flags, final RowIcon baseIcon) {
-    if ((flags & Iconable.ICON_FLAG_VISIBILITY) != 0) {
+    if (BitUtil.isSet(flags, Iconable.ICON_FLAG_VISIBILITY)) {
       VisibilityIcons.setVisibilityIcon(element.getModifierList(), baseIcon);
     }
     return baseIcon;

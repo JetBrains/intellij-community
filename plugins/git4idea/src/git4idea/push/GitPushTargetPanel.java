@@ -112,7 +112,6 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     updateComponents(defaultTarget);
 
     setFocusCycleRoot(true);
-    setFocusTraversalPolicyProvider(true);
     myRemoteRenderer.setFocusable(true);
     myTargetEditor.setFocusable(true);
     setFocusTraversalPolicy(new MyGitTargetFocusTraversalPolicy());

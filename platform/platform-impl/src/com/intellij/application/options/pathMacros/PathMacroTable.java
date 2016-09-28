@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,12 +44,8 @@ public class PathMacroTable extends Table {
   private static final int NAME_COLUMN = 0;
   private static final int VALUE_COLUMN = 1;
 
-  private final List<Couple<String>> myMacros = new ArrayList<Couple<String>>();
-  private static final Comparator<Couple<String>> MACRO_COMPARATOR = new Comparator<Couple<String>>() {
-    public int compare(Couple<String> pair, Couple<String> pair1) {
-      return pair.getFirst().compareTo(pair1.getFirst());
-    }
-  };
+  private final List<Couple<String>> myMacros = new ArrayList<>();
+  private static final Comparator<Couple<String>> MACRO_COMPARATOR = (pair, pair1) -> pair.getFirst().compareTo(pair1.getFirst());
 
   private final Collection<String> myUndefinedMacroNames;
 
@@ -79,10 +75,6 @@ public class PathMacroTable extends Table {
 
   public String getMacroValueAt(int row) {
     return (String) getValueAt(row, VALUE_COLUMN);
-  }
-
-  public String getMacroNameAt(int row) {
-    return (String)getValueAt(row, NAME_COLUMN);
   }
 
   public void addMacro() {
@@ -200,7 +192,7 @@ public class PathMacroTable extends Table {
   }
 
   public boolean isModified() {
-    final ArrayList<Couple<String>> macros = new ArrayList<Couple<String>>();
+    final ArrayList<Couple<String>> macros = new ArrayList<>();
     obtainMacroPairs(macros);
     return !macros.equals(myMacros);
   }
@@ -269,8 +261,9 @@ public class PathMacroTable extends Table {
 
   private static class EditValidator implements PathMacroEditor.Validator {
     public boolean checkName(String name) {
-      if (name.length() == 0) return false;
-      if (PathMacros.getInstance().getSystemMacroNames().contains(name)) return false;
+      if (name.isEmpty() || PathMacros.getInstance().getSystemMacroNames().contains(name)) {
+        return false;
+      }
 
       return PathMacrosCollector.MACRO_PATTERN.matcher("$" + name + "$").matches();
     }

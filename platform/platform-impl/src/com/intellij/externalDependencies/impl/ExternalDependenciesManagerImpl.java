@@ -47,14 +47,11 @@ public class ExternalDependenciesManagerImpl extends ExternalDependenciesManager
     myProject = project;
   }
 
-  private static final Comparator<ProjectExternalDependency> DEPENDENCY_COMPARATOR = new Comparator<ProjectExternalDependency>() {
-    @Override
-    public int compare(ProjectExternalDependency o1, ProjectExternalDependency o2) {
-      int i = o1.getClass().getSimpleName().compareToIgnoreCase(o2.getClass().getSimpleName());
-      if (i != 0) return i;
-      //noinspection unchecked
-      return ((Comparable)o1).compareTo(o2);
-    }
+  private static final Comparator<ProjectExternalDependency> DEPENDENCY_COMPARATOR = (o1, o2) -> {
+    int i = o1.getClass().getSimpleName().compareToIgnoreCase(o2.getClass().getSimpleName());
+    if (i != 0) return i;
+    //noinspection unchecked
+    return ((Comparable)o1).compareTo(o2);
   };
   private List<ProjectExternalDependency> myDependencies = new ArrayList<ProjectExternalDependency>();
   

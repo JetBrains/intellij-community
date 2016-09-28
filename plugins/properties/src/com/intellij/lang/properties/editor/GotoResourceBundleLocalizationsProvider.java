@@ -53,12 +53,7 @@ public class GotoResourceBundleLocalizationsProvider extends GotoRelatedProvider
     if (bundlePropertiesFiles.size() != 1) {
       final ArrayList<PropertiesFile> propertiesFilesWithoutCurrent = ContainerUtil.newArrayList(bundlePropertiesFiles);
       propertiesFilesWithoutCurrent.remove(psiFile);
-      return ContainerUtil.map(propertiesFilesWithoutCurrent, new Function<PropertiesFile, GotoRelatedItem>() {
-        @Override
-        public GotoRelatedItem fun(final PropertiesFile propertiesFile) {
-          return new GotoRelatedItem((PsiElement) propertiesFile, "Other Localizations");
-        }
-      });
+      return ContainerUtil.map(propertiesFilesWithoutCurrent, propertiesFile -> new GotoRelatedItem((PsiElement) propertiesFile, "Other Localizations"));
     } else {
       return Collections.emptyList();
     }

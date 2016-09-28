@@ -27,7 +27,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -248,34 +247,22 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   }
 
   private void applyAction(final IntentionActionWithTextCaching cachedAction) {
-    myFinalRunnable = new Runnable() {
-      @Override
-      public void run() {
-        HintManager.getInstance().hideAllHints();
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed() || myEditor != null && myEditor.isDisposed()) return;
-            if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
-              DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
-              return;
-            }
-            
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            PsiFile file;
-            if (myEditor != null) {
-              file = PsiUtilBase.getPsiFileInEditor(myEditor, myProject);
-              if (file == null) {
-                return;
-              }
-            } else {
-              file = myFile;
-            }
-
-            ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
-          }
-        });
+    myFinalRunnable = () -> {
+      HintManager.getInstance().hideAllHints();
+      if (myProject.isDisposed() || myEditor != null && myEditor.isDisposed()) return;
+      if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
+        DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
+        return;
       }
+
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+      PsiFile file = myEditor != null ? PsiUtilBase.getPsiFileInEditor(myEditor, myProject) : myFile;
+      if (file == null) {
+        return;
+      }
+
+      ShowIntentionActionsHandler.chooseActionAndInvoke(file, myEditor, cachedAction.getAction(), cachedAction.getText(), myProject);
     };
   }
 
@@ -318,16 +305,13 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     result.addAll(myCachedGutters);
     result.addAll(myCachedNotifications);
     result = DumbService.getInstance(myProject).filterByDumbAwareness(result);
-    Collections.sort(result, new Comparator<IntentionActionWithTextCaching>() {
-      @Override
-      public int compare(final IntentionActionWithTextCaching o1, final IntentionActionWithTextCaching o2) {
-        int weight1 = getWeight(o1);
-        int weight2 = getWeight(o2);
-        if (weight1 != weight2) {
-          return weight2 - weight1;
-        }
-        return o1.compareTo(o2);
+    Collections.sort(result, (o1, o2) -> {
+      int weight1 = getWeight(o1);
+      int weight2 = getWeight(o2);
+      if (weight1 != weight2) {
+        return weight2 - weight1;
       }
+      return o1.compareTo(o2);
     });
     return result;
   }
@@ -377,8 +361,12 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
     if (myCachedGutters.contains(action)) {
       return 5;
     }
-    if (action.getAction() instanceof EmptyIntentionAction) {
+    final IntentionAction underlyingAction = action.getAction();
+    if (underlyingAction instanceof EmptyIntentionAction) {
       return -10;
+    }
+    if (underlyingAction instanceof SuppressIntentionActionFromFix && ((SuppressIntentionActionFromFix)underlyingAction).isSuppressAll()) {
+      return -15;
     }
     return 0;
   }

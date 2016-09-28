@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.util.net.NetUtils;
+import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
+import com.intellij.util.xmlb.XmlSerializer;
+import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import com.sun.jdi.Value;
 import com.sun.jdi.connect.spi.TransportService;
 import org.jdom.Element;
@@ -95,15 +99,33 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
 
   @Override
   public void writeTextWithImports(Element root, String name, TextWithImports value) {
-    LOG.assertTrue(value.getKind() == CodeFragmentKind.EXPRESSION);
-    JDOMExternalizerUtil.writeField(root, name, value.toExternalForm());
+    if (value.getKind() == CodeFragmentKind.EXPRESSION) {
+      JDOMExternalizerUtil.writeField(root, name, value.toExternalForm());
+    }
+    else {
+      Element element = JDOMExternalizerUtil.writeOption(root, name);
+      XExpression expression = TextWithImportsImpl.toXExpression(value);
+      if (expression != null) {
+        XmlSerializer.serializeInto(new XExpressionState(expression), element, new SkipDefaultValuesSerializationFilters());
+      }
+    }
   }
 
   @Override
   public TextWithImports readTextWithImports(Element root, String name) {
     String s = JDOMExternalizerUtil.readField(root, name);
-    if(s == null) return null;
-    return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, s);
+    if (s != null) {
+      return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, s);
+    }
+    else {
+      Element option = JDOMExternalizerUtil.getOption(root, name);
+      if (option != null) {
+        XExpressionState state = new XExpressionState();
+        XmlSerializer.deserializeInto(state, option);
+        return TextWithImportsImpl.fromXExpression(state.toXExpression());
+      }
+    }
+    return null;
   }
 
   @Override
@@ -124,8 +146,7 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  public String findAvailableDebugAddress(final boolean useSockets) throws ExecutionException {
-    final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
+  public String findAvailableDebugAddress(boolean useSockets) throws ExecutionException {
     if (useSockets) {
       final int freePort;
       try {
@@ -136,29 +157,32 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       }
       return Integer.toString(freePort);
     }
-
-    try {
-      TransportService.ListenKey listenKey = transportService.startListening();
-      final String address = listenKey.address();
-      transportService.stopListening(listenKey);
-      return address;
-    }
-    catch (IOException e) {
-      int tryNum = 0;
-      while (true) {
-        try {
-          TransportService.ListenKey listenKey = transportService.startListening("javadebug_" + (int)(Math.random()*1000));
-          final String address = listenKey.address();
-          transportService.stopListening(listenKey);
-          return address;
-        }
-        catch (Exception ex) {
-          if (tryNum++ > 10) {
-            throw new ExecutionException(DebugProcessImpl.processError(ex));
+    else {
+      TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(false);
+      try {
+        return tryShmemConnect(transportService, null);
+      }
+      catch (IOException e) {
+        int tryNum = 0;
+        while (true) {
+          try {
+            return tryShmemConnect(transportService, "javadebug_" + (int)(Math.random() * 1000));
+          }
+          catch (Exception ex) {
+            if (tryNum++ > 10) {
+              throw new ExecutionException(DebugProcessImpl.processError(ex));
+            }
           }
         }
       }
     }
+  }
+
+  private static String tryShmemConnect(TransportServiceWrapper transportService, String address) throws IOException {
+    TransportService.ListenKey listenKey = transportService.startListening(address);
+    address = listenKey.address();
+    transportService.stopListening(listenKey);
+    return address;
   }
 
   public static boolean isRemote(DebugProcess debugProcess) {

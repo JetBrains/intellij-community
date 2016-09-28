@@ -180,7 +180,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   public static void bindAllClassRefs(final PsiFile file,
-                                      final PsiElement resolved,
+                                      @NotNull final PsiElement resolved,
                                       final String referenceName,
                                       final PsiClass resolvedClass) {
     file.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -197,7 +197,7 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
       }
     });
 
-    if (resolved != null && findExistingImport(file, resolvedClass, referenceName) == null) {
+    if (findExistingImport(file, resolvedClass, referenceName) == null) {
       if (resolved instanceof PsiClass) {
         ((PsiImportHolder) file).importClass((PsiClass) resolved);
       } else {
@@ -235,29 +235,19 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
                 }
               }
               reference.putUserData(TEMP_REFERENT_USER_DATA, null);
-            } else {
+            }
+            else if (referent == null || referent instanceof PsiMember && ((PsiMember)referent).hasModifierProperty(PsiModifier.STATIC)) {
               if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
                 PsiElement aClass = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
                 if (aClass instanceof PsiVariable) {
                   aClass = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)aClass).getType());
                 }
                 if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, resolvedClass, true)) {
-                  boolean foundMemberByName = false;
-                  if (referent instanceof PsiMember) {
-                    final String memberName = ((PsiMember)referent).getName();
-                    final PsiClass containingClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
-                    if (containingClass != null) {
-                      foundMemberByName |= containingClass.findFieldByName(memberName, true) != null;
-                      foundMemberByName |= containingClass.findMethodsByName(memberName, true).length > 0;
-                    }
+                  try {
+                    qualifierExpression.delete();
                   }
-                  if (!foundMemberByName) {
-                    try {
-                      qualifierExpression.delete();
-                    }
-                    catch (IncorrectOperationException e) {
-                      LOG.error(e);
-                    }
+                  catch (IncorrectOperationException e) {
+                    LOG.error(e);
                   }
                 }
               }

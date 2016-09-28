@@ -22,12 +22,10 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.ui.DebuggerExpressionTextField;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -38,8 +36,13 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.JBUI;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -61,10 +64,10 @@ class CompoundRendererConfigurable extends JPanel {
   private final JRadioButton myRbDefaultChildrenRenderer;
   private final JRadioButton myRbExpressionChildrenRenderer;
   private final JRadioButton myRbListChildrenRenderer;
-  private final DebuggerExpressionTextField myLabelEditor;
-  private final DebuggerExpressionTextField myChildrenEditor;
-  private final DebuggerExpressionTextField myChildrenExpandedEditor;
-  private DebuggerExpressionTextField myListChildrenEditor;
+  private final XDebuggerExpressionEditor myLabelEditor;
+  private final XDebuggerExpressionEditor myChildrenEditor;
+  private final XDebuggerExpressionEditor myChildrenExpandedEditor;
+  private XDebuggerExpressionEditor myListChildrenEditor;
   private final JLabel myExpandedLabel;
   private JBTable myTable;
   @NonNls private static final String EMPTY_PANEL_ID = "EMPTY";
@@ -95,10 +98,12 @@ class CompoundRendererConfigurable extends JPanel {
     childrenButtonGroup.add(myRbExpressionChildrenRenderer);
     childrenButtonGroup.add(myRbListChildrenRenderer);
 
-    myLabelEditor = new DebuggerExpressionTextField(myProject, parentDisposable, null, "ClassLabelExpression");
-    myChildrenEditor = new DebuggerExpressionTextField(myProject, parentDisposable, null, "ClassChildrenExpression");
-    myChildrenExpandedEditor = new DebuggerExpressionTextField(myProject, parentDisposable, null, "ClassChildrenExpression");
-    JComponent myChildrenListEditor = createChildrenListEditor(parentDisposable);
+    JavaDebuggerEditorsProvider editorsProvider = new JavaDebuggerEditorsProvider();
+
+    myLabelEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "ClassLabelExpression", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, true);
+    myChildrenEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "ClassChildrenExpression", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, true);
+    myChildrenExpandedEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "ClassChildrenExpression", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, true);
+    JComponent myChildrenListEditor = createChildrenListEditor(editorsProvider);
 
     final ItemListener updateListener = new ItemListener() {
       @Override
@@ -132,47 +137,47 @@ class CompoundRendererConfigurable extends JPanel {
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.apply.to")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 0, 0, 0), 0, 0));
+                                     JBUI.emptyInsets(), 0, 0));
     panel.add(myClassNameField, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                       GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
+                                                       GridBagConstraints.HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.rendering")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(20, 0, 0, 0), 0, 0));
+                                     JBUI.insetsTop(20), 0, 0));
     panel.add(myShowTypeCheckBox,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 7, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(7), 0, 0));
     panel.add(myRbDefaultLabel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 10, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(10), 0, 0));
     panel.add(myRbExpressionLabel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 10, 0, 0), 0, 0));
-    panel.add(myLabelEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                    GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(10), 0, 0));
+    panel.add(myLabelEditor.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                                   GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
 
     panel.add(new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.when.expanding")),
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(20, 0, 0, 0), 0, 0));
+                                     JBUI.insetsTop(20), 0, 0));
     panel.add(myRbDefaultChildrenRenderer,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 10, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(10), 0, 0));
     panel.add(myRbExpressionChildrenRenderer,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(0, 10, 0, 0), 0, 0));
-    panel.add(myChildrenEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                       GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+                                     JBUI.insetsLeft(10), 0, 0));
+    panel.add(myChildrenEditor.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                                      GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
     myExpandedLabel = new JLabel(DebuggerBundle.message("label.compound.renderer.configurable.test.can.expand"));
     panel.add(myExpandedLabel,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
-                                     new Insets(4, 30, 0, 0), 0, 0));
-    panel.add(myChildrenExpandedEditor, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                               GridBagConstraints.HORIZONTAL, new Insets(0, 30, 0, 0), 0, 0));
+                                     JBUI.insets(4, 30, 0, 0), 0, 0));
+    panel.add(myChildrenExpandedEditor.getComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
+                                                                              GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(30), 0, 0));
     panel.add(myRbListChildrenRenderer, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                               GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
+                                                               GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(10), 0, 0));
     panel.add(myChildrenListEditor,
               new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                     new Insets(4, 30, 0, 0), 0, 0));
+                                     JBUI.insets(4, 30, 0, 0), 0, 0));
     add(new JPanel(), EMPTY_PANEL_ID);
     add(panel, DATA_PANEL_ID);
   }
@@ -193,35 +198,15 @@ class CompoundRendererConfigurable extends JPanel {
   }
 
   private void updateContext(final String qName) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        final Project project = myProject;
-        final PsiClass psiClass = project != null ? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
-        myLabelEditor.setContext(psiClass);
-        myChildrenEditor.setContext(psiClass);
-        myChildrenExpandedEditor.setContext(psiClass);
-        myListChildrenEditor.setContext(psiClass);
-
-        assert project != null;
-        PsiType type = DebuggerUtils.getType(qName, project);
-        myLabelEditor.setThisType(type);
-        myChildrenEditor.setThisType(type);
-        myChildrenExpandedEditor.setThisType(type);
-        myListChildrenEditor.setThisType(type);
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final Project project = myProject;
+      final PsiClass psiClass = project != null ? DebuggerUtils.findClass(qName, project, GlobalSearchScope.allScope(project)) : null;
+      XSourcePositionImpl position = XSourcePositionImpl.createByElement(psiClass);
+      myLabelEditor.setSourcePosition(position);
+      myChildrenEditor.setSourcePosition(position);
+      myChildrenExpandedEditor.setSourcePosition(position);
+      myListChildrenEditor.setSourcePosition(position);
     });
-
-    // Need to recreate fields documents with the new context
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myLabelEditor.setText(myLabelEditor.getText());
-        myChildrenEditor.setText(myChildrenEditor.getText());
-        myChildrenExpandedEditor.setText(myChildrenExpandedEditor.getText());
-        myListChildrenEditor.setText(myListChildrenEditor.getText());
-      }
-    }, ModalityState.any(), myProject.getDisposed());
   }
 
   private void updateEnabledState() {
@@ -234,26 +219,27 @@ class CompoundRendererConfigurable extends JPanel {
     myTable.setEnabled(myRbListChildrenRenderer.isSelected());
   }
 
-  private JComponent createChildrenListEditor(@NotNull Disposable parentDisposable) {
+  private JComponent createChildrenListEditor(JavaDebuggerEditorsProvider editorsProvider) {
     final MyTableModel tableModel = new MyTableModel();
     myTable = new JBTable(tableModel);
-    myListChildrenEditor = new DebuggerExpressionTextField(myProject, parentDisposable, null, "NamedChildrenConfigurable");
+    myListChildrenEditor = new XDebuggerExpressionEditor(myProject, editorsProvider, "NamedChildrenConfigurable", null, XExpressionImpl.EMPTY_EXPRESSION, false, false, false);
+    JComponent editorComponent = myListChildrenEditor.getComponent();
 
     AbstractTableCellEditor editor = new AbstractTableCellEditor() {
       @Override
       public Object getCellEditorValue() {
-        return myListChildrenEditor.getText();
+        return TextWithImportsImpl.fromXExpression(myListChildrenEditor.getExpression());
       }
 
       @Override
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-        myListChildrenEditor.setText((TextWithImports)value);
-        return myListChildrenEditor;
+        myListChildrenEditor.setExpression(TextWithImportsImpl.toXExpression((TextWithImports)value));
+        return editorComponent;
       }
     };
-    myListChildrenEditor.registerKeyboardAction(e -> editor.stopCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+    editorComponent.registerKeyboardAction(e -> editor.stopCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
                            JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    myListChildrenEditor.registerKeyboardAction(e -> editor.cancelCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+    editorComponent.registerKeyboardAction(e -> editor.cancelCellEditing(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
                            JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     TableColumn exprColumn = myTable.getColumnModel().getColumn(EXPRESSION_TABLE_COLUMN);
@@ -323,15 +309,15 @@ class CompoundRendererConfigurable extends JPanel {
     renderer.setShowType(myShowTypeCheckBox.isSelected());
     if (myRbExpressionLabel.isSelected()) {
       labelRenderer = new LabelRenderer();
-      labelRenderer.setLabelExpression(myLabelEditor.getText());
+      labelRenderer.setLabelExpression(TextWithImportsImpl.fromXExpression(myLabelEditor.getExpression()));
     }
     renderer.setLabelRenderer(labelRenderer);
     // children
     ChildrenRenderer childrenRenderer = null;
     if (myRbExpressionChildrenRenderer.isSelected()) {
       childrenRenderer = new ExpressionChildrenRenderer();
-      ((ExpressionChildrenRenderer)childrenRenderer).setChildrenExpression(myChildrenEditor.getText());
-      ((ExpressionChildrenRenderer)childrenRenderer).setChildrenExpandable(myChildrenExpandedEditor.getText());
+      ((ExpressionChildrenRenderer)childrenRenderer).setChildrenExpression(TextWithImportsImpl.fromXExpression(myChildrenEditor.getExpression()));
+      ((ExpressionChildrenRenderer)childrenRenderer).setChildrenExpandable(TextWithImportsImpl.fromXExpression(myChildrenExpandedEditor.getExpression()));
     }
     else if (myRbListChildrenRenderer.isSelected()) {
       childrenRenderer = new EnumerationChildrenRenderer(getTableModel().getExpressions());
@@ -349,6 +335,9 @@ class CompoundRendererConfigurable extends JPanel {
     }
     final String className = myRenderer.getClassName();
     myClassNameField.setText(className);
+
+    updateContext(className);
+
     final ValueLabelRenderer labelRenderer = myRenderer.getLabelRenderer();
     final ChildrenRenderer childrenRenderer = myRenderer.getChildrenRenderer();
     final NodeRendererSettings rendererSettings = NodeRendererSettings.getInstance();
@@ -356,31 +345,31 @@ class CompoundRendererConfigurable extends JPanel {
     myShowTypeCheckBox.setSelected(myRenderer.isShowType());
 
     if (rendererSettings.isBase(labelRenderer)) {
-      myLabelEditor.setText(emptyExpressionFragment);
+      myLabelEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       myRbDefaultLabel.setSelected(true);
     }
     else {
       myRbExpressionLabel.setSelected(true);
-      myLabelEditor.setText(((LabelRenderer)labelRenderer).getLabelExpression());
+      myLabelEditor.setExpression(TextWithImportsImpl.toXExpression(((LabelRenderer)labelRenderer).getLabelExpression()));
     }
 
     if (rendererSettings.isBase(childrenRenderer)) {
       myRbDefaultChildrenRenderer.setSelected(true);
-      myChildrenEditor.setText(emptyExpressionFragment);
-      myChildrenExpandedEditor.setText(emptyExpressionFragment);
+      myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
+      myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       getTableModel().clear();
     }
     else if (childrenRenderer instanceof ExpressionChildrenRenderer) {
       myRbExpressionChildrenRenderer.setSelected(true);
       final ExpressionChildrenRenderer exprRenderer = (ExpressionChildrenRenderer)childrenRenderer;
-      myChildrenEditor.setText(exprRenderer.getChildrenExpression());
-      myChildrenExpandedEditor.setText(exprRenderer.getChildrenExpandable());
+      myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpression()));
+      myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(exprRenderer.getChildrenExpandable()));
       getTableModel().clear();
     }
     else {
       myRbListChildrenRenderer.setSelected(true);
-      myChildrenEditor.setText(emptyExpressionFragment);
-      myChildrenExpandedEditor.setText(emptyExpressionFragment);
+      myChildrenEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
+      myChildrenExpandedEditor.setExpression(TextWithImportsImpl.toXExpression(emptyExpressionFragment));
       if (childrenRenderer instanceof EnumerationChildrenRenderer) {
         getTableModel().init(((EnumerationChildrenRenderer)childrenRenderer).getChildren());
       }
@@ -390,7 +379,6 @@ class CompoundRendererConfigurable extends JPanel {
     }
 
     updateEnabledState();
-    updateContext(className);
   }
 
   private MyTableModel getTableModel() {
@@ -524,15 +512,12 @@ class CompoundRendererConfigurable extends JPanel {
   private static class ClassNameEditorWithBrowseButton extends ReferenceEditorWithBrowseButton {
     private ClassNameEditorWithBrowseButton(ActionListener browseActionListener, final Project project) {
       super(browseActionListener, project,
-            new Function<String, Document>() {
-              @Override
-              public Document fun(String s) {
-                PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
-                final JavaCodeFragment fragment =
-                  JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
-                fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-                return PsiDocumentManager.getInstance(project).getDocument(fragment);
-              }
+            s -> {
+              PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+              final JavaCodeFragment fragment =
+                JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(s, defaultPackage, true, true);
+              fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
+              return PsiDocumentManager.getInstance(project).getDocument(fragment);
             }, "");
     }
   }

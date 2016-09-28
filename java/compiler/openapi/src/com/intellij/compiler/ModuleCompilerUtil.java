@@ -97,11 +97,9 @@ public final class ModuleCompilerUtil {
 
   public static void sortModules(final Project project, final List<Module> modules) {
     final Application application = ApplicationManager.getApplication();
-    Runnable sort = new Runnable() {
-      public void run() {
-        Comparator<Module> comparator = ModuleManager.getInstance(project).moduleDependencyComparator();
-        Collections.sort(modules, comparator);
-      }
+    Runnable sort = () -> {
+      Comparator<Module> comparator = ModuleManager.getInstance(project).moduleDependencyComparator();
+      Collections.sort(modules, comparator);
     };
     if (application.isDispatchThread()) {
       sort.run();
@@ -120,15 +118,12 @@ public final class ModuleCompilerUtil {
 
       public Iterator<T> getIn(final ModuleRootModel model) {
         final List<T> dependencies = new ArrayList<T>();
-        model.orderEntries().compileOnly().forEachModule(new Processor<Module>() {
-          @Override
-          public boolean process(Module module) {
-            T depModel = models.get(module);
-            if (depModel != null) {
-              dependencies.add(depModel);
-            }
-            return true;
+        model.orderEntries().compileOnly().forEachModule(module -> {
+          T depModel = models.get(module);
+          if (depModel != null) {
+            dependencies.add(depModel);
           }
+          return true;
         });
         return dependencies.iterator();
       }
@@ -181,16 +176,13 @@ public final class ModuleCompilerUtil {
   public static List<Chunk<ModuleSourceSet>> getCyclicDependencies(@NotNull Project project, @NotNull List<Module> modules) {
     Collection<Chunk<ModuleSourceSet>> chunks = computeSourceSetCycles(new DefaultModulesProvider(project));
     final Set<Module> modulesSet = new HashSet<Module>(modules);
-    return ContainerUtil.filter(chunks, new Condition<Chunk<ModuleSourceSet>>() {
-      @Override
-      public boolean value(Chunk<ModuleSourceSet> chunk) {
-        for (ModuleSourceSet sourceSet : chunk.getNodes()) {
-          if (modulesSet.contains(sourceSet.getModule())) {
-            return true;
-          }
+    return ContainerUtil.filter(chunks, chunk -> {
+      for (ModuleSourceSet sourceSet : chunk.getNodes()) {
+        if (modulesSet.contains(sourceSet.getModule())) {
+          return true;
         }
-        return false;
       }
+      return false;
     });
   }
 
@@ -215,12 +207,9 @@ public final class ModuleCompilerUtil {
           enumerator = enumerator.productionOnly();
         }
         final List<ModuleSourceSet> deps = new ArrayList<ModuleSourceSet>();
-        enumerator.forEachModule(new Processor<Module>() {
-          @Override
-          public boolean process(Module module) {
-            deps.add(new ModuleSourceSet(module, n.getType()));
-            return true;
-          }
+        enumerator.forEachModule(module -> {
+          deps.add(new ModuleSourceSet(module, n.getType()));
+          return true;
         });
         if (n.getType() == ModuleSourceSet.Type.TEST) {
           deps.add(new ModuleSourceSet(n.getModule(), ModuleSourceSet.Type.PRODUCTION));
@@ -263,12 +252,7 @@ public final class ModuleCompilerUtil {
   }
 
   private static List<Chunk<ModuleSourceSet>> removeSingleElementChunks(Collection<Chunk<ModuleSourceSet>> chunks) {
-    return ContainerUtil.filter(chunks, new Condition<Chunk<ModuleSourceSet>>() {
-      @Override
-      public boolean value(Chunk<ModuleSourceSet> chunk) {
-        return chunk.getNodes().size() > 1;
-      }
-    });
+    return ContainerUtil.filter(chunks, chunk -> chunk.getNodes().size() > 1);
   }
 
   /**
@@ -285,15 +269,12 @@ public final class ModuleCompilerUtil {
       }
     }
 
-    return ContainerUtil.filter(sourceSetCycles, new Condition<Chunk<ModuleSourceSet>>() {
-      @Override
-      public boolean value(Chunk<ModuleSourceSet> chunk) {
-        if (getCommonType(chunk) != ModuleSourceSet.Type.TEST) return true;
-        for (Set<Module> productionCycle : productionCycles) {
-          if (productionCycle.containsAll(ModuleSourceSet.getModules(chunk.getNodes()))) return false;
-        }
-        return true;
+    return ContainerUtil.filter(sourceSetCycles, chunk -> {
+      if (getCommonType(chunk) != ModuleSourceSet.Type.TEST) return true;
+      for (Set<Module> productionCycle : productionCycles) {
+        if (productionCycle.containsAll(ModuleSourceSet.getModules(chunk.getNodes()))) return false;
       }
+      return true;
     });
   }
 

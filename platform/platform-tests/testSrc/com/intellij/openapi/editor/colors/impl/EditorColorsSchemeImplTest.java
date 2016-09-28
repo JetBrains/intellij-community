@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.editor.EditorColorSchemeTestCase;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -23,43 +24,30 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jdom.Element;
-import org.jdom.input.DOMBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.NotNull;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.awt.*;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
 import static java.util.Collections.singletonList;
 
-public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase {
+@SuppressWarnings("Duplicates")
+public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   EditorColorsSchemeImpl myScheme = new EditorColorsSchemeImpl(null);
 
   public void testDefaults() {
     checkState(myScheme.getFontPreferences(),
-               Collections.<String>emptyList(),
-               Collections.<String>emptyList(),
+               Collections.emptyList(),
+               Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
     assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getEditorFontName());
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
-               Collections.<String>emptyList(),
-               Collections.<String>emptyList(),
+               Collections.emptyList(),
+               Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
     assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getConsoleFontName());
@@ -189,6 +177,7 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     Element root = new Element("scheme");
     ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
     root.removeChildren("option"); // Remove font options
+    root.removeChildren("metaInfo");
     assertXmlOutputEquals("<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\" />", root);
   }
 
@@ -199,6 +188,7 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     Element root = new Element("scheme");
     ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
     root.removeChildren("option"); // Remove font options
+    root.removeChildren("metaInfo");
     assertXmlOutputEquals("<scheme name=\"test\" version=\"142\" parent_scheme=\"Darcula\" />", root);
   }
 
@@ -323,46 +313,5 @@ public class EditorColorsSchemeImplTest extends LightPlatformCodeInsightTestCase
     }
   }
 
-
-  private static EditorColorsScheme loadScheme(@NotNull String docText) throws ParserConfigurationException, IOException, SAXException {
-    DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-    InputSource inputSource = new InputSource(new StringReader(docText));
-    org.w3c.dom.Document doc = docBuilder.parse(inputSource);
-    Element root = new DOMBuilder().build(doc.getDocumentElement());
-
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
-    EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
-
-    targetScheme.readExternal(root);
-
-    return targetScheme;
-  }
-
-  @NotNull
-  public Pair<EditorColorsScheme,TextAttributes> doTestWriteRead(TextAttributesKey key, TextAttributes attributes)
-    throws WriteExternalException {
-    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
-
-    EditorColorsScheme sourceScheme = (EditorColorsScheme)defaultScheme.clone();
-    sourceScheme.setName("test");
-    sourceScheme.setAttributes(key, attributes);
-
-    Element root = new Element("scheme");
-    ((AbstractColorsScheme)sourceScheme).writeExternal(root);
-
-    EditorColorsScheme targetScheme = new EditorColorsSchemeImpl(defaultScheme);
-    targetScheme.readExternal(root);
-    assertEquals("test", targetScheme.getName());
-    TextAttributes targetAttrs = targetScheme.getAttributes(key);
-    return Pair.create(targetScheme,targetAttrs);
-  }
-
-  private static void assertXmlOutputEquals(String expected, Element root) throws IOException {
-    StringWriter writer = new StringWriter();
-    Format format = Format.getPrettyFormat();
-    format.setLineSeparator("\n");
-    new XMLOutputter(format).output(root, writer);
-    String actual = writer.toString();
-    assertEquals(expected, actual);
-  }
+  
 }

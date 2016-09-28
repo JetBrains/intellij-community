@@ -47,15 +47,13 @@ public class ServerSocketConnectionImpl<Request extends AbstractRequest, Respons
   public void open() throws IOException {
     myServerSocket = createSocket();
     setPort(myServerSocket.getLocalPort());
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        try {
-          waitForConnection();
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          setStatus(ConnectionStatus.CONNECTION_FAILED, "Connection failed: " + e.getMessage());
-        }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        waitForConnection();
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        setStatus(ConnectionStatus.CONNECTION_FAILED, "Connection failed: " + e.getMessage());
       }
     });
   }

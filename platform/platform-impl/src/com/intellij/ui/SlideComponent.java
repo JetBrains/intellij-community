@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,7 +196,7 @@ class SlideComponent extends JComponent {
     pointerValue -= OFFSET;
     final int size = myVertical ? getHeight() : getWidth();
     float proportion = (size - 23) / 255f;
-    return (int)(pointerValue / proportion);
+    return Math.round((pointerValue / proportion));
   }
 
   private int valueToPointerValue(int value) {

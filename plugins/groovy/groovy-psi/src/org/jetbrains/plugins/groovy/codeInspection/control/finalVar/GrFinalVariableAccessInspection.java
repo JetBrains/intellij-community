@@ -231,12 +231,9 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
   @NotNull
   private static List<GrField> getFinalFields(@NotNull GrTypeDefinition clazz) {
     final GrField[] fields = clazz.getCodeFields();
-    return ContainerUtil.filter(fields, new Condition<GrField>() {
-      @Override
-      public boolean value(GrField field) {
-        final GrModifierList list = field.getModifierList();
-        return list != null && list.hasModifierProperty(PsiModifier.FINAL);
-      }
+    return ContainerUtil.filter(fields, field -> {
+      final GrModifierList list = field.getModifierList();
+      return list != null && list.hasModifierProperty(PsiModifier.FINAL);
     });
   }
 

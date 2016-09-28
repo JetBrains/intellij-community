@@ -49,13 +49,9 @@ public class DGMMemberContributor extends NonCodeMembersContributor {
     final Project project = place.getProject();
 
     ConcurrentMap<GlobalSearchScope, List<GdkMethodHolder>> map = CachedValuesManager.getManager(project).getCachedValue(
-      project, new CachedValueProvider<ConcurrentMap<GlobalSearchScope, List<GdkMethodHolder>>>() {
-        @Nullable
-        @Override
-        public Result<ConcurrentMap<GlobalSearchScope, List<GdkMethodHolder>>> compute() {
-          ConcurrentMap<GlobalSearchScope, List<GdkMethodHolder>> value = ContainerUtil.createConcurrentSoftValueMap();
-          return Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
-        }
+      project, () -> {
+        ConcurrentMap<GlobalSearchScope, List<GdkMethodHolder>> value = ContainerUtil.createConcurrentSoftValueMap();
+        return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
       });
 
     GlobalSearchScope scope = place.getResolveScope();

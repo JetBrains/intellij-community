@@ -59,12 +59,9 @@ public class ProjectLibrariesTest extends IdeaTestCase {
     assertNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
 
     final Library.ModifiableModel model = myLib.getModifiableModel();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.addRoot(myRoot, OrderRootType.CLASSES);
-        model.commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      model.addRoot(myRoot, OrderRootType.CLASSES);
+      model.commit();
     });
 
     assertNotNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
@@ -78,24 +75,16 @@ public class ProjectLibrariesTest extends IdeaTestCase {
       assertNotNull(moduleModel.findLibraryOrderEntry(myLib));
 
       final Library.ModifiableModel libModel = myLib.getModifiableModel();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          libModel.addRoot(myRoot, OrderRootType.CLASSES);
-          libModel.commit();
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        libModel.addRoot(myRoot, OrderRootType.CLASSES);
+        libModel.commit();
       });
 
       assertNotNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));
       assertTrue(Arrays.asList(moduleModel.orderEntries().librariesOnly().classes().getRoots()).contains(myRoot));
     }
     finally {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          moduleModel.commit();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> moduleModel.commit());
     }
 
     assertNotNull(getJavaFacade().findClass("pack.MyClass", GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(myModule)));

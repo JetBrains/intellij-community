@@ -43,12 +43,7 @@ import java.util.List;
  */
 public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   private static final String COLOR_STRING = XmlBundle.message("choose.color.in.color.lookup");
-  private static final Function<Color,String> COLOR_TO_STRING_CONVERTER = new Function<Color, String>() {
-    @Override
-    public String fun(Color color) {
-      return '#' + ColorUtil.toHex(color);
-    }
-  };
+  private static final Function<Color,String> COLOR_TO_STRING_CONVERTER = color -> '#' + ColorUtil.toHex(color);
 
   public UserColorLookup() {
     this(COLOR_TO_STRING_CONVERTER);

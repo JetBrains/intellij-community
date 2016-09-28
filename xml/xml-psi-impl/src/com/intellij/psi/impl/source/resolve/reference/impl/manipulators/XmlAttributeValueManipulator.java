@@ -17,18 +17,17 @@ package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.impl.CheckUtil;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.Factory;
-import com.intellij.psi.impl.source.tree.LeafElement;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,36 +43,28 @@ public class XmlAttributeValueManipulator extends AbstractElementManipulator<Xml
 
   @Override
   public XmlAttributeValue handleContentChange(@NotNull XmlAttributeValue element, @NotNull TextRange range, String newContent) throws IncorrectOperationException {
-    return handleContentChange(element, range, newContent, XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN);
-  }
-
-  public static <T extends PsiElement> T handleContentChange(T element,
-                                                             TextRange range,
-                                                             String newContent,
-                                                             final IElementType tokenType) {
     CheckUtil.checkWritable(element);
-    final CompositeElement attrNode = (CompositeElement)element.getNode();
-    final ASTNode valueNode = attrNode.findLeafElementAt(range.getStartOffset());
-    LOG.assertTrue(valueNode != null, "Leaf not found in " + attrNode + " at offset " + range.getStartOffset() + " in element " + element);
-    final PsiElement elementToReplace = valueNode.getPsi();
 
     String text;
+    final String oldText = element.getText();
     try {
-      text = elementToReplace.getText();
-      final int offsetInParent = elementToReplace.getStartOffsetInParent();
-      String textBeforeRange = text.substring(0, range.getStartOffset() - offsetInParent);
-      String textAfterRange = text.substring(range.getEndOffset()- offsetInParent, text.length());
-      newContent = element.getText().startsWith("'") || element.getText().endsWith("'") ?
-                   newContent.replace("'", "&apos;") : newContent.replace("\"", "&quot;");
-      text = textBeforeRange + newContent + textAfterRange;
+      String textBeforeRange = oldText.substring(0, range.getStartOffset());
+      String textAfterRange = oldText.substring(range.getEndOffset(), oldText.length());
+      newContent = oldText.startsWith("'") || oldText.endsWith("'") ?
+                   newContent.replace("'", oldText.contains("&#39;") ? "&#39;" : "&apos;") :
+                   newContent.replace("\"", oldText.contains("&#34;") ? "&#34;" : "&quot;");
+      text = "<a value=" + textBeforeRange + newContent + textAfterRange;
     } catch(StringIndexOutOfBoundsException e) {
-      LOG.error("Range: " + range + " in text: '" + element.getText() + "'", e);
+      LOG.error("Range: " + range + " in text: '" + oldText + "'", e);
       throw e;
     }
-    final CharTable charTableByTree = SharedImplUtil.findCharTableByTree(attrNode);
-    final LeafElement newValueElement = Factory.createSingleLeafElement(tokenType, text, charTableByTree, element.getManager());
-
-    attrNode.replaceChildInternal(valueNode, newValueElement);
+    final Project project = element.getProject();
+    final XmlTag tag = element.getParent().getParent() instanceof HtmlTag ?
+                       XmlElementFactory.getInstance(project).createHTMLTagFromText(text) :
+                       XmlElementFactory.getInstance(project).createTagFromText(text);
+    final XmlAttribute attribute = tag.getAttribute("value");
+    assert attribute != null && attribute.getValueElement() != null;
+    element.getNode().replaceAllChildrenToChildrenOf(attribute.getValueElement().getNode());
     return element;
   }
 

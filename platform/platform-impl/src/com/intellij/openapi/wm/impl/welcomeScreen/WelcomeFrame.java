@@ -21,10 +21,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -119,20 +116,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
         public void windowClosing(final WindowEvent e) {
           frame.dispose();
 
-          final Application app = ApplicationManager.getApplication();
-          app.invokeLater(new DumbAwareRunnable() {
-            public void run() {
-              if (app.isDisposed()) {
-                ApplicationManagerEx.getApplicationEx().exit();
-                return;
-              }
-
-              final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-              if (openProjects.length == 0) {
-                ApplicationManagerEx.getApplicationEx().exit();
-              }
-            }
-          }, ModalityState.NON_MODAL);
+          if (ProjectManager.getInstance().getOpenProjects().length == 0) {
+            ApplicationManagerEx.getApplicationEx().exit();
+          }
         }
       }
     );

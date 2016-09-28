@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NonNls;
  * @author peter
  */
 public class XmlPatterns extends PlatformPatterns {
+
   public static XmlFilePattern.Capture xmlFile() {
     return new XmlFilePattern.Capture();
   }
@@ -41,7 +42,7 @@ public class XmlPatterns extends PlatformPatterns {
   }
 
   public static XmlAttributeValuePattern xmlAttributeValue() {
-    return new XmlAttributeValuePattern();
+    return XmlAttributeValuePattern.XML_ATTRIBUTE_VALUE_PATTERN;
   }
 
   public static XmlNamedElementPattern.XmlAttributePattern xmlAttribute(@NonNls String localName) {
@@ -53,7 +54,7 @@ public class XmlPatterns extends PlatformPatterns {
   }
 
   public static XmlTagPattern.Capture xmlTag() {
-    return new XmlTagPattern.Capture();
+    return XmlTagPattern.Capture.XML_TAG_PATTERN;
   }
 
   public static XmlElementPattern.XmlTextPattern xmlText() {

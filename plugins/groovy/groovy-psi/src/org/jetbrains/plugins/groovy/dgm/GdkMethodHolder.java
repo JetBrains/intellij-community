@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGd
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
@@ -59,7 +58,7 @@ public class GdkMethodHolder {
     for (PsiMethod m : categoryClass.getMethods()) {
       final PsiParameter[] params = m.getParameterList().getParameters();
       if (params.length == 0) continue;
-      if (PsiUtil.isDGMMethod(m) && (PsiImplUtil.isDeprecatedByAnnotation(m) || PsiImplUtil.isDeprecatedByDocTag(m))) {
+      if (PsiImplUtil.isDeprecatedByAnnotation(m) || PsiImplUtil.isDeprecatedByDocTag(m)) {
         continue;
       }
       byName.putValue(m.getName(), m);
@@ -120,19 +119,16 @@ public class GdkMethodHolder {
   public static GdkMethodHolder getHolderForClass(final PsiClass categoryClass, final boolean isStatic, final GlobalSearchScope scope) {
     final Project project = categoryClass.getProject();
     Key<CachedValue<GdkMethodHolder>> key = isStatic ? CACHED_STATIC : CACHED_NON_STATIC;
-    return CachedValuesManager.getManager(project).getCachedValue(categoryClass, key, new CachedValueProvider<GdkMethodHolder>() {
-      @Override
-      public Result<GdkMethodHolder> compute() {
-        GdkMethodHolder result = new GdkMethodHolder(categoryClass, isStatic, scope);
+    return CachedValuesManager.getManager(project).getCachedValue(categoryClass, key, () -> {
+      GdkMethodHolder result = new GdkMethodHolder(categoryClass, isStatic, scope);
 
-        final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
-        final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
-        if (vfile != null && (rootManager.getFileIndex().isInLibraryClasses(vfile) || rootManager.getFileIndex().isInLibrarySource(vfile))) {
-          return Result.create(result, rootManager);
-        }
-
-        return Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
+      final ProjectRootManager rootManager = ProjectRootManager.getInstance(project);
+      final VirtualFile vfile = categoryClass.getContainingFile().getVirtualFile();
+      if (vfile != null && (rootManager.getFileIndex().isInLibraryClasses(vfile) || rootManager.getFileIndex().isInLibrarySource(vfile))) {
+        return CachedValueProvider.Result.create(result, rootManager);
       }
+
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, rootManager);
     }, false);
   }
 }

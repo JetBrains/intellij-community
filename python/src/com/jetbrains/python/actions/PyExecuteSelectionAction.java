@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.console.PyCodeExecutor;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PythonConsoleRunnerFactory;
@@ -96,15 +95,10 @@ public class PyExecuteSelectionAction extends AnAction {
 
   private static void execute(final AnActionEvent e, final String selectionText) {
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     Module module = e.getData(LangDataKeys.MODULE);
 
-    findCodeExecutor(e, new Consumer<PyCodeExecutor>() {
-      @Override
-      public void consume(PyCodeExecutor codeExecutor) {
-        executeInConsole(codeExecutor, selectionText, editor);
-      }
-    }, editor, project, module);
+    findCodeExecutor(e, codeExecutor -> executeInConsole(codeExecutor, selectionText, editor), editor, project, module);
   }
 
   private static String getLineUnderCaret(Editor editor) {
@@ -178,12 +172,9 @@ public class PyExecuteSelectionAction extends AnAction {
     Collection<RunContentDescriptor> consoles = getConsoles(project);
 
     ExecutionHelper
-      .selectContentDescriptor(dataContext, project, consoles, "Select console to execute in", new Consumer<RunContentDescriptor>() {
-        @Override
-        public void consume(RunContentDescriptor descriptor) {
-          if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
-            consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
-          }
+      .selectContentDescriptor(dataContext, project, consoles, "Select console to execute in", descriptor -> {
+        if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
+          consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
         }
       });
   }
@@ -197,13 +188,7 @@ public class PyExecuteSelectionAction extends AnAction {
     }
 
     Collection<RunContentDescriptor> descriptors =
-      ExecutionHelper.findRunningConsole(project, new NotNullFunction<RunContentDescriptor, Boolean>() {
-        @NotNull
-        @Override
-        public Boolean fun(RunContentDescriptor dom) {
-          return dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom);
-        }
-      });
+      ExecutionHelper.findRunningConsole(project, dom -> dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom));
 
     if (descriptors.isEmpty() && toolWindow != null) {
       return toolWindow.getConsoleContentDescriptors();
@@ -235,15 +220,12 @@ public class PyExecuteSelectionAction extends AnAction {
     final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
     if (toolWindow != null) {
-      toolWindow.activate(new Runnable() {
-        @Override
-        public void run() {
-          List<RunContentDescriptor> descs = toolWindow.getConsoleContentDescriptors();
+      toolWindow.activate(() -> {
+        List<RunContentDescriptor> descs = toolWindow.getConsoleContentDescriptors();
 
-          RunContentDescriptor descriptor = descs.get(0);
-          if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
-            consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
-          }
+        RunContentDescriptor descriptor = descs.get(0);
+        if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
+          consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
         }
       });
     }
@@ -263,7 +245,7 @@ public class PyExecuteSelectionAction extends AnAction {
   }
 
   private static boolean canFindConsole(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e.getProject();
     if (project != null) {
       Collection<RunContentDescriptor> descriptors = getConsoles(project);
       return descriptors.size() > 0;

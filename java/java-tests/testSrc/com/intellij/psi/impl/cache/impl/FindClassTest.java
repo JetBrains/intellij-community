@@ -57,27 +57,24 @@ public class FindClassTest extends PsiTestCase {
     super.setUp();
 
     final File root = createTempDirectory();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        try {
-          VirtualFile rootVFile =
-            LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
+    WriteCommandAction.runWriteCommandAction(null, () -> {
+      try {
+        VirtualFile rootVFile =
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getAbsolutePath().replace(File.separatorChar, '/'));
 
-          myPrjDir1 = createChildDirectory(rootVFile, "prj1");
-          mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
+        myPrjDir1 = createChildDirectory(rootVFile, "prj1");
+        mySrcDir1 = createChildDirectory(myPrjDir1, "src1");
 
-          myPackDir = createChildDirectory(mySrcDir1, "p");
-          VirtualFile file1 = createChildData(myPackDir, "A.java");
-          setFileText(file1, "package p; public class A{ public void foo(); }");
-          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        myPackDir = createChildDirectory(mySrcDir1, "p");
+        VirtualFile file1 = createChildData(myPackDir, "A.java");
+        setFileText(file1, "package p; public class A{ public void foo(); }");
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-          PsiTestUtil.addContentRoot(myModule, myPrjDir1);
-          PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+        PsiTestUtil.addContentRoot(myModule, myPrjDir1);
+        PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     });
   }
@@ -88,64 +85,58 @@ public class FindClassTest extends PsiTestCase {
   }
 
   public void testClassUnderExcludedFolder() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        PsiTestUtil.addExcludedRoot(myModule, myPackDir);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiTestUtil.addExcludedRoot(myModule, myPackDir);
 
-        PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
-        assertNull(psiClass);
+      PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
+      assertNull(psiClass);
 
-        ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        final ContentEntry content = rootModel.getContentEntries()[0];
-        content.removeExcludeFolder(content.getExcludeFolders()[0]);
-        rootModel.commit();
+      ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
+      final ContentEntry content = rootModel.getContentEntries()[0];
+      content.removeExcludeFolder(content.getExcludeFolders()[0]);
+      rootModel.commit();
 
-        psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
-        assertEquals("p.A", psiClass.getQualifiedName());
-      }
+      psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
+      assertEquals("p.A", psiClass.getQualifiedName());
     });
   }
 
   public void testClassUnderIgnoredFolder() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
-        assertEquals("p.A", psiClass.getQualifiedName());
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      PsiClass psiClass = myJavaFacade.findClass("p.A", GlobalSearchScope.allScope(myProject));
+      assertEquals("p.A", psiClass.getQualifiedName());
 
-        assertTrue(psiClass.isValid());
+      assertTrue(psiClass.isValid());
 
-        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-        String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
-        fileTypeManager.setIgnoredFilesList(ignoredFilesList + ";p");
-        try {
-          assertFalse(psiClass.isValid());
-        }
-        finally {
-          fileTypeManager.setIgnoredFilesList(ignoredFilesList);
-        }
-
-        psiClass = myJavaFacade.findClass("p.A");
-        assertTrue(psiClass.isValid());
+      FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+      String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
+      fileTypeManager.setIgnoredFilesList(ignoredFilesList + ";p");
+      try {
+        assertFalse(psiClass.isValid());
       }
+      finally {
+        fileTypeManager.setIgnoredFilesList(ignoredFilesList);
+      }
+
+      psiClass = myJavaFacade.findClass("p.A");
+      assertTrue(psiClass.isValid());
     });
   }
 
   public void testSynchronizationAfterChange() {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-        PsiClass psiClass = myJavaFacade.findClass("p.A");
-        final VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
-        File ioFile = VfsUtil.virtualToIoFile(vFile);
-        ioFile.setLastModified(5);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      FileDocumentManager.getInstance().saveAllDocuments();
+      PsiClass psiClass = myJavaFacade.findClass("p.A");
+      final VirtualFile vFile = psiClass.getContainingFile().getVirtualFile();
+      File ioFile = VfsUtil.virtualToIoFile(vFile);
+      ioFile.setLastModified(5);
 
-        LocalFileSystem.getInstance().refresh(false);
+      LocalFileSystem.getInstance().refresh(false);
 
-        ModuleRootModificationUtil.setModuleSdk(myModule, null);
+      ModuleRootModificationUtil.setModuleSdk(myModule, null);
 
-        psiClass = myJavaFacade.findClass("p.A");
-        assertNotNull(psiClass);
-      }
+      psiClass = myJavaFacade.findClass("p.A");
+      assertNotNull(psiClass);
     });
   }
 

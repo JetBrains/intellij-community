@@ -20,8 +20,8 @@ import com.intellij.openapi.application.ModalityState;
 import org.jetbrains.annotations.NotNull;
 
 public class EmptyProgressIndicator implements StandardProgressIndicator {
-  private volatile boolean myIsRunning = false;
-  private volatile boolean myIsCanceled = false;
+  private volatile boolean myIsRunning;
+  private volatile boolean myIsCanceled;
 
   @Override
   public void start() {

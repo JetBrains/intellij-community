@@ -28,7 +28,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
@@ -114,16 +113,6 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     return "missingValue";
   }
 
-  @Nullable
-  private String findLanguage(PsiElement[] operands) {
-    PsiElement parent = PsiTreeUtil.findCommonParent(operands);
-    BaseInjection params = GrConcatenationInjector.findLanguageParams(parent, myConfiguration);
-    if (params != null) {
-      return params.getInjectedLanguageId();
-    }
-    return null;
-  }
-
   static class InjectionProcessor {
     private final Configuration myConfiguration;
     private final LanguageInjectionSupport mySupport;
@@ -197,19 +186,16 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
         @Override
         public boolean visitVariable(PsiVariable variable) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
-            ReferencesSearch.search(variable, searchScope).forEach(new Processor<PsiReference>() {
-              @Override
-              public boolean process(PsiReference psiReference) {
-                final PsiElement element = psiReference.getElement();
-                if (element instanceof GrExpression) {
-                  final GrExpression refExpression = (GrExpression)element;
-                  places.add(refExpression);
-                  if (!myUnparsable) {
-                    myUnparsable = checkUnparsableReference(refExpression);
-                  }
+            ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
+              final PsiElement element = psiReference.getElement();
+              if (element instanceof GrExpression) {
+                final GrExpression refExpression = (GrExpression)element;
+                places.add(refExpression);
+                if (!myUnparsable) {
+                  myUnparsable = checkUnparsableReference(refExpression);
                 }
-                return true;
               }
+              return true;
             });
           }
           if (!processCommentInjections(variable)) {
@@ -299,7 +285,7 @@ public class GrConcatenationAwareInjector implements ConcatenationAwareInjector 
     }
 
 
-    private boolean checkUnparsableReference(GrExpression expression) {
+    private static boolean checkUnparsableReference(GrExpression expression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof GrAssignmentExpression) {
         final GrAssignmentExpression assignmentExpression = (GrAssignmentExpression)parent;

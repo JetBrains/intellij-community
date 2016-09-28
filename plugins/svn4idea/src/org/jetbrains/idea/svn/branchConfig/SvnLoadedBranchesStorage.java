@@ -63,7 +63,7 @@ public class SvnLoadedBranchesStorage {
   
   public void activate() {
     synchronized (myLock) {
-      myState = new SmallMapSerializer<String, Map<String, Collection<SvnBranchItem>>>(myFile, new EnumeratorStringDescriptor(), createExternalizer());
+      myState = new SmallMapSerializer<String, Map<String, Collection<SvnBranchItem>>>(myFile, EnumeratorStringDescriptor.INSTANCE, createExternalizer());
     }
   }
 

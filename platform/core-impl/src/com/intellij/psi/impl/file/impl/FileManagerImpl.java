@@ -187,9 +187,7 @@ public class FileManagerImpl implements FileManager {
     DebugUtil.startPsiModification("clearViewProviders");
     try {
       for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
-        if (provider instanceof SingleRootFileViewProvider) {
-          ((SingleRootFileViewProvider)provider).markInvalidated();
-        }
+        markInvalidated(provider);
       }
       myVFileToViewProviderMap.clear();
     }
@@ -242,7 +240,7 @@ public class FileManagerImpl implements FileManager {
     if (prev != null) {
       DebugUtil.startPsiModification(null);
       try {
-        ((SingleRootFileViewProvider)prev).markInvalidated();
+        markInvalidated(prev);
         DebugUtil.onInvalidated(prev);
       }
       finally {
@@ -253,12 +251,6 @@ public class FileManagerImpl implements FileManager {
     if (!(virtualFile instanceof VirtualFileWindow)) {
       if (fileViewProvider == null) {
         myVFileToViewProviderMap.remove(virtualFile);
-
-        Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
-        if (document != null) {
-          ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).associatePsi(document, null);
-        }
-        virtualFile.putUserData(myPsiHardRefKey, null);
       }
       else {
         if (virtualFile instanceof LightVirtualFile) {
@@ -473,8 +465,8 @@ public class FileManagerImpl implements FileManager {
           }
           else {
             FileViewProvider viewProvider = myVFileToViewProviderMap.remove(file);
-            if (viewProvider instanceof SingleRootFileViewProvider) {
-              ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+            if (viewProvider != null) {
+              markInvalidated(viewProvider);
             }
           }
           return true;
@@ -484,6 +476,18 @@ public class FileManagerImpl implements FileManager {
     finally {
       DebugUtil.finishPsiModification();
     }
+  }
+
+  private void markInvalidated(@NotNull FileViewProvider viewProvider) {
+    if (viewProvider instanceof SingleRootFileViewProvider) {
+      ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+    }
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+    if (document != null) {
+      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).associatePsi(document, null);
+    }
+    virtualFile.putUserData(myPsiHardRefKey, null);
   }
 
   @Nullable
@@ -586,8 +590,8 @@ public class FileManagerImpl implements FileManager {
     try {
       for (Map.Entry<VirtualFile, FileViewProvider> entry : originalFileToPsiFileMap.entrySet()) {
         FileViewProvider viewProvider = entry.getValue();
-        if (viewProvider instanceof SingleRootFileViewProvider && myVFileToViewProviderMap.get(entry.getKey()) != viewProvider) {
-          ((SingleRootFileViewProvider)viewProvider).markInvalidated();
+        if (myVFileToViewProviderMap.get(entry.getKey()) != viewProvider) {
+          markInvalidated(viewProvider);
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,10 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.PlatformTestCase;
 
 import java.io.File;
+import java.io.IOException;
 
 public class LocatorTest extends PlatformTestCase {
-  public void test() throws Exception {
+  public void test() throws IOException {
     File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
     assertTrue("doesn't exist: " + locatorFile.getPath(), locatorFile.exists());
     assertTrue("can't read: " + locatorFile.getPath(), locatorFile.canRead());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -229,21 +229,11 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     final PsiElement parent = initializer.getParent();
     if (parent instanceof GrVariable) {
-      writeInstr = ContainerUtil.find(flow, new Condition<Instruction>() {
-        @Override
-        public boolean value(Instruction instruction) {
-          return instruction.getElement() == var;
-        }
-      });
+      writeInstr = ContainerUtil.find(flow, instruction -> instruction.getElement() == var);
     }
     else if (parent instanceof GrAssignmentExpression) {
       final GrReferenceExpression refExpr = (GrReferenceExpression)((GrAssignmentExpression)parent).getLValue();
-      final Instruction instruction = ContainerUtil.find(flow, new Condition<Instruction>() {
-        @Override
-        public boolean value(Instruction instruction) {
-          return instruction.getElement() == refExpr;
-        }
-      });
+      final Instruction instruction = ContainerUtil.find(flow, instruction1 -> instruction1.getElement() == refExpr);
 
       LOG.assertTrue(instruction != null);
       final BitSet prev = writes.get(instruction.num());
@@ -455,7 +445,6 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
 
     if (argList.getAllArguments().length == 0 && PsiImplUtil.hasClosureArguments(callExpression)) {
       final GrArgumentList emptyArgList = ((GrMethodCallExpression)factory.createExpressionFromText("foo{}")).getArgumentList();
-      LOG.assertTrue(emptyArgList != null);
       argList.replace(emptyArgList);
     }
 

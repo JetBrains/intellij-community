@@ -37,7 +37,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -87,22 +86,16 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
         final String informationHint = provider.getInformationHint(expression);
         TextRange range = expression.getTextRange();
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            HintManager.getInstance().setRequestFocusForNextHint(myRequestFocus);
-            HintManager.getInstance().showInformationHint(editor, informationHint);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          HintManager.getInstance().setRequestFocusForNextHint(myRequestFocus);
+          HintManager.getInstance().showInformationHint(editor, informationHint);
         });
       }
     };
     if (map.isEmpty()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          String errorHint = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(handlers)).getErrorHint();
-          HintManager.getInstance().showErrorHint(editor, errorHint);
-        }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        String errorHint = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(handlers)).getErrorHint();
+        HintManager.getInstance().showErrorHint(editor, errorHint);
       });
     }
     else if (map.size() == 1) {
@@ -111,12 +104,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     else {
       IntroduceTargetChooser.showChooser(
         editor, ContainerUtil.newArrayList(map.keySet()), callback,
-        new Function<PsiElement, String>() {
-          @Override
-          public String fun(@NotNull PsiElement expression) {
-            return expression.getText();
-          }
-        }
+        expression -> expression.getText()
       );
     }
   }

@@ -20,16 +20,22 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class AnnotateActionGroup extends ActionGroup {
   private final AnAction[] myActions;
 
-  public AnnotateActionGroup(List<AnnotationFieldGutter> gutters, EditorGutterComponentEx gutterComponent) {
+  public AnnotateActionGroup(@NotNull List<AnnotationFieldGutter> gutters,
+                             @NotNull EditorGutterComponentEx gutterComponent,
+                             @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
     super("View", true);
     final List<AnAction> actions = new ArrayList<AnAction>();
     for (AnnotationFieldGutter g : gutters) {
@@ -38,7 +44,9 @@ public class AnnotateActionGroup extends ActionGroup {
       }
     }
     actions.add(Separator.getInstance());
-    actions.add(new ShowAnnotationColorsAction(gutterComponent));
+    if (bgColorMap != null) {
+      actions.add(new ShowAnnotationColorsAction(gutterComponent));
+    }
     actions.add(new ShowShortenNames(gutterComponent));
     myActions = actions.toArray(new AnAction[actions.size()]);
   }

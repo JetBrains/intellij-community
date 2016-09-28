@@ -114,12 +114,8 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       Document document = editor.getDocument();
       long modificationStamp = document.getModificationStamp();
 
-      if (!lookup.performGuardedChange(new Runnable() {
-        @Override
-        public void run() {
-          EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true);
-        }
-      })) {
+      if (!lookup.performGuardedChange(
+        () -> EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true))) {
         return true;
       }
       lookup.appendPrefix(charTyped);

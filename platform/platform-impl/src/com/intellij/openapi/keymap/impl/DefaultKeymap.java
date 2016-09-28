@@ -87,7 +87,12 @@ public class DefaultKeymap {
       return KeymapManager.MAC_OS_X_KEYMAP;
     }
     else if (SystemInfo.isXWindow) {
-      return KeymapManager.X_WINDOW_KEYMAP;
+      if (SystemInfo.isKDE) {
+        return KeymapManager.KDE_KEYMAP;
+      }
+      else {
+        return KeymapManager.X_WINDOW_KEYMAP;
+      }
     }
     else {
       return KeymapManager.DEFAULT_IDEA_KEYMAP;

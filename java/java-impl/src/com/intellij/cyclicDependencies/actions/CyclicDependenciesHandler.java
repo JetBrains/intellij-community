@@ -43,25 +43,15 @@ public class CyclicDependenciesHandler {
 
   public void analyze() {
     final CyclicDependenciesBuilder builder = new CyclicDependenciesBuilder(myProject, myScope);
-    final Runnable process = new Runnable() {
-      public void run() {
-        builder.analyze();
-      }
-    };
-    final Runnable successRunnable = new Runnable() {
-      public void run() {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            CyclicDependenciesPanel panel = new CyclicDependenciesPanel(myProject, builder);
-            Content content = ContentFactory.SERVICE.getInstance().createContent(panel, AnalysisScopeBundle.message(
-              "action.analyzing.cyclic.dependencies.in.scope", builder.getScope().getDisplayName()), false);
-            content.setDisposer(panel);
-            panel.setContent(content);
-            DependenciesToolWindow.getInstance(myProject).addContent(content);
-          }
-        });
-      }
-    };
+    final Runnable process = () -> builder.analyze();
+    final Runnable successRunnable = () -> SwingUtilities.invokeLater(() -> {
+      CyclicDependenciesPanel panel = new CyclicDependenciesPanel(myProject, builder);
+      Content content = ContentFactory.SERVICE.getInstance().createContent(panel, AnalysisScopeBundle.message(
+        "action.analyzing.cyclic.dependencies.in.scope", builder.getScope().getDisplayName()), false);
+      content.setDisposer(panel);
+      panel.setContent(content);
+      DependenciesToolWindow.getInstance(myProject).addContent(content);
+    });
     ProgressManager.getInstance()
       .runProcessWithProgressAsynchronously(myProject, AnalysisScopeBundle.message("package.dependencies.progress.title"),
                                             process, successRunnable, null, new PerformAnalysisInBackgroundOption(myProject));

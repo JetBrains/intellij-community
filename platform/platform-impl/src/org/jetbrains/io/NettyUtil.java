@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.BootstrapUtil;
-import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.socket.oio.OioSocketChannel;
 import io.netty.handler.codec.http.HttpMethod;
@@ -30,6 +28,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.handler.codec.http.cors.CorsConfig;
+import io.netty.handler.codec.http.cors.CorsConfigBuilder;
 import io.netty.handler.codec.http.cors.CorsHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.concurrent.GlobalEventExecutor;
@@ -86,7 +85,7 @@ public final class NettyUtil {
                            int maxAttemptCount,
                            @NotNull Condition<Void> stopCondition) throws Throwable {
     int attemptCount = 0;
-    if (bootstrap.group() instanceof NioEventLoopGroup) {
+    if (bootstrap.config().group() instanceof NioEventLoopGroup) {
       return connectNio(bootstrap, remoteAddress, promise, maxAttemptCount, stopCondition, attemptCount);
     }
 
@@ -199,22 +198,6 @@ public final class NettyUtil {
            (message.startsWith("Connection reset") || message.equals("Operation timed out") || message.equals("Connection timed out"));
   }
 
-  @SuppressWarnings("unused")
-  @Deprecated
-  @NotNull
-  public static ServerBootstrap nioServerBootstrap(@NotNull EventLoopGroup eventLoopGroup) {
-    ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(NioServerSocketChannel.class);
-    bootstrap.childOption(ChannelOption.TCP_NODELAY, true).childOption(ChannelOption.SO_KEEPALIVE, true);
-    return bootstrap;
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  @NotNull
-  public static Bootstrap oioClientBootstrap() {
-    return NettyKt.oioClientBootstrap();
-  }
-
   public static Bootstrap nioClientBootstrap() {
     return nioClientBootstrap(new NioEventLoopGroup(1, PooledThreadExecutor.INSTANCE));
   }
@@ -234,8 +217,9 @@ public final class NettyUtil {
     if (pipeline.get(ChunkedWriteHandler.class) == null) {
       pipeline.addLast("chunkedWriteHandler", new ChunkedWriteHandler());
     }
-    pipeline.addLast("corsHandler", new CorsHandlerDoNotUseOwnLogger(CorsConfig
-                                                                       .withAnyOrigin()
+    pipeline.addLast("corsHandler", new CorsHandlerDoNotUseOwnLogger(CorsConfigBuilder
+                                                                       .forAnyOrigin()
+                                                                       .shortCircuit()
                                                                        .allowCredentials()
                                                                        .allowNullOrigin()
                                                                        .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)

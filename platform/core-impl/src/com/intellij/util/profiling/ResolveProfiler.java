@@ -34,7 +34,7 @@ public class ResolveProfiler {
   private static final boolean DISABLED = true;
 
   private static final ThreadLocal<ThreadInfo> threadMap = new ThreadLocal<ThreadInfo>();
-  private static volatile int fileCount = 0;
+  private static volatile int fileCount;
 
   private static class ThreadInfo {
     private final String myFileName;

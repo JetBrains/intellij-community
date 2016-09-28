@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,7 +240,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     private final String tagName;
     private final String tagNamespace;
 
-    public AddRequiredSubtagFix(@NotNull String _tagName, @NotNull String _tagNamespace) {
+    private AddRequiredSubtagFix(@NotNull String _tagName, @NotNull String _tagNamespace) {
       tagName = _tagName;
       tagNamespace = _tagNamespace;
     }
@@ -254,7 +254,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
+      return XmlBundle.message("insert.required.tag.fix.family");
     }
 
     @Override

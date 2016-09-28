@@ -44,5 +44,4 @@ public interface VcsLogObjectsFactory {
 
   @NotNull
   VcsRef createRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root);
-
 }

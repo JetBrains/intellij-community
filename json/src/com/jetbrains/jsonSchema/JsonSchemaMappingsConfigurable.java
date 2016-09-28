@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -44,14 +43,11 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   @NonNls public static final String SETTINGS_JSON_SCHEMA = "settings.json.schema";
   public static final String JSON_SCHEMA_MAPPINGS = "JSON Schema";
 
-  private final static Comparator<JsonSchemaMappingsConfigurationBase.SchemaInfo> COMPARATOR = new Comparator<JsonSchemaMappingsConfigurationBase.SchemaInfo>() {
-    @Override
-    public int compare(JsonSchemaMappingsConfigurationBase.SchemaInfo o1, JsonSchemaMappingsConfigurationBase.SchemaInfo o2) {
-      if (o1.isApplicationLevel() != o2.isApplicationLevel()) {
-        return o1.isApplicationLevel() ? -1 : 1;
-      }
-      return o1.getName().compareToIgnoreCase(o2.getName());
+  private final static Comparator<JsonSchemaMappingsConfigurationBase.SchemaInfo> COMPARATOR = (o1, o2) -> {
+    if (o1.isApplicationLevel() != o2.isApplicationLevel()) {
+      return o1.isApplicationLevel() ? -1 : 1;
     }
+    return o1.getName().compareToIgnoreCase(o2.getName());
   };
   public static final String READ_JSON_SCHEMA = "Read JSON Schema";
   public static final String ADD_PROJECT_SCHEMA = "Add Project Schema";
@@ -59,12 +55,9 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @Nullable
   private Project myProject;
-  private Runnable myTreeUpdater = new Runnable() {
-    @Override
-    public void run() {
-      TREE_UPDATER.run();
-      updateWarningText();
-    }
+  private Runnable myTreeUpdater = () -> {
+    TREE_UPDATER.run();
+    updateWarningText();
   };
 
   public JsonSchemaMappingsConfigurable(@Nullable final Project project) {
@@ -108,7 +101,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         Messages.showErrorDialog(myProject, "Please select file under project root.", ADD_PROJECT_SCHEMA);
         return;
       }
-      final JsonSchemaChecker importer = new JsonSchemaChecker(file, true);
+      final JsonSchemaChecker importer = new JsonSchemaChecker(myProject, file);
       if (!importer.checkSchemaFile()) {
         if (!StringUtil.isEmptyOrSpaces(importer.getError())) {
           JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(importer.getError(), MessageType.ERROR).notify(myProject);
@@ -283,14 +276,11 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @Override
   protected Comparator<MyNode> getNodeComparator() {
-    return new Comparator<MyNode>() {
-      @Override
-      public int compare(MyNode o1, MyNode o2) {
-        if (o1.getConfigurable() instanceof JsonSchemaConfigurable && o2.getConfigurable() instanceof JsonSchemaConfigurable) {
-          return COMPARATOR.compare(getSchemaInfo(o1), getSchemaInfo(o2));
-        }
-        return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
+    return (o1, o2) -> {
+      if (o1.getConfigurable() instanceof JsonSchemaConfigurable && o2.getConfigurable() instanceof JsonSchemaConfigurable) {
+        return COMPARATOR.compare(getSchemaInfo(o1), getSchemaInfo(o2));
       }
+      return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
     };
   }
 
@@ -345,58 +335,41 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   public static class JsonSchemaChecker {
     private static final int MAX_SCHEMA_LENGTH = FileUtil.MEGABYTE;
-    private final boolean myLoadText;
+    private final Project myProject;
     private final VirtualFile myFile;
 
-    public JsonSchemaChecker(VirtualFile file, boolean loadText) {
-      myLoadText = loadText;
+    public JsonSchemaChecker(Project project, VirtualFile file) {
+      myProject = project;
       myFile = file;
     }
 
     @Nullable
-    private String myText;
-    @Nullable
     private String myError;
 
     public boolean checkSchemaFile() {
-      String text = null;
-      try {
-        final File ioFile = new File(myFile.getPath());
-        final long length = ioFile.length();
-        if (length > MAX_SCHEMA_LENGTH) {
-          myError = "JSON schema was not loaded from '" + myFile.getName() + "' because it's too large (file size is " + length + " bytes).";
-          return false;
-        }
-        if (length == 0) {
-          myError = "JSON schema was not loaded from '" + myFile.getName() + "'. File is empty.";
-          return false;
-        }
-        myText = FileUtil.loadFile(ioFile);
+      final long length = myFile.getLength();
+      if (length > MAX_SCHEMA_LENGTH) {
+        myError = "JSON schema was not loaded from '" + myFile.getName() + "' because it's too large (file size is " + length + " bytes).";
+        return false;
       }
-      catch (IOException e1) {
-        JsonSchemaReader.LOG.info(e1);
-        myError = "Problem during reading JSON schema from '" + myFile.getName() + "': " + e1.getMessage();
+      if (length == 0) {
+        myError = "JSON schema was not loaded from '" + myFile.getName() + "'. File is empty.";
         return false;
       }
       final CollectConsumer<String> collectConsumer = new CollectConsumer<>();
-      if (!JsonSchemaReader.isJsonSchema(myText, collectConsumer)) {
+      final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
+      if (service != null && !service.isSchemaFile(myFile, collectConsumer)) {
         myError = "JSON Schema not found or contain error in '" + myFile.getName() + "'";
         if (!collectConsumer.getResult().isEmpty()) {
           myError += ": " + StringUtil.join(collectConsumer.getResult(), "; ");
         }
         return false;
       }
-      if (!myLoadText) myText = null;
       return true;
     }
 
     public VirtualFile getFile() {
       return myFile;
-    }
-
-    @Nullable
-    public String getText() {
-      return myText;
     }
 
     @Nullable

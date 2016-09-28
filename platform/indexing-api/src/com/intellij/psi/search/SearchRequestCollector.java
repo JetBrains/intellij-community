@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,10 +102,10 @@ public class SearchRequestCollector {
     return refElement.getParent();
   }
 
-  @Deprecated
   /** use {@link #searchWord(java.lang.String, com.intellij.psi.search.SearchScope, short, boolean, com.intellij.psi.PsiElement)}
    * instead
    */
+  @Deprecated
   public void searchWord(@NotNull String word,
                          @NotNull SearchScope searchScope,
                          short searchContext,

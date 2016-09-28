@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
+
+import java.awt.*;
 
 /**
  * Not thread-safe. Performs caching of char widths, so cache reset must be invoked (via {@link #clearSymbolWidthCache()} method) when
@@ -126,7 +128,7 @@ public class DefaultEditorTextRepresentationHelper implements EditorTextRepresen
     private char   c;
 
     private Key() {
-      this(0, ' ');
+      this(Font.PLAIN, ' ');
     }
 
     Key(@JdkConstants.FontStyle int fontType, char c) {

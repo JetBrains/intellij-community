@@ -115,29 +115,26 @@ public class ExecutionUtil {
 
     final HyperlinkListener finalListener = listener;
     final String finalDescription = description;
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) {
-          return;
-        }
-
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-        if (toolWindowManager.canShowNotification(toolWindowId)) {
-          //noinspection SSBasedInspection
-          toolWindowManager.notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, null, finalListener);
-        }
-        else {
-          Messages.showErrorDialog(project, UIUtil.toHtml(fullMessage), "");
-        }
-        NotificationListener notificationListener = finalListener == null ? null : new NotificationListener() {
-          @Override
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-            finalListener.hyperlinkUpdate(event);
-          }
-        };
-        ourNotificationGroup.createNotification(title, finalDescription, NotificationType.ERROR, notificationListener).notify(project);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (project.isDisposed()) {
+        return;
       }
+
+      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+      if (toolWindowManager.canShowNotification(toolWindowId)) {
+        //noinspection SSBasedInspection
+        toolWindowManager.notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, null, finalListener);
+      }
+      else {
+        Messages.showErrorDialog(project, UIUtil.toHtml(fullMessage), "");
+      }
+      NotificationListener notificationListener = finalListener == null ? null : new NotificationListener() {
+        @Override
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          finalListener.hyperlinkUpdate(event);
+        }
+      };
+      ourNotificationGroup.createNotification(title, finalDescription, NotificationType.ERROR, notificationListener).notify(project);
     });
   }
 

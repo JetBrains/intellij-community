@@ -170,27 +170,31 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
           text = psiElement.getText();
         }
 
-        final FileEditorManager editorManager = FileEditorManager.getInstance(directory.getProject());
-        final FileEditor[] fileEditors = editorManager.openFile(newFile.getVirtualFile(), true);
-
-        if (text != null) {
-          for(FileEditor fileEditor: fileEditors) {
-            if (fileEditor instanceof TextEditor) { // JSP is not safe to edit via Psi
-              final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
-              document.setText(text);
-
-              if (ApplicationManager.getApplication().isUnitTestMode()) {
-                FileDocumentManager.getInstance().saveDocument(document);
-              }
-              PsiDocumentManager.getInstance(project).commitDocument(document);
-              break;
-            }
-          }
-        }
+        openFile(project, directory, newFile, text);
       }
     }
     catch (IncorrectOperationException e) {
       myIsAvailable = false;
+    }
+  }
+
+  protected void openFile(@NotNull Project project, PsiDirectory directory, PsiFile newFile, String text) {
+    final FileEditorManager editorManager = FileEditorManager.getInstance(directory.getProject());
+    final FileEditor[] fileEditors = editorManager.openFile(newFile.getVirtualFile(), true);
+
+    if (text != null) {
+      for(FileEditor fileEditor: fileEditors) {
+        if (fileEditor instanceof TextEditor) { // JSP is not safe to edit via Psi
+          final Document document = ((TextEditor)fileEditor).getEditor().getDocument();
+          document.setText(text);
+
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            FileDocumentManager.getInstance().saveDocument(document);
+          }
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+          break;
+        }
+      }
     }
   }
 }

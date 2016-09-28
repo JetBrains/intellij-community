@@ -57,12 +57,9 @@ public class DebuggerContextUtil {
             SuspendManagerUtil.findContextByThread(session.getProcess().getSuspendManager(), stackFrame.threadProxy());
           final DebuggerContextImpl newContext =
             DebuggerContextImpl.createDebuggerContext(session, threadSuspendContext, stackFrame.threadProxy(), stackFrame);
-          DebuggerInvocationUtil.swingInvokeLater(session.getProject(), new Runnable() {
-            @Override
-            public void run() {
-              manager.setState(newContext, session.getState(), DebuggerSession.Event.REFRESH, null);
-              SourceCodeChecker.checkSource(newContext);
-            }
+          DebuggerInvocationUtil.swingInvokeLater(session.getProject(), () -> {
+            manager.setState(newContext, session.getState(), DebuggerSession.Event.REFRESH, null);
+            SourceCodeChecker.checkSource(newContext);
           });
         }
       });

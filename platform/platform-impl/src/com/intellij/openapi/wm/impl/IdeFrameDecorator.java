@@ -26,6 +26,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -66,7 +67,10 @@ public abstract class IdeFrameDecorator implements Disposable {
   protected void notifyFrameComponents(boolean state) {
     if (myFrame != null) {
       myFrame.getRootPane().putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
-      myFrame.getJMenuBar().putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
+      final JMenuBar menuBar = myFrame.getJMenuBar();
+      if (menuBar != null) {
+        menuBar.putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
+      }
     }
   }
 

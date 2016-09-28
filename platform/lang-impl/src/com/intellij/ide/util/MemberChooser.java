@@ -158,11 +158,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     myElementToNodeMap.clear();
     myContainerNodes.clear();
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        myTreeModel = buildModel();
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      myTreeModel = buildModel();
     });
 
     myTree.setModel(myTreeModel);
@@ -735,6 +732,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
           }
         }
       }
+      mySelectedNodes.sort(new OrderComparator());
       mySelectedElements = new LinkedHashSet<T>();
       for (MemberNode selectedNode : mySelectedNodes) {
         mySelectedElements.add((T)selectedNode.getDelegate());

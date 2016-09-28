@@ -79,6 +79,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
 
     addAction(new ShowEnabledOrDisabledInspectionsAction(true));
     addAction(new ShowEnabledOrDisabledInspectionsAction(false));
+    addAction(new ShowOnlyModifiedInspectionsAction());
     addSeparator();
 
     final SortedSet<HighlightSeverity> severities = LevelChooserAction.getSeverities(mySeverityRegistrar);
@@ -107,12 +108,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
       final DefaultActionGroup languageActionGroupParent =
         new DefaultActionGroup("Filter by Language", languages.size() >= MIN_LANGUAGE_COUNT_TO_WRAP);
       add(languageActionGroupParent);
-      Collections.sort(languages, new Comparator<Language>() {
-        @Override
-        public int compare(Language l1, Language l2) {
-          return l1.getDisplayName().compareTo(l2.getDisplayName());
-        }
-      });
+      Collections.sort(languages, (l1, l2) -> l1.getDisplayName().compareTo(l2.getDisplayName()));
       for (Language language : languages) {
         languageActionGroupParent.add(new LanguageFilterAction(language));
       }
@@ -251,7 +247,7 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
                                  (StringUtil.isEmptyOrSpaces(StringUtil.trimStart(ApplicationInfo.getInstance().getMinorVersion(),"0")) ?
                                  "" : "."+ApplicationInfo.getInstance().getMinorVersion());
   private final String presentableVersion = ApplicationNamesInfo.getInstance().getProductName() + " " + version;
-  private class ShowNewInspectionsAction extends AnAction {
+  private class ShowNewInspectionsAction extends AnAction implements DumbAware {
     private ShowNewInspectionsAction() {
       super("Show New Inspections in " + presentableVersion,
             "Shows new inspections which are available since " + presentableVersion,
@@ -261,6 +257,22 @@ public class InspectionFilterAction extends DefaultActionGroup implements Toggle
     @Override
     public void actionPerformed(AnActionEvent e) {
       myFilterComponent.setFilter("\"New in " + version + "\"");
+    }
+  }
+
+  private class ShowOnlyModifiedInspectionsAction extends CheckboxAction implements DumbAware {
+    public ShowOnlyModifiedInspectionsAction() {
+      super("Show Only Modified Inspections");
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return myInspectionsFilter.isShowOnlyModifiedInspections();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      myInspectionsFilter.setShowOnlyModifiedInspections(state);
     }
   }
 }

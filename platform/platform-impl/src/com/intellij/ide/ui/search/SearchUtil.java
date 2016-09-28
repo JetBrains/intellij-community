@@ -26,7 +26,6 @@ import com.intellij.openapi.options.ex.GlassPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -176,11 +175,9 @@ public class SearchUtil {
                                       final JComponent component,
                                       final String option,
                                       final GlassPanel glassPanel) {
-    return new Runnable() {
-      public void run() {
-        if (!traverseComponentsTree(configurable, glassPanel, component, option, true)) {
-          traverseComponentsTree(configurable, glassPanel, component, option, false);
-        }
+    return () -> {
+      if (!traverseComponentsTree(configurable, glassPanel, component, option, true)) {
+        traverseComponentsTree(configurable, glassPanel, component, option, false);
       }
     };
   }
@@ -260,6 +257,16 @@ public class SearchUtil {
           if (tabbedPane.getTabComponentAt(index) instanceof JComponent) {
             glassPanel.addSpotlight((JComponent)tabbedPane.getTabComponentAt(index));
           }
+        }
+      }
+    }
+    else if (rootComponent instanceof TabbedPaneWrapper.TabbedPaneHolder) {
+      final TabbedPaneWrapper tabbedPaneWrapper = ((TabbedPaneWrapper.TabbedPaneHolder)rootComponent).getTabbedPaneWrapper();
+      final String path = SearchableOptionsRegistrar.getInstance().getInnerPath(configurable, option);
+      if (path != null) {
+        final int index = getSelection(path, tabbedPaneWrapper);
+        if (index > -1 && index < tabbedPaneWrapper.getTabCount()) {
+          glassPanel.addSpotlight((JComponent)tabbedPaneWrapper.getTabComponentAt(index));
         }
       }
     }
@@ -507,20 +514,16 @@ public class SearchUtil {
 
 
     if (model.size() > 0) {
-      final Runnable onChosen = new Runnable() {
-        public void run() {
-          final Object selectedValue = list.getSelectedValue();
-          if (selectedValue instanceof OptionDescription) {
-            final OptionDescription description = ((OptionDescription)selectedValue);
-            searchField.setText(description.getHit());
-            searchField.addCurrentTextToHistory();
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {     //do not show look up again
-                showHintAlarm.cancelAllRequests();
-                selectConfigurable.consume(description.getConfigurableId());
-              }
-            });
-          }
+      final Runnable onChosen = () -> {
+        final Object selectedValue = list.getSelectedValue();
+        if (selectedValue instanceof OptionDescription) {
+          final OptionDescription description = ((OptionDescription)selectedValue);
+          searchField.setText(description.getHit());
+          searchField.addCurrentTextToHistory();
+          SwingUtilities.invokeLater(() -> {     //do not show look up again
+            showHintAlarm.cancelAllRequests();
+            selectConfigurable.consume(description.getConfigurableId());
+          });
         }
       };
       final JBPopup popup = JBPopupFactory.getInstance()
@@ -633,12 +636,7 @@ public class SearchUtil {
       addChildren(each, result);
     }
     
-    result = ContainerUtil.filter(result, new Condition<Configurable>() {
-      @Override
-      public boolean value(Configurable configurable) {
-        return !(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible();
-      }
-    });
+    result = ContainerUtil.filter(result, configurable -> !(configurable instanceof SearchableConfigurable.Parent) || ((SearchableConfigurable.Parent)configurable).isVisible());
    
     return result;
   }

@@ -87,11 +87,7 @@ public class UsedIconsListingAction extends AnAction {
 
       private void processValue(Object value, PsiCallExpression call, PsiFile file) {
         if (value instanceof String) {
-          String str = (String)value;
-          if (str.startsWith("\"")) {
-            str = str.substring(0);
-            str = StringUtil.trimEnd(str, "\"");
-          }
+          String str = StringUtil.unquoteString((String)value, '\"');
 
           if (!str.startsWith("/")) {
 
@@ -159,21 +155,18 @@ public class UsedIconsListingAction extends AnAction {
     PsiClass presentation = psiFacade.findClass("com.intellij.ide.presentation.Presentation",
                                                 allScope);
     final MultiMap<String, PsiAnnotation> annotations = new MultiMap<String, PsiAnnotation>();
-    AnnotationTargetsSearch.search(presentation).forEach(new Processor<PsiModifierListOwner>() {
-      @Override
-      public boolean process(PsiModifierListOwner owner) {
-        PsiAnnotation annotation = owner.getModifierList().findAnnotation("com.intellij.ide.presentation.Presentation");
+    AnnotationTargetsSearch.search(presentation).forEach(owner -> {
+      PsiAnnotation annotation = owner.getModifierList().findAnnotation("com.intellij.ide.presentation.Presentation");
 
-        PsiAnnotationMemberValue icon = annotation.findAttributeValue("icon");
-        if (icon instanceof PsiLiteralExpression) {
-          Object value = ((PsiLiteralExpression)icon).getValue();
-          if (value instanceof String) {
-            annotations.putValue((String)value, annotation);
-          }
+      PsiAnnotationMemberValue icon = annotation.findAttributeValue("icon");
+      if (icon instanceof PsiLiteralExpression) {
+        Object value = ((PsiLiteralExpression)icon).getValue();
+        if (value instanceof String) {
+          annotations.putValue((String)value, annotation);
         }
-
-        return true;
       }
+
+      return true;
     });
 
     doReplacements(project, calls, xmlAttributes, annotations, psiFacade.findClass("com.intellij.icons.AllIcons", allScope));

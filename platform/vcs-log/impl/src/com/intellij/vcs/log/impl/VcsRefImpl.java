@@ -78,5 +78,4 @@ public final class VcsRefImpl implements VcsRef {
     result = 31 * result + (myType.hashCode());
     return result;
   }
-
 }

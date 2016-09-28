@@ -47,6 +47,11 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   @NotNull
+  public static <T> SyntaxTraverser<T> syntaxTraverser(@NotNull Api<T> api) {
+    return new SyntaxTraverser<T>(api, null);
+  }
+
+  @NotNull
   public static SyntaxTraverser<PsiElement> psiTraverser() {
     return new SyntaxTraverser<PsiElement>(psiApi(), null);
   }
@@ -112,17 +117,17 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
   @NotNull
   public SyntaxTraverser<T> expandTypes(@NotNull Condition<? super IElementType> c) {
-    return super.expand(compose(api.TO_TYPE(), c));
+    return super.expand(compose(api.TO_TYPE, c));
   }
 
   @NotNull
   public SyntaxTraverser<T> filterTypes(@NotNull Condition<? super IElementType> c) {
-    return super.filter(compose(api.TO_TYPE(), c));
+    return super.filter(compose(api.TO_TYPE, c));
   }
 
   @NotNull
   public SyntaxTraverser<T> forceDisregardTypes(@NotNull Condition<? super IElementType> c) {
-    return super.forceDisregard(compose(api.TO_TYPE(), c));
+    return super.forceDisregard(compose(api.TO_TYPE, c));
   }
 
   @Nullable
@@ -167,53 +172,45 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
       });
     }
 
-    @NotNull
-    public Function<T, IElementType> TO_TYPE() {
-      return new Function<T, IElementType>() {
-        @Override
-        public IElementType fun(T t) {
-          return typeOf(t);
-        }
+    public final Function<T, IElementType> TO_TYPE = new Function<T, IElementType>() {
+      @Override
+      public IElementType fun(T t) {
+        return typeOf(t);
+      }
 
-        @Override
-        public String toString() {
-          return "TO_TYPE";
-        }
-      };
-    }
+      @Override
+      public String toString() {
+        return "TO_TYPE";
+      }
+    };
 
-    @NotNull
-    public Function<T, CharSequence> TO_TEXT() {
-      return new Function<T, CharSequence>() {
-        @Override
-        public CharSequence fun(T t) {
-          return textOf(t);
-        }
+    public final Function<T, CharSequence> TO_TEXT = new Function<T, CharSequence>() {
+      @Override
+      public CharSequence fun(T t) {
+        return textOf(t);
+      }
 
-        @Override
-        public String toString() {
-          return "TO_TEXT";
-        }
-      };
-    }
+      @Override
+      public String toString() {
+        return "TO_TEXT";
+      }
+    };
 
-    @NotNull
-    public Function<T, TextRange> TO_RANGE() {
-      return new Function<T, TextRange>() {
-        @Override
-        public TextRange fun(T t) {
-          return rangeOf(t);
-        }
+    public final Function<T, TextRange> TO_RANGE = new Function<T, TextRange>() {
+      @Override
+      public TextRange fun(T t) {
+        return rangeOf(t);
+      }
 
-        @Override
-        public String toString() {
-          return "TO_RANGE";
-        }
-      };
-    }
+      @Override
+      public String toString() {
+        return "TO_RANGE";
+      }
+    };
   }
 
   public abstract static class ApiEx<T> extends Api<T> {
+
     @Nullable
     public abstract T first(@NotNull T node);
 
@@ -231,13 +228,20 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
     public JBIterable<? extends T> children(@NotNull final T node) {
       final T first = first(node);
       if (first == null) return JBIterable.empty();
-      return JBIterable.generate(first, new Function<T, T>() {
-        @Override
-        public T fun(T t) {
-          return next(t);
-        }
-      });
+      return JBIterable.generate(first, TO_NEXT);
     }
+
+    private final Function<T, T> TO_NEXT = new Function<T, T>() {
+      @Override
+      public T fun(T t) {
+        return next(t);
+      }
+
+      @Override
+      public String toString() {
+        return "TO_NEXT";
+      }
+    };
   }
 
   private static class PsiApi extends ApiEx<PsiElement> {

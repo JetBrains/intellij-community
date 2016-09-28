@@ -93,5 +93,4 @@ import org.jetbrains.annotations.NotNull;
     }
     return myStartedDeltaIndex.size();
   }
-
 }

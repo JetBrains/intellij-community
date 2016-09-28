@@ -98,12 +98,7 @@ public class EditTaskDialog extends DialogWrapper {
         myBranch.setModel(new CollectionComboBoxModel<VcsTaskHandler.TaskInfo>(infos));
         final List<BranchInfo> branches = task.getBranches(false);
         if (!branches.isEmpty()) {
-          VcsTaskHandler.TaskInfo info = ContainerUtil.find(tasks, new Condition<VcsTaskHandler.TaskInfo>() {
-            @Override
-            public boolean value(VcsTaskHandler.TaskInfo info) {
-              return branches.get(0).name.equals(info.getName());
-            }
-          });
+          VcsTaskHandler.TaskInfo info = ContainerUtil.find(tasks, info1 -> branches.get(0).name.equals(info1.getName()));
           myBranch.setSelectedItem(info);
         }
         else {

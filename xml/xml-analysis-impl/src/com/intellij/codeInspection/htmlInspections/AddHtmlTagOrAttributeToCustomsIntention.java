@@ -63,12 +63,9 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
   @Override
   public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
-    profile.modifyToolSettings(myInspectionKey, file, new Consumer<InspectionProfileEntry>() {
-      @Override
-      public void consume(InspectionProfileEntry entry) {
-        XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection) entry;
-        xmlEntitiesInspection.addEntry(myName);
-      }
+    profile.modifyToolSettings(myInspectionKey, file, entry -> {
+      XmlEntitiesInspection xmlEntitiesInspection = (XmlEntitiesInspection) entry;
+      xmlEntitiesInspection.addEntry(myName);
     });
   }
 

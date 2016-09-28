@@ -93,23 +93,21 @@ public class InspectionApplication {
     }
 
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-    application.runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final ApplicationInfoEx applicationInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-          logMessage(1, InspectionsBundle.message("inspection.application.starting.up", applicationInfo.getFullApplicationName()));
-          application.doNotSave();
-          logMessageLn(1, InspectionsBundle.message("inspection.done"));
+    application.runReadAction(() -> {
+      try {
+        final ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+        logMessage(1, InspectionsBundle.message("inspection.application.starting.up",
+                                                appInfo.getFullApplicationName() + " (build " + appInfo.getBuild().asString() + ")"));
+        application.doNotSave();
+        logMessageLn(1, InspectionsBundle.message("inspection.done"));
 
-          InspectionApplication.this.run();
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        finally {
-          if (myErrorCodeRequired) application.exit(true, true);
-        }
+        InspectionApplication.this.run();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      finally {
+        if (myErrorCodeRequired) application.exit(true, true);
       }
     });
   }
@@ -145,12 +143,7 @@ public class InspectionApplication {
         return;
       }
 
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run(){
-          VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
 
       PatchProjectUtil.patchProject(myProject);
 
@@ -217,18 +210,15 @@ public class InspectionApplication {
       }
 
       final List<File> inspectionsResults = new ArrayList<File>();
-      ProgressManager.getInstance().runProcess(new Runnable() {
-        @Override
-        public void run() {
-          if (!GlobalInspectionContextUtil.canRunInspections(myProject, false)) {
-            gracefulExit();
-            return;
-          }
-          inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
-          logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
-          if (!myErrorCodeRequired) {
-            closeProject();
-          }
+      ProgressManager.getInstance().runProcess(() -> {
+        if (!GlobalInspectionContextUtil.canRunInspections(myProject, false)) {
+          gracefulExit();
+          return;
+        }
+        inspectionContext.launchInspectionsOffline(scope, resultsDataPath, myRunGlobalToolsOnly, inspectionsResults);
+        logMessageLn(1, "\n" + InspectionsBundle.message("inspection.capitalized.done") + "\n");
+        if (!myErrorCodeRequired) {
+          closeProject();
         }
       }, new ProgressIndicatorBase() {
         private String lastPrefix = "";

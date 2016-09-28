@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public class UiDebugger extends JPanel implements Disposable {
       @Override
       @NotNull
       public UiDecoration getDecoration() {
-        return new UiDecoration(null, new Insets(4, 4, 4, 4));
+        return new UiDecoration(null, JBUI.insets(4));
       }
     });
 

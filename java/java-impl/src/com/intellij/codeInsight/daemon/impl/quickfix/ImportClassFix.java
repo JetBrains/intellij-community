@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -143,6 +144,6 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
 
   @Override
   protected boolean isAccessible(PsiMember member, PsiJavaCodeReferenceElement reference) {
-    return member.hasModifierProperty(PsiModifier.PUBLIC) || member.hasModifierProperty(PsiModifier.PROTECTED);
+    return PsiUtil.isAccessible(member, reference, null);
   }
 }

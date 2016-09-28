@@ -103,12 +103,13 @@ public class MavenArtifactDownloader {
     finally {
       boolean isAsync = !ApplicationManager.getApplication().isUnitTestMode();
 
-      Set<File> parentsToRefresh = new HashSet<File>(); // We have to refresh parents of downloaded files, because some additional files  may have been download.
+      Set<File> filesToRefresh = new HashSet<>(); // We have to refresh parents of downloaded files, because some additional files  may have been download.
       for (File file : downloadedFiles) {
-        parentsToRefresh.add(file.getParentFile());
+        filesToRefresh.add(file);
+        filesToRefresh.add(file.getParentFile());
       }
 
-      LocalFileSystem.getInstance().refreshIoFiles(parentsToRefresh, isAsync, false, null);
+      LocalFileSystem.getInstance().refreshIoFiles(filesToRefresh, isAsync, false, null);
     }
   }
 
@@ -184,36 +185,34 @@ public class MavenArtifactDownloader {
 
         for (final DownloadElement eachElement : data.classifiersWithExtensions) {
           final int finalTotal = total;
-          futures.add(EXECUTOR.submit(new Runnable() {
-            public void run() {
-              try {
-                if (myProject.isDisposed()) return;
+          futures.add(EXECUTOR.submit(() -> {
+            try {
+              if (myProject.isDisposed()) return;
 
-                myProgress.checkCanceled();
-                myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
+              myProgress.checkCanceled();
+              myProgress.setFraction(((double)downloaded.getAndIncrement()) / finalTotal);
 
-                MavenArtifact a = myEmbedder.resolve(new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier),
-                                                     new ArrayList<MavenRemoteRepository>(data.repositories));
-                File file = a.getFile();
-                if (file.exists()) {
-                  synchronized (downloadedFiles) {
-                    downloadedFiles.add(file);
+              MavenArtifact a = myEmbedder.resolve(new MavenArtifactInfo(id, eachElement.extension, eachElement.classifier),
+                                                   new ArrayList<MavenRemoteRepository>(data.repositories));
+              File file = a.getFile();
+              if (file.exists()) {
+                synchronized (downloadedFiles) {
+                  downloadedFiles.add(file);
 
-                    switch (eachElement.type) {
-                      case SOURCES:
-                        result.resolvedSources.add(id);
-                        result.unresolvedSources.remove(id);
-                        break;
-                      case DOCS:
-                        result.resolvedDocs.add(id);
-                        result.unresolvedDocs.remove(id);
-                        break;
-                    }
+                  switch (eachElement.type) {
+                    case SOURCES:
+                      result.resolvedSources.add(id);
+                      result.unresolvedSources.remove(id);
+                      break;
+                    case DOCS:
+                      result.resolvedDocs.add(id);
+                      result.unresolvedDocs.remove(id);
+                      break;
                   }
                 }
               }
-              catch (MavenProcessCanceledException ignore) {
-              }
+            }
+            catch (MavenProcessCanceledException ignore) {
             }
           }));
         }

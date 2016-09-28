@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import org.jetbrains.annotations.NonNls;
@@ -110,7 +111,7 @@ public class SSHCredentialsDialog extends DialogWrapper implements ActionListene
     GridBagConstraints gb = new GridBagConstraints();
 
     // top label.
-    gb.insets = new Insets(2, 2, 2, 2);
+    gb.insets = JBUI.insets(2);
     gb.weightx = 1;
     gb.weighty = 0;
     gb.gridwidth = 3;

@@ -66,7 +66,8 @@ public class IncrementalFindAction extends EditorAction {
 
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
-      if (myReplace && ConsoleViewUtil.isConsoleViewEditor(editor)) {
+      if (myReplace && ConsoleViewUtil.isConsoleViewEditor(editor) &&
+          !ConsoleViewUtil.isReplaceActionEnabledForConsoleViewEditor(editor)) {
         return false;
       }
       Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));

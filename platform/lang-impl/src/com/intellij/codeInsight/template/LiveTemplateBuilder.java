@@ -133,17 +133,14 @@ public class LiveTemplateBuilder {
     }
 
     List<VarOccurence> variableOccurrences = getListWithLimit(myVariableOccurrences);
-    Collections.sort(variableOccurrences, new Comparator<VarOccurence>() {
-      @Override
-      public int compare(@NotNull VarOccurence o1, @NotNull VarOccurence o2) {
-        if (o1.myOffset < o2.myOffset) {
-          return -1;
-        }
-        if (o1.myOffset > o2.myOffset) {
-          return 1;
-        }
-        return 0;
+    Collections.sort(variableOccurrences, (o1, o2) -> {
+      if (o1.myOffset < o2.myOffset) {
+        return -1;
       }
+      if (o1.myOffset > o2.myOffset) {
+        return 1;
+      }
+      return 0;
     });
     int last = 0;
     for (VarOccurence occurence : variableOccurrences) {

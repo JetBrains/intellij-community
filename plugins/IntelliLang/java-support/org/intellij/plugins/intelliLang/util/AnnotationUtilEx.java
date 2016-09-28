@@ -283,13 +283,8 @@ public class AnnotationUtilEx {
     if (!inHierarchy) {
       return modifierList == null ? PsiAnnotation.EMPTY_ARRAY : modifierList.getAnnotations();
     }
-    return CachedValuesManager.getCachedValue(listOwner, new CachedValueProvider<PsiAnnotation[]>() {
-      @Nullable
-      @Override
-      public Result<PsiAnnotation[]> compute() {
-        return Result.create(getHierarchyAnnotations(listOwner), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(listOwner, () -> CachedValueProvider.Result
+      .create(getHierarchyAnnotations(listOwner), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   private static PsiAnnotation[] getHierarchyAnnotations(PsiModifierListOwner listOwner) {

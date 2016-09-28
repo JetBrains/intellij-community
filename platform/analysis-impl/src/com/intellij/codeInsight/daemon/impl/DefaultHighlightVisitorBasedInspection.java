@@ -168,16 +168,12 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
         List<TextEditorHighlightingPass> passes = passRegistrarEx.instantiateMainPasses(file, document, HighlightInfoProcessor.getEmpty());
         List<GeneralHighlightingPass> gpasses = ContainerUtil.collect(passes.iterator(), FilteringIterator.instanceOf(GeneralHighlightingPass.class));
         for (final GeneralHighlightingPass gpass : gpasses) {
-          gpass.setHighlightVisitorProducer(new NotNullProducer<HighlightVisitor[]>() {
-            @NotNull
-            @Override
-            public HighlightVisitor[] produce() {
-              gpass.incVisitorUsageCount(1);
+          gpass.setHighlightVisitorProducer(() -> {
+            gpass.incVisitorUsageCount(1);
 
-              HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true,
-                                                                            ServiceManager.getService(project, CachedAnnotators.class));
-              return new HighlightVisitor[]{visitor};
-            }
+            HighlightVisitor visitor = new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true,
+                                                                          ServiceManager.getService(project, CachedAnnotators.class));
+            return new HighlightVisitor[]{visitor};
           });
         }
 

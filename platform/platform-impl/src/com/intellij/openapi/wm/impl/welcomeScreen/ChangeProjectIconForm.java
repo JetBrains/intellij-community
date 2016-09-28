@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,12 +103,7 @@ public class ChangeProjectIconForm {
     public void actionPerformed(AnActionEvent e) {
       VirtualFile[] files = FileChooserFactory.getInstance()
         .createFileChooser(new FileChooserDescriptor(true, false, false, false, false, false).withFileFilter(
-          new Condition<VirtualFile>() {
-            @Override
-            public boolean value(VirtualFile file) {
-              return "png".equalsIgnoreCase(file.getExtension());
-            }
-          }), null, null).choose(null);
+          file -> "png".equalsIgnoreCase(file.getExtension())), null, null).choose(null);
 
       if (files.length == 1) {
         try {
@@ -122,7 +117,7 @@ public class ChangeProjectIconForm {
             pathToIcon = files[0];
           }
         }
-        catch (Exception e1) {
+        catch (Exception ignore) {
         }
       }
     }

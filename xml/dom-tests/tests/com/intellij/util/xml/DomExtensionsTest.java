@@ -75,66 +75,51 @@ public class DomExtensionsTest extends DomTestCase {
   public void testUseCustomConverter() throws Throwable {
     registerDomExtender(AttrDomExtender2.class);
     final MyElement myElement = createElement("<a attr=\"xxx\" xxx=\"zzz\" yyy=\"zzz\"/>", MyElement.class);
-    assertUnorderedCollection(getCustomChildren(myElement), new Consumer<DomElement>() {
-      @Override
-      public void consume(final DomElement element) {
-        final StringBuffer stringBuffer = ((GenericAttributeValue<StringBuffer>)element).getValue();
-        assertEquals("zzz", stringBuffer.toString());
-        assertInstanceOf(((GenericAttributeValue<StringBuffer>)element).getConverter(), StringBufferConverter.class);
-        assertNotNull(myElement.getGenericInfo().getAttributeChildDescription("xxx"));
+    assertUnorderedCollection(getCustomChildren(myElement), element -> {
+      final StringBuffer stringBuffer = ((GenericAttributeValue<StringBuffer>)element).getValue();
+      assertEquals("zzz", stringBuffer.toString());
+      assertInstanceOf(((GenericAttributeValue<StringBuffer>)element).getConverter(), StringBufferConverter.class);
+      assertNotNull(myElement.getGenericInfo().getAttributeChildDescription("xxx"));
 
-        Convert convert = element.getAnnotation(Convert.class);
-        assertNotNull(convert);
-        assertEquals(StringBufferConverter.class, convert.value());
-        assertTrue(convert.soft());
-      }
-    }, new Consumer<DomElement>() {
-      @Override
-      public void consume(final DomElement element) {
-        final StringBuffer stringBuffer = ((GenericAttributeValue<StringBuffer>)element).getValue();
-        assertEquals("zzz", stringBuffer.toString());
-        assertInstanceOf(((GenericAttributeValue<StringBuffer>)element).getConverter(), StringBufferConverter.class);
-        assertNotNull(myElement.getGenericInfo().getAttributeChildDescription("yyy"));
+      Convert convert = element.getAnnotation(Convert.class);
+      assertNotNull(convert);
+      assertEquals(StringBufferConverter.class, convert.value());
+      assertTrue(convert.soft());
+    }, element -> {
+      final StringBuffer stringBuffer = ((GenericAttributeValue<StringBuffer>)element).getValue();
+      assertEquals("zzz", stringBuffer.toString());
+      assertInstanceOf(((GenericAttributeValue<StringBuffer>)element).getConverter(), StringBufferConverter.class);
+      assertNotNull(myElement.getGenericInfo().getAttributeChildDescription("yyy"));
 
-        Convert convert = element.getAnnotation(Convert.class);
-        assertNotNull(convert);
-        assertEquals(StringBufferConverter.class, convert.value());
-        assertFalse(convert.soft());
-      }
+      Convert convert = element.getAnnotation(Convert.class);
+      assertNotNull(convert);
+      assertEquals(StringBufferConverter.class, convert.value());
+      assertFalse(convert.soft());
     });
   }
 
   public void testFixedChildren() throws Throwable {
     registerDomExtender(FixedDomExtender.class);
     final MyElement myElement = createElement("<a attr=\"xxx\"><xxx>zzz</xxx><yyy attr=\"foo\"/><yyy attr=\"bar\"/></a>", MyElement.class);
-    assertUnorderedCollection(getCustomChildren(myElement), new Consumer<DomElement>() {
-      @Override
-      public void consume(final DomElement element) {
-        assertEquals(GenericDomValue.class, ReflectionUtil.getRawType(element.getDomElementType()));
-        final StringBuffer stringBuffer = ((GenericDomValue<StringBuffer>)element).getValue();
-        assertEquals("zzz", stringBuffer.toString());
-        assertInstanceOf(((GenericDomValue<StringBuffer>)element).getConverter(), MyStringBufferConverter.class);
-        assertNotNull(myElement.getGenericInfo().getFixedChildDescription("xxx"));
+    assertUnorderedCollection(getCustomChildren(myElement), element -> {
+      assertEquals(GenericDomValue.class, ReflectionUtil.getRawType(element.getDomElementType()));
+      final StringBuffer stringBuffer = ((GenericDomValue<StringBuffer>)element).getValue();
+      assertEquals("zzz", stringBuffer.toString());
+      assertInstanceOf(((GenericDomValue<StringBuffer>)element).getConverter(), MyStringBufferConverter.class);
+      assertNotNull(myElement.getGenericInfo().getFixedChildDescription("xxx"));
 
-        Convert convert = element.getAnnotation(Convert.class);
-        assertNotNull(convert);
-        assertEquals(MyStringBufferConverter.class, convert.value());
-        assertTrue(convert.soft());
+      Convert convert = element.getAnnotation(Convert.class);
+      assertNotNull(convert);
+      assertEquals(MyStringBufferConverter.class, convert.value());
+      assertTrue(convert.soft());
 
-        assertNotNull(element.getGenericInfo().getAttributeChildDescription("aaa"));
-      }
-    }, new Consumer<DomElement>() {
-      @Override
-      public void consume(final DomElement element) {
-        assertEquals("foo", ((MyElement) element).getAttr().getValue());
-        assertNull(element.getAnnotation(Convert.class));
-      }
-    }, new Consumer<DomElement>() {
-      @Override
-      public void consume(final DomElement element) {
-        assertEquals("bar", ((MyElement) element).getAttr().getValue());
-        assertNull(element.getAnnotation(Convert.class));
-      }
+      assertNotNull(element.getGenericInfo().getAttributeChildDescription("aaa"));
+    }, element -> {
+      assertEquals("foo", ((MyElement) element).getAttr().getValue());
+      assertNull(element.getAnnotation(Convert.class));
+    }, element -> {
+      assertEquals("bar", ((MyElement) element).getAttr().getValue());
+      assertNull(element.getAnnotation(Convert.class));
     });
     final DomFixedChildDescription description = myElement.getGenericInfo().getFixedChildDescription("yyy");
     assertNotNull(description);
@@ -144,18 +129,12 @@ public class DomExtensionsTest extends DomTestCase {
   public void testCollectionChildren() throws Throwable {
     registerDomExtender(CollectionDomExtender.class);
     final MyElement myElement = createElement("<a attr=\"xxx\"><xxx>zzz</xxx><xxx attr=\"foo\"/></a>", MyElement.class);
-    assertUnorderedCollection(getCustomChildren(myElement), new Consumer<DomElement>() {
-      @Override
-      public void consume(final DomElement element) {
-        assertEquals("foo", ((MyElement) element).getAttr().getValue());
-        assertNull(element.getAnnotation(Convert.class));
-      }
-    }, new Consumer<DomElement>() {
-      @Override
-      public void consume(final DomElement element) {
-        assertNull(((MyElement) element).getAttr().getValue());
-        assertNull(element.getAnnotation(Convert.class));
-      }
+    assertUnorderedCollection(getCustomChildren(myElement), element -> {
+      assertEquals("foo", ((MyElement) element).getAttr().getValue());
+      assertNull(element.getAnnotation(Convert.class));
+    }, element -> {
+      assertNull(((MyElement) element).getAttr().getValue());
+      assertNull(element.getAnnotation(Convert.class));
     });
     assertNotNull(myElement.getGenericInfo().getCollectionChildDescription("xxx"));
   }

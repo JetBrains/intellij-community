@@ -156,48 +156,23 @@ public class CompilerTester {
   }
 
   public List<CompilerMessage> make() {
-    return runCompiler(new Consumer<ErrorReportingCallback>() {
-      @Override
-      public void consume(ErrorReportingCallback callback) {
-        CompilerManager.getInstance(getProject()).make(callback);
-      }
-    });
+    return runCompiler(callback -> CompilerManager.getInstance(getProject()).make(callback));
   }
 
   public List<CompilerMessage> rebuild() {
-    return runCompiler(new Consumer<ErrorReportingCallback>() {
-      @Override
-      public void consume(ErrorReportingCallback callback) {
-        CompilerManager.getInstance(getProject()).rebuild(callback);
-      }
-    });
+    return runCompiler(callback -> CompilerManager.getInstance(getProject()).rebuild(callback));
   }
 
   public List<CompilerMessage> compileModule(final Module module) {
-    return runCompiler(new Consumer<ErrorReportingCallback>() {
-      @Override
-      public void consume(ErrorReportingCallback callback) {
-        CompilerManager.getInstance(getProject()).compile(module, callback);
-      }
-    });
+    return runCompiler(callback -> CompilerManager.getInstance(getProject()).compile(module, callback));
   }
 
   public List<CompilerMessage> make(final CompileScope scope) {
-    return runCompiler(new Consumer<ErrorReportingCallback>() {
-      @Override
-      public void consume(ErrorReportingCallback callback) {
-        CompilerManager.getInstance(getProject()).make(scope, callback);
-      }
-    });
+    return runCompiler(callback -> CompilerManager.getInstance(getProject()).make(scope, callback));
   }
 
   public List<CompilerMessage> compileFiles(final VirtualFile... files) {
-    return runCompiler(new Consumer<ErrorReportingCallback>() {
-      @Override
-      public void consume(ErrorReportingCallback callback) {
-        CompilerManager.getInstance(getProject()).compile(files, callback);
-      }
-    });
+    return runCompiler(callback -> CompilerManager.getInstance(getProject()).compile(files, callback));
   }
 
   private List<CompilerMessage> runCompiler(final Consumer<ErrorReportingCallback> runnable) {

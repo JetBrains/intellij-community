@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,15 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Locale;
 
 /**
  * @author ven
- * @noinspection HardCodedStringLiteral
+ * @noinspection UseOfSystemOutOrSystemErr
  */
 public class AppMain {
   private static final String PROPERTY_PORT_NUMBER = "idea.launcher.port";
-  private static final String PROPERTY_BINPATH = "idea.launcher.bin.path";
-
+  private static final String PROPERTY_BIN_PATH = "idea.launcher.bin.path";
   private static final String JAVAFX_LAUNCHER = "com.sun.javafx.application.LauncherImpl";
   private static final String LAUNCH_APPLICATION_METHOD_NAME = "launchApplication";
 
@@ -41,31 +41,19 @@ public class AppMain {
   private static boolean ourHasSecurityProblem = false;
   static {
     try {
-      String binPath = System.getProperty(PROPERTY_BINPATH) + File.separator;
-      final String osName = System.getProperty("os.name").toLowerCase();
-      String arch = System.getProperty("os.arch").toLowerCase();
+      String binPath = System.getProperty(PROPERTY_BIN_PATH) + File.separator;
+      String osName = System.getProperty("os.name").toLowerCase(Locale.US);
+      String arch = System.getProperty("os.arch").toLowerCase(Locale.US);
       String libPath = null;
       if (osName.startsWith("windows")) {
-        if (arch.equals("amd64")) {
-          libPath = binPath + "breakgen64.dll";
-        }
-        else {
-          libPath = binPath + "breakgen.dll";
-        }
-      } else if (osName.startsWith("linux")) {
-        if (arch.equals("amd64")) {
-          libPath = binPath + "libbreakgen64.so";
-        } else {
-          libPath = binPath + "libbreakgen.so";
-        }
-      } else if (osName.startsWith("mac")) {
-        if (arch.endsWith("64")) {
-          libPath = binPath + "libbreakgen64.jnilib";
-        } else {
-          libPath = binPath + "libbreakgen.jnilib";
-        }
+        libPath = binPath + (arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll");
       }
-
+      else if (osName.startsWith("linux")) {
+        libPath = binPath + (arch.equals("amd64") ? "libbreakgen64.so" : "libbreakgen.so");
+      }
+      else if (osName.startsWith("mac")) {
+        libPath = binPath + (arch.endsWith("64") ? "libbreakgen64.jnilib" : "libbreakgen.jnilib");
+      }
       if (libPath != null) {
         System.load(libPath);
       }
@@ -87,45 +75,58 @@ public class AppMain {
           public void run() {
             try {
               ServerSocket socket = new ServerSocket(portNumber);
-              Socket client = socket.accept();
-              BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-              while (true) {
-                String msg = reader.readLine();
-
-                if ("TERM".equals(msg)){
-                  return;
+              try {
+                Socket client = socket.accept();
+                try {
+                  BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+                  try {
+                    while (true) {
+                      String msg = reader.readLine();
+                      if ("TERM".equals(msg)) {
+                        return;
+                      }
+                      else if ("BREAK".equals(msg)) {
+                        triggerControlBreak();
+                      }
+                      else if ("STOP".equals(msg)) {
+                        System.exit(1);
+                      }
+                    }
+                  }
+                  finally {
+                    reader.close();
+                  }
                 }
-                else if ("BREAK".equals(msg)) {
-                  triggerControlBreak();
-                }
-                else if ("STOP".equals(msg)) {
-                  System.exit(1);
+                finally {
+                  client.close();
                 }
               }
-            } catch (IOException ignored) {
-            } catch (IllegalArgumentException ignored) {
-            } catch (SecurityException ignored) {
+              finally {
+                socket.close();
+              }
             }
+            catch (IOException ignored) { }
+            catch (IllegalArgumentException ignored) { }
+            catch (SecurityException ignored) { }
           }
         }, "Monitor Ctrl-Break");
       try {
         t.setDaemon(true);
         t.start();
-      } catch (Exception ignored) {}
+      } catch (Exception ignored) { }
     }
 
     String mainClass = args[0];
-    String[] parms = new String[args.length - 1];
-    for (int j = 1; j < args.length; j++) {
-      parms[j - 1] = args[j];
-    }
-    final Class appClass = Class.forName(mainClass);
+    String[] params = new String[args.length - 1];
+    System.arraycopy(args, 1, params, 0, args.length - 1);
+
+    Class appClass = Class.forName(mainClass);
     Method m;
     try {
-      m = appClass.getMethod("main", new Class[]{parms.getClass()});
+      m = appClass.getMethod("main", new Class[]{params.getClass()});
     }
     catch (NoSuchMethodException e) {
-      if (!startJavaFXApplication(parms, appClass)) {
+      if (!startJavaFXApplication(params, appClass)) {
         throw e;
       }
       return;
@@ -135,41 +136,31 @@ public class AppMain {
       System.err.println("main method should be static");
       return;
     }
+
     if (!void.class.isAssignableFrom(m.getReturnType())) {
       System.err.println("main method must return a value of type void");
       return;
     }
+
     try {
-      ensureAccess(m);
-      m.invoke(null, new Object[]{parms});
-    } catch (InvocationTargetException ite) {
+      m.setAccessible(true);
+      m.invoke(null, new Object[]{params});
+    }
+    catch (InvocationTargetException ite) {
       throw ite.getTargetException();
     }
   }
 
-  private static boolean startJavaFXApplication(String[] parms, Class appClass) throws NoSuchMethodException {
+  private static boolean startJavaFXApplication(String[] params, Class appClass) throws NoSuchMethodException {
     try {
       //check in launch method for application class in the stack trace leads to this hack here
-      final Method launchApplication = Class.forName(JAVAFX_LAUNCHER).getMethod(LAUNCH_APPLICATION_METHOD_NAME,
-                                                                                new Class[]{appClass.getClass(), parms.getClass()});
-      launchApplication.invoke(null, new Object[] {appClass, parms});
+      Class[] types = {appClass.getClass(), params.getClass()};
+      Method launchApplication = Class.forName(JAVAFX_LAUNCHER).getMethod(LAUNCH_APPLICATION_METHOD_NAME, types);
+      launchApplication.invoke(null, new Object[] {appClass, params});
       return true;
     }
     catch (Throwable e) {
       return false;
-    }
-  }
-
-  private static void ensureAccess(Object reflectionObject) {
-    // need to call setAccessible here in order to be able to launch package-local classes
-    // calling setAccessible() via reflection because the method is missing from java version 1.1.x
-    final Class aClass = reflectionObject.getClass();
-    try {
-      final Method setAccessibleMethod = aClass.getMethod("setAccessible", new Class[] {boolean.class});
-      setAccessibleMethod.invoke(reflectionObject, new Object[] {Boolean.TRUE});
-    }
-    catch (Exception e) {
-      // the method not found
     }
   }
 }

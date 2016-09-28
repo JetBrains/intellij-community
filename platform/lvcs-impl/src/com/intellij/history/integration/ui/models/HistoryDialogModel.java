@@ -35,9 +35,11 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -191,8 +193,8 @@ public abstract class HistoryDialogModel {
     return new Change(d.getLeftContentRevision(myGateway), d.getRightContentRevision(myGateway));
   }
 
-  public void createPatch(String path, boolean isReverse) throws VcsException, IOException {
-    PatchCreator.create(myProject, getChanges(), path, isReverse, null);
+  public void createPatch(String path, String basePath, boolean isReverse, @NotNull Charset charset) throws VcsException, IOException {
+    PatchCreator.create(myProject, basePath, getChanges(), path, isReverse, null, charset);
   }
 
   public abstract Reverter createReverter();

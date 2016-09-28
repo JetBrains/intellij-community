@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.Result;
@@ -38,6 +37,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.PsiNavigateUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.Extension;
@@ -46,6 +46,7 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author yole
@@ -78,12 +79,7 @@ public class RegisterExtensionFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-    PluginDescriptorChooser.show(project, editor, file, new Consumer<DomFileElement<IdeaPlugin>>() {
-      @Override
-      public void consume(DomFileElement<IdeaPlugin> element) {
-        doFix(editor, element);
-      }
-    });
+    PluginDescriptorChooser.show(project, editor, file, element -> doFix(editor, element));
   }
 
   private void doFix(Editor editor, final DomFileElement<IdeaPlugin> element) {
@@ -129,7 +125,7 @@ public class RegisterExtensionFix implements IntentionAction {
     PsiNavigateUtil.navigate(navTarget);
   }
 
-  private static final ImmutableMap<String, String> KEY_MAP = ImmutableMap.<String, String>builder()
+  private static final Map<String, String> KEY_MAP = ContainerUtil.<String, String>immutableMapBuilder()
     .put(KeyedFactoryEPBean.class.getName(), "key")
     .put(KeyedLazyInstanceEP.class.getName(), "key")
     .put(FileTypeExtensionPoint.class.getName(), "filetype")

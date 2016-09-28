@@ -45,6 +45,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.*;
 
@@ -55,7 +56,9 @@ public class JavaBuilderUtil {
   private static final Key<Set<File>> ALL_AFFECTED_FILES_KEY = Key.create("_all_affected_files_");
   private static final Key<Set<File>> ALL_COMPILED_FILES_KEY = Key.create("_all_compiled_files_");
   private static final Key<Set<File>> FILES_TO_COMPILE_KEY = Key.create("_files_to_compile_");
+  private static final Key<Set<File>> COMPILED_WITH_ERRORS_KEY = Key.create("_compiled_with_errors_");
   private static final Key<Set<File>> SUCCESSFULLY_COMPILED_FILES_KEY = Key.create("_successfully_compiled_files_");
+  private static final Key<List<FileFilter>> SKIP_MARKING_DIRTY_FILTERS_KEY = Key.create("_skip_marking_dirty_filters_");
   private static final Key<Pair<Mappings, Callbacks.Backend>> MAPPINGS_DELTA_KEY = Key.create("_mappings_delta_");
   public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.Builder");
@@ -68,6 +71,10 @@ public class JavaBuilderUtil {
     getFilesContainer(context, FILES_TO_COMPILE_KEY).addAll(files);
   }
 
+  public static void registerFilesWithErrors(CompileContext context, Collection<File> files) {
+    getFilesContainer(context, COMPILED_WITH_ERRORS_KEY).addAll(files);
+  }
+
   public static void registerSuccessfullyCompiled(CompileContext context, File file) {
     registerSuccessfullyCompiled(context, Collections.singleton(file));
   }
@@ -75,7 +82,19 @@ public class JavaBuilderUtil {
   public static void registerSuccessfullyCompiled(CompileContext context, Collection<File> files) {
     getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY).addAll(files);
   }
-  
+
+  /**
+   * The files accepted by {@code filter} won't be marked dirty by {@link #updateMappings} method when this compilation round finishes.
+   * Use this method to register a filter accepting files of your language if you compute and mark as dirty affected files yourself in your builder.
+   */
+  public static void registerFilterToSkipMarkingAffectedFileDirty(@NotNull CompileContext context, @NotNull FileFilter filter) {
+    List<FileFilter> filters = SKIP_MARKING_DIRTY_FILTERS_KEY.get(context);
+    if (filters == null) {
+      SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, filters = new ArrayList<FileFilter>());
+    }
+    filters.add(filter);
+  }
+
   @NotNull
   public static Callbacks.Backend getDependenciesRegistrar(CompileContext context) {
     Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
@@ -105,19 +124,14 @@ public class JavaBuilderUtil {
     FILES_TO_COMPILE_KEY.set(context, null);
     final Set<File> successfullyCompiled = getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY);
     SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
-    return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled);
+    FileFilter filter = createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context));
+    SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, null);
+    return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled, filter);
   }
 
   /**
-   *
-   * @param context
-   * @param delta
-   * @param dirtyFilesHolder
-   * @param chunk
-   * @param filesToCompile       files compiled in this round
-   * @param successfullyCompiled
-   * @return true if additional compilation pass is required, false otherwise
-   * @throws Exception
+   * @deprecated this method isn't supposed to be called by plugins anymore, the mappings are updated by the build process infrastructure automatically.
+   * Use {@link #getDependenciesRegistrar(CompileContext)}, {@link #registerFilesToCompile(CompileContext, Collection)}, {@link #registerSuccessfullyCompiled(CompileContext, Collection)} instead.
    */
   public static boolean updateMappings(CompileContext context,
                                        final Mappings delta,
@@ -125,7 +139,23 @@ public class JavaBuilderUtil {
                                        ModuleChunk chunk,
                                        Collection<File> filesToCompile,
                                        Collection<File> successfullyCompiled) throws IOException {
+    return updateMappings(context, delta, dirtyFilesHolder, chunk, filesToCompile, successfullyCompiled, null);
+  }
+
+  /**
+   * @param filesToCompile       files compiled in this round
+   * @return true if additional compilation pass is required, false otherwise
+   * @throws Exception
+   */
+  private static boolean updateMappings(CompileContext context,
+                                       final Mappings delta,
+                                       DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                                       ModuleChunk chunk,
+                                       Collection<File> filesToCompile,
+                                       Collection<File> successfullyCompiled,
+                                       @Nullable FileFilter skipMarkingDirtyFilter) throws IOException {
     try {
+      boolean performIntegrate = true;
       boolean additionalPassRequired = false;
 
       final Set<String> removedPaths = getRemovedPaths(chunk, dirtyFilesHolder);
@@ -149,9 +179,12 @@ public class JavaBuilderUtil {
           final Set<File> affectedBeforeDif = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
           affectedBeforeDif.addAll(allAffectedFiles);
 
+          final Set<File> compiledWithErrors = getFilesContainer(context, COMPILED_WITH_ERRORS_KEY);
+          COMPILED_WITH_ERRORS_KEY.set(context, null);
+
           final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
           final boolean incremental = globalMappings.differentiateOnIncrementalMake(
-            delta, removedPaths, filesToCompile, allCompiledFiles, allAffectedFiles, moduleBasedFilter,
+            delta, removedPaths, filesToCompile, compiledWithErrors, allCompiledFiles, allAffectedFiles, moduleBasedFilter,
             CONSTANT_SEARCH_SERVICE.get(context)
           );
 
@@ -175,6 +208,8 @@ public class JavaBuilderUtil {
             final String infoMessage = "Dependency analysis found " + newlyAffectedFiles.size() + " affected files";
             LOG.info(infoMessage);
             context.processMessage(new ProgressMessage(infoMessage));
+
+            removeFilesAcceptedByFilter(newlyAffectedFiles, skipMarkingDirtyFilter);
 
             if (!newlyAffectedFiles.isEmpty()) {
 
@@ -200,12 +235,24 @@ public class JavaBuilderUtil {
             }
           }
           else {
+            // non-incremental mode
             final String messageText = "Marking " + chunk.getPresentableShortName() + " and direct dependants for recompilation";
             LOG.info("Non-incremental mode: " + messageText);
             context.processMessage(new ProgressMessage(messageText));
 
-            additionalPassRequired = isCompileJavaIncrementally(context);
-            FSOperations.markDirtyRecursively(context, CompilationRound.NEXT, chunk);
+            final boolean alreadyMarkedDirty = FSOperations.isMarkedDirty(context, chunk);
+            additionalPassRequired = isCompileJavaIncrementally(context) && !alreadyMarkedDirty;
+
+            if (alreadyMarkedDirty) {
+              // need this to make sure changes data stored in Delta is complete
+              globalMappings.differentiateOnNonIncrementalMake(delta, removedPaths, filesToCompile);
+            }
+            else {
+              performIntegrate = false;
+            }
+
+            FileFilter toBeMarkedFilter = skipMarkingDirtyFilter == null ? null : new NegationFileFilter(skipMarkingDirtyFilter);
+            FSOperations.markDirtyRecursively(context, CompilationRound.NEXT, chunk, toBeMarkedFilter);
           }
         }
         else {
@@ -228,9 +275,10 @@ public class JavaBuilderUtil {
         return false;
       }
 
-      context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getPresentableShortName() + "]"));
-
-      globalMappings.integrate(delta);
+      if (performIntegrate) {
+        context.processMessage(new ProgressMessage("Updating dependency information... [" + chunk.getPresentableShortName() + "]"));
+        globalMappings.integrate(delta);
+      }
 
       return additionalPassRequired;
     }
@@ -239,6 +287,33 @@ public class JavaBuilderUtil {
     }
     finally {
       context.processMessage(new ProgressMessage("")); // clean progress messages
+    }
+  }
+
+  private static FileFilter createOrFilter(final List<FileFilter> filters) {
+    if (filters == null || filters.isEmpty()) return null;
+    return new FileFilter() {
+      @Override
+      public boolean accept(File pathname) {
+        for (FileFilter filter : filters) {
+          if (filter.accept(pathname)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    };
+  }
+
+  private static void removeFilesAcceptedByFilter(@NotNull Set<File> files, @Nullable FileFilter filter) {
+    if (filter == null) return;
+
+    Iterator<File> iterator = files.iterator();
+    while (iterator.hasNext()) {
+      File next = iterator.next();
+      if (filter.accept(next)) {
+        iterator.remove();
+      }
     }
   }
 
@@ -375,6 +450,19 @@ public class JavaBuilderUtil {
     public boolean belongsToCurrentTargetChunk(File file) {
       final JavaSourceRootDescriptor rd = myBuildRootIndex.findJavaRootDescriptor(myContext, file);
       return rd != null && myChunkTargets.contains(rd.target);
+    }
+  }
+
+  private static class NegationFileFilter implements FileFilter {
+    private final FileFilter myFilter;
+
+    public NegationFileFilter(FileFilter filter) {
+      myFilter = filter;
+    }
+
+    @Override
+    public boolean accept(File pathname) {
+      return !myFilter.accept(pathname);
     }
   }
 }

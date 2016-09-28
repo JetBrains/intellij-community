@@ -21,6 +21,7 @@ public interface GraphColorManager<CommitId> {
 
   /**
    * Returns the color which should be used to draw the given branch.
+   *
    * @param headCommit branch head commit index.
    */
   int getColorOfBranch(CommitId headCommit);
@@ -55,5 +56,4 @@ public interface GraphColorManager<CommitId> {
    * @see VcsLogRefManager#getBranchLayoutComparator()
    */
   int compareHeads(CommitId head1, CommitId head2);
-
 }

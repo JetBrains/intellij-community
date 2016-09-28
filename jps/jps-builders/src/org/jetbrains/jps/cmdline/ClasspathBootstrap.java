@@ -26,7 +26,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.CellConstraints;
 import io.netty.util.NetUtil;
-import jsr166e.extra.SequenceLock;
 import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
@@ -142,9 +141,8 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(AlienFormFileException.class));  // forms-compiler
     cp.add(getResourcePath(GridConstraints.class));  // forms-rt
     cp.add(getResourcePath(CellConstraints.class));  // jGoodies-forms
-    cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
+    cp.addAll(getInstrumentationUtilRoots());
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
-    cp.add(getResourcePath(SequenceLock.class));  // jsr166
     cp.add(getJpsPluginSystemClassesPath().getAbsolutePath().replace('\\', '/'));
     
     //don't forget to update layoutCommunityJps() in layouts.gant accordingly
@@ -191,6 +189,13 @@ public class ClasspathBootstrap {
     final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
     if (optimizedFileManagerClass != null) {
       cp.add(getResourceFile(optimizedFileManagerClass));  // optimizedFileManager, if applicable
+    }
+    else {
+      // last resort
+      final File f = new File(PathManager.getLibPath(), "optimizedFileManager.jar");
+      if (f.exists()) {
+        cp.add(f);
+      }
     }
 
     try {
@@ -281,7 +286,20 @@ public class ClasspathBootstrap {
   public static File getResourceFile(Class aClass) {
     return new File(getResourcePath(aClass));
   }
-  
+
+  private static List<String> getInstrumentationUtilRoots() {
+    String instrumentationUtilPath = getResourcePath(NotNullVerifyingInstrumenter.class);
+    File instrumentationUtil = new File(instrumentationUtilPath);
+    if (instrumentationUtil.isDirectory()) {
+      //running from sources: load classes from .../out/production/instrumentation-util-8
+      return Arrays.asList(instrumentationUtilPath, new File(instrumentationUtil.getParentFile(), "instrumentation-util-8").getAbsolutePath());
+    }
+    else {
+      //running from jars: instrumentation-util-8 is located in the same jar
+      return Collections.singletonList(instrumentationUtilPath);
+    }
+  }
+
   private static File getJpsPluginSystemClassesPath() {
     File classesRoot = new File(getResourcePath(ClasspathBootstrap.class));
     if (classesRoot.isDirectory()) {

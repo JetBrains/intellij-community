@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +34,7 @@ import java.util.List;
 class UnifiedEditorRangeHighlighter {
   public static final Logger LOG = UnifiedDiffViewer.LOG;
 
-  @NotNull private final List<Element> myPieces = new ArrayList<Element>();
+  @NotNull private final List<Element> myPieces = new ArrayList<>();
 
   public UnifiedEditorRangeHighlighter(@Nullable Project project, @NotNull Document document) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -43,16 +42,13 @@ class UnifiedEditorRangeHighlighter {
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, false);
     if (model == null) return;
 
-    model.processRangeHighlightersOverlappingWith(0, document.getTextLength(), new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx marker) {
-        int newStart = marker.getStartOffset();
-        int newEnd = marker.getEndOffset();
+    model.processRangeHighlightersOverlappingWith(0, document.getTextLength(), marker -> {
+      int newStart = marker.getStartOffset();
+      int newEnd = marker.getEndOffset();
 
-        myPieces.add(new Element(marker, newStart, newEnd));
+      myPieces.add(new Element(marker, newStart, newEnd));
 
-        return true;
-      }
+      return true;
     });
   }
 
@@ -85,21 +81,18 @@ class UnifiedEditorRangeHighlighter {
     final TextRange changed = range.getChanged();
     final int changedLength = changed.getEndOffset() - changed.getStartOffset();
 
-    model.processRangeHighlightersOverlappingWith(changed.getStartOffset(), changed.getEndOffset(), new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(RangeHighlighterEx marker) {
-        int relativeStart = Math.max(marker.getStartOffset() - changed.getStartOffset(), 0);
-        int relativeEnd = Math.min(marker.getEndOffset() - changed.getStartOffset(), changedLength);
+    model.processRangeHighlightersOverlappingWith(changed.getStartOffset(), changed.getEndOffset(), marker -> {
+      int relativeStart = Math.max(marker.getStartOffset() - changed.getStartOffset(), 0);
+      int relativeEnd = Math.min(marker.getEndOffset() - changed.getStartOffset(), changedLength);
 
-        int newStart = base.getStartOffset() + relativeStart;
-        int newEnd = base.getStartOffset() + relativeEnd;
+      int newStart = base.getStartOffset() + relativeStart;
+      int newEnd = base.getStartOffset() + relativeEnd;
 
-        if (newEnd - newStart <= 0) return true;
+      if (newEnd - newStart <= 0) return true;
 
-        myPieces.add(new Element(marker, newStart, newEnd));
+      myPieces.add(new Element(marker, newStart, newEnd));
 
-        return true;
-      }
+      return true;
     });
   }
 

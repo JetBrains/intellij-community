@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,14 +71,14 @@ public class TreeModelBuilder {
   private final Map<ScopeType, Map<Module, ModuleNode>> myModuleNodes = new HashMap<ScopeType, Map<Module, ModuleNode>>();
   private final Map<ScopeType, Map<String, ModuleGroupNode>> myModuleGroupNodes = new HashMap<ScopeType, Map<String, ModuleGroupNode>>();
   private final Map<ScopeType, Map<OrderEntry, LibraryNode>> myLibraryNodes = new HashMap<ScopeType, Map<OrderEntry, LibraryNode>>();
-  private int myScannedFileCount = 0;
-  private int myTotalFileCount = 0;
-  private int myMarkedFileCount = 0;
-  private GeneralGroupNode myAllLibsNode = null;
+  private int myScannedFileCount;
+  private int myTotalFileCount;
+  private int myMarkedFileCount;
+  private GeneralGroupNode myAllLibsNode;
 
-  private GeneralGroupNode mySourceRoot = null;
-  private GeneralGroupNode myTestRoot = null;
-  private GeneralGroupNode myLibsRoot = null;
+  private GeneralGroupNode mySourceRoot;
+  private GeneralGroupNode myTestRoot;
+  private GeneralGroupNode myLibsRoot;
 
   public static final String PRODUCTION_NAME = AnalysisScopeBundle.message("package.dependencies.production.node.text");
   public static final String TEST_NAME = AnalysisScopeBundle.message("package.dependencies.test.node.text");
@@ -162,29 +162,27 @@ public class TreeModelBuilder {
   }
 
   public TreeModel build(final Project project) {
-    Runnable buildingRunnable = new Runnable() {
-      public void run() {
-        countFiles(project);
-        myFileIndex.iterateContent(new ContentIterator() {
-          PackageDependenciesNode lastParent = null;
-          VirtualFile dir = null;
-          public boolean processFile(VirtualFile fileOrDir) {
-            if (!fileOrDir.isDirectory()) {
-              if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
-                lastParent = null;
-              }
-              lastParent = buildFileNode(fileOrDir, lastParent);
-              dir = fileOrDir.getParent();
-            } else {
+    Runnable buildingRunnable = () -> {
+      countFiles(project);
+      myFileIndex.iterateContent(new ContentIterator() {
+        PackageDependenciesNode lastParent;
+        VirtualFile dir;
+        public boolean processFile(VirtualFile fileOrDir) {
+          if (!fileOrDir.isDirectory()) {
+            if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {
               lastParent = null;
             }
-            return true;
+            lastParent = buildFileNode(fileOrDir, lastParent);
+            dir = fileOrDir.getParent();
+          } else {
+            lastParent = null;
           }
-        });
-
-        for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
-          processFilesRecursively(root);
+          return true;
         }
+      });
+
+      for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
+        processFilesRecursively(root);
       }
     };
 
@@ -195,7 +193,7 @@ public class TreeModelBuilder {
 
   private void processFilesRecursively(@NotNull VirtualFile file) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
-      private PackageDependenciesNode parent = null;
+      private PackageDependenciesNode parent;
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
@@ -242,12 +240,10 @@ public class TreeModelBuilder {
       myShowFiles = true;
     }
 
-    Runnable buildingRunnable = new Runnable() {
-      public void run() {
-        for (final PsiFile file : files) {
-          if (file != null) {
-            buildFileNode(file.getVirtualFile(), null);
-          }
+    Runnable buildingRunnable = () -> {
+      for (final PsiFile file : files) {
+        if (file != null) {
+          buildFileNode(file.getVirtualFile(), null);
         }
       }
     };

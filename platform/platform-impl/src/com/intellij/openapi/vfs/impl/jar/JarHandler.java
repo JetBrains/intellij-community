@@ -277,7 +277,7 @@ public class JarHandler extends ZipHandler {
       for (int i = 0; i < 2; ++i) {
         try {
           info = new PersistentHashMap<String, CacheLibraryInfo>(
-            snapshotInfoFile, new EnumeratorStringDescriptor(), new DataExternalizer<CacheLibraryInfo>() {
+            snapshotInfoFile, EnumeratorStringDescriptor.INSTANCE, new DataExternalizer<CacheLibraryInfo>() {
 
             @Override
             public void save(@NotNull DataOutput out, CacheLibraryInfo value) throws IOException {
@@ -303,19 +303,9 @@ public class JarHandler extends ZipHandler {
 
       assert info != null;
       ourCachedLibraryInfo = info;
-      FlushingDaemon.everyFiveSeconds(new Runnable() {
-        @Override
-        public void run() {
-          flushCachedLibraryInfos();
-        }
-      });
+      FlushingDaemon.everyFiveSeconds(() -> flushCachedLibraryInfos());
 
-      ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-        @Override
-        public void run() {
-          flushCachedLibraryInfos();
-        }
-      });
+      ShutDownTracker.getInstance().registerShutdownTask(() -> flushCachedLibraryInfos());
     }
 
     @NotNull

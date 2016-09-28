@@ -372,5 +372,16 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "        throws IOException {}"
     );
   }
+  
+  public void testLambdaBrace() {
+    getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    doMethodTest(
+      "Runnable r = () -> {\n" +
+      "};",
+      "Runnable r = () ->\n" +
+      "{\n" +
+      "};"
+    );
+  }
 
 }

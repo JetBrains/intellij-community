@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,13 @@
 
 package com.intellij.lang.properties.charset;
 
-/**
- * @author Alexey
- */
-
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
-import java.nio.charset.Charset;
-import java.nio.CharBuffer;
-import java.nio.ByteBuffer;
-import java.nio.BufferUnderflowException;
-import java.nio.BufferOverflowException;
 
 class Native2AsciiCharsetEncoder extends CharsetEncoder {
 

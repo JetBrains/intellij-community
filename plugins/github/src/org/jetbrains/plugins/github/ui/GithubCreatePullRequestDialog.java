@@ -32,10 +32,7 @@ import org.jetbrains.plugins.github.util.GithubProjectSettings;
 import org.jetbrains.plugins.github.util.GithubSettings;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.Collections;
 
 import static org.jetbrains.plugins.github.GithubCreatePullRequestWorker.BranchInfo;
@@ -57,95 +54,83 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     myProjectSettings = GithubProjectSettings.getInstance(project);
 
     myPanel = new GithubCreatePullRequestPanel();
-    myPanel.getShowDiffButton().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myWorker.showDiffDialog(myPanel.getSelectedBranch());
-      }
+    myPanel.getShowDiffButton().addActionListener(e -> {
+      myWorker.showDiffDialog(myPanel.getSelectedBranch());
     });
-    myPanel.getSelectForkButton().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        ForkInfo fork = myWorker.showTargetDialog();
-        if (fork != null) {
-          myPanel.setForks(myWorker.getForks());
-          myPanel.setSelectedFork(fork.getPath());
-        }
+    myPanel.getSelectForkButton().addActionListener(e -> {
+      ForkInfo fork = myWorker.showTargetDialog();
+      if (fork != null) {
+        myPanel.setForks(myWorker.getForks());
+        myPanel.setSelectedFork(fork.getPath());
       }
     });
 
-    myPanel.getForkComboBox().addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.DESELECTED) {
-          myPanel.setBranches(Collections.<BranchInfo>emptyList());
-        }
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          final ForkInfo fork = (ForkInfo)e.getItem();
-          if (fork == null) return;
+    myPanel.getForkComboBox().addItemListener(e -> {
+      if (e.getStateChange() == ItemEvent.DESELECTED) {
+        myPanel.setBranches(Collections.<BranchInfo>emptyList());
+      }
+      if (e.getStateChange() == ItemEvent.SELECTED) {
+        final ForkInfo fork = (ForkInfo)e.getItem();
+        if (fork == null) return;
 
-          myPanel.setBranches(fork.getBranches());
-          myPanel.setSelectedBranch(fork.getDefaultBranch());
+        myPanel.setBranches(fork.getBranches());
+        myPanel.setSelectedBranch(fork.getDefaultBranch());
 
-          if (fork.getRemoteName() == null && !fork.isProposedToCreateRemote()) {
-            fork.setProposedToCreateRemote(true);
-            boolean createRemote = false;
+        if (fork.getRemoteName() == null && !fork.isProposedToCreateRemote()) {
+          fork.setProposedToCreateRemote(true);
+          boolean createRemote = false;
 
-            switch (GithubSettings.getInstance().getCreatePullRequestCreateRemote()) {
-              case YES:
-                createRemote = true;
-                break;
-              case NO:
-                createRemote = false;
-                break;
-              case UNSURE:
-                createRemote = GithubNotifications.showYesNoDialog(project,
-                                                                   "Can't Find Remote",
-                                                                   "Configure remote for '" + fork.getPath().getUser() + "'?",
-                                                                   ourDoNotAskOption);
-                break;
-            }
-
-            if (createRemote) {
-              myWorker.configureRemote(fork);
-            }
+          switch (GithubSettings.getInstance().getCreatePullRequestCreateRemote()) {
+            case YES:
+              createRemote = true;
+              break;
+            case NO:
+              createRemote = false;
+              break;
+            case UNSURE:
+              createRemote = GithubNotifications.showYesNoDialog(project,
+                                                                 "Can't Find Remote",
+                                                                 "Configure remote for '" + fork.getPath().getUser() + "'?",
+                                                                 ourDoNotAskOption);
+              break;
           }
 
-          if (fork.getRemoteName() == null) {
+          if (createRemote) {
+            myWorker.configureRemote(fork);
+          }
+        }
+
+        if (fork.getRemoteName() == null) {
+          myPanel.setDiffEnabled(false);
+        }
+        else {
+          myPanel.setDiffEnabled(true);
+          myWorker.launchFetchRemote(fork);
+        }
+      }
+    });
+
+    myPanel.getBranchComboBox().addItemListener(e -> {
+      if (e.getStateChange() == ItemEvent.SELECTED) {
+        BranchInfo branch = (BranchInfo)e.getItem();
+        if (branch == null) return;
+
+        if (branch.getForkInfo().getRemoteName() != null) {
+          if (branch.getDiffInfoTask() != null && branch.getDiffInfoTask().isDone() && branch.getDiffInfoTask().safeGet() == null) {
             myPanel.setDiffEnabled(false);
           }
           else {
             myPanel.setDiffEnabled(true);
-            myWorker.launchFetchRemote(fork);
           }
         }
-      }
-    });
 
-    myPanel.getBranchComboBox().addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          BranchInfo branch = (BranchInfo)e.getItem();
-          if (branch == null) return;
-
-          if (branch.getForkInfo().getRemoteName() != null) {
-            if (branch.getDiffInfoTask() != null && branch.getDiffInfoTask().isDone() && branch.getDiffInfoTask().safeGet() == null) {
-              myPanel.setDiffEnabled(false);
-            }
-            else {
-              myPanel.setDiffEnabled(true);
-            }
-          }
-
-          if (myPanel.isTitleDescriptionEmptyOrNotModified()) {
-            Pair<String, String> description = myWorker.getDefaultDescriptionMessage(branch);
-            myPanel.setTitle(description.getFirst());
-            myPanel.setDescription(description.getSecond());
-          }
-
-          myWorker.launchLoadDiffInfo(branch);
+        if (myPanel.isTitleDescriptionEmptyOrNotModified()) {
+          Pair<String, String> description = myWorker.getDefaultDescriptionMessage(branch);
+          myPanel.setTitle(description.getFirst());
+          myPanel.setDescription(description.getSecond());
         }
+
+        myWorker.launchLoadDiffInfo(branch);
       }
     });
 

@@ -114,15 +114,14 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
 
     if (injectionsMap.isEmpty() && annotations.isEmpty()) return false;
     final ArrayList<BaseInjection> originalInjections = new ArrayList<BaseInjection>(injectionsMap.keySet());
-    final List<BaseInjection> newInjections = ContainerUtil.mapNotNull(originalInjections, new NullableFunction<BaseInjection, BaseInjection>() {
-      public BaseInjection fun(final BaseInjection injection) {
-        final Pair<PsiMethod, Integer> pair = injectionsMap.get(injection);
-        final String placeText = getPatternStringForJavaPlace(pair.first, pair.second);
-        final BaseInjection newInjection = injection.copy();
-        newInjection.setPlaceEnabled(placeText, false);
-        return InjectorUtils.canBeRemoved(newInjection)? null : newInjection;
-      }
-    });
+    final List<BaseInjection> newInjections = ContainerUtil.mapNotNull(originalInjections,
+                                                                       (NullableFunction<BaseInjection, BaseInjection>)injection -> {
+                                                                         final Pair<PsiMethod, Integer> pair = injectionsMap.get(injection);
+                                                                         final String placeText = getPatternStringForJavaPlace(pair.first, pair.second);
+                                                                         final BaseInjection newInjection = injection.copy();
+                                                                         newInjection.setPlaceEnabled(placeText, false);
+                                                                         return InjectorUtils.canBeRemoved(newInjection)? null : newInjection;
+                                                                       });
     configuration.replaceInjectionsWithUndo(project, newInjections, originalInjections, annotations);
     return true;
   }
@@ -161,11 +160,9 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     builder.addCancelAction();
     builder.setCenterPanel(panel.getComponent());
     builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
-    builder.setOkOperation(new Runnable() {
-      public void run() {
-        panel.apply();
-        builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-      }
+    builder.setOkOperation(() -> {
+      panel.apply();
+      builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
       return new BaseInjection(methodParameterInjection.getSupportId()).copyFrom(methodParameterInjection);
@@ -213,18 +210,15 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
                                                 final PsiModifierListOwner modifierListOwner,
                                                 @NotNull PsiLanguageInjectionHost host,
                                                 final String languageId) {
-    return doAddLanguageAnnotation(project, modifierListOwner, host, languageId, new Processor<PsiLanguageInjectionHost>() {
-      @Override
-      public boolean process(PsiLanguageInjectionHost host) {
-        final Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
-        boolean allowed = configuration.isSourceModificationAllowed();
-        configuration.setSourceModificationAllowed(true);
-        try {
-          return doInjectInJava(project, host, host, languageId);
-        }
-        finally {
-          configuration.setSourceModificationAllowed(allowed);
-        }
+    return doAddLanguageAnnotation(project, modifierListOwner, host, languageId, host1 -> {
+      final Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
+      boolean allowed = configuration.isSourceModificationAllowed();
+      configuration.setSourceModificationAllowed(true);
+      try {
+        return doInjectInJava(project, host1, host1, languageId);
+      }
+      finally {
+        configuration.setSourceModificationAllowed(allowed);
       }
     });
   }

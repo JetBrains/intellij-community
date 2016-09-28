@@ -38,7 +38,10 @@ public class TaskBasedProcessRunner extends ProcessWithConsoleRunner {
   }
 
   @Override
-  void runProcess(@NotNull final String sdkPath, @NotNull final Project project, @NotNull final ProcessListener processListener)
+  void runProcess(@NotNull final String sdkPath,
+                  @NotNull final Project project,
+                  @NotNull final ProcessListener processListener,
+                  @NotNull String tempWorkingPath)
     throws ExecutionException {
     myConsole = new SimpleProcessRunnerConsole(project, processListener);
     myTask.run(myConsole);

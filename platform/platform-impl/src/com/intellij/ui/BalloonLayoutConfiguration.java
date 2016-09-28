@@ -22,6 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -48,6 +49,9 @@ public class BalloonLayoutConfiguration {
 
   public static final int FixedWidth;
   public static final int MaxWidth;
+
+  public static final int MaxFullContentWidth = JBUI.scale(350);
+  public static final String MaxFullContentWidthStyle = "width:" + MaxFullContentWidth + "px;";
 
   public static final int MinWidth = JBUI.scale(100);
 
@@ -81,10 +85,11 @@ public class BalloonLayoutConfiguration {
   public static final int NotificationSpace = JBUI.scale(10);
 
   @NotNull
-  public static BalloonLayoutConfiguration create(@NotNull Notification notification, @NotNull BalloonLayoutData layoutData) {
+  public static BalloonLayoutConfiguration create(@NotNull Notification notification,
+                                                  @NotNull BalloonLayoutData layoutData,
+                                                  boolean actions) {
     boolean title = notification.isTitle();
     boolean content = notification.isContent();
-    boolean actions = !notification.getActions().isEmpty();
     if (title && content && actions) {
       return treeLines();
     }
@@ -92,6 +97,12 @@ public class BalloonLayoutConfiguration {
       return treeLines();
     }
     return twoLines();
+  }
+
+  @NotNull
+  public BalloonLayoutConfiguration replace(int topSpaceHeight, int bottomSpaceHeight) {
+    return new BalloonLayoutConfiguration(iconPanelWidth, iconOffset, topSpaceHeight, titleContentSpaceHeight, contentActionsSpaceHeight,
+                                          titleActionsSpaceHeight, bottomSpaceHeight, actionGap, null, 0, 0, 0);
   }
 
   @NotNull
@@ -126,7 +137,7 @@ public class BalloonLayoutConfiguration {
                                      int titleActionsSpaceHeight,
                                      int bottomSpaceHeight,
                                      int actionGap,
-                                     @NotNull Dimension rightActionsOffset,
+                                     @Nullable Dimension rightActionsOffset,
                                      int afterGearSpace,
                                      int beforeCloseSpace,
                                      int beforeGearSpace) {
@@ -138,11 +149,20 @@ public class BalloonLayoutConfiguration {
     this.titleActionsSpaceHeight = titleActionsSpaceHeight;
     this.bottomSpaceHeight = bottomSpaceHeight;
     this.actionGap = actionGap;
-    this.rightActionsOffset = rightActionsOffset;
 
-    this.closeOffset = beforeCloseSpace + AllIcons.Ide.Notification.Close.getIconWidth() + rightActionsOffset.width;
-    this.gearCloseSpace = afterGearSpace + beforeCloseSpace;
-    this.allActionsOffset = closeOffset + afterGearSpace + AllIcons.Ide.Notification.Gear.getIconWidth();
-    this.beforeGearSpace = beforeGearSpace;
+    if (rightActionsOffset == null) {
+      this.rightActionsOffset = new Dimension();
+      this.closeOffset = 0;
+      this.gearCloseSpace = 0;
+      this.allActionsOffset = 0;
+      this.beforeGearSpace = 0;
+    }
+    else {
+      this.rightActionsOffset = rightActionsOffset;
+      this.closeOffset = beforeCloseSpace + AllIcons.Ide.Notification.Close.getIconWidth() + rightActionsOffset.width;
+      this.gearCloseSpace = afterGearSpace + beforeCloseSpace;
+      this.allActionsOffset = closeOffset + afterGearSpace + AllIcons.Ide.Notification.Gear.getIconWidth();
+      this.beforeGearSpace = beforeGearSpace;
+    }
   }
 }

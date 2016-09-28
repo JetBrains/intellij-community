@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,25 +75,19 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       final String[] text = messageElement.getText();
       final String id = text[0].substring(1, text[0].indexOf("]"));
       final SuppressFix suppressInspectionFix = getSuppressAction(id);
-      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = e.getProject();
       assert project != null;
       final OpenFileDescriptor navigatable = (OpenFileDescriptor)messageElement.getNavigatable();
       final PsiFile file = PsiManager.getInstance(project).findFile(navigatable.getFile());
       assert file != null;
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              try {
-                suppressInspectionFix.invoke(project, file.findElementAt(navigatable.getOffset()));
-              }
-              catch (IncorrectOperationException e1) {
-                LOG.error(e1);
-              }
-            }
-          });
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          suppressInspectionFix.invoke(project, file.findElementAt(navigatable.getOffset()));
         }
-      }, suppressInspectionFix.getText(), null);
+        catch (IncorrectOperationException e1) {
+          LOG.error(e1);
+        }
+      }), suppressInspectionFix.getText(), null);
     }
 
     @Override
@@ -101,7 +95,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       final Presentation presentation = e.getPresentation();
       presentation.setVisible(false);
       presentation.setEnabled(false);
-      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = e.getProject();
       if (project == null) {
         return;
       }

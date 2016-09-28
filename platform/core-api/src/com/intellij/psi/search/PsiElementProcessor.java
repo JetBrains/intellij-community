@@ -91,7 +91,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
 
   class CollectElementsWithLimit<T extends PsiElement> extends CollectElements<T>{
     private final AtomicInteger myCount = new AtomicInteger(0);
-    private volatile boolean myOverflow = false;
+    private volatile boolean myOverflow;
     private final int myLimit;
 
     public CollectElementsWithLimit(int limit) {
@@ -119,7 +119,7 @@ public interface PsiElementProcessor<T extends PsiElement> {
   }
 
   class FindElement<T extends PsiElement> implements PsiElementProcessor<T> {
-    private volatile T myFoundElement = null;
+    private volatile T myFoundElement;
 
     public boolean isFound() {
       return myFoundElement != null;

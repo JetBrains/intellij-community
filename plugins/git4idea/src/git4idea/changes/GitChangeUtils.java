@@ -26,6 +26,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -392,6 +394,17 @@ public class GitChangeUtils {
 
     Collection<Change> changes = new ArrayList<Change>();
     parseChanges(project, root, newRev, oldRev, output, changes, Collections.<String>emptySet());
+    return changes;
+  }
+
+  @NotNull
+  public static Collection<Change> getStagedChanges(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    diff.addParameters("--name-status", "--cached", "-M");
+    String output = diff.run();
+
+    Collection<Change> changes = new ArrayList<>();
+    parseChanges(project, root, null, GitRevisionNumber.HEAD, output, changes, Collections.emptySet());
     return changes;
   }
 

@@ -43,7 +43,7 @@ public class DiffSettingsHolder implements PersistentStateComponent<DiffSettings
   }
 
   private static class PlaceSettings {
-    @NotNull public List<String> DIFF_TOOLS_ORDER = new ArrayList<String>();
+    @NotNull public List<String> DIFF_TOOLS_ORDER = new ArrayList<>();
     public boolean SYNC_BINARY_EDITOR_SETTINGS = true;
   }
 
@@ -114,7 +114,7 @@ public class DiffSettingsHolder implements PersistentStateComponent<DiffSettings
 
   public static class State {
     @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-    public Map<String, PlaceSettings> PLACES_MAP = new HashMap<String, PlaceSettings>();
+    public Map<String, PlaceSettings> PLACES_MAP = new HashMap<>();
     public SharedSettings SHARED_SETTINGS = new SharedSettings();
   }
 

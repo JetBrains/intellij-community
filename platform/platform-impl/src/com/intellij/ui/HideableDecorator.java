@@ -157,11 +157,9 @@ public class HideableDecorator {
       newSize = new Dimension(size.width, size.height - contentSize.height);
     }
     if (!newSize.equals(size)) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (window.isShowing()) {
-            window.setSize(newSize);
-          }
+      SwingUtilities.invokeLater(() -> {
+        if (window.isShowing()) {
+          window.setSize(newSize);
         }
       });
     }

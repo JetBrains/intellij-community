@@ -153,52 +153,50 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     final Semaphore targetDone = new Semaphore();
     final boolean[] result = new boolean[]{true};
     try {
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          public void run() {
-            final Project project = CommonDataKeys.PROJECT.getData(context);
-            final MavenProject mavenProject = getMavenProject(task);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        final Project project = CommonDataKeys.PROJECT.getData(context);
+        final MavenProject mavenProject = getMavenProject(task);
 
-            if (project == null || project.isDisposed() || mavenProject == null) return;
+        if (project == null || project.isDisposed() || mavenProject == null) return;
 
-            FileDocumentManager.getInstance().saveAllDocuments();
+        FileDocumentManager.getInstance().saveAllDocuments();
 
-            final MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
-            final MavenRunner mavenRunner = MavenRunner.getInstance(project);
+        final MavenExplicitProfiles explicitProfiles = MavenProjectsManager.getInstance(project).getExplicitProfiles();
+        final MavenRunner mavenRunner = MavenRunner.getInstance(project);
 
-            targetDone.down();
-            new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
-              public void run(@NotNull ProgressIndicator indicator) {
-                try {
-                  MavenRunnerParameters params = new MavenRunnerParameters(
-                    true,
-                    mavenProject.getDirectory(),
-                    ParametersListUtil.parse(task.getGoal()),
-                    explicitProfiles.getEnabledProfiles(),
-                    explicitProfiles.getDisabledProfiles());
+        targetDone.down();
+        new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
+          public void run(@NotNull ProgressIndicator indicator) {
+            try {
+              MavenRunnerParameters params = new MavenRunnerParameters(
+                true,
+                mavenProject.getDirectory(),
+                ParametersListUtil.parse(task.getGoal()),
+                explicitProfiles.getEnabledProfiles(),
+                explicitProfiles.getDisabledProfiles());
 
-                  result[0] = mavenRunner.runBatch(Collections.singletonList(params),
-                                                null,
-                                                null,
-                                                TasksBundle.message("maven.tasks.executing"),
-                                                indicator);
-                }
-                finally {
-                  targetDone.up();
-                }
-              }
-
-              @Override
-              public boolean shouldStartInBackground() {
-                return MavenRunner.getInstance(project).getSettings().isRunMavenInBackground();
-              }
-
-              @Override
-              public void processSentToBackground() {
-                MavenRunner.getInstance(project).getSettings().setRunMavenInBackground(true);
-              }
-            }.queue();
+              result[0] = mavenRunner.runBatch(Collections.singletonList(params),
+                                            null,
+                                            null,
+                                            TasksBundle.message("maven.tasks.executing"),
+                                            indicator);
+            }
+            finally {
+              targetDone.up();
+            }
           }
-        }, ModalityState.NON_MODAL);
+
+          @Override
+          public boolean shouldStartInBackground() {
+            return MavenRunner.getInstance(project).getSettings().isRunMavenInBackground();
+          }
+
+          @Override
+          public void processSentToBackground() {
+            MavenRunner.getInstance(project).getSettings().setRunMavenInBackground(true);
+          }
+        }.queue();
+      }, ModalityState.NON_MODAL);
     }
     catch (Exception e) {
       MavenLog.LOG.error(e);

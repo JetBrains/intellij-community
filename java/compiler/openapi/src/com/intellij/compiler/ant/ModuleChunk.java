@@ -62,11 +62,7 @@ public class ModuleChunk {
 
   public ModuleChunk(Module[] modules) {
     myModules = modules;
-    Arrays.sort(myModules, new Comparator<Module>() {
-      public int compare(final Module o1, final Module o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    Arrays.sort(myModules, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
     myMainModule = myModules[0];
     myCustomCompilers = ChunkCustomCompilerExtension.getCustomCompile(this);
   }

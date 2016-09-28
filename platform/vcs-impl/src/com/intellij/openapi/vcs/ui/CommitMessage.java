@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -152,6 +153,7 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
     }
   }
 
+  @NotNull
   public String getComment() {
     final String s = myEditorField.getDocument().getCharsSequence().toString();
     int end = s.length();
@@ -164,8 +166,8 @@ public class CommitMessage extends AbstractDataProviderPanel implements Disposab
   public void requestFocusInMessage() {
     myEditorField.requestFocus();
     myEditorField.selectAll();
-  }
 
+  }
   @Override
   public boolean isCheckSpelling() {
     return myCheckSpelling;

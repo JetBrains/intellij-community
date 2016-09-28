@@ -32,7 +32,7 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getDiffSettings;
 
 public class ThreesideBinaryDiffViewer extends ThreesideDiffViewer<BinaryEditorHolder> {
-  private final TransferableFileEditorStateSupport myTransferableStateSupport;
+  @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
 
   public ThreesideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);
@@ -54,7 +54,7 @@ public class ThreesideBinaryDiffViewer extends ThreesideDiffViewer<BinaryEditorH
 
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
     group.add(myTransferableStateSupport.createToggleAction());
     group.addAll(super.createToolbarActions());
     return group;

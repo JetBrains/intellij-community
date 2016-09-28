@@ -38,36 +38,33 @@ public class EqualsAndHashcodeBase extends BaseJavaBatchLocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     final Project project = holder.getProject();
-    Pair<PsiMethod, PsiMethod> pair = CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Pair<PsiMethod, PsiMethod>>() {
-      @Override
-      public Result<Pair<PsiMethod, PsiMethod>> compute() {
-        final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
-            new Computable<PsiClass>() {
-              @Override
-              @Nullable
-              public PsiClass compute() {
-                return psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project));
-              }
+    Pair<PsiMethod, PsiMethod> pair = CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
+          new Computable<PsiClass>() {
+            @Override
+            @Nullable
+            public PsiClass compute() {
+              return psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project));
             }
-        );
-        if (psiObjectClass == null) {
-          return Result.create(null, ProjectRootManager.getInstance(project));
-        }
-        PsiMethod[] methods = psiObjectClass.getMethods();
-        PsiMethod myEquals = null;
-        PsiMethod myHashCode = null;
-        for (PsiMethod method : methods) {
-          @NonNls final String name = method.getName();
-          if ("equals".equals(name)) {
-            myEquals = method;
           }
-          else if ("hashCode".equals(name)) {
-            myHashCode = method;
-          }
-        }
-        return Result.create(Pair.create(myEquals, myHashCode), psiObjectClass);
+      );
+      if (psiObjectClass == null) {
+        return CachedValueProvider.Result.create(null, ProjectRootManager.getInstance(project));
       }
+      PsiMethod[] methods = psiObjectClass.getMethods();
+      PsiMethod myEquals = null;
+      PsiMethod myHashCode = null;
+      for (PsiMethod method : methods) {
+        @NonNls final String name = method.getName();
+        if ("equals".equals(name)) {
+          myEquals = method;
+        }
+        else if ("hashCode".equals(name)) {
+          myHashCode = method;
+        }
+      }
+      return CachedValueProvider.Result.create(Pair.create(myEquals, myHashCode), psiObjectClass);
     });
 
     if (pair == null) return new PsiElementVisitor() {};

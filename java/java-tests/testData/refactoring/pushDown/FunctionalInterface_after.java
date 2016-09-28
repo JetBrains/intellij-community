@@ -5,6 +5,6 @@ interface Base {
     }
 }
 
-class Child implements Base {
+abstract class Child implements Base {
     public abstract void bar();
 }

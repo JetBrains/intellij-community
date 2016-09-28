@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,7 +170,7 @@ public abstract class CompletionPhase implements Disposable {
       super(indicator);
       ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
         @Override
-        public void beforeWriteActionStart(Object action) {
+        public void beforeWriteActionStart(@NotNull Object action) {
           if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled()) {
             indicator.scheduleRestart();
           }
@@ -206,12 +206,7 @@ public abstract class CompletionPhase implements Disposable {
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
       indicator.closeAndFinish(false);
-      indicator.restorePrefix(new Runnable() {
-        @Override
-        public void run() {
-          indicator.getLookup().restorePrefix();
-        }
-      });
+      indicator.restorePrefix(() -> indicator.getLookup().restorePrefix());
       return indicator.nextInvocationCount(time, repeated);
     }
 

@@ -17,12 +17,10 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.util.GithubNotifications;
 
@@ -51,12 +49,7 @@ public class GithubSelectForkDialog extends DialogWrapper {
     myPanel = new GithubSelectForkPanel();
 
     if (forks != null) {
-      myPanel.setUsers(ContainerUtil.map(forks, new Function<GithubFullPath, String>() {
-        @Override
-        public String fun(GithubFullPath path) {
-          return path.getUser();
-        }
-      }));
+      myPanel.setUsers(ContainerUtil.map(forks, GithubFullPath::getUser));
     }
 
     setTitle("Select Base Fork Repository");

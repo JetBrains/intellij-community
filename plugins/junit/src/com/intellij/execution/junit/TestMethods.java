@@ -62,12 +62,7 @@ public class TestMethods extends TestMethod {
     final Project project = module.getProject();
     final SourceScope scope = getSourceScope();
     final GlobalSearchScope searchScope = scope != null ? scope.getGlobalSearchScope() : GlobalSearchScope.allScope(project);
-    addClassesListToJavaParameters(myFailedTests, new Function<AbstractTestProxy, String>() {
-      @Override
-      public String fun(AbstractTestProxy testInfo) {
-        return testInfo != null ? getTestPresentation(testInfo, project, searchScope) : null;
-      }
-    }, data.getPackageName(), true, javaParameters);
+    addClassesListToJavaParameters(myFailedTests, testInfo -> testInfo != null ? getTestPresentation(testInfo, project, searchScope) : null, data.getPackageName(), true, javaParameters);
 
     return javaParameters;
   }

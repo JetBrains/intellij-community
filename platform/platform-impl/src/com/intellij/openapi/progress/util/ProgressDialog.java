@@ -60,7 +60,7 @@ class ProgressDialog implements Disposable {
 
       if (myProgressBar.isShowing()) {
         final int perc = (int)(fraction * 100);
-        myProgressBar.setIndeterminate(perc == 0 || myProgressWindow.isIndeterminate());
+        myProgressBar.setIndeterminate(myProgressWindow.isIndeterminate());
         myProgressBar.setValue(perc);
       }
 
@@ -87,12 +87,7 @@ class ProgressDialog implements Disposable {
     return fullText;
   }
 
-  private final Runnable myUpdateRequest = new Runnable() {
-    @Override
-    public void run() {
-      update();
-    }
-  };
+  private final Runnable myUpdateRequest = () -> update();
   JPanel myPanel;
 
   private JLabel myTextLabel;
@@ -199,12 +194,9 @@ class ProgressDialog implements Disposable {
 
   void setShouldShowBackground(final boolean shouldShowBackground) {
     myShouldShowBackground = shouldShowBackground;
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myBackgroundButton.setVisible(shouldShowBackground);
-        myPanel.revalidate();
-      }
+    SwingUtilities.invokeLater(() -> {
+      myBackgroundButton.setVisible(shouldShowBackground);
+      myPanel.revalidate();
     });
   }
 
@@ -224,12 +216,7 @@ class ProgressDialog implements Disposable {
 
   void enableCancelButtonIfNeeded(final boolean enable) {
     if (myProgressWindow.myShouldShowCancel) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myCancelButton.setEnabled(enable);
-        }
-      }, ModalityState.any());
+      ApplicationManager.getApplication().invokeLater(() -> myCancelButton.setEnabled(enable), ModalityState.any());
     }
   }
 
@@ -265,12 +252,9 @@ class ProgressDialog implements Disposable {
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
-                myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
-              }
+          SwingUtilities.invokeLater(() -> {
+            if (!myUpdateAlarm.isDisposed() && myUpdateAlarm.getActiveRequestCount() == 0) {
+              myUpdateAlarm.addRequest(myUpdateRequest, 500, myProgressWindow.getModalityState());
             }
           });
         }
@@ -287,13 +271,10 @@ class ProgressDialog implements Disposable {
   }
 
   void hide() {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myPopup != null) {
-          myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
-          myPopup = null;
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (myPopup != null) {
+        myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
+        myPopup = null;
       }
     });
   }
@@ -320,19 +301,16 @@ class ProgressDialog implements Disposable {
     }
     myPopup.pack();
 
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myPopup != null) {
-          if (myPopup.getPeer() instanceof FocusTrackbackProvider) {
-            final FocusTrackback focusTrackback = ((FocusTrackbackProvider)myPopup.getPeer()).getFocusTrackback();
-            if (focusTrackback != null) {
-              focusTrackback.consume();
-            }
+    SwingUtilities.invokeLater(() -> {
+      if (myPopup != null) {
+        if (myPopup.getPeer() instanceof FocusTrackbackProvider) {
+          final FocusTrackback focusTrackback = ((FocusTrackbackProvider)myPopup.getPeer()).getFocusTrackback();
+          if (focusTrackback != null) {
+            focusTrackback.consume();
           }
-
-          myProgressWindow.getFocusManager().requestFocus(myCancelButton, true).doWhenDone(myRepaintRunnable);
         }
+
+        myProgressWindow.getFocusManager().requestFocus(myCancelButton, true).doWhenDone(myRepaintRunnable);
       }
     });
 

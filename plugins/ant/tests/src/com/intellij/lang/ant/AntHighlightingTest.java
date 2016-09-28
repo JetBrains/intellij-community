@@ -117,12 +117,7 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
 
     try {
       myIgnoreInfos = true;
-      PlatformTestUtil.startPerformanceTest("Should be quite performant !", 25000, new ThrowableRunnable() {
-        @Override
-        public void run() {
-          doDoTest(true, false);
-        }
-      }).cpuBound().useLegacyScaling().assertTiming();
+      PlatformTestUtil.startPerformanceTest("Should be quite performant !", 25000, () -> doDoTest(true, false)).cpuBound().useLegacyScaling().assertTiming();
     }
     finally {
       myIgnoreInfos = false;

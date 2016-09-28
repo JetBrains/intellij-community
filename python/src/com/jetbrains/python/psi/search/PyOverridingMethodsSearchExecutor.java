@@ -40,31 +40,29 @@ public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFuncti
       }
     );
 
-    return PyClassInheritorsSearch.search(containingClass, queryParameters.isCheckDeep()).forEach(new Processor<PyClass>() {
-      public boolean process(final PyClass pyClass) {
-        final AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-        PyFunction overridingMethod;
-        try {
-          overridingMethod = pyClass.findMethodByName(baseMethod.getName(), false, null);
-          if (overridingMethod != null) {
-            final Property baseProperty = baseMethod.getProperty();
-            final Property overridingProperty = overridingMethod.getProperty();
-            if (baseProperty != null && overridingProperty != null) {
-              final AccessDirection direction = PyUtil.getPropertyAccessDirection(baseMethod);
-              final PyCallable callable = overridingProperty.getByDirection(direction).valueOrNull();
-              overridingMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
-            }
+    return PyClassInheritorsSearch.search(containingClass, queryParameters.isCheckDeep()).forEach(pyClass -> {
+      final AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+      PyFunction overridingMethod;
+      try {
+        overridingMethod = pyClass.findMethodByName(baseMethod.getName(), false, null);
+        if (overridingMethod != null) {
+          final Property baseProperty = baseMethod.getProperty();
+          final Property overridingProperty = overridingMethod.getProperty();
+          if (baseProperty != null && overridingProperty != null) {
+            final AccessDirection direction = PyUtil.getPropertyAccessDirection(baseMethod);
+            final PyCallable callable = overridingProperty.getByDirection(direction).valueOrNull();
+            overridingMethod = (callable instanceof PyFunction) ? (PyFunction)callable : null;
           }
         }
-        finally {
-          accessToken.finish();
-        }
-        //noinspection SimplifiableIfStatement
-        if (overridingMethod != null) {
-          return consumer.process(overridingMethod);
-        }
-        return true;
       }
+      finally {
+        accessToken.finish();
+      }
+      //noinspection SimplifiableIfStatement
+      if (overridingMethod != null) {
+        return consumer.process(overridingMethod);
+      }
+      return true;
     });
   }
 }

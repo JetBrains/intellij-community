@@ -36,7 +36,10 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import git4idea.*;
+import git4idea.DialogManager;
+import git4idea.GitLocalBranch;
+import git4idea.GitRemoteBranch;
+import git4idea.GitRevisionNumber;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -80,7 +83,6 @@ public class GitPushOperation {
   private final Git myGit;
   private final ProgressIndicator myProgressIndicator;
   private final GitVcsSettings mySettings;
-  private final GitPlatformFacade myPlatformFacade;
   private final GitRepositoryManager myRepositoryManager;
 
   public GitPushOperation(@NotNull Project project,
@@ -96,7 +98,6 @@ public class GitPushOperation {
     myGit = ServiceManager.getService(Git.class);
     myProgressIndicator = ObjectUtils.notNull(ProgressManager.getInstance().getProgressIndicator(), new EmptyProgressIndicator());
     mySettings = GitVcsSettings.getInstance(myProject);
-    myPlatformFacade = ServiceManager.getService(project, GitPlatformFacade.class);
     myRepositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
 
     Map<GitRepository, GitRevisionNumber> currentHeads = ContainerUtil.newHashMap();
@@ -437,7 +438,7 @@ public class GitPushOperation {
   protected GitUpdateResult update(@NotNull Collection<GitRepository> rootsToUpdate,
                                    @NotNull UpdateMethod updateMethod,
                                    boolean checkForRebaseOverMergeProblem) {
-    GitUpdateResult updateResult = new GitUpdateProcess(myProject, myPlatformFacade, myProgressIndicator,
+    GitUpdateResult updateResult = new GitUpdateProcess(myProject, myProgressIndicator,
                                                         new HashSet<GitRepository>(rootsToUpdate), UpdatedFiles.create(),
                                                         checkForRebaseOverMergeProblem).update(updateMethod);
     for (GitRepository repository : rootsToUpdate) {

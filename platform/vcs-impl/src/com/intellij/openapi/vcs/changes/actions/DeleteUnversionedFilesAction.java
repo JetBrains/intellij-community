@@ -49,6 +49,6 @@ public class DeleteUnversionedFilesAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     DeleteProvider deleteProvider = e.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER);
-    e.getPresentation().setVisible(deleteProvider != null && deleteProvider.canDeleteElement(e.getDataContext()));
+    e.getPresentation().setEnabled(deleteProvider != null && deleteProvider.canDeleteElement(e.getDataContext()));
   }
 }

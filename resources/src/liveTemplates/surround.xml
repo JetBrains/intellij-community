@@ -73,14 +73,4 @@
     </context>
   </template>
 
-  <template name="TR" value="try ($ELEMENT_TYPE$ $VAR$ = $SELECTION$) {&#10;  $END$&#10;}&#10;"
-            resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.surround.with.ARM" toReformat="true" toShortenFQNames="true">
-    <variable name="ELEMENT_TYPE" expression="expressionType(SELECTION)" defaultValue="java.lang.AutoCloseable" alwaysStopAt="false" />
-    <variable name="VAR" expression="suggestVariableName()" defaultValue="" alwaysStopAt="true" />
-    <context>
-      <option name="JAVA_CODE" value="false" />
-      <option name="JAVA_STATEMENT" value="true" />
-    </context>
-  </template>
-
 </templateSet>

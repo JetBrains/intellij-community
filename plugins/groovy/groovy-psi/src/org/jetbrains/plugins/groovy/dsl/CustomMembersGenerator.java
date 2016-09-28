@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.dsl.holders.DeclarationType;
 import org.jetbrains.plugins.groovy.dsl.holders.NonCodeMembersHolder;
 import org.jetbrains.plugins.groovy.dsl.toplevel.ClassContextFilter;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.extensions.impl.NamedArgumentDescriptorImpl;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -196,12 +197,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
       if (argTypes == null) return;
 
       String[] types = new String[argTypes.length];
-      ContainerUtil.map(argTypes, new Function<PsiType, Object>() {
-        @Override
-        public Object fun(PsiType type) {
-          return type.getCanonicalText();
-        }
-      }, types);
+      ContainerUtil.map(argTypes, (Function<PsiType, Object>)type -> type.getCanonicalText(), types);
 
       generator.setDelegate(this);
 
@@ -339,13 +335,13 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
       name = (String)args.get("name");
       final String typeText = stringifyType(args.get("type"));
       Object doc = args.get("doc");
-      descriptor = new NamedArgumentDescriptor(new GdslNamedParameter(name, doc instanceof String ? (String)doc : null, context, typeText)) {
+      GdslNamedParameter parameter = new GdslNamedParameter(name, doc instanceof String ? (String)doc : null, context, typeText);
+      descriptor = new NamedArgumentDescriptorImpl(NamedArgumentDescriptor.Priority.ALWAYS_ON_TOP, parameter) {
         @Override
         public boolean checkType(@NotNull PsiType type, @NotNull GroovyPsiElement context) {
           return typeText == null || ClassContextFilter.isSubtype(type, context.getContainingFile(), typeText);
         }
       };
-      descriptor.setPriority(NamedArgumentDescriptor.Priority.ALWAYS_ON_TOP);
     }
 
   }

@@ -103,13 +103,8 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     MultiMap.create(TObjectHashingStrategy.IDENTITY);
 
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
-  private final CachedValue<SelectionState> selectionState = new CachedValueImpl<SelectionState>(new CachedValueProvider<SelectionState>() {
-    @Nullable
-    @Override
-    public Result<SelectionState> compute() {
-      return Result.createSingleDependency(getSelectionStatus(), myModificationTracker);
-    }
-  });
+  private final CachedValue<SelectionState> selectionState = new CachedValueImpl<SelectionState>(
+    () -> CachedValueProvider.Result.createSingleDependency(getSelectionStatus(), myModificationTracker));
 
   private boolean myShowSelectedRowsOnly;
   private int myModulesCount;
@@ -204,43 +199,32 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     final DataNode<ProjectData> projectStructure = myProjectInfo.getExternalProjectStructure();
     if (projectStructure != null) {
       final boolean[] isModified = {false};
-      ExternalSystemApiUtil.visit(projectStructure, new Consumer<DataNode<?>>() {
-        @Override
-        public void consume(DataNode<?> node) {
-          final DataNode modifiedDataNode = node.getUserData(MODIFIED_NODE_KEY);
-          if (modifiedDataNode != null) {
-            if (node.isIgnored() != modifiedDataNode.isIgnored()) {
-              node.setIgnored(modifiedDataNode.isIgnored());
-              isModified[0] = true;
-            }
-            node.removeUserData(MODIFIED_NODE_KEY);
-            node.removeUserData(CONNECTED_UI_NODE_KEY);
+      ExternalSystemApiUtil.visit(projectStructure, node -> {
+        final DataNode modifiedDataNode = node.getUserData(MODIFIED_NODE_KEY);
+        if (modifiedDataNode != null) {
+          if (node.isIgnored() != modifiedDataNode.isIgnored()) {
+            node.setIgnored(modifiedDataNode.isIgnored());
+            isModified[0] = true;
           }
+          node.removeUserData(MODIFIED_NODE_KEY);
+          node.removeUserData(CONNECTED_UI_NODE_KEY);
         }
       });
       if (isModified[0]) {
-        DataNode<?> notIgnoredNode = ContainerUtil.find(projectStructure.getChildren(), new Condition<DataNode<?>>() {
-          @Override
-          public boolean value(DataNode<?> node) {
-            return !node.isIgnored();
-          }
-        });
+        DataNode<?> notIgnoredNode = ContainerUtil.find(projectStructure.getChildren(), node -> !node.isIgnored());
         projectStructure.setIgnored(notIgnoredNode == null);
 
         // execute when current dialog is closed
-        ExternalSystemUtil.invokeLater(myProject, ModalityState.NON_MODAL, new Runnable() {
-          @Override
-          public void run() {
-            final ProjectData projectData = projectStructure.getData();
-            String title = ExternalSystemBundle.message(
-              "progress.refresh.text", projectData.getExternalName(), projectData.getOwner().getReadableName());
-            new Task.Backgroundable(myProject, title, true, PerformInBackgroundOption.DEAF) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, false);
-              }
-            }.queue();
-          }
+        ExternalSystemUtil.invokeLater(myProject, ModalityState.NON_MODAL, () -> {
+          final ProjectData projectData = projectStructure.getData();
+          String title = ExternalSystemBundle.message(
+            "progress.refresh.text", projectData.getExternalName(), projectData.getOwner().getReadableName());
+          new Task.Backgroundable(myProject, title, true, PerformInBackgroundOption.DEAF) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              ServiceManager.getService(ProjectDataManager.class).importData(projectStructure, myProject, false);
+            }
+          }.queue();
         });
       }
     }
@@ -250,12 +234,9 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   @Override
   public void doCancelAction() {
-    ExternalSystemApiUtil.visit(myProjectInfo.getExternalProjectStructure(), new Consumer<DataNode<?>>() {
-      @Override
-      public void consume(DataNode<?> node) {
-        node.removeUserData(MODIFIED_NODE_KEY);
-        node.removeUserData(CONNECTED_UI_NODE_KEY);
-      }
+    ExternalSystemApiUtil.visit(myProjectInfo.getExternalProjectStructure(), node -> {
+      node.removeUserData(MODIFIED_NODE_KEY);
+      node.removeUserData(CONNECTED_UI_NODE_KEY);
     });
 
     super.doCancelAction();
@@ -296,12 +277,9 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
             //noinspection unchecked
             final String listOfUncheckedDependencies =
               StringUtil
-                .join(dependentNodeMap.get((DataNode<Identifiable>)node.myDataNode), new Function<DataNode<Identifiable>, String>() {
-                  @Override
-                  public String fun(final DataNode<Identifiable> depNode) {
-                    final DataNodeCheckedTreeNode uiNode = depNode.getUserData(CONNECTED_UI_NODE_KEY);
-                    return uiNode != null && !uiNode.isChecked() ? depNode.getData().getId() : null;
-                  }
+                .join(dependentNodeMap.get((DataNode<Identifiable>)node.myDataNode), depNode -> {
+                  final DataNodeCheckedTreeNode uiNode = depNode.getUserData(CONNECTED_UI_NODE_KEY);
+                  return uiNode != null && !uiNode.isChecked() ? depNode.getData().getId() : null;
                 }, "<br>");
             if (StringUtil.isNotEmpty(listOfUncheckedDependencies)) {
               hasErrors = true;
@@ -359,46 +337,43 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
     final int[] modulesCount = {0};
 
-    ExternalSystemApiUtil.visit(myProjectInfo.getExternalProjectStructure(), new Consumer<DataNode<?>>() {
-      @Override
-      public void consume(DataNode<?> node) {
-        final Key key = node.getKey();
-        if (!myPublicKeys.contains(key)) return;
+    ExternalSystemApiUtil.visit(myProjectInfo.getExternalProjectStructure(), node -> {
+      final Key key = node.getKey();
+      if (!myPublicKeys.contains(key)) return;
 
-        DataNode modifiableDataNode = getModifiableDataNode(node);
+      DataNode modifiableDataNode = getModifiableDataNode(node);
+
+      if (myDependencyAwareDataKeys.contains(key)) {
+        modulesCount[0]++;
+      }
+
+      if (modifiableDataNode.isIgnored() && myShowSelectedRowsOnly) return;
+
+      DataNodeCheckedTreeNode treeNode = treeNodeMap.get(node);
+      if (treeNode == null) {
+        treeNode = new DataNodeCheckedTreeNode(node);
 
         if (myDependencyAwareDataKeys.contains(key)) {
-          modulesCount[0]++;
+          final Identifiable moduleData = (Identifiable)node.getData();
+          //noinspection unchecked
+          modulesNodeMap.put(moduleData.getId(), (DataNode<Identifiable>)node);
         }
 
-        if (modifiableDataNode.isIgnored() && myShowSelectedRowsOnly) return;
-
-        DataNodeCheckedTreeNode treeNode = treeNodeMap.get(node);
-        if (treeNode == null) {
-          treeNode = new DataNodeCheckedTreeNode(node);
-
-          if (myDependencyAwareDataKeys.contains(key)) {
-            final Identifiable moduleData = (Identifiable)node.getData();
-            //noinspection unchecked
-            modulesNodeMap.put(moduleData.getId(), (DataNode<Identifiable>)node);
+        if (myPreselectedNodeObject != null && myPreselectedNodeObject.equals(node.getData())) {
+          preselectedNode[0] = treeNode;
+        }
+        if (node.getData() instanceof ModuleData) {
+          if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(((ModuleData)node.getData()).getLinkedExternalProjectPath())) {
+            rootModuleNode[0] = treeNode;
           }
-
-          if (myPreselectedNodeObject != null && myPreselectedNodeObject.equals(node.getData())) {
-            preselectedNode[0] = treeNode;
-          }
-          if (node.getData() instanceof ModuleData) {
-            if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(((ModuleData)node.getData()).getLinkedExternalProjectPath())) {
-              rootModuleNode[0] = treeNode;
-            }
-          }
-          treeNode.setEnabled(myIgnorableKeys.contains(key));
-          treeNodeMap.put(node, treeNode);
-          final DataNode parent = node.getParent();
-          if (parent != null) {
-            final CheckedTreeNode parentTreeNode = treeNodeMap.get(parent);
-            if (parentTreeNode != null) {
-              parentTreeNode.add(treeNode);
-            }
+        }
+        treeNode.setEnabled(myIgnorableKeys.contains(key));
+        treeNodeMap.put(node, treeNode);
+        final DataNode parent = node.getParent();
+        if (parent != null) {
+          final CheckedTreeNode parentTreeNode = treeNodeMap.get(parent);
+          if (parentTreeNode != null) {
+            parentTreeNode.add(treeNode);
           }
         }
       }
@@ -411,12 +386,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       final Collection<String> moduleDependencies = moduleDependenciesMap.get(moduleId);
       final DataNode<Identifiable> moduleNode = modulesNodeMap.get(moduleId);
       if (moduleNode != null) {
-        dependentNodeMap.putValues(moduleNode, ContainerUtil.mapNotNull(moduleDependencies, new Function<String, DataNode<Identifiable>>() {
-          @Override
-          public DataNode<Identifiable> fun(String s) {
-            return modulesNodeMap.get(s);
-          }
-        }));
+        dependentNodeMap.putValues(moduleNode, ContainerUtil.mapNotNull(moduleDependencies, s -> modulesNodeMap.get(s)));
       }
     }
 
@@ -529,21 +499,15 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (moduleNode != null) {
           moduleNode.isChecked = true;
         }
-        ExternalSystemApiUtil.visit(moduleNode == null ? myDataNode : moduleNode.myDataNode, new Consumer<DataNode<?>>() {
-          @Override
-          public void consume(DataNode node) {
-            final DataNode modifiedDataNode = getModifiableDataNode(node);
-            modifiedDataNode.setIgnored(false);
-          }
+        ExternalSystemApiUtil.visit(moduleNode == null ? myDataNode : moduleNode.myDataNode, node -> {
+          final DataNode modifiedDataNode = getModifiableDataNode(node);
+          modifiedDataNode.setIgnored(false);
         });
       }
       else {
-        ExternalSystemApiUtil.visit(myDataNode, new Consumer<DataNode<?>>() {
-          @Override
-          public void consume(DataNode node) {
-            final DataNode modifiedDataNode = getModifiableDataNode(node);
-            modifiedDataNode.setIgnored(true);
-          }
+        ExternalSystemApiUtil.visit(myDataNode, node -> {
+          final DataNode modifiedDataNode = getModifiableDataNode(node);
+          modifiedDataNode.setIgnored(true);
         });
         if (myShowSelectedRowsOnly) {
           final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
@@ -595,12 +559,9 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       final Set<DataNode<Identifiable>> deps = ContainerUtil.newHashSet();
       for (DataNode<Identifiable> selectedModule : selectedModules) {
         if (checked) {
-          deps.addAll(ContainerUtil.filter(dependentNodeMap.get(selectedModule), new Condition<DataNode<Identifiable>>() {
-            @Override
-            public boolean value(DataNode<Identifiable> node) {
-              final DataNodeCheckedTreeNode uiNode = node.getUserData(CONNECTED_UI_NODE_KEY);
-              return uiNode != null && !uiNode.isChecked();
-            }
+          deps.addAll(ContainerUtil.filter(dependentNodeMap.get(selectedModule), node -> {
+            final DataNodeCheckedTreeNode uiNode = node.getUserData(CONNECTED_UI_NODE_KEY);
+            return uiNode != null && !uiNode.isChecked();
           }));
         }
         else {
@@ -617,19 +578,9 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       }
 
       if (!deps.isEmpty() && !selectedModules.isEmpty()) {
-        final String listOfSelectedModules = StringUtil.join(selectedModules, new Function<DataNode<Identifiable>, String>() {
-          @Override
-          public String fun(DataNode<Identifiable> node) {
-            return node.getData().getId();
-          }
-        }, ", ");
+        final String listOfSelectedModules = StringUtil.join(selectedModules, node -> node.getData().getId(), ", ");
 
-        final String listOfDependencies = StringUtil.join(deps, new Function<DataNode<Identifiable>, String>() {
-          @Override
-          public String fun(final DataNode<Identifiable> node) {
-            return node.getData().getId();
-          }
-        }, "<br>");
+        final String listOfDependencies = StringUtil.join(deps, node -> node.getData().getId(), "<br>");
 
         final String message;
         if (!checked) {
@@ -647,12 +598,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
         if (Messages.showOkCancelDialog(message, checked ? "Enable Dependant Modules" : "Disable Modules with Dependency on this",
                                         Messages.getQuestionIcon()) == Messages.OK) {
           List<DataNodeCheckedTreeNode> nodes =
-            ContainerUtil.mapNotNull(deps, new Function<DataNode<Identifiable>, DataNodeCheckedTreeNode>() {
-              @Override
-              public DataNodeCheckedTreeNode fun(DataNode<Identifiable> node) {
-                return node.getUserData(CONNECTED_UI_NODE_KEY);
-              }
-            });
+            ContainerUtil.mapNotNull(deps, node -> node.getUserData(CONNECTED_UI_NODE_KEY));
 
           for (DataNodeCheckedTreeNode node : nodes) {
             DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();

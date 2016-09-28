@@ -155,12 +155,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
 
   @Override
   public void reset() {
-    UiNotifyConnector.doWhenFirstShown(getPluginTable(), new Runnable() {
-      @Override
-      public void run() {
-        loadAvailablePlugins();
-      }
-    });
+    UiNotifyConnector.doWhenFirstShown(getPluginTable(), () -> loadAvailablePlugins());
     super.reset();
   }
 

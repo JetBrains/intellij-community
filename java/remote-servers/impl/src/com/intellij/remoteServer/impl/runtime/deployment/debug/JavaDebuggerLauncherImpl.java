@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.debugger.DebugEnvironment;
 import com.intellij.debugger.DebugUIEnvironment;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessAdapter;
+import com.intellij.debugger.engine.DebugProcessListener;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.execution.DefaultExecutionResult;
@@ -69,7 +69,7 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
     if (serverMode) {
       serverModeHandler.attachRemote();
       DebuggerManager.getInstance(executionEnvironment.getProject())
-        .addDebugProcessListener(processHandler, new DebugProcessAdapter() {
+        .addDebugProcessListener(processHandler, new DebugProcessListener() {
           public void processDetached(DebugProcess process, boolean closedByUser) {
             try {
               serverModeHandler.detachRemote();
@@ -159,8 +159,8 @@ public class JavaDebuggerLauncherImpl extends JavaDebuggerLauncher {
     }
 
     @Override
-    public boolean isPollConnection() {
-      return true;
+    public long getPollTimeout() {
+      return LOCAL_START_TIMEOUT;
     }
 
     @Override

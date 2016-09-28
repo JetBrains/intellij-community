@@ -365,11 +365,6 @@ public class DefaultFunctionContext extends AbstractFunctionContext {
   }
 
   public static FunctionContext getInstance(final ContextType type) {
-    return AbstractFunctionContext.getInstance(type, new Factory<FunctionContext>() {
-      @Override
-      public FunctionContext create() {
-        return new DefaultFunctionContext(type);
-      }
-    });
+    return AbstractFunctionContext.getInstance(type, () -> new DefaultFunctionContext(type));
   }
 }

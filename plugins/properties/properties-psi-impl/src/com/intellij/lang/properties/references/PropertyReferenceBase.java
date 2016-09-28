@@ -154,12 +154,10 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       }
     }
     // put default properties file first
-    ContainerUtil.quickSort(properties, new Comparator<IProperty>() {
-      public int compare(final IProperty o1, final IProperty o2) {
-        String name1 = o1.getPropertiesFile().getName();
-        String name2 = o2.getPropertiesFile().getName();
-        return Comparing.compare(name1, name2);
-      }
+    ContainerUtil.quickSort(properties, (o1, o2) -> {
+      String name1 = o1.getPropertiesFile().getName();
+      String name2 = o2.getPropertiesFile().getName();
+      return Comparing.compare(name1, name2);
     });
     return getResolveResults(properties);
   }

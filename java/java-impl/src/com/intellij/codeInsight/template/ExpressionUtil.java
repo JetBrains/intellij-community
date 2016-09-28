@@ -50,16 +50,13 @@ import org.jetbrains.annotations.Nullable;
      }
      else{
        final PsiFile fileCopy = (PsiFile)file.copy();
-       ApplicationManager.getApplication().runWriteAction(new Runnable() {
-         @Override
-         public void run() {
-           BlockSupport blockSupport = BlockSupport.getInstance(project);
-           try{
-             blockSupport.reparseRange(fileCopy, offset, offset, "xxx");
-           }
-           catch(IncorrectOperationException e){
-             LOG.error(e);
-           }
+       ApplicationManager.getApplication().runWriteAction(() -> {
+         BlockSupport blockSupport = BlockSupport.getInstance(project);
+         try{
+           blockSupport.reparseRange(fileCopy, offset, offset, "xxx");
+         }
+         catch(IncorrectOperationException e){
+           LOG.error(e);
          }
        });
        PsiElement identifierCopy = fileCopy.findElementAt(offset);

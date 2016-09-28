@@ -16,7 +16,9 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.FList;
@@ -154,30 +156,36 @@ public class DebugReflectionUtil {
 
     @Override
     public String toString() {
-      BackLink backLink = this;
-      String result = "";
-      while (backLink != null) {
-        String valueStr;
-        AccessToken token = ReadAction.start();
-        try {
-          valueStr = backLink.value instanceof FList
-                     ? "FList (size="+((FList)backLink.value).size()+")" :
-                     backLink.value instanceof Collection ? "Collection (size="+((Collection)backLink.value).size()+")" :
-                     String.valueOf(backLink.value);
-          valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
+      return
+      ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
+        public String compute() {
+          String result = "";
+          BackLink backLink = BackLink.this;
+          while (backLink != null) {
+            String valueStr;
+            AccessToken token = ReadAction.start();
+            try {
+              valueStr = backLink.value instanceof FList
+                         ? "FList (size=" + ((FList)backLink.value).size() + ")" :
+                         backLink.value instanceof Collection ? "Collection (size=" + ((Collection)backLink.value).size() + ")" :
+                         String.valueOf(backLink.value);
+              valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
+            }
+            catch (Throwable e) {
+              valueStr = "(" + e.getMessage() + " while computing .toString())";
+            }
+            finally {
+              token.finish();
+            }
+            Field field = backLink.field;
+            String fieldName = field == null ? "?" : field.getDeclaringClass().getName() + "." + field.getName();
+            result += "via '" + fieldName + "'; Value: '" + valueStr + "' of " + backLink.value.getClass() + "\n";
+            backLink = backLink.backLink;
+          }
+          return result;
         }
-        catch (Throwable e) {
-          valueStr = "(" + e.getMessage() + " while computing .toString())";
-        }
-        finally {
-          token.finish();
-        }
-        Field field = backLink.field;
-        String fieldName = field == null ? "?" : field.getDeclaringClass().getName()+"."+field.getName();
-        result += "via '" + fieldName + "'; Value: '" + valueStr + "' of " + backLink.value.getClass() + "\n";
-        backLink = backLink.backLink;
-      }
-      return result;
+      });
     }
   }
 }

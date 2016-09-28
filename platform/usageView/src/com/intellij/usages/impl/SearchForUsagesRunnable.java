@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,8 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -136,15 +136,12 @@ class SearchForUsagesRunnable implements Runnable {
                             + UsageViewBundle.message("large.files.were.ignored", largeFiles.size()) + "</a>)";
 
       resultLines.add(shortMessage);
-      resultListener = addHrefHandling(resultListener, LARGE_FILES_HREF_TARGET, new Runnable() {
-        @Override
-        public void run() {
-          String detailedMessage = detailedLargeFilesMessage(largeFiles);
-          List<String> strings = new ArrayList<String>(lines);
-          strings.add(detailedMessage);
-          //noinspection SSBasedInspection
-          ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.FIND, info, wrapInHtml(strings), AllIcons.Actions.Find, listener);
-        }
+      resultListener = addHrefHandling(resultListener, LARGE_FILES_HREF_TARGET, () -> {
+        String detailedMessage = detailedLargeFilesMessage(largeFiles);
+        List<String> strings = new ArrayList<String>(lines);
+        strings.add(detailedMessage);
+        //noinspection SSBasedInspection
+        ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.FIND, info, wrapInHtml(strings), AllIcons.Actions.Find, listener);
       });
     }
 
@@ -269,7 +266,7 @@ class SearchForUsagesRunnable implements Runnable {
 
     RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6);
     List<Segment> segments = new ArrayList<Segment>();
-    CommonProcessors.CollectProcessor<Segment> processor = new CommonProcessors.CollectProcessor<Segment>(segments);
+    Processor<Segment> processor = Processors.cancelableCollectProcessor(segments);
     usageInfo.processRangeMarkers(processor);
     rangeBlinker.resetMarkers(segments);
     rangeBlinker.startBlinking();
@@ -287,12 +284,7 @@ class SearchForUsagesRunnable implements Runnable {
         final Usage firstUsage = myFirstUsage.get();
         if (firstUsage != null) {
           final UsageViewImpl finalUsageView = usageView;
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              finalUsageView.appendUsage(firstUsage);
-            }
-          });
+          ApplicationManager.getApplication().runReadAction(() -> finalUsageView.appendUsage(firstUsage));
         }
       }
       else {
@@ -304,16 +296,13 @@ class SearchForUsagesRunnable implements Runnable {
   }
 
   private void openView(@NotNull final UsageViewImpl usageView) {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        myUsageViewManager.addContent(usageView, myPresentation);
-        if (myListener != null) {
-          myListener.usageViewCreated(usageView);
-        }
-        myUsageViewManager.showToolWindow(false);
+    SwingUtilities.invokeLater(() -> {
+      if (myProject.isDisposed()) return;
+      myUsageViewManager.addContent(usageView, myPresentation);
+      if (myListener != null) {
+        myListener.usageViewCreated(usageView);
       }
+      myUsageViewManager.showToolWindow(false);
     });
   }
 
@@ -333,72 +322,53 @@ class SearchForUsagesRunnable implements Runnable {
     assert indicator != null : "must run find usages under progress";
     TooManyUsagesStatus.createFor(indicator);
     Alarm findUsagesStartedBalloon = new Alarm();
-    findUsagesStartedBalloon.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation, myProject,
-                            Collections.singletonList(StringUtil.escapeXml(UsageViewManagerImpl.getProgressTitle(myPresentation))));
-        findStartedBalloonShown.set(true);
-      }
+    findUsagesStartedBalloon.addRequest(() -> {
+      notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation, myProject,
+                          Collections.singletonList(StringUtil.escapeXml(UsageViewManagerImpl.getProgressTitle(myPresentation))));
+      findStartedBalloonShown.set(true);
     }, 300, ModalityState.NON_MODAL);
     UsageSearcher usageSearcher = mySearcherFactory.create();
 
-    usageSearcher.generate(new Processor<Usage>() {
-      @Override
-      public boolean process(final Usage usage) {
-        ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
-        assert indicator != null : "must run find usages under progress";
-        if (indicator.isCanceled()) return false;
+    usageSearcher.generate(usage -> {
+      ProgressIndicator indicator1 = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
+      assert indicator1 != null : "must run find usages under progress";
+      if (indicator1.isCanceled()) return false;
 
-        if (!UsageViewManagerImpl.isInScope(usage, mySearchScopeToWarnOfFallingOutOf)) {
-          myOutOfScopeUsages.incrementAndGet();
-          return true;
-        }
-
-        boolean incrementCounter = !UsageViewManager.isSelfUsage(usage, mySearchFor);
-
-        if (incrementCounter) {
-          final int usageCount = myUsageCountWithoutDefinition.incrementAndGet();
-          if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-            myFirstUsage.compareAndSet(null, usage);
-          }
-
-          final UsageViewImpl usageView = getUsageView(indicator);
-
-          TooManyUsagesStatus tooManyUsagesStatus;
-          if (usageCount > UsageLimitUtil.USAGES_LIMIT && (tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator)).switchTooManyUsagesStatus()) {
-            UsageViewManagerImpl.showTooManyUsagesWarning(myProject, tooManyUsagesStatus, indicator, myPresentation, usageCount, usageView);
-          }
-
-          if (usageView != null) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                usageView.appendUsage(usage);
-              }
-            });
-          }
-        }
-        return !indicator.isCanceled();
+      if (!UsageViewManagerImpl.isInScope(usage, mySearchScopeToWarnOfFallingOutOf)) {
+        myOutOfScopeUsages.incrementAndGet();
+        return true;
       }
+
+      boolean incrementCounter = !UsageViewManager.isSelfUsage(usage, mySearchFor);
+
+      if (incrementCounter) {
+        final int usageCount = myUsageCountWithoutDefinition.incrementAndGet();
+        if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
+          myFirstUsage.compareAndSet(null, usage);
+        }
+
+        final UsageViewImpl usageView = getUsageView(indicator1);
+
+        TooManyUsagesStatus tooManyUsagesStatus;
+        if (usageCount > UsageLimitUtil.USAGES_LIMIT && (tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator1)).switchTooManyUsagesStatus()) {
+          UsageViewManagerImpl.showTooManyUsagesWarning(myProject, tooManyUsagesStatus, indicator1, myPresentation, usageCount, usageView);
+        }
+
+        if (usageView != null) {
+          ApplicationManager.getApplication().runReadAction(() -> usageView.appendUsage(usage));
+        }
+      }
+      return !indicator1.isCanceled();
     });
     if (getUsageView(indicator) != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          myUsageViewManager.showToolWindow(true);
-        }
-      }, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
     }
     Disposer.dispose(findUsagesStartedBalloon);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (findStartedBalloonShown.get()) {
-          Balloon balloon = ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND);
-          if (balloon != null) {
-            balloon.hide();
-          }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (findStartedBalloonShown.get()) {
+        Balloon balloon = ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND);
+        if (balloon != null) {
+          balloon.hide();
         }
       }
     }, myProject.getDisposed());
@@ -459,26 +429,23 @@ class SearchForUsagesRunnable implements Runnable {
         }, ModalityState.NON_MODAL, myProject.getDisposed());
     }
     else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Usage usage = myFirstUsage.get();
-          if (usage.canNavigate()) {
-            usage.navigate(true);
-            flashUsageScriptaculously(usage);
-          }
-          List<String> lines = new ArrayList<String>();
-
-          lines.add("Only one usage found.");
-          if (myOutOfScopeUsages.get() != 0) {
-            lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
-          }
-          lines.add(createOptionsHtml(mySearchFor));
-          MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
-          notifyByFindBalloon(createGotToOptionsListener(mySearchFor),
-                              type, myProcessPresentation, myProject,
-                              lines);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Usage usage = myFirstUsage.get();
+        if (usage.canNavigate()) {
+          usage.navigate(true);
+          flashUsageScriptaculously(usage);
         }
+        List<String> lines = new ArrayList<String>();
+
+        lines.add("Only one usage found.");
+        if (myOutOfScopeUsages.get() != 0) {
+          lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
+        }
+        lines.add(createOptionsHtml(mySearchFor));
+        MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
+        notifyByFindBalloon(createGotToOptionsListener(mySearchFor),
+                            type, myProcessPresentation, myProject,
+                            lines);
       }, ModalityState.NON_MODAL, myProject.getDisposed());
     }
     else {
@@ -502,12 +469,9 @@ class SearchForUsagesRunnable implements Runnable {
       if (!myProcessPresentation.getLargeFiles().isEmpty() ||
           myOutOfScopeUsages.get() != 0 ||
           myProcessPresentation.searchIncludingProjectFileUsages() != null) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
-            notifyByFindBalloon(hyperlinkListener, type, myProcessPresentation, myProject, lines);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
+          notifyByFindBalloon(hyperlinkListener, type, myProcessPresentation, myProject, lines);
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
     }

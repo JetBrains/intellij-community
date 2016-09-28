@@ -33,6 +33,7 @@ public class EditArrangementRuleAction extends AbstractArrangementRuleAction imp
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.edit.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.edit.description"));
     getTemplatePresentation().setIcon(IconUtil.getEditIcon());
+    setEnabledInModalContext(true);
   }
 
   @Override

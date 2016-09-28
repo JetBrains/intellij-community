@@ -160,7 +160,7 @@ public class PsiPolyExpressionUtil {
   }
 
   private enum ConditionalKind {
-    BOOLEAN, NUMERIC
+    BOOLEAN, NUMERIC, NULL
   }
 
   private static ConditionalKind isBooleanOrNumeric(PsiExpression expr) {
@@ -192,14 +192,18 @@ public class PsiPolyExpressionUtil {
       final PsiExpression elseExpression = ((PsiConditionalExpression)expr).getElseExpression();
       final ConditionalKind thenKind = isBooleanOrNumeric(thenExpression);
       final ConditionalKind elseKind = isBooleanOrNumeric(elseExpression);
-      if (thenKind == elseKind || elseKind == null) return thenKind;
-      if (thenKind == null) return elseKind;
+      if (thenKind == elseKind || elseKind == ConditionalKind.NULL) return thenKind;
+      if (thenKind == ConditionalKind.NULL) return elseKind;
     }
     return null;
   }
 
   @Nullable
   private static ConditionalKind isBooleanOrNumericType(PsiType type) {
+    if (type == PsiType.NULL) {
+      return ConditionalKind.NULL;
+    }
+
     final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (TypeConversionUtil.isNumericType(type)) return ConditionalKind.NUMERIC;
     if (TypeConversionUtil.isBooleanType(type)) return ConditionalKind.BOOLEAN;

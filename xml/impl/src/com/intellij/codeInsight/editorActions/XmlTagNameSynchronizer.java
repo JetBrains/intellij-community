@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,12 +119,7 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
     if (!WebEditorOptions.getInstance().isSyncTagEditing() || document == null) return TagNameSynchronizer.EMPTY;
     final Editor[] editors = EditorFactory.getInstance().getEditors(document);
 
-    return ContainerUtil.mapNotNull(editors, new Function<Editor, TagNameSynchronizer>() {
-      @Override
-      public TagNameSynchronizer fun(Editor editor) {
-        return editor.getUserData(SYNCHRONIZER_KEY);
-      }
-    }, TagNameSynchronizer.EMPTY);
+    return ContainerUtil.mapNotNull(editors, editor -> editor.getUserData(SYNCHRONIZER_KEY), TagNameSynchronizer.EMPTY);
   }
 
   @Override
@@ -297,27 +292,23 @@ public class XmlTagNameSynchronizer extends CommandAdapter implements NamedCompo
       myState = State.APPLYING;
 
       final Document document = myEditor.getDocument();
-      final Runnable apply = new Runnable() {
-        @Override
-        public void run() {
-          for (Couple<RangeMarker> couple : myMarkers) {
-            final RangeMarker leader = couple.first;
-            final RangeMarker support = couple.second;
-            final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
+      final Runnable apply = () -> {
+        for (Couple<RangeMarker> couple : myMarkers) {
+          final RangeMarker leader = couple.first;
+          final RangeMarker support = couple.second;
+          final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
+          if (!name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
             document.replaceString(support.getStartOffset(), support.getEndOffset(), name);
           }
         }
       };
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-          if (lookup != null) {
-            lookup.performGuardedChange(apply);
-          }
-          else {
-            apply.run();
-          }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+        if (lookup != null) {
+          lookup.performGuardedChange(apply);
+        }
+        else {
+          apply.run();
         }
       });
 

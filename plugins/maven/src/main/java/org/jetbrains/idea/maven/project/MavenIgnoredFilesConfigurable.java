@@ -78,11 +78,7 @@ public class MavenIgnoredFilesConfigurable implements SearchableConfigurable, Co
     MavenUIUtil.setElements(myIgnoredFilesPathsChooser,
                             MavenUtil.collectPaths(myManager.getProjectsFiles()),
                             myOriginallyIgnoredFilesPaths,
-                            new Comparator<String>() {
-                              public int compare(String o1, String o2) {
-                                return FileUtil.comparePaths(o1, o2);
-                              }
-                            });
+                            (o1, o2) -> FileUtil.comparePaths(o1, o2));
     myIgnoredFilesPattersEditor.setText(myOriginallyIgnoredFilesPatterns);
   }
 

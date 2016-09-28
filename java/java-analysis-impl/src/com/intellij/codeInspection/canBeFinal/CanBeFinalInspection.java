@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ import java.awt.*;
 public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.canBeFinal.CanBeFinalInspection");
 
-  public boolean REPORT_CLASSES = false;
-  public boolean REPORT_METHODS = false;
+  public boolean REPORT_CLASSES;
+  public boolean REPORT_METHODS;
   public boolean REPORT_FIELDS = true;
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.can.be.final.display.name");
   @NonNls public static final String SHORT_NAME = "CanBeFinal";

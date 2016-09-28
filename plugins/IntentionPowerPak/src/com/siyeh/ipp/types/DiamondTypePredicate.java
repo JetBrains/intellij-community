@@ -16,6 +16,7 @@
 package com.siyeh.ipp.types;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class DiamondTypePredicate implements PsiElementPredicate {
@@ -33,6 +34,12 @@ class DiamondTypePredicate implements PsiElementPredicate {
     }
     final PsiTypeElement typeParameterElement = typeParameterElements[0];
     final PsiType type = typeParameterElement.getType();
-    return type instanceof PsiDiamondType;
+    if (type instanceof PsiDiamondType) {
+      final PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
+      if (newExpression != null) {
+        return !PsiDiamondTypeImpl.resolveInferredTypesNoCheck(newExpression, newExpression).getInferredTypes().isEmpty();
+      }
+    }
+    return false;
   }
 }

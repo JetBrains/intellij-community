@@ -79,19 +79,17 @@ public class SuspendManagerUtil {
 
   public static void restoreAfterResume(SuspendContextImpl context, Object resumeData) {
     SuspendManager suspendManager = context.getDebugProcess().getSuspendManager();
-    ResumeData data = (ResumeData) resumeData;
+    ResumeData data = (ResumeData)resumeData;
 
     ThreadReferenceProxyImpl thread = context.getThread();
-    if(data.myIsFrozen && !suspendManager.isFrozen(thread)) {
+    if (data.myIsFrozen && !suspendManager.isFrozen(thread)) {
       suspendManager.freezeThread(thread);
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("RestoreAfterResume SuspendContextImpl...");
-    }
+    LOG.debug("RestoreAfterResume SuspendContextImpl...");
     LOG.assertTrue(context.myResumedThreads == null);
 
-    if(data.myResumedThreads != null) {
+    if (data.myResumedThreads != null) {
       data.myResumedThreads.forEach(ThreadReferenceProxyImpl::resume);
       context.myResumedThreads = data.myResumedThreads;
     }
@@ -104,14 +102,12 @@ public class SuspendManagerUtil {
 
     ResumeData resumeData = new ResumeData(suspendManager.isFrozen(thread), context.myResumedThreads);
 
-    if(resumeData.myIsFrozen) {
+    if (resumeData.myIsFrozen) {
       suspendManager.unfreezeThread(thread);
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Resuming SuspendContextImpl...");
-    }
-    if(context.myResumedThreads != null) {
+    LOG.debug("Resuming SuspendContextImpl...");
+    if (context.myResumedThreads != null) {
       context.myResumedThreads.forEach(ThreadReferenceProxyImpl::suspend);
       context.myResumedThreads = null;
     }

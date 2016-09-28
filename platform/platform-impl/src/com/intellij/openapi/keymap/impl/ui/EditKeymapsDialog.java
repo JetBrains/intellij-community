@@ -30,11 +30,7 @@ public class EditKeymapsDialog extends SingleConfigurableEditor {
 
   public void show() {
     if (myActionToSelect != null) {
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          ((KeymapPanel)getConfigurable()).selectAction(myActionToSelect);
-        }
-      });
+      SwingUtilities.invokeLater(() -> ((KeymapPanel)getConfigurable()).selectAction(myActionToSelect));
     }
     super.show();
   }

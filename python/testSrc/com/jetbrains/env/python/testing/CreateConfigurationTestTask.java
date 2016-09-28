@@ -51,13 +51,9 @@ class CreateConfigurationTestTask extends PyExecutionFixtureTestTask {
    */
   CreateConfigurationTestTask(@NotNull final Class<? extends PythonTestConfigurationProducer> producer,
                               @NotNull final String testRunnerName) {
+    super("/testRunner/env/createConfigurationTest/");
     myProducer = producer;
     myTestRunnerName = testRunnerName;
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "/testRunner/env/createConfigurationTest/";
   }
 
   @Override

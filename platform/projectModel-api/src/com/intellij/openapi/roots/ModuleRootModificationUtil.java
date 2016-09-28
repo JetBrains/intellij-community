@@ -37,12 +37,7 @@ import java.util.List;
  */
 public class ModuleRootModificationUtil {
   public static void addContentRoot(@NotNull Module module, final @NotNull String path) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        model.addContentEntry(VfsUtilCore.pathToUrl(path));
-      }
-    });
+    updateModel(module, model -> model.addContentEntry(VfsUtilCore.pathToUrl(path)));
   }
 
   public static void addModuleLibrary(@NotNull Module module, @Nullable String libName, @NotNull List<String> classesRoots, @NotNull List<String> sourceRoots) {
@@ -69,34 +64,26 @@ public class ModuleRootModificationUtil {
                                       final @NotNull List<String> excludedRoots,
                                       final @NotNull DependencyScope scope,
                                       final boolean exported) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(final ModifiableRootModel model) {
-        final LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(libName);
-        final LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
+    updateModel(module, model -> {
+      final LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(libName);
+      final LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
 
-        for (String root : classesRoots) {
-          libraryModel.addRoot(root, OrderRootType.CLASSES);
-        }
-        for (String root : sourceRoots) {
-          libraryModel.addRoot(root, OrderRootType.SOURCES);
-        }
-        for (String excluded : excludedRoots) {
-          libraryModel.addExcludedRoot(excluded);
-        }
-
-        LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
-        assert entry != null : library;
-        entry.setScope(scope);
-        entry.setExported(exported);
-
-        doWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            libraryModel.commit();
-          }
-        });
+      for (String root : classesRoots) {
+        libraryModel.addRoot(root, OrderRootType.CLASSES);
       }
+      for (String root : sourceRoots) {
+        libraryModel.addRoot(root, OrderRootType.SOURCES);
+      }
+      for (String excluded : excludedRoots) {
+        libraryModel.addExcludedRoot(excluded);
+      }
+
+      LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
+      assert entry != null : library;
+      entry.setScope(scope);
+      entry.setExported(exported);
+
+      doWriteAction(() -> libraryModel.commit());
     });
   }
 
@@ -109,32 +96,19 @@ public class ModuleRootModificationUtil {
   }
 
   public static void addDependency(@NotNull Module module, final @NotNull Library library, final @NotNull DependencyScope scope, final boolean exported) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        LibraryOrderEntry entry = model.addLibraryEntry(library);
-        entry.setExported(exported);
-        entry.setScope(scope);
-      }
+    updateModel(module, model -> {
+      LibraryOrderEntry entry = model.addLibraryEntry(library);
+      entry.setExported(exported);
+      entry.setScope(scope);
     });
   }
 
   public static void setModuleSdk(@NotNull Module module, @Nullable final Sdk sdk) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        model.setSdk(sdk);
-      }
-    });
+    updateModel(module, model -> model.setSdk(sdk));
   }
 
   public static void setSdkInherited(@NotNull Module module) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        model.inheritSdk();
-      }
-    });
+    updateModel(module, model -> model.inheritSdk());
   }
 
   public static void addDependency(final @NotNull Module from, final @NotNull Module to) {
@@ -142,13 +116,10 @@ public class ModuleRootModificationUtil {
   }
 
   public static void addDependency(@NotNull Module from, @NotNull final Module to, @NotNull final DependencyScope scope, final boolean exported) {
-    updateModel(from, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        ModuleOrderEntry entry = model.addModuleOrderEntry(to);
-        entry.setScope(scope);
-        entry.setExported(exported);
-      }
+    updateModel(from, model -> {
+      ModuleOrderEntry entry = model.addModuleOrderEntry(to);
+      entry.setScope(scope);
+      entry.setExported(exported);
     });
   }
 
@@ -161,12 +132,7 @@ public class ModuleRootModificationUtil {
     });
     try {
       task.consume(model);
-      doWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          model.commit();
-        }
-      });
+      doWriteAction(() -> model.commit());
     }
     catch (RuntimeException e) {
       model.dispose();
@@ -182,19 +148,16 @@ public class ModuleRootModificationUtil {
                                            @NotNull final VirtualFile contentRoot,
                                            @NotNull final Collection<String> urlsToUnExclude,
                                            @NotNull final Collection<String> urlsToExclude) {
-    updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel modifiableModel) {
-        for (final ContentEntry contentEntry : modifiableModel.getContentEntries()) {
-          if (contentRoot.equals(contentEntry.getFile())) {
-            for (String url : urlsToUnExclude) {
-              contentEntry.removeExcludeFolder(url);
-            }
-            for (String url : urlsToExclude) {
-              contentEntry.addExcludeFolder(url);
-            }
-            break;
+    updateModel(module, modifiableModel -> {
+      for (final ContentEntry contentEntry : modifiableModel.getContentEntries()) {
+        if (contentRoot.equals(contentEntry.getFile())) {
+          for (String url : urlsToUnExclude) {
+            contentEntry.removeExcludeFolder(url);
           }
+          for (String url : urlsToExclude) {
+            contentEntry.addExcludeFolder(url);
+          }
+          break;
         }
       }
     });
@@ -202,11 +165,6 @@ public class ModuleRootModificationUtil {
 
   private static void doWriteAction(final Runnable action) {
     final Application application = ApplicationManager.getApplication();
-    application.invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        application.runWriteAction(action);
-      }
-    }, application.getDefaultModalityState());
+    application.invokeAndWait(() -> application.runWriteAction(action), application.getDefaultModalityState());
   }
 }

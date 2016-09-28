@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,24 @@ package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author nik
  */
 public class XDebuggerHistoryManager {
   public static final int MAX_RECENT_EXPRESSIONS = 10;
-  private final Map<String, LinkedList<XExpression>> myRecentExpressions = new HashMap<String, LinkedList<XExpression>>();
+  private final Map<String, LinkedList<XExpression>> myRecentExpressions = new HashMap<>();
 
   public static XDebuggerHistoryManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, XDebuggerHistoryManager.class);
@@ -44,7 +47,7 @@ public class XDebuggerHistoryManager {
 
     LinkedList<XExpression> list = myRecentExpressions.get(id);
     if (list == null) {
-      list = new LinkedList<XExpression>();
+      list = new LinkedList<>();
       myRecentExpressions.put(id, list);
     }
     if (list.size() == MAX_RECENT_EXPRESSIONS) {
@@ -58,7 +61,6 @@ public class XDebuggerHistoryManager {
   }
 
   public List<XExpression> getRecentExpressions(@NonNls String id) {
-    LinkedList<XExpression> list = myRecentExpressions.get(id);
-    return list != null ? list : Collections.<XExpression>emptyList();
+    return ContainerUtil.notNullize(myRecentExpressions.get(id));
   }
 }

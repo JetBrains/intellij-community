@@ -17,11 +17,6 @@
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" />
     <editorNotificationProvider implementation="org.editorconfig.plugincomponents.EditorConfigNotifierProvider"/>
     <applicationService serviceInterface="org.editorconfig.plugincomponents.SettingsProviderComponent" serviceImplementation="org.editorconfig.plugincomponents.SettingsProviderComponent" />
+    <postStartupActivity implementation="org.editorconfig.plugincomponents.ConfigProjectComponent"/>
   </extensions>
-
-  <project-components>
-      <component>
-          <implementation-class>org.editorconfig.plugincomponents.ConfigProjectComponent</implementation-class>
-      </component>
-  </project-components>
 </idea-plugin>

@@ -84,25 +84,21 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
   private static ModuleIndex getModuleIndex(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<ModuleIndex>() {
-        @Nullable
-        @Override
-        public Result<ModuleIndex> compute() {
-          ModuleIndex index = new ModuleIndex();
-          for (Module module : ModuleManager.getInstance(project).getModules()) {
-            for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-              if (orderEntry instanceof ModuleOrderEntry) {
-                Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
-                if (referenced != null) {
-                  MultiMap<Module, Module> map = ((ModuleOrderEntry)orderEntry).isExported() ? index.exportingUsages : index.plainUsages;
-                  map.putValue(referenced, module);
-                }
-              }
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      ModuleIndex index = new ModuleIndex();
+      for (Module module : ModuleManager.getInstance(project).getModules()) {
+        for (OrderEntry orderEntry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+          if (orderEntry instanceof ModuleOrderEntry) {
+            Module referenced = ((ModuleOrderEntry)orderEntry).getModule();
+            if (referenced != null) {
+              MultiMap<Module, Module> map = ((ModuleOrderEntry)orderEntry).isExported() ? index.exportingUsages : index.plainUsages;
+              map.putValue(referenced, module);
             }
           }
-          return Result.create(index, ProjectRootManager.getInstance(project));
         }
-      });
+      }
+      return CachedValueProvider.Result.create(index, ProjectRootManager.getInstance(project));
+    });
   }
 
   @Override

@@ -96,7 +96,7 @@ public abstract class PlatformScalingUtil {
   }
 
   public void setActiveScaleFactorFromFontSize(int size) {
-    JBUI.setScaleFactor(size / 12f);
+    JBUI.setScaleFactor(size / UIUtil.DEF_SYSTEM_FONT_SIZE);
   }
 
   public abstract float normalizeScaleFactor(float scale);
@@ -119,7 +119,7 @@ public abstract class PlatformScalingUtil {
     }
 
     // 100% scaling factor is 12pt font size.
-    return normalizeScaleFactorUtil(size / 12.0f);
+    return normalizeScaleFactorUtil(size / UIUtil.DEF_SYSTEM_FONT_SIZE);
   }
 
   protected void invokeScaleFactorChanged(final Window window) {

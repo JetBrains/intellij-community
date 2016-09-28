@@ -287,12 +287,9 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
 
         @Override
         protected void invokeRefactoring(final BaseRefactoringProcessor processor) {
-          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-            @Override
-            public void run() {
-              temporallyRevertChanges(method, oldText);
-              doRefactor(processor);
-            }
+          CommandProcessor.getInstance().executeCommand(myProject, () -> {
+            temporallyRevertChanges(method, oldText);
+            doRefactor(processor);
           }, RefactoringBundle.message("changing.signature.of.0", DescriptiveNameUtil.getDescriptiveName(currentMethod)), null);
         }
 
@@ -310,16 +307,13 @@ class DetectedJavaChangeInfo extends JavaChangeInfoImpl {
   private static void temporallyRevertChanges(final PsiElement psiElement,
                                               final String oldText,
                                               final TextRange textRange) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final PsiFile file = psiElement.getContainingFile();
-        final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiElement.getProject());
-        final Document document = documentManager.getDocument(file);
-        if (document != null) {
-          document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), oldText);
-          documentManager.commitDocument(document);
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final PsiFile file = psiElement.getContainingFile();
+      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(psiElement.getProject());
+      final Document document = documentManager.getDocument(file);
+      if (document != null) {
+        document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), oldText);
+        documentManager.commitDocument(document);
       }
     });
   }

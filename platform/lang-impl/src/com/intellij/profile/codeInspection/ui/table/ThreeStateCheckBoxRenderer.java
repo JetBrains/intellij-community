@@ -16,9 +16,9 @@
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ThreeStateCheckBox;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,7 +44,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
     setThirdStateEnabled(false);
     setHorizontalAlignment(CENTER);
     setVerticalAlignment(CENTER);
-    setBorder(BorderFactory.createEmptyBorder(0, 0, 0, InspectionsConfigTreeTable.getAdditionalPadding()));
+    setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, InspectionsConfigTreeTable.getAdditionalPadding()));
     addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -64,9 +64,9 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
   }
 
   private JCheckBox tune(final Object value, final boolean isSelected, final int row, final JTable table, boolean hasFocus) {
-    final Color bg = UIUtil.isUnderNimbusLookAndFeel() && row % 2 == 1 ? UIUtil.TRANSPARENT_COLOR : table.getBackground();
+    final Color bg = table.getBackground();
     final Color fg = table.getForeground();
-    final Color selBg = (hasFocus || table.hasFocus()) ? table.getSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground();
+    final Color selBg = table.getSelectionBackground();
     final Color selFg = table.getSelectionForeground();
 
     setForeground(isSelected ? selFg : fg);

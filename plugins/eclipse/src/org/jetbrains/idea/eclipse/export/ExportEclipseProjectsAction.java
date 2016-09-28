@@ -96,12 +96,7 @@ public class ExportEclipseProjectsAction extends AnAction implements DumbAware {
       }
     }
     else if (Messages.showOkCancelDialog(project, "<html><body>Eclipse incompatible modules found:<ul><br><li>" +
-                                                  StringUtil.join(incompatibleModules, new Function<Module, String>() {
-                                                    @Override
-                                                    public String fun(Module module) {
-                                                      return module.getName();
-                                                    }
-                                                  }, "<br><li>") +
+                                                  StringUtil.join(incompatibleModules, module -> module.getName(), "<br><li>") +
                                                   "</ul><br>Would you like to proceed and possibly lose your configurations?</body></html>",
                                          EclipseBundle.message("eclipse.export.dialog.title"), Messages.getWarningIcon()) != Messages.OK) {
       return;

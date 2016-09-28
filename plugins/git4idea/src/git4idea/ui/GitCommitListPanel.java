@@ -16,7 +16,10 @@
 package git4idea.ui;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -28,6 +31,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import git4idea.GitCommit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -202,7 +206,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   private static String getAuthor(GitCommit commit) {
-    return commit.getAuthor().getName();
+    return VcsUserUtil.getShortPresentation(commit.getAuthor());
   }
 
   private static String getTime(GitCommit commit) {

@@ -46,20 +46,14 @@ public class StringBuilderSpinAllocatorTest extends PlatformTestCase {
   }
 
   private static long concurrentTime(int count, final Runnable action) {
-    return time(count, new Runnable() {
-      @Override
-      public void run() {
-        boolean ok =
-          JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(THREADS, null), null, true, new Processor<Object>() {
-            @Override
-            public boolean process(Object o) {
-              action.run();
-              return true;
-            }
-          });
+    return time(count, () -> {
+      boolean ok =
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(THREADS, null), null, true, o -> {
+          action.run();
+          return true;
+        });
 
-        assertTrue(ok);
-      }
+      assertTrue(ok);
     });
   }
 

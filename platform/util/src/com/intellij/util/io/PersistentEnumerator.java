@@ -26,10 +26,6 @@ import java.io.IOException;
  * @author jeka
  */
 public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
-  private static final int DIRTY_MAGIC = 0xbabe0589;
-  private static final int VERSION = 6;
-  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafac + VERSION;
-
   private static final int FIRST_VECTOR_OFFSET = DATA_START;
 
   private static final int BITS_PER_LEVEL = 4;
@@ -47,17 +43,20 @@ public class PersistentEnumerator<Data> extends PersistentEnumeratorBase<Data> {
   private static final int KEY_REF_OFFSET = KEY_HASHCODE_OFFSET + 4;
   private static final int RECORD_SIZE = KEY_REF_OFFSET + 4;
   private int valuesCount; // TODO: valuesCount should be persistent
-  private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
+
+  static final int VERSION = 6;
+  private static final Version ourVersion = new Version(VERSION);
 
   public PersistentEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
-    this(file, dataDescriptor, initialSize, null);
+    this(file, dataDescriptor, initialSize, null, 0);
   }
 
   public PersistentEnumerator(@NotNull File file,
                               @NotNull KeyDescriptor<Data> dataDescriptor,
                               int initialSize,
-                              @Nullable PagedFileStorage.StorageLockContext storageLockContext) throws IOException {
-    super(file, new ResizeableMappedFile(file, initialSize, storageLockContext, -1, false), dataDescriptor, initialSize, ourVersion,
+                              @Nullable PagedFileStorage.StorageLockContext storageLockContext,
+                              int version) throws IOException {
+    super(file, new ResizeableMappedFile(file, initialSize, storageLockContext, -1, false), dataDescriptor, initialSize, new Version(VERSION + version),
           new RecordBufferHandler(), true);
   }
 

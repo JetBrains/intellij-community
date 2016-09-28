@@ -36,8 +36,7 @@ import com.intellij.lexer.FlexLexer;
 
   public void goTo(int offset) {
     zzCurrentPos = zzMarkedPos = zzStartRead = offset;
-    zzPushbackPos = 0;
-    zzAtEOF = offset < zzEndRead;
+    zzAtEOF = false;
   }
 %}
 
@@ -46,10 +45,6 @@ import com.intellij.lexer.FlexLexer;
 %implements FlexLexer
 %function advance
 %type IElementType
-
-%eof{
-  return;
-%eof}
 
 WHITE_SPACE_CHAR = [\ \n\r\t\f]
 
@@ -85,125 +80,128 @@ STRING_LITERAL = \" ([^\\\"\r\n] | {ESCAPE_SEQUENCE})* (\"|\\)?
 
 %%
 
-<YYINITIAL> {WHITE_SPACE_CHAR}+ { return JavaTokenType.WHITE_SPACE; }
+<YYINITIAL> {
 
-<YYINITIAL> {C_STYLE_COMMENT} { return JavaTokenType.C_STYLE_COMMENT; }
-<YYINITIAL> {END_OF_LINE_COMMENT} { return JavaTokenType.END_OF_LINE_COMMENT; }
-<YYINITIAL> {DOC_COMMENT} { return JavaDocElementType.DOC_COMMENT; }
+  {WHITE_SPACE_CHAR}+ { return JavaTokenType.WHITE_SPACE; }
 
-<YYINITIAL> {LONG_LITERAL} { return JavaTokenType.LONG_LITERAL; }
-<YYINITIAL> {INTEGER_LITERAL} { return JavaTokenType.INTEGER_LITERAL; }
-<YYINITIAL> {FLOAT_LITERAL} { return JavaTokenType.FLOAT_LITERAL; }
-<YYINITIAL> {DOUBLE_LITERAL} { return JavaTokenType.DOUBLE_LITERAL; }
-<YYINITIAL> {CHARACTER_LITERAL} { return JavaTokenType.CHARACTER_LITERAL; }
-<YYINITIAL> {STRING_LITERAL} { return JavaTokenType.STRING_LITERAL; }
+  {C_STYLE_COMMENT} { return JavaTokenType.C_STYLE_COMMENT; }
+  {END_OF_LINE_COMMENT} { return JavaTokenType.END_OF_LINE_COMMENT; }
+  {DOC_COMMENT} { return JavaDocElementType.DOC_COMMENT; }
 
-<YYINITIAL> "true" { return JavaTokenType.TRUE_KEYWORD; }
-<YYINITIAL> "false" { return JavaTokenType.FALSE_KEYWORD; }
-<YYINITIAL> "null" { return JavaTokenType.NULL_KEYWORD; }
+  {LONG_LITERAL} { return JavaTokenType.LONG_LITERAL; }
+  {INTEGER_LITERAL} { return JavaTokenType.INTEGER_LITERAL; }
+  {FLOAT_LITERAL} { return JavaTokenType.FLOAT_LITERAL; }
+  {DOUBLE_LITERAL} { return JavaTokenType.DOUBLE_LITERAL; }
+  {CHARACTER_LITERAL} { return JavaTokenType.CHARACTER_LITERAL; }
+  {STRING_LITERAL} { return JavaTokenType.STRING_LITERAL; }
 
-<YYINITIAL> "abstract" { return JavaTokenType.ABSTRACT_KEYWORD; }
-<YYINITIAL> "assert" { return myAssertKeyword ? JavaTokenType.ASSERT_KEYWORD : JavaTokenType.IDENTIFIER; }
-<YYINITIAL> "boolean" { return JavaTokenType.BOOLEAN_KEYWORD; }
-<YYINITIAL> "break" { return JavaTokenType.BREAK_KEYWORD; }
-<YYINITIAL> "byte" { return JavaTokenType.BYTE_KEYWORD; }
-<YYINITIAL> "case" { return JavaTokenType.CASE_KEYWORD; }
-<YYINITIAL> "catch" { return JavaTokenType.CATCH_KEYWORD; }
-<YYINITIAL> "char" { return JavaTokenType.CHAR_KEYWORD; }
-<YYINITIAL> "class" { return JavaTokenType.CLASS_KEYWORD; }
-<YYINITIAL> "const" { return JavaTokenType.CONST_KEYWORD; }
-<YYINITIAL> "continue" { return JavaTokenType.CONTINUE_KEYWORD; }
-<YYINITIAL> "default" { return JavaTokenType.DEFAULT_KEYWORD; }
-<YYINITIAL> "do" { return JavaTokenType.DO_KEYWORD; }
-<YYINITIAL> "double" { return JavaTokenType.DOUBLE_KEYWORD; }
-<YYINITIAL> "else" { return JavaTokenType.ELSE_KEYWORD; }
-<YYINITIAL> "enum" { return myEnumKeyword ? JavaTokenType.ENUM_KEYWORD : JavaTokenType.IDENTIFIER; }
-<YYINITIAL> "extends" { return JavaTokenType.EXTENDS_KEYWORD; }
-<YYINITIAL> "final" { return JavaTokenType.FINAL_KEYWORD; }
-<YYINITIAL> "finally" { return JavaTokenType.FINALLY_KEYWORD; }
-<YYINITIAL> "float" { return JavaTokenType.FLOAT_KEYWORD; }
-<YYINITIAL> "for" { return JavaTokenType.FOR_KEYWORD; }
-<YYINITIAL> "goto" { return JavaTokenType.GOTO_KEYWORD; }
-<YYINITIAL> "if" { return JavaTokenType.IF_KEYWORD; }
-<YYINITIAL> "implements" { return JavaTokenType.IMPLEMENTS_KEYWORD; }
-<YYINITIAL> "import" { return JavaTokenType.IMPORT_KEYWORD; }
-<YYINITIAL> "instanceof" { return JavaTokenType.INSTANCEOF_KEYWORD; }
-<YYINITIAL> "int" { return JavaTokenType.INT_KEYWORD; }
-<YYINITIAL> "interface" { return JavaTokenType.INTERFACE_KEYWORD; }
-<YYINITIAL> "long" { return JavaTokenType.LONG_KEYWORD; }
-<YYINITIAL> "native" { return JavaTokenType.NATIVE_KEYWORD; }
-<YYINITIAL> "new" { return JavaTokenType.NEW_KEYWORD; }
-<YYINITIAL> "package" { return JavaTokenType.PACKAGE_KEYWORD; }
-<YYINITIAL> "private" { return JavaTokenType.PRIVATE_KEYWORD; }
-<YYINITIAL> "public" { return JavaTokenType.PUBLIC_KEYWORD; }
-<YYINITIAL> "short" { return JavaTokenType.SHORT_KEYWORD; }
-<YYINITIAL> "super" { return JavaTokenType.SUPER_KEYWORD; }
-<YYINITIAL> "switch" { return JavaTokenType.SWITCH_KEYWORD; }
-<YYINITIAL> "synchronized" { return JavaTokenType.SYNCHRONIZED_KEYWORD; }
-<YYINITIAL> "this" { return JavaTokenType.THIS_KEYWORD; }
-<YYINITIAL> "throw" { return JavaTokenType.THROW_KEYWORD; }
-<YYINITIAL> "protected" { return JavaTokenType.PROTECTED_KEYWORD; }
-<YYINITIAL> "transient" { return JavaTokenType.TRANSIENT_KEYWORD; }
-<YYINITIAL> "return" { return JavaTokenType.RETURN_KEYWORD; }
-<YYINITIAL> "void" { return JavaTokenType.VOID_KEYWORD; }
-<YYINITIAL> "static" { return JavaTokenType.STATIC_KEYWORD; }
-<YYINITIAL> "strictfp" { return JavaTokenType.STRICTFP_KEYWORD; }
-<YYINITIAL> "while" { return JavaTokenType.WHILE_KEYWORD; }
-<YYINITIAL> "try" { return JavaTokenType.TRY_KEYWORD; }
-<YYINITIAL> "volatile" { return JavaTokenType.VOLATILE_KEYWORD; }
-<YYINITIAL> "throws" { return JavaTokenType.THROWS_KEYWORD; }
+  "true" { return JavaTokenType.TRUE_KEYWORD; }
+  "false" { return JavaTokenType.FALSE_KEYWORD; }
+  "null" { return JavaTokenType.NULL_KEYWORD; }
 
-<YYINITIAL> {IDENTIFIER} { return JavaTokenType.IDENTIFIER; }
+  "abstract" { return JavaTokenType.ABSTRACT_KEYWORD; }
+  "assert" { return myAssertKeyword ? JavaTokenType.ASSERT_KEYWORD : JavaTokenType.IDENTIFIER; }
+  "boolean" { return JavaTokenType.BOOLEAN_KEYWORD; }
+  "break" { return JavaTokenType.BREAK_KEYWORD; }
+  "byte" { return JavaTokenType.BYTE_KEYWORD; }
+  "case" { return JavaTokenType.CASE_KEYWORD; }
+  "catch" { return JavaTokenType.CATCH_KEYWORD; }
+  "char" { return JavaTokenType.CHAR_KEYWORD; }
+  "class" { return JavaTokenType.CLASS_KEYWORD; }
+  "const" { return JavaTokenType.CONST_KEYWORD; }
+  "continue" { return JavaTokenType.CONTINUE_KEYWORD; }
+  "default" { return JavaTokenType.DEFAULT_KEYWORD; }
+  "do" { return JavaTokenType.DO_KEYWORD; }
+  "double" { return JavaTokenType.DOUBLE_KEYWORD; }
+  "else" { return JavaTokenType.ELSE_KEYWORD; }
+  "enum" { return myEnumKeyword ? JavaTokenType.ENUM_KEYWORD : JavaTokenType.IDENTIFIER; }
+  "extends" { return JavaTokenType.EXTENDS_KEYWORD; }
+  "final" { return JavaTokenType.FINAL_KEYWORD; }
+  "finally" { return JavaTokenType.FINALLY_KEYWORD; }
+  "float" { return JavaTokenType.FLOAT_KEYWORD; }
+  "for" { return JavaTokenType.FOR_KEYWORD; }
+  "goto" { return JavaTokenType.GOTO_KEYWORD; }
+  "if" { return JavaTokenType.IF_KEYWORD; }
+  "implements" { return JavaTokenType.IMPLEMENTS_KEYWORD; }
+  "import" { return JavaTokenType.IMPORT_KEYWORD; }
+  "instanceof" { return JavaTokenType.INSTANCEOF_KEYWORD; }
+  "int" { return JavaTokenType.INT_KEYWORD; }
+  "interface" { return JavaTokenType.INTERFACE_KEYWORD; }
+  "long" { return JavaTokenType.LONG_KEYWORD; }
+  "native" { return JavaTokenType.NATIVE_KEYWORD; }
+  "new" { return JavaTokenType.NEW_KEYWORD; }
+  "package" { return JavaTokenType.PACKAGE_KEYWORD; }
+  "private" { return JavaTokenType.PRIVATE_KEYWORD; }
+  "public" { return JavaTokenType.PUBLIC_KEYWORD; }
+  "short" { return JavaTokenType.SHORT_KEYWORD; }
+  "super" { return JavaTokenType.SUPER_KEYWORD; }
+  "switch" { return JavaTokenType.SWITCH_KEYWORD; }
+  "synchronized" { return JavaTokenType.SYNCHRONIZED_KEYWORD; }
+  "this" { return JavaTokenType.THIS_KEYWORD; }
+  "throw" { return JavaTokenType.THROW_KEYWORD; }
+  "protected" { return JavaTokenType.PROTECTED_KEYWORD; }
+  "transient" { return JavaTokenType.TRANSIENT_KEYWORD; }
+  "return" { return JavaTokenType.RETURN_KEYWORD; }
+  "void" { return JavaTokenType.VOID_KEYWORD; }
+  "static" { return JavaTokenType.STATIC_KEYWORD; }
+  "strictfp" { return JavaTokenType.STRICTFP_KEYWORD; }
+  "while" { return JavaTokenType.WHILE_KEYWORD; }
+  "try" { return JavaTokenType.TRY_KEYWORD; }
+  "volatile" { return JavaTokenType.VOLATILE_KEYWORD; }
+  "throws" { return JavaTokenType.THROWS_KEYWORD; }
 
-<YYINITIAL> "==" { return JavaTokenType.EQEQ; }
-<YYINITIAL> "!=" { return JavaTokenType.NE; }
-<YYINITIAL> "||" { return JavaTokenType.OROR; }
-<YYINITIAL> "++" { return JavaTokenType.PLUSPLUS; }
-<YYINITIAL> "--" { return JavaTokenType.MINUSMINUS; }
+  {IDENTIFIER} { return JavaTokenType.IDENTIFIER; }
 
-<YYINITIAL> "<" { return JavaTokenType.LT; }
-<YYINITIAL> "<=" { return JavaTokenType.LE; }
-<YYINITIAL> "<<=" { return JavaTokenType.LTLTEQ; }
-<YYINITIAL> "<<" { return JavaTokenType.LTLT; }
-<YYINITIAL> ">" { return JavaTokenType.GT; }
-<YYINITIAL> "&" { return JavaTokenType.AND; }
-<YYINITIAL> "&&" { return JavaTokenType.ANDAND; }
+  "==" { return JavaTokenType.EQEQ; }
+  "!=" { return JavaTokenType.NE; }
+  "||" { return JavaTokenType.OROR; }
+  "++" { return JavaTokenType.PLUSPLUS; }
+  "--" { return JavaTokenType.MINUSMINUS; }
 
-<YYINITIAL> "+=" { return JavaTokenType.PLUSEQ; }
-<YYINITIAL> "-=" { return JavaTokenType.MINUSEQ; }
-<YYINITIAL> "*=" { return JavaTokenType.ASTERISKEQ; }
-<YYINITIAL> "/=" { return JavaTokenType.DIVEQ; }
-<YYINITIAL> "&=" { return JavaTokenType.ANDEQ; }
-<YYINITIAL> "|=" { return JavaTokenType.OREQ; }
-<YYINITIAL> "^=" { return JavaTokenType.XOREQ; }
-<YYINITIAL> "%=" { return JavaTokenType.PERCEQ; }
+  "<" { return JavaTokenType.LT; }
+  "<=" { return JavaTokenType.LE; }
+  "<<=" { return JavaTokenType.LTLTEQ; }
+  "<<" { return JavaTokenType.LTLT; }
+  ">" { return JavaTokenType.GT; }
+  "&" { return JavaTokenType.AND; }
+  "&&" { return JavaTokenType.ANDAND; }
 
-<YYINITIAL> "("   { return JavaTokenType.LPARENTH; }
-<YYINITIAL> ")"   { return JavaTokenType.RPARENTH; }
-<YYINITIAL> "{"   { return JavaTokenType.LBRACE; }
-<YYINITIAL> "}"   { return JavaTokenType.RBRACE; }
-<YYINITIAL> "["   { return JavaTokenType.LBRACKET; }
-<YYINITIAL> "]"   { return JavaTokenType.RBRACKET; }
-<YYINITIAL> ";"   { return JavaTokenType.SEMICOLON; }
-<YYINITIAL> ","   { return JavaTokenType.COMMA; }
-<YYINITIAL> "..." { return JavaTokenType.ELLIPSIS; }
-<YYINITIAL> "."   { return JavaTokenType.DOT; }
+  "+=" { return JavaTokenType.PLUSEQ; }
+  "-=" { return JavaTokenType.MINUSEQ; }
+  "*=" { return JavaTokenType.ASTERISKEQ; }
+  "/=" { return JavaTokenType.DIVEQ; }
+  "&=" { return JavaTokenType.ANDEQ; }
+  "|=" { return JavaTokenType.OREQ; }
+  "^=" { return JavaTokenType.XOREQ; }
+  "%=" { return JavaTokenType.PERCEQ; }
 
-<YYINITIAL> "=" { return JavaTokenType.EQ; }
-<YYINITIAL> "!" { return JavaTokenType.EXCL; }
-<YYINITIAL> "~" { return JavaTokenType.TILDE; }
-<YYINITIAL> "?" { return JavaTokenType.QUEST; }
-<YYINITIAL> ":" { return JavaTokenType.COLON; }
-<YYINITIAL> "+" { return JavaTokenType.PLUS; }
-<YYINITIAL> "-" { return JavaTokenType.MINUS; }
-<YYINITIAL> "*" { return JavaTokenType.ASTERISK; }
-<YYINITIAL> "/" { return JavaTokenType.DIV; }
-<YYINITIAL> "|" { return JavaTokenType.OR; }
-<YYINITIAL> "^" { return JavaTokenType.XOR; }
-<YYINITIAL> "%" { return JavaTokenType.PERC; }
-<YYINITIAL> "@" { return JavaTokenType.AT; }
+  "("   { return JavaTokenType.LPARENTH; }
+  ")"   { return JavaTokenType.RPARENTH; }
+  "{"   { return JavaTokenType.LBRACE; }
+  "}"   { return JavaTokenType.RBRACE; }
+  "["   { return JavaTokenType.LBRACKET; }
+  "]"   { return JavaTokenType.RBRACKET; }
+  ";"   { return JavaTokenType.SEMICOLON; }
+  ","   { return JavaTokenType.COMMA; }
+  "..." { return JavaTokenType.ELLIPSIS; }
+  "."   { return JavaTokenType.DOT; }
 
-<YYINITIAL> "::" { return JavaTokenType.DOUBLE_COLON; }
-<YYINITIAL> "->" { return JavaTokenType.ARROW; }
+  "=" { return JavaTokenType.EQ; }
+  "!" { return JavaTokenType.EXCL; }
+  "~" { return JavaTokenType.TILDE; }
+  "?" { return JavaTokenType.QUEST; }
+  ":" { return JavaTokenType.COLON; }
+  "+" { return JavaTokenType.PLUS; }
+  "-" { return JavaTokenType.MINUS; }
+  "*" { return JavaTokenType.ASTERISK; }
+  "/" { return JavaTokenType.DIV; }
+  "|" { return JavaTokenType.OR; }
+  "^" { return JavaTokenType.XOR; }
+  "%" { return JavaTokenType.PERC; }
+  "@" { return JavaTokenType.AT; }
 
-<YYINITIAL> . { return JavaTokenType.BAD_CHARACTER; }
+  "::" { return JavaTokenType.DOUBLE_COLON; }
+  "->" { return JavaTokenType.ARROW; }
+}
+
+[^]  { return JavaTokenType.BAD_CHARACTER; }

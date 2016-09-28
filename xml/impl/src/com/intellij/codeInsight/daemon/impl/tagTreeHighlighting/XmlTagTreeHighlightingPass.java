@@ -262,7 +262,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
       @Override
       public void paint(Editor editor, Graphics g, Rectangle r) {
         g.setColor(color);
-        g.fillRect(r.x, r.y, 2, r.height);
+        g.fillRect(r.x - 1, r.y, 2, r.height);
       }
     });
     return highlighter;

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TextFieldWithAutoCompletion;
+import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -41,7 +42,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
   private final static String ENTER_REMOTE = "Enter Remote";
   private final HgRepository myRepository;
   private final String myBranchName;
-  private final TextFieldWithAutoCompletion<String> myDestTargetPanel;
+  private final TextFieldWithCompletion myDestTargetPanel;
   private final VcsEditableTextComponent myTargetRenderedComponent;
 
   public HgPushTargetPanel(@NotNull HgRepository repository, @Nullable HgTarget defaultTarget) {

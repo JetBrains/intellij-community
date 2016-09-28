@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.RoundedLineBorder;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,9 +33,6 @@ import java.awt.event.*;
 public abstract class VcsLogPopupComponent extends JPanel {
   private static final int GAP_BEFORE_ARROW = 3;
   private static final int BORDER_SIZE = 2;
-  private static final Border INNER_MARGIN_BORDER = BorderFactory.createEmptyBorder(2, 2, 2, 2);
-  private static final Border FOCUSED_BORDER = createFocusedBorder();
-  private static final Border UNFOCUSED_BORDER = createUnfocusedBorder();
 
   @NotNull private final String myName;
   @NotNull private JLabel myNameLabel;
@@ -54,7 +52,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
     };
     setDefaultForeground();
     setFocusable(true);
-    setBorder(UNFOCUSED_BORDER);
+    setBorder(createUnfocusedBorder());
 
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
     add(myNameLabel);
@@ -62,12 +60,9 @@ public abstract class VcsLogPopupComponent extends JPanel {
     add(Box.createHorizontalStrut(GAP_BEFORE_ARROW));
     add(new JLabel(AllIcons.Ide.Statusbar_arrows));
 
-    installChangeListener(new Runnable() {
-      @Override
-      public void run() {
-        myValueLabel.revalidate();
-        myValueLabel.repaint();
-      }
+    installChangeListener(() -> {
+      myValueLabel.revalidate();
+      myValueLabel.repaint();
     });
     showPopupMenuOnClick();
     showPopupMenuFromKeyboard();
@@ -90,12 +85,12 @@ public abstract class VcsLogPopupComponent extends JPanel {
     addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(@NotNull FocusEvent e) {
-        setBorder(FOCUSED_BORDER);
+        setBorder(createFocusedBorder());
       }
 
       @Override
       public void focusLost(@NotNull FocusEvent e) {
-        setBorder(UNFOCUSED_BORDER);
+        setBorder(createUnfocusedBorder());
       }
     });
   }
@@ -158,11 +153,11 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   private static Border createFocusedBorder() {
-    return BorderFactory.createCompoundBorder(new RoundedLineBorder(UIUtil.getHeaderActiveColor(), 10, BORDER_SIZE), INNER_MARGIN_BORDER);
+    return BorderFactory.createCompoundBorder(new RoundedLineBorder(UIUtil.getHeaderActiveColor(), 10, BORDER_SIZE), JBUI.Borders.empty(2));
   }
 
   private static Border createUnfocusedBorder() {
     return BorderFactory
-      .createCompoundBorder(BorderFactory.createEmptyBorder(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE), INNER_MARGIN_BORDER);
+      .createCompoundBorder(BorderFactory.createEmptyBorder(BORDER_SIZE, BORDER_SIZE, BORDER_SIZE, BORDER_SIZE), JBUI.Borders.empty(2));
   }
 }
