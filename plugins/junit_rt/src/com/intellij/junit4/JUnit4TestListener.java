@@ -268,7 +268,7 @@ public class JUnit4TestListener extends RunListener {
       return;
     }
 
-    final Map attrs = new HashMap();
+    final Map attrs = new LinkedHashMap();
     attrs.put("name", methodName);
     final long duration = currentTime() - myCurrentTestStart;
     if (duration > 0) {
