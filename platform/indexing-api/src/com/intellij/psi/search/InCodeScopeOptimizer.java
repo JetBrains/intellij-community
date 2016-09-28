@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler;
+package com.intellij.psi.search;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.UseScopeOptimizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CompilerReferenceScopeOptimizer extends UseScopeOptimizer {
+public interface InCodeScopeOptimizer {
+  ExtensionPointName<InCodeScopeOptimizer> EP_NAME = ExtensionPointName.create("com.intellij.inCodeScopeOptimizer");
+
   @Nullable
-  @Override
-  public GlobalSearchScope getScopeToExclude(@NotNull PsiElement element) {
-    return CompilerReferenceService.getInstance(element.getProject()).getScopeWithoutReferences(element);
-  }
+  GlobalSearchScope getOptimizedScopeInCode(@NotNull PsiElement element);
 }

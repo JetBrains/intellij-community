@@ -15,30 +15,16 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.InCodeScopeOptimizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class CompilerReferenceService extends AbstractProjectComponent {
-  public static final RegistryValue IS_ENABLED_KEY = Registry.get("bytecode.ref.index");
-
-  protected CompilerReferenceService(Project project) {
-    super(project);
-  }
-
-  public static CompilerReferenceService getInstance(@NotNull Project project) {
-    return project.getComponent(CompilerReferenceService.class);
-  }
-
+public class JavaCompilerReferencesInCodeScopeOptimizer implements InCodeScopeOptimizer {
   @Nullable
-  public abstract GlobalSearchScope getMayContainReferencesInCodeScope(@NotNull PsiElement element);
-
-  public static boolean isEnabled() {
-    return IS_ENABLED_KEY.asBoolean();
+  @Override
+  public GlobalSearchScope getOptimizedScopeInCode(@NotNull PsiElement element) {
+    return CompilerReferenceService.getInstance(element.getProject()).getMayContainReferencesInCodeScope(element);
   }
 }

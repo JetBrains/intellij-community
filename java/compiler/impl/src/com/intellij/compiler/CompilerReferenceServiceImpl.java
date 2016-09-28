@@ -24,11 +24,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -55,6 +55,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
   private final Set<FileType> myFileTypes;
 
   private volatile CompilerReferenceReader myReader;
+  private volatile GlobalSearchScope myMayContainInvalidDataScope = GlobalSearchScope.EMPTY_SCOPE;
 
   private final Object myLock = new Object();
 
@@ -79,6 +80,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
         @Override
         public boolean execute(CompileContext context) {
           myChangedModules.clear();
+          myMayContainInvalidDataScope = GlobalSearchScope.EMPTY_SCOPE;
           openReaderIfNeed();
           return true;
         }
@@ -127,7 +129,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
         if (myReader != null && myProjectFileIndex.isInSourceContent(file) && myFileTypes.contains(file.getFileType())) {
           final Module module = myProjectFileIndex.getModuleForFile(file);
           if (module != null) {
-            myChangedModules.add(module);
+            if (myChangedModules.add(module)) {
+              myMayContainInvalidDataScope = myMayContainInvalidDataScope.union(module.getModuleWithDependentsScope());
+            }
           }
         }
       }
@@ -139,25 +143,27 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     closeReaderIfNeed();
   }
 
+  @Nullable
   @Override
-  public GlobalSearchScope getScopeWithoutReferences(@NotNull PsiElement element) {
+  public GlobalSearchScope getMayContainReferencesInCodeScope(@NotNull PsiElement element) {
     if (!isServiceEnabled()) return null;
-    return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result.create(calculateScopeWithoutReferences(element),
-                                                                                               PsiModificationTracker.MODIFICATION_COUNT));
+    return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result.create(calculateMayContainReferencesScope(element), PsiModificationTracker.MODIFICATION_COUNT));
   }
+
 
   private boolean isServiceEnabled() {
     return myReader != null && isEnabled();
   }
 
   @Nullable
-  private GlobalSearchScope calculateScopeWithoutReferences(@NotNull PsiElement element) {
+  private GlobalSearchScope calculateMayContainReferencesScope(@NotNull PsiElement element) {
     TIntHashSet referentFileIds = getReferentFileIds(element);
     if (referentFileIds == null) return null;
 
-    final GlobalSearchScope everythingIsClearScope = GlobalSearchScope
-      .getScopeRestrictedByFileTypes(ProjectScope.getContentScope(myProject), myFileTypes.toArray(new FileType[myFileTypes.size()]));
-    return new ScopeWithoutBytecodeReferences(referentFileIds).intersectWith(everythingIsClearScope);
+    return new ScopeWithBytecodeReferences(referentFileIds)
+      .union(myMayContainInvalidDataScope)
+      .union(LibraryScopeCache.getInstance(element.getProject()).getLibrariesOnlyScope())
+      .union(GlobalSearchScope.notScope(GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(myProject), myFileTypes.toArray(new FileType[myFileTypes.size()]))));
   }
 
   @Nullable
@@ -171,11 +177,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     if (place == null) {
       return null;
     }
-    if (!myChangedModules.isEmpty()) {
-      final Module module = myProjectFileIndex.getModuleForFile(vFile);
-      if (module == null || areDependenciesOrSelfChanged(module, new THashSet<>())) {
-        return null;
-      }
+
+    if (myMayContainInvalidDataScope.contains(vFile)) {
+      return null;
     }
     final FileType type = vFile.getFileType();
     CompilerElement[] compilerElements = null;
@@ -250,16 +254,16 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     }
   }
 
-  private static class ScopeWithoutBytecodeReferences extends GlobalSearchScope {
+  private static class ScopeWithBytecodeReferences extends GlobalSearchScope {
     private final TIntHashSet myReferentIds;
 
-    private ScopeWithoutBytecodeReferences(TIntHashSet ids) {
+    private ScopeWithBytecodeReferences(TIntHashSet ids) {
       myReferentIds = ids;
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return !(file instanceof VirtualFileWithId) || !myReferentIds.contains(((VirtualFileWithId)file).getId());
+      return file instanceof VirtualFileWithId && myReferentIds.contains(((VirtualFileWithId)file).getId());
     }
 
     @Override

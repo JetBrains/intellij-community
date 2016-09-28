@@ -1803,7 +1803,7 @@
 
     <fileBasedIndex implementation="com.intellij.psi.impl.search.JavaNullMethodArgumentIndex"/>
 
-    <useScopeOptimizer implementation="com.intellij.find.compiler.CompilerReferenceScopeOptimizer"/>
+    <inCodeScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesInCodeScopeOptimizer"/>
   </extensions>
 
   <actions>

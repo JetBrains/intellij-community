@@ -28,6 +28,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -60,7 +62,7 @@ public class SearchRequestCollector {
                          short searchContext,
                          boolean caseSensitive,
                          @NotNull PsiElement searchTarget) {
-    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), new SingleTargetRequestResultProcessor(searchTarget));
+    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), new SingleTargetRequestResultProcessor(searchTarget), searchTarget);
   }
 
   private void searchWord(@NotNull String word,
@@ -68,11 +70,35 @@ public class SearchRequestCollector {
                           short searchContext,
                           boolean caseSensitive,
                           String containerName,
-                          @NotNull RequestResultProcessor processor) {
+                          @NotNull RequestResultProcessor processor,
+                          PsiElement searchTarget) {
     if (!makesSenseToSearch(word, searchScope)) return;
+
+    Collection<PsiSearchRequest> requests = null;
+    if (searchTarget != null && (searchScope instanceof GlobalSearchScope) && ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
+      for (InCodeScopeOptimizer optimizer : InCodeScopeOptimizer.EP_NAME.getExtensions()) {
+        final GlobalSearchScope optimizedSourcesSearchScope = optimizer.getOptimizedScopeInCode(searchTarget);
+        if (optimizedSourcesSearchScope != null) {
+          short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
+          ? (short)(searchContext ^ UsageSearchContext.IN_CODE)
+          : (UsageSearchContext.IN_COMMENTS |
+             UsageSearchContext.IN_STRINGS |
+             UsageSearchContext.IN_FOREIGN_LANGUAGES |
+             UsageSearchContext.IN_PLAIN_TEXT);
+          final GlobalSearchScope effectiveScopeWithSources = ((GlobalSearchScope)searchScope).intersectWith(optimizedSourcesSearchScope);
+          final GlobalSearchScope effectiveScopeWithoutSources =
+            ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedSourcesSearchScope));
+          requests = ContainerUtil.list(new PsiSearchRequest(effectiveScopeWithSources, word, searchContext, caseSensitive, containerName, processor),
+                                        new PsiSearchRequest(effectiveScopeWithoutSources, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
+        }
+      }
+    }
+    if (requests == null) {
+      requests = Collections.singleton(new PsiSearchRequest(searchScope, word, searchContext, caseSensitive, containerName, processor));
+    }
+
     synchronized (lock) {
-      PsiSearchRequest request = new PsiSearchRequest(searchScope, word, searchContext, caseSensitive, containerName, processor);
-      myWordRequests.add(request);
+      myWordRequests.addAll(requests);
     }
   }
   public void searchWord(@NotNull String word,
@@ -81,7 +107,7 @@ public class SearchRequestCollector {
                           boolean caseSensitive,
                           @NotNull PsiElement searchTarget,
                           @NotNull RequestResultProcessor processor) {
-    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), processor);
+    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), processor, searchTarget);
   }
 
   private static String getContainerName(@NotNull final PsiElement target) {
@@ -111,7 +137,7 @@ public class SearchRequestCollector {
                          short searchContext,
                          boolean caseSensitive,
                          @NotNull RequestResultProcessor processor) {
-    searchWord(word, searchScope, searchContext, caseSensitive, (String)null, processor);
+    searchWord(word, searchScope, searchContext, caseSensitive, null, processor, null);
   }
 
   private static boolean makesSenseToSearch(@NotNull String word, @NotNull SearchScope searchScope) {

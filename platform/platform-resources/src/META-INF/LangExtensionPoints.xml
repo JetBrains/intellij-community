@@ -260,6 +260,7 @@
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
     <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider"/>
     <extensionPoint name="useScopeOptimizer" interface="com.intellij.psi.search.UseScopeOptimizer"/>
+    <extensionPoint name="inCodeScopeOptimizer" interface="com.intellij.psi.search.InCodeScopeOptimizer"/>
 
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
     <extensionPoint name="outOfSourcesChecker" interface="com.intellij.openapi.projectRoots.OutOfSourcesChecker"/>
