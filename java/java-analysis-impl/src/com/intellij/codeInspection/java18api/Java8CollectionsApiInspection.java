@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -111,7 +112,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
         PsiStatement thenStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
         if(!(thenStatement instanceof PsiExpressionStatement)) return;
         if(!declaration.isIteratorMethodCall(((PsiExpressionStatement)thenStatement).getExpression(), "remove")) return;
-        if(!OptionalIsPresentInspection.isVoidLambdaCandidate(condition)) return;
+        if(!LambdaGenerationUtil.canBeUncheckedLambda(condition)) return;
         //noinspection DialogTitleCapitalization
         holder.registerProblem(statement, new TextRange(0, endToken.getTextOffset() - statement.getTextOffset() + 1),
                                QuickFixBundle.message("java.8.collections.api.inspection.remove.description"),
