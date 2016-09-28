@@ -429,9 +429,9 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     JLabel label = createInitializingLabel();
     ToolWindowAnchor toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor);
     final ToolWindowFactory factory = bean.getToolWindowFactory();
-    final ToolWindowImpl toolWindow =
-      (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory),
-                                         bean.canCloseContents);
+    ToolWindow window = registerToolWindow(bean.id, label, toolWindowAnchor, false, bean.canCloseContents,
+                                           DumbService.isDumbAware(factory), factory.shouldBeAvailable(myProject));
+    final ToolWindowImpl toolWindow = (ToolWindowImpl)registerDisposable(bean.id, myProject, window);
     toolWindow.setContentFactory(factory);
     if (bean.icon != null && toolWindow.getIcon() == null) {
       Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
@@ -1055,7 +1055,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        @NotNull ToolWindowAnchor anchor,
                                        @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode, boolean canCloseContents) {
-    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode));
+    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode, true));
   }
 
   @NotNull
@@ -1063,13 +1063,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                         @NotNull final JComponent component,
                                         @NotNull final ToolWindowAnchor anchor,
                                         boolean canWorkInDumbMode) {
-    return registerToolWindow(id, component, anchor, false, false, canWorkInDumbMode);
+    return registerToolWindow(id, component, anchor, false, false, canWorkInDumbMode, true);
   }
 
   @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
-    return registerToolWindow(id, null, anchor, false, canCloseContent, false);
+    return registerToolWindow(id, null, anchor, false, canCloseContent, false, true);
   }
 
   @NotNull
@@ -1078,7 +1078,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        final boolean canCloseContent,
                                        @NotNull final ToolWindowAnchor anchor,
                                        final boolean secondary) {
-    return registerToolWindow(id, null, anchor, secondary, canCloseContent, false);
+    return registerToolWindow(id, null, anchor, secondary, canCloseContent, false, true);
   }
 
 
@@ -1100,7 +1100,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode,
                                        boolean secondary) {
-    ToolWindow window = registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode);
+    ToolWindow window = registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode, true);
     return registerDisposable(id, parentDisposable, window);
   }
 
@@ -1110,7 +1110,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                         @NotNull final ToolWindowAnchor anchor,
                                         boolean sideTool,
                                         boolean canCloseContent,
-                                        final boolean canWorkInDumbMode) {
+                                        final boolean canWorkInDumbMode,
+                                        boolean shouldBeAvailable) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -1124,6 +1125,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final boolean wasVisible = info.isVisible();
     info.setActive(false);
     info.setVisible(false);
+    info.setShowStripeButton(shouldBeAvailable);
 
     // Create decorator
 

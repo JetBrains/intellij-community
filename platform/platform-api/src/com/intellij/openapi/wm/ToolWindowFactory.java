@@ -38,6 +38,12 @@ public interface ToolWindowFactory {
   default void init(ToolWindow window) {}
 
   /**
+   * Check if toolwindow (and its stripe button) should be visible after startup.
+   * @see ToolWindow#isAvailable()
+   */
+  default boolean shouldBeAvailable(@NotNull Project project) { return true;}
+
+  /**
    * Tool Window saves its state on project close and restore on when project opens
    * In some cases, it is useful to postpone Tool Window activation until user explicitly activates it.
    * Example: Tool Window initialisation takes huge amount of time and makes project loading slower.
