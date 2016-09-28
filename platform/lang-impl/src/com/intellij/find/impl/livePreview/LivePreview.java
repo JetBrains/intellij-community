@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -399,7 +400,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     balloonBuilder.setHideOnAction(false);
     balloonBuilder.setCloseButtonEnabled(true);
     myReplacementBalloon = balloonBuilder.createBalloon();
-
+    EditorUtil.disposeWithEditor(editor, myReplacementBalloon);
     myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.below);
   }
 
@@ -488,8 +489,6 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
     @Override
     public RelativePoint recalculateLocation(final Balloon object) {
-      if (myEditor.isDisposed()) return new RelativePoint(getComponent(), new Point());
-
       FindResult cursor = mySearchResults.getCursor();
       if (cursor == null) return null;
       final TextRange cur = cursor;
