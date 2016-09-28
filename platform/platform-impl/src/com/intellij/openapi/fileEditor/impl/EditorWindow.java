@@ -1184,6 +1184,15 @@ public class EditorWindow {
     return getEditorAt(i).getFile();
   }
 
+  public void clear() {
+    for (EditorWithProviderComposite composite : getEditors()) {
+      Disposer.dispose(composite);
+    }
+    if (myTabbedPane == null) {
+      myPanel.removeAll();
+    }
+  }
+
   @Override
   public String toString() {
     return "EditorWindow: files=" + Arrays.asList(getFiles());

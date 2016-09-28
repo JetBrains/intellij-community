@@ -1012,9 +1012,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private static void clearWindowIfNeeded(@NotNull EditorWindow window) {
     if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE || UISettings.getInstance().PRESENTATION_MODE) {
-      for (EditorWithProviderComposite composite : window.getEditors()) {
-        Disposer.dispose(composite);
-      }
+      window.clear();
     }
   }
 
