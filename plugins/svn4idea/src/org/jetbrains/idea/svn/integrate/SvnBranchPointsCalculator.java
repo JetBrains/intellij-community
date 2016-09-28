@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.ValueHolder;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
@@ -41,7 +40,9 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 public class SvnBranchPointsCalculator {
 
@@ -149,33 +150,18 @@ public class SvnBranchPointsCalculator {
   }
 
   private static class PersistentHolder {
-    private final SmallMapSerializer<String, TreeMap<String, BranchCopyData>> myPersistentMap;
-    private final MultiMap<String, String> myForSearchMap;
-    private final Object myLock;
+    @NotNull private final SmallMapSerializer<String, TreeMap<String, BranchCopyData>> myPersistentMap;
+    @NotNull private final Object myLock = new Object();
 
-    PersistentHolder(final File file) {
-      myLock = new Object();
-      myPersistentMap = new SmallMapSerializer<>(
-        file, EnumeratorStringDescriptor.INSTANCE, new BranchDataExternalizer());
-      // list for values by default
-      myForSearchMap = new MultiMap<>();
-      for (String s : myPersistentMap.keySet()) {
-        final TreeMap<String, BranchCopyData> map = myPersistentMap.get(s);
-        if (map != null) {
-          myForSearchMap.put(s, new ArrayList<>(map.keySet()));
-        }
-      }
-
-      for (String key : myForSearchMap.keySet()) {
-        Collections.sort((List<String>) myForSearchMap.get(key));
-      }
+    PersistentHolder(@NotNull File file) {
+      myPersistentMap = new SmallMapSerializer<>(file, EnumeratorStringDescriptor.INSTANCE, new BranchDataExternalizer());
     }
 
     public void close() {
       myPersistentMap.force();
     }
 
-    public void put(final String uid, final String target, final BranchCopyData data) {
+    public void put(String uid, String target, BranchCopyData data) {
       // todo - rewrite of rather big piece; consider rewriting
       synchronized (myLock) {
         TreeMap<String, BranchCopyData> map = myPersistentMap.get(uid);
@@ -184,58 +170,40 @@ public class SvnBranchPointsCalculator {
         }
         map.put(target, data);
         myPersistentMap.put(uid, map);
-        if (myForSearchMap.containsKey(uid)) {
-          final List<String> list = (List<String>)myForSearchMap.get(uid);
-          final int idx = Collections.binarySearch(list, target);
-          if (idx < 0) {
-            final int insertionIdx = - idx - 1;
-            list.add(insertionIdx, target);
-          }
-        } else {
-          myForSearchMap.putValue(uid, target);
-        }
       }
       myPersistentMap.force();
     }
 
     @Nullable
-    public WrapperInvertor getBestHit(final String repoUrl, final String source, final String target) {
-      final List<String> keys;
+    public WrapperInvertor getBestHit(String repoUrl, String source, String target) {
       synchronized (myLock) {
-        keys = (List<String>) myForSearchMap.get(repoUrl);
-      }
-      // keys are never removed, so we can use 2 synchronized blocks
-      final String sourceMatching = getMatchingUrl(keys, source);
-      final String targetMatching = getMatchingUrl(keys, target);
+        WrapperInvertor result = null;
+        TreeMap<String, BranchCopyData> map = myPersistentMap.get(repoUrl);
 
-      if (sourceMatching == null && targetMatching == null) return null;
+        if (map != null) {
+          BranchCopyData sourceData = getBranchData(map, source);
+          BranchCopyData targetData = getBranchData(map, target);
 
-      synchronized (myLock) {
-        final TreeMap<String, BranchCopyData> map = myPersistentMap.get(repoUrl);
-
-        final boolean sourceIsOut = sourceMatching == null;
-        if (sourceIsOut || targetMatching == null) {
-          // if found by "target" url - we correctly thought that target of copy is target
-          return sourceIsOut ? new WrapperInvertor(false, map.get(targetMatching)) :
-                 new WrapperInvertor(true, map.get(sourceMatching));
+          if (sourceData != null && targetData != null) {
+            boolean inverted = sourceData.getTargetRevision() > targetData.getTargetRevision();
+            result = new WrapperInvertor(inverted, inverted ? sourceData : targetData);
+          }
+          else if (sourceData != null) {
+            result = new WrapperInvertor(true, sourceData);
+          }
+          else if (targetData != null) {
+            result = new WrapperInvertor(false, targetData);
+          }
         }
-        final BranchCopyData sourceData = map.get(sourceMatching);
-        final BranchCopyData targetData = map.get(targetMatching);
 
-        final boolean inverted = sourceData.getTargetRevision() > targetData.getTargetRevision();
-        return new WrapperInvertor(inverted, inverted ? sourceData : targetData);
+        return result;
       }
     }
 
     @Nullable
-    private String getMatchingUrl(List<String> keys, String source) {
-      final int idx = Collections.binarySearch(keys, source);
-      if (idx >= 0) return keys.get(idx);
-      final int beforeInsertionIdx = - idx - 2;
-      if (beforeInsertionIdx < 0) return null;
-      final String candidate = keys.get(beforeInsertionIdx);
-      if (source.startsWith(candidate)) return candidate;
-      return null;
+    private static BranchCopyData getBranchData(@NotNull NavigableMap<String, BranchCopyData> map, String url) {
+      Map.Entry<String, BranchCopyData> branchData = map.floorEntry(url);
+      return branchData != null && url.startsWith(branchData.getKey()) ? branchData.getValue() : null;
     }
   }
 
