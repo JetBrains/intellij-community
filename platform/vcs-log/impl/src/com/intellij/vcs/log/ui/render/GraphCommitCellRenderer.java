@@ -273,12 +273,24 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
   private class TooltipReferencesPanel extends ReferencesPanel {
     private static final int REFS_LIMIT = 10;
+    private boolean myHasGroupWithMultipleRefs;
 
     public TooltipReferencesPanel(@NotNull Collection<VcsRef> refs) {
       super(new VerticalFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)), REFS_LIMIT);
       VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
       setReferences(
         ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));
+    }
+
+    @Override
+    public void update() {
+      super.update();
+      myHasGroupWithMultipleRefs = false;
+      for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
+        if (typeAndRefs.getValue().size() > 1) {
+          myHasGroupWithMultipleRefs = true;
+        }
+      }
     }
 
     @NotNull
@@ -292,23 +304,15 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     protected Icon createIcon(@NotNull VcsRefType type, @NotNull Collection<VcsRef> refs, int refIndex, int height) {
       if (refIndex == 0) {
         Color color = type.getBackgroundColor();
-        int width = hasGroupWithMultipleRefs() ? 2 : 1;
         return new LabelIcon(height, getBackground(),
                              refs.size() > 1 ? new Color[]{color, color} : new Color[]{color}) {
           @Override
           public int getIconWidth() {
-            return getWidth(width);
+            return getWidth(myHasGroupWithMultipleRefs ? 2 : 1);
           }
         };
       }
       return createEmptyIcon(height);
-    }
-
-    private boolean hasGroupWithMultipleRefs() {
-      for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
-        if (typeAndRefs.getValue().size() > 1) return true;
-      }
-      return false;
     }
 
     @NotNull
