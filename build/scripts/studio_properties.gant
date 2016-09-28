@@ -107,6 +107,7 @@ def getProperties(String home, String buildNumber) {
         }
 
         dir("plugins") {
+/* Disabled during merge
           dir("android-ndk") {
             dir("lib") {
               jar("android-ndk.jar") {
@@ -114,6 +115,7 @@ def getProperties(String home, String buildNumber) {
               }
             }
           }
+*/
 
           dir("games") {
             dir("lib") {
@@ -263,6 +265,7 @@ def getProperties(String home, String buildNumber) {
             }
           }
 
+/* Disabled during merge
           dir("ndk-workspace") {
             dir("lib") {
               jar("ndk-workspace.jar") {
@@ -270,6 +273,7 @@ def getProperties(String home, String buildNumber) {
               }
             }
           }
+*/
 
           dir("sdk-updates") {
             dir("lib") {
@@ -372,6 +376,7 @@ def getProperties(String home, String buildNumber) {
     }
 
     def finishLayout(out) {
+/* Disabled during merge
       updateAswbPlugin();
 
       layout(out) {
@@ -391,6 +396,7 @@ def getProperties(String home, String buildNumber) {
           }
         }
       }
+*/
     }
   }
 }
