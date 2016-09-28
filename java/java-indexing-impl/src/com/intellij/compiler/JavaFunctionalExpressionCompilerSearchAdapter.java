@@ -40,6 +40,7 @@ public class JavaFunctionalExpressionCompilerSearchAdapter implements CompilerSe
   @NotNull
   @Override
   public CompilerElement[] libraryElementAsCompilerElements(@NotNull PsiElement psi) {
-    return new CompilerElement[] {asCompilerElement(psi)};
+    final CompilerElement element = asCompilerElement(psi);
+    return element == null ? CompilerElement.EMPTY_ARRAY : new CompilerElement[] {element};
   }
 }
