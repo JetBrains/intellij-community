@@ -45,11 +45,6 @@ import org.jetbrains.annotations.Nullable;
  * User: ktisha
  */
 public class PyRenameElementQuickFix implements LocalQuickFix {
-  @NotNull
-  @Override
-  public String getName() {
-    return "Rename element";
-  }
 
   @NotNull
   @Override

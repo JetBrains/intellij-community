@@ -138,12 +138,6 @@ public class GrPackageInspection extends BaseInspection {
       myNewPackageName = newPackageName;
     }
 
-    @NotNull
-    @Override
-    public String getName() {
-      return GroovyBundle.message("fix.package.name");
-    }
-
     @Override
     @NotNull
     public String getFamilyName() {

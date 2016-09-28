@@ -39,12 +39,6 @@ public class ReformatFix implements IntentionAction, LocalQuickFix, HighPriority
 
   @NotNull
   @Override
-  public String getName() {
-    return getText();
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
     return getText();
   }
