@@ -151,15 +151,11 @@ public class XBreakpointUtil {
       int maxPriority = 0;
       for (XLineBreakpointType<?> type : lineTypes) {
         maxPriority = Math.max(maxPriority, type.getPriority());
-        final XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
-        if (breakpoint != null && temporary && !breakpoint.isTemporary()) {
-          breakpoint.setTemporary(true);
-        }
-        else if (type.canPutAt(file, line, project) || breakpoint != null) {
-          if (typeWinner == null || type.getPriority() > typeWinner.getPriority()) {
-            typeWinner = type;
-            lineWinner = line;
-          }
+        XLineBreakpoint<? extends XBreakpointProperties> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
+        if ((type.canPutAt(file, line, project) || breakpoint != null) &&
+            (typeWinner == null || type.getPriority() > typeWinner.getPriority())) {
+          typeWinner = type;
+          lineWinner = line;
         }
       }
       // already found max priority type - stop
