@@ -25,9 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -35,7 +33,7 @@ import java.util.regex.PatternSyntaxException;
 public class PlatformDocumentationUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.documentation.PlatformDocumentationUtil");
 
-  private static final @NonNls Pattern ourLtFixupPattern = Pattern.compile("<([^/^\\w^!])");
+  private static final @NonNls Pattern ourLtFixupPattern = Pattern.compile("<([^\\\\^/^\\w^!])");
   private static final @NonNls Pattern ourToQuote = Pattern.compile("[\\\\\\.\\^\\$\\?\\*\\+\\|\\)\\}\\]\\{\\(\\[]");
   private static final @NonNls String LT_ENTITY = "&lt;";
 
@@ -52,7 +50,7 @@ public class PlatformDocumentationUtil {
 
     return result.isEmpty() ? null : result;
   }
-  
+
   @Nullable
   public static String getDocUrl(@NotNull VirtualFile root, String relPath) {
     if (root.getFileSystem() instanceof HttpFileSystem) {
@@ -66,7 +64,7 @@ public class PlatformDocumentationUtil {
       VirtualFile file = root.findFileByRelativePath(relPath);
       return file == null ? null : file.getUrl();
     }
-  } 
+  }
 
   private static String quote(String x) {
     if (ourToQuote.matcher(x).find()) {
@@ -78,26 +76,19 @@ public class PlatformDocumentationUtil {
 
   public static String fixupText(@NotNull CharSequence docText) {
     Matcher fixupMatcher = ourLtFixupPattern.matcher(docText);
-    LinkedList<String> secondSymbols = new LinkedList<String>();
 
     while (fixupMatcher.find()) {
-      String s = fixupMatcher.group(1);
+      String secondSymbol = fixupMatcher.group(1);
 
-      //[db] that's workaround to avoid internal bug
-      if (!s.equals("\\") && !secondSymbols.contains(s)) {
-        secondSymbols.addFirst(s);
-      }
-    }
-
-    for (String s : secondSymbols) {
-      String pattern = "<" + quote(s);
-
+      String pattern = "<" + quote(secondSymbol);
       try {
-        docText = Pattern.compile(pattern).matcher(docText).replaceAll(LT_ENTITY + pattern);
+        docText = Pattern.compile(pattern).matcher(docText).replaceAll(LT_ENTITY + secondSymbol);
       }
       catch (PatternSyntaxException e) {
         LOG.error("Pattern syntax exception on " + pattern);
       }
+
+      fixupMatcher = ourLtFixupPattern.matcher(docText);
     }
 
     return docText.toString();
