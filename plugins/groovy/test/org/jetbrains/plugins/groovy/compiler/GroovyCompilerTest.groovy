@@ -51,16 +51,11 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
  * @author peter
  */
 @CompileStatic
- abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
+abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
     super.setUp()
     Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest").info(testStartMessage)
     addGroovyLibrary(myModule)
-  }
-
-  @Override
-  protected boolean shouldRunTest() {
-    return false
   }
 
   void testPlainGroovy() throws Throwable {
@@ -941,7 +936,7 @@ class AppTest {
       FileUtil.writeToFile(script, "import groovy.transform.*; withConfig(configuration) { ast(CompileStatic) }")
 
       GroovyCompilerConfiguration.getInstance(project).configScript = script.path
-      
+
       myFixture.addFileToProject("a.groovy", "class A { int s = 'foo' }")
       shouldFail { make() }
     }
@@ -969,7 +964,5 @@ class Bar {}'''
 
       GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
     }
-
   }
-
 }
