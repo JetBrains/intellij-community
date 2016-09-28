@@ -36,9 +36,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -50,7 +48,12 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     public ScriptEngineManager call() {
       long start = System.currentTimeMillis();
       try {
-        return new ScriptEngineManager();
+        return ClassLoaderUtil.runWithClassLoader(AllPluginsLoader.INSTANCE, new Computable<ScriptEngineManager>() {
+          @Override
+          public ScriptEngineManager compute() {
+            return new ScriptEngineManager();
+          }
+         });
       }
       finally {
         long end = System.currentTimeMillis();
@@ -300,13 +303,38 @@ class Jsr223IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
       throw new ClassNotFoundException(name);
     }
 
+    private static boolean isAllowedPluginResource(String name) {
+      // allow plugin engines but suppress all other resources
+      return "META-INF/services/javax.script.ScriptEngineFactory".equals(name);
+    }
+
     @Override
     protected URL findResource(String name) {
+      if (isAllowedPluginResource(name)) {
+        for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+          ClassLoader l = descriptor.getPluginClassLoader();
+          URL url = l == null ? null : l.getResource(name);
+          if (url != null) return url;
+        }
+      }
       return getClass().getClassLoader().getResource(name);
     }
 
     @Override
     protected Enumeration<URL> findResources(String name) throws IOException {
+      if (isAllowedPluginResource(name)) {
+        Set<URL> result = null;
+        for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
+          ClassLoader l = descriptor.getPluginClassLoader();
+          Enumeration<URL> urls = l == null ? null : l.getResources(name);
+          if (urls == null || !urls.hasMoreElements()) continue;
+          if (result == null) result = ContainerUtil.newLinkedHashSet();
+          ContainerUtil.addAll(result, urls);
+        }
+        if (result != null) {
+          return Collections.enumeration(result);
+        }
+      }
       return getClass().getClassLoader().getResources(name);
     }
   }

@@ -24,8 +24,7 @@ import java.awt.event.*;
 /**
  * @author Sergey.Malenkov
  */
-public class MouseEventAdapter<T> extends MouseAdapter implements MouseListener, MouseInputListener,
-                                                                  MouseMotionListener, MouseWheelListener {
+public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputListener {
   private final T myAdapter;
 
   public MouseEventAdapter(T adapter) {
