@@ -236,7 +236,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
 
       public void remove () {
         final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
-        breakpointManager.removeBreakpoint(XLineBreakpointImpl.this);
+        ApplicationManager.getApplication().runWriteAction(() -> breakpointManager.removeBreakpoint(XLineBreakpointImpl.this));
       }
 
       @Override
