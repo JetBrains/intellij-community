@@ -209,13 +209,6 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase implement
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return PropertiesBundle.message("remove.property.intention.text");
     }

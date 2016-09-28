@@ -56,13 +56,6 @@ public class TrivialMethodReferenceInspection extends BaseJavaBatchLocalInspecti
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return "Replace with qualifier";
     }

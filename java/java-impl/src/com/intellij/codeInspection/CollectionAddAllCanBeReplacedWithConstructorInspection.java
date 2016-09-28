@@ -239,13 +239,6 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Base
       myAssignmentExpression = smartPointerManager.createSmartPsiElementPointer(assignmentExpression);
     }
 
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
     @NotNull
     @Override
     public String getFamilyName() {

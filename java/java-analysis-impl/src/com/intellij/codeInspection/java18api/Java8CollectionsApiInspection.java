@@ -487,13 +487,6 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return QuickFixBundle.message("java.8.collections.api.inspection.sort.fix.name");
     }
@@ -584,13 +577,6 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
   }
 
   private static class ReplaceWithRemoveIfQuickFix implements LocalQuickFix {
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
     @Nls
     @NotNull
     @Override
