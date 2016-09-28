@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -27,6 +28,8 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -534,6 +537,22 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
 
     assertAllOutputs(myMockResettablePrinter, "preved", "","Empty test suite.\n");
+  }
+
+  public void testEnsureOrderedClearFlush() throws Exception {
+    StringBuffer buf = new StringBuffer();
+    String expected = "";
+    for(int i = 0; i < 100; i++) {
+      expected += "1" ;
+      expected += "2" ;
+      CompositePrintable.invokeInAlarm(() -> buf.append("1"), false);
+      CompositePrintable.invokeInAlarm(() -> buf.append("2"), false);
+    }
+    Semaphore s = new Semaphore();
+    s.down();
+    CompositePrintable.invokeInAlarm(s::up, false);
+    assertTrue(s.waitFor(1000));
+    assertEquals(expected, buf.toString());
   }
 
   @NotNull

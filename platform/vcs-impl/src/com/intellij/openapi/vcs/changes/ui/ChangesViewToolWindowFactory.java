@@ -29,4 +29,9 @@ public class ChangesViewToolWindowFactory implements ToolWindowFactory, DumbAwar
   public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     ChangesViewContentManager.getInstance(project).setUp(toolWindow);
   }
+
+  @Override
+  public boolean shouldBeAvailable(@NotNull Project project) {
+    return ChangesViewContentManager.getInstance(project).isAvailable();
+  }
 }

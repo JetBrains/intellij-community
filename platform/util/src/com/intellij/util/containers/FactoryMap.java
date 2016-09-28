@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -160,5 +161,16 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   public Set<Entry<K, V>> entrySet() {
     if (myMap == null) return Collections.emptySet();
     return myMap.entrySet();
+  }
+
+  @NotNull
+  public static <K, V> FactoryMap<K, V> createMap(@NotNull final Function<K, V> computeValue) {
+    return new FactoryMap<K, V>() {
+      @Nullable
+      @Override
+      protected V create(K key) {
+        return computeValue.fun(key);
+      }
+    };
   }
 }

@@ -41,10 +41,7 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -341,7 +338,8 @@ public class DiffUtil {
 
     AnAction[] children = group.getChildren(null);
     for (AnAction action : actions) {
-      if (!ArrayUtil.contains(action, children)) {
+      if (action instanceof Separator ||
+          !ArrayUtil.contains(action, children)) {
         group.add(action);
       }
     }

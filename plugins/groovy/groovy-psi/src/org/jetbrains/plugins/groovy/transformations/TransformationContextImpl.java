@@ -20,12 +20,12 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightPsiClassBuilder;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
@@ -33,34 +33,36 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.transformations.dsl.MemberBuilder;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.psi.util.MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY;
+import static com.intellij.util.containers.ContainerUtil.flatten;
+import static com.intellij.util.containers.ContainerUtil.map;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.expandReflectedMethods;
 
 public class TransformationContextImpl implements TransformationContext {
 
   private final @NotNull GrTypeDefinition myCodeClass;
-  private final Set<MethodSignature> mySignatures = new THashSet<>(METHOD_PARAMETERS_ERASURE_EQUALITY);
   private final LinkedList<PsiMethod> myMethods = ContainerUtil.newLinkedList();
   private final Collection<GrField> myFields = ContainerUtil.newArrayList();
   private final Collection<PsiClass> myInnerClasses = ContainerUtil.newArrayList();
   private final List<PsiClassType> myImplementsTypes = ContainerUtil.newArrayList();
   private final List<PsiClassType> myExtendsTypes = ContainerUtil.newArrayList();
   private final MemberBuilder myMemberBuilder = new MemberBuilder(this);
+  private final Map<String, Set<MethodSignature>> mySignaturesCache = FactoryMap.createMap(name -> {
+    THashSet<MethodSignature> result = new THashSet<>(METHOD_PARAMETERS_ERASURE_EQUALITY);
+    for (PsiMethod existingMethod : myMethods) {
+      if (existingMethod.getName().equals(name)) {
+        result.add(existingMethod.getSignature(PsiSubstitutor.EMPTY));
+      }
+    }
+    return result;
+  });
 
   public TransformationContextImpl(@NotNull GrTypeDefinition codeClass) {
     myCodeClass = codeClass;
     ContainerUtil.addAll(myFields, codeClass.getCodeFields());
-    for (GrMethod grMethod : codeClass.getCodeMethods()) {
-      for (PsiMethod method : expandReflectedMethods(grMethod)) {
-        mySignatures.add(method.getSignature(PsiSubstitutor.EMPTY));
-        myMethods.add(method);
-      }
-    }
+    ContainerUtil.addAll(myMethods, flatten(map(codeClass.getCodeMethods(), m -> expandReflectedMethods(m))));
     ContainerUtil.addAll(myInnerClasses, codeClass.getCodeInnerClasses());
     ContainerUtil.addAll(myImplementsTypes, GrClassImplUtil.getReferenceListTypes(codeClass.getImplementsClause()));
     ContainerUtil.addAll(myExtendsTypes, GrClassImplUtil.getReferenceListTypes(codeClass.getExtendsClause()));
@@ -97,7 +99,6 @@ public class TransformationContextImpl implements TransformationContext {
   }
 
   @Override
-  @SuppressWarnings("unused")
   @NotNull
   public List<PsiClassType> getExtendsTypes() {
     return myExtendsTypes;
@@ -140,7 +141,8 @@ public class TransformationContextImpl implements TransformationContext {
       ((LightMethodBuilder)method).setContainingClass(myCodeClass);
     }
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
-    if (mySignatures.add(signature)) {
+    Set<MethodSignature> signatures = mySignaturesCache.get(method.getName());
+    if (signatures.add(signature)) {
       if (prepend) {
         myMethods.addFirst(method);
       }
@@ -173,10 +175,12 @@ public class TransformationContextImpl implements TransformationContext {
 
   @Override
   public void removeMethod(@NotNull PsiMethod method) {
+    Set<MethodSignature> signatures = mySignaturesCache.get(method.getName());
     for (PsiMethod expanded : expandReflectedMethods(method)) {
       MethodSignature signature = expanded.getSignature(PsiSubstitutor.EMPTY);
-      mySignatures.remove(signature);
-      myMethods.removeIf(m -> METHOD_PARAMETERS_ERASURE_EQUALITY.equals(signature, m.getSignature(PsiSubstitutor.EMPTY)));
+      if (signatures.remove(signature)) {
+        myMethods.removeIf(m -> METHOD_PARAMETERS_ERASURE_EQUALITY.equals(signature, m.getSignature(PsiSubstitutor.EMPTY)));
+      }
     }
   }
 

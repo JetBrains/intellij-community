@@ -17,11 +17,13 @@ package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.IndentInfo;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
@@ -58,12 +60,16 @@ class IndentCalculator {
   
   
   @Nullable
-  String getIndentString(@NotNull SemanticEditorPosition currPosition) {
-    Document document = myEditor.getDocument();
+  String getIndentString(@Nullable Language language, @NotNull SemanticEditorPosition currPosition) {
     String baseIndent = getBaseIndent(currPosition);
+    Document document = myEditor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if (file != null) {
-      CommonCodeStyleSettings.IndentOptions options = CodeStyleSettingsManager.getSettings(myProject).getIndentOptionsByFile(file);
+      CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(myProject);
+      CommonCodeStyleSettings.IndentOptions options =
+        language != null && !(language.is(file.getLanguage()) || language.is(Language.ANY)) ?
+        codeStyleSettings.getCommonSettings(language).getIndentOptions() :
+        codeStyleSettings.getIndentOptionsByFile(file);
       return
         baseIndent + new IndentInfo(0, indentTypeToSize(myIndentType, options), 0, false).generateNewWhiteSpace(options);
     }

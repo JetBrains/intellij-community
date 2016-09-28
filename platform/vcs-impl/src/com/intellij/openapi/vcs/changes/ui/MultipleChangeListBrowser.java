@@ -66,10 +66,10 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   private AnAction myMoveActionWithCustomShortcut;
 
   // todo terrible constructor
-  public MultipleChangeListBrowser(Project project,
-                                   List<? extends ChangeList> changeLists,
+  public MultipleChangeListBrowser(@NotNull Project project,
+                                   @NotNull List<? extends ChangeList> changeLists,
                                    @NotNull List<Object> changes,
-                                   ChangeList initialListSelection,
+                                   @Nullable ChangeList initialListSelection,
                                    boolean capableOfExcludingChanges,
                                    boolean highlightProblems,
                                    @Nullable Runnable rebuildListListener,

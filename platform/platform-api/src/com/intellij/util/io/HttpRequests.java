@@ -254,25 +254,27 @@ public final class HttpRequests {
 
   private static class RequestImpl implements Request, AutoCloseable {
     private final RequestBuilderImpl myBuilder;
+    private String myUrl;
     private URLConnection myConnection;
     private InputStream myInputStream;
     private BufferedReader myReader;
 
     private RequestImpl(RequestBuilderImpl builder) {
       myBuilder = builder;
+      myUrl = myBuilder.myUrl;
     }
 
     @NotNull
     @Override
     public String getURL() {
-      return myBuilder.myUrl;
+      return myUrl;
     }
 
     @NotNull
     @Override
     public URLConnection getConnection() throws IOException {
       if (myConnection == null) {
-        myConnection = openConnection(myBuilder);
+        myConnection = openConnection(myBuilder, this);
       }
       return myConnection;
     }
@@ -418,12 +420,12 @@ public final class HttpRequests {
     return CharsetToolkit.UTF8_CHARSET;
   }
 
-  private static URLConnection openConnection(RequestBuilderImpl builder) throws IOException {
-    String url = builder.myUrl;
+  private static URLConnection openConnection(RequestBuilderImpl builder, RequestImpl request) throws IOException {
+    String url = request.myUrl;
 
     for (int i = 0; i < builder.myRedirectLimit; i++) {
       if (builder.myForceHttps && StringUtil.startsWith(url, "http:")) {
-        url = "https:" + url.substring(5);
+        request.myUrl = url = "https:" + url.substring(5);
       }
 
       if (url.startsWith("https:") && ApplicationManager.getApplication() != null) {
@@ -467,13 +469,15 @@ public final class HttpRequests {
       }
 
       if (connection instanceof HttpURLConnection) {
+        if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
         int responseCode = ((HttpURLConnection)connection).getResponseCode();
+        if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
 
         if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
           ((HttpURLConnection)connection).disconnect();
 
           if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
-            url = connection.getHeaderField("Location");
+            request.myUrl = url = connection.getHeaderField("Location");
             if (url != null) {
               continue;
             }

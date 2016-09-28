@@ -47,8 +47,13 @@ public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDesc
     @NotNull
     @Override
     public List<String> getLibraryClassesRoots() {
-      return Arrays.asList(PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.jupiter.api.Test")),
-                           PathUtil.getJarPathForClass(ReflectionUtil.forName("org.opentest4j.AssertionFailedError")));
+      try {
+        return Arrays.asList(PathUtil.getJarPathForClass(Class.forName("org.junit.jupiter.api.Test")),
+                             PathUtil.getJarPathForClass(Class.forName("org.opentest4j.AssertionFailedError")));
+      }
+      catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
     }
   };
   private final String myVersion;

@@ -15,12 +15,19 @@
  */
 package com.intellij.ide.ui.laf.darcula;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.text.JTextComponent;
+import javax.swing.text.Position;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+
+import static javax.swing.SwingConstants.EAST;
+import static javax.swing.SwingConstants.WEST;
 
 /**
  * @author Konstantin Bulenkov
@@ -87,4 +94,24 @@ public class DarculaUIUtil {
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
   }
 
+  public static boolean isCurrentEventShiftDownEvent() {
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    return (event instanceof KeyEvent && ((KeyEvent)event).isShiftDown());
+  }
+
+  /**
+   * @see javax.swing.plaf.basic.BasicTextUI#getNextVisualPositionFrom(JTextComponent, int, Position.Bias, int, Position.Bias[])
+   * @return -1 if visual position shouldn't be patched, otherwise selection start or selection end
+   */
+  public static int getPatchedNextVisualPositionFrom(JTextComponent t, int pos, int direction) {
+    if (!isCurrentEventShiftDownEvent()) {
+      if (direction == WEST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionEnd() == pos) {
+        return t.getSelectionStart();
+      }
+      if (direction == EAST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionStart() == pos) {
+        return t.getSelectionEnd();
+      }
+    }
+    return -1;
+  }
 }

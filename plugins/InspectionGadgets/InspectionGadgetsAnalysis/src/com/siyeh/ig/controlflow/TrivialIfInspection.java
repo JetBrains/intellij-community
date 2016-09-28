@@ -233,6 +233,10 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     if (nextStatement == null) {
       return;
     }
+    final PsiElement nextSibling = statement.getNextSibling();
+    if (nextSibling != nextStatement) {
+      statement.getParent().deleteChildRange(nextSibling, nextStatement.getPrevSibling());
+    }
     @NonNls final String newStatement = "return " + conditionText + ';';
     PsiReplacementUtil.replaceStatement(statement, newStatement);
     nextStatement.delete();

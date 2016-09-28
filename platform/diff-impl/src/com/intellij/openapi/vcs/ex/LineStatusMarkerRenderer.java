@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -38,6 +39,7 @@ import java.util.List;
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
 
 public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
+
   @NotNull protected final Range myRange;
 
   public LineStatusMarkerRenderer(@NotNull Range range) {
@@ -51,7 +53,7 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
     TextAttributes attributes = getTextAttributes(range);
 
     final RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                         HighlighterLayer.FIRST - 1, attributes,
+                                                                         DiffDrawUtil.LST_LINE_MARKER_LAYER, attributes,
                                                                          HighlighterTargetArea.LINES_IN_RANGE);
 
     highlighter.setThinErrorStripeMark(true);
@@ -126,10 +128,15 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
   // Gutter painting
   //
 
+  protected int getFramingBorderSize() {
+    return 0;
+  }
+
   @Override
   public void paint(Editor editor, Graphics g, Rectangle r) {
     Color gutterColor = getGutterColor(myRange, editor);
     Color borderColor = getGutterBorderColor(editor);
+    Color gutterBackgroundColor = ((EditorEx)editor).getGutterComponentEx().getBackground();
 
     Rectangle area = getMarkerArea(editor, r, myRange.getLine1(), myRange.getLine2());
     final int x = area.x;
@@ -137,19 +144,23 @@ public abstract class LineStatusMarkerRenderer implements ActiveGutterRenderer {
     final int y = area.y;
     final int endY = area.y + area.height;
 
-    if (myRange.getInnerRanges() == null) { // Mode.DEFAULT
+    int framingBorder = getFramingBorderSize();
+    if (framingBorder > 0) {
       if (y != endY) {
-        paintRect(g, gutterColor, borderColor, x, y, endX, endY);
-      }
-      else {
-        paintTriangle(g, gutterColor, borderColor, x, endX, y);
+        g.setColor(gutterBackgroundColor);
+        g.fillRect(x - framingBorder, y - framingBorder,
+                   endX - x + framingBorder, endY - y + framingBorder * 2);
       }
     }
-    else { // Mode.SMART
-      if (y == endY) {
-        paintTriangle(g, gutterColor, borderColor, x, endX, y);
+
+    if (y == endY) {
+      paintTriangle(g, gutterColor, borderColor, x, endX, y);
+    }
+    else {
+      if (myRange.getInnerRanges() == null) { // Mode.DEFAULT
+        paintRect(g, gutterColor, borderColor, x, y, endX, endY);
       }
-      else {
+      else { // Mode.SMART
         List<Range.InnerRange> innerRanges = myRange.getInnerRanges();
         for (Range.InnerRange innerRange : innerRanges) {
           if (innerRange.getType() == Range.DELETED) continue;

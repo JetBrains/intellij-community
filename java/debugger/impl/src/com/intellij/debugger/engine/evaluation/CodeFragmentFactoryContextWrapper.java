@@ -83,12 +83,11 @@ public class CodeFragmentFactoryContextWrapper extends CodeFragmentFactory {
   private static JavaCodeFragment prepareResolveScope(JavaCodeFragment codeFragment) {
     GlobalSearchScope originalResolveScope = codeFragment.getResolveScope();
     codeFragment.forceResolveScope(new DelegatingGlobalSearchScope(GlobalSearchScope.allScope(codeFragment.getProject())) {
-      final Comparator<VirtualFile> myScopeComparator = Comparator.comparing(originalResolveScope::contains);
+      final Comparator<VirtualFile> myScopeComparator = Comparator.comparing(originalResolveScope::contains).thenComparing(super::compare);
       @Override
       public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
         // prefer files from the original resolve scope
-        int res = myScopeComparator.compare(file1, file2);
-        return res != 0 ? res : super.compare(file1, file2);
+        return myScopeComparator.compare(file1, file2);
       }
     });
     return codeFragment;

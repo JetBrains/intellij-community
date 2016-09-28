@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -437,7 +438,9 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
   @Override
   public String toString() {
-    return getClass().getName() + "(" + myLexer.getClass().getName() + "): '" + myLexer.getBufferSequence()+"'" ;
+    return getClass().getName() + "(" +
+           (myLexer.getClass() == FlexAdapter.class ? myLexer.toString() : myLexer.getClass().getName()) +
+           "): '" + myLexer.getBufferSequence() + "'";
   }
 
   public class HighlighterIteratorImpl implements HighlighterIterator {

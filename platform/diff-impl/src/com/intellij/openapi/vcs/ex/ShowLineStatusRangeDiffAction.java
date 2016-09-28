@@ -25,22 +25,25 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
-  public ShowLineStatusRangeDiffAction(@NotNull LineStatusTracker lineStatusTracker, @NotNull Range range, @Nullable Editor editor) {
-    super(lineStatusTracker, range);
+public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
+  private final LineStatusTrackerBase myLineStatusTracker;
+  private final Range myRange;
+
+  public ShowLineStatusRangeDiffAction(@NotNull LineStatusTrackerBase lineStatusTracker, @NotNull Range range, @Nullable Editor editor) {
+    myLineStatusTracker = lineStatusTracker;
+    myRange = range;
     ActionUtil.copyFrom(this, "ChangesView.Diff");
   }
 
-  @Override
-  public boolean isEnabled() {
-    return true;
+  public void update(final AnActionEvent e) {
+    e.getPresentation().setEnabled(myLineStatusTracker.isValid());
   }
 
   @Override
@@ -48,15 +51,14 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
     DiffManager.getInstance().showDiff(e.getProject(), createDiffData());
   }
 
+  @NotNull
   private DiffRequest createDiffData() {
     Range range = expand(myRange, myLineStatusTracker.getDocument(), myLineStatusTracker.getVcsDocument());
 
     DiffContent vcsContent = createDiffContent(myLineStatusTracker.getVcsDocument(),
-                                               myLineStatusTracker.getVcsTextRange(range),
-                                               null);
+                                               myLineStatusTracker.getVcsTextRange(range));
     DiffContent currentContent = createDiffContent(myLineStatusTracker.getDocument(),
-                                                   myLineStatusTracker.getCurrentTextRange(range),
-                                                   myLineStatusTracker.getVirtualFile());
+                                                   myLineStatusTracker.getCurrentTextRange(range));
 
     return new SimpleDiffRequest(VcsBundle.message("dialog.title.diff.for.range"),
                                  vcsContent, currentContent,
@@ -66,9 +68,9 @@ public class ShowLineStatusRangeDiffAction extends BaseLineStatusRangeAction {
   }
 
   @NotNull
-  private DiffContent createDiffContent(@NotNull Document document, @NotNull TextRange textRange, @Nullable VirtualFile file) {
+  private DiffContent createDiffContent(@NotNull Document document, @NotNull TextRange textRange) {
     final Project project = myLineStatusTracker.getProject();
-    DocumentContent content = DiffContentFactory.getInstance().create(project, document, file);
+    DocumentContent content = DiffContentFactory.getInstance().create(project, document);
     return DiffContentFactory.getInstance().createFragment(project, content, textRange);
   }
 
