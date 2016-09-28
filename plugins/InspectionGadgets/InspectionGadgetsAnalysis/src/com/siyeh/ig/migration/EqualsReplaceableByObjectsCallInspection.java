@@ -249,7 +249,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     }
   }
 
-  private PsiExpression getArgumentExpression(PsiMethodCallExpression callExpression) {
+  private static PsiExpression getArgumentExpression(PsiMethodCallExpression callExpression) {
     final PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
     return expressions.length == 1 ? ParenthesesUtils.stripParentheses(expressions[0]) : null;
   }
@@ -259,6 +259,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
    *
    * @return the text representation of the variable chain (with parenthesis stripped), or {@code null} if it's not a variable chain
    */
+  @Contract("null->null")
   @Nullable
   private static String getQualifiedVariableName(@Nullable PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
