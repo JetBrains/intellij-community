@@ -28,7 +28,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -62,33 +61,51 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
     if (myIndex < 0 || myIndex >= myRequests.size()) return NoDiffRequest.INSTANCE;
     DiffHyperlink hyperlink = myRequests.get(myIndex);
     try {
-      String title = hyperlink.getDiffTitle();
+      String windowTitle = hyperlink.getDiffTitle();
 
-      Pair<String, DiffContent> content1 = createContentWithTitle("diff.content.expected.title", 
-                                                                  hyperlink.getLeft(), hyperlink.getFilePath());
-      Pair<String, DiffContent> content2 = createContentWithTitle("diff.content.actual.title", 
-                                                                  hyperlink.getRight(), hyperlink.getActualFilePath());
+      String text1 = hyperlink.getLeft();
+      String text2 = hyperlink.getRight();
+      VirtualFile file1 = findFile(hyperlink.getFilePath());
+      VirtualFile file2 = findFile(hyperlink.getActualFilePath());
 
-      return new SimpleDiffRequest(title, content1.second, content2.second, content1.first, content2.first);
+      DiffContent content1 = createContentWithTitle(getProject(), text1, file1, file2);
+      DiffContent content2 = createContentWithTitle(getProject(), text2, file2, file1);
+
+      String title1 = getContentTitle("diff.content.expected.title", file1);
+      String title2 = getContentTitle("diff.content.actual.title", file2);
+
+      return new SimpleDiffRequest(windowTitle, content1, content2, title1, title2);
     }
     catch (Exception e) {
       return new ErrorDiffRequest(e);
     }
   }
-  
-  private Pair<String, DiffContent> createContentWithTitle(String titleKey, String contentString, String contentFilePath) {
-    String title;
-    DiffContent content;
-    VirtualFile vFile;
-    if (contentFilePath != null && (vFile = LocalFileSystem.getInstance().findFileByPath(contentFilePath)) != null) {
-      title = ExecutionBundle.message(titleKey) + " (" + vFile.getPresentableUrl() + ")";
-      content = DiffContentFactory.getInstance().create(getProject(), vFile);
+
+  @Nullable
+  private static VirtualFile findFile(@Nullable String path) {
+    return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
+  }
+
+  @NotNull
+  private static DiffContent createContentWithTitle(@Nullable Project project,
+                                                    @NotNull String content,
+                                                    @Nullable VirtualFile contentFile,
+                                                    @Nullable VirtualFile highlightFile) {
+    if (contentFile != null) {
+      return DiffContentFactory.getInstance().create(project, contentFile);
     }
     else {
-      title = ExecutionBundle.message(titleKey);
-      content = DiffContentFactory.getInstance().create(contentString);
+      return DiffContentFactory.getInstance().create(content, highlightFile);
     }
-    return Pair.create(title, content);
+  }
+
+  @NotNull
+  private static String getContentTitle(@NotNull String titleKey, @Nullable VirtualFile file) {
+    String title = ExecutionBundle.message(titleKey);
+    if (file != null) {
+      title += " (" + file.getPresentableUrl() + ")";
+    }
+    return title;
   }
 
   //
