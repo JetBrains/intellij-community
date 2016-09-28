@@ -121,7 +121,7 @@ public class VarArgTest {
 """)
     
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("test->13", "booleans...->false")
+        .assertInlays("test->13", "...booleans->false")
   }
   
   fun `test no hint if varargs null`() {
@@ -160,7 +160,7 @@ public class VarArgTest {
 """)
     
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("test->13", "booleans...->false")
+        .assertInlays("test->13", "...booleans->false")
   }
   
   fun `test do not inline if parameter length is one or two`() {
@@ -399,7 +399,7 @@ public class VarArgTest {
 """)
     
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("booleans...->isCheck")
+        .assertInlays("...booleans->isCheck")
   }
 
   fun `test if any param matches inline all`() {

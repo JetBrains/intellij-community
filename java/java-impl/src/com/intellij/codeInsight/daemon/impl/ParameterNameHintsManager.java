@@ -146,7 +146,7 @@ public class ParameterNameHintsManager {
 
   @NotNull
   private static InlayInfo createInlayInfo(@NotNull PsiExpression callArgument, @NotNull PsiParameter methodParam) {
-    String paramName = methodParam.getName() + ((methodParam.getType() instanceof PsiEllipsisType) ? "..." : "");
+    String paramName = ((methodParam.getType() instanceof PsiEllipsisType) ? "..." : "") + methodParam.getName();
     return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset());
   }
 
