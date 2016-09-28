@@ -49,7 +49,8 @@ public class SvnBranchPointsCalculator {
   private static final Logger LOG = Logger.getInstance(SvnBranchPointsCalculator.class);
 
   private ValueHolder<WrapperInvertor, KeyData> myCache;
-  private PersistentHolder myPersistentHolder;
+  private SmallMapSerializer<String, TreeMap<String, BranchCopyData>> myPersistentMap;
+  @NotNull private final Object myPersistenceLock = new Object();
   private File myFile;
   private final Project myProject;
 
@@ -63,33 +64,83 @@ public class SvnBranchPointsCalculator {
   }
 
   public void activate() {
-    myPersistentHolder = new PersistentHolder(myFile);
+    synchronized (myPersistenceLock) {
+      myPersistentMap = new SmallMapSerializer<>(myFile, EnumeratorStringDescriptor.INSTANCE, new BranchDataExternalizer());
+    }
+
     myCache = new ValueHolder<WrapperInvertor, KeyData>() {
       public WrapperInvertor getValue(KeyData dataHolder) {
-        final WrapperInvertor result =
-          myPersistentHolder.getBestHit(dataHolder.getRepoUrl(), dataHolder.getSourceUrl(), dataHolder.getTargetUrl());
+        WrapperInvertor result = getBestHit(dataHolder.getRepoUrl(), dataHolder.getSourceUrl(), dataHolder.getTargetUrl());
         if (LOG.isDebugEnabled()) {
           LOG.debug("Persistent for: " + dataHolder.toString() + " returned: " + (result == null ? null : result.toString()));
         }
         return result;
       }
+
       public void setValue(WrapperInvertor value, KeyData dataHolder) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Put into persistent: key: " + dataHolder.toString() + " value: " + value.toString());
         }
-        myPersistentHolder.put(dataHolder.getRepoUrl(), value.getWrapped().getTarget(), value.getWrapped());
+        persist(dataHolder.getRepoUrl(), value.getWrapped().getTarget(), value.getWrapped());
       }
     };
   }
 
-  public void deactivate() {
-    myPersistentHolder.close();
-    myCache = null;
-    myPersistentHolder = null;
+  @Nullable
+  public WrapperInvertor getBestHit(String repoUrl, String source, String target) {
+    synchronized (myPersistenceLock) {
+      WrapperInvertor result = null;
+      TreeMap<String, BranchCopyData> map = myPersistentMap.get(repoUrl);
+
+      if (map != null) {
+        BranchCopyData sourceData = getBranchData(map, source);
+        BranchCopyData targetData = getBranchData(map, target);
+
+        if (sourceData != null && targetData != null) {
+          boolean inverted = sourceData.getTargetRevision() > targetData.getTargetRevision();
+          result = new WrapperInvertor(inverted, inverted ? sourceData : targetData);
+        }
+        else if (sourceData != null) {
+          result = new WrapperInvertor(true, sourceData);
+        }
+        else if (targetData != null) {
+          result = new WrapperInvertor(false, targetData);
+        }
+      }
+
+      return result;
+    }
   }
 
-  private static class BranchDataExternalizer implements DataExternalizer<TreeMap<String,BranchCopyData>> {
-    public void save(@NotNull DataOutput out, TreeMap<String,BranchCopyData> value) throws IOException {
+  public void deactivate() {
+    synchronized (myPersistenceLock) {
+      myPersistentMap.force();
+      myPersistentMap = null;
+    }
+    myCache = null;
+  }
+
+  private void persist(String uid, String target, BranchCopyData data) {
+    // todo - rewrite of rather big piece; consider rewriting
+    synchronized (myPersistenceLock) {
+      TreeMap<String, BranchCopyData> map = myPersistentMap.get(uid);
+      if (map == null) {
+        map = new TreeMap<>();
+      }
+      map.put(target, data);
+      myPersistentMap.put(uid, map);
+      myPersistentMap.force();
+    }
+  }
+
+  @Nullable
+  private static BranchCopyData getBranchData(@NotNull NavigableMap<String, BranchCopyData> map, String url) {
+    Map.Entry<String, BranchCopyData> branchData = map.floorEntry(url);
+    return branchData != null && url.startsWith(branchData.getKey()) ? branchData.getValue() : null;
+  }
+
+  private static class BranchDataExternalizer implements DataExternalizer<TreeMap<String, BranchCopyData>> {
+    public void save(@NotNull DataOutput out, TreeMap<String, BranchCopyData> value) throws IOException {
       out.writeInt(value.size());
       for (Map.Entry<String, BranchCopyData> entry : value.entrySet()) {
         out.writeUTF(entry.getKey());
@@ -101,8 +152,8 @@ public class SvnBranchPointsCalculator {
       }
     }
 
-    public TreeMap<String,BranchCopyData> read(@NotNull DataInput in) throws IOException {
-      final TreeMap<String,BranchCopyData> result = new TreeMap<>();
+    public TreeMap<String, BranchCopyData> read(@NotNull DataInput in) throws IOException {
+      final TreeMap<String, BranchCopyData> result = new TreeMap<>();
 
       final int num = in.readInt();
       for (int i = 0; i < num; i++) {
@@ -149,64 +200,6 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  private static class PersistentHolder {
-    @NotNull private final SmallMapSerializer<String, TreeMap<String, BranchCopyData>> myPersistentMap;
-    @NotNull private final Object myLock = new Object();
-
-    PersistentHolder(@NotNull File file) {
-      myPersistentMap = new SmallMapSerializer<>(file, EnumeratorStringDescriptor.INSTANCE, new BranchDataExternalizer());
-    }
-
-    public void close() {
-      myPersistentMap.force();
-    }
-
-    public void put(String uid, String target, BranchCopyData data) {
-      // todo - rewrite of rather big piece; consider rewriting
-      synchronized (myLock) {
-        TreeMap<String, BranchCopyData> map = myPersistentMap.get(uid);
-        if (map == null) {
-          map = new TreeMap<>();
-        }
-        map.put(target, data);
-        myPersistentMap.put(uid, map);
-      }
-      myPersistentMap.force();
-    }
-
-    @Nullable
-    public WrapperInvertor getBestHit(String repoUrl, String source, String target) {
-      synchronized (myLock) {
-        WrapperInvertor result = null;
-        TreeMap<String, BranchCopyData> map = myPersistentMap.get(repoUrl);
-
-        if (map != null) {
-          BranchCopyData sourceData = getBranchData(map, source);
-          BranchCopyData targetData = getBranchData(map, target);
-
-          if (sourceData != null && targetData != null) {
-            boolean inverted = sourceData.getTargetRevision() > targetData.getTargetRevision();
-            result = new WrapperInvertor(inverted, inverted ? sourceData : targetData);
-          }
-          else if (sourceData != null) {
-            result = new WrapperInvertor(true, sourceData);
-          }
-          else if (targetData != null) {
-            result = new WrapperInvertor(false, targetData);
-          }
-        }
-
-        return result;
-      }
-    }
-
-    @Nullable
-    private static BranchCopyData getBranchData(@NotNull NavigableMap<String, BranchCopyData> map, String url) {
-      Map.Entry<String, BranchCopyData> branchData = map.floorEntry(url);
-      return branchData != null && url.startsWith(branchData.getKey()) ? branchData.getValue() : null;
-    }
-  }
-
   private static class Loader implements ThrowableConvertor<KeyData, WrapperInvertor, VcsException> {
     private SvnVcs myVcs;
 
@@ -224,11 +217,12 @@ public class SvnBranchPointsCalculator {
         if (correct) {
           branchCopyData = new BranchCopyData(keyData.getSourceUrl(), copyData.getCopySourceRevision(), keyData.getTargetUrl(),
                                               copyData.getCopyTargetRevision());
-        } else {
+        }
+        else {
           branchCopyData = new BranchCopyData(keyData.getTargetUrl(), copyData.getCopySourceRevision(), keyData.getSourceUrl(),
                                               copyData.getCopyTargetRevision());
         }
-        WrapperInvertor invertor = new WrapperInvertor(! correct, branchCopyData);
+        WrapperInvertor invertor = new WrapperInvertor(!correct, branchCopyData);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Loader17 returned: for key: " + keyData.toString() + " result: " + (invertor.toString()));
         }
@@ -310,7 +304,7 @@ public class SvnBranchPointsCalculator {
   }
 
   public TaskDescriptor getFirstCopyPointTask(final String repoUID, final String sourceUrl, final String targetUrl,
-                                          final Consumer<TransparentlyFailedValueI<WrapperInvertor, VcsException>> consumer) {
+                                              final Consumer<TransparentlyFailedValueI<WrapperInvertor, VcsException>> consumer) {
     KeyData in = new KeyData(repoUID, sourceUrl, targetUrl);
     TransparentlyFailedValueI<WrapperInvertor, VcsException> value = new ThreadSafeTransparentlyFailedValue<>();
 
