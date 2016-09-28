@@ -33,6 +33,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
+import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -337,6 +338,7 @@ public class ManagePackagesDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myFilter = new MyPackageFilter();
+    myDescriptionTextArea = SwingHelper.createHtmlViewer(true, null, null, null);
   }
 
   public void setOptionsText(@NotNull String optionsText) {
