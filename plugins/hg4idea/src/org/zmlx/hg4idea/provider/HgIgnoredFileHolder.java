@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,47 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes;
+package org.zmlx.hg4idea.provider;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.changes.FileHolder;
+import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder;
+import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
+import org.zmlx.hg4idea.HgVcs;
 
 import java.util.Collection;
 import java.util.Set;
 
-/**
- * @author irengrig
- *         Date: 2/10/11
- *         Time: 4:20 PM
- */
-public class MapIgnoredFilesHolder extends AbstractIgnoredFilesHolder {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.MapIgnoredFilesHolder");
-
+public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder {
+  private final Project myProject;
+  private HgVcs myVcs;
   private final Set<VirtualFile> mySet;
   private final Set<VirtualFile> myVcsIgnoredSet;
-  private final Project myProject;
 
-  public MapIgnoredFilesHolder(Project project) {
-    super(project);
+  public HgIgnoredFileHolder(Project project) {
     myProject = project;
-    mySet = new THashSet<>();
-    myVcsIgnoredSet = new THashSet<>();    //collect ignored files from VcsChangeProvider -> processIgnored
-  }
-
-  @Override
-  protected void removeFile(VirtualFile file) {
-    mySet.remove(file);
-    myVcsIgnoredSet.remove(file);
-  }
-
-  @Override
-  protected Collection<VirtualFile> keys() {
-    // if mySet has a big size ->  idea will process all of this on every typing. see cleanAndAdjustScope() in AbstractIgnoredFilesHolder
-    return mySet;
+    myVcs = HgVcs.getInstance(myProject);
+    mySet = ContainerUtil.newHashSet();
+    myVcsIgnoredSet = ContainerUtil.newHashSet();   //collect ignored files from VcsChangeProvider -> processIgnored
   }
 
   @Override
@@ -61,9 +46,6 @@ public class MapIgnoredFilesHolder extends AbstractIgnoredFilesHolder {
     // todo fix more. take from x0x branch
     //LOG.assertTrue(! file.isDirectory());
     mySet.add(file);
-  }
-
-  public void addByVcsChangeProvider(VirtualFile file) {
     myVcsIgnoredSet.add(file);
   }
 
@@ -76,6 +58,10 @@ public class MapIgnoredFilesHolder extends AbstractIgnoredFilesHolder {
   public Collection<VirtualFile> values() {
     return ContainerUtil.union(mySet, myVcsIgnoredSet);
   }
+  
+ @Override
+  public void cleanAndAdjustScope(final VcsModifiableDirtyScope scope) {
+  }
 
   @Override
   public void cleanAll() {
@@ -85,7 +71,7 @@ public class MapIgnoredFilesHolder extends AbstractIgnoredFilesHolder {
 
   @Override
   public FileHolder copy() {
-    final MapIgnoredFilesHolder result = new MapIgnoredFilesHolder(myProject);
+    final HgIgnoredFileHolder result = new HgIgnoredFileHolder(myProject);
     result.mySet.addAll(mySet);
     result.myVcsIgnoredSet.addAll(myVcsIgnoredSet);
     return result;
@@ -98,5 +84,12 @@ public class MapIgnoredFilesHolder extends AbstractIgnoredFilesHolder {
 
   @Override
   public void notifyVcsStarted(AbstractVcs scope) {
+    cleanAll();
+  }
+
+  @NotNull
+  @Override
+  public AbstractVcs getVcs() {
+    return myVcs;
   }
 }

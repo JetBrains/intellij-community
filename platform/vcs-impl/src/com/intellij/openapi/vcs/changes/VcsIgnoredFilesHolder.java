@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,13 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.AbstractVcs;
+import org.jetbrains.annotations.NotNull;
 
-public interface FileHolder {
-  void cleanAll();
-  void cleanAndAdjustScope(VcsModifiableDirtyScope scope);
-  FileHolder copy();
-  HolderType getType();
+public interface VcsIgnoredFilesHolder extends IgnoredFilesHolder {
+  ExtensionPointName<VcsIgnoredFilesHolder> VCS_IGNORED_FILES_HOLDER_EP = ExtensionPointName.create("com.intellij.vcs.ignoredFilesHolder");
 
-  void notifyVcsStarted(AbstractVcs scope);
-
-  enum HolderType {
-    DELETED,
-    UNVERSIONED,
-    SWITCHED,
-    MODIFIED_WITHOUT_EDITING,
-    IGNORED,
-    LOCKED,
-    LOGICALLY_LOCKED,
-    ROOT_SWITCH
-  }
+  @NotNull
+  AbstractVcs getVcs();
 }
