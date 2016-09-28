@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -909,10 +910,13 @@ public final class EditorUtil {
       Disposer.dispose(disposable);
       return;
     }
+    // for injected editors disposal will happen only when host editor is disposed,
+    // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
+    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
-        if (event.getEditor() == editor) {
+        if (event.getEditor() == hostEditor) {
           Disposer.dispose(disposable);
         }
       }
