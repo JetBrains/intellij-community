@@ -268,8 +268,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           return;
         }
 
-        int change = Math.abs(e.getWheelRotation());
-        boolean increase = e.getWheelRotation() <= 0;
+        int rotation = e.getWheelRotation();
+        if (rotation == 0) return;
+        int change = Math.abs(rotation);
+        boolean increase = rotation <= 0;
         FontSize newFontSize = getQuickDocFontSize();
         for (; change > 0; change--) {
           if (increase) {
