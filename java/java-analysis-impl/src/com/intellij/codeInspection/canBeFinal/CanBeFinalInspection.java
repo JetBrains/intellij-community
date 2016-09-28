@@ -271,14 +271,8 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return QUICK_FIX_NAME;
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return QUICK_FIX_NAME;
     }
 
     @Override

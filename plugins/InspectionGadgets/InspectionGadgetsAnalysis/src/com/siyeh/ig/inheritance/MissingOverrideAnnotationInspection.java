@@ -84,13 +84,8 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("missing.override.annotation.add.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("missing.override.annotation.add.quickfix");
     }
 
     @Override

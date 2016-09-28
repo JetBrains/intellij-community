@@ -193,14 +193,8 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("try.with.identical.catches.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("try.with.identical.catches.quickfix");
     }
 
     @Override

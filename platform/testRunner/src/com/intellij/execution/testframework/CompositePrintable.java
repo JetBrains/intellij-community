@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 public class CompositePrintable implements Printable, Disposable {
   public static final String NEW_LINE = "\n";
@@ -41,6 +42,7 @@ public class CompositePrintable implements Printable, Disposable {
   private int myCurrentSize = 0;
   private String myOutputFile = null;
   private String myFrameworkOutputFile;
+  private static final ExecutorService ourTestExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("tests", 1);
 
   public void flush() {
     synchronized (myNestedPrintables) {
@@ -65,7 +67,7 @@ public class CompositePrintable implements Printable, Disposable {
     if (sync) {
       runnable.run();
     } else {
-      AppExecutorUtil.getAppExecutorService().execute(runnable);
+      ourTestExecutorService.execute(runnable);
     }
   }
 
@@ -140,7 +142,7 @@ public class CompositePrintable implements Printable, Disposable {
   public void setOutputFilePath(String outputFile) {
     myOutputFile = outputFile;
   }
-  
+
   public void setFrameworkOutputFile(String frameworkOutputFile) {
     myFrameworkOutputFile = frameworkOutputFile;
   }

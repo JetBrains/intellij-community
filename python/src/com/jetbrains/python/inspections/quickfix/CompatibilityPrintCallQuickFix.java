@@ -33,13 +33,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class CompatibilityPrintCallQuickFix implements LocalQuickFix {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.statement.effect");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.statement.effect");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

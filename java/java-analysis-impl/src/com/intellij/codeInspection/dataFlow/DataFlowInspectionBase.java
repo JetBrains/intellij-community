@@ -48,12 +48,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -319,6 +317,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
     }
 
+    reportAlwaysFailingCalls(holder, visitor, reportedAnchors);
+
     reportConstantPushes(runner, holder, visitor, reportedAnchors);
 
     reportNullableArguments(visitor, holder, reportedAnchors);
@@ -335,6 +335,35 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
     }
+  }
+
+  private static void reportAlwaysFailingCalls(ProblemsHolder holder,
+                                               DataFlowInstructionVisitor visitor,
+                                               HashSet<PsiElement> reportedAnchors) {
+    for (PsiCall call : visitor.getAlwaysFailingCalls()) {
+      PsiMethod method = call.resolveMethod();
+      if (method != null && reportedAnchors.add(call)) {
+        holder.registerProblem(getElementToHighlight(call), "The call to #ref always fails, according to its method contracts");
+      }
+    }
+  }
+
+  @NotNull private static PsiElement getElementToHighlight(@NotNull PsiCall call) {
+    PsiJavaCodeReferenceElement ref;
+    if (call instanceof PsiNewExpression) {
+      ref = ((PsiNewExpression)call).getClassReference();
+    }
+    else if (call instanceof PsiMethodCallExpression) {
+      ref = ((PsiMethodCallExpression)call).getMethodExpression();
+    }
+    else {
+      return call;
+    }
+    if (ref != null) {
+      PsiElement name = ref.getReferenceNameElement();
+      return name != null ? name : ref;
+    }
+    return call;
   }
 
   private void reportConstantPushes(StandardDataFlowRunner runner,
@@ -465,8 +494,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     List<LocalQuickFix> fixes = createNPEFixes(methodExpression.getQualifierExpression(), callExpression, onTheFly);
     ContainerUtil.addIfNotNull(fixes, ReplaceWithObjectsEqualsFix.createFix(callExpression, methodExpression));
 
-    PsiElement toHighlight = methodExpression.getReferenceNameElement();
-    if (toHighlight == null) toHighlight = methodExpression;
+    PsiElement toHighlight = getElementToHighlight(callExpression);
     holder.registerProblem(toHighlight,
                            InspectionsBundle.message("dataflow.message.npe.method.invocation"),
                            fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
@@ -805,7 +833,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static class RedundantInstanceofFix implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.data.flow.redundant.instanceof.quickfix");
     }
 
@@ -823,12 +851,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
           LOG.error(e);
         }
       }
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 
@@ -855,6 +877,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     private final MultiMap<NullabilityProblem, PsiElement> myProblems = new MultiMap<>();
     private final Map<Pair<NullabilityProblem, PsiElement>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
     private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
+    private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
 
     @Override
     protected void onInstructionProducesCCE(TypeCastInstruction instruction) {
@@ -869,6 +892,36 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         //  (e.g. if it's inside "if (var == null)" check after contract method invocation
         return info.normalNpe || info.ephemeralNpe && !info.normalOk;
       });
+    }
+
+    Collection<PsiCall> getAlwaysFailingCalls() {
+      return StreamEx.of(myFailingCalls.keySet()).filter(this::isAlwaysFailing).map(MethodCallInstruction::getCallExpression).toList();
+    }
+
+    @Override
+    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
+                                                 DataFlowRunner runner,
+                                                 DfaMemoryState memState) {
+      DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
+      if (hasNonTrivialFailingContracts(instruction)) {
+        boolean allFail = Arrays.stream(states).allMatch(s -> s.getMemoryState().peek() == runner.getFactory().getConstFactory().getContractFail());
+        myFailingCalls.put(instruction, allFail && isAlwaysFailing(instruction));
+      }
+      return states;
+    }
+
+    private static boolean hasNonTrivialFailingContracts(MethodCallInstruction instruction) {
+      List<MethodContract> contracts = instruction.getContracts();
+      return !contracts.isEmpty() && contracts.stream().allMatch(DataFlowInstructionVisitor::isNonTrivialFailingContract);
+    }
+
+    private static boolean isNonTrivialFailingContract(MethodContract contract) {
+      return contract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION &&
+             Arrays.stream(contract.arguments).anyMatch(v -> v != MethodContract.ValueConstraint.ANY_VALUE);
+    }
+
+    private boolean isAlwaysFailing(MethodCallInstruction instruction) {
+      return !Boolean.FALSE.equals(myFailingCalls.get(instruction));
     }
 
     @Override

@@ -121,7 +121,7 @@ public class VarArgTest {
 """)
     
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("test->13", "booleans...->false")
+        .assertInlays("test->13", "...booleans->false")
   }
   
   fun `test no hint if varargs null`() {
@@ -140,7 +140,7 @@ public class VarArgTest {
 }
 """)
     
-    onLineStartingWith("testBooleanVarargs").assertNoInlays()
+    onLineStartingWith("testBooleanVarargs").assertInlays("test->13")
   }
   
   fun `test multiple vararg hint`() {
@@ -160,7 +160,7 @@ public class VarArgTest {
 """)
     
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("test->13", "booleans...->false")
+        .assertInlays("test->13", "...booleans->false")
   }
   
   fun `test do not inline if parameter length is one or two`() {
@@ -179,7 +179,7 @@ public class CharSymbol {
 }
 """)
     
-    onLineStartingWith("count").assertNoInlays()
+    onLineStartingWith("count").assertInlays("t->1", "fa->false")
   }
   
   fun `test do not inline known subsequent parameter names`() {
@@ -274,10 +274,45 @@ public class Test {
 """)
     
     onLineStartingWith("System")
-        .assertInlays("""x->"AAA"""")
+        .assertNoInlays()
     
     onLineStartingWith("main(t")
         .assertInlays("isActive->true", "requestFocus->false", "xoo->2")
+  }
+  
+  
+  fun `test ignored methods`() {
+    setup("""
+public class Test {
+  
+  public void main() {
+    println("A");
+    print("A");
+    get(1);
+    set(1, new Object());
+    setNewIndex(10);
+    "sss".contains("s");
+    append("sdfsdf");
+    "sfsdf".startWith("s");
+    "sss".charAt(3);
+    
+    clearStatus(false);
+  }
+  
+  void print(String s) {}
+  void println(String s) {}
+  void get(int index) {}
+  void set(int index, Object object) {}
+  void append(String s) {}
+  void clearStatus(boolean updatedRecently) {}
+
+}
+""")
+
+    val inlays = getInlays()
+    assertThat(inlays).hasSize(1)
+    
+    assertThat(inlays[0].offset).isEqualTo(myFixture.editor.document.text.indexOf("false"))
   }
   
   fun `test hints for generic arguments`() {
@@ -367,7 +402,7 @@ public class VarArgTest {
 """)
     
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("booleans...->isCheck")
+        .assertInlays("...booleans->isCheck")
   }
 
   fun `test if any param matches inline all`() {
@@ -443,6 +478,10 @@ public class VarArgTest {
         .assertInlays("test->this", "endIndex->1000")
   }
 
+  private fun getInlays(): List<Inlay> {
+    val editor = myFixture.editor
+    return editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
+  }
 
   private fun onLineStartingWith(text: String): InlayAssert {
     val range = getLineRangeStartingWith(text)

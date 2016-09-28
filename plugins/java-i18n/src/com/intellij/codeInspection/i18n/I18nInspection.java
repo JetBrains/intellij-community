@@ -433,7 +433,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return new LocalQuickFix() {
       @Override
       @NotNull
-      public String getName() {
+      public String getFamilyName() {
         return IntroduceConstantHandler.REFACTORING_NAME;
       }
 
@@ -447,12 +447,6 @@ public class I18nInspection extends BaseLocalInspectionTool {
           PsiExpression[] expressions = {(PsiExpression)element};
           new IntroduceConstantHandler().invoke(project, expressions);
         }, project.getDisposed());
-      }
-
-      @Override
-      @NotNull
-      public String getFamilyName() {
-        return getName();
       }
     };
   }

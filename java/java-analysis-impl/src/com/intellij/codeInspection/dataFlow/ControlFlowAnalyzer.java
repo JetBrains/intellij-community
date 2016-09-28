@@ -1586,7 +1586,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiMethod constructor = pushConstructorArguments(expression);
 
       addConditionalRuntimeThrow();
-      addInstruction(new MethodCallInstruction(expression, null, Collections.emptyList()));
+      addInstruction(new MethodCallInstruction(expression, null, constructor == null ? Collections.emptyList() : getMethodContracts(constructor)));
 
       if (!myCatchStack.isEmpty()) {
         addMethodThrows(constructor, expression);
@@ -1597,6 +1597,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
+  @Nullable
   private PsiMethod pushConstructorArguments(PsiConstructorCall call) {
     PsiExpressionList args = call.getArgumentList();
     PsiMethod ctr = call.resolveConstructor();

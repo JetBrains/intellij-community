@@ -237,6 +237,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testContractPreservesUnknownMethodNullability() { doTest(); }
   public void testContractSeveralClauses() { doTest(); }
   public void testContractVarargs() { doTest(); }
+  public void testContractConstructor() { doTest(); }
 
   public void testBoxingImpliesNotNull() { doTest(); }
   public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }

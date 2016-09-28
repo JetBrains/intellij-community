@@ -72,14 +72,8 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
   private static class ReplaceWithRuntimeExceptionFix extends InspectionGadgetsFix {
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("replace.with.catch.clause.for.runtime.exception.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("replace.with.catch.clause.for.runtime.exception.quickfix");
     }
 
     @Override

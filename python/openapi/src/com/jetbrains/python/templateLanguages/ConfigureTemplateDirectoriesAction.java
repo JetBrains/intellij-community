@@ -28,14 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public class ConfigureTemplateDirectoriesAction implements LocalQuickFix, LowPriorityAction {
   @NotNull
   @Override
-  public String getName() {
-    return "Configure template directories";
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return "Configure template directories";
   }
 
   @Override

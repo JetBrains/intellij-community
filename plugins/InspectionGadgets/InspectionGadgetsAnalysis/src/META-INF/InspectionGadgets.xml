@@ -412,8 +412,8 @@
                      key="class.initializer.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure"
                      enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.classlayout.ClassInitializerInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ClassMayBeInterface" bundle="com.siyeh.InspectionGadgetsBundle" key="class.may.be.interface.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="false"
-                     level="WARNING" implementationClass="com.siyeh.ig.classlayout.ClassMayBeInterfaceInspection"/>
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="true"
+                     level="INFORMATION" implementationClass="com.siyeh.ig.classlayout.ClassMayBeInterfaceInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ClassNameDiffersFromFileName" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="class.name.differs.from.file.name.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"

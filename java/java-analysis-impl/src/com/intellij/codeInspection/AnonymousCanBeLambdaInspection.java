@@ -361,14 +361,8 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
   private static class ReplaceWithLambdaFix implements LocalQuickFix, HighPriorityAction {
     @NotNull
     @Override
-    public String getName() {
-      return "Replace with lambda";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Replace with lambda";
     }
 
     @Override

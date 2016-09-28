@@ -52,14 +52,8 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("simplify.junit.assertion.simplify.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("simplify.junit.assertion.simplify.quickfix");
     }
 
     @Override

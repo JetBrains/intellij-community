@@ -885,11 +885,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     public void mouseWheelMoved(@NotNull MouseWheelEvent e) {
       if (myEditorPreviewHint == null) return;
-      int inc = e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
-              e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount();
+      int units = e.getUnitsToScroll();
+      if (units == 0) return;
       // Stop accumulating when the last or the first line has been reached as 'adjusted' position to show lens.
-      if (myLastVisualLine < myEditor.getVisibleLineCount() - 1 && inc > 0 || myLastVisualLine > 0 && inc < 0) {
-        myWheelAccumulator += inc;
+      if (myLastVisualLine < myEditor.getVisibleLineCount() - 1 && units > 0 || myLastVisualLine > 0 && units < 0) {
+        myWheelAccumulator += units;
       }
       myRowAdjuster = myWheelAccumulator / myEditor.getLineHeight();
       showToolTipByMouseMove(e);

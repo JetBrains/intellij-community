@@ -589,14 +589,8 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {
     @NotNull
     @Override
-    public String getName() {
-      return "Replace lambda with method reference";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Replace lambda with method reference";
     }
 
     @Override

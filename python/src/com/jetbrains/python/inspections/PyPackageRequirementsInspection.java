@@ -418,15 +418,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @NotNull
     @Override
-    public String getName() {
+    public String getFamilyName() {
       final boolean plural = myPackageNames.size() > 1;
       return String.format("Ignore requirement%s", plural ? "s" : "");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override
@@ -465,14 +459,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @NotNull
     @Override
-    public String getName() {
-      return String.format("Add requirement '%s' to %s", myPackageName, calculateTarget());
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return String.format("Add requirement '%s' to %s", myPackageName, calculateTarget());
     }
 
     @Override

@@ -65,6 +65,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -196,6 +197,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     };
     setFixedColumnWidth(ClasspathTableModel.EXPORT_COLUMN, ClasspathTableModel.EXPORT_COLUMN_NAME);
     setFixedColumnWidth(ClasspathTableModel.SCOPE_COLUMN, DependencyScope.COMPILE.toString() + "     ");  // leave space for combobox border
+    myEntryTable.getTableHeader().getColumnModel().getColumn(ClasspathTableModel.ITEM_COLUMN).setPreferredWidth(10000); // consume all available space
 
     myEntryTable.registerKeyboardAction(
       new ActionListener() {
@@ -323,10 +325,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   private void setFixedColumnWidth(final int columnIndex, String sampleText) {
     final TableColumn column = myEntryTable.getTableHeader().getColumnModel().getColumn(columnIndex);
     final FontMetrics fontMetrics = myEntryTable.getFontMetrics(myEntryTable.getFont());
-    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + 4;
+    final int width = fontMetrics.stringWidth(" " + sampleText + " ") + JBUI.scale(4);
     column.setPreferredWidth(width);
-    column.setMaxWidth(width);
-
+    column.setMinWidth(width);
     column.setResizable(false);
   }
 

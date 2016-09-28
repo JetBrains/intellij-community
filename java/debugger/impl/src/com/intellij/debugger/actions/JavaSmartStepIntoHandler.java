@@ -52,8 +52,9 @@ import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
 import java.util.Collections;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Stack;
 
 /**
  * User: Alexander Podkhalyuzin
@@ -144,14 +145,14 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       final Ref<TextRange> textRange = new Ref<>(lineRange);
 
       final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
-        final Stack<PsiMethod> myContextStack = new Stack<>();
-        final Stack<String> myParamNameStack = new Stack<>();
+        final Deque<PsiMethod> myContextStack = new LinkedList<>();
+        final Deque<String> myParamNameStack =  new LinkedList<>();
         private int myNextLambdaExpressionOrdinal = 0;
         private boolean myInsideLambda = false;
 
         @Nullable
         private String getCurrentParamName() {
-          return myParamNameStack.isEmpty() ? null : myParamNameStack.peek();
+          return myParamNameStack.peekFirst();
         }
 
         @Override
@@ -257,7 +258,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
 
         public void visitExpressionList(PsiExpressionList expressionList) {
-          final PsiMethod psiMethod = myContextStack.isEmpty()? null : myContextStack.peek();
+          PsiMethod psiMethod = myContextStack.peekFirst();
           if (psiMethod != null) {
             final String methodName = psiMethod.getName();
             final PsiExpression[] expressions = expressionList.getExpressions();

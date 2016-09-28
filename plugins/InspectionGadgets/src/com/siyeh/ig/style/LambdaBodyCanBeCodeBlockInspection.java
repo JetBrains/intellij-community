@@ -80,15 +80,8 @@ public class LambdaBodyCanBeCodeBlockInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("lambda.body.can.be.code.block.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("lambda.body.can.be.code.block.quickfix");
     }
   }
 }

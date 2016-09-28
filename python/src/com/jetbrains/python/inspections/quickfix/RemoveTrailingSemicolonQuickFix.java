@@ -31,13 +31,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RemoveTrailingSemicolonQuickFix implements LocalQuickFix {
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.remove.trailing.semicolon");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.remove.trailing.semicolon");
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

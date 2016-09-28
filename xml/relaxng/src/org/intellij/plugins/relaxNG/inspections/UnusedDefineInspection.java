@@ -212,14 +212,8 @@ public class UnusedDefineInspection extends BaseInspection {
 
       @Override
       @NotNull
-      public String getName() {
-        return "Remove define";
-      }
-
-      @Override
-      @NotNull
       public String getFamilyName() {
-        return getName();
+        return "Remove define";
       }
 
       @Override

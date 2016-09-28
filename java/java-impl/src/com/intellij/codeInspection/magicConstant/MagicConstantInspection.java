@@ -205,14 +205,8 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     holder.registerProblem(file, text, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new LocalQuickFix() {
       @NotNull
       @Override
-      public String getName() {
-        return "Attach annotations";
-      }
-
-      @NotNull
-      @Override
       public String getFamilyName() {
-        return getName();
+        return "Attach annotations";
       }
 
       @Override

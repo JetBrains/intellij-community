@@ -62,15 +62,10 @@ public abstract class MisorderedAssertEqualsArgumentsInspectionBase extends Base
   }
 
   private static class FlipArgumentsFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("misordered.assert.equals.arguments.flip.quickfix");
     }
 

@@ -51,13 +51,8 @@ public class StaticMethodOnlyUsedInOneClassInspection extends StaticMethodOnlyUs
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.quickfix");
     }
 
     @Override

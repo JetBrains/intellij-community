@@ -51,14 +51,8 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("assertequals.may.be.assertsame.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("assertequals.may.be.assertsame.quickfix");
     }
 
     @Override

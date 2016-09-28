@@ -78,13 +78,8 @@ public class ConvertOldAnnotationInspection extends BaseJavaLocalInspectionTool 
     private static final Logger LOG = Logger.getInstance("#" + ConvertOldAnnotationsQuickfix.class.getName());
 
     @NotNull
-    public String getName() {
-      return DISPLAY_NAME;
-    }
-
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return DISPLAY_NAME;
     }
 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

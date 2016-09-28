@@ -67,14 +67,8 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("simplifiable.annotation.quickfix");
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("simplifiable.annotation.quickfix");
     }
 
     @Override

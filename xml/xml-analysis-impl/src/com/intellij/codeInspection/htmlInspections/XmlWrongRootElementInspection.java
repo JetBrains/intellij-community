@@ -141,14 +141,8 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return XmlBundle.message("change.root.element.to", myText);
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return XmlBundle.message("change.root.element.to", myText);
     }
 
     @Override

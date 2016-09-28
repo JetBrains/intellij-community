@@ -135,14 +135,9 @@ public class MultiplyOrDivideByPowerOfTwoInspection
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "multiply.or.divide.by.power.of.two.replace.quickfix");
-    }
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

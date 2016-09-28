@@ -360,15 +360,13 @@ public class LocalVariablesUtil {
     private final MultiMap<Integer, String> myNames;
     private int myCurrentSlotIndex;
     private final PsiElement myElement;
-    private final Stack<Integer> myIndexStack;
+    private final Deque<Integer> myIndexStack = new LinkedList<>();
     private boolean myReached = false;
 
     public LocalVariableNameFinder(int startSlot, MultiMap<Integer, String> names, PsiElement element) {
       myNames = names;
       myCurrentSlotIndex = startSlot;
       myElement = element;
-      myIndexStack = new Stack<>();
-
     }
 
     private boolean shouldVisit(PsiElement scope) {

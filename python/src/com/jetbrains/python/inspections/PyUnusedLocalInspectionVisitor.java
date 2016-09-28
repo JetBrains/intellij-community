@@ -406,7 +406,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
   private static class ReplaceWithWildCard implements LocalQuickFix {
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return PyBundle.message("INSP.unused.locals.replace.with.wildcard");
     }
 
@@ -427,11 +427,6 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           psiElement.replace(target);
         }
       }), getName(), null);
-    }
-
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 }

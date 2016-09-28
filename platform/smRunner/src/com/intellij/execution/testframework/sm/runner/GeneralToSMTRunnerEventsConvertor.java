@@ -392,6 +392,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);
       }
       else {
+        testProxy.setTestFailed(localizedMessage, stackTrace, isTestError);
         logProblem("Comparison failure actual and expected texts should be both null or not null.\n"
                    + "Expected:\n"
                    + comparisionFailureExpectedText + "\n"

@@ -319,6 +319,7 @@ public class LaterInvocator {
 
   @NotNull
   public static ModalityState getCurrentModalityState() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return ourModalityStack.peek();
   }
 

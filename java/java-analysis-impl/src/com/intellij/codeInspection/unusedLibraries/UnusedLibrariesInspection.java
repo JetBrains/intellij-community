@@ -133,14 +133,8 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return myFiles == null ? InspectionsBundle.message("detach.library.quickfix.name") : InspectionsBundle.message("detach.library.roots.quickfix.name");
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return myFiles == null ? InspectionsBundle.message("detach.library.quickfix.name") : InspectionsBundle.message("detach.library.roots.quickfix.name");
     }
 
     @Override

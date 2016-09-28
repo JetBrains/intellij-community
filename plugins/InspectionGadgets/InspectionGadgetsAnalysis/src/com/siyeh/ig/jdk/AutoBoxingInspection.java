@@ -109,14 +109,8 @@ public class AutoBoxingInspection extends BaseInspection {
   private static class AutoBoxingFix extends InspectionGadgetsFix {
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("auto.boxing.make.boxing.explicit.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("auto.boxing.make.boxing.explicit.quickfix");
     }
 
     @Override

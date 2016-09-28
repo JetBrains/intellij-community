@@ -28,14 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public class PyReplaceTupleWithListQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.make.list");
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.make.list");
   }
 
   @Override

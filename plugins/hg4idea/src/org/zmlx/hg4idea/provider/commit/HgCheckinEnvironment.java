@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.provider.commit;
 import com.intellij.dvcs.AmendComponent;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -26,13 +27,13 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.GuiUtils;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -161,11 +162,9 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     // push if needed
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
       final List<HgRepository> preselectedRepositories = ContainerUtil.newArrayList(repositoriesMap.keySet());
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        public void run() {
-          new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show();
-        }
-      });
+      GuiUtils.invokeLaterIfNeeded(() ->
+                                     new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show(),
+                                   ModalityState.defaultModalityState());
     }
 
     return exceptions;
