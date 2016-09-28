@@ -56,6 +56,8 @@ class AsyncFilterRunner {
   }
 
   void highlightHyperlinks(final Filter customFilter, final int startLine, final int endLine) {
+    if (endLine < 0) return;
+
     Computable<FilterResults> bgComputation = highlightHyperlinksAsync(customFilter, startLine, endLine);
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       bgComputation.compute().applyHighlights(myHyperlinks);
