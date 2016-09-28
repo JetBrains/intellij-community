@@ -522,11 +522,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * This is helper method. It delegated its functionality to the WindowManager.
    * Before delegating it fires state changed.
    */
-  void execute(@NotNull List<FinalizableCommand> commandList) {
-    execute(commandList, false);
-  }
-
-  private void execute(@NotNull List<FinalizableCommand> commandList, boolean synchronously) {
+  public void execute(@NotNull List<FinalizableCommand> commandList) {
     for (FinalizableCommand each : commandList) {
       if (each.willChangeState()) {
         fireStateChanged();
@@ -537,7 +533,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     for (FinalizableCommand each : commandList) {
       each.beforeExecute(this);
     }
-    myWindowManager.getCommandProcessor().execute(commandList, myProject.getDisposed(), synchronously);
+    myWindowManager.getCommandProcessor().execute(commandList, myProject.getDisposed());
+  }
+
+  private void flushCommands() {
+    myWindowManager.getCommandProcessor().flush();
   }
 
   @Override
@@ -2441,12 +2441,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     public void runActivity(@NotNull Project project) {
       ToolWindowManagerEx ex = ToolWindowManagerEx.getInstanceEx(project);
       if (ex instanceof ToolWindowManagerImpl) {
-        ToolWindowManagerImpl myManager = (ToolWindowManagerImpl)ex;
+        ToolWindowManagerImpl manager = (ToolWindowManagerImpl)ex;
         List<FinalizableCommand> list = new ArrayList<>();
-        myManager.registerToolWindowsFromBeans(list);
-        myManager.initAll(list);
+        manager.registerToolWindowsFromBeans(list);
+        manager.initAll(list);
         EdtInvocationManager.getInstance().invokeLater(() -> {
-          myManager.execute(list, true);
+          manager.execute(list);
+          manager.flushCommands();
         });
       }
     }
