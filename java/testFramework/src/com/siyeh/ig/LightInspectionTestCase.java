@@ -15,11 +15,16 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -44,6 +49,14 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     final InspectionProfileEntry inspection = getInspection();
     if (inspection != null) {
       myFixture.enableInspections(inspection);
+
+      final Project project = myFixture.getProject();
+      final HighlightDisplayKey displayKey = HighlightDisplayKey.find(inspection.getShortName());
+      final InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstanceImpl(project).getCurrentProfile();
+      final HighlightDisplayLevel errorLevel = currentProfile.getErrorLevel(displayKey, null);
+      if (errorLevel == HighlightDisplayLevel.DO_NOT_SHOW) {
+        currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.WARNING, project);
+      }
     }
 
     Sdk sdk = ModuleRootManager.getInstance(ModuleManager.getInstance(getProject()).getModules()[0]).getSdk();
