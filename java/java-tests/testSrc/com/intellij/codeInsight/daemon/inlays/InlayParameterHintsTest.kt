@@ -461,6 +461,24 @@ public class VarArgTest {
     onLineStartingWith("check(")
         .assertInlays("beginIndex->10", "endIndex->1000")
   }
+  
+  fun `test ignore String methods`() {
+    setup("""
+class Test {
+  
+  public void main() {
+    "qq".replace("a", "a");
+    "ww".replace('a', 'b');
+    String.format("line", "eee", "www");
+  }
+  
+}
+""")
+    
+    onLineStartingWith("\"q").assertNoInlays()
+    onLineStartingWith("\"w").assertNoInlays()
+    onLineStartingWith("String").assertNoInlays()
+  }
 
   fun `test inline common name pair if more that 2 args xxx`() {
     setup("""

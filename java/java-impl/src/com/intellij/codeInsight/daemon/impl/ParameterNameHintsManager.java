@@ -46,6 +46,8 @@ public class ParameterNameHintsManager {
     "charAt", "startsWith", "indexOf"
   );
 
+  private static final List<String> COMMON_CLASSES = ContainerUtil.newArrayList(JAVA_LANG_STRING);
+
   @NotNull
   private final List<InlayInfo> myDescriptors;
 
@@ -59,11 +61,25 @@ public class ParameterNameHintsManager {
         && hasUnclearExpressions(callArguments)) 
     {
       PsiMethod method = (PsiMethod)resolveResult.getElement();
+      if (isInBlackList(method)) {
+        myDescriptors = descriptors;
+        return;
+      }
+      
       PsiParameter[] parameters = method.getParameterList().getParameters();
       descriptors = buildDescriptorsForLiteralArguments(callArguments, parameters, resolveResult);
     }
 
     myDescriptors = descriptors;
+  }
+
+  private static boolean isInBlackList(PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass != null) {
+      String fqn = aClass.getQualifiedName();
+      return COMMON_CLASSES.stream().anyMatch((e) -> e.equals(fqn));
+    }
+    return false;
   }
 
   private static boolean isMethodToShowParams(JavaResolveResult resolveResult) {
