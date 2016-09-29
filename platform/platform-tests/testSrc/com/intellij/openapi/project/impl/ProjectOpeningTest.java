@@ -38,7 +38,7 @@ import static com.intellij.openapi.startup.StartupActivity.POST_STARTUP_ACTIVITY
  */
 public class ProjectOpeningTest extends LightPlatformTestCase {
 
-  public void testOpenProjectCancelling() throws Exception {
+  public void _testOpenProjectCancelling() throws Exception {
     File foo = PlatformTestCase.createTempDir("foo");
     Project project = null;
     MyStartupActivity activity = new MyStartupActivity();
@@ -55,6 +55,36 @@ public class ProjectOpeningTest extends LightPlatformTestCase {
       closeProject(project);
     }
   }
+  /*
+
+  public void testCancelOnLoadingModules() throws Exception {
+    File foo = PlatformTestCase.createTempDir("foo");
+    Project project = null;
+    try {
+      ProjectManagerEx manager = ProjectManagerEx.getInstanceEx();
+      project = manager.createProject(null, foo.getPath());
+      project.save();
+      closeProject(project);
+
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
+        @Override
+        public void projectComponentsInitialized(@NotNull Project project) {
+          ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+          assertNotNull(indicator);
+          indicator.cancel();
+        }
+      });
+
+      manager.loadAndOpenProject(foo.getPath());
+      assertFalse(manager.openProject(project));
+      assertFalse(project.isOpen());
+    }
+    finally {
+      closeProject(project);
+    }
+  }
+
+  */
 
   private static void closeProject(final Project project) {
     if (project != null && !project.isDisposed()) {
