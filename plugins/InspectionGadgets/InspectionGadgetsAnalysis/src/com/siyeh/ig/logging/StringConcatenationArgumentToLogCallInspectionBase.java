@@ -95,13 +95,8 @@ public class StringConcatenationArgumentToLogCallInspectionBase extends BaseInsp
 
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("string.concatenation.argument.to.log.call.quickfix");
     }
 
     @Override

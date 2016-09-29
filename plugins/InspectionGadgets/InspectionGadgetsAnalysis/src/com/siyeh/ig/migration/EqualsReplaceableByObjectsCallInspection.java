@@ -83,14 +83,8 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("equals.replaceable.by.objects.call.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("equals.replaceable.by.objects.call.quickfix");
     }
 
     @Override

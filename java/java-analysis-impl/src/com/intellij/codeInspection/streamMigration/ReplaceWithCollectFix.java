@@ -16,7 +16,9 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -32,6 +34,8 @@ import java.util.List;
  * @author Tagir Valeev
  */
 class ReplaceWithCollectFix extends MigrateToStreamFix {
+  private static final Logger LOG = Logger.getInstance(ReplaceWithCollectFix.class);
+
   final String myMethodName;
 
   protected ReplaceWithCollectFix(String methodName) {
@@ -87,16 +91,18 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
     final StringBuilder builder = generateStream(iteratedValue, operations);
 
     final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
-    final PsiExpression initializer = StreamApiMigrationInspection
-      .extractReplaceableCollectionInitializer(qualifierExpression, foreachStatement);
-    if (initializer != null) {
-      String callText = builder.append(".collect(java.util.stream.Collectors.")
-        .append(createInitializerReplacementText(qualifierExpression.getType(), initializer))
-        .append(")").toString();
-      PsiElement result = initializer.replace(elementFactory.createExpressionFromText(callText, null));
-      simplifyAndFormat(project, result);
-      removeLoop(foreachStatement);
-      return;
+    final PsiLocalVariable variable = StreamApiMigrationInspection.extractCollectionVariable(qualifierExpression);
+    if (variable != null) {
+      InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(variable, foreachStatement);
+      if(status != InitializerUsageStatus.UNKNOWN) {
+        PsiExpression initializer = variable.getInitializer();
+        LOG.assertTrue(initializer != null);
+        String callText = builder.append(".collect(java.util.stream.Collectors.")
+          .append(createInitializerReplacementText(qualifierExpression.getType(), initializer))
+          .append(")").toString();
+        replaceInitializer(foreachStatement, variable, initializer, callText, status);
+        return;
+      }
     }
     final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() + "." : "";
 

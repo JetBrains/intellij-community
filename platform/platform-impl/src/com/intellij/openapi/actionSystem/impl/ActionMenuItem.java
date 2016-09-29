@@ -247,6 +247,17 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     }
   }
 
+  @Override
+  public void setIcon(Icon icon) {
+    if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
+      if (icon instanceof IconLoader.LazyIcon) {
+        // [tav] JDK can't paint correctly our HiDPI icons at the system menu bar
+        icon = ((IconLoader.LazyIcon)icon).inNormalScale(false);
+      }
+    }
+    super.setIcon(icon);
+  }
+
   public boolean isToggleable() {
     return myToggleable;
   }

@@ -77,15 +77,9 @@ public class NegatedIfElseInspection extends BaseInspection {
 
   private static class NegatedIfElseFix extends InspectionGadgetsFix {
 
-    @NotNull
     @Override
+    @NotNull
     public String getFamilyName() {
-      return getName();
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
       return InspectionGadgetsBundle.message("negated.if.else.invert.quickfix");
     }
 

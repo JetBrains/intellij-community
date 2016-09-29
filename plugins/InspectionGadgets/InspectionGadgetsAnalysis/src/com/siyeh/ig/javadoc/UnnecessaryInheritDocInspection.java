@@ -75,14 +75,9 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "unnecessary.inherit.doc.quickfix");
-    }
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

@@ -59,15 +59,10 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
   }
 
   private static class UnclearBinaryExpressionFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @NotNull
     @Override
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unclear.binary.expression.quickfix");
     }
 

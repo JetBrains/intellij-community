@@ -39,9 +39,9 @@ import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
-import com.intellij.vcs.log.ui.render.RectangleReferencePainter;
 import com.intellij.vcs.log.ui.render.LabelIcon;
 import com.intellij.vcs.log.ui.render.RectanglePainter;
+import com.intellij.vcs.log.ui.render.RectangleReferencePainter;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -573,7 +573,7 @@ class CommitPanel extends JBPanel {
   }
 
   private static class RootPanel extends JPanel {
-    private static final int RIGHT_BORDER = 5;
+    private static final int RIGHT_BORDER = Math.max(UIUtil.getScrollBarWidth(), JBUI.scale(14));
     @NotNull private final RectanglePainter myLabelPainter;
     @NotNull private String myText = "";
     @NotNull private Color myColor = getCommitDetailsBackground();
@@ -620,14 +620,9 @@ class CommitPanel extends JBPanel {
         }
         else {
           Rectangle rect = scrollPane.getViewport().getViewRect();
-          JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
           width = rect.x + rect.width;
-          if (verticalScrollBar.isVisible()) {
-            width -= verticalScrollBar.getWidth();
-          }
         }
-        getWidth();
-        myLabelPainter.paint((Graphics2D)g, myText, width - painterSize.width - JBUI.scale(RIGHT_BORDER), 0, myColor);
+        myLabelPainter.paint((Graphics2D)g, myText, width - painterSize.width - RIGHT_BORDER, 0, myColor);
       }
     }
 

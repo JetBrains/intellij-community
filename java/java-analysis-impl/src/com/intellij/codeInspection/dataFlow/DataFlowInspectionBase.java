@@ -833,7 +833,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static class RedundantInstanceofFix implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.data.flow.redundant.instanceof.quickfix");
     }
 
@@ -851,12 +851,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
           LOG.error(e);
         }
       }
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 

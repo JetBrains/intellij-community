@@ -57,15 +57,10 @@ public class ExtendsObjectInspection extends BaseInspection {
   }
 
   private static class ExtendsObjectFix extends InspectionGadgetsFix {
-     @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "extends.object.remove.quickfix");
     }

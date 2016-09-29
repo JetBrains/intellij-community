@@ -62,14 +62,8 @@ public class SimplifiableConditionalExpressionInspection extends BaseInspection 
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
     }
 
     @Override

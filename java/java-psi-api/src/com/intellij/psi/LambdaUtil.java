@@ -122,8 +122,7 @@ public class LambdaUtil {
   public static boolean isFunctionalClass(PsiClass aClass) {
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return false;
-      final List<HierarchicalMethodSignature> signatures = findFunctionCandidates(aClass);
-      return signatures != null && signatures.size() == 1;
+      return getFunction(aClass) != null;
     }
     return false;
   }
@@ -153,7 +152,6 @@ public class LambdaUtil {
   @Contract("null -> null")
   @Nullable
   public static MethodSignature getFunction(PsiClass psiClass) {
-    if (psiClass == null) return null;
     final List<HierarchicalMethodSignature> functions = findFunctionCandidates(psiClass);
     if (functions != null && functions.size() == 1) {
       return functions.get(0);
@@ -219,7 +217,7 @@ public class LambdaUtil {
 
   @Contract("null -> null")
   @Nullable
-  public static List<HierarchicalMethodSignature> findFunctionCandidates(final PsiClass psiClass) {
+  public static List<HierarchicalMethodSignature> findFunctionCandidates(@Nullable final PsiClass psiClass) {
     if (psiClass != null && psiClass.isInterface() && !psiClass.isAnnotationType()) {
       return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<List<HierarchicalMethodSignature>>() {
         @Nullable

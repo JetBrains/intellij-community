@@ -40,14 +40,8 @@ public class PyDefaultArgumentQuickFix implements LocalQuickFix {
 
   @Override
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.default.argument");
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.default.argument");
   }
 
   @Override

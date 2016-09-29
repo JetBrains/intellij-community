@@ -32,14 +32,8 @@ import org.jetbrains.annotations.NotNull;
 public class MoveFromFutureImportQuickFix implements LocalQuickFix {
   @Override
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.move.from.future.import");
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.move.from.future.import");
   }
 
   @Override

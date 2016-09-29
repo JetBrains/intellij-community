@@ -245,13 +245,6 @@ public class PyChainedComparisonsInspection extends PyInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return ourIgnoreConstantOptionText;
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return ourIgnoreConstantOptionText;
     }

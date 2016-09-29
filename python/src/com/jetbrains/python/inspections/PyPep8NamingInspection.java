@@ -276,14 +276,8 @@ public class PyPep8NamingInspection extends PyInspection {
 
     @NotNull
     @Override
-    public String getName() {
-      return "Ignore method names for descendants of class";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Ignore method names for descendants of class";
     }
 
     @Override
@@ -321,13 +315,6 @@ public class PyPep8NamingInspection extends PyInspection {
 
     public IgnoreErrorFix(String code) {
       myCode = code;
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return  myText;
     }
 
     @Nls

@@ -71,15 +71,9 @@ public class TailRecursionInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "tail.recursion.replace.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

@@ -1090,7 +1090,7 @@ public class TemplateState implements Disposable {
 
   private void cleanupTemplateState(boolean brokenOff) {
     final Editor editor = myEditor;
-    fireBeforeTemplateFinished();
+    fireBeforeTemplateFinished(brokenOff);
     if (!isDisposed()) {
       int oldVar = myCurrentVariableNumber;
       setCurrentVariableNumber(-1);
@@ -1398,9 +1398,9 @@ public class TemplateState implements Disposable {
     }
   }
 
-  private void fireBeforeTemplateFinished() {
+  private void fireBeforeTemplateFinished(boolean brokenOff) {
     for (TemplateEditingListener listener : myListeners) {
-      listener.beforeTemplateFinished(this, myTemplate);
+      listener.beforeTemplateFinished(this, myTemplate, brokenOff);
     }
   }
 

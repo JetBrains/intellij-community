@@ -39,14 +39,8 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.make.static");
-  }
-
-  @NonNls
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.make.static");
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

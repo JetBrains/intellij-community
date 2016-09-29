@@ -26,14 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public class DeleteImportFix extends InspectionGadgetsFix {
   @Override
   @NotNull
-  public String getName() {
-    return InspectionGadgetsBundle.message("delete.import.quickfix");
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return InspectionGadgetsBundle.message("delete.import.quickfix");
   }
 
   @Override

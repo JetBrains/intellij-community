@@ -87,7 +87,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
       @Override
       public PsiClass compute() {
         if (JUnitUtil.isJUnit5(module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
-                                              : sourceScope.getGlobalSearchScope(),
+                                              : sourceScope.getLibrariesScope(),
                                sourceScope.getProject())) {
           return null;
         }

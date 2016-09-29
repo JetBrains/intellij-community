@@ -37,7 +37,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -198,15 +197,12 @@ public class ModuleHighlightUtil {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
       }
       else {
-        Graph<PsiJavaModule> graph = JavaModuleGraphBuilder.getOrBuild(target.getProject());
-        if (graph != null) {
-          Collection<PsiJavaModule> cycle = JavaModuleGraphBuilder.findCycle(graph, (PsiJavaModule)target);
-          if (cycle != null && cycle.contains(container)) {
-            Stream<String> stream = cycle.stream().map(PsiJavaModule::getModuleName);
-            if (ApplicationManager.getApplication().isUnitTestMode()) stream = stream.sorted();
-            String message = JavaErrorMessages.message("module.cyclic.dependence", stream.collect(Collectors.joining(", ")));
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
-          }
+        Collection<PsiJavaModule> cycle = JavaModuleGraphUtil.findCycle((PsiJavaModule)target);
+        if (cycle != null && cycle.contains(container)) {
+          Stream<String> stream = cycle.stream().map(PsiJavaModule::getModuleName);
+          if (ApplicationManager.getApplication().isUnitTestMode()) stream = stream.sorted();
+          String message = JavaErrorMessages.message("module.cyclic.dependence", stream.collect(Collectors.joining(", ")));
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).description(message).create();
         }
       }
     }

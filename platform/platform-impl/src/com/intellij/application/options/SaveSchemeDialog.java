@@ -20,6 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
+import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -79,7 +80,7 @@ public class SaveSchemeDialog extends DialogWrapper {
     }
     else if (
       isDefaultSchemeName(schemeName) ||
-      schemeName.startsWith(DefaultColorsScheme.EDITABLE_COPY_PREFIX)) {
+      schemeName.startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
       Messages.showMessageDialog(getContentPane(), ApplicationBundle.message("error.illegal.scheme.name"),
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return;

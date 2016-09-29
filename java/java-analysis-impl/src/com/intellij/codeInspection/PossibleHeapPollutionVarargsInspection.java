@@ -94,14 +94,8 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaBatchLocalIn
   private static class AnnotateAsSafeVarargsQuickFix implements LocalQuickFix {
     @NotNull
     @Override
-    public String getName() {
-      return "Annotate as @SafeVarargs";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Annotate as @SafeVarargs";
     }
 
     @Override
@@ -119,14 +113,8 @@ public class PossibleHeapPollutionVarargsInspection extends BaseJavaBatchLocalIn
   private static class MakeFinalAndAnnotateQuickFix implements LocalQuickFix {
     @NotNull
     @Override
-    public String getName() {
-      return "Make final and annotate as @SafeVarargs";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Make final and annotate as @SafeVarargs";
     }
 
     @Override

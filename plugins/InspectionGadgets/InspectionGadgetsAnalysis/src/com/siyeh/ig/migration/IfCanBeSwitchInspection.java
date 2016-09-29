@@ -148,15 +148,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
 
     public IfCanBeSwitchFix() {}
 
-    @NotNull
     @Override
+    @NotNull
     public String getFamilyName() {
-      return getName();
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
       return InspectionGadgetsBundle.message("if.can.be.switch.quickfix");
     }
 

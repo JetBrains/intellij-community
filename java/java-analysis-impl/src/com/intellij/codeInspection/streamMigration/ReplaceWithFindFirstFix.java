@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -76,13 +77,12 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       PsiExpression value = assignment.getRExpression();
       if (value == null) return;
       restoreComments(foreachStatement, body);
-      if (StreamApiMigrationInspection.isDeclarationJustBefore(var, foreachStatement)) {
+      InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, foreachStatement);
+      if (status != InitializerUsageStatus.UNKNOWN) {
         PsiExpression initializer = var.getInitializer();
         if (initializer != null) {
-          PsiElement result =
-            initializer.replace(elementFactory.createExpressionFromText(generateOptionalUnwrap(stream, tb, value, initializer), initializer));
-          removeLoop(foreachStatement);
-          simplifyAndFormat(project, result);
+          String replacementText = generateOptionalUnwrap(stream, tb, value, initializer);
+          replaceInitializer(foreachStatement, var, initializer, replacementText, status);
           return;
         }
       }

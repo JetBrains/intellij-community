@@ -28,15 +28,10 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix {
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return InspectionGadgetsBundle.message(
       "make.initialization.explicit.quickfix");
   }
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
   @Override
   public void doFix(Project project, ProblemDescriptor descriptor)

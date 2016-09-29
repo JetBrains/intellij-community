@@ -92,13 +92,8 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
   public static class JUnitConverterQuickFix implements LocalQuickFix {
 
     @NotNull
-    public String getName() {
-      return QUICKFIX_NAME;
-    }
-
-     @NotNull
     public String getFamilyName() {
-      return getName();
+      return QUICKFIX_NAME;
     }
 
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

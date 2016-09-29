@@ -35,7 +35,7 @@ public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
 
   @NotNull
   @Override
-  public String getName() {
+  public String getFamilyName() {
     return XmlErrorMessages.message("switch.to.html5.quickfix.text");
   }
 
@@ -43,12 +43,6 @@ public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
   @Override
   public String getText() {
     return getFamilyName();
-  }
-
-  @NotNull
-  @Override
-  public String getFamilyName() {
-    return getName();
   }
 
   @Override

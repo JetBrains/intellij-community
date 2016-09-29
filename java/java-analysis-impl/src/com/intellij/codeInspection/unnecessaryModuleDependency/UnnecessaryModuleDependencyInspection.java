@@ -158,14 +158,8 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
 
     @Override
     @NotNull
-    public String getName() {
-      return "Remove dependency";
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return "Remove dependency";
     }
 
     @Override

@@ -300,7 +300,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("introduce.constant.across.the.project");
     }
 
@@ -340,12 +340,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         };
         handler.invoke(project, expressionArray);
       });
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 

@@ -31,15 +31,8 @@ public class PyRemoveUnderscoresInNumericLiteralsQuickFix implements LocalQuickF
   @Nls
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("QFIX.NAME.remove.underscores.in.numeric");
-  }
-
-  @Nls
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("QFIX.NAME.remove.underscores.in.numeric");
   }
 
   @Override

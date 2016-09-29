@@ -114,12 +114,6 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   @Override
   @NotNull
-  public String getName() {
-    return getFamilyName();
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
     return getText();
   }

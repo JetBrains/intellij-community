@@ -68,14 +68,9 @@ public class CStyleArrayDeclarationInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "c.style.array.declaration.replace.quickfix");
-    }
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override
