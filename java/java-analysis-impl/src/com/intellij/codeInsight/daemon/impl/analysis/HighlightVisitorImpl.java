@@ -65,6 +65,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   private JavaSdkVersion myJavaSdkVersion;
 
   @SuppressWarnings("StatefulEp") private PsiFile myFile;
+  @SuppressWarnings("StatefulEp") private PsiJavaModule myJavaModule;
 
   // map codeBlock->List of PsiReferenceExpression of uninitialized final variables
   private final Map<PsiElement, Collection<PsiReferenceExpression>> myUninitializedVarProblems = new THashMap<>();
@@ -155,13 +156,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public boolean analyze(@NotNull PsiFile file, boolean updateWholeFile, @NotNull HighlightInfoHolder holder, @NotNull Runnable highlight) {
-    myFile = file;
-    myHolder = Holder.CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder;
-
     boolean success = true;
     try {
-      myLanguageLevel = PsiUtil.getLanguageLevel(file);
-      myJavaSdkVersion = notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
+      prepare(Holder.CHECK_ELEMENT_LEVEL ? new CheckLevelHighlightInfoHolder(file, holder) : holder, file);
       if (updateWholeFile) {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         if (progress == null) throw new IllegalStateException("Must be run under progress");
@@ -193,6 +190,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       myReassignedParameters.clear();
 
       myRefCountHolder = null;
+      myJavaModule = null;
       myFile = null;
       myHolder = null;
       myDuplicateMethods.clear();
@@ -200,6 +198,18 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
 
     return success;
+  }
+
+  protected void prepareToRunAsInspection(@NotNull HighlightInfoHolder holder) {
+    prepare(holder, holder.getContextFile());
+  }
+
+  private void prepare(HighlightInfoHolder holder, PsiFile file) {
+    myHolder = holder;
+    myFile = file;
+    myLanguageLevel = PsiUtil.getLanguageLevel(file);
+    myJavaSdkVersion = notNull(JavaVersionService.getInstance().getJavaSdkVersion(file), JavaSdkVersion.fromLanguageLevel(myLanguageLevel));
+    myJavaModule = myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9) ? ModuleHighlightUtil.getModuleDescriptor(file) : null;
   }
 
   @Override
@@ -1030,8 +1040,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
   @Override
   public void visitReferenceElement(PsiJavaCodeReferenceElement ref) {
-    JavaResolveResult resolveResult = doVisitReferenceElement(ref);
-    if (resolveResult != null && !myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkRawOnParameterizedType(ref, resolveResult.getElement()));
+    JavaResolveResult result = doVisitReferenceElement(ref);
+    if (result != null) {
+      PsiElement resolved = result.getElement();
+      if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkRawOnParameterizedType(ref, resolved));
+      if (!myHolder.hasErrorResults() && resolved != null && myJavaModule != null) {
+        myHolder.add(ModuleHighlightUtil.checkPackageAccessibility(ref, resolved, myJavaModule));
+      }
+    }
   }
 
   private JavaResolveResult doVisitReferenceElement(@NotNull PsiJavaCodeReferenceElement ref) {
@@ -1687,15 +1703,5 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Nullable
   private HighlightInfo checkFeature(@NotNull PsiElement element, @NotNull Feature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
-  }
-
-  protected void prepareToRunAsInspection(@NotNull HighlightInfoHolder holder) {
-    PsiFile file = holder.getContextFile();
-    JavaSdkVersion sdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(file);
-
-    myHolder = holder;
-    myFile = file;
-    myLanguageLevel = PsiUtil.getLanguageLevel(file);
-    myJavaSdkVersion = sdkVersion != null ? sdkVersion : JavaSdkVersion.fromLanguageLevel(myLanguageLevel);
   }
 }

@@ -55,6 +55,34 @@ import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class ModuleHighlightUtil {
   @Nullable
+  static PsiJavaModule getModuleDescriptor(@NotNull PsiElement element) {
+    VirtualFile file = Optional.of(element)
+      .map(e -> e instanceof PsiFileSystemItem ? (PsiFileSystemItem)e : e.getContainingFile())
+      .map(PsiFileSystemItem::getVirtualFile)
+      .orElse(null);
+    if (file == null) return null;
+
+    Project project = element.getProject();
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    if (element instanceof PsiCompiledElement) {
+      return Optional.ofNullable(index.getClassRootForFile(file))
+        .map(r -> r.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE))
+        .map(PsiManager.getInstance(project)::findFile)
+        .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
+        .orElse(null);
+    }
+    else {
+      Module module = index.getModuleForFile(file);
+      return Optional.ofNullable(module)
+        .map(m -> FilenameIndex.getVirtualFilesByName(project, MODULE_INFO_FILE, m.getModuleScope(false)))
+        .map(c -> c.size () == 1 ? c.iterator().next() : null)
+        .map(PsiManager.getInstance(project)::findFile)
+        .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
+        .orElse(null);
+    }
+  }
+
+  @Nullable
   static HighlightInfo checkFileName(@NotNull PsiJavaModule element, @NotNull PsiFile file) {
     if (!MODULE_INFO_FILE.equals(file.getName())) {
       String message = JavaErrorMessages.message("module.file.wrong.name");
@@ -305,6 +333,70 @@ public class ModuleHighlightUtil {
     }
 
     return null;
+  }
+
+  @Nullable
+  static HighlightInfo checkPackageAccessibility(@NotNull PsiJavaCodeReferenceElement ref,
+                                                 @NotNull PsiElement target,
+                                                 @NotNull PsiJavaModule refModule) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(ref);
+    if (module != null) {
+      if (target instanceof PsiClass && !(target instanceof PsiCompiledElement) && module != ModuleUtilCore.findModuleForPsiElement(target)) {
+        PsiElement targetFile = target.getParent();
+        if (targetFile instanceof PsiClassOwner) {
+          PsiJavaModule targetModule = getModuleDescriptor(target);
+          String packageName = ((PsiClassOwner)targetFile).getPackageName();
+          return checkPackageAccessibility(ref, refModule, targetModule, packageName);
+        }
+      }
+      else if (target instanceof PsiPackage) {
+        PsiElement refImport = ref.getParent();
+        if (refImport instanceof PsiImportStatementBase && ((PsiImportStatementBase)refImport).isOnDemand()) {
+          PsiDirectory[] dirs = ((PsiPackage)target).getDirectories(module.getModuleWithDependenciesAndLibrariesScope(false));
+          if (dirs.length == 1 && ModuleUtilCore.findModuleForPsiElement(dirs[0]) != module) {
+            PsiJavaModule targetModule = getModuleDescriptor(dirs[0]);
+            String packageName = ((PsiPackage)target).getQualifiedName();
+            return checkPackageAccessibility(ref, refModule, targetModule, packageName);
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private static HighlightInfo checkPackageAccessibility(PsiJavaCodeReferenceElement ref,
+                                                         PsiJavaModule refModule,
+                                                         PsiJavaModule targetModule,
+                                                         String packageName) {
+    if (targetModule == null) {
+      String message = JavaErrorMessages.message("module.package.on.classpath");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
+    }
+
+    String refModuleName = refModule.getModuleName();
+    String requiredName = targetModule.getModuleName();
+    if (!(targetModule instanceof PsiCompiledElement) && !isExported(targetModule, packageName)) {
+      String message = JavaErrorMessages.message("module.package.not.exported", requiredName, packageName, refModuleName);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
+    }
+
+    if (!(PsiJavaModule.JAVA_BASE.equals(requiredName) || JavaModuleGraphUtil.reads(refModule, targetModule))) {
+      String message = JavaErrorMessages.message("module.not.in.requirements", refModuleName, requiredName);
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
+    }
+
+    return null;
+  }
+
+  private static boolean isExported(PsiJavaModule module, String packageName) {
+    for (PsiExportsStatement statement : psiTraverser().children(module).filter(PsiExportsStatement.class)) {
+      String exportedName = Optional.ofNullable(statement.getPackageReference()).map(ModuleHighlightUtil::refText).orElse("");
+      if (packageName.equals(exportedName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static HighlightInfo moduleResolveError(PsiJavaModuleReferenceElement refElement, PsiPolyVariantReference ref) {

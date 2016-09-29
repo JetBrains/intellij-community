@@ -26,6 +26,7 @@ public interface PsiJavaModule extends NavigatablePsiElement, PsiNamedElement, P
   String MODULE_INFO_CLASS = "module-info";
   String MODULE_INFO_FILE = MODULE_INFO_CLASS + ".java";
   String MODULE_INFO_CLS_FILE = MODULE_INFO_CLASS + ".class";
+  String JAVA_BASE = "java.base";
 
   @NotNull PsiJavaModuleReferenceElement getNameElement();
   @NotNull String getModuleName();
