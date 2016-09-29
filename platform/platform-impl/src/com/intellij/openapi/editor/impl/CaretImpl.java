@@ -825,7 +825,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   void afterDocumentChange(@NotNull final DocumentEventImpl event) {
     final DocumentEx document = myEditor.getDocument();
-    if (document.isInBulkUpdate()) return;
     boolean performSoftWrapAdjustment = event.getNewLength() > 0 // We want to put caret just after the last added symbol
                                         // There is a possible case that the user removes text just before the soft wrap. We want to keep caret
                                         // on a visual line with soft wrap start then.

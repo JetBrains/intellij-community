@@ -137,6 +137,29 @@ public class EditorImplTest extends AbstractEditorTest {
     checkResultByText("something\telse");
   }
 
+  public void testCaretMergeDuringBulkModeDocumentUpdate() throws Exception {
+    initText("a<selection>bcdef<caret></selection>g\n" +
+             "a<selection>bcdef<caret></selection>g");
+    new WriteCommandAction.Simple(getProject()) {
+      @Override
+      protected void run() throws Throwable {
+        DocumentEx document = (DocumentEx)myEditor.getDocument();
+        document.setInBulkUpdate(true);
+        try {
+          // delete selected text
+          document.deleteString(1, 6);
+          document.deleteString(4, 9);
+        }
+        finally {
+          document.setInBulkUpdate(false);
+        }
+      }
+    }.execute().throwException();
+
+    checkResultByText("a<caret>g\n" +
+                      "a<caret>g");
+  }
+
   public void testPositionCalculationForOneCharacterFolds() throws Exception {
     initText("something");
     addCollapsedFoldRegion(1, 2, "...");

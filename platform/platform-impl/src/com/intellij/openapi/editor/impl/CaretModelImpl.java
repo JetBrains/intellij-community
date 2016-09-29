@@ -81,11 +81,13 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     isDocumentChanged = true;
     try {
       myIsInUpdate = false;
-      doWithCaretMerging(() -> {
-        for (CaretImpl caret : myCarets) {
-          caret.afterDocumentChange((DocumentEventImpl)e);
-        }
-      });
+      if (!myEditor.getDocument().isInBulkUpdate()) {
+        doWithCaretMerging(() -> {
+          for (CaretImpl caret : myCarets) {
+            caret.afterDocumentChange((DocumentEventImpl)e);
+          }
+        });
+      }
     }
     finally {
       isDocumentChanged = false;
