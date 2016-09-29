@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class ParameterNameHintsManager {
   private static final List<Couple<String>> COMMONLY_USED_PARAMETER_PAIR = ContainerUtil.newArrayList(
@@ -134,18 +135,23 @@ public class ParameterNameHintsManager {
       }
     }
     
-    if (parameters.length == 2 && descriptors.size() == 2 
-        && isCommonlyNamedParameterPair(descriptors.get(0), descriptors.get(1))) {
+    if (descriptors.size() == 1 && isStringLiteral(descriptors.get(0)) 
+        || parameters.length == 2 && descriptors.size() == 2 && isCommonlyNamedParameterPair(descriptors.get(0), descriptors.get(1))) {
       return ContainerUtil.emptyList();
     }
     
     return descriptors;
   }
 
+  private static boolean isStringLiteral(InlayInfo info) {
+    PsiType type = info.getArgument().getType();
+    return type != null && type.equalsToText(JAVA_LANG_STRING);
+  }
+
   @NotNull
   private static InlayInfo createInlayInfo(@NotNull PsiExpression callArgument, @NotNull PsiParameter methodParam) {
     String paramName = ((methodParam.getType() instanceof PsiEllipsisType) ? "..." : "") + methodParam.getName();
-    return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset());
+    return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset(), callArgument);
   }
 
   private static boolean isCommonlyNamedParameterPair(InlayInfo first, InlayInfo second) {

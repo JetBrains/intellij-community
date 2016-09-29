@@ -478,6 +478,45 @@ public class VarArgTest {
         .assertInlays("test->this", "endIndex->1000")
   }
 
+  fun `test do not show single parameter hint if it is string literal`() {
+    setup("""
+public class Test {
+  
+  public void test() {
+    debug("Error message");
+    info("Error message", new Object());
+  }
+
+  void debug(String message) {}
+  void info(String message, Object error) {}
+  
+}
+""")
+
+    onLineStartingWith("debug(").assertNoInlays()
+    onLineStartingWith("info(").assertNoInlays()
+  }
+
+  fun `test show hints for literals if there are many of them`() {
+    setup("""
+public class Test {
+  
+  public void test() {
+    int a = 2;
+    debug("Debug", "DTitle", a);
+    info("Error message", "Title");
+  }
+
+  void debug(String message, String title, int value) {}
+  void info(String message, String title) {}
+  
+}
+""")
+
+    onLineStartingWith("debug(").assertInlays("message->\"Debug\"", "title->\"DTitle\"")
+    onLineStartingWith("info(").assertInlays("message->\"Error message\"", "title->\"Title\"")
+  }
+  
   private fun getInlays(): List<Inlay> {
     val editor = myFixture.editor
     return editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
