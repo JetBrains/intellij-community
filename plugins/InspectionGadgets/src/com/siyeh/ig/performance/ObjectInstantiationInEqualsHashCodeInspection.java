@@ -42,6 +42,9 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
   protected String buildErrorString(Object... infos) {
     final PsiMethod method = PsiTreeUtil.getParentOfType((PsiElement)infos[0], PsiMethod.class);
     assert method != null;
+    if (infos.length > 1) {
+      return InspectionGadgetsBundle.message("object.instantiation.inside.equals.or.hashcode.problem.descriptor2", method.getName(), infos[1]);
+    }
     return InspectionGadgetsBundle.message("object.instantiation.inside.equals.or.hashcode.problem.descriptor", method.getName());
   }
 
@@ -50,8 +53,67 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     return new ObjectInstantiationInEqualsHashCodeVisitor();
   }
 
-  // todo check boxing too
   private static class ObjectInstantiationInEqualsHashCodeVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitExpression(PsiExpression expression) {
+      if (!ExpressionUtils.isAutoBoxed(expression)) {
+        return;
+      }
+      registerError(expression, expression, "autoboxing");
+    }
+
+    @Override
+    public void visitForeachStatement(PsiForeachStatement statement) {
+      final PsiExpression iteratedValue = statement.getIteratedValue();
+      if (iteratedValue == null || iteratedValue.getType() instanceof PsiArrayType) {
+        return;
+      }
+      registerError(iteratedValue, iteratedValue, "iterator");
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      if (method.isVarArgs()) {
+        registerError(expression, expression, "varargs call");
+      }
+      else {
+        final String name = methodExpression.getReferenceName();
+        if (!"valueOf".equals(name)) {
+          return;
+        }
+        final PsiExpressionList argumentList = expression.getArgumentList();
+        final PsiExpression[] expressions = argumentList.getExpressions();
+        if (expressions.length != 1) {
+          return;
+        }
+        final PsiClass aClass = method.getContainingClass();
+        if (aClass == null) {
+          return;
+        }
+        final String qualifiedName = aClass.getQualifiedName();
+        if (!CommonClassNames.JAVA_LANG_SHORT.equals(qualifiedName) && !CommonClassNames.JAVA_LANG_INTEGER.equals(qualifiedName) &&
+            !CommonClassNames.JAVA_LANG_LONG.equals(qualifiedName) && !CommonClassNames.JAVA_LANG_DOUBLE.equals(qualifiedName) &&
+            !CommonClassNames.JAVA_LANG_FLOAT.equals(qualifiedName) && !CommonClassNames.JAVA_LANG_CHARACTER.equals(qualifiedName)) {
+          return;
+        }
+        registerError(expression, expression);
+      }
+    }
+
+    @Override
+    public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
+      if (!(expression.getParent() instanceof PsiVariable)) {
+        // new expressions are already reported.
+        return;
+      }
+      registerError(expression, expression);
+    }
 
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
