@@ -187,6 +187,7 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
 
   open fun setError(error: Throwable): Boolean {
     if (!stateRef.compareAndSet(State.PENDING, State.REJECTED)) {
+      LOG.errorIfNotMessage(error)
       return false
     }
 
