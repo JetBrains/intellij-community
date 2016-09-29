@@ -62,9 +62,9 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   @Override
   public Dimension getPreferredSize() {
     Dimension preferredSize = super.getPreferredSize();
-    return new Dimension(preferredSize.width + (myReferencePainter.isLeftAligned() ? 0 :
-                                                myReferencePainter.getSize().width - LabelPainter.GRADIENT_WIDTH),
-                         getPreferredHeight());
+    int referencesSize = myReferencePainter.isLeftAligned() ? 0 : myReferencePainter.getSize().width;
+    if (referencesSize > 0) referencesSize -= LabelPainter.GRADIENT_WIDTH;
+    return new Dimension(preferredSize.width + referencesSize, getPreferredHeight());
   }
 
   public int getPreferredHeight() {
