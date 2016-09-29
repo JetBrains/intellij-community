@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2016 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,7 +30,7 @@ class Server(private val port: Int, private val generator: Generator) {
   private val tsFormat = DateTimeFormatter.ofPattern("dd/MMM/yyyy:kk:mm:ss ZZ")
 
   fun start() {
-    server.bind(InetSocketAddress("localhost", port), 0)
+    server.bind(InetSocketAddress(port), 0)
 
     server.createContext("/") { ex ->
       val response = try {
