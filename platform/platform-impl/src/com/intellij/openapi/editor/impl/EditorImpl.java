@@ -6569,24 +6569,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (Registry.is("debugger.click.disable.breakpoints")) {
       try {
-        Object attachedObject = t.getTransferData(t.getTransferDataFlavors()[0]);
-        if (attachedObject instanceof GutterIconRenderer) {
-          GutterDraggableObject object = ((GutterIconRenderer)attachedObject).getDraggableObject();
-          if (object != null) {
-            object.remove();
-            Point mouseLocationOnScreen = MouseInfo.getPointerInfo().getLocation();
-            JComponent editorComponent = editor.getComponent();
-            Point editorComponentLocationOnScreen = editorComponent.getLocationOnScreen();
-            IdeGlassPaneUtil.installPainter(
-              editorComponent,
-              new ExplosionPainter(
-                new Point(
-                  mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
-                  mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
-                )
-              ),
-              editor.getDisposable()
+        if (t.isDataFlavorSupported(GutterDraggableObject.flavor)) {
+          Object attachedObject = t.getTransferData(GutterDraggableObject.flavor);
+          if (attachedObject instanceof GutterIconRenderer) {
+            GutterDraggableObject object = ((GutterIconRenderer)attachedObject).getDraggableObject();
+            if (object != null) {
+              object.remove();
+              Point mouseLocationOnScreen = MouseInfo.getPointerInfo().getLocation();
+              JComponent editorComponent = editor.getComponent();
+              Point editorComponentLocationOnScreen = editorComponent.getLocationOnScreen();
+              IdeGlassPaneUtil.installPainter(
+                editorComponent,
+                new ExplosionPainter(
+                  new Point(
+                    mouseLocationOnScreen.x - editorComponentLocationOnScreen.x,
+                    mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
+                  )
+                ),
+                editor.getDisposable()
               );
+            }
           }
         }
       }
@@ -6673,7 +6675,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (transferFlavor.equals(DataFlavor.stringFlavor)) return true;
         if (Registry.is("debugger.click.disable.breakpoints")) {
           //should be used a better representation class
-          if (transferFlavor.isRepresentationClassInputStream()) {
+          if (GutterDraggableObject.flavor.equals(transferFlavor)) {
             return true;
           }
         }
