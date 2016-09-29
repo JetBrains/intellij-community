@@ -26,6 +26,7 @@ public class AnswerPlaceholderSubtaskInfo {
   private boolean mySelected = false;
   private StudyStatus myStatus = StudyStatus.Unchecked;
   @Expose private boolean myHasFrame = true;
+  @Expose private boolean myNeedInsertText = false;
 
   public StudyStatus getStatus() {
     return myStatus;
@@ -126,5 +127,13 @@ public class AnswerPlaceholderSubtaskInfo {
 
   public void setHasFrame(boolean hasFrame) {
     myHasFrame = hasFrame;
+  }
+
+  public boolean isNeedInsertText() {
+    return myNeedInsertText;
+  }
+
+  public void setNeedInsertText(boolean needInsertText) {
+    myNeedInsertText = needInsertText;
   }
 }

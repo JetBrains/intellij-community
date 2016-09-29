@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -34,7 +35,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
 
 
   private static boolean arePlaceholdersIntersect(@NotNull final TaskFile taskFile, int start, int end) {
-    List<AnswerPlaceholder> answerPlaceholders = taskFile.getAnswerPlaceholders();
+    List<AnswerPlaceholder> answerPlaceholders = taskFile.getActivePlaceholders();
     for (AnswerPlaceholder existingAnswerPlaceholder : answerPlaceholders) {
       int twStart = existingAnswerPlaceholder.getOffset();
       int twEnd = existingAnswerPlaceholder.getPossibleAnswerLength() + twStart;
@@ -58,10 +59,24 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     FileDocumentManager.getInstance().saveDocument(document);
     final SelectionModel model = editor.getSelectionModel();
     final int offset = model.hasSelection() ? model.getSelectionStart() : editor.getCaretModel().getOffset();
-    int stepIndex = state.getTaskFile().getTask().getActiveSubtaskIndex();
-    final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
-    answerPlaceholder.getSubtaskInfos().put(stepIndex, new AnswerPlaceholderSubtaskInfo());
     TaskFile taskFile = state.getTaskFile();
+    int stepIndex = state.getTaskFile().getTask().getActiveSubtaskIndex();
+
+    AnswerPlaceholder existingPlaceholder = taskFile.getAnswerPlaceholder(offset, taskFile.getAnswerPlaceholders());
+    if (existingPlaceholder != null) {
+      int visibleLength = existingPlaceholder.getVisibleLength(stepIndex);
+      int placeholderOffset = existingPlaceholder.getOffset();
+      String possibleAnswer = document.getText(TextRange.create(placeholderOffset, placeholderOffset + visibleLength));
+      AnswerPlaceholderSubtaskInfo info = new AnswerPlaceholderSubtaskInfo();
+      existingPlaceholder.getSubtaskInfos().put(stepIndex, info);
+      info.setPossibleAnswer(possibleAnswer);
+      StudyUtils.drawAllWindows(editor, taskFile);
+      return;
+    }
+    final AnswerPlaceholder answerPlaceholder = new AnswerPlaceholder();
+    AnswerPlaceholderSubtaskInfo info = new AnswerPlaceholderSubtaskInfo();
+    info.setNeedInsertText(!model.hasSelection());
+    answerPlaceholder.getSubtaskInfos().put(stepIndex, info);
     int index = taskFile.getAnswerPlaceholders().size();
     answerPlaceholder.setIndex(index);
     answerPlaceholder.setTaskFile(taskFile);
@@ -83,7 +98,6 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     if (!model.hasSelection()) {
       DocumentUtil.writeInRunUndoTransparentAction(() -> document.insertString(offset, defaultPlaceholderText));
     }
-
 
     answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
     AddAction action = new AddAction(answerPlaceholder, taskFile, editor);
@@ -187,6 +201,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
   }
 
   protected CCCreateAnswerPlaceholderDialog createDialog(Project project, AnswerPlaceholder answerPlaceholder) {
-    return new CCCreateAnswerPlaceholderDialog(project, StringUtil.notNullize(answerPlaceholder.getTaskText()), answerPlaceholder.getHints());
+    return new CCCreateAnswerPlaceholderDialog(project, StringUtil.notNullize(answerPlaceholder.getTaskText()),
+                                               answerPlaceholder.getHints());
   }
 }

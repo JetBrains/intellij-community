@@ -353,10 +353,11 @@ public class StudyUtils {
     final Project project = editor.getProject();
     if (project == null) return;
     final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
-    for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
+    for (AnswerPlaceholder answerPlaceholder : taskFile.getAnswerPlaceholders()) {
       final JBColor color = taskManager.getColor(answerPlaceholder);
       EduAnswerPlaceholderPainter.drawAnswerPlaceholder(editor, answerPlaceholder, color);
     }
+
     final Document document = editor.getDocument();
     EditorActionManager.getInstance()
       .setReadonlyFragmentModificationHandler(document, new EduAnswerPlaceholderDeleteHandler(editor));

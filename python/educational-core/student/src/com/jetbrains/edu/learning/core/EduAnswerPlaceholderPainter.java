@@ -33,39 +33,54 @@ public class EduAnswerPlaceholderPainter {
     final TextAttributes textAttributes = new TextAttributes(scheme.getDefaultForeground(), scheme.getDefaultBackground(), null,
                                                                     EffectType.BOXED, Font.PLAIN);
     textAttributes.setEffectColor(color);
-    drawAnswerPlaceholder(editor, placeholder, textAttributes, PLACEHOLDERS_LAYER);
+    if (placeholder.isActive()) {
+      drawAnswerPlaceholder(editor, placeholder, textAttributes, PLACEHOLDERS_LAYER);
+    } else if (!placeholder.getUseLength()) {
+      int offset = placeholder.getOffset();
+      drawAnswerPlaceholderFromPrevStep(editor, offset, offset + placeholder.getVisibleLength(placeholder.getActiveSubtaskIndex()));
+    }
   }
 
   public static void drawAnswerPlaceholder(@NotNull Editor editor,
                                            @NotNull AnswerPlaceholder placeholder,
                                            TextAttributes textAttributes,
                                            int placeholdersLayer) {
-    final Project project = editor.getProject();
-    assert project != null;
     final int startOffset = placeholder.getOffset();
     if (startOffset == - 1) {
       return;
     }
     final int length = placeholder.getRealLength();
     final int endOffset = startOffset + length;
+    drawAnswerPlaceholder(editor, startOffset, endOffset, textAttributes, placeholdersLayer);
+  }
+
+  public static void drawAnswerPlaceholder(@NotNull Editor editor,
+                                           int start,
+                                           int end,
+                                           TextAttributes textAttributes,
+                                           int placeholdersLayer) {
+    final Project project = editor.getProject();
+    assert project != null;
+    if (start == - 1) {
+      return;
+    }
     RangeHighlighter
-      highlighter = editor.getMarkupModel().addRangeHighlighter(startOffset, endOffset, placeholdersLayer,
+      highlighter = editor.getMarkupModel().addRangeHighlighter(start, end, placeholdersLayer,
                                                                 textAttributes, HighlighterTargetArea.EXACT_RANGE);
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
   }
 
-  public static void drawAnswerPlaceholderFromPrevStep(@NotNull Editor editor, @NotNull AnswerPlaceholder placeholder) {
-    if (placeholder.getUseLength()) {
-      return;
-    }
+
+
+  public static void drawAnswerPlaceholderFromPrevStep(@NotNull Editor editor, int start, int end) {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     Color color = scheme.getColor(EditorColors.TEARLINE_COLOR);
     SimpleTextAttributes attributes = SimpleTextAttributes.GRAY_ATTRIBUTES;
     final TextAttributes textAttributes = new TextAttributes(attributes.getFgColor(), color, null,
                                                              null, attributes.getFontStyle());
 
-    drawAnswerPlaceholder(editor, placeholder, textAttributes, HighlighterLayer.LAST);
+    drawAnswerPlaceholder(editor, start, end, textAttributes, HighlighterLayer.LAST);
   }
 
   public static void createGuardedBlock(Editor editor, List<RangeMarker> blocks, int start, int end) {

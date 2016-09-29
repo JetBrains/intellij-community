@@ -42,9 +42,7 @@ abstract public class CCAnswerPlaceholderAction extends DumbAwareAction {
     if (taskFile == null) {
       return null;
     }
-    AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholder(
-      editor.getCaretModel().getOffset()
-    );
+    AnswerPlaceholder answerPlaceholder = taskFile.getAnswerPlaceholder(editor.getCaretModel().getOffset());
     return new CCState(taskFile, answerPlaceholder, psiFile, editor, project);
   }
 
