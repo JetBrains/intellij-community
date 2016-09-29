@@ -87,6 +87,10 @@ public class PyEditingTest extends PyTestCase {
     assertEquals("'''docstring'''", doTestTyping("'''docstring''", 14,  '\''));
   }
 
+  public void testAutoCloseAfterIllegalPrefix() {
+    assertEquals("rrr''", doTestTyping("rrr", 3, '\''));
+  }
+
   // PY-18972
   public void testFString() throws Exception {
     assertEquals("f''", doTestTyping("f", 1, '\''));

@@ -28,8 +28,8 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
-import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
@@ -132,22 +132,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   public static int getPrefixLength(String text) {
-    int startOffset = 0;
-    startOffset = PyStringLiteralLexer.skipEncodingPrefix(text, startOffset);
-    startOffset = PyStringLiteralLexer.skipRawPrefix(text, startOffset);
-    startOffset = PyStringLiteralLexer.skipFormattedPrefix(text, startOffset);
-    startOffset = PyStringLiteralLexer.skipEncodingPrefix(text, startOffset);
-    startOffset = PyStringLiteralLexer.skipRawPrefix(text, startOffset);
-    return startOffset;
-  }
-
-  private static boolean isRaw(String text) {
-    int startOffset = PyStringLiteralLexer.skipEncodingPrefix(text, 0);
-    return PyStringLiteralLexer.skipRawPrefix(text, startOffset) > startOffset;
-  }
-
-  private static boolean isUnicode(String text) {
-    return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'U';                       //TODO[ktisha]
+    return PythonStringUtil.getPrefixEndOffset(text, 0);
   }
 
   private boolean isUnicodeByDefault() {
@@ -162,14 +147,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return false;
   }
 
-  private static boolean isBytes(String text) {
-    return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'B';
-  }
-
-  private static boolean isChar(String text) {
-    return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'C';
-  }
-
   @Override
   @NotNull
   public List<Pair<TextRange, String>> getDecodedFragments() {
@@ -182,7 +159,9 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         final TextRange textRange = getNodeTextRange(text);
         final int offset = node.getTextRange().getStartOffset() - elementStart + textRange.getStartOffset();
         final String encoded = textRange.substring(text);
-        result.addAll(getDecodedFragments(encoded, offset, isRaw(text), unicodeByDefault || isUnicode(text)));
+        final boolean hasRawPrefix = PythonStringUtil.isRawPrefix(PythonStringUtil.getPrefix(text));
+        final boolean hasUnicodePrefix = PythonStringUtil.isUnicodePrefix(PythonStringUtil.getPrefix(text));
+        result.addAll(getDecodedFragments(encoded, offset, hasRawPrefix, unicodeByDefault || hasUnicodePrefix));
       }
       myDecodedFragments = result;
     }

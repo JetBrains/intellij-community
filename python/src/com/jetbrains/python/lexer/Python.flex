@@ -46,6 +46,8 @@ IMAGNUMBER=(({FLOATNUMBER})|({INTPART}))[Jj]
 //RAW_STRING=[Rr]{QUOTED_STRING}
 //QUOTED_STRING=({TRIPLE_APOS_LITERAL})|({QUOTED_LITERAL})|({DOUBLE_QUOTED_LITERAL})|({TRIPLE_QUOTED_LITERAL})
 
+// If you change patterns for string literals, don't forget to update PythonStringUtil!
+// "c" prefix character is included for Cython
 SINGLE_QUOTED_STRING=[UuBbCcRrFf]{0,3}({QUOTED_LITERAL} | {DOUBLE_QUOTED_LITERAL})
 TRIPLE_QUOTED_STRING=[UuBbCcRrFf]{0,3}({TRIPLE_QUOTED_LITERAL}|{TRIPLE_APOS_LITERAL})
 

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -69,53 +70,21 @@ public class PyStringLiteralLexer extends LexerBase {
     myBufferEnd = endOffset;
 
     // the following could be parsing steps if we wanted this info as tokens
-    int i = myStart;
+    final String prefix = PythonStringUtil.getPrefix(buffer, myStart);
 
-    i = skipEncodingPrefix(buffer, i);
-    int offset = skipRawPrefix(buffer, i);
-    if (offset > i) myIsRaw = true;
-    i = offset;
-    offset = skipFormattedPrefix(buffer, i);
-    if (offset > i) myIsFormatted = true;
-    i = offset;
-    i = skipEncodingPrefix(buffer, i);
-    offset = skipRawPrefix(buffer, i);
-    if (offset > i) myIsRaw = true;
-    i = offset;
+    myIsFormatted = PythonStringUtil.isFormattedPrefix(prefix);
+    myIsRaw = PythonStringUtil.isRawPrefix(prefix);
 
+    final int quoteOffset = myStart + prefix.length();
     // which quote char?
-    char c = buffer.charAt(i);
+    char c = buffer.charAt(quoteOffset);
     assert (c == '"') || (c == '\'') : "String must be quoted by single or double quote. Found '" + c + "' in string " + buffer;
     myQuoteChar = c;
 
-    myIsTriple = (buffer.length() > i + 2) && (buffer.charAt(i + 1) == c) && (buffer.charAt(i + 2) == c);
+    myIsTriple = (buffer.length() > quoteOffset + 2) && (buffer.charAt(quoteOffset + 1) == c) && (buffer.charAt(quoteOffset + 2) == c);
 
     // calculate myEnd at last
     myEnd = locateToken(myStart);
-  }
-
-  public static int skipFormattedPrefix(CharSequence text, int startOffset) {
-    char c = Character.toUpperCase(text.charAt(startOffset));
-    if (c == 'F') {
-      startOffset++;
-    }
-    return startOffset;
-  }
-
-  public static int skipRawPrefix(CharSequence text, int startOffset) {
-    char c = Character.toUpperCase(text.charAt(startOffset));
-    if (c == 'R') {
-      startOffset++;
-    }
-    return startOffset;
-  }
-
-  public static int skipEncodingPrefix(CharSequence text, int startOffset) {
-    char c = Character.toUpperCase(text.charAt(startOffset));
-    if (c == 'U' || c == 'B' || c == 'C') {
-      startOffset++;
-    }
-    return startOffset;
   }
 
   public int getState() {

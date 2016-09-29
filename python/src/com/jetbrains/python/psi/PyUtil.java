@@ -61,12 +61,13 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -1964,28 +1965,28 @@ public class PyUtil {
      * @return true if given string node contains "u" or "U" prefix
      */
     public boolean isUnicode() {
-      return StringUtil.containsIgnoreCase(myPrefix, "u");
+      return PythonStringUtil.isUnicodePrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "r" or "R" prefix
      */
     public boolean isRaw() {
-      return StringUtil.containsIgnoreCase(myPrefix, "r");
+      return PythonStringUtil.isRawPrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "b" or "B" prefix
      */
     public boolean isBytes() {
-      return StringUtil.containsIgnoreCase(myPrefix, "b");
+      return PythonStringUtil.isBytesPrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "f" or "F" prefix
      */
     public boolean isFormatted() {
-      return StringUtil.containsIgnoreCase(myPrefix, "f");
+      return PythonStringUtil.isFormattedPrefix(myPrefix);
     }
 
     /**
