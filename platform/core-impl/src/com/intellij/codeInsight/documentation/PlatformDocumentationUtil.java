@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.documentation;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -29,10 +28,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class PlatformDocumentationUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.documentation.PlatformDocumentationUtil");
-
   private static final @NonNls Pattern ourLtFixupPattern = Pattern.compile("<(?=[^/!\\p{Alpha}])");
-  private static final @NonNls Pattern ourToQuote = Pattern.compile("[\\\\\\.\\^\\$\\?\\*\\+\\|\\)\\}\\]\\{\\(\\[]");
   private static final @NonNls String LT_ENTITY = "&lt;";
 
   @Nullable
@@ -63,14 +59,6 @@ public class PlatformDocumentationUtil {
       return file == null ? null : file.getUrl();
     }
   } 
-
-  private static String quote(String x) {
-    if (ourToQuote.matcher(x).find()) {
-      return "\\" + x;
-    }
-
-    return x;
-  }
 
   /**
    * Updates HTML contents for display in JEditorPane, which treats invalid HTML somewhat differently than popular browsers.
