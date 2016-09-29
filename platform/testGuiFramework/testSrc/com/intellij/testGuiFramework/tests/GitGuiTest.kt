@@ -36,7 +36,7 @@ class GitGuiTest : GuiTestCase() {
   @Test
   fun testGitImport(){
     val vcsName = "Git"
-    val gitApp = "SimpleGitApplication"
+    val gitApp = "path_to_git_repo"
     val projectPath = getMasterProjectDirPath(gitApp)
 
     val welcomeFrame = WelcomeFrameFixture.find(myRobot)
