@@ -226,7 +226,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
               final MySelectionListener selectionListener = new MySelectionListener();
               ListPopupImpl popup = new ListPopupImpl(
-                new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Create breakpoint for", variants) {
+                new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Set Breakpoint", variants) {
                   @NotNull
                   @Override
                   public String getTextFor(XLineBreakpointType.XLineBreakpointVariant value) {
