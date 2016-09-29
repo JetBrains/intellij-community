@@ -19,6 +19,11 @@ public class ThrowableInstanceNeverThrown {
         <warning descr="Runtime exception instance 'new RuntimeException()' is not thrown">new RuntimeException()</warning>;
     }
 
+    void suppressed() {
+      //noinspection ThrowableInstanceNeverThrown
+      new RuntimeException();
+    }
+
     void throwing() throws Throwable {
         throw new RuntimeException("asdf").initCause(null);
     }
