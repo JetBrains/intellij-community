@@ -36,7 +36,7 @@ import static com.intellij.openapi.startup.StartupActivity.POST_STARTUP_ACTIVITY
 /**
  * @author Dmitry Avdeev
  */
-public class ProjectOpeningTest extends LightPlatformTestCase {
+public abstract class ProjectOpeningTest extends LightPlatformTestCase {
 
   public void _testOpenProjectCancelling() throws Exception {
     File foo = PlatformTestCase.createTempDir("foo");

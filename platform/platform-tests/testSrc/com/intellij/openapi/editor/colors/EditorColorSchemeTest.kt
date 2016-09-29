@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.ex
+package com.intellij.openapi.editor.colors
 
 import com.intellij.configurationStore.SchemeManagerFactoryBase
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.testFramework.InMemoryFsRule
 import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.runInInitMode
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.hasChildren
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 
-class InspectionSchemeTest {
+class EditorColorSchemeTest {
   companion object {
     @JvmField
     @ClassRule
@@ -39,27 +40,29 @@ class InspectionSchemeTest {
   val fsRule = InMemoryFsRule()
 
   @Test fun loadSchemes() {
-    val schemeFile = fsRule.fs.getPath("inspection/Bar.xml")
+    val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
     val schemeData = """
-    <inspections profile_name="Bar" version="1.0">
-      <option name="myName" value="Bar" />
-      <inspection_tool class="Since15" enabled="true" level="ERROR" enabled_by_default="true" />
-    "</inspections>""".trimIndent()
+    <scheme name="Foo" version="142" parent_scheme="Default">
+      <metaInfo>
+        <property name="created">2016-09-29T12:13:05</property>
+        <property name="ide">idea</property>
+        <property name="ideVersion">2016.3.0.0</property>
+        <property name="modified">2016-09-29T12:14:54</property>
+        <property name="originalScheme">Default</property>
+      </metaInfo>
+      <option name="EDITOR_FONT_SIZE" value="12" />
+      <option name="EDITOR_FONT_NAME" value="Menlo" />
+    </scheme>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
-    val profileManager = ApplicationInspectionProfileManager(InspectionToolRegistrar.getInstance(), schemeManagerFactory, ApplicationManager.getApplication().messageBus)
-    profileManager.forceInitProfiles(true)
-    profileManager.initProfiles()
+    val manager = EditorColorsManagerImpl(DefaultColorSchemesManager.getInstance(), schemeManagerFactory)
 
-    assertThat(profileManager.profiles).hasSize(2)
-    val scheme = profileManager.profiles.first() as InspectionProfileImpl
-    assertThat(scheme.name).isEqualTo("Bar")
-
-    runInInitMode { scheme.initInspectionTools(null) }
+    val scheme = manager.getScheme("Foo")
+    assertThat(scheme.name).isEqualTo("Foo")
 
     schemeManagerFactory.save()
 
     assertThat(schemeFile.readText()).isEqualTo(schemeData)
-    profileManager.profiles
+    assertThat(schemeFile.parent).hasChildren("Foo.icls")
   }
 }

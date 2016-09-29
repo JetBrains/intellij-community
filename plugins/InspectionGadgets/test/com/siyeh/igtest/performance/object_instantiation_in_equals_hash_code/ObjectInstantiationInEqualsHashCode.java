@@ -8,7 +8,7 @@ class ObjectInstantiationInEqualsHashCode {
 
   public boolean equals(Object o) {
     ObjectInstantiationInEqualsHashCode other = (ObjectInstantiationInEqualsHashCode)o;
-    return Arrays.equals(new <warning descr="Object instantiation inside 'equals()'">Object</warning>[] {a, b}, new <warning descr="Object instantiation inside 'equals()'">Object</warning>[] {other.a, other.b});
+    return Arrays.equals(new <warning descr="Object instantiation inside 'equals()'">Object</warning>[] {a, <warning descr="Object instantiation inside 'equals()' (autoboxing)">b</warning>}, new <warning descr="Object instantiation inside 'equals()'">Object</warning>[] {other.a, <warning descr="Object instantiation inside 'equals()' (autoboxing)">other.b</warning>});
   }
 
   public int hashCode() {
@@ -38,4 +38,31 @@ class X implements Comparable<X>, Comparator<String> {
     new <warning descr="Object instantiation inside 'compare()'">Object</warning>();
     return 0;
   }
+}
+class Y {
+
+  public java.util.List<Object> fooList = new java.util.ArrayList<>();
+
+  @Override
+  public int hashCode() {
+    Integer i = <warning descr="Object instantiation inside 'hashCode()' (autoboxing)">1</warning>;
+    <warning descr="Object instantiation inside 'hashCode()'">Short.valueOf((short) 1)</warning>;
+    Byte.valueOf((byte) 1); // nope
+    <warning descr="Object instantiation inside 'hashCode()'">Long.valueOf(1)</warning>;
+    Boolean.valueOf(true); // nope
+    <warning descr="Object instantiation inside 'hashCode()'">Character.valueOf('a')</warning>;
+    <warning descr="Object instantiation inside 'hashCode()'">Float.valueOf((float) 1.0)</warning>;
+    <warning descr="Object instantiation inside 'hashCode()'">Double.valueOf(1.0)</warning>;
+    <warning descr="Object instantiation inside 'hashCode()' (autoboxing)">i</warning>++;
+    int j = 1;
+    j++;
+    int[] is = <warning descr="Object instantiation inside 'hashCode()'">{j}</warning>;
+    int hashCode = 7;
+    <warning descr="Object instantiation inside 'hashCode()' (varargs call)">java.util.Arrays.asList()</warning>;
+    for (Object fooElement : <warning descr="Object instantiation inside 'hashCode()' (iterator)">fooList</warning>) {
+      hashCode = 31 * hashCode + (fooElement == null ? 0 : fooElement.hashCode());
+    }
+    return hashCode;
+  }
+
 }

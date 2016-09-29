@@ -15,19 +15,33 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 public class ExpressionUtils {
+
+  @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
+  static {
+    convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_BYTE);
+    convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_CHARACTER);
+    convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_SHORT);
+  }
 
   private ExpressionUtils() {}
 
@@ -722,5 +736,57 @@ public class ExpressionUtils {
   @Contract("null, _ -> false")
   public static boolean isLiteral(PsiElement element, Object value) {
     return element instanceof PsiLiteralExpression && value.equals(((PsiLiteralExpression)element).getValue());
+  }
+
+  public static boolean isAutoBoxed(@NotNull PsiExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiParenthesizedExpression) {
+      return false;
+    }
+    if (parent instanceof PsiExpressionList) {
+      final PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+        final PsiMethod method = methodCallExpression.resolveMethod();
+        if (method != null &&
+            AnnotationUtil.isAnnotated(method, Collections.singletonList("java.lang.invoke.MethodHandle.PolymorphicSignature"))) {
+          return false;
+        }
+      }
+    }
+    final PsiType expressionType = expression.getType();
+    if (PsiPrimitiveType.getUnboxedType(expressionType) != null &&
+        (parent instanceof PsiPrefixExpression || parent instanceof PsiPostfixExpression)) {
+      return true;
+    }
+    if (expressionType == null || expressionType.equals(PsiType.VOID) || !TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
+      return false;
+    }
+    final PsiPrimitiveType primitiveType = (PsiPrimitiveType)expressionType;
+    final PsiClassType boxedType = primitiveType.getBoxedType(expression);
+    if (boxedType == null) {
+      return false;
+    }
+    final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
+    if (expectedType == null || ClassUtils.isPrimitive(expectedType)) {
+      return false;
+    }
+    if (!expectedType.isAssignableFrom(boxedType)) {
+      // JLS 5.2 Assignment Conversion
+      // check if a narrowing primitive conversion is applicable
+      if (!(expectedType instanceof PsiClassType) || !PsiUtil.isConstantExpression(expression)) {
+        return false;
+      }
+      final PsiClassType classType = (PsiClassType)expectedType;
+      final String className = classType.getCanonicalText();
+      if (!convertableBoxedClassNames.contains(className)) {
+        return false;
+      }
+      if (!PsiType.BYTE.equals(expressionType) && !PsiType.CHAR.equals(expressionType) &&
+          !PsiType.SHORT.equals(expressionType) && !PsiType.INT.equals(expressionType)) {
+        return false;
+      }
+    }
+    return true;
   }
 }

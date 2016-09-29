@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * @author Yura Cangea
- */
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
   public EditorColorsSchemeImpl(EditorColorsScheme parentScheme) {
     super(parentScheme);
@@ -36,7 +33,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
-    if (attributes != getAttributes(key)) {
+    if (!attributes.equals(getAttributes(key))) {
       myAttributesMap.put(key, attributes);
     }
   }

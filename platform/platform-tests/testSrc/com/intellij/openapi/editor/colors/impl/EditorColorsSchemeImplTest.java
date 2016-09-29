@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,6 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, declarationAttrs);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
     assertThat(result.second).isEqualTo(fallbackAttrs);
-    assertThat(result.second).isNotSameAs(fallbackAttrs);
   }
 
   public void testSaveInheritanceForEmptyAttrs() throws Exception {

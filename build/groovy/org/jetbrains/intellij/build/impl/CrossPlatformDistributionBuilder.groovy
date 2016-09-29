@@ -101,7 +101,6 @@ class CrossPlatformDistributionBuilder {
         }
         zipfileset(dir: "$macDistPath/bin", prefix: "bin", filemode: "775") {
           include(name: "restarter*")
-          include(name: "*.py")
         }
         zipfileset(dir: "$macDistPath/bin", prefix: "bin/mac", filemode: "775") {
           include(name: "fsnotifier*")

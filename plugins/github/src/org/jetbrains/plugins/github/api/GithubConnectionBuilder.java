@@ -27,7 +27,6 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.config.ConnectionConfig;
-import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -62,8 +61,7 @@ class GithubConnectionBuilder {
       .setDefaultRequestConfig(createRequestConfig())
       .setDefaultConnectionConfig(createConnectionConfig())
       .setDefaultHeaders(createHeaders())
-      .setSslcontext(CertificateManager.getInstance().getSslContext())
-      .setHostnameVerifier((X509HostnameVerifier)CertificateManager.HOSTNAME_VERIFIER);
+      .setSslcontext(CertificateManager.getInstance().getSslContext());
 
     setupCredentialsProvider(builder);
 
