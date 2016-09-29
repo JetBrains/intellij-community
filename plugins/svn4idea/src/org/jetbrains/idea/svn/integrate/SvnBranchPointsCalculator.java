@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.ValueHolder;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
@@ -48,7 +47,6 @@ public class SvnBranchPointsCalculator {
 
   private static final Logger LOG = Logger.getInstance(SvnBranchPointsCalculator.class);
 
-  private ValueHolder<WrapperInvertor, KeyData> myCache;
   private SmallMapSerializer<String, TreeMap<String, BranchCopyData>> myPersistentMap;
   @NotNull private final Object myPersistenceLock = new Object();
   private File myFile;
@@ -67,23 +65,6 @@ public class SvnBranchPointsCalculator {
     synchronized (myPersistenceLock) {
       myPersistentMap = new SmallMapSerializer<>(myFile, EnumeratorStringDescriptor.INSTANCE, new BranchDataExternalizer());
     }
-
-    myCache = new ValueHolder<WrapperInvertor, KeyData>() {
-      public WrapperInvertor getValue(KeyData dataHolder) {
-        WrapperInvertor result = getBestHit(dataHolder.getRepoUrl(), dataHolder.getSourceUrl(), dataHolder.getTargetUrl());
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Persistent for: " + dataHolder.toString() + " returned: " + (result == null ? null : result.toString()));
-        }
-        return result;
-      }
-
-      public void setValue(WrapperInvertor value, KeyData dataHolder) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Put into persistent: key: " + dataHolder.toString() + " value: " + value.toString());
-        }
-        persist(dataHolder.getRepoUrl(), value.getWrapped().getTarget(), value.getWrapped());
-      }
-    };
   }
 
   @Nullable
@@ -108,6 +89,8 @@ public class SvnBranchPointsCalculator {
         }
       }
 
+      logCopyData(repoUrl, source, target, result);
+
       return result;
     }
   }
@@ -117,17 +100,16 @@ public class SvnBranchPointsCalculator {
       myPersistentMap.force();
       myPersistentMap = null;
     }
-    myCache = null;
   }
 
-  private void persist(String uid, String target, BranchCopyData data) {
+  private void persist(String uid, @NotNull BranchCopyData data) {
     // todo - rewrite of rather big piece; consider rewriting
     synchronized (myPersistenceLock) {
       TreeMap<String, BranchCopyData> map = myPersistentMap.get(uid);
       if (map == null) {
         map = new TreeMap<>();
       }
-      map.put(target, data);
+      map.put(data.getTarget(), data);
       myPersistentMap.put(uid, map);
       myPersistentMap.force();
     }
@@ -209,6 +191,7 @@ public class SvnBranchPointsCalculator {
 
     @Override
     public WrapperInvertor convert(final KeyData keyData) throws VcsException {
+      WrapperInvertor result = null;
       CopyData copyData = new FirstInBranch(myVcs, keyData.getRepoUrl(), keyData.getTargetUrl(), keyData.getSourceUrl()).run();
 
       if (copyData != null) {
@@ -222,16 +205,21 @@ public class SvnBranchPointsCalculator {
           branchCopyData = new BranchCopyData(keyData.getTargetUrl(), copyData.getCopySourceRevision(), keyData.getSourceUrl(),
                                               copyData.getCopyTargetRevision());
         }
-        WrapperInvertor invertor = new WrapperInvertor(!correct, branchCopyData);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Loader17 returned: for key: " + keyData.toString() + " result: " + (invertor.toString()));
-        }
-        return invertor;
+        result = new WrapperInvertor(!correct, branchCopyData);
       }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Loader17 returned: for key: " + keyData.toString() + " result: null");
-      }
-      return null;
+
+      logCopyData(keyData.getRepoUrl(), keyData.getSourceUrl(), keyData.getTargetUrl(), result);
+
+      return result;
+    }
+  }
+
+  private static void logCopyData(@NotNull String repoUrl,
+                                  @NotNull String sourceUrl,
+                                  @NotNull String targetUrl,
+                                  @Nullable WrapperInvertor inverter) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("repoURL: " + repoUrl + ", sourceUrl:" + sourceUrl + ", targetUrl: " + targetUrl + ", inverter: " + inverter);
     }
   }
 
@@ -314,7 +302,7 @@ public class SvnBranchPointsCalculator {
         try {
           WrapperInvertor calculatedValue = new Loader(myProject).convert(in);
           if (calculatedValue != null) {
-            myCache.setValue(calculatedValue, in);
+            persist(repoUID, calculatedValue.getWrapped());
           }
           value.set(calculatedValue);
         }
@@ -334,7 +322,7 @@ public class SvnBranchPointsCalculator {
       @Override
       public void run(ContinuationContext context) {
         try {
-          value.set(myCache.getValue(in));
+          value.set(getBestHit(repoUID, sourceUrl, targetUrl));
         }
         catch (Exception e) {
           setException(value, e);
