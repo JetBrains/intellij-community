@@ -431,9 +431,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
   }
 
-  @Deprecated
-  public static final Map<String, Color> DEFAULT_ERROR_STRIPE_COLOR = new THashMap<>();
-
   @SuppressWarnings("UseJBColor")
   private static final Map<String, Couple<Color>> DEFAULT_STRIPE_COLORS = new THashMap<String, Couple<Color>>() {
     {
