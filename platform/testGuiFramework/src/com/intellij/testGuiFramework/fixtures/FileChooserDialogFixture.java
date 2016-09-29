@@ -25,6 +25,7 @@ import org.fest.swing.timing.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
@@ -36,6 +37,9 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.assertNotNull;
 
 public class FileChooserDialogFixture extends IdeaDialogFixture<FileChooserDialogImpl> {
+
+  TreePath myTargetPath;
+
   @NotNull
   public static FileChooserDialogFixture findOpenProjectDialog(@NotNull Robot robot) {
     return findDialog(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
@@ -68,10 +72,9 @@ public class FileChooserDialogFixture extends IdeaDialogFixture<FileChooserDialo
 
   @NotNull
   public FileChooserDialogFixture select(@NotNull final VirtualFile file) {
-    sleepWithTimeBomb();
     final FileSystemTreeImpl fileSystemTree = field("myFileSystemTree").ofType(FileSystemTreeImpl.class)
-                                                                       .in(getDialogWrapper())
-                                                                       .get();
+      .in(getDialogWrapper())
+      .get();
     assertNotNull(fileSystemTree);
     final AtomicBoolean fileSelected = new AtomicBoolean();
     execute(new GuiTask() {
@@ -102,7 +105,8 @@ public class FileChooserDialogFixture extends IdeaDialogFixture<FileChooserDialo
     try {
       Thread.sleep(5000);
     }
-    catch (InterruptedException e) {}
+    catch (InterruptedException e) {
+    }
   }
 
   @NotNull

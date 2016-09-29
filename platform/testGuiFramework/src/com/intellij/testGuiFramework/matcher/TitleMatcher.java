@@ -13,37 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.fest.swing.core;
+package com.intellij.testGuiFramework.matcher;
 
-import org.fest.swing.hierarchy.ComponentHierarchy;
-import org.fest.swing.hierarchy.ExistingHierarchy;
+import org.fest.swing.core.GenericTypeMatcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nonnull;
+import javax.swing.*;
 
 /**
  * @author Sergey Karashevich
  */
-public class FastRobot extends BasicRobot {
+public class TitleMatcher<T extends JDialog> extends GenericTypeMatcher<T> {
 
-  public FastRobot(){
-    super((Object)null, new ExistingHierarchy());
+  String myTitle;
+
+  public TitleMatcher(@Nonnull Class<T> supportedType) {
+    super(supportedType);
   }
 
-  FastRobot(@Nullable Object screenLockOwner,
-            @NotNull ComponentHierarchy hierarchy) {
-    super(screenLockOwner, hierarchy);
+  public TitleMatcher(@Nonnull Class<T> supportedType, @NotNull String title) {
+    super(supportedType);
+    myTitle = title;
   }
-
-  volatile boolean isIdle = false;
 
   @Override
-  public void waitForIdle() {
-    //do not wait for idle
+  protected boolean isMatching(@Nonnull T t) {
+    return (t.getTitle().equals(myTitle) && t.isShowing());
   }
 
-  public void superWaitForIdle(){
-    super.waitForIdle();
+  public static TitleMatcher<JDialog> withTitleMatcher(@NotNull String title){
+    return new TitleMatcher<>(JDialog.class, title);
   }
-
 }

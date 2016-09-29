@@ -45,10 +45,10 @@ public class MethodInvoker extends Statement {
 
   @Override
   public void evaluate() throws Throwable {
-    //if (myTestConfigurator.shouldSkipTest()) {
-    //   Message already printed in console.
-      //return;
-    //}
+    if (myTestConfigurator.shouldSkipTest()) {
+       //Message already printed in console.
+      return;
+    }
     String testFqn = getTestFqn();
     if (doesIdeHaveFatalErrors()) {
       // Fatal errors were caused by previous test. Skipping this test.

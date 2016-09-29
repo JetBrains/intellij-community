@@ -59,12 +59,10 @@ public class IdeTestApplicationImpl extends IdeTestApplication implements Dispos
 
   @NotNull
   public static synchronized IdeTestApplication getInstance() throws Exception {
-    //System.setProperty(PLATFORM_PREFIX_KEY, "AndroidStudio");
-    //System.setProperty(PLATFORM_PREFIX_KEY, "idea");
     File configDirPath = getConfigDirPath();
     System.setProperty(PROPERTY_CONFIG_PATH, configDirPath.getPath());
 
-    // Force Swing FileChooser on Mac (instead of native one) to be able to use FEST to drive it.
+    //Force Swing FileChooser on Mac (instead of native one) to be able to use FEST to drive it.
     System.setProperty("native.mac.file.chooser.enabled", "false");
 
     //We are using this property to skip testProjectLeak in _LastSuiteTests

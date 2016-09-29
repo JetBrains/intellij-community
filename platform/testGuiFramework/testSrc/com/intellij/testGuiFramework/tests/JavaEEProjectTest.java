@@ -23,7 +23,6 @@ import com.intellij.testGuiFramework.fixtures.ToolWindowFixture;
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture;
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
-import com.intellij.testGuiFramework.framework.IdeGuiTest;
 import com.intellij.testGuiFramework.impl.GuiTestCase;
 import org.junit.Test;
 
@@ -41,8 +40,7 @@ import static com.intellij.testGuiFramework.framework.GuiTestUtil.getSystemJdk;
  */
 public class JavaEEProjectTest extends GuiTestCase {
 
-
-  @Test @IdeGuiTest
+  @Test
   public void testJavaEEProject() throws IOException, InterruptedException {
 
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm");
@@ -90,6 +88,19 @@ public class JavaEEProjectTest extends GuiTestCase {
                                                  myRobot);
       myRobot.click(newButton);
       File javaSdkPath = new File(getSystemJdk());
+      String sdkType = GuiTestUtil.adduction(ProjectBundle.message("sdk.java.name"));
+      GuiTestUtil.clickPopupMenuItem(sdkType, newButton, myRobot);
+      newProjectWizard.selectSdkPath(javaSdkPath, sdkType);
+    }
+  }
+
+  private void setupJdk(NewProjectWizardFixture newProjectWizard, String customPath){
+    if (newProjectWizard.isJdkEmpty()) {
+      JButton newButton = GuiTestUtil.findButton(newProjectWizard,
+                                                 GuiTestUtil.adduction(ApplicationBundle.message("button.new")),
+                                                 myRobot);
+      myRobot.click(newButton);
+      File javaSdkPath = new File(customPath);
       String sdkType = GuiTestUtil.adduction(ProjectBundle.message("sdk.java.name"));
       GuiTestUtil.clickPopupMenuItem(sdkType, newButton, myRobot);
       newProjectWizard.selectSdkPath(javaSdkPath, sdkType);

@@ -182,7 +182,7 @@ public final class GuiTestUtil {
     return jdkHome;
   }
 
-  public static void setupGitPath(){
+  public static void setupGitPath() {
     //GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
     //settings.setPathToGit(GitExecutor.PathHolder.GIT_EXECUTABLE);
   }
@@ -199,16 +199,15 @@ public final class GuiTestUtil {
     execute(new GuiTask() {
       @Override
       protected void executeInEDT() throws Throwable {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              LOG.info(String.format("Setting JDK: '%1$s'", jdkPath.getPath()));
-              setJdkPath(jdkPath);
-            }
-          });
-        }
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            LOG.info(String.format("Setting JDK: '%1$s'", jdkPath.getPath()));
+            setJdkPath(jdkPath);
+          }
+        });
+      }
     });
-
   }
 
   public static void setJdkPath(@NotNull File path) {
@@ -838,5 +837,15 @@ public final class GuiTestUtil {
   @NotNull
   public static JTextComponentFixture findTextField(@NotNull Robot robot, @NotNull final String labelText) {
     return new JTextComponentFixture(robot, robot.finder().findByLabel(labelText, JTextComponent.class));
+  }
+
+  /**
+   * @param shortcut should follow {@link KeyStroke#getKeyStroke(String)} instructions
+   */
+  public static void invokeActionViaShortcut(@NotNull Robot robot, @NotNull String shortcut) {
+
+    KeyStroke keyStroke = KeyStroke.getKeyStroke(shortcut);
+    LOG.info("Invoking action via shortcut " + shortcut);
+    robot.pressAndReleaseKey(keyStroke.getKeyCode(), new int[]{keyStroke.getModifiers()});
   }
 }
