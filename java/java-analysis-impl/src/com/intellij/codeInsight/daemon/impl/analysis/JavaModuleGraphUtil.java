@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -47,14 +46,14 @@ public class JavaModuleGraphUtil {
   public static Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(ReadAction.compute(() -> findCycles(project)), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+      Result.create(findCycles(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
     return ContainerUtil.find(cycles, set -> set.contains(module));
   }
 
   public static boolean reads(@NotNull PsiJavaModule source, @NotNull PsiJavaModule destination) {
     Project project = source.getProject();
     RequiresGraph graph = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(ReadAction.compute(() -> buildRequiresGraph(project)), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+      Result.create(buildRequiresGraph(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
     return graph.reads(source, destination);
   }
 
