@@ -63,7 +63,6 @@ public class CCNewSubtaskAction extends DumbAwareAction {
     int num = task.getSubtaskNum();
     createTaskDescriptionFile(project, taskDir, num);
     task.setSubtaskNum(num + 1);
-    task.setActiveSubtaskIndex(num);
     StudySubtaskUtils.switchStep(project, task, num);
   }
 

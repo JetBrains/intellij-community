@@ -164,19 +164,20 @@ public class EduUtils {
     studentDocument.addDocumentListener(listener);
 
     for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
-      replaceAnswerPlaceholder(project, studentDocument, placeholder);
+      replaceAnswerPlaceholder(project, studentDocument, placeholder, placeholder.getRealLength(), placeholder.getTaskText());
     }
     studentDocument.removeDocumentListener(listener);
     return Pair.create(studentFile, taskFile);
   }
 
-  private static void replaceAnswerPlaceholder(@NotNull final Project project,
-                                               @NotNull final Document document,
-                                               @NotNull final AnswerPlaceholder answerPlaceholder) {
-    final String taskText = answerPlaceholder.getTaskText();
+  public static void replaceAnswerPlaceholder(@NotNull final Project project,
+                                              @NotNull final Document document,
+                                              @NotNull final AnswerPlaceholder answerPlaceholder,
+                                              int length,
+                                              String replacementText) {
     final int offset = answerPlaceholder.getOffset();
     CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      document.replaceString(offset, offset + answerPlaceholder.getRealLength(), taskText);
+      document.replaceString(offset, offset + length, replacementText);
       FileDocumentManager.getInstance().saveDocument(document);
     }), "Replace Answer Placeholders", "Replace Answer Placeholders");
   }

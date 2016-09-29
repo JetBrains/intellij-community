@@ -73,7 +73,9 @@ public class EduDocumentListener extends DocumentAdapter {
           if (answerPlaceholder.getUseLength()) {
             answerPlaceholder.setLength(length);
           } else {
-            answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + length)));
+            if (answerPlaceholder.isActive() && myTaskFile.isTrackLengths()) {
+              answerPlaceholder.setPossibleAnswer(document.getText(TextRange.create(twStart, twStart + length)));
+            }
           }
         }
       }

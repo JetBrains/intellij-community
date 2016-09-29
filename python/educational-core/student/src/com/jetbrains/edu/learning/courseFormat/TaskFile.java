@@ -21,6 +21,7 @@ public class TaskFile {
   private int myIndex = -1;
   private boolean myUserCreated = false;
   private boolean myTrackChanges = true;
+  private boolean myTrackLengths = true;
   private boolean myHighlightErrors = false;
   @Expose @SerializedName("placeholders") private List<AnswerPlaceholder> myAnswerPlaceholders = new ArrayList<>();
   @Transient private Task myTask;
@@ -86,7 +87,11 @@ public class TaskFile {
    */
   @Nullable
   public AnswerPlaceholder getAnswerPlaceholder(int offset) {
-    for (AnswerPlaceholder placeholder : myAnswerPlaceholders) {
+    return getAnswerPlaceholder(offset, getActivePlaceholders());
+  }
+
+  @Nullable public AnswerPlaceholder getAnswerPlaceholder(int offset, List<AnswerPlaceholder> placeholders) {
+    for (AnswerPlaceholder placeholder : placeholders) {
       int placeholderStart = placeholder.getOffset();
       int placeholderEnd = placeholderStart + placeholder.getRealLength();
       if (placeholderStart <= offset && offset <= placeholderEnd) {
@@ -96,6 +101,13 @@ public class TaskFile {
     return null;
   }
 
+  public boolean isTrackLengths() {
+    return myTrackLengths;
+  }
+
+  public void setTrackLengths(boolean trackLengths) {
+    myTrackLengths = trackLengths;
+  }
 
   public static void copy(@NotNull final TaskFile source, @NotNull final TaskFile target) {
     List<AnswerPlaceholder> sourceAnswerPlaceholders = source.getActivePlaceholders();

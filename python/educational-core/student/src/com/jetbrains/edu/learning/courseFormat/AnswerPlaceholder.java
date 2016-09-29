@@ -2,10 +2,12 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -138,7 +140,7 @@ public class AnswerPlaceholder {
    * @return length or possible answer length
    */
   public int getRealLength() {
-    return myUseLength ? getLength() : getPossibleAnswerLength();
+    return myUseLength ? getLength() : getVisibleLength(getActiveSubtaskIndex());
   }
 
   public void setUseLength(boolean useLength) {
@@ -179,6 +181,10 @@ public class AnswerPlaceholder {
     mySubtaskInfos = subtaskInfos;
   }
 
+  public boolean isActive() {
+    return getActiveSubtaskInfo() != null;
+  }
+
   public static class MyInitialState {
     private int length = -1;
     private int offset = -1;
@@ -209,10 +215,26 @@ public class AnswerPlaceholder {
   }
 
   public AnswerPlaceholderSubtaskInfo getActiveSubtaskInfo() {
+    return mySubtaskInfos.get(getActiveSubtaskIndex());
+  }
+
+  public int getActiveSubtaskIndex() {
     if (myTaskFile == null || myTaskFile.getTask() == null) {
-      return mySubtaskInfos.get(0);
+      return 0;
     }
-    int activeStepIndex = myTaskFile.getTask().getActiveSubtaskIndex();
-    return mySubtaskInfos.get(activeStepIndex);
+    return myTaskFile.getTask().getActiveSubtaskIndex();
+  }
+
+  public int getVisibleLength(int subtaskIndex) {
+    int minIndex = Collections.min(mySubtaskInfos.keySet());
+    AnswerPlaceholderSubtaskInfo minInfo = mySubtaskInfos.get(minIndex);
+    if (minIndex == subtaskIndex) {
+      return getUseLength() ? length : minInfo.getPossibleAnswer().length();
+    }
+    if (minIndex > subtaskIndex) {
+      return minInfo.isNeedInsertText() ? 0 : minInfo.getPlaceholderText().length();
+    }
+    int maxIndex = Collections.max(ContainerUtil.filter(mySubtaskInfos.keySet(), i -> i < subtaskIndex));
+    return getUseLength() ? length : mySubtaskInfos.get(maxIndex).getPossibleAnswer().length();
   }
 }
