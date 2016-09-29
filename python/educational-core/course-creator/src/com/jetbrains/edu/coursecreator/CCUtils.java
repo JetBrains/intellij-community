@@ -231,7 +231,7 @@ public class CCUtils {
         continue;
       }
       ApplicationManager.getApplication().runWriteAction(() -> {
-        EduUtils.createStudentFile(CCUtils.class, project, answerFile, studentDir, null);
+        EduUtils.createStudentFile(CCUtils.class, project, answerFile, studentDir, null, task.getActiveSubtaskIndex());
       });
     }
   }
