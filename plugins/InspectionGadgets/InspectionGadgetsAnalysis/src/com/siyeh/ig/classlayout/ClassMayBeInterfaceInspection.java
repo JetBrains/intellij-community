@@ -79,13 +79,8 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("class.may.be.interface.convert.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("class.may.be.interface.convert.quickfix");
     }
 
     @Override

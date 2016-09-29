@@ -200,14 +200,8 @@ public class NonThreadSafeLazyInitializationInspection extends NonThreadSafeLazy
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("introduce.holder.class.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("introduce.holder.class.quickfix");
     }
   }
 }

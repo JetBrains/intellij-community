@@ -62,15 +62,10 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
   }
 
   private static class TypeParameterExtendsFinalClassFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("type.parameter.extends.final.class.quickfix");
     }
 

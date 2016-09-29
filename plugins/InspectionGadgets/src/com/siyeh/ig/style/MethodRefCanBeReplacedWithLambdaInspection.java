@@ -107,15 +107,8 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
     }
 
     @Override

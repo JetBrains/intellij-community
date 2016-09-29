@@ -471,7 +471,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   private static void notifyProjectOpenFailed() {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
+    Application application = ApplicationManager.getApplication();
+    application.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed();
+    if (application.isUnitTestMode()) return;
     WelcomeFrame.showIfNoProjectOpened();
   }
 

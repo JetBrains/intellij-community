@@ -114,17 +114,11 @@ public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalI
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {
       @NotNull
       @Override
-      public String getName() {
+      public String getFamilyName() {
         return "Replace with method reference";
       }
 
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return getName();
-      }
-
-      @Override
+    @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement();
         if (element instanceof PsiNewExpression) {

@@ -325,7 +325,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
   private static class AcceptSuggested implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
     }
 
@@ -343,12 +343,6 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 

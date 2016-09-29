@@ -24,10 +24,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Producer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Contract;
@@ -122,8 +119,7 @@ public class LambdaUtil {
   public static boolean isFunctionalClass(PsiClass aClass) {
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return false;
-      final List<HierarchicalMethodSignature> signatures = findFunctionCandidates(aClass);
-      return signatures != null && signatures.size() == 1;
+      return getFunction(aClass) != null;
     }
     return false;
   }
@@ -152,15 +148,69 @@ public class LambdaUtil {
 
   @Contract("null -> null")
   @Nullable
-  public static MethodSignature getFunction(PsiClass psiClass) {
-    if (psiClass == null) return null;
-    final List<HierarchicalMethodSignature> functions = findFunctionCandidates(psiClass);
-    if (functions != null && functions.size() == 1) {
-      return functions.get(0);
+  public static MethodSignature getFunction(final PsiClass psiClass) {
+    if (isPlainInterface(psiClass)) {
+      return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MethodSignature>() {
+        @Nullable
+        @Override
+        public Result<MethodSignature> compute() {
+          return Result.create(calcFunction(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+      });
     }
     return null;
   }
 
+  private static boolean isPlainInterface(PsiClass psiClass) {
+    return psiClass != null && psiClass.isInterface() && !psiClass.isAnnotationType();
+  }
+
+  @Nullable
+  private static MethodSignature calcFunction(@NotNull PsiClass psiClass) {
+    if (hasManyOwnAbstractMethods(psiClass) || hasManyInheritedAbstractMethods(psiClass)) return null;
+
+    final List<HierarchicalMethodSignature> functions = findFunctionCandidates(psiClass);
+    return functions != null && functions.size() == 1 ? functions.get(0) : null;
+  }
+
+  private static boolean hasManyOwnAbstractMethods(@NotNull PsiClass psiClass) {
+    int abstractCount = 0;
+    for (PsiMethod method : psiClass.getMethods()) {
+      if (isDefinitelyAbstractInterfaceMethod(method) && ++abstractCount > 1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isDefinitelyAbstractInterfaceMethod(PsiMethod method) {
+    return method.hasModifierProperty(PsiModifier.ABSTRACT) && !isPublicObjectMethod(method.getName());
+  }
+
+  private static boolean isPublicObjectMethod(String methodName) {
+    return "equals".equals(methodName) || "hashCode".equals(methodName) || "toString".equals(methodName);
+  }
+
+  private static boolean hasManyInheritedAbstractMethods(@NotNull PsiClass psiClass) {
+    final Set<String> abstractNames = ContainerUtil.newHashSet();
+    final Set<String> defaultNames = ContainerUtil.newHashSet();
+    InheritanceUtil.processSupers(psiClass, true, new Processor<PsiClass>() {
+      @Override
+      public boolean process(PsiClass psiClass) {
+        for (PsiMethod method : psiClass.getMethods()) {
+          if (isDefinitelyAbstractInterfaceMethod(method)) {
+            abstractNames.add(method.getName());
+          }
+          else if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
+            defaultNames.add(method.getName());
+          }
+        }
+        return true;
+      }
+    });
+    abstractNames.removeAll(defaultNames);
+    return abstractNames.size() > 1;
+  }
 
   private static boolean overridesPublicObjectMethod(HierarchicalMethodSignature psiMethod) {
     final List<HierarchicalMethodSignature> signatures = psiMethod.getSuperSignatures();
@@ -219,20 +269,9 @@ public class LambdaUtil {
 
   @Contract("null -> null")
   @Nullable
-  public static List<HierarchicalMethodSignature> findFunctionCandidates(final PsiClass psiClass) {
-    if (psiClass != null && psiClass.isInterface() && !psiClass.isAnnotationType()) {
-      return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<List<HierarchicalMethodSignature>>() {
-        @Nullable
-        @Override
-        public Result<List<HierarchicalMethodSignature>> compute() {
-          return Result.create(calcFunctionCandidates(psiClass), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-        }
-      });
-    }
-    return null;
-  }
+  public static List<HierarchicalMethodSignature> findFunctionCandidates(@Nullable final PsiClass psiClass) {
+    if (!isPlainInterface(psiClass)) return null;
 
-  private static List<HierarchicalMethodSignature> calcFunctionCandidates(PsiClass psiClass) {
     final List<HierarchicalMethodSignature> methods = new ArrayList<HierarchicalMethodSignature>();
     final Map<MethodSignature, Set<PsiMethod>> overrideEquivalents = PsiSuperMethodUtil.collectOverrideEquivalents(psiClass);
     final Collection<HierarchicalMethodSignature> visibleSignatures = psiClass.getVisibleSignatures();

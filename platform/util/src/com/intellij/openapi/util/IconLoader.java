@@ -573,6 +573,19 @@ public final class IconLoader {
     }
 
     protected abstract Icon compute();
+
+    public Icon inNormalScale(boolean isRetina) {
+      Icon icon = getOrComputeIcon();
+      if (icon != null) {
+        if (icon instanceof CachedImageIcon) {
+          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrigImage(isRetina);
+          if (img != null) {
+            icon = new ImageIcon(img);
+          }
+        }
+      }
+      return icon;
+    }
   }
 
   private static class LabelHolder {

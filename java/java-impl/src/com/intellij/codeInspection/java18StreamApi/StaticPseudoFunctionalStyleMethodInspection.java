@@ -114,13 +114,6 @@ public class StaticPseudoFunctionalStyleMethodInspection extends BaseJavaBatchLo
       myHandler = handler;
     }
 
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
     @NotNull
     @Override
     public String getFamilyName() {

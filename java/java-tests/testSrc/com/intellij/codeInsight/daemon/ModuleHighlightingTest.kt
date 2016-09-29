@@ -17,8 +17,7 @@ package com.intellij.codeInsight.daemon
 
 import com.intellij.psi.PsiJavaModule
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M3
+import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.assertj.core.api.Assertions.assertThat
 
@@ -134,6 +133,33 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testClassRefFixes() {
     addFile("pkg/m3/C3.java", "package pkg.m3;\npublic class C3 { }", M3)
     fixes("module M { uses <caret>pkg.m3.C3; }", "AddModuleDependencyFix")
+  }
+
+  fun testPackageAccessibility() {
+    addFile("module-info.java", "module M { requires M2; requires M6; }")
+    addFile("module-info.java", "module M2 { exports pkg.m2; }", M2)
+    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
+    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
+    addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
+    addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
+    addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
+    addFile("module-info.java", "module M6 { requires public M7; }", M6)
+    addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
+    addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
+
+    highlight("test.java", """
+        import pkg.m2.C2;
+        import pkg.m2.*;
+        import <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>;
+        import <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl</error>.*;
+        import <error descr="A named module cannot access packages of an unnamed one">pkg.m4.C4</error>;
+        import <error descr="The module 'M' does not have the module 'M5' in requirements">pkg.m5.C5</error>;
+        import pkg.m7.C7;
+
+        import static <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make;
+
+        class C { }
+        """.trimIndent(), true)
   }
 
   //<editor-fold desc="Helpers.">

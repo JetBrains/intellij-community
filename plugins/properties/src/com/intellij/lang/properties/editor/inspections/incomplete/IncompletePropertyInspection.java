@@ -108,13 +108,6 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return PropertiesBundle.message("incomplete.property.quick.fix.name");
     }

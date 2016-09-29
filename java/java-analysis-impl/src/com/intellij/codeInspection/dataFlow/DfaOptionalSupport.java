@@ -100,13 +100,6 @@ public class DfaOptionalSupport {
       myClearArguments = clearArguments;
     }
 
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
     @NotNull
     @Override
     public String getFamilyName() {

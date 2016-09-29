@@ -99,13 +99,6 @@ public class MigrateAssertToMatcherAssertInspection extends LocalInspectionTool 
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return "Replace with 'assertThat'";
     }

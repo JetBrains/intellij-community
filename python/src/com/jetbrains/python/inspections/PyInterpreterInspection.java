@@ -80,11 +80,6 @@ public class PyInterpreterInspection extends PyInspection {
   }
 
   private static class ConfigureInterpreterFix implements LocalQuickFix {
-    @NotNull
-    @Override
-    public String getName() {
-      return "Configure Python Interpreter";
-    }
 
     @NotNull
     @Override

@@ -25,26 +25,25 @@ import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil.DEFAULT_E
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
 import com.intellij.openapi.options.*
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.Condition
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.SafeWriteRequestor
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.util.PathUtil
-import com.intellij.util.PathUtilRt
-import com.intellij.util.SmartList
+import com.intellij.util.*
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.catch
 import com.intellij.util.io.*
-import com.intellij.util.loadElement
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashSet
@@ -575,7 +574,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     val currentFileNameWithoutExtension = externalInfo?.fileNameWithoutExtension
     val parent = processor.writeScheme(scheme)
     val element = if (parent is Element) parent else (parent as Document).detachRootElement()
-    if (JDOMUtil.isEmpty(element)) {
+    if (element.isEmpty()) {
       externalInfo?.scheduleDelete()
       return
     }
@@ -591,9 +590,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     // save only if scheme differs from bundled
-    val bundledScheme = readOnlyExternalizableSchemes.get(scheme.name)
-    if (bundledScheme != null && schemeToInfo.get(bundledScheme)?.isDigestEquals(newDigest) ?: false) {
-      externalInfo?.scheduleDelete()
+    if (isEqualToBundledScheme(externalInfo, newDigest, scheme)) {
       return
     }
 
@@ -642,7 +639,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
         }
 
         if (file == null) {
-          file = getFile(fileName, dir, this)
+          file = dir.getOrCreateChild(fileName, this)
         }
 
         runWriteAction {
@@ -674,6 +671,38 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
     externalInfo.digest = newDigest
     externalInfo.schemeName = scheme.name
+  }
+
+  private fun isEqualToBundledScheme(externalInfo: ExternalInfo?, newDigest: ByteArray, scheme: MUTABLE_SCHEME): Boolean {
+    fun serializeIfPossible(scheme: T): Element? {
+      LOG.catchAndLog {
+        @Suppress("UNCHECKED_CAST")
+        val bundledAsMutable = scheme as? MUTABLE_SCHEME ?: return null
+        return processor.writeScheme(bundledAsMutable) as Element
+      }
+      return null
+    }
+
+    val bundledScheme = readOnlyExternalizableSchemes.get(scheme.name)
+    if (bundledScheme == null) {
+      if ((processor as? LazySchemeProcessor)?.let { it.isSchemeEqualToBundled(scheme) } ?: false) {
+        externalInfo?.scheduleDelete()
+        return true
+      }
+      return false
+    }
+
+    val bundledExternalInfo = schemeToInfo.get(bundledScheme) ?: return false
+    if (bundledExternalInfo.digest == null) {
+      serializeIfPossible(bundledScheme)?.let {
+        bundledExternalInfo.digest = it.digest()
+      } ?: return false
+    }
+    if (bundledExternalInfo.isDigestEquals(newDigest)) {
+      externalInfo?.scheduleDelete()
+      return true
+    }
+    return false
   }
 
   private fun ExternalInfo.scheduleDelete() {
@@ -930,25 +959,6 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override fun isMetadataEditable(scheme: T) = !readOnlyExternalizableSchemes.containsKey(scheme.name)
 
-  private class ExternalInfo(var fileNameWithoutExtension: String, var fileExtension: String?) {
-    // we keep it to detect rename
-    var schemeName: String? = null
-
-    var digest: ByteArray? = null
-
-    val fileName: String
-      get() = "$fileNameWithoutExtension$fileExtension"
-
-    fun setFileNameWithoutExtension(nameWithoutExtension: String, extension: String) {
-      fileNameWithoutExtension = nameWithoutExtension
-      fileExtension = extension
-    }
-
-    fun isDigestEquals(newDigest: ByteArray) = Arrays.equals(digest, newDigest)
-
-    override fun toString() = fileName
-  }
-
   override fun toString() = fileSpec
 }
 
@@ -957,26 +967,6 @@ private fun ExternalizableScheme.renameScheme(newName: String) {
     name = newName
     LOG.assertTrue(newName == name)
   }
-}
-
-private inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
-  try {
-    runnable()
-  }
-  catch (e: Throwable) {
-    add(e)
-  }
-}
-
-fun createDir(ioDir: Path, requestor: Any): VirtualFile {
-  ioDir.createDirectories()
-  val parentFile = ioDir.parent
-  val parentVirtualFile = (if (parentFile == null) null else VfsUtil.createDirectoryIfMissing(parentFile.systemIndependentPath)) ?: throw IOException(ProjectBundle.message("project.configuration.save.file.not.found", parentFile))
-  return getFile(ioDir.fileName.toString(), parentVirtualFile, requestor)
-}
-
-fun getFile(fileName: String, parent: VirtualFile, requestor: Any): VirtualFile {
-  return parent.findChild(fileName) ?: runWriteAction { parent.createChildData(requestor, fileName) }
 }
 
 private inline fun catchAndLog(fileName: String, runnable: (fileName: String) -> Unit) {

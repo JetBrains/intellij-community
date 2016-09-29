@@ -46,15 +46,8 @@ public class GrUnnecessarySemicolonInspection extends GroovySuppressableInspecti
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return "Remove semicolon";
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Remove semicolon";
     }
 
     @Override

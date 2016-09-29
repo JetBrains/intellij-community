@@ -22,7 +22,6 @@ import com.intellij.application.options.colors.TextAttributesDescription;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -78,10 +77,6 @@ class PatternDialog extends DialogWrapper {
     TextAttributes attributes = myPattern.getAttributes().getCustomizedTextAttributes();
     myColorAndFontDescription = new TextAttributesDescription("null", null, attributes, null,
                                                               EditorColorsManager.getInstance().getGlobalScheme(), null, null) {
-      @Override
-      public void apply(EditorColorsScheme scheme) {
-      }
-
       @Override
       public boolean isErrorStripeEnabled() {
         return true;

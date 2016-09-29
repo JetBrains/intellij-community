@@ -69,6 +69,10 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, true);
   }
 
+  public void testPyMethodParametersInspectionInitSubclass() {
+    doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON36);
+  }
+
   public void testPyNestedDecoratorsInspection() {
     LocalInspectionTool inspection = new PyNestedDecoratorsInspection();
     doTest(getTestName(false), inspection);

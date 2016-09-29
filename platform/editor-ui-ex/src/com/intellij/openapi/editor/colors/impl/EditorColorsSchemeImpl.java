@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
-import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,13 +29,13 @@ import java.awt.*;
 /**
  * @author Yura Cangea
  */
-public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme, SerializableScheme {
+public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
   public EditorColorsSchemeImpl(EditorColorsScheme parentScheme) {
     super(parentScheme);
   }
 
   @Override
-  public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
+  public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
     if (attributes != getAttributes(key)) {
       myAttributesMap.put(key, attributes);
     }
@@ -51,20 +49,31 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   @Override
-  public TextAttributes getAttributes(TextAttributesKey key) {
-    if (key != null) {
-      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-      TextAttributes attributes = getDirectlyDefinedAttributes(key);
-      if (fallbackKey == null) {
-        if (containsValue(attributes)) return attributes;
-      }
-      else {
-        if (containsValue(attributes) && !attributes.isFallbackEnabled()) return attributes;
-        attributes = getFallbackAttributes(fallbackKey);
-        if (containsValue(attributes)) return attributes;
+  public TextAttributes getAttributes(@Nullable TextAttributesKey key) {
+    TextAttributes attributes = key == null ? null : getOwnAttributes(key);
+    return attributes == null ? myParentScheme.getAttributes(key) : attributes;
+  }
+
+  @Nullable
+  private TextAttributes getOwnAttributes(@NotNull TextAttributesKey key) {
+    TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+    TextAttributes attributes = getDirectlyDefinedAttributes(key);
+    if (fallbackKey == null) {
+      if (containsValue(attributes)) {
+        return attributes;
       }
     }
-    return myParentScheme.getAttributes(key);
+    else {
+      if (containsValue(attributes) && !attributes.isFallbackEnabled()) {
+        return attributes;
+      }
+
+      attributes = getFallbackAttributes(fallbackKey);
+      if (containsValue(attributes)) {
+        return attributes;
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -85,13 +94,5 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     newScheme.setName(getName());
     newScheme.setDefaultMetaInfo(this);
     return newScheme;
-  }
-
-  @NotNull
-  @Override
-  public Element writeScheme() {
-    Element root = new Element("scheme");
-    writeExternal(root);
-    return root;
   }
 }

@@ -33,13 +33,8 @@ import org.jetbrains.annotations.NotNull;
 public class RemoveTrailingLQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("INTN.remove.trailing.l");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("INTN.remove.trailing.l");
   }
 
   @Override

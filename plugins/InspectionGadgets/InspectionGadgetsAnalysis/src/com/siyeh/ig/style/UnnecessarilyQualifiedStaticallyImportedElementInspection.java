@@ -55,14 +55,9 @@ public class UnnecessarilyQualifiedStaticallyImportedElementInspection extends B
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessarily.qualified.statically.imported.element.quickfix");
     }
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return getName();
-  }
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor)

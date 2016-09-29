@@ -161,10 +161,11 @@ public class EnvironmentUtil {
   public static class ShellEnvReader {
 
     public Map<String, String> readShellEnv() throws Exception {
+      String os = SystemInfo.isLinux ? "linux" : "mac";
       File reader = FileUtil.findFirstThatExist(
         PathManager.getBinPath() + "/printenv.py",
-        PathManager.getHomePath() + "/community/bin/mac/printenv.py",
-        PathManager.getHomePath() + "/bin/mac/printenv.py");
+        PathManager.getHomePath() + "/community/bin/" + os + "/printenv.py",
+        PathManager.getHomePath() + "/bin/" + os + "/printenv.py");
       if (reader == null) {
         throw new Exception("bin:" + PathManager.getBinPath());
       }
@@ -185,7 +186,8 @@ public class EnvironmentUtil {
     }
 
     @NotNull
-    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator) throws Exception {
+    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
+      throws Exception {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       Process process = builder.start();

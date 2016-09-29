@@ -35,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConsoleViewImplTest extends LightPlatformTestCase {
   private ConsoleViewImpl myConsole;
@@ -117,7 +120,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         latch.countDown();
       }, 0);
       UIUtil.dispatchAllInvocationEvents(); // flush 1-st clear request
-      latch.await();
+      assertThat(latch.await(30, TimeUnit.SECONDS)).isTrue();
       UIUtil.dispatchAllInvocationEvents(); // flush 2-nd clear request
       while (console.hasDeferredOutput()) {
         UIUtil.dispatchAllInvocationEvents();

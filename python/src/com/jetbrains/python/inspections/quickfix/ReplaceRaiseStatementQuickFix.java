@@ -32,13 +32,8 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceRaiseStatementQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("INTN.replace.raise.statement");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("INTN.replace.raise.statement");
   }
 
   @Override

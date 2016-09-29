@@ -64,13 +64,6 @@ public class RefusedBequestInspection extends RefusedBequestInspectionBase {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return "Insert call to super method";
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return "Insert call to super method";
     }

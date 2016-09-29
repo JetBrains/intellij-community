@@ -485,7 +485,7 @@ public class JUnitTreeByDescriptionHierarchyTest {
 
     final String startMessage = "##teamcity[enteredTheMatrix]\n\n" +
                                 "##teamcity[testFailed name='A.a' ";
-    assertEquals(startMessage, StringUtil.convertLineSeparators(output.substring(0, startMessage.length() + 1)));
+    assertEquals(startMessage, StringUtil.convertLineSeparators(output.toString()).substring(0, startMessage.length()));
   }
 
   @Test

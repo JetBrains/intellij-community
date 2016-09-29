@@ -93,11 +93,6 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
   }
 
   private static class JavaFxOptimizeImportsFix implements LocalQuickFix {
-    @NotNull
-    @Override
-    public String getName() {
-      return QuickFixBundle.message("optimize.imports.fix");
-    }
 
     @Override
     @NotNull

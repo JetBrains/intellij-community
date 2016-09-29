@@ -32,15 +32,9 @@ import java.util.Collection;
  */
 public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
 
-  @Override
   @NotNull
+  @Override
   public String getFamilyName() {
-    return getName();
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
     return InspectionGadgetsBundle.message("convert.to.variable.arity.method.quickfix");
   }
 

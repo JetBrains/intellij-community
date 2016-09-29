@@ -25,6 +25,7 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -288,7 +289,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
         TextRange endRange = templateState.getVariableRange(template.getVariableNameAt(template.getVariableCount() - 1));
         if (startRange == null || endRange == null) return;
 
-        editor.getDocument().deleteString(startRange.getStartOffset(), endRange.getEndOffset());
+        WriteCommandAction.runWriteCommandAction(editor.getProject(), () ->
+          editor.getDocument().deleteString(startRange.getStartOffset(), endRange.getEndOffset()));
       }
     });
   }

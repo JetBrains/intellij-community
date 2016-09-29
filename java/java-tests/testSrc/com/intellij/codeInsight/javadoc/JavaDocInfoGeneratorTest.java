@@ -176,6 +176,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestField();
   }
 
+  public void testDoubleLt() throws Exception {
+    doTestClass();
+  }
+
   public void testEnumConstantOrdinal() throws Exception {
     PsiClass psiClass = getTestClass();
     PsiField field = psiClass.getFields() [0];
@@ -224,6 +228,11 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestLambdaParameter();
   }
 
+  private void doTestClass() throws Exception {
+    PsiClass psiClass = getTestClass();
+    verifyJavaDoc(psiClass);
+  }
+
   private void doTestField() throws Exception {
     PsiClass psiClass = getTestClass();
     PsiField field = psiClass.getFields() [0];
@@ -253,7 +262,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   private void verifyJavaDoc(final PsiElement field, List<String> docUrls) throws IOException {
-    String docInfo = JavaDocInfoGeneratorFactory.create(getProject(), field).generateDocInfo(docUrls);
+    String docInfo = JavaDocumentationProvider.generateExternalJavadoc(field, docUrls);
     assertNotNull(docInfo);
     assertEquals(exampleHtmlFileText(getTestName(true)), replaceEnvironmentDependentContent(docInfo));
   }
@@ -262,7 +271,8 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     final String path = JavaTestUtil.getJavaTestDataPath() + TEST_DATA_FOLDER;
     final String packageInfo = path + getTestName(true);
     PsiTestUtil.createTestProjectStructure(myProject, myModule, path, myFilesToDelete);
-    final String info = JavaDocInfoGeneratorFactory.create(getProject(), JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true))).generateDocInfo(null);
+    PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage(getTestName(true));
+    final String info = JavaDocumentationProvider.generateExternalJavadoc(psiPackage, (List<String>)null);
     String htmlText = FileUtil.loadFile(new File(packageInfo + File.separator + "packageInfo.html"));
     assertNotNull(info);
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), replaceEnvironmentDependentContent(info));
@@ -307,7 +317,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   private void verifyJavadocFor(String className) throws IOException {
     PsiClass psiClass = JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));
     assertNotNull(psiClass);
-    String doc = JavaDocInfoGeneratorFactory.create(myProject, psiClass).generateDocInfo(null);
+    String doc = JavaDocumentationProvider.generateExternalJavadoc(psiClass, (List<String>)null);
     assertNotNull(doc);
     PsiDirectory dir = (PsiDirectory)psiClass.getParent().getParent();
     PsiFile htmlFile = dir.findFile(psiClass.getName() + ".html");

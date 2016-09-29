@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -72,20 +73,40 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
                                          PsiType expressionType) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     restoreComments(foreachStatement, foreachStatement.getBody());
-    if (StreamApiMigrationInspection.isDeclarationJustBefore(var, foreachStatement)) {
+    InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, foreachStatement);
+    if (status != InitializerUsageStatus.UNKNOWN) {
       PsiExpression initializer = var.getInitializer();
       if (ExpressionUtils.isZero(initializer)) {
         PsiType type = var.getType();
         String replacement = (type.equals(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + builder;
-        initializer.replace(elementFactory.createExpressionFromText(replacement, foreachStatement));
-        removeLoop(foreachStatement);
-        simplifyAndFormat(project, var);
+        replaceInitializer(foreachStatement, var, initializer, replacement, status);
         return;
       }
     }
     PsiElement result =
       foreachStatement.replace(elementFactory.createStatementFromText(var.getName() + "+=" + builder + ";", foreachStatement));
     simplifyAndFormat(project, result);
+  }
+
+  static void replaceInitializer(PsiForeachStatement foreachStatement,
+                                 PsiVariable var,
+                                 PsiExpression initializer,
+                                 String replacement,
+                                 InitializerUsageStatus status) {
+    Project project = foreachStatement.getProject();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    if(status == InitializerUsageStatus.DECLARED_JUST_BEFORE) {
+      initializer.replace(elementFactory.createExpressionFromText(replacement, foreachStatement));
+      removeLoop(foreachStatement);
+      simplifyAndFormat(project, var);
+    } else {
+      if(status == InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
+        initializer.delete();
+      }
+      PsiElement result =
+        foreachStatement.replace(elementFactory.createStatementFromText(var.getName() + " = " + replacement + ";", foreachStatement));
+      simplifyAndFormat(project, result);
+    }
   }
 
   static void simplifyAndFormat(@NotNull Project project, PsiElement result) {

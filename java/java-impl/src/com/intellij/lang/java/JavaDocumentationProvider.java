@@ -549,13 +549,24 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   @Nullable
   public static String generateExternalJavadoc(@NotNull final PsiElement element) {
+    List<String> docURLs = getExternalJavaDocUrl(element);
+    return generateExternalJavadoc(element, docURLs);
+  }
+
+  @Nullable
+  public static String generateExternalJavadoc(@NotNull final PsiElement element, @Nullable List<String> docURLs) {
     final JavaDocInfoGenerator javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(element.getProject(), element);
-    return generateExternalJavadoc(element, javaDocInfoGenerator);
+    return generateExternalJavadoc(javaDocInfoGenerator, docURLs);
   }
 
   @Nullable
   public static String generateExternalJavadoc(@NotNull final PsiElement element, @NotNull JavaDocInfoGenerator generator) {
     final List<String> docURLs = getExternalJavaDocUrl(element);
+    return generateExternalJavadoc(generator, docURLs);
+  }
+
+  @Nullable
+  private static String generateExternalJavadoc(@NotNull JavaDocInfoGenerator generator, @Nullable List<String> docURLs) {
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(docURLs));
   }
 

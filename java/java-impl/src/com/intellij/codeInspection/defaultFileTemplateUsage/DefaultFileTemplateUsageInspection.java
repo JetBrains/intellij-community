@@ -86,14 +86,8 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionsBundle.message("default.file.template.edit.template");
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionsBundle.message("default.file.template.edit.template");
     }
 
     @Override

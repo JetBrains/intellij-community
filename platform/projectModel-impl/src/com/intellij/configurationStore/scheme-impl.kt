@@ -62,12 +62,13 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(pri
                             name: String,
                             attributeProvider: Function<String, String?>,
                             isBundled: Boolean = false): MUTABLE_SCHEME
-
   override final fun writeScheme(scheme: MUTABLE_SCHEME) = (scheme as SerializableScheme).writeScheme()
 
   open fun isSchemeFile(name: CharSequence) = true
 
   open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray) = false
+
+  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
 }
 
 class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
@@ -79,9 +80,7 @@ class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
     digest.update(b, off, len)
   }
 
-  override fun toString(): String {
-    return "[Digest Output Stream] " + digest.toString()
-  }
+  override fun toString() = "[Digest Output Stream] $digest"
 }
 
 fun Element.digest(): ByteArray {

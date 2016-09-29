@@ -126,14 +126,8 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
   private static class ReplaceWithExprFix implements LocalQuickFix, HighPriorityAction {
     @NotNull
     @Override
-    public String getName() {
-      return "Replace with expression lambda";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Replace with expression lambda";
     }
 
     @Override
