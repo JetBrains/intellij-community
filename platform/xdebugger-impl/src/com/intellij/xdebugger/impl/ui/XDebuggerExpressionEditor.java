@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -59,7 +60,9 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
       @Override
       protected EditorEx createEditor() {
         final EditorEx editor = super.createEditor();
+        editor.setHorizontalScrollbarVisible(multiline);
         editor.setVerticalScrollbarVisible(multiline);
+        editor.getSettings().setUseSoftWraps(isUseSoftWraps());
         editor.getColorsScheme().setEditorFontName(getFont().getFontName());
         editor.getColorsScheme().setEditorFontSize(getFont().getSize());
         return editor;
@@ -124,5 +127,19 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
   @Override
   public void selectAll() {
     myEditorTextField.selectAll();
+  }
+
+  private static final String SOFT_WRAPS_KEY = "XDebuggerExpressionEditor_Use_Soft_Wraps";
+
+  public boolean isUseSoftWraps() {
+    return PropertiesComponent.getInstance().getBoolean(SOFT_WRAPS_KEY);
+  }
+
+  public void setUseSoftWraps(boolean use) {
+    PropertiesComponent.getInstance().setValue(SOFT_WRAPS_KEY, use);
+    Editor editor = getEditor();
+    if (editor != null) {
+      editor.getSettings().setUseSoftWraps(use);
+    }
   }
 }
