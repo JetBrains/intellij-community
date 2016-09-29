@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public class OverlyLongLambdaInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {
-    doStatementTest("Runnable r = /*Lambda is too long (# Non-comment source statements = 4)*/() -> {/**/" +
+    doStatementTest("Runnable r = /*Lambda expression is too long (# Non-comment source statements = 4)*/() -> {/**/" +
                     "  System.out.println();" +
                     "  System.out.println();" +
                     "  System.out.println();" +
