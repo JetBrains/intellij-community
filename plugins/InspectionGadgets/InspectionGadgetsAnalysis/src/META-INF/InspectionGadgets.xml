@@ -1631,6 +1631,9 @@
                      key="non.comment.source.statements.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.method.metrics" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.methodmetrics.NonCommentSourceStatementsInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OverlyLongLambda" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="overly.long.lambda.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.method.metrics"
+                     enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.methodmetrics.OverlyLongLambdaInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="MethodWithTooManyParameters" shortName="ParametersPerMethod" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="parameters.per.method.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.method.metrics"
                      enabledByDefault="false" level="WARNING"
