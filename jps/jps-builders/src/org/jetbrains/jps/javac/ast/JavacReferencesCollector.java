@@ -135,7 +135,7 @@ public class JavacReferencesCollector {
       }
     }
 
-    private Name getAsteriksFromCurrentNameTable(Name tableRepresentative) {
+    private Name getAsteriskFromCurrentNameTable(Name tableRepresentative) {
       if (myAsteriks == null) {
         myAsteriks = tableRepresentative.table.fromChars(new char[]{'*'}, 0, 1);
       }
@@ -152,7 +152,7 @@ public class JavacReferencesCollector {
             final JCTree.JCFieldAccess classImport = (JCTree.JCFieldAccess)qExpr;
             final Symbol ownerSym = classImport.sym;
             final Name name = id.getIdentifier();
-            if (name != getAsteriksFromCurrentNameTable(name)) {
+            if (name != getAsteriskFromCurrentNameTable(name)) {
               // member import
               for (Symbol memberSymbol : ownerSym.members().getElements()) {
                 if (memberSymbol.getSimpleName() == name) {
