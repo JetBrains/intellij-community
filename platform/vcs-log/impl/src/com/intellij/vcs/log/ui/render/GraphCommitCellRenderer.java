@@ -229,6 +229,9 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
           nextWidth = myEmptyPainter.getSize().width;
         }
 
+        if (row == 0 && table.getRowCount() == 1) {
+          customizeRefsPainter(myEmptyPainter, ContainerUtil.emptyList(), foreground);
+        }
         myWidth = Math.max(Math.max(prevWidth, nextWidth), LabelPainter.GRADIENT_WIDTH);
       }
     }
