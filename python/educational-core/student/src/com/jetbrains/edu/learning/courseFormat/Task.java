@@ -220,12 +220,15 @@ public class Task implements StudyItem {
   }
   
   public void setStatus(StudyStatus status) {
-    myStatus = status;
     for (TaskFile taskFile : taskFiles.values()) {
       for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
         placeholder.setStatus(status);
       }
     }
+    if (status == StudyStatus.Solved && hasSubtasks() && getActiveSubtaskIndex() != getSubtaskNum() - 1) {
+      return;
+    }
+    myStatus = status;
   }
 
   public Task copy() {

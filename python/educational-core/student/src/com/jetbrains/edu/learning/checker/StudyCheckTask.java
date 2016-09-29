@@ -11,10 +11,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.StudyPluginConfigurator;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.actions.StudyAfterCheckAction;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
@@ -189,8 +186,15 @@ public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroun
           });
       }
       else {
-        ApplicationManager.getApplication()
-          .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
+        boolean hasMoreSubtasks = myTask.hasSubtasks() && myTask.getActiveSubtaskIndex() != myTask.getSubtaskNum() - 1;
+        int visibleSubtaskIndex = myTask.getActiveSubtaskIndex() + 1;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          String resultMessage = !hasMoreSubtasks ? message : "Subtask " + visibleSubtaskIndex + "/" + myTask.getSubtaskNum() + " solved";
+          StudyCheckUtils.showTestResultPopUp(resultMessage, MessageType.INFO.getPopupBackground(), myProject);
+          if (hasMoreSubtasks) {
+            StudySubtaskUtils.switchStep(myProject, myTask, myTask.getActiveSubtaskIndex() + 1);
+          }
+        });
       }
     }
   }

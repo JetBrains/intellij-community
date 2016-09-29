@@ -92,7 +92,7 @@ public class CCAddAnswerPlaceholder extends CCAnswerPlaceholderAction {
     String answerPlaceholderText = dlg.getTaskText();
     answerPlaceholder.setPossibleAnswer(model.hasSelection() ? model.getSelectedText() : defaultPlaceholderText);
     answerPlaceholder.setTaskText(StringUtil.notNullize(answerPlaceholderText));
-    answerPlaceholder.setLength(StringUtil.notNullize(answerPlaceholderText).length());
+    answerPlaceholder.setLength(model.hasSelection() ? StringUtil.notNullize(answerPlaceholderText).length() : 0);
     answerPlaceholder.setHints(dlg.getHints());
 
     if (!model.hasSelection()) {
