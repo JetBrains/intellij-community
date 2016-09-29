@@ -42,6 +42,7 @@ public class SimpleGitTest extends GuiTestCase {
     try {
       IdeFrameFixture ideFrameFixture = importSimpleApplication();
       ProjectViewFixture.PaneFixture projectPane = ideFrameFixture.getProjectView().selectProjectPane();
+      ideFrameFixture.waitForBackgroundTasksToFinish();
 
       final String projectName = ideFrameFixture.getProject().getName();
       ProjectViewFixture.NodeFixture src = projectPane.selectByPath(projectName, "src");
