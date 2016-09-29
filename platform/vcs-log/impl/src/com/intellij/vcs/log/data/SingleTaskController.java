@@ -117,6 +117,16 @@ public abstract class SingleTaskController<Request, Result> {
     }
   }
 
+  @Nullable
+  public final Request popRequest() {
+    synchronized (LOCK) {
+      if (myAwaitingRequests.isEmpty()) return null;
+      Request request = myAwaitingRequests.remove(0);
+      LOG.debug("Popped request: " + request);
+      return request;
+    }
+  }
+
   /**
    * The underlying currently active task should use this method to inform that it has completed the execution. <br/>
    * If the result is not null, it is immediately passed to the result handler specified in the constructor.
