@@ -586,6 +586,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     int countAfter = tool.visited.size();
     assertTrue(tool.visited.toString(), countAfter > 0);
+    tool.visited.clear();
+
+    //ensure started on another file
+    configureByExistingFile(otherFile.getVirtualFile());
+    infos = doHighlighting(HighlightSeverity.WARNING);
+    assertEmpty(infos);
+
+    int countAfter2 = tool.visited.size();
+    assertTrue(tool.visited.toString(), countAfter2 > 0);
   }
 
   public void testOverriddenMethodMarkers() throws Exception {

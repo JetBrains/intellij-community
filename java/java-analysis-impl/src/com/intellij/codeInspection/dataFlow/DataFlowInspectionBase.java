@@ -895,7 +895,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
 
     Collection<PsiCall> getAlwaysFailingCalls() {
-      return StreamEx.of(myFailingCalls.keySet()).filter(i -> myFailingCalls.get(i) == Boolean.TRUE).map(MethodCallInstruction::getCallExpression).toList();
+      return StreamEx.ofKeys(myFailingCalls, v -> v).map(MethodCallInstruction::getCallExpression).toList();
     }
 
     @Override

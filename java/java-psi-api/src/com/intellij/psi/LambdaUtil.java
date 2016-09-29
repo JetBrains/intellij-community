@@ -176,11 +176,19 @@ public class LambdaUtil {
   private static boolean hasManyOwnAbstractMethods(@NotNull PsiClass psiClass) {
     int abstractCount = 0;
     for (PsiMethod method : psiClass.getMethods()) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT) && ++abstractCount > 1) {
+      if (isDefinitelyAbstractInterfaceMethod(method) && ++abstractCount > 1) {
         return true;
       }
     }
     return false;
+  }
+
+  private static boolean isDefinitelyAbstractInterfaceMethod(PsiMethod method) {
+    return method.hasModifierProperty(PsiModifier.ABSTRACT) && !isPublicObjectMethod(method.getName());
+  }
+
+  private static boolean isPublicObjectMethod(String methodName) {
+    return "equals".equals(methodName) || "hashCode".equals(methodName) || "toString".equals(methodName);
   }
 
   private static boolean hasManyInheritedAbstractMethods(@NotNull PsiClass psiClass) {
@@ -190,7 +198,7 @@ public class LambdaUtil {
       @Override
       public boolean process(PsiClass psiClass) {
         for (PsiMethod method : psiClass.getMethods()) {
-          if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          if (isDefinitelyAbstractInterfaceMethod(method)) {
             abstractNames.add(method.getName());
           }
           else if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
