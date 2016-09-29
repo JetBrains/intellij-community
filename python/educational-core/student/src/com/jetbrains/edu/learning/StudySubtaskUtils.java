@@ -46,7 +46,11 @@ public class StudySubtaskUtils {
         continue;
       }
       TaskFile taskFile = entry.getValue();
-      updatePlaceholderTexts(project, virtualFile, taskFile, fromSubtaskIndex, toSubtaskIndex);
+      Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+      if (document == null) {
+        continue;
+      }
+      updatePlaceholderTexts(project, document, taskFile, fromSubtaskIndex, toSubtaskIndex);
       EditorNotifications.getInstance(project).updateNotifications(virtualFile);
     }
     task.setActiveSubtaskIndex(toSubtaskIndex);
@@ -67,17 +71,21 @@ public class StudySubtaskUtils {
     }
   }
 
-  private static void updatePlaceholderTexts(@NotNull Project project,
-                                             @NotNull VirtualFile virtualFile,
+  public static void updatePlaceholderTexts(@NotNull Project project,
+                                             @NotNull Document document,
                                              @NotNull TaskFile taskFile,
                                              int fromSubtaskIndex,
                                              int toSubtaskIndex) {
-    Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    if (document == null) {
-      return;
-    }
     taskFile.setTrackLengths(false);
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+      AnswerPlaceholderSubtaskInfo fromSubtaskInfo = placeholder.getSubtaskInfos().get(fromSubtaskIndex);
+      if (fromSubtaskIndex == toSubtaskIndex && fromSubtaskInfo != null) {
+        String placeholderText = fromSubtaskInfo.getPlaceholderText();
+        if (placeholderText != null) {
+          EduUtils.replaceAnswerPlaceholder(project, document, placeholder, placeholder.getRealLength(), placeholderText);
+        }
+        continue;
+      }
       Set<Integer> indexes = placeholder.getSubtaskInfos().keySet();
       Integer minIndex = Collections.min(indexes);
       int visibleLength = placeholder.getVisibleLength(fromSubtaskIndex);

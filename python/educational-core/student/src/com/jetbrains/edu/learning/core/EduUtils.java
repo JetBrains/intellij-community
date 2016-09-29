@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.edu.learning.StudySubtaskUtils;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NonNls;
@@ -140,7 +140,8 @@ public class EduUtils {
                                                               Project project,
                                                               VirtualFile answerFile,
                                                               VirtualFile parentDir,
-                                                              @Nullable Task task) {
+                                                              @Nullable Task task,
+                                                              int toSubtaskIndex) {
 
     VirtualFile studentFile = copyFile(requestor, parentDir, answerFile);
     if (studentFile == null) {
@@ -163,18 +164,7 @@ public class EduUtils {
     }
     EduDocumentListener listener = new EduDocumentListener(taskFile, false);
     studentDocument.addDocumentListener(listener);
-
-    for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
-      Set<Integer> indexes = placeholder.getSubtaskInfos().keySet();
-      int activeSubtaskIndex = task.getActiveSubtaskIndex();
-      if (Collections.min(indexes) < activeSubtaskIndex) {
-        Integer max = Collections.max(ContainerUtil.filter(indexes, i -> i < activeSubtaskIndex));
-        String possibleAnswer = placeholder.getSubtaskInfos().get(max).getPossibleAnswer();
-        replaceAnswerPlaceholder(project, studentDocument, placeholder, placeholder.getRealLength(), possibleAnswer);
-        continue;
-      }
-      replaceAnswerPlaceholder(project, studentDocument, placeholder, placeholder.getRealLength(), placeholder.getTaskText());
-    }
+    StudySubtaskUtils.updatePlaceholderTexts(project, studentDocument, taskFile, task.getActiveSubtaskIndex(), toSubtaskIndex);
     studentDocument.removeDocumentListener(listener);
     return Pair.create(studentFile, taskFile);
   }
