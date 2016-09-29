@@ -17,6 +17,10 @@ package com.intellij.openapi.diagnostic
 
 import com.intellij.openapi.progress.ProcessCanceledException
 
+inline fun <reified T : Any> logger(): Logger = Logger.getInstance(T::class.java)
+
+fun logger(category: String) = Logger.getInstance(category)
+
 inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> String) {
   if (isDebugEnabled) {
     debug(lazyMessage(), e)
