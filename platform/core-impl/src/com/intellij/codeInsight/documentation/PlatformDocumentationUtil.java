@@ -25,17 +25,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class PlatformDocumentationUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.documentation.PlatformDocumentationUtil");
 
-  private static final @NonNls Pattern ourLtFixupPattern = Pattern.compile("<([^/^\\w^!])");
+  private static final @NonNls Pattern ourLtFixupPattern = Pattern.compile("<(?=[^/!\\p{Alpha}])");
   private static final @NonNls Pattern ourToQuote = Pattern.compile("[\\\\\\.\\^\\$\\?\\*\\+\\|\\)\\}\\]\\{\\(\\[]");
   private static final @NonNls String LT_ENTITY = "&lt;";
 
@@ -76,30 +72,10 @@ public class PlatformDocumentationUtil {
     return x;
   }
 
+  /**
+   * Updates HTML contents for display in JEditorPane, which treats invalid HTML somewhat differently than popular browsers.
+   */
   public static String fixupText(@NotNull CharSequence docText) {
-    Matcher fixupMatcher = ourLtFixupPattern.matcher(docText);
-    LinkedList<String> secondSymbols = new LinkedList<String>();
-
-    while (fixupMatcher.find()) {
-      String s = fixupMatcher.group(1);
-
-      //[db] that's workaround to avoid internal bug
-      if (!s.equals("\\") && !secondSymbols.contains(s)) {
-        secondSymbols.addFirst(s);
-      }
-    }
-
-    for (String s : secondSymbols) {
-      String pattern = "<" + quote(s);
-
-      try {
-        docText = Pattern.compile(pattern).matcher(docText).replaceAll(LT_ENTITY + pattern);
-      }
-      catch (PatternSyntaxException e) {
-        LOG.error("Pattern syntax exception on " + pattern);
-      }
-    }
-
-    return docText.toString();
+    return ourLtFixupPattern.matcher(docText).replaceAll(LT_ENTITY);
   }
 }
