@@ -640,10 +640,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
   }
 
-  private void writeAttributes(Element attrElements) throws WriteExternalException {
+  private void writeAttributes(@NotNull Element attrElements) throws WriteExternalException {
     List<TextAttributesKey> list = new ArrayList<>(myAttributesMap.keySet());
-    Collections.sort(list);
-
+    list.sort(null);
     for (TextAttributesKey key: list) {
       TextAttributes defaultAttr = myParentScheme != null ? myParentScheme.getAttributes(key) : new TextAttributes();
       TextAttributesKey baseKey = key.getFallbackAttributeKey();
@@ -651,20 +650,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
         baseKey != null && myParentScheme instanceof AbstractColorsScheme ?
         ((AbstractColorsScheme)myParentScheme).getFallbackAttributes(baseKey) : null;
       TextAttributes value = myAttributesMap.get(key);                
-      Element element = new Element(OPTION_ELEMENT);
-      element.setAttribute(NAME_ATTR, key.getExternalName());
       if (baseKey != null && value.isFallbackEnabled()) {
         if (isParentOverwritingInheritance(key)) {
-          element.setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName());
-          attrElements.addContent(element);
+          attrElements.addContent(new Element(OPTION_ELEMENT).setAttribute(NAME_ATTR, key.getExternalName()).setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName()));
         }
       }
       else {
         if (value.containsValue() && !value.equals(defaultAttr) || defaultAttr == defaultFallbackAttr) {
           Element valueElement = new Element(VALUE_ELEMENT);
           value.writeExternal(valueElement);
-          element.addContent(valueElement);
-          attrElements.addContent(element);
+          attrElements.addContent(new Element(OPTION_ELEMENT).setAttribute(NAME_ATTR, key.getExternalName()).addContent(valueElement));
         }
       }
     }
