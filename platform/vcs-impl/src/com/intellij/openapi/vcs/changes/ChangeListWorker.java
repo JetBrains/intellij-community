@@ -402,7 +402,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     for(ChangeList changeList: changedLists) {
       dispatcher.changeListChanged(changeList);
     }
-    mySwitchedHolder.calculateChildren();
 
     for (String name : myListsToDisappear) {
       final LocalChangeList changeList = myMap.get(name);
