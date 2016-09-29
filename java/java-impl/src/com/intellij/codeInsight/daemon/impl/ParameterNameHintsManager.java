@@ -135,12 +135,22 @@ public class ParameterNameHintsManager {
       }
     }
     
-    if (descriptors.size() == 1 && isStringLiteral(descriptors.get(0)) 
+    if (descriptors.size() == 1 && isStringLiteral(descriptors.get(0)) && !hasMultipleStringParams(parameters) 
         || parameters.length == 2 && descriptors.size() == 2 && isCommonlyNamedParameterPair(descriptors.get(0), descriptors.get(1))) {
       return ContainerUtil.emptyList();
     }
     
     return descriptors;
+  }
+
+  private static boolean hasMultipleStringParams(PsiParameter[] parameters) {
+    int stringParams = 0;
+    for (PsiParameter parameter : parameters) {
+      if (parameter.getType().equalsToText(JAVA_LANG_STRING)) {
+        stringParams++;
+      }
+    }
+    return stringParams > 1;
   }
 
   private static boolean isStringLiteral(InlayInfo info) {

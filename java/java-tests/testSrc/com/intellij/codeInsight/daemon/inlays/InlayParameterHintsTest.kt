@@ -86,6 +86,26 @@ class Groo {
     onLineStartingWith("configure(testNow").assertNoInlays()
   }
 
+  fun `test show hint for single string literal if there is multiple string params`() {
+    setup("""class Groo {
+
+ public void test() {
+   String message = "sdfsdfdsf";
+   assertEquals("fooo", message);
+
+   String title = "TT";
+   show(title, "Hi");
+ }
+
+ public void assertEquals(String expected, String actual) {}
+ public void show(String title, String message) {}
+
+}""")
+
+    onLineStartingWith("assertEquals").assertInlays("expected->\"fooo\"")
+    onLineStartingWith("show").assertInlays("message->\"Hi\"")
+  }
+
   fun `test do not show hints on setters`() {
     setup("""class Groo {
 
