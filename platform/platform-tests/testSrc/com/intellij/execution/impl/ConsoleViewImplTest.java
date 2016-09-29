@@ -30,7 +30,6 @@ import com.intellij.testFramework.TestDataProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
-import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
