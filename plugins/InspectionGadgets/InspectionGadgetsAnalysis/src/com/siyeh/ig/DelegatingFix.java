@@ -30,12 +30,6 @@ public class DelegatingFix extends InspectionGadgetsFix {
 
   @Override
   @NotNull
-  public String getName() {
-    return delegate.getName();
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
     return delegate.getName();
   }

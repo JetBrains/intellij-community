@@ -47,12 +47,6 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
     return XmlErrorMessages.message("remove.extra.closing.tag.quickfix");
   }
 
-  @Override
-  @NotNull
-  public String getName() {
-    return XmlErrorMessages.message("remove.extra.closing.tag.quickfix");
-  }
-
 
   @Override
   @NotNull

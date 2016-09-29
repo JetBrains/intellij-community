@@ -271,12 +271,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @NotNull
     @Override
-    public String getName() {
-      return myName;
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
       return myName;
     }
@@ -357,11 +351,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
       myNode = SmartPointerManager.getInstance(node.getProject()).createSmartPsiElementPointer(node, node.getContainingFile());
       myModule = ModuleUtilCore.findModuleForPsiElement(node);
       mySdk = PythonSdkType.findPythonSdk(myModule);
-    }
-
-    @NotNull
-    public String getName() {
-      return "Install and import package " + myPackageName;
     }
 
     @NotNull

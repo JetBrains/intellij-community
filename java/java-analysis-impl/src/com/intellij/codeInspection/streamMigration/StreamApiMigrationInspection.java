@@ -49,6 +49,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus.*;
+
 /**
  * User: anna
  */
@@ -377,24 +379,56 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, variable.getType()) : null;
   }
 
-  @Contract("null, _ -> null")
-  static PsiExpression extractReplaceableCollectionInitializer(PsiExpression qualifierExpression, PsiStatement foreachStatement) {
+  @Contract("null -> null")
+  static PsiLocalVariable extractCollectionVariable(PsiExpression qualifierExpression) {
     if (qualifierExpression instanceof PsiReferenceExpression) {
       final PsiElement resolve = ((PsiReferenceExpression)qualifierExpression).resolve();
       if (resolve instanceof PsiLocalVariable) {
         PsiLocalVariable var = (PsiLocalVariable)resolve;
-        if (isDeclarationJustBefore(var, foreachStatement)) {
-          final PsiExpression initializer = var.getInitializer();
-          if (initializer instanceof PsiNewExpression) {
-            final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
-            if (argumentList != null && argumentList.getExpressions().length == 0) {
-              return initializer;
-            }
+        final PsiExpression initializer = var.getInitializer();
+        if (initializer instanceof PsiNewExpression) {
+          final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
+          if (argumentList != null && argumentList.getExpressions().length == 0) {
+            return var;
           }
         }
       }
     }
     return null;
+  }
+
+  enum InitializerUsageStatus {
+    // Variable is declared just before the wanted place
+    DECLARED_JUST_BEFORE,
+    // All initial value usages go through wanted place and at wanted place the variable value is guaranteed to be the initial value
+    AT_WANTED_PLACE_ONLY,
+    // At wanted place the variable value is guaranteed to be the initial value, but this initial value might be used somewhere else
+    AT_WANTED_PLACE,
+    // It's not guaranteed that the variable value at wanted place is initial value
+    UNKNOWN
+  }
+
+  static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement nextStatement) {
+    if(var.getInitializer() == null) return UNKNOWN;
+    if(isDeclarationJustBefore(var, nextStatement)) return DECLARED_JUST_BEFORE;
+    PsiElement declaration = var.getParent();
+    // Check if variable is not referenced in the same declaration like "int a = 0, b = a;"
+    if(!PsiTreeUtil.processElements(declaration, e -> !(e instanceof PsiReferenceExpression) ||
+                                                  ((PsiReferenceExpression)e).resolve() != var)) return UNKNOWN;
+    PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
+    if(block == null) return UNKNOWN;
+    final ControlFlow controlFlow;
+    try {
+      controlFlow = ControlFlowFactory.getInstance(nextStatement.getProject())
+        .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+    }
+    catch (AnalysisCanceledException ignored) {
+      return UNKNOWN;
+    }
+    int start = controlFlow.getEndOffset(declaration);
+    int stop = controlFlow.getStartOffset(nextStatement);
+    if(ControlFlowUtil.isVariableReferencedBetween(controlFlow, start, stop, var)) return UNKNOWN;
+    return ControlFlowUtil.isValueUsedWithoutVisitingStop(controlFlow, start, stop, var) ? AT_WANTED_PLACE : AT_WANTED_PLACE_ONLY;
   }
 
   static boolean isDeclarationJustBefore(PsiVariable var, PsiStatement nextStatement) {
@@ -482,8 +516,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             methodName = "addAll";
           } else {
             PsiMethodCallExpression methodCallExpression = tb.getSingleMethodCall();
-            if(methodCallExpression != null && extractReplaceableCollectionInitializer(
-              methodCallExpression.getMethodExpression().getQualifierExpression(), statement) != null) {
+            if(canCollect(statement, methodCallExpression)) {
               methodName = "collect";
             } else {
               if (!SUGGEST_FOREACH) return;
@@ -535,13 +568,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     }
 
-    void handleSingleReturn(PsiForeachStatement statement,
-                            TerminalBlock tb,
-                            List<Operation> operations) {
+    boolean canCollect(PsiForeachStatement statement, PsiMethodCallExpression methodCallExpression) {
+      if(methodCallExpression == null) return false;
+      PsiLocalVariable variable = extractCollectionVariable(methodCallExpression.getMethodExpression().getQualifierExpression());
+      if(variable == null) return false;
+      return getInitializerUsageStatus(variable, statement) != UNKNOWN;
+    }
+
+    void handleSingleReturn(PsiForeachStatement statement, TerminalBlock tb, List<Operation> operations) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
       PsiExpression value = returnStatement.getReturnValue();
       PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
-      if(nextReturnStatement != null && (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE))) {
+      if (nextReturnStatement != null &&
+          (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE))) {
         boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
         if(ExpressionUtils.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
           String methodName;

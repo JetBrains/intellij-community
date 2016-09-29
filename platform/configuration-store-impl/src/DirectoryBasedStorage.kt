@@ -204,7 +204,7 @@ open class DirectoryBasedStorage(private val dir: Path,
           storeElement.setAttribute(FileStorageCoreUtil.NAME, storage.componentName!!)
           storeElement.addContent(element)
 
-          val file = getFile(fileName, dir, this)
+          val file = dir.getOrCreateChild(fileName, this)
           // we don't write xml prolog due to historical reasons (and should not in any case)
           writeFile(null, this, file, storeElement, LineSeparator.fromString(if (file.exists()) loadFile(file).second else SystemProperties.getLineSeparator()), false)
         }

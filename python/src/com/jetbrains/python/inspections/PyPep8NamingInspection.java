@@ -320,13 +320,6 @@ public class PyPep8NamingInspection extends PyInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return  myText;
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
       return myText;
     }

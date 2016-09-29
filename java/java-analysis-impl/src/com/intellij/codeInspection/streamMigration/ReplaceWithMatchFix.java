@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -93,7 +94,8 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
           // for(....) if(...) {flag = true; break;}
           PsiVariable var = (PsiVariable)maybeVar;
           PsiExpression initializer = var.getInitializer();
-          if(initializer != null && StreamApiMigrationInspection.isDeclarationJustBefore(var, foreachStatement)) {
+          InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, foreachStatement);
+          if(initializer != null && status != InitializerUsageStatus.UNKNOWN) {
             String replacement;
             if(ExpressionUtils.isLiteral(initializer, Boolean.FALSE) &&
                ExpressionUtils.isLiteral(rValue, Boolean.TRUE)) {
@@ -104,9 +106,7 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
             } else {
               replacement = streamText + "?" + rValue.getText() + ":" + initializer.getText();
             }
-            PsiElement result = initializer.replace(elementFactory.createExpressionFromText(replacement, initializer));
-            removeLoop(foreachStatement);
-            simplifyAndFormat(project, result);
+            replaceInitializer(foreachStatement, var, initializer, replacement, status);
             return;
           }
         }

@@ -88,8 +88,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         EditorColorsSchemeImpl scheme = isBundled ? new BundledScheme() : new EditorColorsSchemeImpl(null);
         // todo be lazy
         scheme.readExternal(dataHolder.read());
-        // https://gist.github.com/develar/6efc34c5f11ad50346e8eaef020b0ee4
-        //dataHolder.updateDigest(scheme);
+        // we don't need to update digest for bundled scheme because
+        // 1) it can be computed on demand later (because bundled scheme is not mutable)
+        // 2) in the future user copy of bundled scheme will use bundled scheme as parent (not as full copy)
+        if (!isBundled) {
+          //dataHolder.updateDigest(scheme);
+        }
         return scheme;
       }
 
@@ -116,6 +120,21 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       public String getSchemeExtension() {
         return ".icls";
       }
+
+      @Override
+      public boolean isSchemeEqualToBundled(@NotNull EditorColorsSchemeImpl scheme) {
+        if (!scheme.getName().startsWith(SchemeManager.EDITABLE_COPY_PREFIX)) {
+          return false;
+        }
+
+        AbstractColorsScheme bundledScheme =
+          (AbstractColorsScheme)mySchemeManager.findSchemeByName(scheme.getName().substring(SchemeManager.EDITABLE_COPY_PREFIX.length()));
+        if (bundledScheme == null) {
+          return false;
+        }
+
+        return scheme.isEqualToBundled(bundledScheme);
+      }
     }
     mySchemeManager = schemeManagerFactory.create(FILE_SPEC, new EditorColorSchemeProcessor());
 
@@ -141,7 +160,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     }
     loadAdditionalTextAttributes();
   }
-
 
   private void initEditableDefaultSchemesCopies() {
     for (DefaultColorsScheme defaultScheme : myDefaultColorSchemeManager.getAllSchemes()) {
@@ -172,7 +190,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     if (editableCopy == null) {
       editableCopy = (AbstractColorsScheme)initialScheme.clone();
       editableCopy.setName(editableCopyName);
-      addColorsScheme(editableCopy);
+      mySchemeManager.addScheme(editableCopy);
     }
     editableCopy.setCanBeDeleted(false);
   }
@@ -205,7 +223,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     }
     
     public String getEditableCopyName() {
-      return DefaultColorsScheme.EDITABLE_COPY_PREFIX + getName();
+      return SchemeManager.EDITABLE_COPY_PREFIX + getName();
     }
   }
 

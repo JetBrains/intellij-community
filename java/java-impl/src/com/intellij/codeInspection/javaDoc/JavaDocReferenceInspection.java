@@ -110,12 +110,6 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
 
     @Override
     @NotNull
-    public String getName() {
-      return QuickFixBundle.message("add.qualifier");
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
       return QuickFixBundle.message("add.qualifier");
     }

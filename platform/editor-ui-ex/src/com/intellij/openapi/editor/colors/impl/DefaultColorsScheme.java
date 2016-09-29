@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.SchemeManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnlyColorsScheme {
-  
-  public final static String EDITABLE_COPY_PREFIX = "_@user_";
-  
   private String myName;
 
   public DefaultColorsScheme() {
@@ -77,7 +75,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
 
   @Override
-  public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
+  public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
   }
 
   @Override
@@ -107,7 +105,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
   }
   
   public String getEditableCopyName() {
-    return EDITABLE_COPY_PREFIX + myName;
+    return SchemeManager.EDITABLE_COPY_PREFIX + myName;
   }
 
   @Override

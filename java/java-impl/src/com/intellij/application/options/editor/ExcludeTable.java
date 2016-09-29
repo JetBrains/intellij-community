@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
-  private static final Pattern ourPackagePattern = Pattern.compile("(\\w+\\.)*\\w+");
+  private static final Pattern ourPackagePattern = Pattern.compile("([\\w*]+\\.)*[\\w*]+");
   private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>("Class/package/member qualified name mask") {
     @Nullable
     @Override

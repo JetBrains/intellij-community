@@ -16,17 +16,24 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.idea.IdeaTestApplication;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testFramework.TestDataProvider;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NonNls;
 
 @SuppressWarnings({"JUnitTestClassNamingConvention", "JUnitTestCaseWithNoTests"})
 public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  {
@@ -165,5 +172,28 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     assertNotNull(location);
     PsiElement element = location.getPsiElement();
     assertEquals(aClass, element);
+  }
+
+  public void testMultipleClassesInOneFile() throws Exception {
+    myFixture.configureByText("a.java", "public class Test1 {<caret>} public class Test2 {}");
+
+    final IdeaTestApplication testApplication = IdeaTestApplication.getInstance();
+    try {
+      testApplication.setDataProvider(new TestDataProvider(myFixture.getProject()) {
+        @Override
+        public Object getData(@NonNls String dataId) {
+          if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+            return new VirtualFile[] {myFixture.getFile().getVirtualFile()};
+          }
+          return super.getData(dataId);
+        }
+      });
+      final PsiElement psiElement = myFixture.getFile().findElementAt(getEditor().getCaretModel().getOffset());
+      final PatternConfigurationProducer configurationProducer = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class);
+      assertFalse(configurationProducer.isMultipleElementsSelected(new ConfigurationContext(psiElement)));
+    }
+    finally {
+      testApplication.setDataProvider(null);
+    }
   }
 }

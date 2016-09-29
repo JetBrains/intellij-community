@@ -523,7 +523,7 @@ class PassExecutorService implements Disposable {
       else {
         log(updateProgress, pass, "Finished but there are passes in the queue: " + threadsToStartCountdown.get());
       }
-    }, Registry.is("ide.perProjectModality") ? ModalityState.current() : ModalityState.stateForComponent(fileEditor.getComponent()));
+    }, Registry.is("ide.perProjectModality") ? ModalityState.defaultModalityState() : ModalityState.stateForComponent(fileEditor.getComponent()));
   }
 
   protected boolean isDisposed() {

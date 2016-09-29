@@ -190,11 +190,6 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
 
   private static class CreateTestngFix implements LocalQuickFix {
     @NotNull
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @NotNull
     public String getFamilyName() {
       return "Create suite";
     }

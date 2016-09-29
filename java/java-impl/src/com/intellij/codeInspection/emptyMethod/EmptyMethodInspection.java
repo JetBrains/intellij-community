@@ -309,12 +309,6 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return QUICK_FIX_NAME;
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
       return QUICK_FIX_NAME;
     }

@@ -101,12 +101,17 @@ public class ReferenceChainLink {
       PsiPackage pkg = JavaPsiFacade.getInstance(project).findPackage(referenceName);
       if (pkg != null && pkg.getDirectories(scope).length > 0) return null;
 
-      if (!cache.processFieldsWithName(referenceName, processor, scope, null) ||
-          !cache.processClassesWithName(referenceName, processor, scope, null)) {
+      if (!cache.processFieldsWithName(referenceName, processor, scope, null)) {
         markExpensive(project);
         return null;
       }
     }
+
+    if (!cache.processClassesWithName(referenceName, processor, scope, null)) {
+      markExpensive(project);
+      return null;
+    }
+
     return candidates;
   }
 
