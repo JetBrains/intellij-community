@@ -52,6 +52,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
 
 public class CCShowPreview extends DumbAwareAction {
   public static final String SHOW_PREVIEW = "Show Preview";
@@ -147,7 +148,8 @@ public class CCShowPreview extends DumbAwareAction {
       }
     });
     for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
-      answerPlaceholder.setUseLength(true);
+      Integer minIndex = Collections.min(answerPlaceholder.getSubtaskInfos().keySet());
+      answerPlaceholder.setUseLength(minIndex >= answerPlaceholder.getActiveSubtaskIndex());
       EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, JBColor.BLUE);
     }
     JPanel header = new JPanel();
