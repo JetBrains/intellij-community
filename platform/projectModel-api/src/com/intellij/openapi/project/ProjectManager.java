@@ -130,5 +130,5 @@ public abstract class ProjectManager {
    * @return newly crated project
    */
   @Nullable
-  public abstract Project createProject(String name, String path);
+  public abstract Project createProject(@Nullable String name, @NotNull String path);
 }
