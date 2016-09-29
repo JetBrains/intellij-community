@@ -139,9 +139,10 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     public void run(@NotNull ProgressIndicator indicator) {
       State state = myState;
       List<Request> requests;
-      while (!(requests = myTaskController.popRequests()).isEmpty()) {
+      if (!(requests = myTaskController.peekRequests()).isEmpty()) {
         try {
           state = computeState(state, requests);
+          myTaskController.removeRequests(requests);
         }
         catch (ProcessCanceledException reThrown) {
           LOG.debug("Filtering cancelled");

@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -95,6 +96,22 @@ public abstract class SingleTaskController<Request, Result> {
       myAwaitingRequests = ContainerUtil.newArrayList();
       LOG.debug("Popped requests: " + requests);
       return requests;
+    }
+  }
+
+  @NotNull
+  public final List<Request> peekRequests() {
+    synchronized (LOCK) {
+      List<Request> requests = ContainerUtil.newArrayList(myAwaitingRequests);
+      LOG.debug("Peeked requests: " + requests);
+      return requests;
+    }
+  }
+
+  public final void removeRequests(@NotNull List<Request> requests) {
+    synchronized (LOCK) {
+      myAwaitingRequests.removeAll(requests);
+      LOG.debug("Removed requests: " + requests);
     }
   }
 
