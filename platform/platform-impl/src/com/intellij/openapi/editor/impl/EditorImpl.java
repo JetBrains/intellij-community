@@ -6502,12 +6502,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static class ExplosionPainter extends AbstractPainter {
 
     private Point myExplosionLocation;
-    private static final long timePerFrame = 50;
+    private final static long TIME_PER_FRAME = 50;
     private long lastRepaintTime = System.currentTimeMillis();;
     private int spriteIndex = 0;
+    private final static int SPRITE_SIZE = 64;
+    private final static int SPRITES_IN_ROW = 4;
 
     private Image [] sprites = new Image [16];
-    public AtomicBoolean nrp = new AtomicBoolean(true);
+    private AtomicBoolean nrp = new AtomicBoolean(true);
 
     public ExplosionPainter(final Point explosionLocation) {
       myExplosionLocation = new Point(explosionLocation.x, explosionLocation.y);
@@ -6519,12 +6521,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private static BufferedImage initSprites(int index, Image explosionImage) {
-      BufferedImage spriteImage = new BufferedImage(64, 64, BufferedImage.TYPE_INT_ARGB);
+      BufferedImage spriteImage =  UIUtil.createImage(SPRITE_SIZE, SPRITE_SIZE, BufferedImage.TYPE_INT_ARGB);
       Graphics2D spriteGraphics = (Graphics2D)spriteImage.getGraphics();
-      int sourceX = 64 * (index % 4);
-      int sourceY = 64 * (index / 4);
+      int sourceX = SPRITE_SIZE * (index % SPRITES_IN_ROW);
+      int sourceY = SPRITE_SIZE * (index / SPRITES_IN_ROW);
       spriteGraphics.drawImage(explosionImage,
-                               0, 0, 64, 64,
+                               0, 0, SPRITE_SIZE, SPRITE_SIZE,
                                sourceX, sourceY, sourceX + 64, sourceY + 64,
                                null);
       return spriteImage;
@@ -6539,9 +6541,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int y = myExplosionLocation.y - 32;
 
       long currentTimeMillis = System.currentTimeMillis();
-      if ((currentTimeMillis - lastRepaintTime) < timePerFrame) {
+      if ((currentTimeMillis - lastRepaintTime) < TIME_PER_FRAME) {
         g.drawImage(sprites[spriteIndex], x, y, null);
-        JobScheduler.getScheduler().schedule(() -> {component.repaint(x, y, 12, 64);}, timePerFrame, TimeUnit.MILLISECONDS);
+        JobScheduler.getScheduler().schedule(() -> {component.repaint(x, y, 12, 64);}, TIME_PER_FRAME, TimeUnit.MILLISECONDS);
         return;
       }
       lastRepaintTime = currentTimeMillis;
@@ -6550,9 +6552,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (spriteIndex == sprites.length) {
         nrp.set(false);
         IdeGlassPaneUtil.find(component).removePainter(this);
-        component.repaint(x, y, 64, 64);
+        component.repaint(x, y, SPRITE_SIZE, SPRITE_SIZE);
       }
-      component.repaint(x, y, 64, 64);
+      component.repaint(x, y, SPRITE_SIZE, SPRITE_SIZE);
     }
 
     @Override
@@ -6583,7 +6585,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   mouseLocationOnScreen.y - editorComponentLocationOnScreen.y
                 )
               ),
-              () -> {}
+              editor.getDisposable()
               );
           }
         }
