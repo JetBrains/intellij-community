@@ -40,7 +40,7 @@ public class ParameterNameHintsManager {
     Couple.of("min", "max")
   );
   
-  private static final List<String> COMMON_METHODS = ContainerUtil.newArrayList(
+  private static final List<String> COMMON_METHOD_NAMES = ContainerUtil.newArrayList(
     "get", "set", "contains", "append", 
     "print", "println", 
     "charAt", "startsWith", "indexOf"
@@ -77,7 +77,7 @@ public class ParameterNameHintsManager {
 
   private static boolean isCommonMethod(PsiMethod method) {
     String methodName = method.getName();
-    return COMMON_METHODS.stream().anyMatch((name) -> methodName.equals(name));
+    return COMMON_METHOD_NAMES.stream().anyMatch((name) -> methodName.equals(name));
   }
 
   private static boolean isSetter(PsiMethod method) {
