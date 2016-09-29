@@ -6551,7 +6551,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       g.drawImage(sprites[spriteIndex++], x, y, null);
       if (spriteIndex == sprites.length) {
         nrp.set(false);
-        IdeGlassPaneUtil.find(component).removePainter(this);
+        ApplicationManager.getApplication().invokeLater(() -> IdeGlassPaneUtil.find(component).removePainter(this));
         component.repaint(x, y, SPRITE_SIZE, SPRITE_SIZE);
       }
       component.repaint(x, y, SPRITE_SIZE, SPRITE_SIZE);
