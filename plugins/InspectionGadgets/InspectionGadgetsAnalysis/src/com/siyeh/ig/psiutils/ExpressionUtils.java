@@ -755,6 +755,10 @@ public class ExpressionUtils {
       }
     }
     final PsiType expressionType = expression.getType();
+    if (PsiPrimitiveType.getUnboxedType(expressionType) != null &&
+        (parent instanceof PsiPrefixExpression || parent instanceof PsiPostfixExpression)) {
+      return true;
+    }
     if (expressionType == null || expressionType.equals(PsiType.VOID) || !TypeConversionUtil.isPrimitiveAndNotNull(expressionType)) {
       return false;
     }
