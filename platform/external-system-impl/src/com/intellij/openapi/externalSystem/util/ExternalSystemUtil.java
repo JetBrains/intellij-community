@@ -541,6 +541,7 @@ public class ExternalSystemUtil {
     final TaskUnderProgress task = new TaskUnderProgress() {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
         final Semaphore targetDone = new Semaphore();
         final Ref<Boolean> result = new Ref<>(false);
         final Disposable disposable = Disposer.newDisposable();
