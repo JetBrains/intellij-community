@@ -54,6 +54,7 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
@@ -2369,13 +2370,38 @@ public class UIUtil {
     final StyleSheet style = new StyleSheet();
     style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
     style.addRule(customCss);
+    scaleStyleSheetFontSize(style);
 
     return new HTMLEditorKit() {
+
+      @Override
+      public Document createDefaultDocument() {
+        Document document = super.createDefaultDocument();
+        if (document instanceof HTMLDocument) {
+          scaleStyleSheetFontSize(((HTMLDocument)document).getStyleSheet());
+        }
+        return document;
+      }
+
       @Override
       public StyleSheet getStyleSheet() {
         return style;
       }
     };
+  }
+
+  private static void scaleStyleSheetFontSize(@Nullable StyleSheet styleSheet) {
+    if (styleSheet == null) {
+      return;
+    }
+    // 'baseFontSize' equals to javax.swing.text.html.StyleSheet.sizeMapDefault[3],
+    // where '3' == javax.swing.text.html.CSS.baseFontSizeIndex
+    // See javax.swing.text.html.StyleSheet.rebaseSizeMap()
+    int baseFontSize = 14;
+    int scaledBaseFontSize = JBUI.scaleFontSize(baseFontSize);
+    if (baseFontSize != scaledBaseFontSize) {
+      styleSheet.addRule("BASE_SIZE " + scaledBaseFontSize);
+    }
   }
 
   public static void removeScrollBorder(final Component c) {
