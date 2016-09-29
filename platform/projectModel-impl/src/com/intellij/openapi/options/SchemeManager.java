@@ -25,6 +25,8 @@ import java.util.List;
 
 @SuppressWarnings("UnusedParameters")
 public abstract class SchemeManager<T extends Scheme> {
+  public final static String EDITABLE_COPY_PREFIX = "_@user_";
+
   @NotNull
   public abstract Collection<T> loadSchemes();
 

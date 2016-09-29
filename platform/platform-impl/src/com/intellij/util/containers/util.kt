@@ -122,3 +122,12 @@ fun <T> Stream<T>?.getIfSingle(): T? =
  * Also see [Stream.concat] documentation for other possible issues of concatenating large number of streams.
  */
 fun <T> concat(vararg streams: Stream<T>): Stream<T> = Stream.of(*streams).reduce(Stream.empty()) { a, b -> Stream.concat(a, b) }
+
+inline fun MutableList<Throwable>.catch(runnable: () -> Unit) {
+  try {
+    runnable()
+  }
+  catch (e: Throwable) {
+    add(e)
+  }
+}
