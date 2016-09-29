@@ -36,17 +36,9 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
-    TextAttributes ownAttributes = getOwnAttributes(key);
-    if (ownAttributes != null && ownAttributes.equals(attributes)) {
-      return;
+    if (attributes != getAttributes(key)) {
+      myAttributesMap.put(key, attributes);
     }
-    TextAttributes parentAttributes = myParentScheme.getAttributes(key);
-    if (parentAttributes != null && parentAttributes.equals(attributes)) {
-      myAttributesMap.remove(key);
-      return;
-    }
-
-    myAttributesMap.put(key, attributes);
   }
 
   @Override
@@ -75,6 +67,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       if (containsValue(attributes) && !attributes.isFallbackEnabled()) {
         return attributes;
       }
+
       attributes = getFallbackAttributes(fallbackKey);
       if (containsValue(attributes)) {
         return attributes;
