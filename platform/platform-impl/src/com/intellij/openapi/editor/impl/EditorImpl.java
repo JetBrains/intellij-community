@@ -33,7 +33,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -6588,6 +6587,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 ),
                 editor.getDisposable()
               );
+              return true;
             }
           }
         }
