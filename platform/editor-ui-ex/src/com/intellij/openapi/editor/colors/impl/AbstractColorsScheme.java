@@ -792,7 +792,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     return getFallbackAttributes(fallbackKey.getFallbackAttributeKey());
   }
 
-
   /**
    * Looks for explicitly specified attributes either in the scheme or its parent scheme. No fallback keys are used.
    *
@@ -807,7 +806,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     }
     return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
   }
-
 
   protected static boolean containsValue(@Nullable TextAttributes attributes) {
     return attributes != null && attributes.containsValue();
