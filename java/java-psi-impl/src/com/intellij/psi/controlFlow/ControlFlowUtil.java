@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.IntStack;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1282,6 +1283,112 @@ public class ControlFlowUtil {
     MyVisitor visitor = new MyVisitor();
     depthFirstSearch(flow, visitor);
     return visitor.getResult().booleanValue();
+  }
+
+  /**
+   * Returns true if the value the variable has at start is later referenced without going through stop instruction
+   *
+   * @param flow ControlFlow to analyze
+   * @param start the point at which variable value is created
+   * @param stop the stop-point
+   * @param variable the variable to examine
+   * @return true if the value the variable has at start is later referenced without going through stop instruction
+   */
+  public static boolean isValueUsedWithoutVisitingStop(final ControlFlow flow, final int start, final int stop, final PsiVariable variable) {
+    if(start == stop) return false;
+
+    class MyVisitor extends InstructionClientVisitor<Boolean> {
+      // true if value the variable has at given offset maybe referenced without going through stop instruction
+      final boolean[] maybeReferenced = new boolean[flow.getSize() + 1];
+
+      @Override
+      public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
+        if (offset == stop) {
+          maybeReferenced[offset] = false;
+          return;
+        }
+        if(instruction instanceof WriteVariableInstruction && ((WriteVariableInstruction)instruction).variable == variable) {
+          maybeReferenced[offset] = false;
+          return;
+        }
+        if (maybeReferenced[offset]) return;
+        if (nextOffset > flow.getSize()) nextOffset = flow.getSize();
+
+        boolean nextState = maybeReferenced[nextOffset];
+        maybeReferenced[offset] =
+          nextState || (instruction instanceof ReadVariableInstruction && ((ReadVariableInstruction)instruction).variable == variable);
+      }
+
+      @Override
+      public Boolean getResult() {
+        return maybeReferenced[start];
+      }
+    }
+    MyVisitor visitor = new MyVisitor();
+    depthFirstSearch(flow, visitor, start, flow.getSize());
+    return visitor.getResult().booleanValue();
+  }
+
+  /**
+   * Checks whether variable can be referenced between start and stop points. Back-edges are also considered, so the actual place
+   * where it referenced might be outside of (start, stop) interval.
+   *
+   * @param flow ControlFlow to analyze
+   * @param start start point
+   * @param stop stop point
+   * @param variable variable to analyze
+   * @return true if variable can be referenced between start and stop points
+   */
+  public static boolean isVariableReferencedBetween(final ControlFlow flow,
+                                                    final int start,
+                                                    final int stop,
+                                                    final PsiVariable variable) {
+    if(start == stop) return false;
+
+    // DFS visits instructions mainly in backward direction while here visiting in forward direction
+    // greatly reduces number of iterations. So first we just collect edges, then reverse their order.
+    // contains (from, to) pairs representing control flow arcs
+    final TIntArrayList list = new TIntArrayList();
+    depthFirstSearch(flow, new InstructionClientVisitor<Void>() {
+      @Override
+      public void visitInstruction(Instruction instruction, int offset, int nextOffset) {
+        list.add(offset);
+        list.add(nextOffset);
+      }
+
+      @Override
+      public Void getResult() {
+        return null;
+      }
+    }, start, flow.getSize());
+    BitSet violated = new BitSet();
+    List<Instruction> instructions = flow.getInstructions();
+    boolean changed = true;
+    while(changed) {
+      changed = false;
+      for(int i=list.size()-2; i>=0; i-=2) {
+        int from = list.get(i);
+        int to = list.get(i+1);
+        if(from == stop) continue;
+        if(violated.get(from)) {
+          if(!violated.get(to)) {
+            if(to == stop) return true;
+            violated.set(to);
+            changed = true;
+          }
+          continue;
+        }
+        Instruction instruction = instructions.get(from);
+        if((instruction instanceof ReadVariableInstruction && ((ReadVariableInstruction)instruction).variable == variable) ||
+           (instruction instanceof WriteVariableInstruction && ((WriteVariableInstruction)instruction).variable == variable)) {
+          violated.set(from);
+          violated.set(to);
+          if(to == stop) return true;
+          changed = true;
+        }
+      }
+    }
+    return false;
   }
 
   /**

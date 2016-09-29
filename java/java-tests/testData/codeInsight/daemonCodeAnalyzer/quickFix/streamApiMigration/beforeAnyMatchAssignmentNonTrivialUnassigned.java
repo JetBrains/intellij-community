@@ -6,7 +6,7 @@ public class Main {
   public void testAssignment(List<String> data) {
     boolean found = false;
     if(Math.random() > 0.5) {
-      found = true;
+      System.out.println("oops");
     } else {
       for (String str : da<caret>ta) {
         String trimmed = str.trim();

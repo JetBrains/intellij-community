@@ -5,9 +5,7 @@ import java.util.List;
 public class Main {
   public void testAssignment(List<String> data) {
     boolean found = false;
-    if(Math.random() > 0.5) {
-      found = true;
-    } else {
+    try {
       for (String str : da<caret>ta) {
         String trimmed = str.trim();
         if (!trimmed.isEmpty()) {
@@ -15,7 +13,10 @@ public class Main {
           break;
         }
       }
+      System.out.println(found);
     }
-    System.out.println(found);
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
   }
 }

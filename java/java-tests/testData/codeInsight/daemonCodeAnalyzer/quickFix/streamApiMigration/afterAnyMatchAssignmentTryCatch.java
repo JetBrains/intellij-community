@@ -5,11 +5,12 @@ import java.util.List;
 public class Main {
   public void testAssignment(List<String> data) {
     boolean found;
-    if(Math.random() > 0.5) {
-      found = true;
-    } else {
+    try {
         found = data.stream().map(String::trim).anyMatch(trimmed -> !trimmed.isEmpty());
+      System.out.println(found);
     }
-    System.out.println(found);
+    catch(Exception ex) {
+      ex.printStackTrace();
+    }
   }
 }

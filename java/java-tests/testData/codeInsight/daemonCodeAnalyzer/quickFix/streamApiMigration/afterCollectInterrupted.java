@@ -10,6 +10,8 @@ public class Collect {
   }
 
   void collectNames(List<Person> persons){
-      List<String> names = persons.stream().map(Person::getName).collect(Collectors.toList());
+    Set<String> names, other = new HashSet<>();
+      names = persons.stream().map(Person::getName).collect(Collectors.toSet());
+    System.out.println(names);
   }
 }
