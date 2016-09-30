@@ -3,6 +3,7 @@ package org.jetbrains.debugger.memory.view;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -21,6 +22,7 @@ import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.debugger.memory.component.CreationPositionTracker;
 import org.jetbrains.debugger.memory.component.InstancesTracker;
 import org.jetbrains.debugger.memory.tracking.TrackerForNewInstances;
 import org.jetbrains.debugger.memory.tracking.TrackingType;
@@ -109,7 +111,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
         TrackerForNewInstances strategy = myParent.getStrategy(ref);
         if (strategy != null && strategy.isReady() && strategy.getCount() > 0) {
           List<ObjectReference> newInstances = strategy.getNewInstances();
-          new InstancesWindow(myDebugSession, limit -> newInstances, ref.name()).show();
+          CreationPositionTracker.getInstance(myDebugSession.getProject()).pinStacks(myDebugSession, ref);
+          InstancesWindow instancesWindow = new InstancesWindow(myDebugSession, limit -> newInstances, ref.name());
+          Disposer.register(instancesWindow.getDisposable(),
+              () -> CreationPositionTracker.getInstance(myDebugSession.getProject()).unpinStacks(myDebugSession, ref));
+          instancesWindow.show();
         }
       }
     });
@@ -423,11 +429,12 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   private class MyDiffColumnRenderer extends MyTableCellRenderer {
-    private final SimpleTextAttributes myClickableCellAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE,
-        JBColor.BLUE);
+    private final SimpleTextAttributes myClickableCellAttributes =
+        new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE, JBColor.BLUE);
 
     @Override
-    protected void addText(JTable table, @NotNull Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    protected void addText(JTable table, @NotNull Object value, boolean isSelected,
+                           boolean hasFocus, int row, int column) {
       long diff = ((DiffValue) value).diff();
       setTextAlign(SwingConstants.RIGHT);
 
@@ -439,7 +446,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       if (strategy != null && strategy.isReady()) {
         long trackedNew = strategy.getCount();
         if (trackedNew == diff) {
-          append(text, diff == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES :  myClickableCellAttributes);
+          append(text, diff == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES : myClickableCellAttributes);
         } else {
           append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           if (trackedNew != 0) {
