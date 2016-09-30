@@ -492,7 +492,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           isArray = false;
         } else return;
       }
-      if (!ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{body}).isEmpty()) return;
+      if (!ExceptionUtil.getThrownCheckedExceptions(body).isEmpty()) return;
 
       TerminalBlock tb = TerminalBlock.from(statement.getIterationParameter(), body);
       List<Operation> operations = tb.extractOperations();

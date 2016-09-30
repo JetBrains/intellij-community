@@ -140,7 +140,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
   @Contract("null, _ -> false")
   static boolean isOptionalLambdaCandidate(PsiExpression lambdaCandidate, PsiVariable optionalVariable) {
     if(lambdaCandidate == null) return false;
-    if(!ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {lambdaCandidate}).isEmpty()) return false;
+    if(!ExceptionUtil.getThrownCheckedExceptions(lambdaCandidate).isEmpty()) return false;
     return PsiTreeUtil.processElements(lambdaCandidate, e -> {
       if (!(e instanceof PsiReferenceExpression)) return true;
       PsiElement element = ((PsiReferenceExpression)e).resolve();

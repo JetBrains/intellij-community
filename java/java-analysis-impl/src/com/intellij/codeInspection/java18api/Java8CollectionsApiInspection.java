@@ -242,7 +242,7 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
               !equivalence.expressionsAreEquivalent(value, putArguments[1])) {
             return;
           }
-          if(!ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {lambdaCandidate}).isEmpty()) return;
+          if(!ExceptionUtil.getThrownCheckedExceptions(lambdaCandidate).isEmpty()) return;
           if(!PsiTreeUtil.processElements(lambdaCandidate, e -> {
             if(!(e instanceof PsiReferenceExpression)) return true;
             PsiElement element = ((PsiReferenceExpression)e).resolve();

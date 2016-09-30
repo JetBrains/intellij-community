@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,7 +246,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
 
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
-    final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownCheckedExceptions(new PsiElement[]{myInitializer});
+    final List<PsiClassType> thrownExceptions = ExceptionUtil.getThrownCheckedExceptions(myInitializer);
     final Set<PsiVariable> varsUsedInInitializer = new HashSet<>();
     final Set<PsiJavaCodeReferenceElement> paramRefsToInline = new HashSet<>();
     final Map<PsiElement, PsiElement> replacements = new HashMap<>();

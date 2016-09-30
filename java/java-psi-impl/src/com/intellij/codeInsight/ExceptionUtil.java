@@ -58,7 +58,7 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getThrownCheckedExceptions(@NotNull PsiElement[] elements) {
+  public static List<PsiClassType> getThrownCheckedExceptions(@NotNull PsiElement... elements) {
     List<PsiClassType> exceptions = getThrownExceptions(elements);
     if (exceptions.isEmpty()) return exceptions;
     exceptions = filterOutUncheckedExceptions(exceptions);
