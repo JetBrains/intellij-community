@@ -20,6 +20,8 @@ import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -846,6 +848,16 @@ public final class GuiTestUtil {
 
     KeyStroke keyStroke = KeyStroke.getKeyStroke(shortcut);
     LOG.info("Invoking action via shortcut " + shortcut);
+    robot.pressAndReleaseKey(keyStroke.getKeyCode(), new int[]{keyStroke.getModifiers()});
+  }
+
+  public static void invokeAction(@NotNull Robot robot, @NotNull String actionId) {
+
+    KeyboardShortcut keyboardShortcut = ActionManager.getInstance().getKeyboardShortcut(actionId);
+
+    assert keyboardShortcut != null;
+    KeyStroke keyStroke = keyboardShortcut.getFirstKeyStroke();
+    LOG.info("Invoking action \"" + actionId +"\" via shortcut " + keyboardShortcut.toString());
     robot.pressAndReleaseKey(keyStroke.getKeyCode(), new int[]{keyStroke.getModifiers()});
   }
 }

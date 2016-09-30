@@ -47,7 +47,7 @@ public class SimpleGitTest extends GuiTestCase {
       ProjectViewFixture.NodeFixture src = projectPane.selectByPath(projectName, "src");
 
       //invoke "New..." action
-      GuiTestUtil.invokeActionViaShortcut(myRobot, "control N");
+      GuiTestUtil.invokeAction(myRobot, "NewElement");
       //select first element (Java class)
       myRobot.pressAndReleaseKey(KeyEvent.VK_ENTER);
 
@@ -61,9 +61,9 @@ public class SimpleGitTest extends GuiTestCase {
       fileChooserDialogFixture.select(ideFrameFixture.getProject().getBaseDir()).clickOk();
       Pause.pause(GuiTestUtil.THIRTY_SEC_TIMEOUT.duration()); //wait when file will be added to commit
 
-      GuiTestUtil.invokeActionViaShortcut(myRobot, "alt meta A");
+      GuiTestUtil.invokeAction(myRobot, "ChangesView.AddUnversioned");
       waitForIdle();
-      GuiTestUtil.invokeActionViaShortcut(myRobot, "meta K");
+      GuiTestUtil.invokeAction(myRobot, "CheckinProject");
 
       DialogFixture commitDialogFixture = DialogFixture.find(myRobot, VcsBundle.message("commit.dialog.title"));
       myRobot.enterText("initial commit");
