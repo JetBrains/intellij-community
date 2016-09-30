@@ -13,11 +13,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.action.DebuggerTreeAction;
 import org.jetbrains.debugger.memory.component.CreationPositionTracker;
 import org.jetbrains.debugger.memory.utils.StackFrameDescriptor;
+import org.jetbrains.debugger.memory.view.InstancesTree;
 import org.jetbrains.debugger.memory.view.StackFramePopup;
 
 import java.util.List;
 
-public class GetAllocationSourceAction extends DebuggerTreeAction {
+public class JumpToAllocationSourceAction extends DebuggerTreeAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setVisible(getStack(e) != null);
@@ -46,8 +47,7 @@ public class GetAllocationSourceAction extends DebuggerTreeAction {
       return null;
     }
 
-    // TODO: Wrong way: session may be not current
-    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+    XDebugSession session = e.getData(InstancesTree.DEBUG_SESSION_DATA_KEY);
     return session == null ? null : CreationPositionTracker.getInstance(project).getStack(session, ref);
   }
 }

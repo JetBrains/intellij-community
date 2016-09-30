@@ -191,7 +191,7 @@ public class InstancesWindow extends DialogWrapper {
 
       myProgress.addStopActionListener(this::cancelFilteringTask);
 
-      myInstancesTree = new InstancesTree(myProject, editorsProvider, markers, this::updateInstances);
+      myInstancesTree = new InstancesTree(myProject, myDebugSession, editorsProvider, markers, this::updateInstances);
 
       myFilterButton.addActionListener(e -> {
         String expression = myFilterConditionEditor.getExpression().getExpression();

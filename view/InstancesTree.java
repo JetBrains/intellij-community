@@ -1,7 +1,10 @@
 package org.jetbrains.debugger.memory.view;
 
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -9,6 +12,7 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,18 +20,22 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-class InstancesTree extends XDebuggerTree {
+public class InstancesTree extends XDebuggerTree implements DataProvider {
+  public static final DataKey<XDebugSession> DEBUG_SESSION_DATA_KEY = DataKey.create("InstancesTree.DebugSession");
   private final XValueNodeImpl myRoot;
   private final Runnable myOnRootExpandAction;
+  private final XDebugSession myDebugSession;
   private List<XValueChildrenList> myChildren;
 
   InstancesTree(@NotNull Project project,
+                @NotNull XDebugSession debugSession,
                 @NotNull XDebuggerEditorsProvider editorsProvider,
                 @Nullable XValueMarkers<?, ?> valueMarkers,
                 @NotNull Runnable onRootExpand) {
     super(project, editorsProvider, null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, valueMarkers);
     myOnRootExpandAction = onRootExpand;
     myRoot = new XValueNodeImpl(this, null, "root", new MyRootValue());
+    myDebugSession = debugSession;
 
     myRoot.children();
     setRoot(myRoot, false);
@@ -61,6 +69,16 @@ class InstancesTree extends XDebuggerTree {
     myChildren = null;
     myRoot.clearChildren();
     myRoot.setMessage(text, icon, textAttributes, null);
+  }
+
+  @Nullable
+  @Override
+  public Object getData(@NonNls String dataId) {
+    if(DEBUG_SESSION_DATA_KEY.is(dataId)) {
+      return myDebugSession;
+    }
+
+    return super.getData(dataId);
   }
 
   enum RebuildPolicy {
