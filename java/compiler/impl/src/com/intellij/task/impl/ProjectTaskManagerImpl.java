@@ -131,6 +131,11 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     };
     visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
 
+    if (toRun.isEmpty()) {
+      sendSuccessNotify(callback);
+      return;
+    }
+
     AtomicInteger inProgressCounter = new AtomicInteger(toRun.size());
     AtomicInteger errorsCounter = new AtomicInteger();
     AtomicInteger warningsCounter = new AtomicInteger();
@@ -150,7 +155,20 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
       }
     };
 
-    toRun.forEach(pair -> pair.first.run(myProject, context, chunkStatusNotification, pair.second));
+    toRun.forEach(pair -> {
+      if (pair.second.isEmpty()) {
+        sendSuccessNotify(chunkStatusNotification);
+      }
+      else {
+        pair.first.run(myProject, context, chunkStatusNotification, pair.second);
+      }
+    });
+  }
+
+  private static void sendSuccessNotify(@Nullable ProjectTaskNotification notification) {
+    if (notification != null) {
+      notification.finished(new ProjectTaskResult(false, 0, 0));
+    }
   }
 
   private static void visitTasks(@NotNull Collection<? extends ProjectTask> tasks,
