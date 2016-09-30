@@ -55,7 +55,7 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       if (nextReturnStatement == null) return;
       PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
       if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return;
-      stream = generateOptionalUnwrap(stream, tb, value, orElseExpression);
+      stream = generateOptionalUnwrap(stream, tb, value, orElseExpression, null);
       restoreComments(foreachStatement, body);
       boolean siblings = nextReturnStatement.getParent() == foreachStatement.getParent();
       PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", foreachStatement));
@@ -81,19 +81,19 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       if (status != InitializerUsageStatus.UNKNOWN) {
         PsiExpression initializer = var.getInitializer();
         if (initializer != null) {
-          String replacementText = generateOptionalUnwrap(stream, tb, value, initializer);
+          String replacementText = generateOptionalUnwrap(stream, tb, value, initializer, var.getType());
           replaceInitializer(foreachStatement, var, initializer, replacementText, status);
           return;
         }
       }
       PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(
-        var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, lValue) + ";", foreachStatement));
+        var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, lValue, var.getType()) + ";", foreachStatement));
       simplifyAndFormat(project, result);
     }
   }
 
   private static String generateOptionalUnwrap(String stream, @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-                                               PsiExpression trueExpression, PsiExpression falseExpression) {
+                                               PsiExpression trueExpression, PsiExpression falseExpression, PsiType targetType) {
     PsiVariable var = tb.getVariable();
     if (!StreamApiMigrationInspection.isIdentityMapping(var, trueExpression)) {
       if(trueExpression instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
@@ -112,9 +112,11 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
         if(EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(falseExpression, condition.getElseExpression())) {
           return generateOptionalUnwrap(
             stream + ".filter(" + LambdaUtil.createLambda(var, condition.getCondition()) + ")", tb,
-            condition.getThenExpression(), falseExpression);
+            condition.getThenExpression(), falseExpression, var.getType());
         }
       }
+      trueExpression =
+        targetType == null ? trueExpression : ExpressionUtils.convertInitializerToNormalExpression(trueExpression, targetType);
       stream += ".map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
     }
     stream += ".orElse(" + falseExpression.getText() + ")";

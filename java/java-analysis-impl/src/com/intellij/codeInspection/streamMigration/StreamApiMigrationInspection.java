@@ -586,7 +586,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             if(!(var instanceof PsiVariable) || !nonFinalVariables.contains(var)) return;
             PsiExpression rValue = assignment.getRExpression();
             if(rValue == null || isVariableReferenced((PsiVariable)var, rValue)) return;
-            if(tb.getVariable() instanceof PsiPrimitiveType && !isIdentityMapping(tb.getVariable(), rValue)) return;
+            if(tb.getVariable().getType() instanceof PsiPrimitiveType && !isIdentityMapping(tb.getVariable(), rValue)) return;
             registerProblem(statement, "findFirst", new ReplaceWithFindFirstFix());
           }
         }
