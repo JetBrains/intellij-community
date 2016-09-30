@@ -73,6 +73,6 @@ public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List im
       .withBorder(getDefaultItemComponentBorder());
   }
 
-  protected void customizeComponent(JList list, Object value, boolean isSelected) {
+  protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
   }
 }
