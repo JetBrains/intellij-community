@@ -403,14 +403,18 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   public void readAttributes(@NotNull Element childNode) {
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
-      TextAttributesKey key = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
       Element valueElement = e.getChild(VALUE_ELEMENT);
+      if (valueElement == null) {
+        continue;
+      }
+
       TextAttributes attr = myValueReader.read(TextAttributes.class, valueElement);
-      String baseKeyName = e.getAttributeValue(BASE_ATTRIBUTES_ATTR);
-      if (baseKeyName != null) {
+      if (e.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null) {
         // For now inheritance overriding is not supported, just make sure that empty attributes mean inheritance.
         attr.setEnforceEmpty(false);
       }
+
+      TextAttributesKey key = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
       myAttributesMap.put(key, attr);
       migrateErrorStripeColorFrom14(key, attr);
     }
@@ -624,11 +628,9 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     List<TextAttributesKey> list = new ArrayList<>(myAttributesMap.keySet());
     list.sort(null);
     for (TextAttributesKey key: list) {
-      TextAttributes defaultAttr = myParentScheme != null ? myParentScheme.getAttributes(key) : new TextAttributes();
       TextAttributesKey baseKey = key.getFallbackAttributeKey();
-      TextAttributes defaultFallbackAttr =
-        baseKey != null && myParentScheme instanceof AbstractColorsScheme ?
-        ((AbstractColorsScheme)myParentScheme).getFallbackAttributes(baseKey) : null;
+      TextAttributes defaultFallbackAttr = baseKey != null && myParentScheme instanceof AbstractColorsScheme ?
+                                           ((AbstractColorsScheme)myParentScheme).getFallbackAttributes(baseKey) : null;
       TextAttributes value = myAttributesMap.get(key);                
       if (baseKey != null && value.isFallbackEnabled()) {
         if (isParentOverwritingInheritance(key)) {
@@ -636,6 +638,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
         }
       }
       else {
+        TextAttributes defaultAttr = myParentScheme == null ? new TextAttributes() : myParentScheme.getAttributes(key);
         if (value.containsValue() && !value.equals(defaultAttr) || defaultAttr == defaultFallbackAttr) {
           Element valueElement = new Element(VALUE_ELEMENT);
           value.writeExternal(valueElement);
@@ -664,10 +667,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   private boolean isParentOverwritingInheritance(@NotNull TextAttributesKey key) {
     TextAttributes parentAttrs =
       myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
-    if (parentAttrs != null) {
-      return !parentAttrs.isFallbackEnabled();
-    }
-    return false;
+    return parentAttrs != null && !parentAttrs.isFallbackEnabled();
   }
 
   protected Color getOwnColor(ColorKey key) {
@@ -759,10 +759,8 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   protected TextAttributes getFallbackAttributes(TextAttributesKey fallbackKey) {
     if (fallbackKey == null) return null;
     TextAttributes fallbackAttributes = getDirectlyDefinedAttributes(fallbackKey);
-    if (fallbackAttributes != null) {
-      if (!fallbackAttributes.isFallbackEnabled() || fallbackKey.getFallbackAttributeKey() == null) {
-        return fallbackAttributes;
-      }
+    if (fallbackAttributes != null && (!fallbackAttributes.isFallbackEnabled() || fallbackKey.getFallbackAttributeKey() == null)) {
+      return fallbackAttributes;
     }
     return getFallbackAttributes(fallbackKey.getFallbackAttributeKey());
   }

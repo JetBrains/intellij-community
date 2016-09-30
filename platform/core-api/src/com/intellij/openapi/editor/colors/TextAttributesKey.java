@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -38,7 +37,7 @@ import java.util.concurrent.ConcurrentMap;
  * A type of item with a distinct highlighting in an editor or in other views.
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey> {
-  private static final Logger LOG = Logger.getInstance("#" + TextAttributesKey.class.getName());
+  private static final Logger LOG = Logger.getInstance(TextAttributesKey.class);
   
   private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
   private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = ContainerUtil.newConcurrentMap();
@@ -69,7 +68,14 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
   @NotNull
   public static TextAttributesKey find(@NotNull @NonNls String externalName) {
-    return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, new TextAttributesKey(externalName));
+    TextAttributesKey v = ourRegistry.get(externalName);
+    if (v != null) {
+      return v;
+    }
+
+    v = new TextAttributesKey(externalName);
+    TextAttributesKey prev = ourRegistry.putIfAbsent(externalName, v);
+    return prev == null ? v : prev;
   }
 
   public String toString() {

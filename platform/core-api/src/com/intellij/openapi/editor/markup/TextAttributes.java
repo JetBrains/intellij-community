@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -194,14 +193,8 @@ public class TextAttributes implements Cloneable {
     return myAttrs.hashCode();
   }
 
-  public void readExternal(Element element) {
-    try {
-      myAttrs = AttributesFlyweight.create(element);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
-
+  public void readExternal(@NotNull Element element) {
+    myAttrs = AttributesFlyweight.create(element);
     if (isEmpty()) {
       myEnforceEmpty = true;
     }
