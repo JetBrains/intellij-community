@@ -385,7 +385,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
     }
   }
 
-  private static boolean matchesPlatform(Keymap keymap) {
+  public static boolean matchesPlatform(Keymap keymap) {
     final String name = keymap.getName();
     if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name)) {
       return SystemInfo.isWindows;
