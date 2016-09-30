@@ -101,12 +101,6 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     if (userObject instanceof FilePath) {
       return new ChangesBrowserFilePathNode((FilePath) userObject);
     }
-/*    if (userObject instanceof ChangeList) {
-      return new ChangesBrowserChangeListNode(project, (ChangeList) userObject);
-    }*/
-    if (userObject == IGNORED_FILES_TAG) {
-      return new ChangesBrowserIgnoredFilesNode(userObject);
-    }
     if (userObject == LOCKED_FOLDERS_TAG) {
       return new ChangesBrowserLockedFoldersNode(project, userObject);
     }
@@ -254,5 +248,10 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
 
   public void setAttributes(@NotNull SimpleTextAttributes attributes) {
     myAttributes = attributes;
+  }
+
+  protected void appendUpdatingState(@NotNull ChangesBrowserNodeRenderer renderer) {
+    renderer.append((getCountText().isEmpty() ? spaceAndThinSpace() : ", ") + VcsBundle.message("changes.nodetitle.updating"),
+                    SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 }

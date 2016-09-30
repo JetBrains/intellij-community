@@ -16,14 +16,14 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
+import com.intellij.openapi.vcs.changes.IgnoredViewDialog;
 
-/**
- * @author yole
- */
-public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserNode {
-  protected ChangesBrowserIgnoredFilesNode(Object userObject) {
-    super(userObject);
+public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserSpecificFilesNode {
+
+  protected ChangesBrowserIgnoredFilesNode(Project project, int filesSize, int dirsSize, boolean many) {
+    super(IGNORED_FILES_TAG, filesSize, dirsSize, many, () -> new IgnoredViewDialog(project).show());
   }
 
   @Override
@@ -34,5 +34,10 @@ public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserNode {
   @Override
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
     IgnoreUnversionedDialog.ignoreSelectedFiles(dragOwner.getProject(), dragBean.getUnversionedFiles(), null);
+  }
+
+  @Override
+  public int getSortWeight() {
+    return 10;
   }
 }
