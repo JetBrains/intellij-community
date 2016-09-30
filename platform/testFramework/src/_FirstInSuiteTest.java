@@ -64,9 +64,6 @@ public class _FirstInSuiteTest extends TestCase {
     // in tests EDT inexplicably shuts down sometimes during the first access,
     // which leads to nasty problems in ApplicationImpl which assumes there is only one EDT.
     // so we try to forcibly terminate EDT here to urge JVM to re-spawn new shiny permanent EDT-1
-
-    //replacing of IdeEventQueue may cause problems with RepaintManager and EventQueue especially on Windows for GUI tests
-    boolean guiTestMode = Boolean.getBoolean("idea.test.guimode");
     TestRunnerUtil.replaceIdeEventQueueSafely();
     SwingUtilities.invokeAndWait(() -> System.out.println("EDT is " + Thread.currentThread()));
 
