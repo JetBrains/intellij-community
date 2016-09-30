@@ -17,7 +17,6 @@ package com.intellij.codeInsight.editorActions.moveLeftRight;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -37,6 +36,9 @@ public class JavaMoveLeftRightHandler extends MoveElementLeftRightHandler {
     }
     else if (element instanceof PsiArrayInitializerExpression) {
       return  ((PsiArrayInitializerExpression)element).getInitializers();
+    }
+    else if (element instanceof PsiArrayInitializerMemberValue) {
+      return  ((PsiArrayInitializerMemberValue)element).getInitializers();
     }
     else if (element instanceof PsiClass && ((PsiClass)element).isEnum()) {
       PsiEnumConstant[] enumConstants = PsiTreeUtil.getChildrenOfType(element, PsiEnumConstant.class);
