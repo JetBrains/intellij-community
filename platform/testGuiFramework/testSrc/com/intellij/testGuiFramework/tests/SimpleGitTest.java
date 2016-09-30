@@ -23,6 +23,7 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.impl.GuiTestCase;
 import git4idea.i18n.GitBundle;
 import org.fest.swing.core.FastRobot;
+import org.fest.swing.timing.Pause;
 import org.junit.Test;
 
 import java.awt.event.KeyEvent;
@@ -58,10 +59,10 @@ public class SimpleGitTest extends GuiTestCase {
       FileChooserDialogFixture fileChooserDialogFixture =
         FileChooserDialogFixture.findDialog(myRobot, withTitleMatcher(GitBundle.message("init.destination.directory.title")));
       fileChooserDialogFixture.select(ideFrameFixture.getProject().getBaseDir()).clickOk();
-      if (myRobot instanceof FastRobot) ((FastRobot)myRobot).superWaitForIdle();
+      Pause.pause(GuiTestUtil.THIRTY_SEC_TIMEOUT.duration()); //wait when file will be added to commit
 
       GuiTestUtil.invokeActionViaShortcut(myRobot, "alt meta A");
-
+      waitForIdle();
       GuiTestUtil.invokeActionViaShortcut(myRobot, "meta K");
 
       DialogFixture commitDialogFixture = DialogFixture.find(myRobot, VcsBundle.message("commit.dialog.title"));
@@ -70,9 +71,15 @@ public class SimpleGitTest extends GuiTestCase {
 
       MessagesFixture.findByTitle(myRobot, commitDialogFixture.target(), VcsBundle.message("code.smells.error.messages.tab.name"))
         .click("Commit");
+
+      Pause.pause(GuiTestUtil.THIRTY_SEC_TIMEOUT.duration());
     }
     catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  private void waitForIdle() {
+    if (myRobot instanceof FastRobot) ((FastRobot)myRobot).superWaitForIdle();
   }
 }
