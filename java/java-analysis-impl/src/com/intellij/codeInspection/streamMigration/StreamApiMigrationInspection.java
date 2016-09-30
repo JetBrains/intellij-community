@@ -110,6 +110,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return value != null && ReferencesSearch.search(variable, new LocalSearchScope(value)).findFirst() != null;
   }
 
+  static boolean isReferencedInOperations(PsiElement element, List<Operation> operations) {
+    return ReferencesSearch
+             .search(element, new LocalSearchScope(operations.stream().map(Operation::getExpression).toArray(PsiElement[]::new)))
+             .findFirst() != null;
+  }
+
   @Nullable
   static PsiReturnStatement getNextReturnStatement(PsiStatement statement) {
     PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class, PsiComment.class);
@@ -211,13 +217,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     if(!(operand instanceof PsiReferenceExpression)) return null;
     PsiElement element = ((PsiReferenceExpression)operand).resolve();
 
-    // the referred variable is the same as non-final variable
-    if(!(element instanceof PsiLocalVariable) || !variables.contains(element)) return null;
+    // the referred variable is the same as non-final variable and not used in intermediate operations
+    if(!(element instanceof PsiLocalVariable) || !variables.contains(element) || isReferencedInOperations(element, operations)) return null;
 
-    // the referred variable is not used in intermediate operations
-    for(Operation operation : operations) {
-      if(ReferencesSearch.search(element, new LocalSearchScope(operation.getExpression())).findFirst() != null) return null;
-    }
     return (PsiLocalVariable)element;
   }
 
@@ -542,6 +544,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         if (operations.isEmpty() && !REPLACE_TRIVIAL_FOREACH) return;
         if (nonFinalVariables.isEmpty() && tb.getSingleStatement() instanceof PsiReturnStatement) {
           handleSingleReturn(statement, tb, operations);
+        }
+        // Intermediate ops should not refer to non-final variables
+        if (StreamEx.of(operations).map(Operation::getExpression)
+          .flatCollection(expr -> PsiTreeUtil.collectElementsOfType(expr, PsiReferenceExpression.class))
+          .map(PsiReferenceExpression::resolve).anyMatch(nonFinalVariables::contains)) {
+          return;
         }
         PsiStatement[] statements = tb.getStatements();
         if (statements.length == 2) {
