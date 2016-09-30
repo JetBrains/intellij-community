@@ -402,7 +402,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       width += myIcon.getIconWidth() + myIconTextGap;
     }
 
-    final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : new Insets(0, 0, 0, 0);
+    final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBUI.emptyInsets();
     width += borderInsets.left;
 
     Font font = getBaseFont();
