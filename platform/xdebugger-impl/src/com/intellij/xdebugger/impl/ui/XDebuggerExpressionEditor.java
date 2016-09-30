@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
@@ -139,7 +140,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
     PropertiesComponent.getInstance().setValue(SOFT_WRAPS_KEY, use);
     Editor editor = getEditor();
     if (editor != null) {
-      editor.getSettings().setUseSoftWraps(use);
+      AbstractToggleUseSoftWrapsAction.toggleSoftWraps(editor, null, use);
     }
   }
 }
