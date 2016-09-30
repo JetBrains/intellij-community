@@ -19,11 +19,13 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.util.DiffDrawUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -37,6 +39,7 @@ import java.util.stream.Collectors;
  * @author Dmitry Batkovich
  */
 public class ProblemPreviewEditorPresentation {
+  private final static Logger LOG = Logger.getInstance(ProblemPreviewEditorPresentation.class);
   private final static int VIEW_ADDITIONAL_OFFSET = 4;
 
   private final EditorEx myEditor;
@@ -57,33 +60,38 @@ public class ProblemPreviewEditorPresentation {
   }
 
   private void appendFoldings(CommonProblemDescriptor[] descriptors) {
-    final boolean[] isUpdated = new boolean[]{false};
-    final boolean[] allValid = new boolean[]{true};
-    final List<UsageInfo> elements = Arrays.stream(descriptors)
+    List<UsageInfo> usages = Arrays.stream(descriptors)
       .filter(ProblemDescriptorBase.class::isInstance)
       .map(ProblemDescriptorBase.class::cast)
-      .map(ProblemDescriptorBase::getPsiElement)
-      .filter(e -> {
-        final boolean isValid = e != null && e.isValid();
-        allValid[0] &= isValid;
-        return isValid;
+      .map(d -> {
+        final PsiElement psi = d.getPsiElement();
+        if (psi == null) {
+          return null;
+        }
+        final TextRange range = d.getTextRangeInElement();
+        return range == null ? new UsageInfo(psi) : new UsageInfo(psi, range.getStartOffset(), range.getEndOffset());
       })
-      .peek((e) -> isUpdated[0] |= appendFoldings(e.getTextRange()))
-      .map(UsageInfo::new)
       .collect(Collectors.toList());
-    if (!allValid[0]) return;
 
-    if (isUpdated[0] && descriptors.length > 1) {
+    boolean isUpdated = false;
+    for (UsageInfo usage : usages) {
+      if (usage == null) {
+        return;
+      }
+      isUpdated |= appendFoldings(usage.getSegment());
+    }
+    if (isUpdated) {
       updateFoldings();
     }
 
+    List<UsageInfo> validUsages = usages.stream().filter(Objects::nonNull).collect(Collectors.toList());
     PsiDocumentManager.getInstance(myView.getProject()).performLaterWhenAllCommitted(() -> {
       if (!myEditor.isDisposed()) {
         myView.invalidate();
         myView.validate();
-        UsagePreviewPanel.highlight(elements, myEditor, myView.getProject(), false, HighlighterLayer.SELECTION);
-        if (elements.size() == 1) {
-          final PsiElement element = elements.get(0).getElement();
+        UsagePreviewPanel.highlight(validUsages, myEditor, myView.getProject(), false, HighlighterLayer.SELECTION);
+        if (validUsages.size() == 1) {
+          final PsiElement element = validUsages.get(0).getElement();
           if (element != null) {
             final DocumentEx document = myEditor.getDocument();
             final int offset = Math.min(element.getTextRange().getEndOffset() + VIEW_ADDITIONAL_OFFSET,
@@ -118,7 +126,7 @@ public class ProblemPreviewEditorPresentation {
     });
   }
 
-  private boolean appendFoldings(TextRange toShowRange) {
+  private boolean appendFoldings(Segment toShowRange) {
     boolean isUpdated = false;
     final int startLine = Math.max(0, myDocument.getLineNumber(toShowRange.getStartOffset()) - 1);
     final int endLine = Math.min(myDocument.getLineCount(), myDocument.getLineNumber(toShowRange.getEndOffset()) + 2);
