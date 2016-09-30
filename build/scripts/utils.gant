@@ -559,6 +559,10 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     ant.move(file: "$path/MacOS/idea", tofile: "$path/MacOS/$executable")
   }
 
+  ant.replace(file: "$path/bin/format.sh") {
+    replacefilter(token: "@@product_full@@", value: fullName)
+    replacefilter(token: "@@script_name@@", value: executable)
+  }
   ant.replace(file: "$path/bin/inspect.sh") {
     replacefilter(token: "@@product_full@@", value: fullName)
     replacefilter(token: "@@script_name@@", value: executable)
