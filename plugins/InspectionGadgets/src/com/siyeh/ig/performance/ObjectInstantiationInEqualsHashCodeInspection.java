@@ -57,7 +57,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
 
     @Override
     public void visitExpression(PsiExpression expression) {
-      if (!ExpressionUtils.isAutoBoxed(expression)) {
+      if (!ExpressionUtils.isAutoBoxed(expression) || !isInsideEqualsOrHashCode(expression)) {
         return;
       }
       registerError(expression, expression, "autoboxing");
@@ -66,7 +66,7 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     @Override
     public void visitForeachStatement(PsiForeachStatement statement) {
       final PsiExpression iteratedValue = statement.getIteratedValue();
-      if (iteratedValue == null || iteratedValue.getType() instanceof PsiArrayType) {
+      if (iteratedValue == null || iteratedValue.getType() instanceof PsiArrayType || !isInsideEqualsOrHashCode(statement)) {
         return;
       }
       registerError(iteratedValue, iteratedValue, "iterator");
@@ -80,6 +80,9 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
         return;
       }
       if (method.isVarArgs()) {
+        if (!isInsideEqualsOrHashCode(expression)) {
+          return;
+        }
         registerError(expression, expression, "varargs call");
       }
       else {
@@ -102,6 +105,9 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
             !CommonClassNames.JAVA_LANG_FLOAT.equals(qualifiedName) && !CommonClassNames.JAVA_LANG_CHARACTER.equals(qualifiedName)) {
           return;
         }
+        if (!isInsideEqualsOrHashCode(expression)) {
+          return;
+        }
         registerError(expression, expression);
       }
     }
@@ -110,6 +116,9 @@ public class ObjectInstantiationInEqualsHashCodeInspection extends BaseInspectio
     public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
       if (!(expression.getParent() instanceof PsiVariable)) {
         // new expressions are already reported.
+        return;
+      }
+      if (!isInsideEqualsOrHashCode(expression)) {
         return;
       }
       registerError(expression, expression);

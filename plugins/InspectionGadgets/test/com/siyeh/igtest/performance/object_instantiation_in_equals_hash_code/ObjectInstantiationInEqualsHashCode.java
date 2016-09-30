@@ -65,4 +65,24 @@ class Y {
     return hashCode;
   }
 
+  void someOtherMethod() {
+    Integer i = 1;
+    Short.valueOf((short) 1);
+    Byte.valueOf((byte) 1); // nope
+    Long.valueOf(1);
+    Boolean.valueOf(true); // nope
+    Character.valueOf('a');
+    Float.valueOf((float) 1.0);
+    Double.valueOf(1.0);
+    i++;
+    int j = 1;
+    j++;
+    int[] is = {j};
+    int hashCode = 7;
+    java.util.Arrays.asList();
+    for (Object fooElement : fooList) {
+      hashCode = 31 * hashCode + (fooElement == null ? 0 : fooElement.hashCode());
+    }
+  }
+
 }
