@@ -686,11 +686,11 @@ java_library(
         "//tools:idea/plugins/gradle/lib/gradle-wrapper-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-base-services-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-base-services-groovy-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-dependency-management-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-native-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-resources-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-logging-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-process-services-3.1",
+        "//tools:idea/plugins/gradle/lib/gradle-dependency-management-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-cli-3.1",
     ],
     exports = [
@@ -702,11 +702,11 @@ java_library(
         "//tools:idea/plugins/gradle/lib/gradle-wrapper-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-base-services-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-base-services-groovy-3.1",
-        "//tools:idea/plugins/gradle/lib/gradle-dependency-management-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-native-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-resources-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-logging-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-process-services-3.1",
+        "//tools:idea/plugins/gradle/lib/gradle-dependency-management-3.1",
         "//tools:idea/plugins/gradle/lib/gradle-cli-3.1",
     ],
     visibility = ["//visibility:public"],
@@ -903,7 +903,7 @@ java_library(
 
 java_library(
     name = "profiler-grpc-java",
-    runtime_deps = ["////tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
-    exports = ["////tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
+    runtime_deps = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
+    exports = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
     visibility = ["//visibility:public"],
 )
