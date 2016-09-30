@@ -28,13 +28,11 @@ public class TestNGForkedStarter extends ChildVMStarter {
   }
 
   @Override
-  protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err) throws Exception {
+  protected void configureFrameworkAndRun(String[] args) throws Exception {
     final IDEARemoteTestNG testNG = new IDEARemoteTestNG(null);
     CommandLineArgs cla = new CommandLineArgs();
     RemoteArgs ra = new RemoteArgs();
-    String[] resultArgs = new String[args.length - 1];
-    System.arraycopy(args, 1, resultArgs, 0, resultArgs.length);
-    new JCommander(Arrays.asList(cla, ra), resultArgs);
+    new JCommander(Arrays.asList(cla, ra), args);
     testNG.configure(cla);
     testNG.run();
     System.exit(0);

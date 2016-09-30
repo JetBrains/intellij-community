@@ -36,12 +36,12 @@ public class JUnitForkedStarter extends ChildVMStarter {
     new JUnitForkedStarter().startVM((String[])argList.toArray(new String[argList.size()]));
   }
 
-  protected void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err)
+  protected void configureFrameworkAndRun(String[] args)
     throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-    final String[] childTestDescription = {args[1]};
-    final String argentName = args[2];
+    final String[] childTestDescription = {args[0]};
+    final String argentName = args[1];
     final ArrayList listeners = new ArrayList();
-    for (int i = 3, argsLength = args.length; i < argsLength; i++) {
+    for (int i = 2, argsLength = args.length; i < argsLength; i++) {
       listeners.add(args[i]);
     }
     IdeaTestRunner testRunner = (IdeaTestRunner)JUnitStarter.getAgentClass(argentName).newInstance();

@@ -21,31 +21,10 @@ import java.io.PrintStream;
 
 public abstract class ChildVMStarter {
 
-  protected abstract void configureFrameworkAndRun(String[] args, PrintStream out, PrintStream err) throws Exception;
+  protected abstract void configureFrameworkAndRun(String[] args) throws Exception;
   
   //setup output wrappers
   protected void startVM(String[] args) throws Exception {
-    final String testOutputPath = args[0];
-    final File file = new File(testOutputPath);
-    if (!file.exists()) {
-      if (!file.createNewFile()) return;
-    }
-    final FileOutputStream stream = new FileOutputStream(testOutputPath);
-    //noinspection UseOfSystemOutOrSystemErr
-    PrintStream oldOut = System.out;
-    //noinspection UseOfSystemOutOrSystemErr
-    PrintStream oldErr = System.err;
-    try {
-      final PrintStream out = new PrintStream(new ForkedVMWrapper(stream, false));
-      final PrintStream err = new PrintStream(new ForkedVMWrapper(stream, true));
-      System.setOut(out);
-      System.setErr(err);
-      configureFrameworkAndRun(args, out, err);
-    }
-    finally {
-      System.setOut(oldOut);
-      System.setErr(oldErr);
-      stream.close();
-    }
+    configureFrameworkAndRun(args);
   }
 }
