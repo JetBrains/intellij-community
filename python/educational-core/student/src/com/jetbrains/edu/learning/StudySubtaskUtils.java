@@ -5,13 +5,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
@@ -52,6 +50,10 @@ public class StudySubtaskUtils {
       }
       updatePlaceholderTexts(project, document, taskFile, fromSubtaskIndex, toSubtaskIndex);
       EditorNotifications.getInstance(project).updateNotifications(virtualFile);
+      if (StudyUtils.isStudyProject(project)) {
+        WolfTheProblemSolver.getInstance(project).clearProblems(virtualFile);
+        taskFile.setHighlightErrors(false);
+      }
     }
     task.setActiveSubtaskIndex(toSubtaskIndex);
     update(project, task, taskDir);
