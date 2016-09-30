@@ -15,11 +15,9 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
 
@@ -41,11 +39,8 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
         next(loader, dialog);
         break;
       case select:
-        MergeCalculatorTask calculator = getMergeCalculatorTask();
-
-        if (calculator != null) {
-          next(getCalculateFirstCopyPointTask(calculator), calculator);
-        }
+        MergeCalculatorTask calculator = new MergeCalculatorTask(myMergeProcess);
+        next(getCalculateFirstCopyPointTask(calculator), calculator);
         break;
     }
   }
@@ -55,19 +50,5 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
     return myMergeContext.getVcs().getSvnBranchPointsCalculator()
       .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getWcInfo().getRootUrl(),
                              myMergeContext.getSourceUrl(), mergeCalculator);
-  }
-
-  @Nullable
-  private MergeCalculatorTask getMergeCalculatorTask() {
-    MergeCalculatorTask result = null;
-
-    try {
-      result = new MergeCalculatorTask(myMergeProcess);
-    }
-    catch (VcsException e) {
-      end(e);
-    }
-
-    return result;
   }
 }

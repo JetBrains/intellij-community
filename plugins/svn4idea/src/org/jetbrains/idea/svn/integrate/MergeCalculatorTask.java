@@ -53,22 +53,23 @@ public class MergeCalculatorTask extends BaseMergeTask
     myCopyData.set(value);
   }
 
-  public MergeCalculatorTask(@NotNull QuickMerge mergeProcess) throws VcsException {
+  public MergeCalculatorTask(@NotNull QuickMerge mergeProcess) {
     super(mergeProcess, "Calculating not merged revisions", Where.POOLED);
 
     // TODO: Previously it was configurable - either to use OneShotMergeInfoHelper or BranchInfo as merge checker, but later that logic
     // TODO: was commented (in 80ebdbfea5210f6c998e67ddf28ca9c670fa4efe on 5/28/2010).
     // TODO: Still check if we need to preserve such configuration or it is sufficient to always use OneShotMergeInfoHelper.
     myMergeChecker = new OneShotMergeInfoHelper(myMergeContext);
-    myMergeChecker.prepare();
     myCopyData = new AtomicReference<>();
   }
 
   @Override
-  public void run() {
+  public void run() throws VcsException {
     SvnBranchPointsCalculator.WrapperInvertor copyPoint = getCopyPoint();
 
     if (copyPoint != null && myMergeContext.getWcInfo().getFormat().supportsMergeInfo()) {
+      myMergeChecker.prepare();
+
       List<Pair<SvnChangeList, LogHierarchyNode>> afterCopyPointChangeLists =
         getChangeListsAfter(copyPoint.getTrue().getTargetRevision());
       List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(afterCopyPointChangeLists);
