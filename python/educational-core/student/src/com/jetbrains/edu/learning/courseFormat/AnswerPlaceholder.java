@@ -2,14 +2,18 @@ package com.jetbrains.edu.learning.courseFormat;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.core.EduUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Implementation of windows which user should type in
@@ -236,5 +240,39 @@ public class AnswerPlaceholder {
     }
     int maxIndex = Collections.max(ContainerUtil.filter(mySubtaskInfos.keySet(), i -> i < subtaskIndex));
     return getUseLength() ? length : mySubtaskInfos.get(maxIndex).getPossibleAnswer().length();
+  }
+
+  public void switchSubtask(@NotNull Project project, @NotNull Document document, int fromSubtask, int toSubtask) {
+    Set<Integer> indexes = mySubtaskInfos.keySet();
+    int visibleLength = getVisibleLength(fromSubtask);
+    if (indexes.contains(fromSubtask) && indexes.contains(toSubtask)) {
+      if (!myUseLength) {
+        String replacementText = mySubtaskInfos.get(toSubtask).getPossibleAnswer();
+        EduUtils.replaceAnswerPlaceholder(project, document, this, visibleLength, replacementText);
+      }
+      return;
+    }
+    Integer minIndex = Collections.min(indexes);
+    if (fromSubtask < toSubtask) {
+      if (minIndex > fromSubtask && minIndex <= toSubtask) {
+        Integer maxIndex = Collections.max(ContainerUtil.filter(indexes, integer -> integer <= toSubtask));
+        AnswerPlaceholderSubtaskInfo maxInfo = mySubtaskInfos.get(maxIndex);
+        String replacementText = myUseLength ? maxInfo.getPlaceholderText() : maxInfo.getPossibleAnswer();
+        EduUtils.replaceAnswerPlaceholder(project, document, this, visibleLength, replacementText);
+        return;
+      }
+    }
+    if (fromSubtask > toSubtask) {
+      if (minIndex > toSubtask && minIndex <= fromSubtask) {
+        AnswerPlaceholderSubtaskInfo minInfo = mySubtaskInfos.get(minIndex);
+        if (minInfo.isNeedInsertText()) {
+          EduUtils.replaceAnswerPlaceholder(project, document, this, visibleLength, "");
+        }
+        else {
+          String replacementText = minInfo.getPlaceholderText();
+          EduUtils.replaceAnswerPlaceholder(project, document, this, visibleLength, replacementText);
+        }
+      }
+    }
   }
 }

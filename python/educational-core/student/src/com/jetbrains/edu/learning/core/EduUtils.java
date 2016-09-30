@@ -20,7 +20,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.learning.StudySubtaskUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
 import org.jetbrains.annotations.NonNls;
@@ -164,9 +164,33 @@ public class EduUtils {
     }
     EduDocumentListener listener = new EduDocumentListener(taskFile, false);
     studentDocument.addDocumentListener(listener);
-    StudySubtaskUtils.updatePlaceholderTexts(project, studentDocument, taskFile, task.getActiveSubtaskIndex(), toSubtaskIndex);
+    taskFile.setTrackLengths(false);
+    for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+      int fromSubtask = task.getActiveSubtaskIndex();
+      placeholder.switchSubtask(project, studentDocument, fromSubtask, toSubtaskIndex);
+    }
+    for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
+      replaceWithTaskText(project, studentDocument, placeholder, toSubtaskIndex);
+    }
+    taskFile.setTrackChanges(true);
     studentDocument.removeDocumentListener(listener);
     return Pair.create(studentFile, taskFile);
+  }
+
+  private static void replaceWithTaskText(Project project, Document studentDocument, AnswerPlaceholder placeholder, int toSubtaskIndex) {
+    AnswerPlaceholderSubtaskInfo info = placeholder.getSubtaskInfos().get(toSubtaskIndex);
+    if (info == null) {
+      return;
+    }
+    String replacementText;
+    if (Collections.min(placeholder.getSubtaskInfos().keySet()) == toSubtaskIndex) {
+      replacementText = info.getPlaceholderText();
+    }
+    else {
+      Integer max = Collections.max(ContainerUtil.filter(placeholder.getSubtaskInfos().keySet(), i -> i < toSubtaskIndex));
+      replacementText = placeholder.getSubtaskInfos().get(max).getPossibleAnswer();
+    }
+    replaceAnswerPlaceholder(project, studentDocument, placeholder, placeholder.getVisibleLength(toSubtaskIndex), replacementText);
   }
 
   public static void replaceAnswerPlaceholder(@NotNull final Project project,
