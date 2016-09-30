@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -279,7 +280,13 @@ public class XLineBreakpointManager {
       if (line >= 0 && line < document.getLineCount() && file != null) {
         ActionManagerEx.getInstanceEx().fireBeforeActionPerformed(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT, e.getMouseEvent());
 
-        final Promise<XLineBreakpoint> lineBreakpoint = XBreakpointUtil.toggleLineBreakpoint(myProject, XSourcePositionImpl.create(file, line), editor, mouseEvent.isAltDown(), false);
+        final Promise<XLineBreakpoint> lineBreakpoint =
+          XBreakpointUtil.toggleLineBreakpoint(myProject,
+                                               XSourcePositionImpl.create(file, line),
+                                               editor,
+                                               mouseEvent.isAltDown(),
+                                               false,
+                                               !Registry.is("debugger.click.disable.breakpoints"));
         lineBreakpoint
           .done(breakpoint -> {
             if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {

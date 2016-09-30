@@ -131,7 +131,8 @@ public class XBreakpointUtil {
                                              @NotNull XSourcePosition position,
                                              @Nullable Editor editor,
                                              boolean temporary,
-                                             boolean moveCarret) {
+                                             boolean moveCaret,
+                                             boolean canRemove) {
     int lineStart = position.getLine();
     VirtualFile file = position.getFile();
     // for folded text check each line and find out type with the biggest priority
@@ -167,12 +168,13 @@ public class XBreakpointUtil {
     if (typeWinner != null) {
       XSourcePosition winPosition = (lineStart == lineWinner) ? position : XSourcePositionImpl.create(file, lineWinner);
       if (winPosition != null) {
-        Promise<XLineBreakpoint> res = XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor);
+        Promise<XLineBreakpoint> res =
+          XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, typeWinner, winPosition, temporary, editor, canRemove);
 
         if (editor != null && lineStart != lineWinner) {
           int offset = editor.getDocument().getLineStartOffset(lineWinner);
           ExpandRegionAction.expandRegionAtOffset(project, editor, offset);
-          if (moveCarret) {
+          if (moveCaret) {
             editor.getCaretModel().moveToOffset(offset);
           }
         }

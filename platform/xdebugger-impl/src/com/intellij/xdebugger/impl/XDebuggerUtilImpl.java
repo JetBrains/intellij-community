@@ -39,7 +39,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -138,7 +137,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                      final boolean temporary) {
     XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
     if (position != null) {
-      toggleAndReturnLineBreakpoint(project, type, position, temporary, null);
+      toggleAndReturnLineBreakpoint(project, type, position, temporary, null, true);
     }
   }
 
@@ -147,7 +146,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                                          @NotNull final XLineBreakpointType<P> type,
                                                                                                          @NotNull final XSourcePosition position,
                                                                                                          final boolean temporary,
-                                                                                                         @Nullable final Editor editor) {
+                                                                                                         @Nullable final Editor editor,
+                                                                                                         boolean canRemove) {
     return new WriteAction<Promise<XLineBreakpoint>>() {
       @Override
       protected void run(@NotNull Result<Promise<XLineBreakpoint>> result) throws Throwable {
@@ -156,7 +156,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
         XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
         if (breakpoint != null) {
-          if (!temporary && !Registry.is("debugger.click.disable.breakpoints")) {
+          if (!temporary && canRemove) {
             breakpointManager.removeBreakpoint(breakpoint);
           }
         }
