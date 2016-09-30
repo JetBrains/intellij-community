@@ -148,6 +148,9 @@ public class CCShowPreview extends DumbAwareAction {
       }
     });
     for (AnswerPlaceholder answerPlaceholder : taskFile.getActivePlaceholders()) {
+      if (answerPlaceholder.getActiveSubtaskInfo().isNeedInsertText()) {
+        answerPlaceholder.setLength(answerPlaceholder.getTaskText().length());
+      }
       Integer minIndex = Collections.min(answerPlaceholder.getSubtaskInfos().keySet());
       answerPlaceholder.setUseLength(minIndex >= answerPlaceholder.getActiveSubtaskIndex());
       EduAnswerPlaceholderPainter.drawAnswerPlaceholder(createdEditor, answerPlaceholder, JBColor.BLUE);
