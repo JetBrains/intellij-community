@@ -113,6 +113,16 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON34);
   }
 
+  // PY-20805
+  public void testUnusedLocalFStringReferences() {
+    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON36);
+  }
+
+  // PY-8219
+  public void testUnusedLocalDoctestReference() {
+    doHighlightingTest(PyUnusedLocalInspection.class);
+  }
+
   public void testPyDictCreationInspection() {
     doHighlightingTest(PyDictCreationInspection.class, LanguageLevel.PYTHON26);
   }

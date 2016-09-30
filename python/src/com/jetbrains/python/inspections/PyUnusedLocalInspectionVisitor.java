@@ -19,11 +19,15 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInspection.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -44,8 +48,11 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author oleg
@@ -93,6 +100,38 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       collectAllWrites(owner);
     }
     collectUsedReads(owner);
+  }
+
+  @Override
+  public void visitPyStringLiteralExpression(PyStringLiteralExpression pyString) {
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(pyString);
+    if (owner != null && !(owner instanceof PsiFile)) {
+      final PyStatement instrAnchor = PsiTreeUtil.getParentOfType(pyString, PyStatement.class);
+      if (instrAnchor == null) return;
+      final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
+      final int startInstruction = ControlFlowUtil.findInstructionNumberByElement(instructions, instrAnchor);
+      if (startInstruction < 0) return;
+      final Project project = pyString.getProject();
+      final List<Pair<PsiElement, TextRange>> pairs = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(pyString);
+      if (pairs != null) {
+        for (Pair<PsiElement, TextRange> pair : pairs) {
+          pair.getFirst().accept(new PyRecursiveElementVisitor() {
+            @Override
+            public void visitPyReferenceExpression(PyReferenceExpression expr) {
+              final PyExpression qualifier = expr.getQualifier();
+              if (qualifier != null) {
+                qualifier.accept(this);
+                return;
+              }
+              final String name = expr.getName();
+              if (name != null) {
+                analyzeReadsInScope(name, owner, instructions, startInstruction, pyString);
+              }
+            }
+          });
+        }
+      }
+    }
   }
 
   private void collectAllWrites(ScopeOwner owner) {
@@ -180,44 +219,51 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         else {
           startInstruction = i;
         }
-        // Check if the element is declared out of scope, mark all out of scope write accesses as used
-        if (element instanceof PyReferenceExpression) {
-          final PyReferenceExpression ref = (PyReferenceExpression)element;
-          final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(ref, name);
-          if (declOwner != null && declOwner != owner) {
-            Collection<PsiElement> writeElements = ScopeUtil.getReadWriteElements(name, declOwner, false, true);
-            for (PsiElement e : writeElements) {
-              myUsedElements.add(e);
-              myUnusedElements.remove(e);
-            }
-          }
-        }
-        ControlFlowUtil.iteratePrev(startInstruction, instructions, inst -> {
-          final PsiElement element1 = inst.getElement();
-          // Mark function as used
-          if (element1 instanceof PyFunction) {
-            if (name.equals(((PyFunction)element1).getName())){
-              myUsedElements.add(element1);
-              myUnusedElements.remove(element1);
-              return ControlFlowUtil.Operation.CONTINUE;
-            }
-          }
-          // Mark write access as used
-          else if (inst instanceof ReadWriteInstruction) {
-            final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
-            if (rwInstruction.getAccess().isWriteAccess() && name.equals(rwInstruction.getName())) {
-              // For elements in scope
-              if (element1 != null && PsiTreeUtil.isAncestor(owner, element1, false)) {
-                myUsedElements.add(element1);
-                myUnusedElements.remove(element1);
-              }
-              return ControlFlowUtil.Operation.CONTINUE;
-            }
-          }
-          return ControlFlowUtil.Operation.NEXT;
-        });
+        analyzeReadsInScope(name, owner, instructions, startInstruction, as(element, PyReferenceExpression.class));
       }
     }
+  }
+
+  private void analyzeReadsInScope(@NotNull String name, 
+                                   @NotNull ScopeOwner owner,
+                                   @NotNull Instruction[] instructions,
+                                   int startInstruction, 
+                                   @Nullable PsiElement scopeAnchor) {
+    // Check if the element is declared out of scope, mark all out of scope write accesses as used
+    if (scopeAnchor != null) {
+      final ScopeOwner declOwner = ScopeUtil.getDeclarationScopeOwner(scopeAnchor, name);
+      if (declOwner != null && declOwner != owner) {
+        final Collection<PsiElement> writeElements = ScopeUtil.getReadWriteElements(name, declOwner, false, true);
+        for (PsiElement e : writeElements) {
+          myUsedElements.add(e);
+          myUnusedElements.remove(e);
+        }
+      }
+    }
+    ControlFlowUtil.iteratePrev(startInstruction, instructions, inst -> {
+      final PsiElement instElement = inst.getElement();
+      // Mark function as used
+      if (instElement instanceof PyFunction) {
+        if (name.equals(((PyFunction)instElement).getName())){
+          myUsedElements.add(instElement);
+          myUnusedElements.remove(instElement);
+          return ControlFlowUtil.Operation.CONTINUE;
+        }
+      }
+      // Mark write access as used
+      else if (inst instanceof ReadWriteInstruction) {
+        final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)inst;
+        if (rwInstruction.getAccess().isWriteAccess() && name.equals(rwInstruction.getName())) {
+          // For elements in scope
+          if (instElement != null && PsiTreeUtil.isAncestor(owner, instElement, false)) {
+            myUsedElements.add(instElement);
+            myUnusedElements.remove(instElement);
+          }
+          return ControlFlowUtil.Operation.CONTINUE;
+        }
+      }
+      return ControlFlowUtil.Operation.NEXT;
+    });
   }
 
   static class DontPerformException extends RuntimeException {}
