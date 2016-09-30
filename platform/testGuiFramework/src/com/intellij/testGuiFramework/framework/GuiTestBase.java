@@ -343,6 +343,4 @@ public abstract class GuiTestBase {
     });
   }
 
-  public abstract Class<? extends IdeTestApplication> getIdeTestApplicationClass();
-
 }

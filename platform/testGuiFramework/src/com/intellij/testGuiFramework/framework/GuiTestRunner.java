@@ -36,7 +36,6 @@ import java.awt.*;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -60,22 +59,7 @@ public class GuiTestRunner extends BlockJUnit4ClassRunner {
     Class<?> guiTestCaseClass = testClass.getSuperclass();
     //check test extends GuiTestBase
     guiTestCaseClass.isInstance(GuiTestBase.class);
-    try {
-      myIdeTestApplicationClass = (Class<? extends IdeTestApplication>)guiTestCaseClass.getMethod("getIdeTestApplicationClass")
-        .invoke(guiTestCaseClass.newInstance());
-    }
-    catch (NoSuchMethodException e) {
-      e.printStackTrace();
-    }
-    catch (InstantiationException e) {
-      e.printStackTrace();
-    }
-    catch (IllegalAccessException e) {
-      e.printStackTrace();
-    }
-    catch (InvocationTargetException e) {
-      e.printStackTrace();
-    }
+    myIdeTestApplicationClass = guiTestCaseClass.getAnnotation(TestWithIde.class).value();
 
     myScreenshotTaker = canRunGuiTests() ? new ScreenshotTaker() : null;
 

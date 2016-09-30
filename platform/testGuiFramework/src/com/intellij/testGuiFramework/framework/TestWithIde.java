@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.tests
+package com.intellij.testGuiFramework.framework;
 
-import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture
-import com.intellij.testGuiFramework.framework.createNewProject
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import org.junit.Assert
-import org.junit.Test
+import java.lang.annotation.*;
 
 /**
  * @author Sergey Karashevich
  */
-class ShortGuiTest: GuiTestCase() {
 
-  @Test
-  fun testJavaProject(){
-    val createNewProject = createNewProject()
-    val newProjectWizard = findNewProjectWizard()
-    with(newProjectWizard) {
-      clickCancel()
-    }
-    val find = WelcomeFrameFixture.find(myRobot)
-    Assert.assertNotNull(find)
-  }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@Inherited
+public @interface TestWithIde {
+  /**
+   * @return a IdeTestApplication class (must have a getInstance() method that runs apropriate IDE)
+   */
+  Class<? extends IdeTestApplication> value();
 }
-

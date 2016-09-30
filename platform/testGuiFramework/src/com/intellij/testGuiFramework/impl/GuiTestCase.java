@@ -16,7 +16,7 @@
 package com.intellij.testGuiFramework.impl;
 
 import com.intellij.testGuiFramework.framework.GuiTestBase;
-import com.intellij.testGuiFramework.framework.IdeTestApplication;
+import com.intellij.testGuiFramework.framework.TestWithIde;
 import com.intellij.util.net.HttpConfigurable;
 import org.fest.swing.core.FastRobot;
 
@@ -26,6 +26,7 @@ import static com.intellij.testGuiFramework.framework.GuiTestUtil.setUpSdks;
 /**
  * @author Sergey Karashevich
  */
+@TestWithIde(IdeaGuiTestApp.class)
 public class GuiTestCase extends GuiTestBase {
 
   public GuiTestCase() {
@@ -42,12 +43,6 @@ public class GuiTestCase extends GuiTestBase {
     setIdeSettings();
     setUpSdks();
   }
-
-  @Override
-  public Class<? extends IdeTestApplication> getIdeTestApplicationClass() {
-    return IdeTestApplicationImpl.class;
-  }
-
 
   private static void setIdeSettings() {
     // Clear HTTP proxy settings, in case a test changed them.

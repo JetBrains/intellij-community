@@ -49,7 +49,7 @@ import static com.intellij.util.ui.UIUtil.initDefaultLAF;
 import static org.fest.reflect.core.Reflection.method;
 import static org.junit.Assert.assertNotNull;
 
-public class IdeTestApplicationImpl extends IdeTestApplication implements Disposable {
+public class IdeaGuiTestApp extends IdeTestApplication implements Disposable {
   private static final Logger LOG = Logger.getInstance(IdeTestApplication.class);
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
@@ -69,7 +69,7 @@ public class IdeTestApplicationImpl extends IdeTestApplication implements Dispos
     System.setProperty("idea.test.guimode", "true");
 
     if (!isLoaded()) {
-      ourInstance = new IdeTestApplicationImpl();
+      ourInstance = new IdeaGuiTestApp();
       recreateDirectory(configDirPath);
 
       File newProjectsRootDirPath = getProjectCreationDirPath();
@@ -96,7 +96,7 @@ public class IdeTestApplicationImpl extends IdeTestApplication implements Dispos
     ensureExists(path);
   }
 
-  private IdeTestApplicationImpl() throws Exception {
+  private IdeaGuiTestApp() throws Exception {
     String[] args = EMPTY_STRING_ARRAY;
 
     LOG.assertTrue(ourInstance == null, "Only one instance allowed.");

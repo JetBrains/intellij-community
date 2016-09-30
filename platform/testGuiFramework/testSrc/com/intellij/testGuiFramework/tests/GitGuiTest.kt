@@ -26,6 +26,7 @@ import com.intellij.ui.EditorComboBox
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
 import org.fest.swing.fixture.DialogFixture
+import org.junit.Ignore
 import org.junit.Test
 
 /**
@@ -33,7 +34,7 @@ import org.junit.Test
  */
 class GitGuiTest : GuiTestCase() {
 
-  @Test
+  @Test @Ignore
   fun testGitImport(){
     val vcsName = "Git"
     val gitApp = "path_to_git_repo"
@@ -60,7 +61,6 @@ class GitGuiTest : GuiTestCase() {
     with (dialog1) {
       GuiTestUtil.findAndClickButton(this, "Next")
       val textField = GuiTestUtil.findTextField(myRobot, "Project name:").click()
-//      textField.setText("test-project")
       GuiTestUtil.findAndClickButton(this, "Next")
       GuiTestUtil.findAndClickButton(this, "Next")
       GuiTestUtil.findAndClickButton(this, "Next") //libraries

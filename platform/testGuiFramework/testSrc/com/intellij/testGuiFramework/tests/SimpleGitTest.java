@@ -23,13 +23,11 @@ import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.testGuiFramework.impl.GuiTestCase;
 import git4idea.i18n.GitBundle;
 import org.fest.swing.core.FastRobot;
-import org.fest.swing.timing.Pause;
 import org.junit.Test;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static com.intellij.testGuiFramework.matcher.TitleMatcher.withTitleMatcher;
 
 /**
@@ -67,20 +65,11 @@ public class SimpleGitTest extends GuiTestCase {
       GuiTestUtil.invokeActionViaShortcut(myRobot, "meta K");
 
       DialogFixture commitDialogFixture = DialogFixture.find(myRobot, VcsBundle.message("commit.dialog.title"));
-      //EditorTextField editorTextField = myRobot.finder().findByType(commitDialogFixture.target(), EditorTextField.class);
-      //editorTextField.getDocument().setText("");
       myRobot.enterText("initial commit");
       GuiTestUtil.findAndClickButton(commitDialogFixture, "Commit");
 
       MessagesFixture.findByTitle(myRobot, commitDialogFixture.target(), VcsBundle.message("code.smells.error.messages.tab.name"))
         .click("Commit");
-
-      Pause.pause(SHORT_TIMEOUT.duration());
-
-      //create file in project src/Second.java
-      //init git
-      //add Second.java to git
-      //commit
     }
     catch (IOException e) {
       e.printStackTrace();
