@@ -112,7 +112,7 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
         if(EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(falseExpression, condition.getElseExpression())) {
           return generateOptionalUnwrap(
             stream + ".filter(" + LambdaUtil.createLambda(var, condition.getCondition()) + ")", tb,
-            condition.getThenExpression(), falseExpression, var.getType());
+            condition.getThenExpression(), falseExpression, targetType);
         }
       }
       trueExpression =
