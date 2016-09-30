@@ -28,7 +28,6 @@ public class AnswerPlaceholder {
 
   private int myIndex = -1;
   private MyInitialState myInitialState;
-  private StudyStatus myStatus = StudyStatus.Unchecked;
   private boolean mySelected = false;
   private boolean myUseLength = true;
 
@@ -39,12 +38,13 @@ public class AnswerPlaceholder {
   }
 
   public void initAnswerPlaceholder(final TaskFile file, boolean isRestarted) {
+    setTaskFile(file);
     if (!isRestarted) {
       setInitialState(new MyInitialState(myOffset, length));
-      myStatus = file.getTask().getStatus();
+      for (AnswerPlaceholderSubtaskInfo info : getSubtaskInfos().values()) {
+        info.setStatus(file.getTask().getStatus());
+      }
     }
-
-    setTaskFile(file);
   }
 
   public int getIndex() {
@@ -117,11 +117,12 @@ public class AnswerPlaceholder {
   }
 
   public StudyStatus getStatus() {
-    return myStatus;
+    AnswerPlaceholderSubtaskInfo info = getActiveSubtaskInfo();
+    return info != null ? info.getStatus() : StudyStatus.Unchecked;
   }
 
   public void setStatus(StudyStatus status) {
-    myStatus = status;
+    getActiveSubtaskInfo().setStatus(status);
   }
 
   public boolean getSelected() {
