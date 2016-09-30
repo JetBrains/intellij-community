@@ -23,13 +23,13 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -182,14 +182,15 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     return key;
   }
 
+  @Nullable
   public TextAttributesKey getFallbackAttributeKey() {
     return myFallbackAttributeKey;
   }
 
-  public void setFallbackAttributeKey(TextAttributesKey fallbackAttributeKey) {
+  public void setFallbackAttributeKey(@Nullable TextAttributesKey fallbackAttributeKey) {
     myFallbackAttributeKey = fallbackAttributeKey;
     if (fallbackAttributeKey != null) {
-      checkDependencies(fallbackAttributeKey, new HashSet<TextAttributesKey>());
+      checkDependencies(fallbackAttributeKey, new THashSet<TextAttributesKey>());
     }
   }
   
@@ -204,33 +205,30 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     TextAttributes getDefaultAttributes(TextAttributesKey key);
   }
 
-  private void checkDependencies(@Nullable TextAttributesKey key, Set<TextAttributesKey> referencedKeys) {
-    if (key != null) {
-      if (!referencedKeys.contains(key)) {
-        referencedKeys.add(key);
-        TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-        if (fallbackKey != null) {
-          checkDependencies(fallbackKey, referencedKeys);
-        }
+  private void checkDependencies(@NotNull TextAttributesKey key, @NotNull Set<TextAttributesKey> referencedKeys) {
+    if (referencedKeys.add(key)) {
+      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+      if (fallbackKey != null) {
+        checkDependencies(fallbackKey, referencedKeys);
       }
-      else {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Cyclic TextAttributesKey dependency found: ");
-        printDependencyLoop(sb, key);
-        myFallbackAttributeKey = null;
-        LOG.error(sb.toString());
-      }
+    }
+    else {
+      StringBuilder sb = new StringBuilder();
+      sb.append("Cyclic TextAttributesKey dependency found: ");
+      printDependencyLoop(sb, key);
+      myFallbackAttributeKey = null;
+      LOG.error(sb.toString());
     }
   }
 
-  private void printDependencyLoop(@NotNull StringBuilder stringBuilder,
-                                   @NotNull TextAttributesKey currNode) {
+  private void printDependencyLoop(@NotNull StringBuilder stringBuilder, @NotNull TextAttributesKey currNode) {
     stringBuilder.append(currNode.getExternalName()).append("->");
     TextAttributesKey fallbackKey = currNode.getFallbackAttributeKey();
     if (fallbackKey == this) {
       stringBuilder.append(getExternalName());
-      return;
     }
-    printDependencyLoop(stringBuilder, fallbackKey);
+    else if (fallbackKey != null) {
+      printDependencyLoop(stringBuilder, fallbackKey);
+    }
   }
 }
