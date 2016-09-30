@@ -39,6 +39,9 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
 
   private final HashMap<XDebugSession, ClassesFilteredView> myMemoryViews = new HashMap<>();
 
+  @Nullable
+  private ClassesFilteredView myCurrentView = null;
+
   {
     myEmptyContent = new JBLabel("Run debugging to see loaded classes", SwingConstants.CENTER);
   }
@@ -65,14 +68,15 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
           public void stateChanged() {
             if (!myMemoryViews.isEmpty() && !toolWindow.isDisposed()) {
               myMemoryViews.values().forEach(classesFilteredView ->
-                  classesFilteredView.setNeedReloadClasses(toolWindow.isVisible()));
+                  classesFilteredView.setActive(toolWindow.isVisible()));
             }
           }
         }, project);
 
     ActionGroup group = new DefaultActionGroup(
         ActionManager.getInstance().getAction("MemoryView.ShowOnlyWithInstances"),
-        ActionManager.getInstance().getAction("MemoryView.ShowOnlyWithDiff")
+        ActionManager.getInstance().getAction("MemoryView.ShowOnlyWithDiff"),
+        ActionManager.getInstance().getAction("MemoryView.EnableTrackingWithClosedWindow")
     );
     ((ToolWindowEx) toolWindow).setAdditionalGearActions(group);
     toolWindow.getComponent().setLayout(new BorderLayout());
@@ -88,16 +92,14 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
     ToolWindow toolWindow = getToolWindow(session.getProject());
     if (!myMemoryViews.containsKey(session)) {
       ClassesFilteredView newView = new ClassesFilteredView(session);
-      newView.setNeedReloadClasses(toolWindow != null && toolWindow.isVisible());
+      newView.setActive(toolWindow != null && toolWindow.isVisible());
       myMemoryViews.put(session, newView);
     }
   }
 
   private void removeSession(@NotNull XDebugSession session) {
     ClassesFilteredView removed = myMemoryViews.remove(session);
-    if(removed != null) {
-      Disposer.dispose(removed);
-    }
+    Disposer.dispose(removed);
   }
 
   private void updateCurrentMemoryView(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -106,6 +108,11 @@ public class MemoryViewToolWindowFactory implements ToolWindowFactory, DumbAware
       if (session != null && myMemoryViews.containsKey(session)) {
         ClassesFilteredView view = myMemoryViews.get(session);
         replaceToolWindowContent(toolWindow, view);
+        if (myCurrentView != null) {
+          myCurrentView.setActive(true);
+        }
+
+        myCurrentView = view;
         return;
       }
     }

@@ -65,9 +65,11 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private final ClassesTable myTable;
   private final InstancesTracker myInstancesTracker;
   private final Map<ReferenceType, ConstructorInstancesTracker> myConstructorTrackedClasses = new ConcurrentHashMap<>();
+  private final XDebugSessionListener myDebugSessionListener;
 
   private volatile SuspendContextImpl myLastSuspendContext;
-  private volatile boolean myNeedReloadClasses = false;
+
+  private boolean myIsActive;
 
   public ClassesFilteredView(@NotNull XDebugSession debugSession) {
     super();
@@ -192,7 +194,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
     MemoryViewManager.getInstance().addMemoryViewManagerListener(memoryViewManagerListener, this);
 
-    myDebugSession.addSessionListener(new XDebugSessionListener() {
+    myDebugSessionListener = new XDebugSessionListener() {
       @Override
       public void sessionResumed() {
         myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::obsolete);
@@ -211,12 +213,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       @Override
       public void sessionPaused() {
         SwingUtilities.invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
-        if (myNeedReloadClasses) {
-          commitAllTrackers();
-          updateClassesAndCounts();
-        }
+        commitAllTrackers();
+        updateClassesAndCounts();
       }
-    }, this);
+    };
 
     mySingleAlarm = new SingleAlarmWithMutableDelay(() -> {
       myLastSuspendContext = getSuspendContext();
@@ -249,19 +249,6 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
     return myConstructorTrackedClasses.getOrDefault(ref, null);
   }
 
-  public void setNeedReloadClasses(boolean value) {
-    if (myNeedReloadClasses != value) {
-      myNeedReloadClasses = value;
-      if (myNeedReloadClasses) {
-        SuspendContextImpl suspendContext = getSuspendContext();
-        if (suspendContext != null && !suspendContext.equals(myLastSuspendContext)) {
-          commitAllTrackers();
-          updateClassesAndCounts();
-        }
-      }
-    }
-  }
-
   private void trackClass(@NotNull ReferenceType ref,
                           @NotNull TrackingType type) {
     LOG.assertTrue(DebuggerManager.getInstance(myProject).isDebuggerManagerThread());
@@ -272,6 +259,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
       }
 
       ConstructorInstancesTracker tracker = new ConstructorInstancesTracker(ref, myDebugSession);
+      tracker.setBackgroundMode(!myIsActive);
+
       Disposer.register(ClassesFilteredView.this, tracker);
       myConstructorTrackedClasses.put(ref, tracker);
     }
@@ -305,11 +294,42 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   boolean isTrackingActive(@NotNull ReferenceType ref) {
     TrackerForNewInstances strategy = myConstructorTrackedClasses.getOrDefault(ref, null);
     return strategy != null && strategy.isReady();
-
   }
 
   @Override
   public void dispose() {
+  }
+
+  public void setActive(boolean active) {
+    if (myIsActive == active) {
+      return;
+    }
+
+    myIsActive = active;
+    myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+      @Override
+      protected void action() throws Exception {
+        if (active) {
+          doActivate();
+        } else {
+          doPause();
+        }
+      }
+    });
+  }
+
+  private void doActivate() {
+    myDebugSession.addSessionListener(myDebugSessionListener, ClassesFilteredView.this);
+    if (getSuspendContext() != null) {
+      myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(false));
+      commitAllTrackers();
+      updateClassesAndCounts();
+    }
+  }
+
+  private void doPause() {
+    myDebugSession.removeSessionListener(myDebugSessionListener);
+    myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(true));
   }
 
   private final class MyUpdateClassesCommand extends LowestPriorityCommand {

@@ -34,6 +34,10 @@ public class InstancesTracker extends AbstractProjectComponent
     return myState.classes.containsKey(className);
   }
 
+  public boolean isBackgroundTrackingEnabled() {
+    return myState.isBackgroundTrackingEnabled;
+  }
+
   @Nullable
   public TrackingType getTrackingType(@NotNull String className) {
     return myState.classes.getOrDefault(className, null);
@@ -69,6 +73,14 @@ public class InstancesTracker extends AbstractProjectComponent
     myDispatcher.addListener(listener, parentDisposable);
   }
 
+  public void setBackgroundTackingEnabled(boolean state) {
+    boolean oldState = myState.isBackgroundTrackingEnabled;
+    if(state != oldState) {
+      myState.isBackgroundTrackingEnabled = state;
+      myDispatcher.getMulticaster().backgroundTrackingValueChanged(state);
+    }
+  }
+
   @Nullable
   @Override
   public MyState getState() {
@@ -81,6 +93,8 @@ public class InstancesTracker extends AbstractProjectComponent
   }
 
   static class MyState {
+    boolean isBackgroundTrackingEnabled = false;
+
     @NotNull
     @AbstractCollection(surroundWithTag = false, elementTypes = {Map.Entry.class})
     final Map<String, TrackingType> classes = new ConcurrentHashMap<>();
@@ -89,6 +103,7 @@ public class InstancesTracker extends AbstractProjectComponent
     }
 
     MyState(@NotNull MyState state) {
+      isBackgroundTrackingEnabled = state.isBackgroundTrackingEnabled;
       for (Map.Entry<String, TrackingType> classState : state.classes.entrySet()) {
         classes.put(classState.getKey(), classState.getValue());
       }
