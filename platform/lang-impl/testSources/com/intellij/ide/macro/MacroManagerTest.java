@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -74,5 +76,10 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
     String actual = MacroManager.getInstance().expandMacrosInString(args, false, getContext(file.getVirtualFile()));
     String expected = "ans: " + StringUtil.trimEnd(file.getVirtualFile().getParent().getPath(), "/") + "/ ";
     assertEquals(expected, actual);
+  }
+
+  public void testContentRootMacro() throws Exception {
+    doTest("foo/bar/baz.txt", "$ContentRoot$",
+           FileUtil.toSystemDependentName(ModuleRootManager.getInstance(myModule).getContentRoots()[0].getPath()));
   }
 }
