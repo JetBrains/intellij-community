@@ -313,21 +313,12 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
 
   private static void reformatBlock(final Project project, final Editor editor, final int startOffset, final int endOffset) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Runnable task = () -> {
-      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      try {
-        CodeStyleManager.getInstance(project).reformatRange(file, startOffset, endOffset, true);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
-    };
-
-    if (endOffset - startOffset > 1000) {
-      DocumentUtil.executeInBulk(editor.getDocument(), true, task);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    try {
+      CodeStyleManager.getInstance(project).reformatRange(file, startOffset, endOffset, true);
     }
-    else {
-      task.run();
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
     }
   }
 
