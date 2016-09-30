@@ -15,9 +15,11 @@
  */
 package com.intellij.testGuiFramework.impl;
 
+import com.intellij.testFramework.vcs.ExecutableHelper;
 import com.intellij.testGuiFramework.framework.GuiTestBase;
 import com.intellij.testGuiFramework.framework.TestWithIde;
 import com.intellij.util.net.HttpConfigurable;
+import git4idea.config.GitVcsApplicationSettings;
 import org.fest.swing.core.FastRobot;
 
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.setUpDefaultProjectCreationLocationPath;
@@ -42,6 +44,7 @@ public class GuiTestCase extends GuiTestBase {
 
     setIdeSettings();
     setUpSdks();
+    setPathToGit();
   }
 
   private static void setIdeSettings() {
@@ -50,6 +53,10 @@ public class GuiTestCase extends GuiTestBase {
     ideSettings.USE_HTTP_PROXY = false;
     ideSettings.PROXY_HOST = "";
     ideSettings.PROXY_PORT = 80;
+  }
+
+  private static void setPathToGit() {
+    GitVcsApplicationSettings.getInstance().setPathToGit(ExecutableHelper.findGitExecutable());
   }
 
 }
