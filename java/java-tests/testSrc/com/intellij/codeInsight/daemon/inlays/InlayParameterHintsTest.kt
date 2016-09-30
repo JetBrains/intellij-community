@@ -305,14 +305,19 @@ public class Test {
     setup("""
 public class Test {
   
+  List<String> list = new ArrayList<>();
+  StringBuilder builder = new StringBuilder();
+
   public void main() {
-    println("A");
-    print("A");
-    get(1);
-    set(1, new Object());
+    System.out.println("A");
+    System.out.print("A");
+    
+    list.get(1);
+    list.set(1, "sss");
+    
     setNewIndex(10);
     "sss".contains("s");
-    append("sdfsdf");
+    builder.append("sdfsdf");
     "sfsdf".startWith("s");
     "sss".charAt(3);
     
@@ -341,9 +346,18 @@ public class Test {
     settings.minParamNameLengthToShow = 1
     
     setup("""
-import java.util.*;
+
+class QList<E> {
+  void add(int query, E obj) {}
+}
+
+class QCmp<E> {
+  void compare(E o1, E o2) {}
+}
+
+
 public class Test {
-  public void main(Comparator<Integer> c, List<String> l) {
+  public void main(QCmp<Integer> c, QList<String> l) {
     c.compare(0, /** ddd */3);
     l.add(1, "uuu");
   }
@@ -354,7 +368,7 @@ public class Test {
         .assertInlays("o1->0", "o2->3")
     
     onLineStartingWith("l.add")
-        .assertInlays("index->1", """element->"uuu"""")
+        .assertInlays("query->1", """obj->"uuu"""")
   }
   
   fun `test inline constructor literal arguments names`() {
@@ -467,16 +481,12 @@ public class VarArgTest {
 class Test {
   
   public void main() {
-    "qq".replace("a", "a");
-    "ww".replace('a', 'b');
     String.format("line", "eee", "www");
   }
   
 }
 """)
     
-    onLineStartingWith("\"q").assertNoInlays()
-    onLineStartingWith("\"w").assertNoInlays()
     onLineStartingWith("String").assertNoInlays()
   }
 
@@ -553,6 +563,30 @@ public class Test {
 
     onLineStartingWith("debug(").assertInlays("message->\"Debug\"", "title->\"DTitle\"")
     onLineStartingWith("info(").assertInlays("message->\"Error message\"", "title->\"Title\"")
+  }
+  
+  fun `test show single`() {
+    setup("""
+class Test {
+
+  void main() {
+    blah(1, 2);
+    int z = 2;
+    draw(10, 20, z);
+    int x = 10;
+    int y = 12;
+    drawRect(x, y, 10, 12);
+  }
+
+  void draw(int x, int y, int z) {}
+  void drawRect(int x, int y, int w, int h) {}
+
+}
+""")
+    
+    onLineStartingWith("blah").assertNoInlays()
+    onLineStartingWith("draw").assertInlays("x->10", "y->20")
+    onLineStartingWith("drawRect").assertInlays("w->10", "h->12")
   }
   
   private fun getInlays(): List<Inlay> {
