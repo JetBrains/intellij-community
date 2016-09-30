@@ -415,7 +415,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     int height = myIpad.top + myIpad.bottom;
 
     final FontMetrics metrics = getFontMetrics(font);
-    int textHeight = metrics.getHeight();
+    int textHeight = Math.max(JBUI.scale(16), metrics.getHeight()); //avoid too narrow rows
     textHeight += borderInsets.top + borderInsets.bottom;
 
     if (myIcon != null) {
