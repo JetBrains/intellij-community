@@ -409,12 +409,15 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement nextStatement) {
-    if(var.getInitializer() == null) return UNKNOWN;
+    if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
     if(isDeclarationJustBefore(var, nextStatement)) return DECLARED_JUST_BEFORE;
     PsiElement declaration = var.getParent();
     // Check if variable is not referenced in the same declaration like "int a = 0, b = a;"
     if(!PsiTreeUtil.processElements(declaration, e -> !(e instanceof PsiReferenceExpression) ||
                                                   ((PsiReferenceExpression)e).resolve() != var)) return UNKNOWN;
+    // Check that variable is declared in the same method or the same lambda expression
+    if(PsiTreeUtil.getParentOfType(var, PsiLambdaExpression.class, PsiMethod.class) !=
+       PsiTreeUtil.getParentOfType(nextStatement, PsiLambdaExpression.class, PsiMethod.class)) return UNKNOWN;
     PsiElement block = PsiUtil.getVariableCodeBlock(var, null);
     if(block == null) return UNKNOWN;
     final ControlFlow controlFlow;
