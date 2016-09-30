@@ -61,11 +61,7 @@ public class UnversionedViewDialog extends DialogWrapper {
     super(project, true);
     setTitle("Unversioned Files");
     myProject = project;
-    final Runnable closer = new Runnable() {
-      public void run() {
-        UnversionedViewDialog.this.close(0);
-      }
-    };
+    final Runnable closer = () -> this.close(0);
     myView = new ChangesListView(project) {
       @Override
       public void calcData(DataKey key, DataSink sink) {
@@ -219,13 +215,11 @@ public class UnversionedViewDialog extends DialogWrapper {
     if (myInRefresh) return;
     myInRefresh = true;
     
-    myChangeListManager.invokeAfterUpdate(new Runnable() {
-      public void run() {
-        try {
-          initData(((ChangeListManagerImpl) myChangeListManager).getUnversionedFiles());
-        } finally {
-          myInRefresh = false;
-        }
+    myChangeListManager.invokeAfterUpdate(() -> {
+      try {
+        initData(((ChangeListManagerImpl) myChangeListManager).getUnversionedFiles());
+      } finally {
+        myInRefresh = false;
       }
     }, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.current());
   }
