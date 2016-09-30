@@ -6,6 +6,7 @@
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.MisspelledMethodNameInspectionMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.junit.MalformedSetUpTearDownInspectionMerger"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.inheritance.MethodDoesntCallSuperMethodInspectionMerger"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.threading.WaitNotifyNotInSynchronizedContextInspectionMerger"/>
 
     <!--group.names.abstraction.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="boolean.parameter.display.name"
@@ -2630,10 +2631,6 @@
                      key="notify.called.on.condition.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.threading.NotifyCalledOnConditionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="NotifyNotInSynchronizedContext" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="notify.not.in.synchronized.context.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.threading.NotifyNotInSynchronizedContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NotifyWithoutCorrespondingWait" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="notify.without.corresponding.wait.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
@@ -2734,10 +2731,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="WaitNotInLoop" bundle="com.siyeh.InspectionGadgetsBundle" key="wait.not.in.loop.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.threading.WaitNotInLoopInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="WaitWhileNotSynced" shortName="WaitNotInSynchronizedContext" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="wait.not.in.synchronized.context.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.threading.WaitNotInSynchronizedContextInspection"/>
+    <localInspection groupPath="Java" language="JAVA" suppressId="WaitNotifyWhileNotSynced" shortName="WaitNotifyNotInSynchronizedContext"
+                     bundle="com.siyeh.InspectionGadgetsBundle" key="wait.notify.not.in.synchronized.context.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.threading.WaitNotifyNotInSynchronizedContextInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="WaitOrAwaitWithoutTimeout" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="wait.or.await.without.timeout.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.threading.issues" enabledByDefault="false" level="WARNING"

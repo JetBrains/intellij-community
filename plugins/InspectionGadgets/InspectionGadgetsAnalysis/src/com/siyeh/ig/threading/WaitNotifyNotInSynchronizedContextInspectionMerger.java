@@ -15,19 +15,30 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInspection.ex.InspectionElementsMerger;
 
-public class WaitNotInSynchronizedContextInspectionTest extends LightInspectionTestCase {
-
-  public void testWaitNotInSynchronizedContext() {
-    doTest();
+/**
+ * @author Bas Leijdekkers
+ */
+public class WaitNotifyNotInSynchronizedContextInspectionMerger extends InspectionElementsMerger {
+  @Override
+  public String getMergedToolName() {
+    return "WaitNotifyNotInSynchronizedContext";
   }
 
-  @Nullable
   @Override
-  protected InspectionProfileEntry getInspection() {
-    return new WaitNotInSynchronizedContextInspection();
+  public String[] getSourceToolNames() {
+    return new String[] {
+      "WaitNotInSynchronizedContext",
+      "NotifyNotInSynchronizedContext"
+    };
+  }
+
+  @Override
+  public String[] getSuppressIds() {
+    return new String[]{
+      "WaitWhileNotSynced",
+      "WaitNotInSynchronizedContext"
+    };
   }
 }

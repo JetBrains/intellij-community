@@ -1,6 +1,6 @@
 package com.siyeh.igtest.threading.wait_not_in_synchronized_context;
 
-public class WaitNotInSynchronizedContext {
+public class WaitNotifyNotInSynchronizedContext {
   private final Object lock = new Object();
   private final Object otherLock = new Object();
 
@@ -19,7 +19,7 @@ public class WaitNotInSynchronizedContext {
   }
 
   public static void main(String[] args) throws InterruptedException {
-    new WaitNotInSynchronizedContext().foo();
+    new WaitNotifyNotInSynchronizedContext().foo();
   }
 
 }
@@ -35,6 +35,40 @@ class More {
   public  void barzoomb() throws InterruptedException {
     synchronized (lock) {
       lock.wait();
+    }
+  }
+}
+class NotifyNotInSynchronizedContext
+{
+  private final Object lock = new Object();
+
+  public  void foo()
+  {
+    <warning descr="Call to 'lock.notify()' while not synchronized on 'lock'">lock.notify()</warning>;
+  }
+  public  synchronized void bar()
+  {
+    <warning descr="Call to 'lock.notify()' while not synchronized on 'lock'">lock.notify()</warning>;
+  }
+
+  public  void barzoomb() {
+    synchronized (lock) {
+      lock.notify();
+    }
+  }
+
+  public  void fooAll()
+  {
+    <warning descr="Call to 'lock.notifyAll()' while not synchronized on 'lock'">lock.notifyAll()</warning>;
+  }
+  public  synchronized void barAll()
+  {
+    <warning descr="Call to 'lock.notifyAll()' while not synchronized on 'lock'">lock.notifyAll()</warning>;
+  }
+
+  public  void barzoombAll() {
+    synchronized (lock) {
+      lock.notifyAll();
     }
   }
 }
