@@ -996,7 +996,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     private Insets myInsets;
 
     public MyBorder() {
-      myInsets = new JBInsets(1, 1, 1, 1);
+      myInsets = JBUI.insets(1);
     }
 
     public void setInsets(final Insets insets) {
