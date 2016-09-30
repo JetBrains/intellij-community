@@ -22,19 +22,18 @@
     </extensions>
 
     <application-components>
-        <component>
-            <implementation-class>circlet.components.IdePluginClient</implementation-class>
-        </component>
     </application-components>
 
     <project-components>
-        <!-- Add your project components here -->
+        <component>
+            <implementation-class>circlet.components.IdePluginClient</implementation-class>
+        </component>
     </project-components>
 
     <actions>
 
         <action class="circlet.actions.ConnectAction" text="Connect To Circlet..." id="ConnectAction"/>
-        <action class="circlet.actions.DisconnectAction" text="Connect To Circlet..." id="DisconnectAction"/>
+        <action class="circlet.actions.DisconnectAction" text="Disconnect From Circlet..." id="DisconnectAction"/>
 
         <group text="Circlet" id="CircletGroup">
             <add-to-group group-id="ToolsMenu" anchor="last"/>

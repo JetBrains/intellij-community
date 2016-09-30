@@ -8,7 +8,6 @@ plugins {
     id "org.jetbrains.intellij" version "0.1.10"
 }
 
-
 // temparary hack to prevent slf4j version conflict. To be fixed as soon as Zolotov is back from vacation.
 gradle.taskGraph.whenReady {taskGraph ->
     project.tasks.prepareSandbox.doLast{
