@@ -97,6 +97,36 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
       if(status != InitializerUsageStatus.UNKNOWN) {
         PsiExpression initializer = variable.getInitializer();
         LOG.assertTrue(initializer != null);
+        PsiMethodCallExpression toArrayExpression =
+          StreamApiMigrationInspection.extractToArrayExpression(foreachStatement, methodCallExpression);
+        if(toArrayExpression != null) {
+          PsiType type = initializer.getType();
+          if(type instanceof PsiClassType) {
+            String replacement = StreamApiMigrationInspection.COLLECTION_TO_ARRAY.get(((PsiClassType)type).rawType().getCanonicalText());
+            if(replacement != null) {
+              builder.append(".").append(replacement);
+              PsiExpression[] args = toArrayExpression.getArgumentList().getExpressions();
+              if(args.length == 0) {
+                builder.append("()");
+              } else {
+                if(args.length != 1 || !(args[0] instanceof PsiNewExpression)) return;
+                PsiNewExpression newArray = (PsiNewExpression)args[0];
+                PsiType arrayType = newArray.getType();
+                if(arrayType == null) return;
+                String name = arrayType.getCanonicalText();
+                builder.append('(').append(name).append("::new)");
+              }
+              PsiElement result =
+                toArrayExpression.replace(elementFactory.createExpressionFromText(builder.toString(), toArrayExpression));
+              removeLoop(foreachStatement);
+              if(status != InitializerUsageStatus.AT_WANTED_PLACE) {
+                variable.delete();
+              }
+              simplifyAndFormat(project, result);
+              return;
+            }
+          }
+        }
         String callText = builder.append(".collect(java.util.stream.Collectors.")
           .append(createInitializerReplacementText(qualifierExpression.getType(), initializer))
           .append(")").toString();
