@@ -286,7 +286,7 @@ public class XLineBreakpointManager {
                                                editor,
                                                mouseEvent.isAltDown(),
                                                false,
-                                               !Registry.is("debugger.click.disable.breakpoints"));
+                                               !mouseEvent.isShiftDown() && !Registry.is("debugger.click.disable.breakpoints"));
         lineBreakpoint
           .done(breakpoint -> {
             if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
