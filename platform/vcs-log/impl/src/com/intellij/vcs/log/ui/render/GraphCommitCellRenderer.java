@@ -317,7 +317,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
     @NotNull
     private Icon createEmptyIcon(int height) {
-      return EmptyIcon.create(height + (height / 4), height);
+      return EmptyIcon.create(LabelIcon.getWidth(height, 2), height);
     }
 
     @NotNull
