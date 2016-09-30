@@ -78,44 +78,7 @@ public class StudySubtaskUtils {
                                              int toSubtaskIndex) {
     taskFile.setTrackLengths(false);
     for (AnswerPlaceholder placeholder : taskFile.getAnswerPlaceholders()) {
-      AnswerPlaceholderSubtaskInfo fromSubtaskInfo = placeholder.getSubtaskInfos().get(fromSubtaskIndex);
-      if (fromSubtaskIndex == toSubtaskIndex && fromSubtaskInfo != null) {
-        String placeholderText = fromSubtaskInfo.getPlaceholderText();
-        if (placeholderText != null) {
-          EduUtils.replaceAnswerPlaceholder(project, document, placeholder, placeholder.getRealLength(), placeholderText);
-        }
-        continue;
-      }
-      Set<Integer> indexes = placeholder.getSubtaskInfos().keySet();
-      Integer minIndex = Collections.min(indexes);
-      int visibleLength = placeholder.getVisibleLength(fromSubtaskIndex);
-      if (indexes.contains(toSubtaskIndex) && indexes.contains(fromSubtaskIndex)) {
-        if (!placeholder.getUseLength()) {
-          String replacementText = placeholder.getSubtaskInfos().get(toSubtaskIndex).getPossibleAnswer();
-          EduUtils.replaceAnswerPlaceholder(project, document, placeholder, visibleLength, replacementText);
-        }
-        continue;
-      }
-      if (fromSubtaskIndex < toSubtaskIndex) {
-        if (minIndex > fromSubtaskIndex && minIndex <= toSubtaskIndex) {
-          Integer maxIndex = Collections.max(ContainerUtil.filter(indexes, integer -> integer <= toSubtaskIndex));
-          AnswerPlaceholderSubtaskInfo maxInfo = placeholder.getSubtaskInfos().get(maxIndex);
-          String replacementText = placeholder.getUseLength() ? maxInfo.getPlaceholderText() : maxInfo.getPossibleAnswer();
-          EduUtils.replaceAnswerPlaceholder(project, document, placeholder, visibleLength, replacementText);
-        }
-      }
-      else {
-        if (minIndex > toSubtaskIndex && minIndex <= fromSubtaskIndex) {
-          AnswerPlaceholderSubtaskInfo minInfo = placeholder.getSubtaskInfos().get(minIndex);
-          if (minInfo.isNeedInsertText()) {
-            EduUtils.replaceAnswerPlaceholder(project, document, placeholder, visibleLength, "");
-          }
-          else {
-            String replacementText = minInfo.getPlaceholderText();
-            EduUtils.replaceAnswerPlaceholder(project, document, placeholder, visibleLength, replacementText);
-          }
-        }
-      }
+      placeholder.switchSubtask(project, document, fromSubtaskIndex, toSubtaskIndex);
     }
     taskFile.setTrackLengths(true);
   }
