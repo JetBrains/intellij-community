@@ -71,4 +71,19 @@ class NotifyNotInSynchronizedContext
       lock.notifyAll();
     }
   }
+
+  public void suppressed() throws InterruptedException {
+    //noinspection NotifyNotInSynchronizedContext
+    lock.notify();
+    //noinspection WaitWhileNotSynced
+    lock.wait();
+  }
+
+  /**
+   * @GuardedBy(lock)
+   */
+  public void guarded() throws InterruptedException {
+    lock.wait();
+    lock.notifyAll();
+  }
 }

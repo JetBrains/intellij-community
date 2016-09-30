@@ -38,7 +38,7 @@ public class WaitNotifyNotInSynchronizedContextInspectionMerger extends Inspecti
   public String[] getSuppressIds() {
     return new String[]{
       "WaitWhileNotSynced",
-      "WaitNotInSynchronizedContext"
+      "NotifyNotInSynchronizedContext"
     };
   }
 }

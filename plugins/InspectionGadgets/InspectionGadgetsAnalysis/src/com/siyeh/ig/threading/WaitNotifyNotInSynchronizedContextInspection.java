@@ -15,18 +15,16 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -62,28 +60,14 @@ public class WaitNotifyNotInSynchronizedContextInspection extends BaseInspection
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
+      if (!ThreadingUtils.isNotifyOrNotifyAllCall(expression) &&
+          !ThreadingUtils.isWaitCall(expression)) {
+        return;
+      }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      @NonNls final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.WAIT.equals(methodName) &&
-          !HardcodedMethodConstants.NOTIFY.equals(methodName) &&
-          !HardcodedMethodConstants.NOTIFY_ALL.equals(methodName)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      final String qualifiedName = aClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) {
-        return;
-      }
       final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
       if (qualifier == null || qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
-        if (isSynchronizedOnThis(expression)) {
+        if (isSynchronizedOnThis(expression) || isCoveredByGuardedByAnnotation(expression, "this")) {
           return;
         }
         registerError(expression, PsiKeyword.THIS);
@@ -92,8 +76,20 @@ public class WaitNotifyNotInSynchronizedContextInspection extends BaseInspection
         if (isSynchronizedOn(expression, qualifier)) {
           return;
         }
-        registerError(expression, qualifier.getText());
+        final String text = qualifier.getText();
+        if (isCoveredByGuardedByAnnotation(expression, text)) {
+          return;
+        }
+        registerError(expression, text);
       }
+    }
+
+    private static boolean isCoveredByGuardedByAnnotation(PsiElement context, String guard) {
+      final PsiMember member = PsiTreeUtil.getParentOfType(context, PsiMember.class);
+      if (member == null) {
+        return false;
+      }
+      return guard.equals(JCiPUtil.findGuardForMember(member));
     }
 
     private static boolean isSynchronizedOn(@NotNull PsiElement element, @NotNull PsiExpression target) {
