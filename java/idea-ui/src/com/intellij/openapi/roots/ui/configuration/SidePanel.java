@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.ui.EmptyIcon;
@@ -33,61 +32,53 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class SidePanel extends JPanel {
-
-  private final JList myList;
-  private final DefaultListModel myModel;
+  private final JList<SidePanelItem> myList;
+  private final DefaultListModel<SidePanelItem> myModel;
   private final Place.Navigator myNavigator;
-  private final ArrayList<Place> myPlaces = new ArrayList<>();
 
   private final Map<Integer, String> myIndex2Separator = new HashMap<>();
-  private final Map<Place, Presentation> myPlace2Presentation = new HashMap<>();
-  private final History myHistory;
 
-  public SidePanel(Place.Navigator navigator, History history) {
-    myHistory = history;
+  public SidePanel(Place.Navigator navigator) {
     myNavigator = navigator;
 
     setLayout(new BorderLayout());
 
-    myModel = new DefaultListModel();
-    myList = new JBList(myModel);
+    myModel = new DefaultListModel<>();
+    myList = new JBList<>(myModel);
     myList.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     myList.setBorder(new EmptyBorder(5, 0, 0, 0));
-    final ListItemDescriptor descriptor = new ListItemDescriptor() {
+    final ListItemDescriptor<SidePanelItem> descriptor = new ListItemDescriptor<SidePanelItem>() {
       @Override
-      public String getTextFor(final Object value) {
-        return myPlace2Presentation.get(value).getText();
+      public String getTextFor(final SidePanelItem value) {
+        return value.myText;
       }
 
       @Override
-      public String getTooltipFor(final Object value) {
-        return getTextFor(value);
+      public String getTooltipFor(final SidePanelItem value) {
+        return value.myText;
       }
 
       @Override
-      public Icon getIconFor(final Object value) {
+      public Icon getIconFor(final SidePanelItem value) {
         return EmptyIcon.create(16, 20);
-        //return myPlace2Presentation.get(value).getIcon();
       }
 
       @Override
-      public boolean hasSeparatorAboveOf(final Object value) {
-        return getSeparatorAbove((Place)value) != null;
+      public boolean hasSeparatorAboveOf(final SidePanelItem value) {
+        return getSeparatorAbove(value) != null;
       }
 
       @Override
-      public String getCaptionAboveOf(final Object value) {
-        return getSeparatorAbove((Place)value);
+      public String getCaptionAboveOf(final SidePanelItem value) {
+        return getSeparatorAbove(value);
       }
     };
 
-    myList.setCellRenderer(new GroupedItemsListRenderer(descriptor) {
+    myList.setCellRenderer(new GroupedItemsListRenderer<SidePanelItem>(descriptor) {
       JPanel myExtraPanel;
       SidePanelCountLabel myCountLabel;
       CellRendererPane myValidationParent = new CellRendererPane();
@@ -115,12 +106,12 @@ public class SidePanel extends JPanel {
       }
 
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      public Component getListCellRendererComponent(JList<? extends SidePanelItem> list, SidePanelItem value, int index, boolean isSelected, boolean cellHasFocus) {
         layout();
         myCountLabel.setText("");
         final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if ("Problems".equals(descriptor.getTextFor(value))) {
-          final ErrorPaneConfigurable errorPane = (ErrorPaneConfigurable)((Place)value).getPath("category");
+          final ErrorPaneConfigurable errorPane = (ErrorPaneConfigurable)value.myPlace.getPath("category");
           int errorsCount;
           if (errorPane != null && (errorsCount = errorPane.getErrorsCount()) > 0) {
             myCountLabel.setSelected(isSelected);
@@ -163,9 +154,9 @@ public class SidePanel extends JPanel {
       @Override
       public void valueChanged(final ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) return;
-        final Object value = myList.getSelectedValue();
+        final SidePanelItem value = myList.getSelectedValue();
         if (value != null) {
-          myNavigator.navigateTo(((Place)value), false);
+          myNavigator.navigateTo(value.myPlace, false);
         }
       }
     });
@@ -176,40 +167,37 @@ public class SidePanel extends JPanel {
   }
 
   public void addPlace(Place place, @NotNull Presentation presentation) {
-    myModel.addElement(place);
-    myPlaces.add(place);
-    myPlace2Presentation.put(place, presentation);
+    myModel.addElement(new SidePanelItem(place, presentation.getText()));
     revalidate();
     repaint();
   }
 
-  public void clear() {
-    myModel.clear();
-    myPlaces.clear();
-    myPlace2Presentation.clear();
-    myIndex2Separator.clear();
-  }
-
-  public void updatePlace(Place place) {
-    int index = myPlaces.indexOf(place);
-    myModel.set(index, place);
-  }
-
   public void addSeparator(String text) {
-    myIndex2Separator.put(myPlaces.size(), text);
+    myIndex2Separator.put(myModel.size(), text);
   }
 
   @Nullable
-  public String getSeparatorAbove(final Place place) {
-    return myIndex2Separator.get(myPlaces.indexOf(place));
-  }
-
-  public Collection<Place> getPlaces() {
-    return myPlaces;
+  private String getSeparatorAbove(final SidePanelItem item) {
+    return myIndex2Separator.get(myModel.indexOf(item));
   }
 
   public void select(final Place place) {
     myList.setSelectedValue(place, true);
+  }
+
+  private static class SidePanelItem {
+    private final Place myPlace;
+    private final String myText;
+
+    public SidePanelItem(Place place, String text) {
+      myPlace = place;
+      myText = text;
+    }
+
+    @Override
+    public String toString() {
+      return myText;
+    }
   }
 
 }
