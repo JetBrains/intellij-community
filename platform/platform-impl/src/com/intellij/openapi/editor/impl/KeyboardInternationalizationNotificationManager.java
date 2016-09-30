@@ -52,9 +52,13 @@ public class KeyboardInternationalizationNotificationManager {
 
   public static Notification createNotification(@NotNull final String groupDisplayId, @Nullable NotificationListener listener) {
 
-    final String productName = ApplicationNamesInfo.getInstance().getProductName();
-
     Window recentFocusedWindow = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
+
+    if (recentFocusedWindow == null) {
+      recentFocusedWindow = Window.getWindows()[0];
+    }
+
+    final String productName = ApplicationNamesInfo.getInstance().getProductName();
 
     String text =
       "<html>We have found out that you are using a non-english keyboard layout. You can <a href='enable'>enable</a> smart layout support for " +
