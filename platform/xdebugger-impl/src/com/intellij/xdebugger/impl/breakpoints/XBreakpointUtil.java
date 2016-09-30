@@ -127,7 +127,7 @@ public class XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @NotNull
-  public static Promise toggleLineBreakpoint(@NotNull Project project,
+  public static Promise<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
                                              @NotNull XSourcePosition position,
                                              @Nullable Editor editor,
                                              boolean temporary,
