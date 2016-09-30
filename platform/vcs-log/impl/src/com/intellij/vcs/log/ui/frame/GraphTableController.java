@@ -189,6 +189,7 @@ public class GraphTableController {
                                                             .getWidth());
 
     if (tipComponent != null) {
+      myTable.getExpandableItemsHandler().setEnabled(false);
       IdeTooltip tooltip =
         new IdeTooltip(myTable, e.getPoint(), new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.below);
       IdeTooltipManager.getInstance().show(tooltip, false);
@@ -245,6 +246,7 @@ public class GraphTableController {
     @Override
     public void mouseMoved(MouseEvent e) {
       if (myTable.isResizingColumns()) return;
+      myTable.getExpandableItemsHandler().setEnabled(true);
 
       if (myLinkListener.getTagAt(e) != null) {
         myTable.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -279,7 +281,7 @@ public class GraphTableController {
 
     @Override
     public void mouseExited(MouseEvent e) {
-      // Do nothing
+      myTable.getExpandableItemsHandler().setEnabled(true);
     }
   }
 }
