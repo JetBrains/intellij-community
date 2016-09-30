@@ -71,7 +71,7 @@ public class StudySubtaskUtils {
     }
   }
 
-  public static void updatePlaceholderTexts(@NotNull Project project,
+  private static void updatePlaceholderTexts(@NotNull Project project,
                                              @NotNull Document document,
                                              @NotNull TaskFile taskFile,
                                              int fromSubtaskIndex,
