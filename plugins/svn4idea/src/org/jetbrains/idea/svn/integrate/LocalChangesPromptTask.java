@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.FilePathByPathComparator;
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -72,30 +71,30 @@ public class LocalChangesPromptTask extends BaseMergeTask {
   }
 
   @Override
-  public void run(ContinuationContext context) {
+  public void run() {
     List<LocalChangeList> localChangeLists = ChangeListManager.getInstance(myMergeContext.getProject()).getChangeListsCopy();
     Intersection intersection =
       myMergeAll ? getAllChangesIntersection(localChangeLists) : getChangesIntersection(localChangeLists, myChangeListsToMerge);
 
     if (intersection != null && !intersection.getChangesSubset().isEmpty()) {
-      processIntersection(context, intersection);
+      processIntersection(intersection);
     }
   }
 
-  private void processIntersection(@NotNull ContinuationContext context, @NotNull Intersection intersection) {
+  private void processIntersection(@NotNull Intersection intersection) {
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (myInteraction.selectLocalChangesAction(myMergeAll)) {
       case shelve:
-        context.next(new ShelveLocalChangesTask(myMergeProcess, intersection));
+        next(new ShelveLocalChangesTask(myMergeProcess, intersection));
         break;
       case cancel:
-        context.cancelEverything();
+        end();
         break;
       case inspect:
         // here's cast is due to generic's bug
         @SuppressWarnings("unchecked") Collection<Change> changes = (Collection<Change>)intersection.getChangesSubset().values();
         myInteraction.showIntersectedLocalPaths(sorted(getPaths(changes), FilePathByPathComparator.getInstance()));
-        context.cancelEverything();
+        end();
         break;
     }
   }

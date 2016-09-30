@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.NestedCopyType;
@@ -32,15 +31,15 @@ public class MergeInitChecksTask extends BaseMergeTask {
   }
 
   @Override
-  public void run(ContinuationContext context) {
-    SVNURL url = parseSourceUrl(context);
+  public void run() {
+    SVNURL url = parseSourceUrl();
 
     if (url != null) {
       if (areInSameHierarchy(url, myMergeContext.getWcInfo().getUrl())) {
-        end(context, "Cannot merge from self", true);
+        end("Cannot merge from self", true);
       }
       else if (hasSwitchedRoots() && !myInteraction.shouldContinueSwitchedRootFound()) {
-        context.cancelEverything();
+        end();
       }
     }
   }

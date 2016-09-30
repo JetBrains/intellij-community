@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
@@ -36,15 +35,15 @@ public class MergeTask extends BaseMergeTask {
   }
 
   @Override
-  public void run(ContinuationContext context) {
-    SVNURL sourceUrl = parseSourceUrl(context);
+  public void run() {
+    SVNURL sourceUrl = parseSourceUrl();
 
     if (sourceUrl != null) {
-      context.next(TaskDescriptor.createForBackgroundableTask(newIntegrateTask(sourceUrl)));
+      next(TaskDescriptor.createForBackgroundableTask(newIntegrateTask(sourceUrl)));
 
       boolean needRefresh = setupDefaultEmptyChangeListForMerge();
       if (needRefresh) {
-        refreshChanges(context);
+        refreshChanges();
       }
     }
   }
@@ -82,10 +81,9 @@ public class MergeTask extends BaseMergeTask {
     return needRefresh;
   }
 
-  private void refreshChanges(@NotNull ContinuationContext context) {
-    context.suspend();
-
+  private void refreshChanges() {
+    suspend();
     ChangeListManager.getInstance(myMergeContext.getProject())
-      .invokeAfterUpdate(context::ping, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.NON_MODAL);
+      .invokeAfterUpdate(this::ping, InvokeAfterUpdateMode.BACKGROUND_NOT_CANCELLABLE, "", ModalityState.NON_MODAL);
   }
 }

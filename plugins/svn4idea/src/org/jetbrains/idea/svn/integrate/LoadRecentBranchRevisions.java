@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.history.LogHierarchyNode;
@@ -64,15 +63,6 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
    * TODO: Try to unify collecting and filtering change lists with similar logic in MergeCalculatorTask.
    */
   @Override
-  public void run(ContinuationContext context) {
-    try {
-      run();
-    }
-    catch (VcsException e) {
-      end(context, e);
-    }
-  }
-
   public void run() throws VcsException {
     initialize(getChangeListsBefore(myFirst));
   }

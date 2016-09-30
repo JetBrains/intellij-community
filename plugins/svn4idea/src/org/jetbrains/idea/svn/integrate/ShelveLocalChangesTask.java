@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,15 +46,15 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
   }
 
   @Override
-  public void run(ContinuationContext context) {
-    List<VirtualFile> changedFiles = shelveChanges(context);
+  public void run() {
+    List<VirtualFile> changedFiles = shelveChanges();
 
-    context.suspend();
-    RefreshQueue.getInstance().refresh(true, false, context::ping, changedFiles);
+    suspend();
+    RefreshQueue.getInstance().refresh(true, false, this::ping, changedFiles);
   }
 
   @NotNull
-  private List<VirtualFile> shelveChanges(@NotNull ContinuationContext context) {
+  private List<VirtualFile> shelveChanges() {
     List<VirtualFile> changedFiles = newArrayList();
     ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
 
@@ -71,10 +70,10 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
         changedFiles.addAll(getAfterRevisionsFiles(entry.getValue().stream(), true).collect(toList()));
       }
       catch (IOException e) {
-        end(context, new VcsException(e));
+        end(new VcsException(e));
       }
       catch (VcsException e) {
-        end(context, e);
+        end(e);
       }
     }
 

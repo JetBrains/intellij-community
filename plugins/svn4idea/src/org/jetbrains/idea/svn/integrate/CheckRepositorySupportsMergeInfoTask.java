@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +31,8 @@ public class CheckRepositorySupportsMergeInfoTask extends BaseMergeTask {
   }
 
   @Override
-  public void run(ContinuationContext context) {
-    context.next(supportsMergeInfo() ? getChooseMergeTypeTasks() : getMergeAllTasks());
+  public void run() {
+    next(supportsMergeInfo() ? getChooseMergeTypeTasks() : getMergeAllTasks());
   }
 
   private boolean supportsMergeInfo() {

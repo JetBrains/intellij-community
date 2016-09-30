@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,16 +32,16 @@ public class ShowRecentInDialogTask extends BaseMergeTask {
   }
 
   @Override
-  public void run(ContinuationContext context) {
+  public void run() {
     List<CommittedChangeList> lists = myInteraction
       .showRecentListsForSelection(myInitialChangeListsLoader.getCommittedChangeLists(), myInitialChangeListsLoader.getHelper(),
                                    myInitialChangeListsLoader.isLastLoaded());
 
     if (!lists.isEmpty()) {
-      runChangeListsMerge(context, lists, createBranchCopyPoint(), myMergeContext.getTitle());
+      runChangeListsMerge(lists, createBranchCopyPoint(), myMergeContext.getTitle());
     }
     else {
-      context.cancelEverything();
+      end();
     }
   }
 

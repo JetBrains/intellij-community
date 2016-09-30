@@ -24,7 +24,6 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,43 +65,43 @@ public class MergeCalculatorTask extends BaseMergeTask
   }
 
   @Override
-  public void run(ContinuationContext context) {
-    SvnBranchPointsCalculator.WrapperInvertor copyPoint = getCopyPoint(context);
+  public void run() {
+    SvnBranchPointsCalculator.WrapperInvertor copyPoint = getCopyPoint();
 
     if (copyPoint != null && myMergeContext.getWcInfo().getFormat().supportsMergeInfo()) {
       List<Pair<SvnChangeList, LogHierarchyNode>> afterCopyPointChangeLists =
-        getChangeListsAfter(context, copyPoint.getTrue().getTargetRevision());
+        getChangeListsAfter(copyPoint.getTrue().getTargetRevision());
       List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(afterCopyPointChangeLists);
 
       if (!notMergedChangeLists.isEmpty()) {
-        context.next(new ShowRevisionSelector(myMergeProcess, copyPoint, notMergedChangeLists, myMergeChecker));
+        next(new ShowRevisionSelector(myMergeProcess, copyPoint, notMergedChangeLists, myMergeChecker));
       }
       else {
-        end(context, "Everything is up-to-date", false);
+        end("Everything is up-to-date", false);
       }
     }
   }
 
   @Nullable
-  private SvnBranchPointsCalculator.WrapperInvertor getCopyPoint(@NotNull ContinuationContext context) {
+  private SvnBranchPointsCalculator.WrapperInvertor getCopyPoint() {
     SvnBranchPointsCalculator.WrapperInvertor result = null;
 
     try {
       result = myCopyData.get().get();
 
       if (result == null) {
-        end(context, "Merge start wasn't found", true);
+        end("Merge start wasn't found", true);
       }
     }
     catch (VcsException e) {
-      end(context, "Merge start wasn't found", e);
+      end("Merge start wasn't found", e);
     }
 
     return result;
   }
 
   @NotNull
-  private List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsAfter(@NotNull ContinuationContext context, final long revision) {
+  private List<Pair<SvnChangeList, LogHierarchyNode>> getChangeListsAfter(final long revision) {
     ChangeBrowserSettings settings = new ChangeBrowserSettings();
     settings.CHANGE_AFTER = Long.toString(revision);
     settings.USE_CHANGE_AFTER_FILTER = true;
@@ -121,7 +120,7 @@ public class MergeCalculatorTask extends BaseMergeTask
                                                });
     }
     catch (VcsException e) {
-      end(context, "Checking revisions for merge fault", e);
+      end("Checking revisions for merge fault", e);
     }
 
     return result;
@@ -177,22 +176,22 @@ public class MergeCalculatorTask extends BaseMergeTask
     }
 
     @Override
-    public void run(ContinuationContext context) {
+    public void run() {
       QuickMergeInteraction.SelectMergeItemsResult result =
         myInteraction.selectMergeItems(myChangeLists, myMergeContext.getTitle(), myMergeChecker);
 
       switch (result.getResultCode()) {
         case cancel:
-          context.cancelEverything();
+          end();
           break;
         case all:
-          context.next(getMergeAllTasks());
+          next(getMergeAllTasks());
           break;
         default:
           List<CommittedChangeList> lists = result.getSelectedLists();
 
           if (!lists.isEmpty()) {
-            runChangeListsMerge(context, lists, myCopyPoint, myMergeContext.getTitle());
+            runChangeListsMerge(lists, myCopyPoint, myMergeContext.getTitle());
           }
           break;
       }

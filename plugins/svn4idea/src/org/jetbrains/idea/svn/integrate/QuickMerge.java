@@ -34,10 +34,12 @@ public class QuickMerge {
 
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final QuickMergeInteraction myInteraction;
+  @NotNull private final SeparatePiecesRunner myRunner;
 
   public QuickMerge(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
     myMergeContext = mergeContext;
     myInteraction = interaction;
+    myRunner = createRunner();
   }
 
   @NotNull
@@ -48,6 +50,11 @@ public class QuickMerge {
   @NotNull
   public QuickMergeInteraction getInteraction() {
     return myInteraction;
+  }
+
+  @NotNull
+  public SeparatePiecesRunner getRunner() {
+    return myRunner;
   }
 
   @CalledInAwt
@@ -71,9 +78,8 @@ public class QuickMerge {
       finalTask
     };
 
-    SeparatePiecesRunner runner = createRunner();
-    runner.next(mapNotNull(tasks, identity()));
-    runner.ping();
+    myRunner.next(mapNotNull(tasks, identity()));
+    myRunner.ping();
   }
 
   @NotNull
