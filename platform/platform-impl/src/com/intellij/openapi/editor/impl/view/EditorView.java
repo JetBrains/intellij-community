@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
@@ -554,6 +555,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable {
   }
 
   private void assertNotInBulkMode() {
-    if (myDocument.isInBulkUpdate()) throw new IllegalStateException("Current operation is not available in bulk mode");
+    if (myDocument instanceof DocumentImpl) ((DocumentImpl)myDocument).assertNotInBulkUpdate();
+    else if (myDocument.isInBulkUpdate()) throw new IllegalStateException("Current operation is not available in bulk mode");
   }
 }
