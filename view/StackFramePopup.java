@@ -8,8 +8,11 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
@@ -21,6 +24,8 @@ import javax.swing.*;
 import java.util.List;
 
 public class StackFramePopup {
+  private static final char ANONYMOUS_CLASS_DELIMITER = '$';
+
   private final Project myProject;
   private final List<StackFrameDescriptor> myStackFrame;
   private final GlobalSearchScope myScope;
@@ -80,14 +85,24 @@ public class StackFramePopup {
   private void navigateToSelectedFrame(@NotNull JBList frameList, boolean focusEditor) {
     StackFrameDescriptor frame = (StackFrameDescriptor) frameList.getSelectedValue();
     if (frame != null) {
-      PsiClass psiClass = DebuggerUtils.findClass(frame.path(), myProject, myScope);
+      String path = frame.path();
+      int anonymousClassDelimiterIndex = path.indexOf(ANONYMOUS_CLASS_DELIMITER);
+      int pathLength = anonymousClassDelimiterIndex > 0 ? anonymousClassDelimiterIndex : path.length();
+      path = path.substring(0, pathLength);
+      PsiClass psiClass = DebuggerUtils.findClass(path, myProject, myScope);
       if (psiClass != null) {
         ApplicationManager.getApplication().runReadAction(() -> {
+          PsiElement navigationElement = psiClass.getNavigationElement();
+          VirtualFile file = PsiUtilCore.getVirtualFile(navigationElement);
+          if (file == null) {
+            file = psiClass.getContainingFile().getVirtualFile();
+          }
+
           OpenFileHyperlinkInfo info =
-              new OpenFileHyperlinkInfo(myProject, psiClass.getContainingFile().getVirtualFile(),
-                  frame.line() - 1);
+              new OpenFileHyperlinkInfo(myProject, file, frame.line() - 1);
           OpenFileDescriptor descriptor = info.getDescriptor();
           if (descriptor != null) {
+            descriptor.setUseCurrentWindow(true);
             FileEditorManager.getInstance(myProject).openEditor(descriptor, focusEditor);
           }
         });
