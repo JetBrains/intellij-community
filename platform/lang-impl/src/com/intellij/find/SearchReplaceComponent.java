@@ -347,6 +347,9 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   private void updateReplaceComponent(@NotNull String textToSet) {
     final int oldCaretPosition = myReplaceTextComponent != null ? myReplaceTextComponent.getCaretPosition() : 0;
     if (!updateTextComponent(false)) {
+      if (!myReplaceTextComponent.getText().equals(textToSet)) {
+        myReplaceTextComponent.setText(textToSet);
+      }
       return;
     }
     myReplaceTextComponent.setText(textToSet);
