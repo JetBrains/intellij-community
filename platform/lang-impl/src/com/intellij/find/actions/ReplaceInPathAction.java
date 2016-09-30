@@ -22,10 +22,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 
 public class ReplaceInPathAction extends AnAction {
-  { // enabled in modal content for find in path <-> replace in path modal dialog transition
-    setEnabledInModalContext(true);
-  }
-
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
