@@ -22,6 +22,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.compiler.RemoveElementQuickFix;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.FindSuperElementsHelper;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -97,6 +98,7 @@ public class GrUnusedDefaultParameterInspection extends LocalInspectionTool impl
     GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
     for (int i = reflectedMethods.length - optionalParameterNumber; i < reflectedMethods.length; i++) {
       GrReflectedMethod reflectedMethod = reflectedMethods[i];
+      if (FindSuperElementsHelper.findSuperElements(reflectedMethod).length > 0) return false;
       if (MethodReferencesSearch.search(reflectedMethod).findFirst() != null) return false;
     }
     return true;

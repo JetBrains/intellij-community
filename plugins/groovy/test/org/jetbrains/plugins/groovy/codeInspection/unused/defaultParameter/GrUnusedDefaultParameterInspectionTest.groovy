@@ -92,6 +92,92 @@ new B().foo(1, 2)
 '''
   }
 
+  void 'test super method child usage 1'() {
+    testHighlighting '''\
+class A {
+  def foo(a, b = 2) { a + b }
+}
+class B extends A {}
+
+new B().foo(1)
+'''
+  }
+
+  void 'test super method child usage 2'() {
+    testHighlighting '''\
+class A {
+  def foo(a, b = <warning descr="Default parameter is not used">2</warning>) { a + b }
+}
+class B extends A {}
+
+new B().foo(1, 2)
+'''
+  }
+
+  void 'test super method child usage 3'() {
+    testHighlighting '''\
+class A {
+  def foo(a, b = <warning descr="Default parameter is not used">2</warning>) { a + b }
+}
+class B extends A {
+  def foo(a, b) {}
+}
+
+new B().foo(1, 2)
+'''
+  }
+
+  void 'test reflected method do not have super method'() {
+    testHighlighting '''
+class A {
+  def foo(a, b) {} 
+}
+
+class B extends A {
+  def foo(a, b = <warning descr="Default parameter is not used">2</warning>) {}
+}
+
+def test(A a) {
+  a.foo(1, 2)
+}
+'''
+  }
+
+  void 'test reflected method has super method'() {
+    testHighlighting '''
+class A {
+  def foo(a) {} 
+}
+
+class B extends A {
+  def foo(a, b = 2) {}
+}
+'''
+  }
+
+  void 'test reflected constructor'() {
+    testHighlighting '''
+class A {
+  A(a) {} 
+}
+
+class B extends A {
+  B(a, b = <warning descr="Default parameter is not used">2</warning>) { super("") }
+}
+'''
+  }
+
+  void 'test override method with default parameters'() {
+    testHighlighting '''\
+class A {
+  def foo(a, b = <warning descr="Default parameter is not used">2</warning>) {}
+}
+class B extends A {
+  def foo(a, b = 2) {}
+}
+'''
+  }
+
   private void testHighlighting(String text) {
     fixture.with {
       configureByText '_.groovy', text

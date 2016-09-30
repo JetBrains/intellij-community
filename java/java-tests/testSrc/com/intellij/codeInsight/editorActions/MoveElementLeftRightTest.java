@@ -126,6 +126,11 @@ public class MoveElementLeftRightTest extends AbstractMoveElementLeftRightTest {
                           "final @Suppress<caret>Warnings(\"ALL\") class C {}");
   }
 
+  public void testMoveAnnotationMemberValue() throws Exception {
+    doTestFromLeftToRight("@SuppressWarnings({\"<caret>a\", \"b\"}) final class C {}",
+                          "@SuppressWarnings({\"b\", \"<caret>a\"}) final class C {}");
+  }
+
   @Override
   protected void configureEditor(String contents) throws Exception {
     init(contents, TestFileType.JAVA);

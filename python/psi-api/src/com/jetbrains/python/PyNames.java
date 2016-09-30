@@ -94,6 +94,7 @@ public class PyNames {
   public static final String FAKE_METHOD = "__method";
   public static final String FAKE_NAMEDTUPLE = "__namedtuple";
   public static final String FAKE_COROUTINE = "__coroutine";
+  public static final String FAKE_ASYNC_GENERATOR = "__asyncgenerator";
 
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";
@@ -142,7 +143,8 @@ public class PyNames {
   public static final String MUTABLE_MAPPING = "MutableMapping";
   public static final String ABC_SET = "Set";
   public static final String ABC_MUTABLE_SET = "MutableSet";
-  
+
+  public static final String AWAITABLE = "Awaitable";
   public static final String ASYNC_ITERABLE = "AsyncIterable";
 
   public static final String ABC_NUMBER = "Number";

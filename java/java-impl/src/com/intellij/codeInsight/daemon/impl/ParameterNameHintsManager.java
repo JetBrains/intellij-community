@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
@@ -37,17 +38,16 @@ public class ParameterNameHintsManager {
     Couple.of("first", "second"),
     Couple.of("from", "to"),
     Couple.of("key", "value"),
-    Couple.of("min", "max")
+    Couple.of("min", "max"),
+    Couple.of("format", "arg")
+  );
+
+  private static final Set<Character> ALLOWED_PARAMETER_NAME_CHARS = ContainerUtil.newHashSet('x', 'y', 'z', 'w', 'h');
+  
+  private static final Set<String> COMMON_METHOD_NAMES = ContainerUtil.newHashSet(
+    "get", "set", "contains", "append", "print", "println", "charAt", "startsWith", "endsWith", "indexOf"
   );
   
-  private static final List<String> COMMON_METHOD_NAMES = ContainerUtil.newArrayList(
-    "get", "set", "contains", "append", 
-    "print", "println", 
-    "charAt", "startsWith", "indexOf"
-  );
-
-  private static final List<String> COMMON_CLASSES = ContainerUtil.newArrayList(JAVA_LANG_STRING);
-
   @NotNull
   private final List<InlayInfo> myDescriptors;
 
@@ -61,25 +61,11 @@ public class ParameterNameHintsManager {
         && hasUnclearExpressions(callArguments)) 
     {
       PsiMethod method = (PsiMethod)resolveResult.getElement();
-      if (isInBlackList(method)) {
-        myDescriptors = descriptors;
-        return;
-      }
-      
       PsiParameter[] parameters = method.getParameterList().getParameters();
       descriptors = buildDescriptorsForLiteralArguments(callArguments, parameters, resolveResult);
     }
 
     myDescriptors = descriptors;
-  }
-
-  private static boolean isInBlackList(PsiMethod method) {
-    PsiClass aClass = method.getContainingClass();
-    if (aClass != null) {
-      String fqn = aClass.getQualifiedName();
-      return COMMON_CLASSES.stream().anyMatch((e) -> e.equals(fqn));
-    }
-    return false;
   }
 
   private static boolean isMethodToShowParams(JavaResolveResult resolveResult) {
@@ -92,8 +78,7 @@ public class ParameterNameHintsManager {
   }
 
   private static boolean isCommonMethod(PsiMethod method) {
-    String methodName = method.getName();
-    return COMMON_METHOD_NAMES.stream().anyMatch((name) -> methodName.equals(name));
+    return COMMON_METHOD_NAMES.contains(method.getName());
   }
 
   private static boolean isSetter(PsiMethod method) {
@@ -150,13 +135,31 @@ public class ParameterNameHintsManager {
         descriptors.add(createInlayInfo(arg, param));
       }
     }
-    
-    if (descriptors.size() == 1 && isStringLiteral(descriptors.get(0)) && !hasMultipleStringParams(parameters) 
-        || parameters.length == 2 && descriptors.size() == 2 && isCommonlyNamedParameterPair(descriptors.get(0), descriptors.get(1))) {
+
+    final int totalDescriptors = descriptors.size();
+    if (totalDescriptors == 1 && shouldIgnoreSingleHint(parameters, descriptors)
+        || totalDescriptors == 2 && parameters.length == 2 && isParamPairToIgnore(descriptors.get(0), descriptors.get(1))
+        || countOneCharLengthHints(descriptors) == totalDescriptors && !containsAnyMeaningfull(descriptors)) {
       return ContainerUtil.emptyList();
     }
     
     return descriptors;
+  }
+
+
+  private static long countOneCharLengthHints(List<InlayInfo> inlays) {
+    return inlays.stream().filter((e) -> e.getText().length() == 1).count();
+  }
+
+  private static boolean shouldIgnoreSingleHint(@NotNull PsiParameter[] parameters, List<InlayInfo> descriptors) {
+    return isStringLiteral(descriptors.get(0)) && !hasMultipleStringParams(parameters);
+  }
+
+  private static boolean containsAnyMeaningfull(List<InlayInfo> descriptors) {
+    return descriptors.stream().anyMatch((e) -> {
+      String text = e.getText();
+      return text.length() == 1 && ALLOWED_PARAMETER_NAME_CHARS.contains(text.charAt(0));
+    });
   }
 
   private static boolean hasMultipleStringParams(PsiParameter[] parameters) {
@@ -180,7 +183,7 @@ public class ParameterNameHintsManager {
     return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset(), callArgument);
   }
 
-  private static boolean isCommonlyNamedParameterPair(InlayInfo first, InlayInfo second) {
+  private static boolean isParamPairToIgnore(InlayInfo first, InlayInfo second) {
     String firstParamName = first.getText();
     String secondParamName = second.getText();
 

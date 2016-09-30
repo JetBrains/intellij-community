@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -161,6 +162,11 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
             return elementTypes.get(0);
           }
         }
+      }
+      else if (type instanceof PyClassType &&
+               type instanceof PyCollectionType &&
+               PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
+        return ContainerUtil.getFirstItem(((PyCollectionType)type).getElementTypes(context));
       }
     }
     else if (type instanceof PyUnionType) {

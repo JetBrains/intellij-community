@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class ExpressionParsing extends Parsing {
     if (!parseSingleExpression(isTargetExpression)) {
       builder.error(message("PARSE.expected.expression"));
     }
-    if (builder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
+    if (atForOrAsyncFor()) {
       parseComprehension(expr, PyTokenTypes.RBRACKET, PyElementTypes.LIST_COMP_EXPRESSION);
     }
     else {
@@ -153,7 +153,7 @@ public class ExpressionParsing extends Parsing {
           myBuilder.error(message("PARSE.expected.expression"));
         }
       }
-      if (atToken(PyTokenTypes.FOR_KEYWORD)) {
+      if (atForOrAsyncFor()) {
         continue;
       }
       if (endToken == null || matchToken(endToken)) {
@@ -214,7 +214,7 @@ public class ExpressionParsing extends Parsing {
       firstExprMarker.drop();
       parseSetLiteralTail(expr);
     }
-    else if (atToken(PyTokenTypes.FOR_KEYWORD)) {
+    else if (atForOrAsyncFor()) {
       firstExprMarker.drop();
       parseComprehension(expr, PyTokenTypes.RBRACE, PyElementTypes.SET_COMP_EXPRESSION);
     }
@@ -236,7 +236,7 @@ public class ExpressionParsing extends Parsing {
       return;
     }
     firstKeyValueMarker.done(PyElementTypes.KEY_VALUE_EXPRESSION);
-    if (myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
+    if (atForOrAsyncFor()) {
       parseComprehension(startMarker, PyTokenTypes.RBRACE, PyElementTypes.DICT_COMP_EXPRESSION);
     }
     else {
@@ -299,7 +299,7 @@ public class ExpressionParsing extends Parsing {
     }
     else {
       parseYieldOrTupleExpression(isTargetExpression);
-      if (myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
+      if (atForOrAsyncFor()) {
         parseComprehension(expr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
       }
       else {
@@ -500,7 +500,7 @@ public class ExpressionParsing extends Parsing {
     while (myBuilder.getTokenType() != PyTokenTypes.RPAR) {
       argNumber++;
       if (argNumber > 1) {
-        if (argNumber == 2 && atToken(PyTokenTypes.FOR_KEYWORD) && genexpr != null) {
+        if (argNumber == 2 && atForOrAsyncFor() && genexpr != null) {
           parseComprehension(genexpr, null, PyElementTypes.GENERATOR_EXPRESSION);
           genexpr = null;
           continue;
@@ -992,5 +992,19 @@ public class ExpressionParsing extends Parsing {
     else {
       return parseMemberExpression(isTargetExpression);
     }
+  }
+
+  private boolean atForOrAsyncFor() {
+    if (atToken(PyTokenTypes.FOR_KEYWORD)) {
+      return true;
+    } else if (matchToken(PyTokenTypes.ASYNC_KEYWORD)) {
+      if (atToken(PyTokenTypes.FOR_KEYWORD)) {
+        return true;
+      } else {
+        myBuilder.error("'for' expected");
+        return false;
+      }
+    }
+    return false;
   }
 }

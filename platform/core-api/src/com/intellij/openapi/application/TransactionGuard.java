@@ -82,9 +82,13 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  *
  * Q: What's the difference between transactions and read/write actions and commands ({@link com.intellij.openapi.command.CommandProcessor})?<br/>
- * A: Transactions are more abstract and can contain several write actions and even commands inside. Read/write actions guarantee that no
- * one else will modify the model, while transactions allow for some modification, but in a controlled way. Commands
- * are used for tracking document changes for undo/redo functionality, so they're orthogonal to transactions.
+ * A: Read actions in background threads ensure that no one will modify the model while you're working with it.<br/>
+ * Write actions (in Swing thread only) allow to modify the model, but ensure that no background thread is reading it in the meantime.<br/>
+ * Read action in Swing thread is special: it allows to perform a write action inside. This can lead to troubles
+ * if some foreign invokeLater call modifies the model while you're showing a modal progress that's not supposed to change anything.
+ * Transactions (in Swing thread only) allow for interactive model processing with read and write actions inside,
+ * with modal dialogs and progresses, with a guarantee that only you may modify the model, and not random invokeLater's.<br/>
+ * Commands are used for tracking document changes for undo/redo functionality, so they're orthogonal to transactions.
  *
  * @see Application#runReadAction(Runnable)
  * @see Application#runWriteAction(Runnable)
