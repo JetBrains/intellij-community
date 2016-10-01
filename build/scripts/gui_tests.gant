@@ -37,7 +37,7 @@ target('run_ui_tests' : "Runs UI tests, sharding across multiple JVMs") {
   List<String> testRuntimeClasspath = projectBuilder.moduleRuntimeClasspath(findModule("android-uitests"), true)
   new File(classpathFile).text = testRuntimeClasspath.findAll({ new File((String)it).exists() }).join('\n')
 
-  ant.uitest(testSuite: "com.android.tools.idea.tests.gui.GuiTestSuite", classpathFile: classpathFile) {
+  ant.uitest(classpathFile: classpathFile) {
     pass("idea.test.group")
     pass("idea.test.patterns")
     pass("idea.fast.only")

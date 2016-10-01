@@ -42,10 +42,10 @@ import java.util.stream.Collectors;
  */
 public class UiTestTask extends Task {
 
+  private static final String TEST_SUITE_CLASS_NAME = "com.android.tools.idea.tests.gui.GuiTestSuite";
   private static final String TEST_GROUP_CLASS_NAME = "com.android.tools.idea.tests.gui.framework.TestGroup";
 
   private String classpathFile;
-  private String testSuite;
   private Path classpath;
   private final List<Argument> jvmArgs = new ArrayList<Argument>();
 
@@ -80,13 +80,6 @@ public class UiTestTask extends Task {
     return jvmArg;
   }
 
-  /**
-   * Specifies the canonical class name of the test suite, a class annotated with @RunWith(GuiTestSuiteRunner.class).
-   */
-  public void setTestSuite(String testSuite) {
-    this.testSuite = testSuite;
-  }
-
   @Override
   public void execute() throws BuildException {
     try {
@@ -104,7 +97,7 @@ public class UiTestTask extends Task {
         task.setPrintsummary((JUnitTask.SummaryAttribute) EnumeratedAttribute.getInstance(JUnitTask.SummaryAttribute.class, "true"));
 
         task.createJvmarg().setValue("-Dclasspath.file=" + classpathFile);
-        task.createJvmarg().setValue("-Dbootstrap.testcase=" + testSuite);
+        task.createJvmarg().setValue("-Dbootstrap.testcase=" + TEST_SUITE_CLASS_NAME);
         task.createJvmarg().setValue("-Dui.test.group=" + testGroup);
 
         Path testClasspath = task.createClasspath();
