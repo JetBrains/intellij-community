@@ -60,11 +60,11 @@ public class UiTestTaskTest {
     Map<String, List<Class<?>>> batches = task.getTestGroups();
     assertEquals(5, batches.size());
 
-    assertTrue(batches.containsKey("A"));
-    assertEquals("com.android.antuitest.tasks.ATest,", task.getTestSpec(batches.get("A")));
+    assertTrue(batches.containsKey("THEME"));
+    assertEquals("com.android.antuitest.tasks.ATest,", task.getTestSpec(batches.get("THEME")));
 
-    assertTrue(batches.containsKey("B"));
-    assertEquals("com.android.antuitest.tasks.BTest,com.android.antuitest.tasks.CTest,", task.getTestSpec(batches.get("B")));
+    assertTrue(batches.containsKey("EDITING"));
+    assertEquals("com.android.antuitest.tasks.BTest,com.android.antuitest.tasks.CTest,", task.getTestSpec(batches.get("EDITING")));
 
     assertTrue(batches.containsKey("DEFAULT"));
     assertEquals("com.android.antuitest.tasks.DTest,", task.getTestSpec(batches.get("DEFAULT")));
@@ -79,15 +79,15 @@ public class UiTestTaskTest {
 
 abstract class GuiTestRunner extends Runner {}
 
-@RunIn(TestGroup.A)
+@RunIn(TestGroup.THEME)
 @RunWith(GuiTestRunner.class)
 class ATest {}
 
-@RunIn(TestGroup.B)
+@RunIn(TestGroup.EDITING)
 @RunWith(GuiTestRunner.class)
 class BTest {}
 
-@RunIn(TestGroup.B)
+@RunIn(TestGroup.EDITING)
 @RunWith(GuiTestRunner.class)
 class CTest {}
 
