@@ -46,6 +46,7 @@ public class UiTestTask extends Task {
   private static final String TEST_GROUP_CLASS_NAME = "com.android.tools.idea.tests.gui.framework.TestGroup";
 
   private String classpathFile;
+  private List<String> testGroups = Collections.emptyList();
   private Path classpath;
   private final List<Argument> jvmArgs = new ArrayList<Argument>();
 
@@ -80,10 +81,18 @@ public class UiTestTask extends Task {
     return jvmArg;
   }
 
+
+  /**
+   * Takes a comma-delimited list of TestGroup values for groups to run. If empty or unspecified, all are run.
+   */
+  public void setTestGroups(String testGroupsString) {
+    this.testGroups = Arrays.stream(testGroupsString.split(",")).filter(s -> !s.isEmpty()).collect(Collectors.toList());
+  }
+
   @Override
   public void execute() throws BuildException {
     try {
-      for (String testGroup : getAllTestGroups()) {
+      for (String testGroup : testGroups.isEmpty() ? getAllTestGroups() : testGroups) {
         JUnitTask task = new JUnitTask();
         task.init();
         task.setProject(getProject());
