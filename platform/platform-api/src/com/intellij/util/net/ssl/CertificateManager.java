@@ -83,8 +83,8 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CertificateManager implements PersistentStateComponent<CertificateManager.Config> {
 
   @NonNls public static final String COMPONENT_NAME = "Certificate Manager";
-  @NonNls private static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
-  @NonNls private static final String DEFAULT_PASSWORD = "changeit";
+  @NonNls public static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
+  @NonNls public static final String DEFAULT_PASSWORD = "changeit";
 
   private static final Logger LOG = Logger.getInstance(CertificateManager.class);
 
