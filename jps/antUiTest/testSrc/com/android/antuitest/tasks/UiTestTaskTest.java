@@ -17,7 +17,7 @@ package com.android.antuitest.tasks;
 
 import com.android.tools.idea.tests.gui.framework.RunIn;
 import com.android.tools.idea.tests.gui.framework.TestGroup;
-import com.intellij.openapi.util.io.FileUtil;
+import com.google.common.collect.ImmutableList;
 import org.apache.tools.ant.Project;
 import org.junit.After;
 import org.junit.Before;
@@ -26,11 +26,8 @@ import org.junit.runner.RunWith;
 import org.junit.runner.Runner;
 
 import java.io.File;
-import java.util.List;
-import java.util.Map;
 
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.TestCase.assertEquals;
+import static com.google.common.truth.Truth.assertThat;
 
 /**
  * Tests sharding logic in {@link UiTestTask}.
@@ -43,7 +40,7 @@ public class UiTestTaskTest {
   @Before
   public void setUp() throws Exception {
     task = new UiTestTask();
-    classpathFile = FileUtil.createTempFile("classpath", null);
+    classpathFile = File.createTempFile("classpath", null);
   }
 
   @After
@@ -57,23 +54,12 @@ public class UiTestTaskTest {
     task.setTestSuite("com.android.antuitest.tasks.UiTestTaskTest");
     task.setClasspathFile(classpathFile.getAbsolutePath());
 
-    Map<String, List<Class<?>>> batches = task.getTestGroups();
-    assertEquals(5, batches.size());
-
-    assertTrue(batches.containsKey("THEME"));
-    assertEquals("com.android.antuitest.tasks.ATest,", task.getTestSpec(batches.get("THEME")));
-
-    assertTrue(batches.containsKey("EDITING"));
-    assertEquals("com.android.antuitest.tasks.BTest,com.android.antuitest.tasks.CTest,", task.getTestSpec(batches.get("EDITING")));
-
-    assertTrue(batches.containsKey("DEFAULT"));
-    assertEquals("com.android.antuitest.tasks.DTest,", task.getTestSpec(batches.get("DEFAULT")));
-
-    assertTrue(batches.containsKey("SpecialATest"));
-    assertEquals("com.android.antuitest.tasks.SpecialATest,", task.getTestSpec(batches.get("SpecialATest")));
-
-    assertTrue(batches.containsKey("SpecialBTest"));
-    assertEquals("com.android.antuitest.tasks.SpecialBTest,", task.getTestSpec(batches.get("SpecialBTest")));
+    assertThat(task.getTestGroups()).containsExactly(
+      "THEME", ImmutableList.of(com.android.antuitest.tasks.ATest.class),
+      "EDITING", ImmutableList.of(com.android.antuitest.tasks.BTest.class, com.android.antuitest.tasks.CTest.class),
+      "DEFAULT", ImmutableList.of(com.android.antuitest.tasks.DTest.class),
+      "SpecialATest", ImmutableList.of(com.android.antuitest.tasks.SpecialATest.class),
+      "SpecialBTest", ImmutableList.of(com.android.antuitest.tasks.SpecialBTest.class));
   }
 }
 
