@@ -57,9 +57,7 @@ public class UiTestTaskTest {
     assertThat(task.getTestGroups()).containsExactly(
       "THEME", ImmutableList.of(ATest.class),
       "EDITING", ImmutableList.of(BTest.class, CTest.class),
-      "DEFAULT", ImmutableList.of(DTest.class),
-      "SpecialATest", ImmutableList.of(SpecialATest.class),
-      "SpecialBTest", ImmutableList.of(SpecialBTest.class));
+      "DEFAULT", ImmutableList.of(DTest.class));
   }
 }
 
@@ -79,11 +77,3 @@ class CTest {}
 
 @RunWith(GuiTestRunner.class)
 class DTest {}
-
-@RunIn(TestGroup.INDIVIDUAL)
-@RunWith(GuiTestRunner.class)
-class SpecialATest {}
-
-@RunIn(TestGroup.INDIVIDUAL)
-@RunWith(GuiTestRunner.class)
-class SpecialBTest {}
