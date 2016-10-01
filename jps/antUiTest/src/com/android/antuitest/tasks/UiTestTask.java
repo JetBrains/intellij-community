@@ -23,7 +23,6 @@ import org.apache.tools.ant.taskdefs.optional.junit.JUnitTask;
 import org.apache.tools.ant.taskdefs.optional.junit.JUnitTest;
 import org.apache.tools.ant.types.*;
 import org.apache.tools.ant.types.Commandline.Argument;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -166,7 +165,7 @@ public class UiTestTask extends Task {
     return result;
   }
 
-  private static boolean addToTestGroup(Map<String, List<Class<?>>> testGroups, @NotNull String groupName, @NotNull Class<?> testClass) {
+  private static boolean addToTestGroup(Map<String, List<Class<?>>> testGroups, String groupName, Class<?> testClass) {
     if ("INDIVIDUAL".equals(groupName)) {
       return addToTestGroup(testGroups, testClass.getSimpleName(), testClass);
     }
