@@ -101,7 +101,7 @@ export PATH=$JDK_18_x64/bin:$PATH
 
 # Temp: Figure out if we can properly default to Java8
 export JAVA_HOME=$JAVA8_HOME
-$ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS" -Dbundle.gradle.plugin=true
+$ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS"
 
 # Temp: figure out how to preserve symlinks
 cd "$OUT/artifacts"
