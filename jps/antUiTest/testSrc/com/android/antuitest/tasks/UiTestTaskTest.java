@@ -55,11 +55,11 @@ public class UiTestTaskTest {
     task.setClasspathFile(classpathFile.getAbsolutePath());
 
     assertThat(task.getTestGroups()).containsExactly(
-      "THEME", ImmutableList.of(com.android.antuitest.tasks.ATest.class),
-      "EDITING", ImmutableList.of(com.android.antuitest.tasks.BTest.class, com.android.antuitest.tasks.CTest.class),
-      "DEFAULT", ImmutableList.of(com.android.antuitest.tasks.DTest.class),
-      "SpecialATest", ImmutableList.of(com.android.antuitest.tasks.SpecialATest.class),
-      "SpecialBTest", ImmutableList.of(com.android.antuitest.tasks.SpecialBTest.class));
+      "THEME", ImmutableList.of(ATest.class),
+      "EDITING", ImmutableList.of(BTest.class, CTest.class),
+      "DEFAULT", ImmutableList.of(DTest.class),
+      "SpecialATest", ImmutableList.of(SpecialATest.class),
+      "SpecialBTest", ImmutableList.of(SpecialBTest.class));
   }
 }
 
