@@ -121,13 +121,6 @@
     <call_gant script="${project.home}/build/scripts/gui_tests.gant"/>
   </target>
 
-  <target name="guiSanityTests" depends="init">
-    <delete>
-      <fileset dir="${project.home}/build" includes="TEST-com.android.tools.idea.tests.gui.*"/>
-    </delete>
-    <call_gant script="${project.home}/build/scripts/gui_sanity_tests.gant"/>
-  </target>
-
   <!-- The build task creates an updater.jar in ${out.dir}. This task bundles the updater and its dependencies into a single jar -->
   <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${project.home}/build/lib/jarjar-1.0.jar"/>
   <target name="fullupdater" depends="build">
