@@ -44,9 +44,7 @@ public class ParameterNameHintsManager {
 
   private static final Set<Character> ALLOWED_PARAMETER_NAME_CHARS = ContainerUtil.newHashSet('x', 'y', 'z', 'w', 'h');
   
-  private static final Set<String> COMMON_METHOD_NAMES = ContainerUtil.newHashSet(
-    "get", "set", "contains", "append", "print", "println", "charAt", "startsWith", "endsWith", "indexOf"
-  );
+  private static final Set<String> COMMON_METHOD_NAMES = ContainerUtil.newHashSet("set", "print", "println");
   
   @NotNull
   private final List<InlayInfo> myDescriptors;
@@ -72,9 +70,17 @@ public class ParameterNameHintsManager {
     PsiElement element = resolveResult.getElement();
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
-      return !isSetter(method) && !isCommonMethod(method);
+      if (isSetter(method)) return false;
+      if (hasSingleParameter(method)) {
+        return PsiType.VOID.equals(method.getReturnType());
+      }
+      return !isCommonMethod(method);
     }
     return false;
+  }
+
+  private static boolean hasSingleParameter(PsiMethod method) {
+    return method.getParameterList().getParametersCount() == 1;
   }
 
   private static boolean isCommonMethod(PsiMethod method) {
@@ -83,7 +89,7 @@ public class ParameterNameHintsManager {
 
   private static boolean isSetter(PsiMethod method) {
     String methodName = method.getName();
-    if (method.getParameterList().getParametersCount() == 1
+    if (hasSingleParameter(method)
         && methodName.startsWith("set")
         && methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3))) {
       return true;
