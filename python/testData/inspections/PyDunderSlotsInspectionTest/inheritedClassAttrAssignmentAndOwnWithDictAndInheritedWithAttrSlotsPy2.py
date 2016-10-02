@@ -1,7 +1,3 @@
-# Py2: OK
-# Py3:
-# ValueError: 'attr' in __slots__ conflicts with class variable
-# This is not responsibility of current inspection
 class B(object):
     attr = 'baz'
     __slots__ = ['f', 'attr']
