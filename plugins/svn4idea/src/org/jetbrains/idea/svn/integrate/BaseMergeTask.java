@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.SeparatePiecesRunner;
 import com.intellij.util.continuation.TaskDescriptor;
@@ -33,6 +32,7 @@ import org.tmatesoft.svn.core.SVNURL;
 import java.util.List;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static java.util.Collections.singletonList;
 
 public abstract class BaseMergeTask extends TaskDescriptor {
@@ -86,16 +86,11 @@ public abstract class BaseMergeTask extends TaskDescriptor {
 
   @NotNull
   protected List<TaskDescriptor> getMergeAllTasks() {
-    List<TaskDescriptor> result = ContainerUtil.newArrayList();
-
-    result.add(new LocalChangesPromptTask(myMergeProcess, true, null, null));
-    MergeAllWithBranchCopyPointTask mergeAllExecutor = new MergeAllWithBranchCopyPointTask(myMergeProcess);
-    result.add(myMergeContext.getVcs().getSvnBranchPointsCalculator()
-                 .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl(),
-                                        myMergeContext.getWcInfo().getRootUrl(), mergeAllExecutor));
-    result.add(mergeAllExecutor);
-
-    return result;
+    return newArrayList(
+      new LocalChangesPromptTask(myMergeProcess, true, null, null),
+      new LookForBranchOriginTask(myMergeProcess, true, copyPoint ->
+        next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint)))
+    );
   }
 
   protected void runChangeListsMerge(@NotNull List<CommittedChangeList> lists,

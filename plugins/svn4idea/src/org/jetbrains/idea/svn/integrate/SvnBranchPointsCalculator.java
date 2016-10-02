@@ -18,13 +18,7 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.ThreadSafeTransparentlyFailedValue;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.persistent.SmallMapSerializer;
-import com.intellij.util.Consumer;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
-import com.intellij.util.continuation.Where;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -80,8 +74,6 @@ public class SvnBranchPointsCalculator {
           result = new WrapperInvertor(false, targetData);
         }
       }
-
-      logCopyData(repoUrl, sourceUrl, targetUrl, result);
 
       return result;
     }
@@ -185,16 +177,20 @@ public class SvnBranchPointsCalculator {
   @Nullable
   public WrapperInvertor calculateCopyPoint(@NotNull String repoUrl, @NotNull String sourceUrl, @NotNull String targetUrl)
     throws VcsException {
-    WrapperInvertor result = null;
-    CopyData copyData = new FirstInBranch(myVcs, repoUrl, targetUrl, sourceUrl).run();
+    WrapperInvertor result = getBestHit(repoUrl, sourceUrl, targetUrl);
 
-    if (copyData != null) {
-      BranchCopyData branchCopyData =
-        copyData.isTrunkSupposedCorrect()
-        ? new BranchCopyData(sourceUrl, copyData.getCopySourceRevision(), targetUrl, copyData.getCopyTargetRevision())
-        : new BranchCopyData(targetUrl, copyData.getCopySourceRevision(), sourceUrl, copyData.getCopyTargetRevision());
+    if (result == null) {
+      CopyData copyData = new FirstInBranch(myVcs, repoUrl, targetUrl, sourceUrl).run();
 
-      result = new WrapperInvertor(!copyData.isTrunkSupposedCorrect(), branchCopyData);
+      if (copyData != null) {
+        BranchCopyData branchCopyData =
+          copyData.isTrunkSupposedCorrect()
+          ? new BranchCopyData(sourceUrl, copyData.getCopySourceRevision(), targetUrl, copyData.getCopyTargetRevision())
+          : new BranchCopyData(targetUrl, copyData.getCopySourceRevision(), sourceUrl, copyData.getCopyTargetRevision());
+
+        persist(repoUrl, branchCopyData);
+        result = new WrapperInvertor(!copyData.isTrunkSupposedCorrect(), branchCopyData);
+      }
     }
 
     logCopyData(repoUrl, sourceUrl, targetUrl, result);
@@ -247,63 +243,6 @@ public class SvnBranchPointsCalculator {
 
     public BranchCopyData invertSelf() {
       return new BranchCopyData(myTarget, myTargetRevision, mySource, mySourceRevision);
-    }
-  }
-
-  @NotNull
-  public TaskDescriptor getFirstCopyPointTask(@NotNull String repoUrl,
-                                              @NotNull String sourceUrl,
-                                              @NotNull String targetUrl,
-                                              @NotNull Consumer<TransparentlyFailedValueI<WrapperInvertor, VcsException>> consumer) {
-    TransparentlyFailedValueI<WrapperInvertor, VcsException> value = new ThreadSafeTransparentlyFailedValue<>();
-
-    TaskDescriptor pooled = new TaskDescriptor("Looking for branch origin", Where.POOLED) {
-      @Override
-      public void run(ContinuationContext context) {
-        try {
-          WrapperInvertor calculatedValue = calculateCopyPoint(repoUrl, sourceUrl, targetUrl);
-          if (calculatedValue != null) {
-            persist(repoUrl, calculatedValue.getWrapped());
-          }
-          value.set(calculatedValue);
-        }
-        catch (Exception e) {
-          setException(value, e);
-        }
-        context.next(new TaskDescriptor("final part", Where.AWT) {
-          @Override
-          public void run(ContinuationContext context) {
-            consumer.consume(value);
-          }
-        });
-      }
-    };
-
-    return new TaskDescriptor("short part", Where.AWT) {
-      @Override
-      public void run(ContinuationContext context) {
-        try {
-          value.set(getBestHit(repoUrl, sourceUrl, targetUrl));
-        }
-        catch (Exception e) {
-          setException(value, e);
-        }
-        if (value.haveSomething()) {
-          consumer.consume(value);
-          return;
-        }
-        context.next(pooled);
-      }
-    };
-  }
-
-  private static void setException(@NotNull TransparentlyFailedValueI<WrapperInvertor, VcsException> value, @NotNull Exception e) {
-    if (e instanceof VcsException) {
-      value.fail((VcsException)e);
-    }
-    else {
-      LOG.info(e);
-      value.failRuntime(e instanceof RuntimeException ? (RuntimeException)e : new RuntimeException(e));
     }
   }
 }

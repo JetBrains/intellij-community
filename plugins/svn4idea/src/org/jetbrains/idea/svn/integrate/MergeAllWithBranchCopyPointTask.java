@@ -15,66 +15,27 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
-import com.intellij.util.Consumer;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicReference;
+public class MergeAllWithBranchCopyPointTask extends BaseMergeTask {
 
-public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
-  implements Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> {
+  @NotNull private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
 
-  @NotNull private final AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> myData;
-
-  public MergeAllWithBranchCopyPointTask(@NotNull QuickMerge mergeProcess) {
+  public MergeAllWithBranchCopyPointTask(@NotNull QuickMerge mergeProcess, @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
     super(mergeProcess, "merge all", Where.AWT);
-
-    myData = new AtomicReference<>();
-  }
-
-  @Override
-  public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> value) {
-    myData.set(value);
+    myCopyPoint = copyPoint;
   }
 
   @Override
   public void run() {
-    TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> inverterValue = myData.get();
+    boolean reintegrate = myCopyPoint.isInvertedSense();
 
-    if (inverterValue != null) {
-      runMerge(inverterValue);
-    }
-    else {
-      end("Merge start wasn't found", true);
-    }
-  }
-
-  private void runMerge(@NotNull TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> inverterValue) {
-    try {
-      SvnBranchPointsCalculator.WrapperInvertor inverter = inverterValue.get();
-
-      if (inverter != null) {
-        runMerge(inverter);
-      }
-      else {
-        end("Merge start wasn't found", true);
-      }
-    }
-    catch (VcsException e) {
-      end("Merge start wasn't found", e);
-    }
-  }
-
-  private void runMerge(@NotNull SvnBranchPointsCalculator.WrapperInvertor inverter) {
-    boolean reintegrate = inverter.isInvertedSense();
-
-    if (reintegrate && !myInteraction.shouldReintegrate(inverter.inverted().getTarget())) {
+    if (reintegrate && !myInteraction.shouldReintegrate(myCopyPoint.inverted().getTarget())) {
       end();
     }
     else {
-      MergerFactory mergerFactory = createBranchMergerFactory(reintegrate, inverter);
+      MergerFactory mergerFactory = createBranchMergerFactory(reintegrate);
       String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
 
       next(new MergeTask(myMergeProcess, mergerFactory, title));
@@ -82,9 +43,9 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
   }
 
   @NotNull
-  private MergerFactory createBranchMergerFactory(boolean reintegrate, @NotNull SvnBranchPointsCalculator.WrapperInvertor inverter) {
+  private MergerFactory createBranchMergerFactory(boolean reintegrate) {
     return (vcs, target, handler, currentBranchUrl, branchName) ->
       new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getPath(), handler, reintegrate, myMergeContext.getBranchName(),
-                       reintegrate ? inverter.getWrapped().getTargetRevision() : inverter.getWrapped().getSourceRevision());
+                       reintegrate ? myCopyPoint.getWrapped().getTargetRevision() : myCopyPoint.getWrapped().getSourceRevision());
   }
 }

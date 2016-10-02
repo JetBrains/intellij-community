@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,16 +38,9 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
         next(loader, dialog);
         break;
       case select:
-        MergeCalculatorTask calculator = new MergeCalculatorTask(myMergeProcess);
-        next(getCalculateFirstCopyPointTask(calculator), calculator);
+        next(new LookForBranchOriginTask(myMergeProcess, false, copyPoint ->
+          next(new MergeCalculatorTask(myMergeProcess, copyPoint))));
         break;
     }
-  }
-
-  @NotNull
-  private TaskDescriptor getCalculateFirstCopyPointTask(@NotNull MergeCalculatorTask mergeCalculator) {
-    return myMergeContext.getVcs().getSvnBranchPointsCalculator()
-      .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getWcInfo().getRootUrl(),
-                             myMergeContext.getSourceUrl(), mergeCalculator);
   }
 }

@@ -19,14 +19,11 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.*;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
@@ -34,71 +31,42 @@ import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
 
-public class MergeCalculatorTask extends BaseMergeTask
-  implements Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> {
+public class MergeCalculatorTask extends BaseMergeTask {
 
-  @NotNull private final AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> myCopyData;
-
+  @NotNull private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
   @NotNull private final MergeChecker myMergeChecker;
 
-  @Override
-  public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> value) {
-    myCopyData.set(value);
-  }
-
-  public MergeCalculatorTask(@NotNull QuickMerge mergeProcess) {
+  public MergeCalculatorTask(@NotNull QuickMerge mergeProcess, @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
     super(mergeProcess, "Calculating not merged revisions", Where.POOLED);
-
+    myCopyPoint = copyPoint;
     // TODO: Previously it was configurable - either to use OneShotMergeInfoHelper or BranchInfo as merge checker, but later that logic
     // TODO: was commented (in 80ebdbfea5210f6c998e67ddf28ca9c670fa4efe on 5/28/2010).
     // TODO: Still check if we need to preserve such configuration or it is sufficient to always use OneShotMergeInfoHelper.
     myMergeChecker = new OneShotMergeInfoHelper(myMergeContext);
-    myCopyData = new AtomicReference<>();
   }
 
   @Override
   public void run() throws VcsException {
-    SvnBranchPointsCalculator.WrapperInvertor copyPoint = getCopyPoint();
-
-    if (copyPoint != null && myMergeContext.getWcInfo().getFormat().supportsMergeInfo()) {
+    if (myMergeContext.getWcInfo().getFormat().supportsMergeInfo()) {
       myMergeChecker.prepare();
 
       List<Pair<SvnChangeList, LogHierarchyNode>> afterCopyPointChangeLists =
-        getChangeListsAfter(copyPoint.getTrue().getTargetRevision());
+        getChangeListsAfter(myCopyPoint.getTrue().getTargetRevision());
       List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(afterCopyPointChangeLists);
 
       if (!notMergedChangeLists.isEmpty()) {
-        next(new ShowRevisionSelector(myMergeProcess, copyPoint, notMergedChangeLists, myMergeChecker));
+        next(new ShowRevisionSelector(myMergeProcess, myCopyPoint, notMergedChangeLists, myMergeChecker));
       }
       else {
         end("Everything is up-to-date", false);
       }
     }
-  }
-
-  @Nullable
-  private SvnBranchPointsCalculator.WrapperInvertor getCopyPoint() {
-    SvnBranchPointsCalculator.WrapperInvertor result = null;
-
-    try {
-      result = myCopyData.get().get();
-
-      if (result == null) {
-        end("Merge start wasn't found", true);
-      }
-    }
-    catch (VcsException e) {
-      end("Merge start wasn't found", e);
-    }
-
-    return result;
   }
 
   @NotNull
