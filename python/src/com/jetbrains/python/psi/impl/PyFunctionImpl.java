@@ -726,7 +726,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         .transform(PyTargetExpressionStub::getInitializer)
         .transform(
           initializerName -> {
-            if (initializerName.matches(PyNames.CLASSMETHOD)) {
+            if (initializerName == null) {
+              return null;
+            }
+            else if (initializerName.matches(PyNames.CLASSMETHOD)) {
               return CLASSMETHOD;
             }
             else if (initializerName.matches(PyNames.STATICMETHOD)) {
