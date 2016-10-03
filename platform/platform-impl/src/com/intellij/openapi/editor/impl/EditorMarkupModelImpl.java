@@ -80,6 +80,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMarkupModel {
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
+  private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
 
   private static int getErrorIconWidth() {
     return JBUI.scale(14);
@@ -230,7 +231,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     return new HintHint(me)
       .setAwtTooltip(true)
       .setPreferredPosition(Balloon.Position.atLeft)
-      .setBorderInsets(JBUI.insets(1))
+      .setBorderInsets(JBUI.insets(EDITOR_FRAGMENT_POPUP_BORDER))
       .setShowImmediately(true)
       .setAnimationEnabled(false);
   }
@@ -1186,6 +1187,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                 boolean alignToRight,
                                 @NotNull TooltipGroup group,
                                 @NotNull final HintHint hintInfo) {
+      int contentInsets = JBUI.scale(2); // BalloonPopupBuilderImpl.myContentInsets
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
       boolean needDelay = false;
       if (myEditorPreviewHint == null) {
@@ -1198,8 +1200,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           public Dimension getPreferredSize() {
             int width = myEditor.getGutterComponentEx().getWidth() + myEditor.getScrollingModel().getVisibleArea().width
                         - myEditor.getVerticalScrollBar().getWidth();
-            width--;
-            return new Dimension(width - BalloonImpl.POINTER_WIDTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
+            width -= JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) * 2 + contentInsets;
+            return new Dimension(width - BalloonImpl.POINTER_LENGTH, myEditor.getLineHeight() * (myEndVisualLine - myStartVisualLine));
           }
 
           @Override
@@ -1221,8 +1223,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               EditorUIUtil.setupAntialiasing(cg);
               int lineShift = -myEditor.getLineHeight() * myCacheStartLine;
 
-              AffineTransform gutterAT = AffineTransform.getTranslateInstance(-3, lineShift);
-              AffineTransform contentAT = AffineTransform.getTranslateInstance(gutterWidth  - 3, lineShift);
+              int shift = JBUI.scale(EDITOR_FRAGMENT_POPUP_BORDER) + contentInsets;
+              AffineTransform gutterAT = AffineTransform.getTranslateInstance(-shift, lineShift);
+              AffineTransform contentAT = AffineTransform.getTranslateInstance(gutterWidth - shift, lineShift);
               gutterAT.preConcatenate(t);
               contentAT.preConcatenate(t);
 
