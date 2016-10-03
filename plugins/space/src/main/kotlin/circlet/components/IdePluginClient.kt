@@ -2,48 +2,33 @@ package circlet.components
 
 import circlet.client.*
 import circlet.client.auth.*
-import circlet.protocol.*
 import circlet.utils.*
+import com.intellij.notification.*
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import com.intellij.util.net.ssl.*
+import klogging.*
 import lifetime.*
 import nl.komponents.kovenant.*
 import org.apache.http.client.utils.*
 import rx.subjects.*
 import java.util.*
-import javax.websocket.*
 
-enum class ConnectionStates {
-    Connecting,
-    Connected
-}
-
-data class IdePluginConnectionState (
-    val def : LifetimeDefinition,
-    var connection : ModelConnection? = null,
-    var session: Session? = null,
-    var message: String = "Connecting",
-    var connectionState : ConnectionStates = ConnectionStates.Connecting) {
-
-    fun Close() {
-        def.terminate()
-        session?.close()
-    }
-}
+private val log = KLoggers.logger("plugin/IdePluginClient.kt")
 
 class IdePluginClient(project : Project) : AbstractProjectComponent(project) {
+    val DISPLAY_ID = "circlet.components.IdePluginClient"
+
+    enum class ConnectionStates { Connecting, Connected }
 
     private val serverConfig = ServerConfig()
-    var logger = Logger.getInstance(javaClass)
     var connectionState : IdePluginConnectionState? = null
 
     fun connect() {
         if (connectionState != null)
         {
-            logger.error("Can't connect twice")
+            log.error("Can't connect twice")
             return
         }
 
@@ -63,36 +48,37 @@ class IdePluginClient(project : Project) : AbstractProjectComponent(project) {
         }))
 
         task {
-            Thread.currentThread().setContextClassLoader(this.javaClass.getClassLoader())
+            Thread.currentThread().contextClassLoader = this.javaClass.classLoader
 
-            RingAuth(CertificateManager.getInstance().getSslContext(), CertificateManager.HOSTNAME_VERIFIER, serverConfig, connectedStateLifetimeDef.lifetime).apply {
+            RingAuth(CertificateManager.getInstance().sslContext, CertificateManager.HOSTNAME_VERIFIER, serverConfig, connectedStateLifetimeDef.lifetime).apply {
                 connectionState?.message = "Connecting to hub"
                 hubInfo() thenAwait {
-                    logger.info("got hub info $it")
+                    log.info("got hub info $it")
                     connectionState?.message = "Getting auth code"
                     authCode(it)
                 } thenAwait {
-                    logger.info("got auth code")
+                    log.info("got auth code")
                     connectionState?.message = "Getting refresh token"
                     refreshToken(it)
                 } thenAwait {
-                    logger.info("got refresh token")
+                    log.info("got refresh token")
                     connectionState?.message = "Getting access token"
                     authToken(it)
                 } then {
-                    try {
-                        val me = user(it)
+                    val me = user(it)
 
-                        connectionState?.message = "Connecting to circlet server"
-                        val token = it.accessTokenSource.accessToken
-                        logger.info("got access token: $token")
-                        var builder = URIBuilder(serverConfig.serviceWebSocketUrl).
-                            setParameter("token", Base64.getEncoder().encodeToString(token.accessToken.toByteArray())).
-                            setParameter("user", Base64.getEncoder().encodeToString(me.toByteArray()))
-                        val uri = builder.toString()
-                        logger.info("connect to circlet: $uri")
-                        val session = connectToServer(uri) { cnctn, lifetime ->
-                            logger.info("connected to ")
+                    connectionState?.message = "Connecting to circlet server"
+                    val token = it.accessTokenSource.accessToken
+                    log.info("got access token: $token")
+                    val builder = URIBuilder(serverConfig.serviceWebSocketUrl).
+                        setParameter("token", Base64.getEncoder().encodeToString(token.accessToken.toByteArray())).
+                        setParameter("user", Base64.getEncoder().encodeToString(me.toByteArray()))
+                    val uri = builder.toString()
+                    log.info("connect to circlet: $uri")
+
+                    val session = log.io {
+                        connectToServer(uri) { cnctn, lifetime ->
+                            log.info("connected to ")
                             state.connection = cnctn
                             state.connectionState = ConnectionStates.Connected
                             lifetime.add {
@@ -100,14 +86,24 @@ class IdePluginClient(project : Project) : AbstractProjectComponent(project) {
                             }
                             connectingProgressLifetimeDef.terminate()
                         }
-                        state.session = session
-                    } catch (th: Throwable){
-                        disconnect()
-                        logger.error(th)
                     }
-                } catch {
+                    state.session = session
+
+                } catch { th ->
                     disconnect()
-                    logger.error(it)
+                    when (th){
+                        is ProcessCancalledException ->{
+                            val notification = Notification(DISPLAY_ID, "Circlet connection cancelled", "", NotificationType.INFORMATION)
+                            Notifications.Bus.notify(notification, myProject)
+                        }
+                        is ExpectedException -> {
+                            val notification = Notification(DISPLAY_ID, "Circlet connection failed", th.message ?: "", NotificationType.ERROR)
+                            Notifications.Bus.notify(notification, myProject)
+                        }
+                        else -> {
+                            log.error(th)
+                        }
+                    }
                 }
             }
         }

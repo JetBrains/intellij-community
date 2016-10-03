@@ -31,6 +31,7 @@ class DisconnectAction : AnAction() {
         project ?: return
 
         val connectionState = project.component<IdePluginClient>().connectionState
+        // can disconnect in any connected state...
         e.presentation.isEnabled = connectionState != null
     }
 
