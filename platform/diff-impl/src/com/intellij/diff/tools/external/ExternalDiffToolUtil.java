@@ -36,8 +36,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithoutContent;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import com.intellij.util.TimeoutUtil;
@@ -115,6 +117,9 @@ public class ExternalDiffToolUtil {
     Charset charset = content.getCharset();
     if (charset == null) charset = Charset.defaultCharset();
 
+    Boolean hasBom = content.getBOM();
+    if (hasBom == null) hasBom = CharsetToolkit.getMandatoryBom(charset) != null;
+
     String contentData = ReadAction.compute(() -> {
       return content.getDocument().getText();
     });
@@ -123,6 +128,12 @@ public class ExternalDiffToolUtil {
     }
 
     byte[] bytes = contentData.getBytes(charset);
+
+    byte[] bom = hasBom ? CharsetToolkit.getBom(charset) : null;
+    if (bom != null) {
+      bytes = ArrayUtil.mergeArrays(bom, bytes);
+    }
+
     return createFile(bytes, fileName);
   }
 

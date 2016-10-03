@@ -94,7 +94,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   @Override
   public DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent) {
     if (referent == null) return new DocumentContentImpl(document);
-    return new DocumentContentImpl(document, referent.getContentType(), referent.getHighlightFile(), null, null);
+    return new DocumentContentImpl(document, referent.getContentType(), referent.getHighlightFile(), null, null, null);
   }
 
   @Override
@@ -107,7 +107,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   @NotNull
   public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable FileType fileType) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null) return new DocumentContentImpl(document, fileType, null, null, null);
+    if (file == null) return new DocumentContentImpl(document, fileType, null, null, null, null);
     return create(project, document, file);
   }
 
@@ -189,7 +189,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     LineSeparator separator = respectLineSeparators ? StringUtil.detectSeparators(text) : null;
     Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text));
     if (readOnly) document.setReadOnly(true);
-    return new DocumentContentImpl(document, type, highlightFile, separator, charset);
+    return new DocumentContentImpl(document, type, highlightFile, separator, charset, null);
   }
 
   @NotNull

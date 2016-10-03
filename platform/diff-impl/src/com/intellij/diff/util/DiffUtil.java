@@ -467,23 +467,26 @@ public class DiffUtil {
                                         boolean equalSeparators,
                                         @Nullable Editor editor) {
     if (content instanceof EmptyContent) return null;
+    DocumentContent documentContent = (DocumentContent)content;
 
-    Charset charset = equalCharsets ? null : ((DocumentContent)content).getCharset();
-    LineSeparator separator = equalSeparators ? null : ((DocumentContent)content).getLineSeparator();
+    Charset charset = equalCharsets ? null : documentContent.getCharset();
+    Boolean bom = equalCharsets ? null : documentContent.getBOM();
+    LineSeparator separator = equalSeparators ? null : documentContent.getLineSeparator();
     boolean isReadOnly = editor == null || editor.isViewer() || !canMakeWritable(editor.getDocument());
 
-    return createTitle(title, charset, separator, isReadOnly);
+    return createTitle(title, separator, charset, bom, isReadOnly);
   }
 
   @NotNull
   public static JComponent createTitle(@NotNull String title) {
-    return createTitle(title, null, null, false);
+    return createTitle(title, null, null, null, false);
   }
 
   @NotNull
   public static JComponent createTitle(@NotNull String title,
-                                       @Nullable Charset charset,
                                        @Nullable LineSeparator separator,
+                                       @Nullable Charset charset,
+                                       @Nullable Boolean bom,
                                        boolean readOnly) {
     if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
 
@@ -493,13 +496,13 @@ public class DiffUtil {
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
-      panel2.add(createCharsetPanel(charset));
+      panel2.add(createCharsetPanel(charset, bom));
       panel2.add(Box.createRigidArea(new Dimension(4, 0)));
       panel2.add(createSeparatorPanel(separator));
       panel.add(panel2, BorderLayout.EAST);
     }
     else if (charset != null) {
-      panel.add(createCharsetPanel(charset), BorderLayout.EAST);
+      panel.add(createCharsetPanel(charset, bom), BorderLayout.EAST);
     }
     else if (separator != null) {
       panel.add(createSeparatorPanel(separator), BorderLayout.EAST);
@@ -508,8 +511,13 @@ public class DiffUtil {
   }
 
   @NotNull
-  private static JComponent createCharsetPanel(@NotNull Charset charset) {
-    JLabel label = new JLabel(charset.displayName());
+  private static JComponent createCharsetPanel(@NotNull Charset charset, @Nullable Boolean bom) {
+    String text = charset.displayName();
+    if (bom != null && bom) {
+      text += " BOM";
+    }
+
+    JLabel label = new JLabel(text);
     // TODO: specific colors for other charsets
     if (charset.equals(Charset.forName("UTF-8"))) {
       label.setForeground(JBColor.BLUE);

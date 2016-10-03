@@ -59,6 +59,12 @@ public interface DocumentContent extends DiffContent {
   @Nullable
   default Charset getCharset() { return null; }
 
+  /**
+   * @return original file byte order mark
+   */
+  @Nullable
+  default Boolean getBOM() { return null; }
+
   @Nullable
   @Deprecated
   default OpenFileDescriptor getOpenFileDescriptor(int offset) {

@@ -40,8 +40,9 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
                                   @Nullable FileType fileType,
                                   @Nullable VirtualFile highlightFile,
                                   @Nullable LineSeparator separator,
-                                  @Nullable Charset charset) {
-    super(document, fileType, highlightFile, separator, charset);
+                                  @Nullable Charset charset,
+                                  @Nullable Boolean bom) {
+    super(document, fileType, highlightFile, separator, charset, bom);
     myProject = project;
   }
 
@@ -78,6 +79,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     private VirtualFile myHighlightFile;
     private LineSeparator mySeparator;
     private Charset myCharset;
+    private Boolean myBOM;
     private Charset mySuggestedCharset;
     private boolean myMalformedContent;
     private String myFileName;
@@ -140,6 +142,15 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     private Builder create(@NotNull byte[] content) {
       assert mySuggestedCharset != null;
 
+      Charset charset = CharsetToolkit.guessFromBOM(content);
+      if (charset != null) {
+        mySuggestedCharset = charset;
+        myBOM = true;
+      }
+      else {
+        myBOM = false;
+      }
+
       myCharset = mySuggestedCharset;
       try {
         String text = CharsetToolkit.tryDecodeString(content, mySuggestedCharset);
@@ -165,7 +176,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     public FileAwareDocumentContent build() {
       if (FileTypes.UNKNOWN.equals(myFileType)) myFileType = PlainTextFileType.INSTANCE;
       FileAwareDocumentContent content
-        = new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset);
+        = new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset, myBOM);
       DiffUtil.addNotification(createNotification(), content);
       content.putUserData(DiffUserDataKeysEx.FILE_NAME, myFileName);
       return content;
