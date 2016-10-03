@@ -85,7 +85,7 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     assert editor != null;
 
     DocumentContent content2 = createContent(project, editor, editorFileType);
-    DocumentContent content1 = DiffContentFactory.getInstance().createClipboardContent(content2);
+    DocumentContent content1 = DiffContentFactory.getInstance().createClipboardContent(project, content2);
 
     String title1 = DiffBundle.message("diff.content.clipboard.content.title");
     String title2 = createContentTitle(editor);

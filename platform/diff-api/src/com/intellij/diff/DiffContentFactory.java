@@ -60,6 +60,27 @@ public abstract class DiffContentFactory {
 
 
   @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text);
+
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type);
+
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type,
+                                         boolean respectLineSeparators);
+
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable VirtualFile highlightFile);
+
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable DocumentContent referent);
+
+
+  @NotNull
+  public abstract DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent);
+
+
+  @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document);
 
   @NotNull
@@ -69,7 +90,7 @@ public abstract class DiffContentFactory {
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile file);
 
   @NotNull
-  public abstract DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent);
+  public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable DocumentContent referent);
 
 
   @NotNull
@@ -94,6 +115,12 @@ public abstract class DiffContentFactory {
 
   @NotNull
   public abstract DocumentContent createClipboardContent(@Nullable DocumentContent referent);
+
+  @NotNull
+  public abstract DiffContent createClipboardContent(@Nullable Project project);
+
+  @NotNull
+  public abstract DocumentContent createClipboardContent(@Nullable Project project, @Nullable DocumentContent referent);
 
 
   @NotNull

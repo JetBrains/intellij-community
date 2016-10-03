@@ -95,7 +95,7 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
       return DiffContentFactory.getInstance().create(project, contentFile);
     }
     else {
-      return DiffContentFactory.getInstance().create(content, highlightFile);
+      return DiffContentFactory.getInstance().create(project, content, highlightFile);
     }
   }
 

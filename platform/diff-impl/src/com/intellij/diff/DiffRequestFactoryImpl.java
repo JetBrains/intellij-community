@@ -215,7 +215,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
     List<DocumentContent> contents = new ArrayList<>(3);
     for (String text : textContents) {
-      contents.add(myContentFactory.create(text, fileType));
+      contents.add(myContentFactory.create(project, text, fileType));
     }
 
     return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, titles, applyCallback);

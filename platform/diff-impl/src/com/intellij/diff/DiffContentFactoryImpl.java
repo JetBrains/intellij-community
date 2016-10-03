@@ -57,43 +57,76 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return new EmptyContent();
   }
 
+
   @NotNull
   @Override
   public DocumentContent create(@NotNull String text) {
-    return create(text, (FileType)null);
+    return create(null, text);
   }
 
   @NotNull
   @Override
   public DocumentContent create(@NotNull String text, @Nullable FileType type) {
-    return create(text, type, true);
+    return create(null, text, type);
   }
 
   @NotNull
   @Override
   public DocumentContent create(@NotNull String text, @Nullable FileType type, boolean respectLineSeparators) {
-    return createImpl(text, type, null, null, respectLineSeparators, true);
+    return create(null, text, type, respectLineSeparators);
   }
 
   @NotNull
   @Override
   public DocumentContent create(@NotNull String text, @Nullable VirtualFile highlightFile) {
-    return createImpl(text, highlightFile != null ? highlightFile.getFileType() : null, highlightFile, null, true, true);
+    return create(null, text, highlightFile);
   }
 
   @NotNull
   @Override
   public DocumentContent create(@NotNull String text, @Nullable DocumentContent referent) {
-    if (referent == null) return create(text);
-    return createImpl(text, referent.getContentType(), referent.getHighlightFile(), null, false, true);
+    return create(null, text, referent);
+  }
+
+
+  @NotNull
+  @Override
+  public DocumentContent create(@Nullable Project project, @NotNull String text) {
+    return create(project, text, (FileType)null);
   }
 
   @NotNull
   @Override
-  public DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent) {
-    if (referent == null) return new DocumentContentImpl(document);
-    return new DocumentContentImpl(document, referent.getContentType(), referent.getHighlightFile(), null, null, null);
+  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type) {
+    return create(project, text, type, true);
   }
+
+  @NotNull
+  @Override
+  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type, boolean respectLineSeparators) {
+    return createImpl(project, text, type, null, null, respectLineSeparators, true);
+  }
+
+  @NotNull
+  @Override
+  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable VirtualFile highlightFile) {
+    return createImpl(project, text, highlightFile != null ? highlightFile.getFileType() : null, highlightFile, null, true, true);
+  }
+
+  @NotNull
+  @Override
+  public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable DocumentContent referent) {
+    if (referent == null) return create(text);
+    return createImpl(project, text, referent.getContentType(), referent.getHighlightFile(), null, false, true);
+  }
+
+
+  @NotNull
+  @Override
+  public DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent) {
+    return create(null, document, referent);
+  }
+
 
   @NotNull
   @Override
@@ -115,6 +148,14 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     if (file != null) return new FileDocumentContentImpl(project, document, file);
     return new DocumentContentImpl(document);
   }
+
+  @NotNull
+  @Override
+  public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable DocumentContent referent) {
+    if (referent == null) return new DocumentContentImpl(document);
+    return new DocumentContentImpl(document, referent.getContentType(), referent.getHighlightFile(), null, null, null);
+  }
+
 
   @NotNull
   @Override
@@ -144,6 +185,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return (FileContent)create(project, file);
   }
 
+
   @NotNull
   @Override
   public DocumentContent createFragment(@Nullable Project project, @NotNull Document document, @NotNull TextRange range) {
@@ -157,24 +199,38 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return new DocumentFragmentContent(project, content, range);
   }
 
+
   @NotNull
   @Override
   public DiffContent createClipboardContent() {
-    return createClipboardContent(null);
+    return createClipboardContent(null, null);
   }
 
   @NotNull
   @Override
   public DocumentContent createClipboardContent(@Nullable DocumentContent referent) {
+    return createClipboardContent(null, referent);
+  }
+
+  @NotNull
+  @Override
+  public DiffContent createClipboardContent(@Nullable Project project) {
+    return createClipboardContent(project, null);
+  }
+
+  @NotNull
+  @Override
+  public DocumentContent createClipboardContent(@Nullable Project project, @Nullable DocumentContent referent) {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
 
     FileType type = referent != null ? referent.getContentType() : null;
     VirtualFile highlightFile = referent != null ? referent.getHighlightFile() : null;
 
-    DocumentContent content = createImpl(StringUtil.notNullize(text), type, highlightFile, null, true, false);
+    DocumentContent content = createImpl(project, StringUtil.notNullize(text), type, highlightFile, null, true, false);
     content.putUserData(DiffUserDataKeysEx.FILE_NAME, "Clipboard.txt");
     return content;
   }
+
 
   @NotNull
   @Override
@@ -222,8 +278,10 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return create(project, file);
   }
 
+
   @NotNull
-  private static DocumentContent createImpl(@NotNull String text,
+  private static DocumentContent createImpl(@Nullable Project project,
+                                            @NotNull String text,
                                             @Nullable FileType type,
                                             @Nullable VirtualFile highlightFile,
                                             @Nullable Charset charset,
