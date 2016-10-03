@@ -42,6 +42,7 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract EmptyContent createEmpty();
 
+
   @NotNull
   public abstract DocumentContent create(@NotNull String text);
 
@@ -57,6 +58,7 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DocumentContent create(@NotNull String text, @Nullable DocumentContent referent);
 
+
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document);
 
@@ -69,6 +71,7 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent);
 
+
   @NotNull
   public abstract DiffContent create(@Nullable Project project, @NotNull VirtualFile file);
 
@@ -78,20 +81,20 @@ public abstract class DiffContentFactory {
   @Nullable
   public abstract FileContent createFile(@Nullable Project project, @NotNull VirtualFile file);
 
+
   @NotNull
   public abstract DocumentContent createFragment(@Nullable Project project, @NotNull Document document, @NotNull TextRange range);
 
   @NotNull
   public abstract DocumentContent createFragment(@Nullable Project project, @NotNull DocumentContent content, @NotNull TextRange range);
 
+
   @NotNull
   public abstract DiffContent createClipboardContent();
 
-  /**
-   * @param referenceContent used to detect FileType and proper highlighting for clipboard content
-   */
   @NotNull
-  public abstract DocumentContent createClipboardContent(@Nullable DocumentContent referenceContent);
+  public abstract DocumentContent createClipboardContent(@Nullable DocumentContent referent);
+
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,

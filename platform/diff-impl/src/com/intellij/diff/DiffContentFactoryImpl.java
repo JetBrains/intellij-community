@@ -165,29 +165,15 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @NotNull
   @Override
-  public DocumentContent createClipboardContent(@Nullable DocumentContent mainContent) {
+  public DocumentContent createClipboardContent(@Nullable DocumentContent referent) {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
 
-    FileType type = mainContent != null ? mainContent.getContentType() : null;
-    VirtualFile highlightFile = mainContent != null ? mainContent.getHighlightFile() : null;
+    FileType type = referent != null ? referent.getContentType() : null;
+    VirtualFile highlightFile = referent != null ? referent.getHighlightFile() : null;
 
     DocumentContent content = createImpl(StringUtil.notNullize(text), type, highlightFile, null, true, false);
     content.putUserData(DiffUserDataKeysEx.FILE_NAME, "Clipboard.txt");
     return content;
-  }
-
-  @NotNull
-  private static DocumentContent createImpl(@NotNull String text,
-                                            @Nullable FileType type,
-                                            @Nullable VirtualFile highlightFile,
-                                            @Nullable Charset charset,
-                                            boolean respectLineSeparators,
-                                            boolean readOnly) {
-    // TODO: detect invalid (different across the file) separators ?
-    LineSeparator separator = respectLineSeparators ? StringUtil.detectSeparators(text) : null;
-    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text));
-    if (readOnly) document.setReadOnly(true);
-    return new DocumentContentImpl(document, type, highlightFile, separator, charset, null);
   }
 
   @NotNull
@@ -196,7 +182,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                      @NotNull FilePath filePath,
                                      @NotNull byte[] content) throws IOException {
     if (filePath.getFileType().isBinary()) {
-      return DiffContentFactory.getInstance().createBinary(project, filePath.getName(), filePath.getFileType(), content);
+      return createBinary(project, filePath.getName(), filePath.getFileType(), content);
     }
 
     return FileAwareDocumentContent.create(project, content, filePath);
@@ -209,7 +195,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                      @NotNull byte[] content) throws IOException {
     // TODO: check if FileType.UNKNOWN is actually a text ?
     if (highlightFile.getFileType().isBinary()) {
-      return DiffContentFactory.getInstance().createBinary(project, highlightFile.getName(), highlightFile.getFileType(), content);
+      return createBinary(project, highlightFile.getName(), highlightFile.getFileType(), content);
     }
 
     return FileAwareDocumentContent.create(project, content, highlightFile);
@@ -234,6 +220,20 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     }
 
     return create(project, file);
+  }
+
+  @NotNull
+  private static DocumentContent createImpl(@NotNull String text,
+                                            @Nullable FileType type,
+                                            @Nullable VirtualFile highlightFile,
+                                            @Nullable Charset charset,
+                                            boolean respectLineSeparators,
+                                            boolean readOnly) {
+    // TODO: detect invalid (different across the file) separators ?
+    LineSeparator separator = respectLineSeparators ? StringUtil.detectSeparators(text) : null;
+    Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text));
+    if (readOnly) document.setReadOnly(true);
+    return new DocumentContentImpl(document, type, highlightFile, separator, charset, null);
   }
 
   @NotNull
