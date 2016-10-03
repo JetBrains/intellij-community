@@ -18,6 +18,7 @@ package com.intellij.openapi.application.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +38,8 @@ import static com.intellij.openapi.application.impl.LaterInvocatorTest.flushSwin
 @SuppressWarnings({"SSBasedInspection"})
 @SkipInHeadlessEnvironment
 public class PerProjectLaterInvocatorTest extends PlatformTestCase {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.PerProjectLaterInvocatorTest");
 
   private final static Object lock = new Object();
   @SuppressWarnings("EmptySynchronizedStatement") private static Runnable blockEDT = () -> {synchronized(lock){}};
@@ -176,8 +179,9 @@ public class PerProjectLaterInvocatorTest extends PlatformTestCase {
     AtomicInteger enteringIndex = new AtomicInteger(-1);
 
     ModalityStateListener modalityStateListener = entering -> {
-      if (entering != enteringOrder[enteringIndex.incrementAndGet()])
-        throw new RuntimeException("Trying to enter a modal state. Wrong order of the modalityStateListener invocations. Step #" + enteringIndex.get());
+      if (entering != enteringOrder[enteringIndex.incrementAndGet()]) {
+        throw new RuntimeException("Entrance index: " + enteringIndex + "; value: " + entering + " expected value: " + enteringOrder[enteringIndex.get()]);
+      }
     };
 
     Disposable emptyDisposal = () -> {};
