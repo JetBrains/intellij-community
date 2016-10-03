@@ -41,8 +41,6 @@ public class ParameterNameHintsManager {
     Couple.of("min", "max"),
     Couple.of("format", "arg")
   );
-
-  private static final Set<Character> ALLOWED_PARAMETER_NAME_CHARS = ContainerUtil.newHashSet('x', 'y', 'z', 'w', 'h');
   
   private static final Set<String> COMMON_METHOD_NAMES = ContainerUtil.newHashSet("set", "print", "println");
   
@@ -163,30 +161,18 @@ public class ParameterNameHintsManager {
 
     final int totalDescriptors = descriptors.size();
     if (totalDescriptors == 1 && shouldIgnoreSingleHint(parameters, descriptors)
-        || totalDescriptors == 2 && parameters.length == 2 && isParamPairToIgnore(descriptors.get(0), descriptors.get(1))
-        || countOneCharLengthHints(descriptors) == totalDescriptors && !containsAnyMeaningfull(descriptors)) {
+        || totalDescriptors == 2 && parameters.length == 2 && isParamPairToIgnore(descriptors.get(0), descriptors.get(1))) 
+    {
       return ContainerUtil.emptyList();
     }
     
     return descriptors;
   }
-
-
-  private static long countOneCharLengthHints(List<InlayInfo> inlays) {
-    return inlays.stream().filter((e) -> e.getText().length() == 1).count();
-  }
-
+  
   private static boolean shouldIgnoreSingleHint(@NotNull PsiParameter[] parameters, List<InlayInfo> descriptors) {
     return isStringLiteral(descriptors.get(0)) && !hasMultipleStringParams(parameters);
   }
-
-  private static boolean containsAnyMeaningfull(List<InlayInfo> descriptors) {
-    return descriptors.stream().anyMatch((e) -> {
-      String text = e.getText();
-      return text.length() == 1 && ALLOWED_PARAMETER_NAME_CHARS.contains(text.charAt(0));
-    });
-  }
-
+  
   private static boolean hasMultipleStringParams(PsiParameter[] parameters) {
     int stringParams = 0;
     for (PsiParameter parameter : parameters) {

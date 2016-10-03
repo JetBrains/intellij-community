@@ -601,13 +601,14 @@ class Test {
     drawRect(x, y, 10, 12);
   }
 
+  void blah(int a, int b) {}
   void draw(int x, int y, int z) {}
   void drawRect(int x, int y, int w, int h) {}
 
 }
 """)
     
-    onLineStartingWith("blah").assertNoInlays()
+    onLineStartingWith("blah").assertInlays("a->1", "b->2")
     onLineStartingWith("draw").assertInlays("x->10", "y->20")
     onLineStartingWith("drawRect").assertInlays("w->10", "h->12")
   }
