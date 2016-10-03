@@ -1,0 +1,220 @@
+package com.jetbrains.tmp.learning.checker;
+
+import com.intellij.execution.process.CapturingProcessHandler;
+import com.intellij.execution.process.ProcessOutput;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.tmp.learning.StudyPluginConfigurator;
+import com.jetbrains.tmp.learning.StudyState;
+import com.jetbrains.tmp.learning.StudyTaskManager;
+import com.jetbrains.tmp.learning.StudyUtils;
+import com.jetbrains.tmp.learning.actions.StudyAfterCheckAction;
+import com.jetbrains.tmp.learning.core.EduNames;
+import com.jetbrains.tmp.learning.core.EduUtils;
+import com.jetbrains.tmp.learning.courseFormat.Course;
+import com.jetbrains.tmp.learning.courseFormat.StudyStatus;
+import com.jetbrains.tmp.learning.courseFormat.Task;
+import com.jetbrains.tmp.learning.stepik.EduAdaptiveStepikConnector;
+import com.jetbrains.tmp.learning.stepik.StepikConnectorPost;
+import com.jetbrains.tmp.learning.stepik.StepikUser;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class StudyCheckTask extends com.intellij.openapi.progress.Task.Backgroundable {
+
+  private static final Logger LOG = Logger.getInstance(StudyCheckTask.class);
+  private final Project myProject;
+  protected final StudyState myStudyState;
+  protected final Task myTask;
+  protected final VirtualFile myTaskDir;
+  protected final StudyTaskManager myTaskManger;
+  private final StudyStatus myStatusBeforeCheck;
+  private final Ref<Boolean> myCheckInProcess;
+  private final Process myTestProcess;
+  private final String myCommandLine;
+  private final String FAILED_CHECK_LAUNCH = "Failed to launch checking";
+
+  public StudyCheckTask(Project project, StudyState studyState, Ref<Boolean> checkInProcess, Process testProcess, String commandLine) {
+    super(project, "Checking Task");
+    myProject = project;
+    myStudyState = studyState;
+    myCheckInProcess = checkInProcess;
+    myTestProcess = testProcess;
+    myCommandLine = commandLine;
+    myTask = studyState.getTask();
+    myTaskDir = studyState.getTaskDir();
+    myTaskManger = StudyTaskManager.getInstance(myProject);
+    myStatusBeforeCheck = myTask.getStatus();
+  }
+
+  @Override
+  public void onSuccess() {
+    StudyUtils.updateToolWindows(myProject);
+    StudyCheckUtils.drawAllPlaceholders(myProject, myTask, myTaskDir);
+    ProjectView.getInstance(myProject).refresh();
+    clearState();
+  }
+
+  protected void clearState() {
+    EduUtils.deleteWindowDescriptions(myTask, myTaskDir);
+    myCheckInProcess.set(false);
+  }
+
+  @Override
+  public void onCancel() {
+    myTask.setStatus(myStatusBeforeCheck);
+    clearState();
+  }
+
+  @Override
+  public void run(@NotNull ProgressIndicator indicator) {
+    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+    if (course != null) {
+      if (course.isAdaptive()) {
+        checkForAdaptiveCourse(indicator);
+      }
+      else {
+        checkForEduCourse(indicator);
+      }
+    }
+  }
+
+  private void checkForEduCourse(@NotNull ProgressIndicator indicator) {
+    final StudyTestsOutputParser.TestsOutput testsOutput = getTestOutput(indicator);
+    
+    if (testsOutput != null) {
+      if (testsOutput.isSuccess()) {
+        onTaskSolved(testsOutput.getMessage());
+      }
+      else {
+        onTaskFailed(testsOutput.getMessage());
+      }
+      runAfterTaskCheckedActions();
+      final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+      if (course != null && EduNames.STUDY.equals(course.getCourseMode())) {
+        postAttemptToStepik(testsOutput);
+      }
+    }
+  }
+
+  @Nullable
+  private StudyTestsOutputParser.TestsOutput getTestOutput(@NotNull ProgressIndicator indicator) {
+    final CapturingProcessHandler handler = new CapturingProcessHandler(myTestProcess, null, myCommandLine);
+    final ProcessOutput output = handler.runProcessWithProgressIndicator(indicator);
+    if (indicator.isCanceled()) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> StudyCheckUtils.showTestResultPopUp("Check cancelled", MessageType.WARNING.getPopupBackground(), myProject));
+    }
+
+    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+    if (course != null) {
+      final StudyTestsOutputParser.TestsOutput testsOutput = StudyTestsOutputParser.getTestsOutput(output, course.isAdaptive());
+      String stderr = output.getStderr();
+      if (!stderr.isEmpty()) {
+        //log error output of tests
+        LOG.info("#educational " + stderr);
+      }
+      return testsOutput;
+    }
+    return null;
+  }
+
+  private void checkForAdaptiveCourse(ProgressIndicator indicator) {
+    final StudyTestsOutputParser.TestsOutput testOutput = getTestOutput(indicator);
+    if (testOutput != null) {
+      if (testOutput.isSuccess()) {
+        final Pair<Boolean, String> pair = EduAdaptiveStepikConnector.checkTask(myProject, myTask);
+        if (pair != null && !(!pair.getFirst() && pair.getSecond().isEmpty())) {
+          if (pair.getFirst()) {
+            onTaskSolved("Congratulations! Remote tests passed.");
+            if (myStatusBeforeCheck != StudyStatus.Solved) {
+              EduAdaptiveStepikConnector.addNextRecommendedTask(myProject, 2);
+            }
+          }
+          else {
+            final String checkMessage = pair.getSecond();
+            onTaskFailed(checkMessage);
+          }
+          runAfterTaskCheckedActions();
+        }
+        else {
+          ApplicationManager.getApplication().invokeLater(() -> StudyCheckUtils.showTestResultPopUp(FAILED_CHECK_LAUNCH,
+                                                                                                    MessageType.WARNING
+                                                                                                      .getPopupBackground(),
+                                                                                                    myProject));
+        }
+      }
+      else {
+        onTaskFailed(testOutput.getMessage());
+      }
+    }
+  }
+
+  protected void onTaskFailed(String message) {
+    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+    myTask.setStatus(StudyStatus.Failed);
+    if (course != null) {
+      if (course.isAdaptive()) {
+        ApplicationManager.getApplication().invokeLater(
+          () -> {
+            StudyCheckUtils.showTestResultPopUp("Failed", MessageType.ERROR.getPopupBackground(), myProject);
+            StudyCheckUtils.showTestResultsToolWindow(myProject, message, false);
+          });
+      }
+      else {
+        ApplicationManager.getApplication()
+          .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), myProject));
+      }
+    }
+  }
+
+  protected void onTaskSolved(String message) {
+    final Course course = StudyTaskManager.getInstance(myProject).getCourse();
+    myTask.setStatus(StudyStatus.Solved);
+    if (course != null) {
+      if (course.isAdaptive()) {
+        ApplicationManager.getApplication().invokeLater(
+          () -> {
+            StudyCheckUtils.showTestResultPopUp("Congratulations!", MessageType.INFO.getPopupBackground(), myProject);
+            StudyCheckUtils.showTestResultsToolWindow(myProject, message, true);
+          });
+      }
+      else {
+        ApplicationManager.getApplication()
+          .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.INFO.getPopupBackground(), myProject));
+      }
+    }
+  }
+
+  private void runAfterTaskCheckedActions() {
+    StudyPluginConfigurator configurator = StudyUtils.getConfigurator(myProject);
+    if (configurator != null) {
+      StudyAfterCheckAction[] checkActions = configurator.getAfterCheckActions();
+      if (checkActions != null) {
+        for (StudyAfterCheckAction action : checkActions) {
+          action.run(myProject, myTask, myStatusBeforeCheck);
+        }
+      }
+    }
+    else {
+      LOG.warn("No configurator is provided for the plugin");
+    }
+  }
+
+  protected void postAttemptToStepik(@NotNull StudyTestsOutputParser.TestsOutput testsOutput) {
+    final StudyTaskManager studySettings = StudyTaskManager.getInstance(myProject);
+    final StepikUser user = studySettings.getUser();
+    if (user == null) return;
+    final String login = user.getEmail();
+    final String password = StringUtil.isEmptyOrSpaces(login) ? "" : user.getPassword();
+    StepikConnectorPost.postAttempt(myTask, testsOutput.isSuccess(), login, password);
+  }
+}
