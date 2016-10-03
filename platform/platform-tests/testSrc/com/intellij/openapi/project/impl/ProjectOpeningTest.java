@@ -24,7 +24,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -36,9 +35,9 @@ import static com.intellij.openapi.startup.StartupActivity.POST_STARTUP_ACTIVITY
 /**
  * @author Dmitry Avdeev
  */
-public abstract class ProjectOpeningTest extends LightPlatformTestCase {
+public class ProjectOpeningTest extends PlatformTestCase {
 
-  public void _testOpenProjectCancelling() throws Exception {
+  public void testOpenProjectCancelling() throws Exception {
     File foo = PlatformTestCase.createTempDir("foo");
     Project project = null;
     MyStartupActivity activity = new MyStartupActivity();
