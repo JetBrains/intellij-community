@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   public static final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
@@ -104,20 +103,20 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type, boolean respectLineSeparators) {
-    return createImpl(project, text, type, null, null, respectLineSeparators, true);
+    return createImpl(project, text, type, null, respectLineSeparators, true);
   }
 
   @NotNull
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable VirtualFile highlightFile) {
-    return createImpl(project, text, highlightFile != null ? highlightFile.getFileType() : null, highlightFile, null, true, true);
+    return createImpl(project, text, highlightFile != null ? highlightFile.getFileType() : null, highlightFile, true, true);
   }
 
   @NotNull
   @Override
   public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable DocumentContent referent) {
     if (referent == null) return create(text);
-    return createImpl(project, text, referent.getContentType(), referent.getHighlightFile(), null, false, true);
+    return createImpl(project, text, referent.getContentType(), referent.getHighlightFile(), false, true);
   }
 
 
@@ -226,7 +225,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     FileType type = referent != null ? referent.getContentType() : null;
     VirtualFile highlightFile = referent != null ? referent.getHighlightFile() : null;
 
-    DocumentContent content = createImpl(project, StringUtil.notNullize(text), type, highlightFile, null, true, false);
+    DocumentContent content = createImpl(project, StringUtil.notNullize(text), type, highlightFile, true, false);
     content.putUserData(DiffUserDataKeysEx.FILE_NAME, "Clipboard.txt");
     return content;
   }
@@ -284,14 +283,13 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                             @NotNull String text,
                                             @Nullable FileType type,
                                             @Nullable VirtualFile highlightFile,
-                                            @Nullable Charset charset,
                                             boolean respectLineSeparators,
                                             boolean readOnly) {
     // TODO: detect invalid (different across the file) separators ?
     LineSeparator separator = respectLineSeparators ? StringUtil.detectSeparators(text) : null;
     Document document = EditorFactory.getInstance().createDocument(StringUtil.convertLineSeparators(text));
     if (readOnly) document.setReadOnly(true);
-    return new DocumentContentImpl(document, type, highlightFile, separator, charset, null);
+    return new DocumentContentImpl(document, type, highlightFile, separator, null, null);
   }
 
   @NotNull
