@@ -17,9 +17,13 @@ package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.psi.PsiReference;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,18 +55,13 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
         if (value != null) {
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
-          final String paramName = refParameter.getName();
-          problems.add(manager.createProblemDescriptor(refParameter.getElement(), InspectionsBundle.message(
-            "inspection.same.parameter.problem.descriptor", "<code>" + paramName + "</code>", "<code>" + value + "</code>"),
-                                                       createFix(paramName, value),
-                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false));
+          problems.add(registerProblem(manager, refParameter.getElement(), value));
         }
       }
     }
 
     return problems == null ? null : problems.toArray(new CommonProblemDescriptor[problems.size()]);
   }
-
 
   @Override
   protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
@@ -118,7 +117,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
   }
 
   protected LocalQuickFix createFix(String paramName, String value) {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   @Override
@@ -127,4 +126,131 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
     return fix.toString();
   }
 
+  @Nullable
+  @Override
+  public LocalInspectionTool getSharedLocalInspectionTool() {
+    return new LocalSameParameterValueInspection(this);
+  }
+
+  private class LocalSameParameterValueInspection extends BaseJavaLocalInspectionTool {
+    private static final String NOT_CONST = "_NOT_CONST";
+
+    private final SameParameterValueInspectionBase myGlobal;
+
+    private LocalSameParameterValueInspection(SameParameterValueInspectionBase global) {
+      myGlobal = global;
+    }
+
+    @Override
+    @NotNull
+    public String getGroupDisplayName() {
+      return myGlobal.getGroupDisplayName();
+    }
+
+    @Override
+    @NotNull
+    public String getDisplayName() {
+      return myGlobal.getDisplayName();
+    }
+
+    @Override
+    @NotNull
+    public String getShortName() {
+      return myGlobal.getShortName();
+    }
+
+    @NotNull
+    @Override
+    public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                          boolean isOnTheFly,
+                                          @NotNull LocalInspectionToolSession session) {
+      return new JavaElementVisitor() {
+        private final UnusedDeclarationInspectionBase myDeadCodeTool;
+
+        {
+          InspectionProfile profile = InspectionProjectProfileManager.getInstance(holder.getProject()).getCurrentProfile();
+          UnusedDeclarationInspectionBase deadCodeTool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, holder.getFile());
+          myDeadCodeTool = deadCodeTool == null ? new UnusedDeclarationInspectionBase() : deadCodeTool;
+        }
+
+        @Override
+        public void visitMethod(PsiMethod method) {
+          if (method.isConstructor()) return;
+          PsiParameter[] parameters = method.getParameterList().getParameters();
+          if (parameters.length == 0) return;
+
+          if (myDeadCodeTool.isEntryPoint(method)) return;
+          if (!method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) return;
+
+          PsiParameter lastParameter = parameters[parameters.length - 1];
+          final String[] paramValues;
+          final boolean hasVarArg = lastParameter.getType() instanceof PsiEllipsisType;
+          if (hasVarArg) {
+            if (parameters.length == 1) return;
+            paramValues = new String[parameters.length - 1];
+          } else {
+            paramValues = new String[parameters.length];
+          }
+
+          if (UnusedSymbolUtil.processUsages(holder.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, info -> {
+            PsiElement element = info.getElement();
+
+            if (!(element instanceof PsiReferenceExpression)) {
+              return false;
+            }
+            PsiElement parent = element.getParent();
+            if (!(parent instanceof PsiMethodCallExpression)) {
+              return false;
+            }
+            PsiMethodCallExpression methodCall = (PsiMethodCallExpression) parent;
+            PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
+            if (arguments.length < paramValues.length) return false;
+
+            boolean needFurtherProcess = false;
+            for (int i = 0; i < paramValues.length; i++) {
+              Object value = paramValues[i];
+              final String currentArg = getArgValue(arguments[i]);
+              if (value == null) {
+                paramValues[i] = currentArg;
+                if (currentArg != NOT_CONST) {
+                  needFurtherProcess = true;
+                }
+              } else if (value != NOT_CONST) {
+                if (!paramValues[i].equals(currentArg)) {
+                  paramValues[i] = NOT_CONST;
+                } else {
+                  needFurtherProcess = true;
+                }
+              }
+            }
+
+            return needFurtherProcess;
+          })) {
+            for (int i = 0, length = paramValues.length; i < length; i++) {
+              String value = paramValues[i];
+              if (value != null && value != NOT_CONST) {
+                holder.registerProblem(registerProblem(holder.getManager(), parameters[i], value));
+              }
+            }
+          }
+        }
+      };
+    }
+
+    private String getArgValue(PsiExpression arg) {
+      return arg instanceof PsiLiteralExpression ? arg.getText() : NOT_CONST;
+    }
+  }
+
+  private ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
+                                            PsiParameter parameter,
+                                            String value) {
+    final String name = parameter.getName();
+    return manager.createProblemDescriptor(parameter,
+                                           InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
+                                                                     "<code>" + name + "</code>",
+                                                                     "<code>" + value + "</code>"),
+                                           createFix(name, value),
+                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
+  }
 }
