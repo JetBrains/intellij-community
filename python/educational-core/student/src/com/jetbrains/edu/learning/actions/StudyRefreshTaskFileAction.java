@@ -20,14 +20,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.jetbrains.edu.learning.StudyActionListener;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyTaskManager;
-import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.*;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.core.EduUtils;
-import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
+import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import icons.InteractiveLearningIcons;
@@ -63,11 +62,8 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
     final Editor editor = studyState.getEditor();
     final TaskFile taskFile = studyState.getTaskFile();
     if (taskFile.getTask().hasSubtasks()) {
-      int prevSubtaskIndex = taskFile.getTask().getActiveSubtaskIndex() - 1;
       for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
-        AnswerPlaceholderSubtaskInfo info = placeholder.getSubtaskInfos().get(prevSubtaskIndex);
-        String replacementText = info != null ? info.getAnswer() : placeholder.getTaskText();
-        EduUtils.replaceAnswerPlaceholder(project, editor.getDocument(), placeholder, placeholder.getRealLength(), replacementText);
+        StudySubtaskUtils.refreshPlaceholder(project, editor, placeholder);
       }
     }
     else {
