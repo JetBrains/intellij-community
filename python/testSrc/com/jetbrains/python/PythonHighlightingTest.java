@@ -364,6 +364,11 @@ public class PythonHighlightingTest extends PyTestCase {
   public void testFStringSingleRightBraces() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
   }
+  
+  // PY-20901
+  public void testFStringTooDeeplyNestedExpressionFragments() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest(true, false));
+  }
 
   // ---
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {

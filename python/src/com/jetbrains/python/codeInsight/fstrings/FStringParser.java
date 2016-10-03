@@ -154,7 +154,12 @@ public class FStringParser {
     if (contentEndOffset == -1) {
       contentEndOffset = offset;
     }
-    myFragments.add(new Fragment(leftBraceOffset, contentEndOffset, rightBraceOffset, containsNamedUnicodeEscape, firstHashOffset));
+    myFragments.add(new Fragment(leftBraceOffset, 
+                                 contentEndOffset, 
+                                 rightBraceOffset, 
+                                 containsNamedUnicodeEscape, 
+                                 firstHashOffset,
+                                 depth));
     return offset;
   }
 
@@ -172,12 +177,14 @@ public class FStringParser {
     private final int myContentEndOffset;
     private final boolean myContainsNamedUnicodeEscape;
     private final int myFirstHashOffset;
+    private int myDepth;
 
     private Fragment(int leftBraceOffset,
                      int contentEndOffset,
                      int rightBraceOffset,
-                     boolean containsUnicodeEscape, 
-                     int firstHashOffset) {
+                     boolean containsUnicodeEscape,
+                     int firstHashOffset, 
+                     int depth) {
       assert leftBraceOffset < contentEndOffset;
       assert rightBraceOffset < 0 || contentEndOffset <= rightBraceOffset;
       assert firstHashOffset < 0 || leftBraceOffset < firstHashOffset && firstHashOffset < contentEndOffset;
@@ -187,6 +194,7 @@ public class FStringParser {
       myContentEndOffset = contentEndOffset;
       myContainsNamedUnicodeEscape = containsUnicodeEscape;
       myFirstHashOffset = firstHashOffset;
+      myDepth = depth;
     }
 
     public int getLeftBraceOffset() {
@@ -207,6 +215,10 @@ public class FStringParser {
 
     public int getFirstHashOffset() {
       return myFirstHashOffset;
+    }
+
+    public int getDepth() {
+      return myDepth;
     }
 
     @NotNull

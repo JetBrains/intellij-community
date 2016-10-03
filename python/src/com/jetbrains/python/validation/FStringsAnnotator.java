@@ -39,6 +39,15 @@ public class FStringsAnnotator extends PyAnnotator {
         final FStringParser.ParseResult result = FStringParser.parse(nodeText);
         boolean hasUnclosedBrace = false;
         for (Fragment fragment : result.getFragments()) {
+          if (fragment.getDepth() > 2) {
+            // Do not report anything about expression fragments nested deeper that three times
+            if (fragment.getDepth() == 3) {
+              final int fragmentEndOffset = fragment.getRightBraceOffset() < 0 ? nodeContentEnd : fragment.getRightBraceOffset() + 1;
+              final TextRange range = TextRange .create(fragment.getLeftBraceOffset(), fragmentEndOffset);
+              report("Expression fragment inside f-string is nested too deeply", range, node);
+            }
+            continue;
+          }
           final int fragContentEnd = fragment.getContentEndOffset();
           if (CharArrayUtil.isEmptyOrSpaces(nodeText, fragment.getLeftBraceOffset() + 1, fragment.getContentEndOffset())) {
             report("Empty expressions are not allowed inside f-strings", fragment.getContentRange(), node);
