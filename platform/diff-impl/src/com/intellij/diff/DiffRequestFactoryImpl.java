@@ -53,8 +53,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   // Diff
   //
 
-  @Override
   @NotNull
+  @Override
   public ContentDiffRequest createFromFiles(@Nullable Project project, @NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     DiffContent content1 = myContentFactory.create(project, file1);
     DiffContent content2 = myContentFactory.create(project, file2);
@@ -84,8 +84,8 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return new SimpleDiffRequest(null, content1, content2, content3, title1, title2, title3);
   }
 
-  @Override
   @NotNull
+  @Override
   public ContentDiffRequest createClipboardVsValue(@NotNull String value) {
     DiffContent content1 = myContentFactory.createClipboardContent();
     DiffContent content2 = myContentFactory.create(value);
@@ -102,20 +102,20 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   // Titles
   //
 
-  @Override
   @NotNull
+  @Override
   public String getContentTitle(@NotNull VirtualFile file) {
     return getContentTitle(VcsUtil.getFilePath(file));
   }
 
-  @Override
   @NotNull
+  @Override
   public String getTitle(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     return getTitle(VcsUtil.getFilePath(file1), VcsUtil.getFilePath(file2), " vs ");
   }
 
-  @Override
   @NotNull
+  @Override
   public String getTitle(@NotNull VirtualFile file) {
     return getTitle(file, file);
   }

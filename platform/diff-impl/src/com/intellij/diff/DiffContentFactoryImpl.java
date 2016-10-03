@@ -56,32 +56,32 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return (DiffContentFactoryImpl)DiffContentFactory.getInstance();
   }
 
-  @Override
   @NotNull
+  @Override
   public EmptyContent createEmpty() {
     return new EmptyContent();
   }
 
-  @Override
   @NotNull
+  @Override
   public DocumentContent create(@NotNull String text) {
     return create(text, (FileType)null);
   }
 
-  @Override
   @NotNull
+  @Override
   public DocumentContent create(@NotNull String text, @Nullable FileType type) {
     return create(text, type, true);
   }
 
-  @Override
   @NotNull
+  @Override
   public DocumentContent create(@NotNull String text, @Nullable FileType type, boolean respectLineSeparators) {
     return createImpl(text, type, null, null, respectLineSeparators, true);
   }
 
-  @Override
   @NotNull
+  @Override
   public DocumentContent create(@NotNull String text, @Nullable VirtualFile highlightFile) {
     return createImpl(text, highlightFile != null ? highlightFile.getFileType() : null, highlightFile, null, true, true);
   }
@@ -100,29 +100,29 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return new DocumentContentImpl(document, referent.getContentType(), referent.getHighlightFile(), null, null, null);
   }
 
-  @Override
   @NotNull
+  @Override
   public DocumentContent create(@Nullable Project project, @NotNull Document document) {
     return create(project, document, (FileType)null);
   }
 
-  @Override
   @NotNull
+  @Override
   public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable FileType fileType) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return new DocumentContentImpl(document, fileType, null, null, null, null);
     return create(project, document, file);
   }
 
-  @Override
   @NotNull
+  @Override
   public DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile file) {
     if (file != null) return new FileDocumentContentImpl(project, document, file);
     return new DocumentContentImpl(document);
   }
 
-  @Override
   @NotNull
+  @Override
   public DiffContent create(@Nullable Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return new DirectoryContentImpl(project, file);
     DocumentContent content = createDocument(project, file);
@@ -130,8 +130,8 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return new FileContentImpl(project, file);
   }
 
-  @Override
   @Nullable
+  @Override
   public DocumentContent createDocument(@Nullable Project project, @NotNull final VirtualFile file) {
     // TODO: add notification, that file is decompiled ?
     if (file.isDirectory()) return null;
@@ -142,8 +142,8 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return new FileDocumentContentImpl(project, document, file);
   }
 
-  @Override
   @Nullable
+  @Override
   public FileContent createFile(@Nullable Project project, @NotNull VirtualFile file) {
     if (file.isDirectory()) return null;
     return (FileContent)create(project, file);
@@ -162,14 +162,14 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return new DocumentFragmentContent(project, content, range);
   }
 
-  @Override
   @NotNull
+  @Override
   public DiffContent createClipboardContent() {
     return createClipboardContent(null);
   }
 
-  @Override
   @NotNull
+  @Override
   public DocumentContent createClipboardContent(@Nullable DocumentContent mainContent) {
     String text = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
 
@@ -206,8 +206,8 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return FileAwareDocumentContent.create(project, content, filePath);
   }
 
-  @Override
   @NotNull
+  @Override
   public DiffContent createFromBytes(@Nullable Project project,
                                      @NotNull VirtualFile highlightFile,
                                      @NotNull byte[] content) throws IOException {
@@ -219,8 +219,8 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     return FileAwareDocumentContent.create(project, content, highlightFile);
   }
 
-  @Override
   @NotNull
+  @Override
   public DiffContent createBinary(@Nullable Project project,
                                   @NotNull String fileName,
                                   @NotNull FileType type,
