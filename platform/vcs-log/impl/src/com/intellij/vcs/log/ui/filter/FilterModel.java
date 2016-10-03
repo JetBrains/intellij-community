@@ -60,7 +60,7 @@ abstract class FilterModel<Filter extends VcsLogFilter> {
     return myFilter;
   }
 
-  @NotNull
+  @Nullable
   protected abstract Filter createFilter(@NotNull List<String> values);
 
   @NotNull

@@ -86,7 +86,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     myBranchFilterModel = new BranchFilterModel(dataPackGetter, myUiProperties);
     myUserFilterModel = new UserFilterModel(dataPackGetter, uiProperties);
     myDateFilterModel = new DateFilterModel(dataPackGetter, uiProperties);
-    myStructureFilterModel = new FileFilterModel(dataPackGetter, uiProperties);
+    myStructureFilterModel = new FileFilterModel(dataPackGetter, myLogData.getLogProviders().keySet(), uiProperties);
     myTextFilterModel = new TextFilterModel(dataPackGetter, myUiProperties);
 
     updateUiOnFilterChange();
@@ -317,9 +317,13 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private static class FileFilterModel extends FilterModel<VcsLogFileFilter> {
     @NotNull private static final String ROOTS = "roots";
     @NotNull private static final String STRUCTURE = "structure";
+    @NotNull private final Set<VirtualFile> myRoots;
 
-    public FileFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter, VcsLogUiProperties uiProperties) {
+    public FileFilterModel(NotNullComputable<VcsLogDataPack> dataPackGetter,
+                           @NotNull Set<VirtualFile> roots,
+                           VcsLogUiProperties uiProperties) {
       super("file", dataPackGetter, uiProperties);
+      myRoots = roots;
     }
 
     @Override
@@ -360,10 +364,25 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       return null;
     }
 
-    @NotNull
-    private static VcsLogRootFilter createRootsFilter(@NotNull List<String> values) {
-      return new VcsLogRootFilterImpl(
-        values.stream().map(path -> LocalFileSystem.getInstance().findFileByPath(path)).collect(Collectors.toList()));
+    @Nullable
+    private VcsLogRootFilter createRootsFilter(@NotNull List<String> values) {
+      List<VirtualFile> selectedRoots = ContainerUtil.newArrayList();
+      for (String path : values) {
+        VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
+        if (root != null) {
+          if (myRoots.contains(root)) {
+            selectedRoots.add(root);
+          }
+          else {
+            LOG.warn("Can not find VCS root for filtering " + root);
+          }
+        }
+        else {
+          LOG.warn("Can not filter by file that does not exist " + path);
+        }
+      }
+      if (selectedRoots.isEmpty()) return null;
+      return new VcsLogRootFilterImpl(selectedRoots);
     }
 
     @NotNull
@@ -389,13 +408,23 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       super("date", dataPackGetter, uiProperties);
     }
 
-    @NotNull
+    @Nullable
     @Override
     protected VcsLogDateFilter createFilter(@NotNull List<String> values) {
+      if (values.size() != 2) {
+        LOG.warn("Can not create date filter from " + values + " before and after dates are required.");
+        return null;
+      }
       String after = values.get(0);
       String before = values.get(1);
-      return new VcsLogDateFilterImpl(after.isEmpty() ? null : new Date(Long.parseLong(after)),
-                                      before.isEmpty() ? null : new Date(Long.parseLong(before)));
+      try {
+        return new VcsLogDateFilterImpl(after.isEmpty() ? null : new Date(Long.parseLong(after)),
+                                        before.isEmpty() ? null : new Date(Long.parseLong(before)));
+      }
+      catch (NumberFormatException e) {
+        LOG.warn("Can not create date filter from " + values);
+      }
+      return null;
     }
 
     @NotNull
