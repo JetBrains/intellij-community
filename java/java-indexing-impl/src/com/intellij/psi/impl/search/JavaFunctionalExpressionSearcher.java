@@ -113,10 +113,10 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
           SearchScope scope = samClass.getUseScope().intersectWith(queryParameters.getEffectiveSearchScope());
 
-          final GlobalSearchScope mayContainReferencesScope =
+          final GlobalSearchScope excludedScope =
             CompilerReferenceService.getInstance(project).getScopeWithoutReferences(samClass, JavaFunctionalExpressionCompilerSearchAdapter.INSTANCE);
-          if (mayContainReferencesScope != null) {
-            scope = scope.intersectWith(GlobalSearchScope.notScope(mayContainReferencesScope));
+          if (excludedScope != null) {
+            scope = scope.intersectWith(GlobalSearchScope.notScope(excludedScope));
           }
 
           descriptors.add(new SamDescriptor(samClass, saMethod, samType, GlobalSearchScopeUtil.toGlobalSearchScope(scope, project)));
