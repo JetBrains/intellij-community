@@ -34,11 +34,13 @@
 
         <action class="circlet.actions.ConnectAction" text="Connect To Circlet..." id="ConnectAction"/>
         <action class="circlet.actions.DisconnectAction" text="Disconnect From Circlet..." id="DisconnectAction"/>
+        <action class="circlet.actions.TestCircletAction" text="Test Circlet..." id="TestCircletAction"/>
 
-        <group text="Circlet" id="CircletGroup">
+        <group text="Circlet" id="CircletGroup" popup="true">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <reference id="ConnectActionRef" ref="ConnectAction"/>
             <reference id="DisconnectActionRef" ref="DisconnectAction"/>
+            <reference id="TestCircletActionRef" ref="TestCircletAction"/>
         </group>
 
 
