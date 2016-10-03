@@ -3,17 +3,16 @@ package com.jetbrains.edu.learning.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.StudyState;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 
 public class StudyFillPlaceholdersAction extends AnAction {
@@ -28,18 +27,13 @@ public class StudyFillPlaceholdersAction extends AnAction {
       }
       TaskFile taskFile = studyState.getTaskFile();
       final Document document = studyState.getEditor().getDocument();
-      final TaskFile realTaskFile = taskFile;
-      CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
-        for (AnswerPlaceholder placeholder : realTaskFile.getActivePlaceholders()) {
-          String answer = placeholder.getPossibleAnswer();
-          if (answer == null) {
-            continue;
-          }
-          int offset = placeholder.getOffset();
-          document.deleteString(offset, offset + placeholder.getRealLength());
-          document.insertString(offset, answer);
+      for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
+        String answer = placeholder.getPossibleAnswer();
+        if (answer == null) {
+          continue;
         }
-      }));
+        EduUtils.replaceAnswerPlaceholder(project, document, placeholder, placeholder.getRealLength(), answer);
+      }
     }
   }
 
