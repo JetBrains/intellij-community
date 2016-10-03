@@ -108,6 +108,12 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
   @NotNull
   @Override
+  public DocumentContent create(@Nullable Project project, @NotNull String text, @NotNull FilePath filePath) {
+    return createImpl(project, text, filePath.getFileType(), filePath.getVirtualFile(), true, true);
+  }
+
+  @NotNull
+  @Override
   public DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable VirtualFile highlightFile) {
     return createImpl(project, text, highlightFile != null ? highlightFile.getFileType() : null, highlightFile, true, true);
   }
@@ -240,7 +246,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       return createBinary(project, content, filePath.getFileType(), filePath.getName());
     }
 
-    return FileAwareDocumentContent.create(project, content, filePath);
+    return createDocumentFromBytes(project, content, filePath);
   }
 
   @NotNull
@@ -253,6 +259,18 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
       return createBinary(project, content, highlightFile.getFileType(), highlightFile.getName());
     }
 
+    return createDocumentFromBytes(project, content, highlightFile);
+  }
+
+  @NotNull
+  @Override
+  public DocumentContent createDocumentFromBytes(@Nullable Project project, @NotNull byte[] content, @NotNull FilePath filePath) {
+    return FileAwareDocumentContent.create(project, content, filePath);
+  }
+
+  @NotNull
+  @Override
+  public DocumentContent createDocumentFromBytes(@Nullable Project project, @NotNull byte[] content, @NotNull VirtualFile highlightFile) {
     return FileAwareDocumentContent.create(project, content, highlightFile);
   }
 

@@ -17,7 +17,6 @@ package com.intellij.diff;
 
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.contents.FileAwareDocumentContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.merge.MergeResult;
@@ -47,7 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DiffRequestFactoryImpl extends DiffRequestFactory {
-  private final DiffContentFactory myContentFactory = DiffContentFactory.getInstance();
+  private final DiffContentFactoryEx myContentFactory = DiffContentFactoryEx.getInstanceEx();
 
   //
   // Diff
@@ -260,7 +259,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
     List<DocumentContent> contents = new ArrayList<>(3);
     for (byte[] bytes : byteContents) {
-      contents.add(FileAwareDocumentContent.create(project, bytes, output));
+      contents.add(myContentFactory.createDocumentFromBytes(project, bytes, output));
     }
 
     return new TextMergeRequestImpl(project, outputContent, originalContent, contents, title, contentTitles, applyCallback);
