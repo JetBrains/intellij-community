@@ -83,7 +83,10 @@ public class FStringParser {
     int bracesBalance = 0;
     char stringLiteralQuote = '\0';
     int quotesNum = 0;
+    
+    // Used for f-strings validation
     boolean containsNamedUnicodeEscape = false;
+    int firstHashOffset = -1;
 
     int offset = leftBraceOffset + 1;
     while (offset < myNodeContentRange.getEndOffset()) {
@@ -119,6 +122,9 @@ public class FStringParser {
           offset += quotesNum;
           continue;
         }
+        else if (c1 == '#' && firstHashOffset == -1) {
+          firstHashOffset = offset;
+        }
         else if (c1 == '{' || c1 == '[' || c1 == '(') {
           bracesBalance++;
         }
@@ -148,7 +154,7 @@ public class FStringParser {
     if (contentEndOffset == -1) {
       contentEndOffset = offset;
     }
-    myFragments.add(new Fragment(leftBraceOffset, contentEndOffset, rightBraceOffset, containsNamedUnicodeEscape));
+    myFragments.add(new Fragment(leftBraceOffset, contentEndOffset, rightBraceOffset, containsNamedUnicodeEscape, firstHashOffset));
     return offset;
   }
 
@@ -165,15 +171,22 @@ public class FStringParser {
     private final int myRightBraceOffset;
     private final int myContentEndOffset;
     private final boolean myContainsNamedUnicodeEscape;
+    private final int myFirstHashOffset;
 
-    private Fragment(int leftBraceOffset, int contentEndOffset, int rightBraceOffset, boolean escape) {
-      assert contentEndOffset > leftBraceOffset;
-      assert rightBraceOffset < 0 || (contentEndOffset <= rightBraceOffset && leftBraceOffset < rightBraceOffset);
+    private Fragment(int leftBraceOffset,
+                     int contentEndOffset,
+                     int rightBraceOffset,
+                     boolean containsUnicodeEscape, 
+                     int firstHashOffset) {
+      assert leftBraceOffset < contentEndOffset;
+      assert rightBraceOffset < 0 || contentEndOffset <= rightBraceOffset;
+      assert firstHashOffset < 0 || leftBraceOffset < firstHashOffset && firstHashOffset < contentEndOffset;
 
       myLeftBraceOffset = leftBraceOffset;
       myRightBraceOffset = rightBraceOffset;
       myContentEndOffset = contentEndOffset;
-      myContainsNamedUnicodeEscape = escape;
+      myContainsNamedUnicodeEscape = containsUnicodeEscape;
+      myFirstHashOffset = firstHashOffset;
     }
 
     public int getLeftBraceOffset() {
@@ -190,6 +203,10 @@ public class FStringParser {
 
     public boolean containsNamedUnicodeEscape() {
       return myContainsNamedUnicodeEscape;
+    }
+
+    public int getFirstHashOffset() {
+      return myFirstHashOffset;
     }
 
     @NotNull
