@@ -19,11 +19,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.python.codeInsight.fstrings.FStringParser;
-import com.jetbrains.python.codeInsight.fstrings.FStringParser.FragmentOffsets;
+import com.jetbrains.python.codeInsight.fstrings.FStringParser.Fragment;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 
@@ -37,14 +35,13 @@ public class FStringsAnnotator extends PyAnnotator {
       final StringNodeInfo nodeInfo = new StringNodeInfo(node);
       final String nodeText = node.getText();
       if (nodeInfo.isFormatted()) {
-        final int nodeOffset = node.getTextRange().getStartOffset();
         final int nodeContentEnd = nodeInfo.getContentRange().getEndOffset();
-        final List<FragmentOffsets> fragments = FStringParser.parse(nodeText);
+        final FStringParser.ParseResult result = FStringParser.parse(nodeText);
         boolean hasUnclosedBrace = false;
-        for (FragmentOffsets fragment : fragments) {
+        for (Fragment fragment : result.getFragments()) {
           final int fragContentEnd = fragment.getContentEndOffset();
           if (CharArrayUtil.isEmptyOrSpaces(nodeText, fragment.getLeftBraceOffset() + 1, fragment.getContentEndOffset())) {
-            report(fragment.getContentRange().shiftRight(nodeOffset), "Empty expressions are not allowed inside f-strings");
+            report("Empty expressions are not allowed inside f-strings", fragment.getContentRange(), node);
           }
           if (fragment.getRightBraceOffset() == -1) {
             hasUnclosedBrace = true;
@@ -52,40 +49,43 @@ public class FStringsAnnotator extends PyAnnotator {
           for (int i = fragment.getLeftBraceOffset() + 1; i < fragment.getContentEndOffset(); i++) {
             final char c = nodeText.charAt(i);
             if (c == '\\') {
-              reportCharacter(nodeOffset + i, "Expression fragments inside f-strings cannot include backslashes");
+              reportCharacter("Expression fragments inside f-strings cannot include backslashes", i, node);
             }
             else if (c == '#') {
-              reportCharacter(nodeOffset + i, "Expressions fragments inside f-strings cannot include '#'");
+              reportCharacter("Expressions fragments inside f-strings cannot include '#'", i, node);
             }
           }
           // Do not warn about illegal conversion character if '!' is right before closing quotes 
           if (fragContentEnd < nodeContentEnd && nodeText.charAt(fragContentEnd) == '!' && fragContentEnd + 1 < nodeContentEnd) {
             final char conversionChar = nodeText.charAt(fragContentEnd + 1);
-            final int offset = fragContentEnd + nodeOffset + 1;
+            final int offset = fragContentEnd + 1;
             if (fragContentEnd + 1 == fragment.getRightBraceOffset() || conversionChar == ':') {
-              reportEmpty(offset, "Conversion character is expected: should be one of 's', 'r', 'a'");
+              reportEmpty("Conversion character is expected: should be one of 's', 'r', 'a'", offset, node);
             }
             else if ("sra".indexOf(conversionChar) < 0) {
-              reportCharacter(offset, "Illegal conversion character '" + conversionChar + "': should be one of 's', 'r', 'a'");
+              reportCharacter("Illegal conversion character '" + conversionChar + "': should be one of 's', 'r', 'a'", offset, node);
             }
           }
         }
+        for (Integer offset : result.getSingleRightBraces()) {
+          reportCharacter("Single '}' is not allowed inside f-strings", offset, node);
+        }
         if (hasUnclosedBrace) {
-          reportEmpty(nodeContentEnd + nodeOffset, "'}' is expected");
+          reportEmpty("'}' is expected", nodeContentEnd, node);
         }
       }
     }
   }
 
-  private void report(@NotNull TextRange range, @NotNull String message) {
-    getHolder().createErrorAnnotation(range, message);
+  private void report(@NotNull String message, @NotNull TextRange range, @NotNull ASTNode node) {
+    getHolder().createErrorAnnotation(range.shiftRight(node.getTextRange().getStartOffset()), message);
   }
 
-  private void reportEmpty(int offset, @NotNull String message) {
-    getHolder().createErrorAnnotation(TextRange.from(offset, 0), message);
+  private void reportEmpty(@NotNull String message, int offset, @NotNull ASTNode node) {
+    report(message, TextRange.from(offset, 0), node);
   }
 
-  private void reportCharacter(int offset, @NotNull String message) {
-    getHolder().createErrorAnnotation(TextRange.from(offset, 1), message);
+  private void reportCharacter(@NotNull String message, int offset, @NotNull ASTNode node) {
+    report(message, TextRange.from(offset, 1), node);
   }
 }

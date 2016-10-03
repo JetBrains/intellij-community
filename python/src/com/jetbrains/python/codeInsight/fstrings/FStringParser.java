@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,12 +30,14 @@ import java.util.List;
 public class FStringParser {
   private final String myNodeText;
   private final TextRange myNodeContentRange;
-  private final List<FragmentOffsets> myFragments = new ArrayList<>();
+  private final List<Fragment> myFragments = new ArrayList<>();
+  private final List<Integer> mySingleRightBraces = new ArrayList<>();
 
-  public static List<FragmentOffsets> parse(@NotNull String nodeText) {
+  @NotNull
+  public static ParseResult parse(@NotNull String nodeText) {
     final FStringParser parser = new FStringParser(nodeText);
     parser.parseTopLevel();
-    return parser.myFragments;
+    return new ParseResult(parser.mySingleRightBraces, parser.myFragments);
   }
 
   private FStringParser(@NotNull String nodeText) {
@@ -62,6 +65,10 @@ public class FStringParser {
       else if (c1 == '{') {
         offset = parseFragment(offset, 1);
         continue;
+      }
+      // Will be marked as errors
+      else if (c1 == '}') {
+        mySingleRightBraces.add(offset);
       }
       offset++;
     }
@@ -141,7 +148,7 @@ public class FStringParser {
     if (contentEndOffset == -1) {
       contentEndOffset = offset;
     }
-    myFragments.add(new FragmentOffsets(leftBraceOffset, contentEndOffset, rightBraceOffset, containsNamedUnicodeEscape));
+    myFragments.add(new Fragment(leftBraceOffset, contentEndOffset, rightBraceOffset, containsNamedUnicodeEscape));
     return offset;
   }
 
@@ -153,13 +160,13 @@ public class FStringParser {
     return offset;
   }
 
-  public static class FragmentOffsets {
+  public static class Fragment {
     private final int myLeftBraceOffset;
     private final int myRightBraceOffset;
     private final int myContentEndOffset;
     private final boolean myContainsNamedUnicodeEscape;
 
-    private FragmentOffsets(int leftBraceOffset, int contentEndOffset, int rightBraceOffset, boolean escape) {
+    private Fragment(int leftBraceOffset, int contentEndOffset, int rightBraceOffset, boolean escape) {
       assert contentEndOffset > leftBraceOffset;
       assert rightBraceOffset < 0 || (contentEndOffset <= rightBraceOffset && leftBraceOffset < rightBraceOffset);
 
@@ -188,6 +195,26 @@ public class FStringParser {
     @NotNull
     public TextRange getContentRange() {
       return TextRange.create(myLeftBraceOffset + 1, myContentEndOffset);
+    }
+  }
+  
+  public static class ParseResult {
+    private final List<Integer> mySingleRightBraces;
+    private final List<Fragment> myFragments;
+
+    public ParseResult(@NotNull List<Integer> singleRightBraces, @NotNull List<Fragment> fragments) {
+      mySingleRightBraces = singleRightBraces;
+      myFragments = fragments;
+    }
+
+    @NotNull
+    public List<Integer> getSingleRightBraces() {
+      return Collections.unmodifiableList(mySingleRightBraces);
+    }
+
+    @NotNull
+    public List<Fragment> getFragments() {
+      return Collections.unmodifiableList(myFragments);
     }
   }
 }
