@@ -55,7 +55,7 @@ target('run_ui_sanity_tests' : "Runs UI sanity tests") {
     }
 
     classpath {
-      projectBuilder.moduleRuntimeClasspath(findModule("community-main"), true).each {
+      projectBuilder.moduleRuntimeClasspath(findModule("android-uitests"), true).each {
         pathelement(location: it)
       }
       pathelement(location: "${jdkHome}/lib/tools.jar")
