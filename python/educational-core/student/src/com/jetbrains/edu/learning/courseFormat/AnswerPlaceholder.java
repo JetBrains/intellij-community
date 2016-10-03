@@ -116,11 +116,13 @@ public class AnswerPlaceholder {
     length = myInitialState.getLength();
   }
 
+  @Transient
   public StudyStatus getStatus() {
     AnswerPlaceholderSubtaskInfo info = getActiveSubtaskInfo();
     return info != null ? info.getStatus() : StudyStatus.Unchecked;
   }
 
+  @Transient
   public void setStatus(StudyStatus status) {
     getActiveSubtaskInfo().setStatus(status);
   }
