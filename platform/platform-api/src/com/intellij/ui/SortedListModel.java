@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,12 @@
 package com.intellij.ui;
 
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
 import java.util.*;
 
-public class SortedListModel<T> extends AbstractListModel {
-  private List<T> myItems = new ArrayList<T>();
+public class SortedListModel<T> extends AbstractListModel<T> {
+  private List<T> myItems = new ArrayList<>();
   private final Comparator<T> myComparator;
 
   public SortedListModel(Comparator<T> comparator) {
@@ -30,30 +29,24 @@ public class SortedListModel<T> extends AbstractListModel {
   }
 
   public static <T> SortedListModel<T> create(Comparator<T> comparator) {
-    return new SortedListModel<T>(comparator);
+    return new SortedListModel<>(comparator);
   }
 
   public int add(T item) {
     int index;
-    if (myComparator != null)
+    if (myComparator != null) {
       index = Collections.binarySearch(myItems, item, myComparator);
-    else
+    }
+    else {
       index = myItems.size();
+    }
     index = index >= 0 ? index : -(index + 1);
     add(index, item);
     return index;
   }
 
-  public int[] addAll(Object[] items) {
-    int[] indices = new int[items.length];
-    for (int i = 0; i < items.length; i++) {
-      T item = (T)items[i];
-      int newIndex = add(item);
-      for (int j = 0; j < i ; j++)
-        if (indices[j] >= newIndex) indices[j]++;
-      indices[i] = newIndex;
-    }
-    return indices;
+  public int[] addAll(T[] items) {
+    return addAll(Arrays.asList(items));
   }
 
   public int[] addAll(Iterator<T> iterator) {
@@ -61,7 +54,17 @@ public class SortedListModel<T> extends AbstractListModel {
   }
 
   public int[] addAll(Collection<T> items) {
-    return addAll(ArrayUtil.toObjectArray(items));
+    int[] indices = new int[items.size()];
+    int i = 0;
+    for (T item : items) {
+      int newIndex = add(item);
+      for (int j = 0; j < i; j++) {
+        if (indices[j] >= newIndex) indices[j]++;
+      }
+      indices[i] = newIndex;
+      i++;
+    }
+    return indices;
   }
 
   public void remove(int index) {
@@ -94,7 +97,7 @@ public class SortedListModel<T> extends AbstractListModel {
   }
 
   @Override
-  public Object getElementAt(int index) {
+  public T getElementAt(int index) {
     return myItems.get(index);
   }
 
@@ -108,7 +111,7 @@ public class SortedListModel<T> extends AbstractListModel {
 
   public void clear() {
     int oldSize = getSize();
-    myItems = new ArrayList<T>();
+    myItems = new ArrayList<>();
     if (oldSize > 0) fireIntervalRemoved(this, 0, oldSize - 1);
   }
 
