@@ -186,9 +186,14 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     if (myDirtyScope.contains(vFile)) {
       return null;
     }
-    CompilerElement[] compilerElements = place == ElementPlace.SRC
-                                         ? new CompilerElement[]{adapter.asCompilerElement(element)}
-                                         : adapter.libraryElementAsCompilerElements(element);
+    CompilerElement[] compilerElements;
+    if (place == ElementPlace.SRC) {
+      final CompilerElement compilerElement = adapter.asCompilerElement(element);
+      compilerElements = compilerElement == null ? CompilerElement.EMPTY_ARRAY : new CompilerElement[]{compilerElement};
+    }
+    else {
+      compilerElements = adapter.libraryElementAsCompilerElements(element);
+    }
     if (compilerElements.length == 0) return null;
 
     synchronized (myLock) {
