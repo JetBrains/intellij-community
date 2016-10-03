@@ -34,7 +34,7 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
   }
 
   @Override
-  void migrate(@NotNull Project project,
+  PsiElement migrate(@NotNull Project project,
                @NotNull ProblemDescriptor descriptor,
                @NotNull PsiForeachStatement foreachStatement,
                @NotNull PsiExpression iteratedValue,
@@ -46,53 +46,47 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
     if (statement instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       PsiExpression value = returnStatement.getReturnValue();
-      if (value == null) return;
+      if (value == null) return null;
       PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(foreachStatement);
-      if (nextReturnStatement == null) return;
+      if (nextReturnStatement == null) return null;
       PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
-      if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return;
+      if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return null;
       stream = generateOptionalUnwrap(stream, tb, value, orElseExpression, null);
       restoreComments(foreachStatement, body);
-      boolean siblings = nextReturnStatement.getParent() == foreachStatement.getParent();
-      PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", foreachStatement));
-      if (siblings) {
+      if (nextReturnStatement.getParent() == foreachStatement.getParent()) {
         nextReturnStatement.delete();
       }
-      simplifyAndFormat(project, result);
+      return foreachStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", foreachStatement));
     }
     else {
       PsiStatement[] statements = tb.getStatements();
-      if (statements.length != 2) return;
+      if (statements.length != 2) return null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
       if (assignment == null) {
-        if(!(statements[0] instanceof PsiExpressionStatement)) return;
+        if(!(statements[0] instanceof PsiExpressionStatement)) return null;
         PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
         restoreComments(foreachStatement, body);
-        PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(
+        return foreachStatement.replace(elementFactory.createStatementFromText(
           stream + ".ifPresent(" + LambdaUtil.createLambda(tb.getVariable(), expression) + ");", foreachStatement));
-        simplifyAndFormat(project, result);
-        return;
       }
       PsiExpression lValue = assignment.getLExpression();
-      if (!(lValue instanceof PsiReferenceExpression)) return;
+      if (!(lValue instanceof PsiReferenceExpression)) return null;
       PsiElement element = ((PsiReferenceExpression)lValue).resolve();
-      if (!(element instanceof PsiVariable)) return;
+      if (!(element instanceof PsiVariable)) return null;
       PsiVariable var = (PsiVariable)element;
       PsiExpression value = assignment.getRExpression();
-      if (value == null) return;
+      if (value == null) return null;
       restoreComments(foreachStatement, body);
       InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, foreachStatement);
       if (status != InitializerUsageStatus.UNKNOWN) {
         PsiExpression initializer = var.getInitializer();
         if (initializer != null) {
           String replacementText = generateOptionalUnwrap(stream, tb, value, initializer, var.getType());
-          replaceInitializer(foreachStatement, var, initializer, replacementText, status);
-          return;
+          return replaceInitializer(foreachStatement, var, initializer, replacementText, status);
         }
       }
-      PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(
+      return foreachStatement.replace(elementFactory.createStatementFromText(
         var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, lValue, var.getType()) + ";", foreachStatement));
-      simplifyAndFormat(project, result);
     }
   }
 

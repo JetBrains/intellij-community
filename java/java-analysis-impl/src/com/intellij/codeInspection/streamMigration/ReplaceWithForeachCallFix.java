@@ -40,7 +40,7 @@ class ReplaceWithForeachCallFix extends MigrateToStreamFix {
   }
 
   @Override
-  void migrate(@NotNull Project project,
+  PsiElement migrate(@NotNull Project project,
                @NotNull ProblemDescriptor descriptor,
                @NotNull PsiForeachStatement foreachStatement,
                @NotNull PsiExpression iteratedValue,
@@ -71,8 +71,7 @@ class ReplaceWithForeachCallFix extends MigrateToStreamFix {
         (PsiExpressionStatement)callStatement.replace(elementFactory.createStatementFromText(
           buffer.toString() + "(" + tb.getVariable().getText() + ") -> " + wrapInBlock(block) + ");", callStatement));
     }
-
-    simplifyAndFormat(project, callStatement);
+    return callStatement;
   }
 
   private static String wrapInBlock(PsiElement block) {

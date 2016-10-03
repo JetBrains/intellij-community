@@ -32,19 +32,19 @@ class ReplaceWithCountFix extends MigrateToStreamFix {
   }
 
   @Override
-  void migrate(@NotNull Project project,
+  PsiElement migrate(@NotNull Project project,
                @NotNull ProblemDescriptor descriptor,
                @NotNull PsiForeachStatement foreachStatement,
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
                @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
     PsiExpression operand = StreamApiMigrationInspection.extractIncrementedLValue(tb.getSingleExpression(PsiExpression.class));
-    if (!(operand instanceof PsiReferenceExpression)) return;
+    if (!(operand instanceof PsiReferenceExpression)) return null;
     PsiElement element = ((PsiReferenceExpression)operand).resolve();
-    if (!(element instanceof PsiLocalVariable)) return;
+    if (!(element instanceof PsiLocalVariable)) return null;
     PsiLocalVariable var = (PsiLocalVariable)element;
     final StringBuilder builder = generateStream(iteratedValue, tb.getLastOperation());
     builder.append(".count()");
-    replaceWithNumericAddition(project, foreachStatement, var, builder, PsiType.LONG);
+    return replaceWithNumericAddition(project, foreachStatement, var, builder, PsiType.LONG);
   }
 }
