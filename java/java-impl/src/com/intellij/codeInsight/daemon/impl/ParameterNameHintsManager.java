@@ -55,7 +55,7 @@ public class ParameterNameHintsManager {
     
     List<InlayInfo> descriptors = Collections.emptyList();
     if (resolveResult.getElement() instanceof PsiMethod
-        && isMethodToShowParams(resolveResult)
+        && isMethodToShowParams(callExpression, resolveResult)
         && hasUnclearExpressions(callArguments)) 
     {
       PsiMethod method = (PsiMethod)resolveResult.getElement();
@@ -66,16 +66,29 @@ public class ParameterNameHintsManager {
     myDescriptors = descriptors;
   }
 
-  private static boolean isMethodToShowParams(JavaResolveResult resolveResult) {
+  private static boolean isMethodToShowParams(PsiCallExpression callExpression, JavaResolveResult resolveResult) {
     PsiElement element = resolveResult.getElement();
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
-      if (isSetter(method)) return false;
+      if (isSetter(method) || isBuilder(callExpression, method)) return false;
       if (hasSingleParameter(method)) {
         PsiParameter parameter = method.getParameterList().getParameters()[0];
         return PsiType.VOID.equals(method.getReturnType()) || isBoolean(parameter);
       }
       return !isCommonMethod(method);
+    }
+    return false;
+  }
+
+  private static boolean isBuilder(PsiCallExpression expression, PsiMethod method) {
+    if (expression instanceof PsiNewExpression) {
+      return false;
+    }
+    final PsiType callExpressionType = expression.getType();
+    final PsiClass aClass = method.getContainingClass();
+    final String calledMethodFqn = aClass != null ? aClass.getQualifiedName() : null;
+    if (calledMethodFqn != null && callExpressionType != null) {
+      return callExpressionType.equalsToText(calledMethodFqn);
     }
     return false;
   }

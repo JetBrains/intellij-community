@@ -525,6 +525,29 @@ public class VarArgTest {
     onLineStartingWith("check(t")
         .assertInlays("test->this", "endIndex->1000")
   }
+  
+  fun `test do not inline builder pattern`() {
+    setup("""
+class Builder {
+  void await(boolean value) {}
+  Builder bwait(boolean xvalue) {}
+  Builder timeWait(int time) {}
+}
+
+class Test {
+  
+  public void test() {
+    Builder builder = new Builder();
+    builder.await(true);
+    builder.bwait(false).timeWait(100);
+  }
+  
+}
+""")
+
+    onLineStartingWith("builder.await").assertInlays("value->true")
+    onLineStartingWith("builder.bwait").assertNoInlays()
+  }
 
   fun `test do not show single parameter hint if it is string literal`() {
     setup("""
