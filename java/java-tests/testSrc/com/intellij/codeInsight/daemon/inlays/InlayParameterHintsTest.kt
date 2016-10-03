@@ -589,6 +589,22 @@ class Test {
     onLineStartingWith("drawRect").assertInlays("w->10", "h->12")
   }
   
+  fun `test show for method with boolean param and return value`() {
+    setup("""
+class Test {
+  
+  void test() {
+    String name = getTestName(true);
+    System.out.println("");
+  }
+  
+  String getTestName(boolean lowerCase) {}
+}
+""")
+    
+    onLineStartingWith("String name").assertInlays("lowerCase->true")
+  }
+  
   private fun getInlays(): List<Inlay> {
     val editor = myFixture.editor
     return editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)

@@ -72,11 +72,17 @@ public class ParameterNameHintsManager {
       PsiMethod method = (PsiMethod)element;
       if (isSetter(method)) return false;
       if (hasSingleParameter(method)) {
-        return PsiType.VOID.equals(method.getReturnType());
+        PsiParameter parameter = method.getParameterList().getParameters()[0];
+        return PsiType.VOID.equals(method.getReturnType()) || isBoolean(parameter);
       }
       return !isCommonMethod(method);
     }
     return false;
+  }
+
+  private static boolean isBoolean(PsiParameter parameter) {
+    PsiType type = parameter.getType();
+    return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
   }
 
   private static boolean hasSingleParameter(PsiMethod method) {
