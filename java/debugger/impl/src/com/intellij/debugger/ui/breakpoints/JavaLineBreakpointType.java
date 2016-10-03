@@ -185,7 +185,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     private final PsiElement myElement;
     private final Integer myLambdaOrdinal;
 
-    public ExactJavaBreakpointVariant(@NotNull XSourcePosition position, @NotNull PsiElement element, Integer lambdaOrdinal) {
+    public ExactJavaBreakpointVariant(@NotNull XSourcePosition position, @Nullable PsiElement element, Integer lambdaOrdinal) {
       super(position);
       myElement = element;
       myLambdaOrdinal = lambdaOrdinal;
@@ -193,17 +193,17 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
     @Override
     public Icon getIcon() {
-      return myElement.getIcon(0);
+      return myElement != null ? myElement.getIcon(0) : AllIcons.Debugger.Db_set_breakpoint;
     }
 
     @Override
     public String getText() {
-      return StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0);
+      return myElement != null ? StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0) : "Line";
     }
 
     @Override
     public TextRange getHighlightRange() {
-      return myElement.getTextRange();
+      return myElement != null ? myElement.getTextRange() : null;
     }
 
     @NotNull
@@ -217,7 +217,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   public class LineJavaBreakpointVariant extends ExactJavaBreakpointVariant {
-    public LineJavaBreakpointVariant(@NotNull XSourcePosition position, @NotNull PsiElement element, Integer lambdaOrdinal) {
+    public LineJavaBreakpointVariant(@NotNull XSourcePosition position, @Nullable PsiElement element, Integer lambdaOrdinal) {
       super(position, element, lambdaOrdinal);
     }
 
