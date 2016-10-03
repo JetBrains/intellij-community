@@ -30,11 +30,14 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.BinaryLightVirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -255,5 +258,48 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
     }
     VfsUtil.markDirtyAndRefresh(true, true, true, file);
     return file;
+  }
+
+  @NotNull
+  public static Document createDocument(@Nullable Project project,
+                                        @NotNull String content,
+                                        @Nullable FileType fileType,
+                                        @Nullable String fileName,
+                                        boolean readOnly) {
+    if (project != null && !project.isDefault() &&
+        fileType != null && !fileType.isBinary() &&
+        Registry.is("diff.enable.psi.highlighting")) {
+      if (fileName == null) {
+        fileName = "diff." + StringUtil.defaultIfEmpty(fileType.getDefaultExtension(), "txt");
+      }
+
+      Document document = createPsiDocument(project, content, fileType, fileName, readOnly);
+      if (document != null) return document;
+    }
+
+    Document document = EditorFactory.getInstance().createDocument(content);
+    document.setReadOnly(readOnly);
+    return document;
+  }
+
+  @Nullable
+  private static Document createPsiDocument(@NotNull Project project,
+                                            @NotNull String content,
+                                            @NotNull FileType fileType,
+                                            @NotNull String fileName,
+                                            boolean readOnly) {
+    return ReadAction.compute(() -> {
+      LightVirtualFile file = new LightVirtualFile(fileName, DiffPsiFileType.INSTANCE, content);
+      file.setWritable(!readOnly);
+
+      file.putUserData(DiffPsiFileType.ORIGINAL_FILE_TYPE_KEY, fileType);
+
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document == null) return null;
+
+      PsiDocumentManager.getInstance(project).getPsiFile(document);
+
+      return document;
+    });
   }
 }
