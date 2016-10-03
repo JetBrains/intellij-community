@@ -50,7 +50,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
   private final Set<FileType> myFileTypes;
 
   private volatile CompilerReferenceReader myReader;
-  private volatile GlobalSearchScope myMayContainInvalidDataScope = GlobalSearchScope.EMPTY_SCOPE;
+  private volatile GlobalSearchScope myDirtyScope = GlobalSearchScope.EMPTY_SCOPE;
 
   private final Object myLock = new Object();
 
@@ -74,7 +74,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
         @Override
         public boolean execute(CompileContext context) {
           myChangedModules.clear();
-          myMayContainInvalidDataScope = GlobalSearchScope.EMPTY_SCOPE;
+          myDirtyScope = GlobalSearchScope.EMPTY_SCOPE;
           openReaderIfNeed();
           return true;
         }
@@ -124,7 +124,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
           final Module module = myProjectFileIndex.getModuleForFile(file);
           if (module != null) {
             if (myChangedModules.add(module)) {
-              myMayContainInvalidDataScope = myMayContainInvalidDataScope.union(module.getModuleWithDependentsScope());
+              myDirtyScope = myDirtyScope.union(module.getModuleWithDependentsScope());
             }
           }
         }
@@ -169,7 +169,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     if (referentFileIds == null) return null;
 
     return new ScopeWithBytecodeReferences(referentFileIds)
-      .union(myMayContainInvalidDataScope)
+      .union(myDirtyScope)
       .union(LibraryScopeCache.getInstance(element.getProject()).getLibrariesOnlyScope())
       .union(GlobalSearchScope.notScope(GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(myProject), myFileTypes.toArray(new FileType[myFileTypes.size()]))));
   }
@@ -186,7 +186,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
       return null;
     }
 
-    if (myMayContainInvalidDataScope.contains(vFile)) {
+    if (myDirtyScope.contains(vFile)) {
       return null;
     }
     CompilerElement[] compilerElements = place == ElementPlace.SRC
