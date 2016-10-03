@@ -91,14 +91,14 @@ class IdePluginClient(project : Project) : AbstractProjectComponent(project) {
 
                 } then {
                     // succcessful connection.
-                    val notification = Notification(DISPLAY_ID, "Connected to Circlet", "", NotificationType.INFORMATION)
+                    val notification = Notification(DISPLAY_ID, "Circlet", "Connected to server", NotificationType.INFORMATION)
                     Notifications.Bus.notify(notification, myProject)
 
                 } catch { th ->
                     disconnect()
                     when (th){
                         is ProcessCancalledException ->{
-                            val notification = Notification(DISPLAY_ID, "Circlet connection cancelled", "", NotificationType.INFORMATION)
+                            val notification = Notification(DISPLAY_ID, "Circlet", "Connection cancelled", NotificationType.INFORMATION)
                             Notifications.Bus.notify(notification, myProject)
                         }
                         is ExpectedException -> {
@@ -117,10 +117,17 @@ class IdePluginClient(project : Project) : AbstractProjectComponent(project) {
 
     fun disconnect(){
         // may disconned in both connected and connecting states.
-        if (connectionState == null)
+
+        val state = connectionState
+        if (state == null)
             return
 
-        connectionState?.Close()
         connectionState = null
+
+        // succcessful connection.
+        val notification = Notification(DISPLAY_ID, "Circlet", "Disconnected from server", NotificationType.INFORMATION)
+        Notifications.Bus.notify(notification, myProject)
+
+        state.Close()
     }
 }
