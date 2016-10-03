@@ -22,10 +22,8 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
@@ -43,6 +41,9 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collections;
 import java.util.Set;
 
+import static com.intellij.psi.search.GlobalSearchScope.*;
+import static com.intellij.psi.search.GlobalSearchScope.notScope;
+
 public class CompilerReferenceServiceImpl extends CompilerReferenceService {
   private static final Key<ParameterizedCachedValue<GlobalSearchScope, CompilerSearchAdapter>> CACHE_KEY = Key.create("compiler.ref.service.search");
   private final ProjectFileIndex myProjectFileIndex;
@@ -50,7 +51,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
   private final Set<FileType> myFileTypes;
 
   private volatile CompilerReferenceReader myReader;
-  private volatile GlobalSearchScope myDirtyScope = GlobalSearchScope.EMPTY_SCOPE;
+  private volatile GlobalSearchScope myDirtyScope = EMPTY_SCOPE;
 
   private final Object myLock = new Object();
 
@@ -74,7 +75,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
         @Override
         public boolean execute(CompileContext context) {
           myChangedModules.clear();
-          myDirtyScope = GlobalSearchScope.EMPTY_SCOPE;
+          myDirtyScope = EMPTY_SCOPE;
           openReaderIfNeed();
           return true;
         }
@@ -137,10 +138,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     closeReaderIfNeed();
   }
 
-
   @Nullable
   @Override
-  public GlobalSearchScope getMayContainReferencesInCodeScope(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
+  public GlobalSearchScope getScopeWithoutReferences(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
     if (!isServiceEnabled()) return null;
 
     final ParameterizedCachedValueProvider<GlobalSearchScope, CompilerSearchAdapter> cachedValueProvider =
@@ -148,8 +148,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
         @Nullable
         @Override
         public CachedValueProvider.Result<GlobalSearchScope> compute(CompilerSearchAdapter param) {
-          return CachedValueProvider.Result
-            .create(calculateMayContainReferencesScope(element, param), PsiModificationTracker.MODIFICATION_COUNT);
+          return CachedValueProvider.Result.create(calculateScopeWithoutReferences(element, param), PsiModificationTracker.MODIFICATION_COUNT);
         }
       };
     return CachedValuesManager.getManager(myProject).getParameterizedCachedValue(element,
@@ -164,14 +163,12 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
   }
 
   @Nullable
-  private GlobalSearchScope calculateMayContainReferencesScope(@NotNull PsiElement element, CompilerSearchAdapter adapter) {
+  private GlobalSearchScope calculateScopeWithoutReferences(@NotNull PsiElement element, CompilerSearchAdapter adapter) {
     TIntHashSet referentFileIds = getReferentFileIds(element, adapter);
     if (referentFileIds == null) return null;
 
-    return new ScopeWithBytecodeReferences(referentFileIds)
-      .union(myDirtyScope)
-      .union(LibraryScopeCache.getInstance(element.getProject()).getLibrariesOnlyScope())
-      .union(GlobalSearchScope.notScope(GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(myProject), myFileTypes.toArray(new FileType[myFileTypes.size()]))));
+    return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds).intersectWith(notScope(myDirtyScope)),
+                                         myFileTypes.toArray(new FileType[myFileTypes.size()]));
   }
 
   @Nullable
@@ -246,16 +243,16 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     }
   }
 
-  private static class ScopeWithBytecodeReferences extends GlobalSearchScope {
+  private static class ScopeWithoutReferencesOnCompilation extends GlobalSearchScope {
     private final TIntHashSet myReferentIds;
 
-    private ScopeWithBytecodeReferences(TIntHashSet ids) {
+    private ScopeWithoutReferencesOnCompilation(TIntHashSet ids) {
       myReferentIds = ids;
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return file instanceof VirtualFileWithId && myReferentIds.contains(((VirtualFileWithId)file).getId());
+      return !(file instanceof VirtualFileWithId) || !myReferentIds.contains(((VirtualFileWithId)file).getId());
     }
 
     @Override
@@ -272,20 +269,5 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     public boolean isSearchInLibraries() {
       return false;
     }
-  }
-
-  private boolean areDependenciesOrSelfChanged(Module module, THashSet<Module> uniqueModules) {
-    if (!uniqueModules.add(module)) {
-      return false;
-    }
-    if (myChangedModules.contains(module)) {
-      return true;
-    }
-    for (Module dependency : ModuleRootManager.getInstance(module).getDependencies()) {
-      if (areDependenciesOrSelfChanged(dependency, uniqueModules)) {
-        return true;
-      }
-    }
-    return false;
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.psi.search;
 
 import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -36,6 +37,8 @@ import java.util.List;
 * @author peter
 */
 public class SearchRequestCollector {
+  private static final ExtensionPointName<ScopeOptimizer> CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME = ExtensionPointName.create("com.intellij.codeUsageScopeOptimizer");
+
   private final Object lock = new Object();
   private final List<PsiSearchRequest> myWordRequests = ContainerUtil.newArrayList();
   private final List<QuerySearchRequest> myQueryRequests = ContainerUtil.newArrayList();
@@ -76,20 +79,22 @@ public class SearchRequestCollector {
 
     Collection<PsiSearchRequest> requests = null;
     if (searchTarget != null && (searchScope instanceof GlobalSearchScope) && ((searchContext & UsageSearchContext.IN_CODE) != 0 || searchContext == UsageSearchContext.ANY)) {
-      for (InCodeScopeOptimizer optimizer : InCodeScopeOptimizer.EP_NAME.getExtensions()) {
-        final GlobalSearchScope optimizedSourcesSearchScope = optimizer.getOptimizedScopeInCode(searchTarget);
-        if (optimizedSourcesSearchScope != null) {
+      for (ScopeOptimizer optimizer : CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME.getExtensions()) {
+        //TODO
+        final GlobalSearchScope optimizedCodeUsageSearchScope = optimizer.getScopeToExclude(searchTarget);
+        if (optimizedCodeUsageSearchScope != null) {
           short exceptCodeSearchContext = searchContext == UsageSearchContext.ANY
           ? (short)(searchContext ^ UsageSearchContext.IN_CODE)
           : (UsageSearchContext.IN_COMMENTS |
              UsageSearchContext.IN_STRINGS |
              UsageSearchContext.IN_FOREIGN_LANGUAGES |
              UsageSearchContext.IN_PLAIN_TEXT);
-          final GlobalSearchScope effectiveScopeWithSources = ((GlobalSearchScope)searchScope).intersectWith(optimizedSourcesSearchScope);
-          final GlobalSearchScope effectiveScopeWithoutSources =
-            ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedSourcesSearchScope));
-          requests = ContainerUtil.list(new PsiSearchRequest(effectiveScopeWithSources, word, searchContext, caseSensitive, containerName, processor),
-                                        new PsiSearchRequest(effectiveScopeWithoutSources, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
+          final GlobalSearchScope searchWithCodeUsageEffectiveScope =
+            ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
+          final GlobalSearchScope searchWithoutCodeUsageEffectiveScope =
+            ((GlobalSearchScope)searchScope).intersectWith(GlobalSearchScope.notScope(optimizedCodeUsageSearchScope));
+          requests = ContainerUtil.list(new PsiSearchRequest(searchWithCodeUsageEffectiveScope, word, searchContext, caseSensitive, containerName, processor),
+                                        new PsiSearchRequest(searchWithoutCodeUsageEffectiveScope, word, exceptCodeSearchContext, caseSensitive, containerName, processor));
         }
       }
     }

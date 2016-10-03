@@ -17,14 +17,14 @@ package com.intellij.compiler;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.InCodeScopeOptimizer;
+import com.intellij.psi.search.ScopeOptimizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaCompilerReferencesInCodeScopeOptimizer implements InCodeScopeOptimizer {
+public class JavaCompilerReferencesCodeUsageScopeOptimizer implements ScopeOptimizer {
   @Nullable
   @Override
-  public GlobalSearchScope getOptimizedScopeInCode(@NotNull PsiElement element) {
-    return CompilerReferenceService.getInstance(element.getProject()).getMayContainReferencesInCodeScope(element, JavaBaseCompilerSearchAdapter.INSTANCE);
+  public GlobalSearchScope getScopeToExclude(@NotNull PsiElement element) {
+    return CompilerReferenceService.getInstance(element.getProject()).getScopeWithoutReferences(element, JavaBaseCompilerSearchAdapter.INSTANCE);
   }
 }

@@ -15,14 +15,18 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface InCodeScopeOptimizer {
-  ExtensionPointName<InCodeScopeOptimizer> EP_NAME = ExtensionPointName.create("com.intellij.inCodeScopeOptimizer");
+/**
+ * A general interface to perform scope optimization
+ *
+ * @see PsiSearchHelper#getUseScope(PsiElement)
+ * @see SearchRequestCollector#searchWord(String, SearchScope, short, boolean, String, RequestResultProcessor, PsiElement)
+ */
+public interface ScopeOptimizer {
 
   @Nullable
-  GlobalSearchScope getOptimizedScopeInCode(@NotNull PsiElement element);
+  GlobalSearchScope getScopeToExclude(@NotNull PsiElement element);
 }
