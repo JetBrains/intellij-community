@@ -48,13 +48,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-public class DiffContentFactoryImpl extends DiffContentFactory {
+public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   public static final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
-
-  @NotNull
-  public static DiffContentFactoryImpl getInstanceImpl() {
-    return (DiffContentFactoryImpl)DiffContentFactory.getInstance();
-  }
 
   @NotNull
   @Override
@@ -196,6 +191,7 @@ public class DiffContentFactoryImpl extends DiffContentFactory {
   }
 
   @NotNull
+  @Override
   public DiffContent createFromBytes(@Nullable Project project,
                                      @NotNull FilePath filePath,
                                      @NotNull byte[] content) throws IOException {
