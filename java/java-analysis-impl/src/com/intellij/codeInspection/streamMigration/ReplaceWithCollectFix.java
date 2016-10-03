@@ -17,7 +17,6 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,8 +26,6 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author Tagir Valeev
@@ -64,8 +61,7 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
                @NotNull PsiForeachStatement foreachStatement,
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
-               @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-               @NotNull List<Operation> operations) {
+               @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiType iteratedValueType = iteratedValue.getType();
     final PsiMethodCallExpression methodCallExpression = tb.getSingleMethodCall();
@@ -73,7 +69,7 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
     if (methodCallExpression == null) return;
 
     restoreComments(foreachStatement, body);
-    if (operations.isEmpty() && StreamApiMigrationInspection.isAddAllCall(tb)) {
+    if (!tb.hasOperations() && StreamApiMigrationInspection.isAddAllCall(tb)) {
       final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
       final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "";
       final String collectionText =
@@ -87,8 +83,8 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
     PsiExpression itemToAdd = methodCallExpression.getArgumentList().getExpressions()[0];
     PsiType addedType = getAddedElementType(methodCallExpression);
     if (addedType == null) addedType = itemToAdd.getType();
-    operations.add(new StreamApiMigrationInspection.MapOp(itemToAdd, tb.getVariable(), addedType));
-    final StringBuilder builder = generateStream(iteratedValue, operations);
+    final StringBuilder builder =
+      generateStream(iteratedValue, new StreamApiMigrationInspection.MapOp(tb.getLastOperation(), itemToAdd, tb.getVariable(), addedType));
 
     final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
     final PsiLocalVariable variable = StreamApiMigrationInspection.extractCollectionVariable(qualifierExpression);

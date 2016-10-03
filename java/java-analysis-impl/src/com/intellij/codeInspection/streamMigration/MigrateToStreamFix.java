@@ -21,15 +21,20 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.TerminalBlock;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Objects;
 
 /**
  * @author Tagir Valeev
@@ -50,10 +55,9 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
       final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
       if (body != null && iteratedValue != null) {
         final PsiParameter parameter = foreachStatement.getIterationParameter();
-        StreamApiMigrationInspection.TerminalBlock tb = StreamApiMigrationInspection.TerminalBlock.from(parameter, body);
+        TerminalBlock tb = TerminalBlock.from(parameter, body);
         if (!FileModificationService.getInstance().preparePsiElementForWrite(foreachStatement)) return;
-        List<Operation> operations = tb.extractOperations();
-        migrate(project, descriptor, foreachStatement, iteratedValue, body, tb, operations);
+        migrate(project, descriptor, foreachStatement, iteratedValue, body, tb);
       }
     }
   }
@@ -63,8 +67,7 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
                         @NotNull PsiForeachStatement foreachStatement,
                         @NotNull PsiExpression iteratedValue,
                         @NotNull PsiStatement body,
-                        @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-                        @NotNull List<Operation> operations);
+                        @NotNull TerminalBlock tb);
 
   static void replaceWithNumericAddition(@NotNull Project project,
                                          PsiForeachStatement foreachStatement,
@@ -123,12 +126,12 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
   }
 
   @NotNull
-  static StringBuilder generateStream(PsiExpression iteratedValue, List<Operation> intermediateOps) {
-    return generateStream(iteratedValue, intermediateOps, false);
+  static StringBuilder generateStream(PsiExpression iteratedValue, @Nullable Operation lastOperation) {
+    return generateStream(iteratedValue, lastOperation, false);
   }
 
   @NotNull
-  static StringBuilder generateStream(PsiExpression iteratedValue, List<Operation> intermediateOps, boolean noStreamForEmpty) {
+  static StringBuilder generateStream(PsiExpression iteratedValue, @Nullable Operation lastOperation, boolean noStreamForEmpty) {
     StringBuilder buffer = new StringBuilder();
     final PsiType iteratedValueType = iteratedValue.getType();
     if (iteratedValueType instanceof PsiArrayType) {
@@ -136,12 +139,16 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
     }
     else {
       buffer.append(getIteratedValueText(iteratedValue));
-      if (!(noStreamForEmpty && intermediateOps.isEmpty())) {
+      if (!noStreamForEmpty || lastOperation != null) {
         buffer.append(".stream()");
       }
     }
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(iteratedValue.getProject());
-    intermediateOps.stream().map(op -> op.createReplacement(factory)).forEach(buffer::append);
+    List<String> replacements =
+      StreamEx.iterate(lastOperation, Objects::nonNull, Operation::getPreviousOp).map(op -> op.createReplacement(factory)).toList();
+    for(ListIterator<String> it = replacements.listIterator(replacements.size()); it.hasPrevious(); ) {
+      buffer.append(it.previous());
+    }
     return buffer;
   }
 

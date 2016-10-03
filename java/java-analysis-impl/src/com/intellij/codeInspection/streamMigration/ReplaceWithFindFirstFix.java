@@ -17,14 +17,11 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author Tagir Valeev
@@ -42,11 +39,10 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
                @NotNull PsiForeachStatement foreachStatement,
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
-               @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-               @NotNull List<Operation> operations) {
+               @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
     PsiStatement statement = tb.getSingleStatement();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    String stream = generateStream(iteratedValue, operations).append(".findFirst()").toString();
+    String stream = generateStream(iteratedValue, tb.getLastOperation()).append(".findFirst()").toString();
     if (statement instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       PsiExpression value = returnStatement.getReturnValue();

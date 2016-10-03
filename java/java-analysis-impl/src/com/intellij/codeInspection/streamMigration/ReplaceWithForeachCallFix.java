@@ -16,19 +16,16 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
  * @author Tagir Valeev
  */
 class ReplaceWithForeachCallFix extends MigrateToStreamFix {
-  private static final Logger LOG = Logger.getInstance("#" + ReplaceWithForeachCallFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(ReplaceWithForeachCallFix.class);
 
   private final String myForEachMethodName;
 
@@ -48,13 +45,12 @@ class ReplaceWithForeachCallFix extends MigrateToStreamFix {
                @NotNull PsiForeachStatement foreachStatement,
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
-               @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-               @NotNull List<Operation> operations) {
+               @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
     restoreComments(foreachStatement, body);
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
-    StringBuilder buffer = generateStream(iteratedValue, operations, true);
+    StringBuilder buffer = generateStream(iteratedValue, tb.getLastOperation(), true);
     PsiElement block = tb.convertToElement(elementFactory);
 
     buffer.append(".").append(myForEachMethodName).append("(");
