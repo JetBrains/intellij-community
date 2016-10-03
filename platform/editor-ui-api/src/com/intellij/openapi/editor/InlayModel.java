@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.List;
  * <p>
  * WARNING! This is an experimental API, it can change at any time.
  */
+@ApiStatus.Experimental
 public interface InlayModel {
   /**
    * Introduces an inline visual element at a given offset, its width and appearance is defined by the provided renderer. With respect to
