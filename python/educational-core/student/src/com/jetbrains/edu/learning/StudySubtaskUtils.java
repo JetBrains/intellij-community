@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning;
 
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -9,7 +10,9 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.EditorNotifications;
 import com.jetbrains.edu.learning.checker.StudyCheckUtils;
 import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
+import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholderSubtaskInfo;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
@@ -83,5 +86,12 @@ public class StudySubtaskUtils {
       placeholder.switchSubtask(project, document, fromSubtaskIndex, toSubtaskIndex);
     }
     taskFile.setTrackLengths(true);
+  }
+
+  public static void refreshPlaceholder(@NotNull Project project, @NotNull Editor editor, @NotNull AnswerPlaceholder placeholder) {
+    int prevSubtaskIndex = placeholder.getActiveSubtaskIndex() - 1;
+    AnswerPlaceholderSubtaskInfo info = placeholder.getSubtaskInfos().get(prevSubtaskIndex);
+    String replacementText = info != null ? info.getAnswer() : placeholder.getTaskText();
+    EduUtils.replaceAnswerPlaceholder(project, editor.getDocument(), placeholder, placeholder.getRealLength(), replacementText);
   }
 }
