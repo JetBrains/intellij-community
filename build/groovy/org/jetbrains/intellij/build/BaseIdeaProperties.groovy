@@ -108,6 +108,9 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withoutProjectLibrary("com.twelvemonkeys.imageio:imageio-tiff:3.2.1")
       }
     } as Consumer<PlatformLayout>
+
+    additionalModulesToCompile = ["jps-standalone-builder"]
+    modulesToCompileTests = ["jps-builders"]
   }
 
   @Override
