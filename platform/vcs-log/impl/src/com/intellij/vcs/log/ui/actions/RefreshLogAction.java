@@ -54,7 +54,7 @@ public class RefreshLogAction extends RefreshAction {
       }
     }
 
-    logManager.getDataManager().refreshCompletely();
+    logManager.getDataManager().refreshSoftly();
   }
 
   @Override
