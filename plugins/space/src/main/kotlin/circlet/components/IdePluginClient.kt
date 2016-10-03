@@ -89,6 +89,11 @@ class IdePluginClient(project : Project) : AbstractProjectComponent(project) {
                     }
                     state.session = session
 
+                } then {
+                    // succcessful connection.
+                    val notification = Notification(DISPLAY_ID, "Connected to Circlet", "", NotificationType.INFORMATION)
+                    Notifications.Bus.notify(notification, myProject)
+
                 } catch { th ->
                     disconnect()
                     when (th){
