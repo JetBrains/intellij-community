@@ -23,6 +23,8 @@ public class AnswerPlaceholderSubtaskInfo {
   @Expose private String possibleAnswer = "";
 
   @Expose private String myPlaceholderText;
+
+  private String myAnswer = "";
   private boolean mySelected = false;
   private StudyStatus myStatus = StudyStatus.Unchecked;
   @Expose private boolean myHasFrame = true;
@@ -135,5 +137,13 @@ public class AnswerPlaceholderSubtaskInfo {
 
   public void setNeedInsertText(boolean needInsertText) {
     myNeedInsertText = needInsertText;
+  }
+
+  public String getAnswer() {
+    return myAnswer;
+  }
+
+  public void setAnswer(String answer) {
+    myAnswer = answer;
   }
 }

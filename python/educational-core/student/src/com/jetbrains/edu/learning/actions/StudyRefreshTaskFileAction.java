@@ -26,10 +26,8 @@ import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduAnswerPlaceholderPainter;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.StudyStatus;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import icons.InteractiveLearningIcons;
@@ -44,7 +42,8 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   private static final Logger LOG = Logger.getInstance(StudyRefreshTaskFileAction.class.getName());
 
   public StudyRefreshTaskFileAction() {
-    super("Reset Task File (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Refresh current task",
+    super("Reset Task File (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")",
+          "Refresh current task",
           InteractiveLearningIcons.ResetTaskFile);
   }
 
@@ -63,9 +62,19 @@ public class StudyRefreshTaskFileAction extends StudyActionWithShortcut {
   private static void refreshFile(@NotNull final StudyState studyState, @NotNull final Project project) {
     final Editor editor = studyState.getEditor();
     final TaskFile taskFile = studyState.getTaskFile();
-    if (!resetTaskFile(editor.getDocument(), project, taskFile, studyState.getVirtualFile().getName())) {
-      Messages.showInfoMessage("The initial text of task file is unavailable", "Failed to Refresh Task File");
-      return;
+    if (taskFile.getTask().hasSubtasks()) {
+      int prevSubtaskIndex = taskFile.getTask().getActiveSubtaskIndex() - 1;
+      for (AnswerPlaceholder placeholder : taskFile.getActivePlaceholders()) {
+        AnswerPlaceholderSubtaskInfo info = placeholder.getSubtaskInfos().get(prevSubtaskIndex);
+        String replacementText = info != null ? info.getAnswer() : placeholder.getTaskText();
+        EduUtils.replaceAnswerPlaceholder(project, editor.getDocument(), placeholder, placeholder.getRealLength(), replacementText);
+      }
+    }
+    else {
+      if (!resetTaskFile(editor.getDocument(), project, taskFile, studyState.getVirtualFile().getName())) {
+        Messages.showInfoMessage("The initial text of task file is unavailable", "Failed to Refresh Task File");
+        return;
+      }
     }
     WolfTheProblemSolver.getInstance(project).clearProblems(studyState.getVirtualFile());
     taskFile.setHighlightErrors(false);
