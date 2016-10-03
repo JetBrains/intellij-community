@@ -37,23 +37,25 @@ public class FStringsAnnotator extends PyAnnotator {
       if (nodeInfo.isFormatted()) {
         final int nodeContentEnd = nodeInfo.getContentRange().getEndOffset();
         final FStringParser.ParseResult result = FStringParser.parse(nodeText);
-        boolean hasUnclosedBrace = false;
+        TextRange unclosedBraceRange = null;
         for (Fragment fragment : result.getFragments()) {
+          final int fragmentEndOffset = fragment.getRightBraceOffset() == -1 ? nodeContentEnd : fragment.getRightBraceOffset() + 1;
+          final TextRange wholeFragmentRange = TextRange.create(fragment.getLeftBraceOffset(), fragmentEndOffset);
           if (fragment.getDepth() > 2) {
             // Do not report anything about expression fragments nested deeper that three times
             if (fragment.getDepth() == 3) {
-              final int fragmentEndOffset = fragment.getRightBraceOffset() < 0 ? nodeContentEnd : fragment.getRightBraceOffset() + 1;
-              final TextRange range = TextRange .create(fragment.getLeftBraceOffset(), fragmentEndOffset);
-              report("Expression fragment inside f-string is nested too deeply", range, node);
+              report("Expression fragment inside f-string is nested too deeply", wholeFragmentRange, node);
             }
             continue;
           }
           final int fragContentEnd = fragment.getContentEndOffset();
-          if (CharArrayUtil.isEmptyOrSpaces(nodeText, fragment.getLeftBraceOffset() + 1, fragment.getContentEndOffset())) {
-            report("Empty expressions are not allowed inside f-strings", fragment.getContentRange(), node);
+          if (CharArrayUtil.isEmptyOrSpaces(nodeText, fragment.getLeftBraceOffset() + 1, fragContentEnd)) {
+            final int endOffset = fragContentEnd == nodeContentEnd ? fragContentEnd : fragContentEnd + 1;
+            final TextRange range = TextRange.create(fragment.getLeftBraceOffset(), endOffset);
+            report("Empty expression fragments are not allowed inside f-strings", range, node);
           }
-          if (fragment.getRightBraceOffset() == -1) {
-            hasUnclosedBrace = true;
+          if (fragment.getRightBraceOffset() == -1 && unclosedBraceRange == null) {
+            unclosedBraceRange = wholeFragmentRange;
           }
           if (fragment.getFirstHashOffset() != -1) {
             final TextRange range = TextRange.create(fragment.getFirstHashOffset(), fragment.getContentEndOffset());
@@ -68,20 +70,22 @@ public class FStringsAnnotator extends PyAnnotator {
           // Do not warn about illegal conversion character if '!' is right before closing quotes 
           if (fragContentEnd < nodeContentEnd && nodeText.charAt(fragContentEnd) == '!' && fragContentEnd + 1 < nodeContentEnd) {
             final char conversionChar = nodeText.charAt(fragContentEnd + 1);
-            final int offset = fragContentEnd + 1;
+            // No conversion character -- highlight only "!"
             if (fragContentEnd + 1 == fragment.getRightBraceOffset() || conversionChar == ':') {
-              reportEmpty("Conversion character is expected: should be one of 's', 'r', 'a'", offset, node);
+              reportCharacter("Conversion character is expected: should be one of 's', 'r', 'a'", fragContentEnd, node);
             }
+            // Wrong conversion character -- highlight both "!" and the following symbol
             else if ("sra".indexOf(conversionChar) < 0) {
-              reportCharacter("Illegal conversion character '" + conversionChar + "': should be one of 's', 'r', 'a'", offset, node);
+              final TextRange range = TextRange.from(fragContentEnd, 2);
+              report("Illegal conversion character '" + conversionChar + "': should be one of 's', 'r', 'a'", range, node);
             }
           }
         }
         for (Integer offset : result.getSingleRightBraces()) {
           reportCharacter("Single '}' is not allowed inside f-strings", offset, node);
         }
-        if (hasUnclosedBrace) {
-          reportEmpty("'}' is expected", nodeContentEnd, node);
+        if (unclosedBraceRange != null) {
+          report("'}' is expected", unclosedBraceRange, node);
         }
       }
     }
@@ -89,10 +93,6 @@ public class FStringsAnnotator extends PyAnnotator {
 
   private void report(@NotNull String message, @NotNull TextRange range, @NotNull ASTNode node) {
     getHolder().createErrorAnnotation(range.shiftRight(node.getTextRange().getStartOffset()), message);
-  }
-
-  private void reportEmpty(@NotNull String message, int offset, @NotNull ASTNode node) {
-    report(message, TextRange.from(offset, 0), node);
   }
 
   private void reportCharacter(@NotNull String message, int offset, @NotNull ASTNode node) {

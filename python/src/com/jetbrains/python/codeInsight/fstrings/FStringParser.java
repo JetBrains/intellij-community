@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight.fstrings;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -231,9 +232,9 @@ public class FStringParser {
     private final List<Integer> mySingleRightBraces;
     private final List<Fragment> myFragments;
 
-    public ParseResult(@NotNull List<Integer> singleRightBraces, @NotNull List<Fragment> fragments) {
+    private ParseResult(@NotNull List<Integer> singleRightBraces, @NotNull List<Fragment> fragments) {
       mySingleRightBraces = singleRightBraces;
-      myFragments = fragments;
+      myFragments = ContainerUtil.sorted(fragments, (f1, f2) -> f1.getLeftBraceOffset() - f2.getLeftBraceOffset());;
     }
 
     @NotNull
