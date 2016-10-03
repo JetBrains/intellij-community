@@ -436,10 +436,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       super(VCS_LOG_TEXT_FILTER_HISTORY);
       myTextFilterModel = model;
       setText(myTextFilterModel.getText());
-      getTextEditor().addActionListener(e -> {
-        myTextFilterModel.setFilter(new VcsLogTextFilterImpl(getText()));
-        addCurrentTextToHistory();
-      });
+      getTextEditor().addActionListener(e -> applyFilter());
       addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(DocumentEvent e) {
@@ -457,9 +454,19 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       }
     }
 
+    protected void applyFilter() {
+      myTextFilterModel.setFilter(new VcsLogTextFilterImpl(getText()));
+      addCurrentTextToHistory();
+    }
+
     @Override
     protected void onFieldCleared() {
       myTextFilterModel.setFilter(null);
+    }
+
+    @Override
+    protected void onFocusLost() {
+      applyFilter();
     }
   }
 }
