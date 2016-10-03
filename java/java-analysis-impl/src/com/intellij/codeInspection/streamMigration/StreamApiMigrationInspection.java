@@ -568,7 +568,9 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             registerProblem(statement, "anyMatch", new ReplaceWithMatchFix("anyMatch"));
             return;
           }
-          if (nonFinalVariables.size() == 1) {
+          if (nonFinalVariables.isEmpty() && statements[0] instanceof PsiExpressionStatement) {
+            registerProblem(statement, "findFirst", new ReplaceWithFindFirstFix());
+          } else if (nonFinalVariables.size() == 1) {
             PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
             if(assignment == null) return;
             PsiExpression lValue = assignment.getLExpression();

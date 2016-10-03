@@ -64,7 +64,15 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       PsiStatement[] statements = tb.getStatements();
       if (statements.length != 2) return;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
-      if (assignment == null) return;
+      if (assignment == null) {
+        if(!(statements[0] instanceof PsiExpressionStatement)) return;
+        PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+        restoreComments(foreachStatement, body);
+        PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(
+          stream + ".ifPresent(" + LambdaUtil.createLambda(tb.getVariable(), expression) + ");", foreachStatement));
+        simplifyAndFormat(project, result);
+        return;
+      }
       PsiExpression lValue = assignment.getLExpression();
       if (!(lValue instanceof PsiReferenceExpression)) return;
       PsiElement element = ((PsiReferenceExpression)lValue).resolve();
