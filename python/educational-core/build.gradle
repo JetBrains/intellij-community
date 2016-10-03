@@ -60,14 +60,14 @@ subprojects {
   buildDir = new File(rootProject.projectDir, "gradleBuild/" + project.name)
 }
 
-project(':student') {
+project(':stepik-student') {
 
   dependencies {
     compile fileTree(dir: 'lib', include: ['*.jar'])
   }
 
   intellij {
-    pluginName 'student'
+    pluginName 'stepik-student'
   }
 
 }
@@ -75,7 +75,7 @@ project(':student') {
 project(':course-creator') {
 
   dependencies {
-    compile project(':student')
+    compile project(':stepik-student')
   }
 
   intellij {

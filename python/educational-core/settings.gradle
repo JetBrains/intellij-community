@@ -1,1 +1,1 @@
-include 'student', 'course-creator'
+include 'stepik-student', 'course-creator'

@@ -12,6 +12,6 @@
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="guava-tools" level="project" />
-    <orderEntry type="module" module-name="student" />
+    <orderEntry type="module" module-name="stepik-student" />
   </component>
 </module>

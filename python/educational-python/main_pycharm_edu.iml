@@ -17,7 +17,7 @@
     <orderEntry type="module" module-name="educational-python" />
     <orderEntry type="module" module-name="course-creator" />
     <orderEntry type="module" module-name="course-creator-python" />
-    <orderEntry type="module" module-name="student" />
+    <orderEntry type="module" module-name="stepik-student" />
     <orderEntry type="module" module-name="student-python" />
     <orderEntry type="module" module-name="hg4idea" />
     <orderEntry type="module" module-name="ipnb" />
