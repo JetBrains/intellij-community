@@ -241,7 +241,7 @@ public class AnswerPlaceholder {
     if (minIndex > subtaskIndex) {
       return minInfo.isNeedInsertText() ? 0 : minInfo.getPlaceholderText().length();
     }
-    int maxIndex = Collections.max(ContainerUtil.filter(mySubtaskInfos.keySet(), i -> i < subtaskIndex));
+    int maxIndex = Collections.max(ContainerUtil.filter(mySubtaskInfos.keySet(), i -> i <= subtaskIndex));
     return getUseLength() ? length : mySubtaskInfos.get(maxIndex).getPossibleAnswer().length();
   }
 
