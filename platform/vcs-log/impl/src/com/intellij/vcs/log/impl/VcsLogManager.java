@@ -97,7 +97,7 @@ public class VcsLogManager implements Disposable {
   public void scheduleInitialization() {
     if (!myInitialized) {
       myInitialized = true;
-      myLogData.refreshCompletely();
+      myLogData.initialize();
     }
   }
 
