@@ -40,7 +40,7 @@ import java.util.*;
  */
 public abstract class ModuleInsight {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.importProject.ModuleInsight");
-  @NotNull private final ProgressIndicatorWrapper myProgress;
+  @NotNull protected final ProgressIndicatorWrapper myProgress;
 
   private final Set<File> myEntryPointRoots = new HashSet<>();
   private final List<DetectedSourceRoot> mySourceRoots = new ArrayList<>();
@@ -98,9 +98,9 @@ public abstract class ModuleInsight {
       myProgress.pushState();
 
       List<DetectedSourceRoot> processedRoots = new ArrayList<>();
-      for (DetectedSourceRoot root : mySourceRoots) {
+      for (DetectedSourceRoot root : getSourceRootsToScan()) {
         final File sourceRoot = root.getDirectory();
-        if (myIgnoredNames.contains(sourceRoot.getName())) {
+        if (isIgnoredName(sourceRoot)) {
           continue;
         }
         myProgress.setText("Scanning " + sourceRoot.getPath());
@@ -109,7 +109,7 @@ public abstract class ModuleInsight {
         mySourceRootToReferencedPackagesMap.put(sourceRoot, usedPackages);
 
         final HashSet<String> selfPackages = new HashSet<>();
-        mySourceRootToPackagesMap.put(sourceRoot, selfPackages);
+        addExportedPackages(sourceRoot, selfPackages);
 
         scanSources(sourceRoot, ProjectFromSourcesBuilderImpl.getPackagePrefix(root), usedPackages, selfPackages) ;
         usedPackages.removeAll(selfPackages);
@@ -121,7 +121,7 @@ public abstract class ModuleInsight {
       myProgress.setText("Building modules layout...");
       for (DetectedSourceRoot sourceRoot : processedRoots) {
         final File srcRoot = sourceRoot.getDirectory();
-        final File moduleContentRoot = myEntryPointRoots.contains(srcRoot)? srcRoot : srcRoot.getParentFile();
+        final File moduleContentRoot = isEntryPointRoot(srcRoot) ? srcRoot : srcRoot.getParentFile();
         ModuleDescriptor moduleDescriptor = contentRootToModules.get(moduleContentRoot);
         if (moduleDescriptor != null) {
           moduleDescriptor.addSourceRoot(moduleContentRoot, sourceRoot);
@@ -139,13 +139,39 @@ public abstract class ModuleInsight {
     catch (ProcessCanceledException ignored) {
     }
 
-    myModules = new ArrayList<>(contentRootToModules.values());
+    addModules(contentRootToModules.values());
+  }
+
+  protected void addExportedPackages(File sourceRoot, Set<String> packages) {
+    mySourceRootToPackagesMap.put(sourceRoot, packages);
+  }
+
+  protected boolean isIgnoredName(File sourceRoot) {
+    return myIgnoredNames.contains(sourceRoot.getName());
+  }
+
+  protected void addModules(Collection<ModuleDescriptor> newModules) {
+    if (myModules == null) {
+      myModules = new ArrayList<>(newModules);
+    }
+    else {
+      myModules.addAll(newModules);
+    }
     final Set<String> moduleNames = new HashSet<>(myExistingModuleNames);
-    for (ModuleDescriptor module : myModules) {
+    for (ModuleDescriptor module : newModules) {
       final String suggested = suggestUniqueName(moduleNames, module.getName());
       module.setName(suggested);
       moduleNames.add(suggested);
     }
+  }
+
+  @NotNull
+  protected List<DetectedSourceRoot> getSourceRootsToScan() {
+    return Collections.unmodifiableList(mySourceRoots);
+  }
+
+  protected boolean isEntryPointRoot(File srcRoot) {
+    return myEntryPointRoots.contains(srcRoot);
   }
 
   protected abstract ModuleDescriptor createModuleDescriptor(final File moduleContentRoot, Collection<DetectedSourceRoot> sourceRoots);
@@ -377,7 +403,7 @@ public abstract class ModuleInsight {
   }
 
   private void scanSources(final File fromRoot, final String parentPackageName, final Set<String> usedPackages, final Set<String> selfPackages) {
-    if (myIgnoredNames.contains(fromRoot.getName())) {
+    if (isIgnoredName(fromRoot)) {
       return;
     }
     final File[] files = fromRoot.listFiles();
@@ -430,7 +456,7 @@ public abstract class ModuleInsight {
   protected abstract void scanSourceFileForImportedPackages(final CharSequence chars, Consumer<String> result);
 
   private void scanRootForLibraries(File fromRoot) {
-    if (myIgnoredNames.contains(fromRoot.getName())) {
+    if (isIgnoredName(fromRoot)) {
       return;
     }
     final File[] files = fromRoot.listFiles();
