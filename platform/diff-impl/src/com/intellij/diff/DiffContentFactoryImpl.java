@@ -17,7 +17,9 @@ package com.intellij.diff;
 
 import com.intellij.diff.actions.DocumentFragmentContent;
 import com.intellij.diff.contents.*;
+import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +28,8 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -33,19 +37,24 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.BinaryLightVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
 
 public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   public static final Logger LOG = Logger.getInstance(DiffContentFactoryImpl.class);
@@ -265,13 +274,13 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, @NotNull byte[] content, @NotNull FilePath filePath) {
-    return FileAwareDocumentContent.create(project, content, filePath);
+    return new Builder(project).init(filePath).create(content).build();
   }
 
   @NotNull
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, @NotNull byte[] content, @NotNull VirtualFile highlightFile) {
-    return FileAwareDocumentContent.create(project, content, highlightFile);
+    return new Builder(project).init(highlightFile).create(content).build();
   }
 
   @NotNull
@@ -331,11 +340,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
   @NotNull
-  public static Document createDocument(@Nullable Project project,
-                                        @NotNull String content,
-                                        @Nullable FileType fileType,
-                                        @Nullable String fileName,
-                                        boolean readOnly) {
+  private static Document createDocument(@Nullable Project project,
+                                         @NotNull String content,
+                                         @Nullable FileType fileType,
+                                         @Nullable String fileName,
+                                         boolean readOnly) {
     if (project != null && !project.isDefault() &&
         fileType != null && !fileType.isBinary() &&
         Registry.is("diff.enable.psi.highlighting")) {
@@ -371,5 +380,99 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
 
       return document;
     });
+  }
+
+  private static class Builder {
+    private final Project myProject;
+    private Document myDocument;
+    private FileType myFileType;
+    private VirtualFile myHighlightFile;
+    private LineSeparator mySeparator;
+    private Charset myCharset;
+    private Boolean myBOM;
+    private Charset mySuggestedCharset;
+    private boolean myMalformedContent;
+    private String myFileName;
+
+    public Builder(@Nullable Project project) {
+      myProject = project;
+    }
+
+    //
+    // Impl
+    //
+
+    @NotNull
+    private Builder init(@NotNull FilePath path) {
+      myHighlightFile = path.getVirtualFile();
+      myFileType = path.getFileType();
+      mySuggestedCharset = path.getCharset(myProject);
+      myFileName = path.getName();
+      return this;
+    }
+
+    @NotNull
+    private Builder init(@NotNull VirtualFile highlightFile) {
+      myHighlightFile = highlightFile;
+      myFileType = highlightFile.getFileType();
+      mySuggestedCharset = highlightFile.getCharset();
+      myFileName = highlightFile.getName();
+      return this;
+    }
+
+    @NotNull
+    private Builder create(@NotNull String content) {
+      mySeparator = StringUtil.detectSeparators(content);
+      String correctedContent = StringUtil.convertLineSeparators(content);
+
+      myDocument = createDocument(myProject, correctedContent, myFileType, myFileName, true);
+
+      myDocument.setReadOnly(true);
+      return this;
+    }
+
+    @NotNull
+    private Builder create(@NotNull byte[] content) {
+      assert mySuggestedCharset != null;
+
+      Charset charset = CharsetToolkit.guessFromBOM(content);
+      if (charset != null) {
+        mySuggestedCharset = charset;
+        myBOM = true;
+      }
+      else {
+        myBOM = false;
+      }
+
+      myCharset = mySuggestedCharset;
+      try {
+        String text = CharsetToolkit.tryDecodeString(content, mySuggestedCharset);
+        return create(text);
+      }
+      catch (CharacterCodingException e) {
+        String text = CharsetToolkit.decodeString(content, mySuggestedCharset);
+        myMalformedContent = true;
+        return create(text);
+      }
+    }
+
+    @Nullable
+    private JComponent createNotification() {
+      if (!myMalformedContent) return null;
+      assert mySuggestedCharset != null;
+
+      String text = "Content was decoded with errors (using " + "'" + mySuggestedCharset.name() + "' charset)";
+      return DiffNotifications.createNotification(text, LightColors.RED);
+    }
+
+    @NotNull
+    public FileAwareDocumentContent build() {
+      if (FileTypes.UNKNOWN.equals(myFileType)) myFileType = PlainTextFileType.INSTANCE;
+      FileAwareDocumentContent content
+        = new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset, myBOM);
+      DiffUtil.addNotification(createNotification(), content);
+      content.putUserData(DiffUserDataKeysEx.FILE_NAME, myFileName);
+      return content;
+    }
   }
 }
