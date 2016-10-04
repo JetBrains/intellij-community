@@ -23,6 +23,12 @@ It allows to avoid creating redundant temporary objects when traversing a collec
   <li><code>Stream.collect(Collectors.summingInt())</code> &rarr; <code>Stream.mapToInt().sum()</code></li>
   <li><code>Stream.collect(Collectors.summingLong())</code> &rarr; <code>Stream.mapToLong().sum()</code></li>
   <li><code>Stream.collect(Collectors.summingDouble())</code> &rarr; <code>Stream.mapToDouble().sum()</code></li>
+  <li><code>!Stream.anyMatch()</code> &rarr; <code>Stream.noneMatch()</code></li>
+  <li><code>!Stream.anyMatch(x -> !(...))</code> &rarr; <code>Stream.allMatch()</code></li>
+  <li><code>!Stream.noneMatch()</code> &rarr; <code>Stream.anyMatch()</code></li>
+  <li><code>Stream.noneMatch(x -> !(...))</code> &rarr; <code>Stream.allMatch()</code></li>
+  <li><code>Stream.allMatch(x -> !(...))</code> &rarr; <code>Stream.noneMatch()</code></li>
+  <li><code>!Stream.allMatch(x -> !(...))</code> &rarr; <code>Stream.anyMatch()</code></li>
 </ul>
 <p>
   Note that the replacements semantic may have minor difference in some cases.
