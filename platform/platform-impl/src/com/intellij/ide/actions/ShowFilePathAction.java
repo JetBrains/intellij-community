@@ -262,35 +262,29 @@ public class ShowFilePathAction extends AnAction {
   /**
    * Shows system file manager with given directory open in it.
    *
-   * @param directory a directory to show in a file manager.
+   * @param directory a directory to open in a file manager.
    */
   public static void openDirectory(@NotNull File directory) {
     if (!directory.isDirectory()) {
       LOG.info("not a directory: " + directory);
       return;
     }
+
     try {
-      doOpen(directory, null);
+      doOpen(directory.getAbsoluteFile(), null);
     }
     catch (Exception e) {
       LOG.warn(e);
     }
   }
 
-  private static void doOpen(@NotNull File dir, @Nullable File toSelect) throws IOException, ExecutionException {
-    dir = new File(FileUtil.toCanonicalPath(dir.getPath()));
-    toSelect = toSelect == null ? null : new File(FileUtil.toCanonicalPath(toSelect.getPath()));
-    
+  private static void doOpen(@NotNull File _dir, @Nullable File _toSelect) throws IOException, ExecutionException {
+    String dir = FileUtil.toCanonicalPath(_dir.getPath());
+    String toSelect = _toSelect == null ? null : FileUtil.toCanonicalPath(_toSelect.getPath());
+
     if (SystemInfo.isWindows) {
-      String cmd;
-      if (toSelect != null) {
-        cmd = "explorer /select," + toSelect.getAbsolutePath();
-      }
-      else {
-        cmd = "explorer /root," + dir.getAbsolutePath();
-      }
-      // no quoting/escaping is needed
-      Runtime.getRuntime().exec(cmd);
+      String cmd = toSelect != null ? "explorer /select," + toSelect : "explorer /root," + dir;
+      Runtime.getRuntime().exec(cmd);  // no quoting/escaping is needed
       return;
     }
 
@@ -300,26 +294,25 @@ public class ShowFilePathAction extends AnAction {
           "tell application \"Finder\"\n" +
           "\treveal {\"%s\"} as POSIX file\n" +
           "\tactivate\n" +
-          "end tell", toSelect.getAbsolutePath());
+          "end tell", toSelect);
         new GeneralCommandLine(ExecUtil.getOsascriptPath(), "-e", script).createProcess();
       }
       else {
-        new GeneralCommandLine("open", dir.getAbsolutePath()).createProcess();
+        new GeneralCommandLine("open", dir).createProcess();
       }
       return;
     }
 
     if (canUseNautilus.getValue()) {
-      new GeneralCommandLine("nautilus", (toSelect != null ? toSelect : dir).getAbsolutePath()).createProcess();
+      new GeneralCommandLine("nautilus", toSelect != null ? toSelect : dir).createProcess();
       return;
     }
 
-    String path = dir.getAbsolutePath();
     if (SystemInfo.hasXdgOpen()) {
-      new GeneralCommandLine("/usr/bin/xdg-open", path).createProcess();
+      new GeneralCommandLine("/usr/bin/xdg-open", dir).createProcess();
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-      Desktop.getDesktop().open(new File(path));
+      Desktop.getDesktop().open(new File(dir));
     }
     else {
       Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
