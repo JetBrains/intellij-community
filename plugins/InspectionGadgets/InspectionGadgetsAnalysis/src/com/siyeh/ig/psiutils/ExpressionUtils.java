@@ -720,10 +720,10 @@ public class ExpressionUtils {
 
   /**
    * Returns assignment expression if supplied element is a statement which contains assignment expression
-   * or it's an assignment expression itself
+   * or it's an assignment expression itself. Only simple assignments are returned (like a = b, not a+= b).
    *
    * @param element element to get assignment expression from
-   * @return extracted assignment or null if assignment is not found
+   * @return extracted assignment or null if assignment is not found or assignment is compound
    */
   @Contract("null -> null")
   public static PsiAssignmentExpression getAssignment(PsiElement element) {
@@ -731,7 +731,10 @@ public class ExpressionUtils {
       element = ((PsiExpressionStatement)element).getExpression();
     }
     if (element instanceof PsiAssignmentExpression) {
-      return (PsiAssignmentExpression)element;
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)element;
+      if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
+        return assignment;
+      }
     }
     return null;
   }
