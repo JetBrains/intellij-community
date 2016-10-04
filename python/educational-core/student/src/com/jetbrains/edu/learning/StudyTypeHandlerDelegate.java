@@ -27,7 +27,7 @@ public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
 
   @NotNull
   private static Result handleTyping(Project project, Editor editor, PsiFile file) {
-    if (!StudyUtils.isStudyProject(project)) {
+    if (!StudyUtils.isStudentProject(project)) {
       return Result.CONTINUE;
     }
     TaskFile taskFile = StudyUtils.getTaskFile(project, file.getVirtualFile());

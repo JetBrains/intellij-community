@@ -595,6 +595,14 @@ public class StudyUtils {
     return StudyTaskManager.getInstance(project).getCourse() != null;
   }
 
+  public static boolean isStudentProject(@NotNull Project project) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return false;
+    }
+    return EduNames.STUDY.equals(course.getCourseMode());
+  }
+
   @Nullable
   public static Project getStudyProject() {
     Project studyProject = null;
