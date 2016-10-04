@@ -200,7 +200,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
           GitFileAnnotation newFileAnnotation = new GitFileAnnotation(fileAnnotation);
           newFileAnnotation.setRevisions(revisions);
           fileAnnotation.reload(newFileAnnotation);
-        });
+        }, myProject.getDisposed());
       },
       ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
     );
