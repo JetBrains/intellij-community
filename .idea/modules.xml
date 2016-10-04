@@ -63,7 +63,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/commander.iml" filepath="$PROJECT_DIR$/plugins/commander/commander.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/../base/common/common.iml" filepath="$PROJECT_DIR$/../base/common/common.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/common-eclipse-util.iml" filepath="$PROJECT_DIR$/plugins/eclipse/common-eclipse-util/common-eclipse-util.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/common-javaFX-plugin/common-javaFX-plugin.iml" filepath="$PROJECT_DIR$/plugins/javaFX/common-javaFX-plugin/common-javaFX-plugin.iml" group="plugins/JavaFX" />
       <module fileurl="file://$PROJECT_DIR$/community-main.iml" filepath="$PROJECT_DIR$/community-main.iml" />
       <module fileurl="file://$PROJECT_DIR$/community-resources/community-resources.iml" filepath="$PROJECT_DIR$/community-resources/community-resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/community-tests/community-tests.iml" filepath="$PROJECT_DIR$/community-tests/community-tests.iml" />
@@ -162,9 +161,6 @@
       <module fileurl="file://$PROJECT_DIR$/java/java-runtime/java-runtime.iml" filepath="$PROJECT_DIR$/java/java-runtime/java-runtime.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-structure-view/java-structure-view.iml" filepath="$PROJECT_DIR$/java/java-structure-view/java-structure-view.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/java-tests/java-tests.iml" filepath="$PROJECT_DIR$/java/java-tests/java-tests.iml" group="java" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX.iml" group="plugins/JavaFX" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX-CE/javaFX-CE.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX-CE/javaFX-CE.iml" group="plugins/JavaFX" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/javaFX-jps-plugin/javaFX-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/javaFX/javaFX-jps-plugin/javaFX-jps-plugin.iml" group="plugins/JavaFX" />
       <module fileurl="file://$PROJECT_DIR$/java/compiler/javac2/javac2.iml" filepath="$PROJECT_DIR$/java/compiler/javac2/javac2.iml" group="java/compiler" />
       <module fileurl="file://$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" filepath="$PROJECT_DIR$/plugins/cvs/javacvs-src/javacvs-src.iml" group="plugins/VCS/cvs" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" filepath="$PROJECT_DIR$/plugins/groovy/jetgroovy.iml" group="plugins/Groovy" />
