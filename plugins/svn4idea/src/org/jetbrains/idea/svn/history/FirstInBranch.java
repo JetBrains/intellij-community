@@ -17,9 +17,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -27,11 +25,8 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
-
-import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
@@ -44,41 +39,31 @@ import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
 public class FirstInBranch {
 
   @NotNull private final SvnVcs myVcs;
-  @NotNull private final String myBranchUrl;
-  @NotNull private final String myTrunkUrl;
+  @NotNull private final String myRepositoryRelativeBranchUrl;
+  @NotNull private final String myRepositoryRelativeTrunkUrl;
   @NotNull private final String myRepositoryRoot;
 
   public FirstInBranch(@NotNull SvnVcs vcs, @NotNull String repositoryRoot, @NotNull String branchUrl, @NotNull String trunkUrl) {
     myVcs = vcs;
     myRepositoryRoot = repositoryRoot;
-    myBranchUrl = relativePath(repositoryRoot, branchUrl);
-    myTrunkUrl = relativePath(repositoryRoot, trunkUrl);
-  }
-
-  @NotNull
-  private static String relativePath(@NotNull String parent, @NotNull String child) {
-    return ensureStartSlash(getRelativePath(parent, child));
+    myRepositoryRelativeBranchUrl = ensureStartSlash(getRelativePath(repositoryRoot, branchUrl));
+    myRepositoryRelativeTrunkUrl = ensureStartSlash(getRelativePath(repositoryRoot, trunkUrl));
   }
 
   @Nullable
   public CopyData run() throws VcsException {
-    Ref<CopyData> result = Ref.create();
-    run(createUrl(myRepositoryRoot), data -> result.set(data));
-    return result.get();
-  }
-
-  private void run(@NotNull SVNURL branchURL, @NotNull Consumer<CopyData> copyDataConsumer) throws VcsException {
-    SvnTarget target = SvnTarget.fromURL(branchURL);
+    SvnTarget target = SvnTarget.fromURL(createUrl(myRepositoryRoot));
     HistoryClient client = ApplicationManager.getApplication().runReadAction((Computable<HistoryClient>)() -> {
       if (myVcs.getProject().isDisposed()) return null;
       return myVcs.getFactory(target).createHistoryClient();
     });
 
-    if (client == null) return;
+    if (client == null) return null;
+
+    MyLogEntryHandler handler = new MyLogEntryHandler(myRepositoryRelativeTrunkUrl, myRepositoryRelativeBranchUrl);
 
     try {
-      client.doLog(target, SVNRevision.HEAD, SVNRevision.create(0), false, true, false, -1, null,
-                   new MyLogEntryHandler(copyDataConsumer, myTrunkUrl, myBranchUrl));
+      client.doLog(target, SVNRevision.HEAD, SVNRevision.create(0), false, true, false, -1, null, handler);
     }
     catch (SvnBindException e) {
       // do not throw cancel exception as this means corresponding copy point is found (if progress indicator was not explicitly cancelled)
@@ -86,61 +71,57 @@ public class FirstInBranch {
         throw e;
       }
     }
+
+    return handler.getCopyData();
   }
 
   private static class MyLogEntryHandler implements LogEntryConsumer {
 
     @NotNull private final SvnPathThroughHistoryCorrection myTrunkCorrector;
     @NotNull private final SvnPathThroughHistoryCorrection myBranchCorrector;
-    @NotNull private final Consumer<CopyData> myCopyDataConsumer;
+    @Nullable private CopyData myCopyData;
 
-    public MyLogEntryHandler(@NotNull Consumer<CopyData> copyDataConsumer, @NotNull String trunkUrl, @NotNull String branchUrl) {
-      myCopyDataConsumer = copyDataConsumer;
-      myTrunkCorrector = new SvnPathThroughHistoryCorrection(trunkUrl);
-      myBranchCorrector = new SvnPathThroughHistoryCorrection(branchUrl);
+    public MyLogEntryHandler(@NotNull String repositoryRelativeTrunkUrl, @NotNull String repositoryRelativeBranchUrl) {
+      myTrunkCorrector = new SvnPathThroughHistoryCorrection(repositoryRelativeTrunkUrl);
+      myBranchCorrector = new SvnPathThroughHistoryCorrection(repositoryRelativeBranchUrl);
+    }
+
+    @Nullable
+    public CopyData getCopyData() {
+      return myCopyData;
     }
 
     @Override
     public void consume(@NotNull LogEntry logEntry) throws SVNException {
-      Map map = logEntry.getChangedPaths();
-      checkEntries(logEntry, map);
+      checkEntries(logEntry);
       myTrunkCorrector.consume(logEntry);
       myBranchCorrector.consume(logEntry);
-      checkEntries(logEntry, map);
+      checkEntries(logEntry);
     }
 
-    private void checkEntries(@NotNull LogEntry logEntry, @NotNull Map map) throws SVNCancelException {
-      for (Object o : map.values()) {
-        LogEntryPath path = (LogEntryPath)o;
-        String localPath = path.getPath();
-        String copyPath = path.getCopyPath();
-
-        if ('A' == path.getType() &&
-            checkForCopyCase(logEntry, path, localPath, copyPath, myTrunkCorrector.getCurrentPath(), myBranchCorrector.getCurrentPath())) {
+    private void checkEntries(@NotNull LogEntry logEntry) throws SVNCancelException {
+      for (LogEntryPath path : logEntry.getChangedPaths().values()) {
+        if ('A' == path.getType() && checkForCopyCase(logEntry, path)) {
           throw new SVNCancelException();
         }
       }
     }
 
-    private boolean checkForCopyCase(@NotNull LogEntry logEntry,
-                                     @NotNull LogEntryPath path,
-                                     String localPath,
-                                     String copyPath,
-                                     String trunkUrl,
-                                     String branchUrl) {
-      if (equalOrParent(localPath, branchUrl) && equalOrParent(copyPath, trunkUrl)) {
-        myCopyDataConsumer.consume(new CopyData(path.getCopyRevision(), logEntry.getRevision(), true));
-        return true;
+    private boolean checkForCopyCase(@NotNull LogEntry logEntry, @NotNull LogEntryPath path) {
+      String trunkUrl = myTrunkCorrector.getCurrentPath();
+      String branchUrl = myBranchCorrector.getCurrentPath();
+      boolean isBranchCopiedFromTrunk = equalOrParent(path.getPath(), branchUrl) && equalOrParent(path.getCopyPath(), trunkUrl);
+      boolean isTrunkCopiedFromBranch = equalOrParent(path.getPath(), trunkUrl) && equalOrParent(path.getCopyPath(), branchUrl);
+
+      if (isBranchCopiedFromTrunk || isTrunkCopiedFromBranch) {
+        myCopyData = new CopyData(path.getCopyRevision(), logEntry.getRevision(), isBranchCopiedFromTrunk);
       }
-      else if (equalOrParent(copyPath, branchUrl) && equalOrParent(localPath, trunkUrl)) {
-        myCopyDataConsumer.consume(new CopyData(path.getCopyRevision(), logEntry.getRevision(), false));
-        return true;
-      }
-      return false;
+
+      return myCopyData != null;
     }
 
-    private static boolean equalOrParent(String localPath, String targetPath) {
-      return targetPath.equals(localPath) || isAncestor(localPath, targetPath);
+    private static boolean equalOrParent(@Nullable String parentCandidate, @NotNull String childCandidate) {
+      return childCandidate.equals(parentCandidate) || isAncestor(parentCandidate, childCandidate);
     }
   }
 }
