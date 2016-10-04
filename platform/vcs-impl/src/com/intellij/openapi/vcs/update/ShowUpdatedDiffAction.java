@@ -188,7 +188,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
           }
           else {
             byte[] bytes1 = loadContent(myFilePointer, myBefore);
-            content1 = contentFactory.createFromBytes(myProject, myFilePath, bytes1);
+            content1 = contentFactory.createFromBytes(myProject, bytes1, myFilePath);
           }
 
           if (FileStatus.DELETED.equals(myFileStatus)) {
@@ -196,7 +196,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
           }
           else {
             byte[] bytes2 = loadContent(myFilePointer, myAfter);
-            content2 = contentFactory.createFromBytes(myProject, myFilePath, bytes2);
+            content2 = contentFactory.createFromBytes(myProject, bytes2, myFilePath);
           }
 
           String title = DiffRequestFactoryImpl.getContentTitle(myFilePath);

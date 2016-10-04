@@ -75,7 +75,7 @@ public class FileWithBranchComparer extends ElementWithBranchComparer {
       String title2 = myVirtualFile.getPresentableUrl();
 
       try {
-        DiffContent content1 = DiffContentFactory.getInstance().createFromBytes(myProject, myVirtualFile, content.get());
+        DiffContent content1 = DiffContentFactory.getInstance().createFromBytes(myProject, content.get(), myVirtualFile);
         DiffContent content2 = DiffContentFactory.getInstance().create(myProject, myVirtualFile);
 
         DiffRequest request = new SimpleDiffRequest(title, content1, content2, title1, title2);

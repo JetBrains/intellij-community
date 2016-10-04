@@ -234,10 +234,10 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DiffContent createFromBytes(@Nullable Project project,
-                                     @NotNull FilePath filePath,
-                                     @NotNull byte[] content) throws IOException {
+                                     @NotNull byte[] content,
+                                     @NotNull FilePath filePath) throws IOException {
     if (filePath.getFileType().isBinary()) {
-      return createBinary(project, filePath.getName(), filePath.getFileType(), content);
+      return createBinary(project, content, filePath.getFileType(), filePath.getName());
     }
 
     return FileAwareDocumentContent.create(project, content, filePath);
@@ -246,11 +246,11 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DiffContent createFromBytes(@Nullable Project project,
-                                     @NotNull VirtualFile highlightFile,
-                                     @NotNull byte[] content) throws IOException {
+                                     @NotNull byte[] content,
+                                     @NotNull VirtualFile highlightFile) throws IOException {
     // TODO: check if FileType.UNKNOWN is actually a text ?
     if (highlightFile.getFileType().isBinary()) {
-      return createBinary(project, highlightFile.getName(), highlightFile.getFileType(), content);
+      return createBinary(project, content, highlightFile.getFileType(), highlightFile.getName());
     }
 
     return FileAwareDocumentContent.create(project, content, highlightFile);
@@ -259,9 +259,9 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @NotNull
   @Override
   public DiffContent createBinary(@Nullable Project project,
-                                  @NotNull String fileName,
+                                  @NotNull byte[] content,
                                   @NotNull FileType type,
-                                  @NotNull byte[] content) throws IOException {
+                                  @NotNull String fileName) throws IOException {
     // workaround - our JarFileSystem and decompilers can't process non-local files
     boolean useTemporalFile = type instanceof ArchiveFileType || BinaryFileTypeDecompilers.INSTANCE.forFileType(type) != null;
 

@@ -125,12 +125,30 @@ public abstract class DiffContentFactory {
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull VirtualFile highlightFile,
-                                              @NotNull byte[] content) throws IOException;
+                                              @NotNull byte[] content,
+                                              @NotNull VirtualFile highlightFile) throws IOException;
 
   @NotNull
   public abstract DiffContent createBinary(@Nullable Project project,
-                                           @NotNull String fileName,
+                                           @NotNull byte[] content,
                                            @NotNull FileType type,
-                                           @NotNull byte[] content) throws IOException;
+                                           @NotNull String fileName) throws IOException;
+
+
+  @NotNull
+  @Deprecated
+  public DiffContent createFromBytes(@Nullable Project project,
+                                     @NotNull VirtualFile highlightFile,
+                                     @NotNull byte[] content) throws IOException {
+    return createFromBytes(project, content, highlightFile);
+  }
+
+  @NotNull
+  @Deprecated
+  public DiffContent createBinary(@Nullable Project project,
+                                  @NotNull String fileName,
+                                  @NotNull FileType type,
+                                  @NotNull byte[] content) throws IOException {
+    return createBinary(project, content, type, fileName);
+  }
 }

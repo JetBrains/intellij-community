@@ -281,9 +281,9 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
 
         DiffContentFactory contentFactory = DiffContentFactory.getInstance();
         List<DiffContent> contents = ContainerUtil.list(
-          contentFactory.createFromBytes(project, file, mergeData.CURRENT),
-          contentFactory.createFromBytes(project, file, mergeData.ORIGINAL),
-          contentFactory.createFromBytes(project, file, mergeData.LAST)
+          contentFactory.createFromBytes(project, mergeData.CURRENT, file),
+          contentFactory.createFromBytes(project, mergeData.ORIGINAL, file),
+          contentFactory.createFromBytes(project, mergeData.LAST, file)
         );
 
         SimpleDiffRequest request = new SimpleDiffRequest(title, contents, titles);
@@ -387,7 +387,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         if (content == null) {
           throw new DiffRequestProducerException("Can't get binary revision content");
         }
-        return DiffContentFactory.getInstance().createBinary(project, filePath.getName(), filePath.getFileType(), content);
+        return DiffContentFactory.getInstance().createBinary(project, content, filePath.getFileType(), filePath.getName());
       }
 
       if (revision instanceof ByteBackedContentRevision) {

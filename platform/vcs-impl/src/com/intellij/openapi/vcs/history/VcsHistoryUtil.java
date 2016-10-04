@@ -171,7 +171,7 @@ public class VcsHistoryUtil {
     if (isEmpty(revision)) {
       return contentFactory.createEmpty();
     }
-    return contentFactory.createFromBytes(project, filePath, content);
+    return contentFactory.createFromBytes(project, content, filePath);
   }
 
   private static boolean isCurrent(VcsFileRevision revision) {

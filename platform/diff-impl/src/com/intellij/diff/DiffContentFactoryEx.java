@@ -31,6 +31,6 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull FilePath filePath,
-                                              @NotNull byte[] content) throws IOException;
+                                              @NotNull byte[] content,
+                                              @NotNull FilePath filePath) throws IOException;
 }

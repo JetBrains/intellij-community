@@ -284,7 +284,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
 
       List<DiffContent> contents = new ArrayList<>(3);
       for (byte[] bytes : byteContents) {
-        contents.add(myContentFactory.createFromBytes(project, output, bytes));
+        contents.add(myContentFactory.createFromBytes(project, bytes, output));
       }
 
       return new BinaryMergeRequestImpl(project, outputContent, originalContent, contents, byteContents, title, contentTitles, applyCallback);
