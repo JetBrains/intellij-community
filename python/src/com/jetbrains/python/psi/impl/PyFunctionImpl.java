@@ -324,11 +324,19 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       public void visitPyYieldExpression(PyYieldExpression node) {
         final PyExpression expr = node.getExpression();
         final PyType type = expr != null ? context.getType(expr) : null;
-        if (node.isDelegating() && type instanceof PyCollectionType) {
-          final PyCollectionType collectionType = (PyCollectionType)type;
-          // TODO: Select the parameter types that matches T in Iterable[T]
-          final List<PyType> elementTypes = collectionType.getElementTypes(context);
-          types.add(elementTypes.isEmpty() ? null : elementTypes.get(0));
+        if (node.isDelegating()) {
+          if (type instanceof PyCollectionType) {
+            final PyCollectionType collectionType = (PyCollectionType)type;
+            // TODO: Select the parameter types that matches T in Iterable[T]
+            final List<PyType> elementTypes = collectionType.getElementTypes(context);
+            types.add(elementTypes.isEmpty() ? null : elementTypes.get(0));
+          }
+          else if (ArrayUtil.contains(type, cache.getListType(), cache.getDictType(), cache.getSetType())) {
+            types.add(null);
+          }
+          else {
+            types.add(type);
+          }
         }
         else {
           types.add(type);

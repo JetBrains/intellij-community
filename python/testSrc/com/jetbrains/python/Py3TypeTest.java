@@ -84,6 +84,36 @@ public class Py3TypeTest extends PyTestCase {
            "    pass"));
   }
 
+  public void testYieldFromUnknownList() {
+    doTest("Any",
+           "def get_list() -> list:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_list()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
+  public void testYieldFromUnknownDict() {
+    doTest("Any",
+           "def get_dict() -> dict:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_dict()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
+  public void testYieldFromUnknownSet() {
+    doTest("Any",
+           "def get_set() -> set:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_set()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
   public void testAwaitAwaitable() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
            "class C:\n" +
