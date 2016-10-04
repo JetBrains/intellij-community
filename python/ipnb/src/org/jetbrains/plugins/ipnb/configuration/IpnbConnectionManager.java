@@ -320,7 +320,9 @@ public final class IpnbConnectionManager implements ProjectComponent {
       parameters.add("--port");
       parameters.add(hostPort.getSecond());
     }
-    final String baseDir = ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath();
+    final String directory = IpnbSettings.getInstance(myProject).getWorkingDirectory();
+    final String baseDir = !StringUtil.isEmptyOrSpaces(directory) ? directory :
+                           ModuleRootManager.getInstance(module).getContentRoots()[0].getCanonicalPath();
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters).withWorkDirectory(baseDir);
     if (env != null) {
       commandLine.withEnvironment(env);

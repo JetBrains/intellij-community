@@ -40,21 +40,13 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
         if (url == null) return;
         IpnbSettings.getInstance(project).setURL(url);
         final String finalUrl = url;
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            final boolean serverStarted = connectionManager.startIpythonServer(finalUrl, ipnbEditor);
-            if (!serverStarted) {
-              return;
-            }
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                connectionManager.startConnection(null, path, finalUrl, false);
-              }
-            });
-            runCells(cells, ipnbFilePanel);
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          final boolean serverStarted = connectionManager.startIpythonServer(finalUrl, ipnbEditor);
+          if (!serverStarted) {
+            return;
           }
+          UIUtil.invokeLaterIfNeeded(() -> connectionManager.startConnection(null, path, finalUrl, false));
+          runCells(cells, ipnbFilePanel);
         });
 
       }
