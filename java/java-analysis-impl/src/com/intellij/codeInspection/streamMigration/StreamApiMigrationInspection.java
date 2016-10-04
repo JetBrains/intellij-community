@@ -596,18 +596,19 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if (nextReturnStatement != null &&
           (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE))) {
         boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-        if(ExpressionUtils.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
-          String methodName;
-          if (foundResult) {
-            methodName = "anyMatch";
+        String methodName;
+        if (foundResult) {
+          methodName = "anyMatch";
+        }
+        else {
+          methodName = "noneMatch";
+          Operation lastOp = tb.getLastOperation();
+          if(lastOp instanceof FilterOp && (((FilterOp)lastOp).isNegated() ^ BoolUtils.isNegation(lastOp.getExpression()))) {
+            methodName = "allMatch";
           }
-          else {
-            methodName = "noneMatch";
-            Operation lastOp = tb.getLastOperation();
-            if(lastOp instanceof FilterOp && (((FilterOp)lastOp).isNegated() ^ BoolUtils.isNegation(lastOp.getExpression()))) {
-              methodName = "allMatch";
-            }
-          }
+        }
+        if(nextReturnStatement.getParent() == statement.getParent() ||
+           ExpressionUtils.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
           registerProblem(statement, methodName, new ReplaceWithMatchFix(methodName));
           return;
         }

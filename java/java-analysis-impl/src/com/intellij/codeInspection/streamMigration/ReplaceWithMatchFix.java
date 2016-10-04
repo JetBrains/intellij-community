@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -57,13 +58,19 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
       if (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE)) {
         boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
         PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(foreachStatement);
-        if (nextReturnStatement != null && ExpressionUtils.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
+        if (nextReturnStatement != null) {
+          PsiExpression returnValue = nextReturnStatement.getReturnValue();
+          if(returnValue == null) return null;
           String methodName = foundResult ? "anyMatch" : "noneMatch";
           String streamText = generateStream(iteratedValue, tb.getLastOperation()).toString();
           streamText = addTerminalOperation(streamText, methodName, foreachStatement, tb);
           restoreComments(foreachStatement, body);
           if (nextReturnStatement.getParent() == foreachStatement.getParent()) {
-            nextReturnStatement.delete();
+            if(!ExpressionUtils.isLiteral(returnValue, !foundResult)) {
+              streamText+= (foundResult ? "||" : "&&") + ParenthesesUtils.getText(returnValue, ParenthesesUtils.AND_PRECEDENCE);
+            }
+            removeLoop(foreachStatement);
+            return returnValue.replace(elementFactory.createExpressionFromText(streamText, nextReturnStatement));
           }
           return foreachStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", foreachStatement));
         }
