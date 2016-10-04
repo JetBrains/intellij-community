@@ -273,6 +273,7 @@ public class AllIcons {
     public static final Icon Db_verified_warning_breakpoint = IconLoader.getIcon("/debugger/db_verified_warning_breakpoint.png"); // 16x16
     public static final Icon Disable_value_calculation = IconLoader.getIcon("/debugger/disable_value_calculation.png"); // 16x16
     public static final Icon EvaluateExpression = IconLoader.getIcon("/debugger/evaluateExpression.png"); // 16x16
+    public static final Icon Explosion = IconLoader.getIcon("/debugger/explosion.png"); // 256x256
     public static final Icon Frame = IconLoader.getIcon("/debugger/frame.png"); // 16x16
     public static final Icon KillProcess = IconLoader.getIcon("/debugger/killProcess.png"); // 16x16
     public static final Icon LambdaBreakpoint = IconLoader.getIcon("/debugger/LambdaBreakpoint.png"); // 12x12
@@ -327,6 +328,7 @@ public class AllIcons {
     public static final Icon CurrentLine = IconLoader.getIcon("/diff/currentLine.png"); // 16x16
     public static final Icon Diff = IconLoader.getIcon("/diff/Diff.png"); // 16x16
     public static final Icon LeftDiff = IconLoader.getIcon("/diff/leftDiff.png"); // 16x16
+    public static final Icon MagicResolve = IconLoader.getIcon("/diff/magicResolve.png"); // 12x12
     public static final Icon Remove = IconLoader.getIcon("/diff/remove.png"); // 11x11
     public static final Icon RightDiff = IconLoader.getIcon("/diff/rightDiff.png"); // 16x16
 
@@ -587,6 +589,9 @@ public class AllIcons {
   public static final Icon Icon_128 = IconLoader.getIcon("/icon_128.png"); // 128x128
   public static final Icon Icon_CE = IconLoader.getIcon("/icon_CE.png"); // 32x32
   public static final Icon Icon_CE_128 = IconLoader.getIcon("/icon_CE_128.png"); // 128x128
+  public static final Icon Icon_CE_256 = IconLoader.getIcon("/icon_CE_256.png"); // 256x256
+  public static final Icon Icon_CE_512 = IconLoader.getIcon("/icon_CE_512.png"); // 512x512
+  public static final Icon Icon_CE_64 = IconLoader.getIcon("/icon_CE_64.png"); // 64x64
   public static final Icon Icon_CEsmall = IconLoader.getIcon("/icon_CEsmall.png"); // 16x16
   public static final Icon Icon_small = IconLoader.getIcon("/icon_small.png"); // 16x16
   

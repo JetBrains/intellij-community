@@ -16,12 +16,12 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
-import com.intellij.diff.contents.FileAwareDocumentContent;
 import com.intellij.diff.impl.DiffViewerWrapper;
 import com.intellij.diff.merge.MergeUtil;
 import com.intellij.diff.requests.DiffRequest;
@@ -281,9 +281,9 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
 
         DiffContentFactory contentFactory = DiffContentFactory.getInstance();
         List<DiffContent> contents = ContainerUtil.list(
-          contentFactory.createFromBytes(project, file, mergeData.CURRENT),
-          contentFactory.createFromBytes(project, file, mergeData.ORIGINAL),
-          contentFactory.createFromBytes(project, file, mergeData.LAST)
+          contentFactory.createFromBytes(project, mergeData.CURRENT, file),
+          contentFactory.createFromBytes(project, mergeData.ORIGINAL, file),
+          contentFactory.createFromBytes(project, mergeData.LAST, file)
         );
 
         SimpleDiffRequest request = new SimpleDiffRequest(title, contents, titles);
@@ -375,11 +375,12 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
 
       if (revision == null) return DiffContentFactory.getInstance().createEmpty();
       FilePath filePath = revision.getFile();
+      DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
 
       if (revision instanceof CurrentContentRevision) {
         VirtualFile vFile = ((CurrentContentRevision)revision).getVirtualFile();
         if (vFile == null) throw new DiffRequestProducerException("Can't get current revision content");
-        return DiffContentFactory.getInstance().create(project, vFile);
+        return contentFactory.create(project, vFile);
       }
 
       if (revision instanceof BinaryContentRevision) {
@@ -387,18 +388,18 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
         if (content == null) {
           throw new DiffRequestProducerException("Can't get binary revision content");
         }
-        return DiffContentFactory.getInstance().createBinary(project, filePath.getName(), filePath.getFileType(), content);
+        return contentFactory.createBinary(project, content, filePath.getFileType(), filePath.getName());
       }
 
       if (revision instanceof ByteBackedContentRevision) {
         byte[] revisionContent = ((ByteBackedContentRevision)revision).getContentAsBytes();
         if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
-        return FileAwareDocumentContent.create(project, revisionContent, filePath);
+        return contentFactory.createFromBytes(project, revisionContent, filePath);
       }
       else {
         String revisionContent = revision.getContent();
         if (revisionContent == null) throw new DiffRequestProducerException("Can't get revision content");
-        return FileAwareDocumentContent.create(project, revisionContent, filePath);
+        return contentFactory.create(project, revisionContent, filePath);
       }
     }
     catch (IOException e) {

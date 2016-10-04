@@ -42,6 +42,7 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract EmptyContent createEmpty();
 
+
   @NotNull
   public abstract DocumentContent create(@NotNull String text);
 
@@ -57,6 +58,28 @@ public abstract class DiffContentFactory {
   @NotNull
   public abstract DocumentContent create(@NotNull String text, @Nullable DocumentContent referent);
 
+
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text);
+
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type);
+
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable FileType type,
+                                         boolean respectLineSeparators);
+
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable VirtualFile highlightFile);
+
+  @NotNull
+  public abstract DocumentContent create(@Nullable Project project, @NotNull String text, @Nullable DocumentContent referent);
+
+
+  @NotNull
+  public abstract DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent);
+
+
   @NotNull
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document);
 
@@ -67,7 +90,8 @@ public abstract class DiffContentFactory {
   public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable VirtualFile file);
 
   @NotNull
-  public abstract DocumentContent create(@NotNull Document document, @Nullable DocumentContent referent);
+  public abstract DocumentContent create(@Nullable Project project, @NotNull Document document, @Nullable DocumentContent referent);
+
 
   @NotNull
   public abstract DiffContent create(@Nullable Project project, @NotNull VirtualFile file);
@@ -78,29 +102,53 @@ public abstract class DiffContentFactory {
   @Nullable
   public abstract FileContent createFile(@Nullable Project project, @NotNull VirtualFile file);
 
+
   @NotNull
   public abstract DocumentContent createFragment(@Nullable Project project, @NotNull Document document, @NotNull TextRange range);
 
   @NotNull
   public abstract DocumentContent createFragment(@Nullable Project project, @NotNull DocumentContent content, @NotNull TextRange range);
 
+
   @NotNull
   public abstract DiffContent createClipboardContent();
 
-  /**
-   * @param referenceContent used to detect FileType and proper highlighting for clipboard content
-   */
   @NotNull
-  public abstract DocumentContent createClipboardContent(@Nullable DocumentContent referenceContent);
+  public abstract DocumentContent createClipboardContent(@Nullable DocumentContent referent);
+
+  @NotNull
+  public abstract DiffContent createClipboardContent(@Nullable Project project);
+
+  @NotNull
+  public abstract DocumentContent createClipboardContent(@Nullable Project project, @Nullable DocumentContent referent);
+
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
-                                              @NotNull VirtualFile highlightFile,
-                                              @NotNull byte[] content) throws IOException;
+                                              @NotNull byte[] content,
+                                              @NotNull VirtualFile highlightFile) throws IOException;
 
   @NotNull
   public abstract DiffContent createBinary(@Nullable Project project,
-                                           @NotNull String fileName,
+                                           @NotNull byte[] content,
                                            @NotNull FileType type,
-                                           @NotNull byte[] content) throws IOException;
+                                           @NotNull String fileName) throws IOException;
+
+
+  @NotNull
+  @Deprecated
+  public DiffContent createFromBytes(@Nullable Project project,
+                                     @NotNull VirtualFile highlightFile,
+                                     @NotNull byte[] content) throws IOException {
+    return createFromBytes(project, content, highlightFile);
+  }
+
+  @NotNull
+  @Deprecated
+  public DiffContent createBinary(@Nullable Project project,
+                                  @NotNull String fileName,
+                                  @NotNull FileType type,
+                                  @NotNull byte[] content) throws IOException {
+    return createBinary(project, content, type, fileName);
+  }
 }
