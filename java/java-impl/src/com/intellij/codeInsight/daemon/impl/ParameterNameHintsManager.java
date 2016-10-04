@@ -64,16 +64,28 @@ public class ParameterNameHintsManager {
     myDescriptors = descriptors;
   }
 
-  private static boolean isMethodToShowParams(PsiCallExpression callExpression, JavaResolveResult resolveResult) {
+  private static boolean isMethodToShowParams(@NotNull PsiCallExpression callExpression, @NotNull JavaResolveResult resolveResult) {
     PsiElement element = resolveResult.getElement();
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
       if (isSetter(method) || isBuilder(callExpression, method)) return false;
       if (hasSingleParameter(method)) {
         PsiParameter parameter = method.getParameterList().getParameters()[0];
-        return PsiType.VOID.equals(method.getReturnType()) || isBoolean(parameter);
+        return PsiType.VOID.equals(method.getReturnType()) || isBoolean(parameter) || isNullOrThis(callExpression);
       }
       return !isCommonMethod(method);
+    }
+    return false;
+  }
+
+  private static boolean isNullOrThis(@NotNull PsiCallExpression callExpression) {
+    PsiExpressionList list = callExpression.getArgumentList();
+    PsiExpression[] expressions = list != null ? list.getExpressions() : null;
+    if (expressions != null && expressions.length > 0) {
+      PsiExpression expression = expressions[0];
+      if (expression.textMatches("null") || expression.textMatches("this")) {
+        return true;
+      }
     }
     return false;
   }

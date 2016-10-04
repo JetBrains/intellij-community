@@ -526,6 +526,27 @@ public class VarArgTest {
         .assertInlays("test->this", "endIndex->1000")
   }
   
+  fun `test inline strange methods`() {
+    setup("""
+public class Test {
+  
+  void main() {
+    createContent(null);
+    createNewContent(this);
+  }
+
+  Content createContent(DockManager manager) {}
+  Content createNewContent(Test test) {}
+
+}
+interface DockManager {}
+interface Content {}
+""")
+
+    onLineStartingWith("createContent").assertInlays("manager->null")
+    onLineStartingWith("createNewContent").assertInlays("test->this")
+  }
+  
   fun `test do not inline builder pattern`() {
     setup("""
 class Builder {
