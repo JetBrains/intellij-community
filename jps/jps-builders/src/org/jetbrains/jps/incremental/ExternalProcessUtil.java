@@ -78,11 +78,20 @@ public class ExternalProcessUtil {
   }
 
   public static List<String> buildJavaCommandLine(String javaExecutable,
+                                                String mainClass,
+                                                List<String> bootClasspath,
+                                                List<String> classpath,
+                                                List<String> vmParams,
+                                                List<String> programParams, final boolean useCommandLineWrapper) {
+    return buildJavaCommandLine(javaExecutable, mainClass, bootClasspath, classpath, vmParams, programParams, useCommandLineWrapper, true);
+  }
+
+  public static List<String> buildJavaCommandLine(String javaExecutable,
                                                   String mainClass,
                                                   List<String> bootClasspath,
                                                   List<String> classpath,
                                                   List<String> vmParams,
-                                                  List<String> programParams, final boolean useCommandLineWrapper) {
+                                                  List<String> programParams, final boolean useCommandLineWrapper, boolean useClasspathJar) {
     final List<String> cmdLine = new ArrayList<String>();
 
     cmdLine.add(javaExecutable);
@@ -102,11 +111,31 @@ public class ExternalProcessUtil {
         final Class wrapperClass = getCommandLineWrapperClass();
         if (wrapperClass != null) {
           try {
-            final String classpathFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), classpath).getAbsolutePath();
-            commandLineWrapperArgs = Arrays.asList(
-              "-classpath",
-              classpathFile
-            );
+            if (useClasspathJar) {
+              final String classpathFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), classpath).getAbsolutePath();
+              commandLineWrapperArgs = Arrays.asList(
+                "-classpath",
+                classpathFile
+              );
+            }
+            else {
+              File classpathFile = FileUtil.createTempFile("classpath", null);
+              final PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(classpathFile)));
+              try {
+                for (String path : classpath) {
+                  writer.println(path);
+                }
+              }
+              finally {
+                writer.close();
+              }
+              commandLineWrapperArgs = Arrays.asList(
+                "-classpath",
+                ClasspathBootstrap.getResourcePath(wrapperClass),
+                wrapperClass.getName(),
+                classpathFile.getAbsolutePath()
+              );
+            }
           }
           catch (IOException ex) {
             LOG.info("Error starting " + mainClass + "; Classpath wrapper will not be used: ", ex);
