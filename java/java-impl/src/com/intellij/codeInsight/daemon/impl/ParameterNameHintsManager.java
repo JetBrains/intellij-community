@@ -94,11 +94,11 @@ public class ParameterNameHintsManager {
     if (expression instanceof PsiNewExpression) {
       return false;
     }
-    final PsiType callExpressionType = expression.getType();
+    final PsiType returnType = method.getReturnType();
     final PsiClass aClass = method.getContainingClass();
     final String calledMethodFqn = aClass != null ? aClass.getQualifiedName() : null;
-    if (calledMethodFqn != null && callExpressionType != null) {
-      return callExpressionType.equalsToText(calledMethodFqn);
+    if (calledMethodFqn != null && returnType != null) {
+      return returnType.equalsToText(calledMethodFqn);
     }
     return false;
   }
