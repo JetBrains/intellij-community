@@ -20,13 +20,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A general interface to perform scope optimization
+ * A general interface to perform PsiElement's search scope optimization. The interface should be used only for optimization purposes.
+ * It's used in:
  *
- * @see PsiSearchHelper#getUseScope(PsiElement)
- * @see SearchRequestCollector#searchWord(String, SearchScope, short, boolean, String, RequestResultProcessor, PsiElement)
+ * 1. {@link PsiSearchHelper#getUseScope(PsiElement)},
+ *    {@link PsiSearchHelperImpl#USE_SCOPE_OPTIMIZER_EP_NAME}
+ * to perform optimization of PsiElement's use scope.
+ *
+ * 2. {@link SearchRequestCollector#searchWord(String, SearchScope, short, boolean, String, RequestResultProcessor, PsiElement)},
+ *    {@link SearchRequestCollector#CODE_USAGE_SCOPE_OPTIMIZER_EP_NAME}
+ * to exclude a scope without references in code from a usages search when the search with {@link UsageSearchContext#IN_CODE} or {@link UsageSearchContext#ANY}
+ *  context was requested.
+ *
  */
 public interface ScopeOptimizer {
 
-  @Nullable
+  @Nullable("is null when given optimizer can't provide a scope to exclude")
   GlobalSearchScope getScopeToExclude(@NotNull PsiElement element);
 }
