@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -28,7 +27,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 import java.util.Collection;
@@ -37,44 +35,50 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.openapi.util.Conditions.alwaysTrue;
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
-import static com.intellij.util.containers.ContainerUtil.isEmpty;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.stream.Collectors.toSet;
+import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.append;
+import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
 
 public class LocalChangesPromptTask extends BaseMergeTask {
 
-  private final boolean myMergeAll;
   @Nullable private final List<CommittedChangeList> myChangeListsToMerge;
-  private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
+  @Nullable private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
+
+  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess) {
+    super(mergeProcess, "local changes intersection check", Where.AWT);
+    myChangeListsToMerge = null;
+    myCopyPoint = null;
+  }
 
   public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess,
-                                boolean mergeAll,
-                                @Nullable List<CommittedChangeList> changeListsToMerge,
-                                @Nullable SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
+                                @NotNull List<CommittedChangeList> changeListsToMerge,
+                                @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
     super(mergeProcess, "local changes intersection check", Where.AWT);
 
-    myMergeAll = mergeAll;
     myChangeListsToMerge = changeListsToMerge;
     myCopyPoint = copyPoint;
   }
 
   @Nullable
   private File getLocalPath(String repositoryRelativePath) {
-    // from source if not inverted
-    String absolutePath = SVNPathUtil.append(myMergeContext.getWcInfo().getRepositoryRoot(), repositoryRelativePath);
-    SvnBranchPointsCalculator.BranchCopyData wrapped = myCopyPoint.getWrapped();
-    String sourceRelativePath =
-      SVNPathUtil.getRelativePath(myCopyPoint.isInvertedSense() ? wrapped.getSource() : wrapped.getTarget(), absolutePath);
+    String absoluteUrl = append(myMergeContext.getWcInfo().getRepositoryRoot(), repositoryRelativePath);
+    SvnBranchPointsCalculator.WrapperInvertor copyPoint = notNull(myCopyPoint);
+    String sourceUrl = copyPoint.isInvertedSense() ? copyPoint.getWrapped().getSource() : copyPoint.getWrapped().getTarget();
+    String sourceRelativePath = getRelativePath(sourceUrl, absoluteUrl);
 
-    return !StringUtil.isEmptyOrSpaces(sourceRelativePath) ? new File(myMergeContext.getWcInfo().getPath(), sourceRelativePath) : null;
+    return !isEmptyOrSpaces(sourceRelativePath) ? new File(myMergeContext.getWcInfo().getPath(), sourceRelativePath) : null;
   }
 
   @Override
   public void run() {
     List<LocalChangeList> localChangeLists = ChangeListManager.getInstance(myMergeContext.getProject()).getChangeListsCopy();
-    Intersection intersection =
-      myMergeAll ? getAllChangesIntersection(localChangeLists) : getChangesIntersection(localChangeLists, myChangeListsToMerge);
+    Intersection intersection = myChangeListsToMerge != null
+                                ? getChangesIntersection(localChangeLists, myChangeListsToMerge)
+                                : getAllChangesIntersection(localChangeLists);
 
     if (intersection != null && !intersection.getChangesSubset().isEmpty()) {
       processIntersection(intersection);
@@ -83,7 +87,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
 
   private void processIntersection(@NotNull Intersection intersection) {
     //noinspection EnumSwitchStatementWhichMissesCases
-    switch (myInteraction.selectLocalChangesAction(myMergeAll)) {
+    switch (myInteraction.selectLocalChangesAction(myChangeListsToMerge == null)) {
       case shelve:
         next(new ShelveLocalChangesTask(myMergeProcess, intersection));
         break;
@@ -101,14 +105,11 @@ public class LocalChangesPromptTask extends BaseMergeTask {
 
   @Nullable
   private Intersection getChangesIntersection(@NotNull List<LocalChangeList> localChangeLists,
-                                              @Nullable List<CommittedChangeList> changeListsToMerge) {
-    Intersection result = null;
+                                              @NotNull List<CommittedChangeList> changeListsToMerge) {
 
-    if (!isEmpty(changeListsToMerge)) {
-      result = getChangesIntersection(localChangeLists, change -> hasPathToMerge(change, collectPaths(changeListsToMerge)));
-    }
+    Set<FilePath> pathsToMerge = collectPaths(changeListsToMerge);
 
-    return result;
+    return !changeListsToMerge.isEmpty() ? getChangesIntersection(localChangeLists, change -> hasPathToMerge(change, pathsToMerge)) : null;
   }
 
   @NotNull
