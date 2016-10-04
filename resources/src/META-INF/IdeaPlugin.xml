@@ -452,8 +452,6 @@
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager"/>
-
     <projectService serviceInterface="com.intellij.execution.testDiscovery.JavaAutoRunManager"
                     serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
 
