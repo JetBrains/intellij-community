@@ -39,7 +39,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -156,7 +155,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
             return;
           }
 
-          if (!showAsInlay(file, position)) {
+          if (!showAsInlay(file, position, debuggerPosition)) {
             data.put(file, position, XValueNodeImpl.this);
             timestamps.put(file, document.getModificationStamp());
 
@@ -173,13 +172,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   }
 
-  private boolean showAsInlay(VirtualFile file, XSourcePosition position) {
+  private boolean showAsInlay(VirtualFile file, XSourcePosition position, XSourcePosition debuggerPosition) {
     if (!Registry.is("debugger.show.values.inplace")) return false;
-    XDebugSession session = XDebuggerManager.getInstance(myTree.getProject()).getCurrentSession();
-    if (session == null) return false;
-    XSourcePosition currentPosition = session.getCurrentPosition();
-    if (currentPosition == null) return false;
-    if (!currentPosition.getFile().equals(position.getFile()) || currentPosition.getLine() != position.getLine()) return false;
+    if (!debuggerPosition.getFile().equals(position.getFile()) || debuggerPosition.getLine() != position.getLine()) return false;
     XValue container = getValueContainer();
     if (!(container instanceof XValueWithInlinePresentation)) return false;
     String presentation = ((XValueWithInlinePresentation)container).computeInlinePresentation();
