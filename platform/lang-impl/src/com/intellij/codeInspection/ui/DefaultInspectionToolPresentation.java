@@ -211,10 +211,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (context.isViewClosed() || !(refElement instanceof RefElement)) {
       return;
     }
-    if (myToolWrapper instanceof LocalInspectionToolWrapper && !ApplicationManager.getApplication().isUnitTestMode()) {
-      context.initializeViewIfNeed().doWhenDone(() -> {
-        context.getView().addProblemDescriptors(myToolWrapper, refElement, descriptors);
-      });
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      context.initializeViewIfNeed().doWhenDone(() -> context.getView().addProblemDescriptors(myToolWrapper, refElement, descriptors));
     }
   }
 

@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,8 +145,8 @@ public class ProjectIconsAccessor {
   }
 
   private static boolean hasProperSize(Icon icon) {
-    return icon.getIconHeight() <= ICON_MAX_HEIGHT &&
-           icon.getIconWidth() <= ICON_MAX_WEIGHT;
+    return icon.getIconHeight() <= JBUI.scale(ICON_MAX_HEIGHT) &&
+           icon.getIconWidth() <= JBUI.scale(ICON_MAX_WEIGHT);
   }
 
   private static boolean isIdeaProject(Project project) {
