@@ -76,6 +76,9 @@
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
 
     <!-- Console -->
+    <internal_executor id="PyConsoleToolWindowExecutor" implementation="com.jetbrains.python.console.PyConsoleToolWindowExecutor"/>
+    <postStartupActivity implementation="com.jetbrains.python.console.PyConsoleStarter"/>
+
 
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
 

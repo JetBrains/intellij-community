@@ -42,6 +42,7 @@ import java.util.Map;
  */
 public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   @Override
+  @NotNull
   public PydevConsoleRunnerImpl createConsoleRunner(@NotNull Project project,
                                                     @Nullable Module contextModule) {
     Pair<Sdk, Module> sdkAndModule = PydevConsoleRunner.findPythonSdkAndModule(project, contextModule);
@@ -125,6 +126,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
   }
 
+  @NotNull
   protected PydevConsoleRunnerImpl createConsoleRunner(Project project,
                                                        Sdk sdk,
                                                        String workingDir,

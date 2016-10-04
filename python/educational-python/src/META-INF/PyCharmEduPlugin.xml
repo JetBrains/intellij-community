@@ -24,12 +24,6 @@
   </application-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <internal_executor id="PyConsoleToolWindowExecutor" implementation="com.jetbrains.python.console.PyConsoleToolWindowExecutor"/>
-    <postStartupActivity implementation="com.jetbrains.python.console.PyConsoleStarter"/>
-
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
       <programRunner implementation="com.jetbrains.python.edu.debugger.PyEduDebugRunner"/>
       <executor implementation="com.jetbrains.python.edu.debugger.PyEduDebugExecutor" order="first,after run"/>
       <consoleInputFilterProvider implementation="com.jetbrains.python.edu.debugger.PyEduConsoleInputFilterProvider"/>

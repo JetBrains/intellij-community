@@ -13,8 +13,4 @@
     </component>
 
   </application-components>
-  <extensions defaultExtensionNs="com.intellij">
-    <internal_executor id="PyConsoleToolWindowExecutor" implementation="com.jetbrains.python.console.PyConsoleToolWindowExecutor"/>
-    <postStartupActivity implementation="com.jetbrains.python.console.PyConsoleStarter"/>
-  </extensions>
 </idea-plugin>
