@@ -39,6 +39,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.EntryStream;
@@ -415,10 +416,6 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   static InitializerUsageStatus getInitializerUsageStatus(PsiVariable var, PsiStatement nextStatement) {
     if(!(var instanceof PsiLocalVariable) || var.getInitializer() == null) return UNKNOWN;
     if(isDeclarationJustBefore(var, nextStatement)) return DECLARED_JUST_BEFORE;
-    PsiElement declaration = var.getParent();
-    // Check if variable is not referenced in the same declaration like "int a = 0, b = a;"
-    if(!PsiTreeUtil.processElements(declaration, e -> !(e instanceof PsiReferenceExpression) ||
-                                                  ((PsiReferenceExpression)e).resolve() != var)) return UNKNOWN;
     // Check that variable is declared in the same method or the same lambda expression
     if(PsiTreeUtil.getParentOfType(var, PsiLambdaExpression.class, PsiMethod.class) !=
        PsiTreeUtil.getParentOfType(nextStatement, PsiLambdaExpression.class, PsiMethod.class)) return UNKNOWN;
@@ -432,7 +429,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     catch (AnalysisCanceledException ignored) {
       return UNKNOWN;
     }
-    int start = controlFlow.getEndOffset(declaration);
+    int start = controlFlow.getEndOffset(var.getInitializer())+1;
     int stop = controlFlow.getStartOffset(nextStatement);
     if(ControlFlowUtil.isVariableReferencedBetween(controlFlow, start, stop, var)) return UNKNOWN;
     if (!ControlFlowUtil.isValueUsedWithoutVisitingStop(controlFlow, start, stop, var)) return AT_WANTED_PLACE_ONLY;
@@ -559,8 +556,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         PsiStatement[] statements = tb.getStatements();
         if (statements.length == 2) {
           PsiStatement breakStatement = statements[1];
-          if (!(breakStatement instanceof PsiBreakStatement) ||
-              ((PsiBreakStatement)breakStatement).findExitedStatement() != statement) {
+          if (!ControlFlowUtils.statementBreaksLoop(breakStatement, statement)) {
             return;
           }
           if (ReferencesSearch.search(tb.getVariable(), new LocalSearchScope(statements)).findFirst() == null

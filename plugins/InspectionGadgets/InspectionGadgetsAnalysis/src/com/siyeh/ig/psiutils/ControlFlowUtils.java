@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -542,6 +543,61 @@ public class ControlFlowUtils {
     final NakedBreakFinder breakFinder = new NakedBreakFinder();
     statement.accept(breakFinder);
     return breakFinder.breakFound();
+  }
+
+  /**
+   * Checks whether the given statement effectively breaks given loop. Returns true
+   * if the statement is {@link PsiBreakStatement} having given loop as a target. Also may return
+   * true in other cases if the statement is semantically equivalent to break like this:
+   *
+   * <pre>{@code
+   * int myMethod(int[] data) {
+   *   for(int val : data) {
+   *     if(val == 5) {
+   *       System.out.println(val);
+   *       return 0; // this statement is semantically equivalent to break.
+   *     }
+   *   }
+   *   return 0;
+   * }}</pre>
+   *
+   * @param statement statement which may break the loop
+   * @param loop a loop to break
+   * @return true if the statement actually breaks the loop
+   */
+  @Contract("null, _ -> false")
+  public static boolean statementBreaksLoop(PsiStatement statement, PsiLoopStatement loop) {
+    if(statement instanceof PsiBreakStatement) {
+      return ((PsiBreakStatement)statement).findExitedStatement() == loop;
+    }
+    if(statement instanceof PsiReturnStatement) {
+      PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
+      PsiElement cur = loop;
+      for(PsiElement parent = cur.getParent();;parent = cur.getParent()) {
+        if(parent instanceof PsiLabeledStatement) {
+          cur = parent;
+        } else if(parent instanceof PsiCodeBlock) {
+          PsiCodeBlock block = (PsiCodeBlock)parent;
+          PsiStatement[] statements = block.getStatements();
+          if(block.getParent() instanceof PsiBlockStatement && statements.length > 0 && statements[statements.length-1] == cur) {
+            cur = block.getParent();
+          } else break;
+        } else if(parent instanceof PsiIfStatement) {
+          if(cur == ((PsiIfStatement)parent).getThenBranch() || cur == ((PsiIfStatement)parent).getElseBranch()) {
+            cur = parent;
+          } else break;
+        } else break;
+      }
+      PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(cur, PsiComment.class, PsiWhiteSpace.class);
+      if(nextElement instanceof PsiReturnStatement) {
+        return EquivalenceChecker.getCanonicalPsiEquivalence()
+          .expressionsAreEquivalent(returnValue, ((PsiReturnStatement)nextElement).getReturnValue());
+      }
+      if(nextElement == null && returnValue == null && cur.getParent() instanceof PsiMethod) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class NakedBreakFinder extends JavaRecursiveElementWalkingVisitor {

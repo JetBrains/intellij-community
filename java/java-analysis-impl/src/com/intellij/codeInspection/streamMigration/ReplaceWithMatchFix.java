@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +70,9 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
       }
     }
     PsiStatement[] statements = tb.getStatements();
-    if (!(statements.length == 1 || (statements.length == 2 && statements[1] instanceof PsiBreakStatement))) return null;
+    if (!(statements.length == 1 || (statements.length == 2 && ControlFlowUtils.statementBreaksLoop(statements[1], foreachStatement)))) {
+      return null;
+    }
     restoreComments(foreachStatement, body);
     String streamText = generateStream(iteratedValue, tb.getLastOperation()).toString();
     streamText = addTerminalOperation(streamText, "anyMatch", foreachStatement, tb);
