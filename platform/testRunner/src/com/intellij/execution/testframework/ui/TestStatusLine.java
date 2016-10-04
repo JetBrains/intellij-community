@@ -16,14 +16,12 @@
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBEmptyBorder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -51,14 +49,17 @@ public class TestStatusLine extends JPanel {
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
   }
 
-  public void formatTestMessage(final int testsTotal,
+  public void formatTestMessage(int testsTotal,
                                 final int finishedTestsCount,
                                 final int failuresCount,
                                 final int ignoredTestsCount,
                                 final Long duration,
                                 final long endTime) {
     myState.clear();
-    if (testsTotal == 0) return;
+    if (testsTotal == 0) {
+      testsTotal = finishedTestsCount + failuresCount + ignoredTestsCount;
+      if (testsTotal == 0) return;
+    }
     if (duration == null || endTime == 0) {
       myState.append(finishedTestsCount + " of " + getTestsTotalMessage(testsTotal) + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
