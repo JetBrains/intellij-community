@@ -61,7 +61,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
       List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(afterCopyPointChangeLists);
 
       if (!notMergedChangeLists.isEmpty()) {
-        next(new ShowRevisionSelector(myMergeProcess, myCopyPoint, notMergedChangeLists, myMergeChecker));
+        next(new ShowRevisionSelector(myMergeProcess, notMergedChangeLists, myMergeChecker));
       }
       else {
         end("Everything is up-to-date", false);
@@ -131,15 +131,12 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
     @NotNull private final List<CommittedChangeList> myChangeLists;
     @NotNull private final MergeChecker myMergeChecker;
-    @NotNull private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
 
     private ShowRevisionSelector(@NotNull QuickMerge mergeProcess,
-                                 @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
                                  @NotNull List<CommittedChangeList> changeLists,
                                  @NotNull MergeChecker mergeChecker) {
       super(mergeProcess, "show revisions to merge", Where.AWT);
 
-      myCopyPoint = copyPoint;
       myChangeLists = changeLists;
       myMergeChecker = mergeChecker;
     }
@@ -160,7 +157,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
           List<CommittedChangeList> lists = result.getSelectedLists();
 
           if (!lists.isEmpty()) {
-            runChangeListsMerge(lists, myCopyPoint, myMergeContext.getTitle());
+            runChangeListsMerge(lists, myMergeContext.getTitle());
           }
           break;
       }

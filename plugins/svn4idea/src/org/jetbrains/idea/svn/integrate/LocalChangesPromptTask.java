@@ -37,7 +37,6 @@ import java.util.Set;
 import static com.intellij.openapi.util.Conditions.alwaysTrue;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.*;
-import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.stream.Collectors.toSet;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.append;
@@ -46,29 +45,21 @@ import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
 public class LocalChangesPromptTask extends BaseMergeTask {
 
   @Nullable private final List<CommittedChangeList> myChangeListsToMerge;
-  @Nullable private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
 
   public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess) {
     super(mergeProcess, "local changes intersection check", Where.AWT);
     myChangeListsToMerge = null;
-    myCopyPoint = null;
   }
 
-  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess,
-                                @NotNull List<CommittedChangeList> changeListsToMerge,
-                                @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
+  public LocalChangesPromptTask(@NotNull QuickMerge mergeProcess, @NotNull List<CommittedChangeList> changeListsToMerge) {
     super(mergeProcess, "local changes intersection check", Where.AWT);
-
     myChangeListsToMerge = changeListsToMerge;
-    myCopyPoint = copyPoint;
   }
 
   @Nullable
   private File getLocalPath(String repositoryRelativePath) {
     String absoluteUrl = append(myMergeContext.getWcInfo().getRepositoryRoot(), repositoryRelativePath);
-    SvnBranchPointsCalculator.WrapperInvertor copyPoint = notNull(myCopyPoint);
-    String sourceUrl = copyPoint.isInvertedSense() ? copyPoint.getWrapped().getSource() : copyPoint.getWrapped().getTarget();
-    String sourceRelativePath = getRelativePath(sourceUrl, absoluteUrl);
+    String sourceRelativePath = getRelativePath(myMergeContext.getSourceUrl(), absoluteUrl);
 
     return !isEmptyOrSpaces(sourceRelativePath) ? new File(myMergeContext.getWcInfo().getPath(), sourceRelativePath) : null;
   }

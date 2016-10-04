@@ -38,16 +38,10 @@ public class ShowRecentInDialogTask extends BaseMergeTask {
                                    myInitialChangeListsLoader.isLastLoaded());
 
     if (!lists.isEmpty()) {
-      runChangeListsMerge(lists, createBranchCopyPoint(), myMergeContext.getTitle());
+      runChangeListsMerge(lists, myMergeContext.getTitle());
     }
     else {
       end();
     }
-  }
-
-  @NotNull
-  private SvnBranchPointsCalculator.WrapperInvertor createBranchCopyPoint() {
-    return new SvnBranchPointsCalculator.WrapperInvertor(false, new SvnBranchPointsCalculator.BranchCopyData(
-      myMergeContext.getWcInfo().getUrl().toString(), -1, myMergeContext.getSourceUrl(), -1));
   }
 }

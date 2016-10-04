@@ -93,10 +93,8 @@ public abstract class BaseMergeTask extends TaskDescriptor {
     );
   }
 
-  protected void runChangeListsMerge(@NotNull List<CommittedChangeList> lists,
-                                     @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
-                                     @NotNull String title) {
-    next(new LocalChangesPromptTask(myMergeProcess, lists, copyPoint),
+  protected void runChangeListsMerge(@NotNull List<CommittedChangeList> lists, @NotNull String title) {
+    next(new LocalChangesPromptTask(myMergeProcess, lists),
          new MergeTask(myMergeProcess, new ChangeListsMergerFactory(lists, false, false, true), title));
   }
 
