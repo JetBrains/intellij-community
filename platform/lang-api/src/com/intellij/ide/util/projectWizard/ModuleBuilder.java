@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
@@ -295,7 +296,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
     if (runFromProjectWizard) {
       StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(
-        () -> ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module)));
+        (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module)));
     }
     else {
       onModuleInitialized(module);
