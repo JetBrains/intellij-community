@@ -71,6 +71,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
           return true;
         }
       });
+
       CompilerManager.getInstance(myProject).addAfterTask(new CompileTask() {
         @Override
         public boolean execute(CompileContext context) {
@@ -80,57 +81,58 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
           return true;
         }
       });
-    }
 
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
-      @Override
-      public void fileCreated(@NotNull VirtualFileEvent event) {
-        processChange(event.getFile());
-      }
-
-      @Override
-      public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-        processChange(event.getFile());
-      }
-
-      @Override
-      public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-        processChange(event.getFile());
-      }
-
-      @Override
-      public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
-        if (VirtualFile.PROP_NAME.equals(event.getPropertyName()) || VirtualFile.PROP_SYMLINK_TARGET.equals(event.getPropertyName())) {
+      VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+        @Override
+        public void fileCreated(@NotNull VirtualFileEvent event) {
           processChange(event.getFile());
         }
-      }
 
-      @Override
-      public void beforeContentsChange(@NotNull VirtualFileEvent event) {
-        processChange(event.getFile());
-      }
+        @Override
+        public void fileCopied(@NotNull VirtualFileCopyEvent event) {
+          processChange(event.getFile());
+        }
 
-      @Override
-      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-        processChange(event.getFile());
-      }
+        @Override
+        public void fileMoved(@NotNull VirtualFileMoveEvent event) {
+          processChange(event.getFile());
+        }
 
-      @Override
-      public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
-        processChange(event.getFile());
-      }
+        @Override
+        public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
+          if (VirtualFile.PROP_NAME.equals(event.getPropertyName()) || VirtualFile.PROP_SYMLINK_TARGET.equals(event.getPropertyName())) {
+            processChange(event.getFile());
+          }
+        }
 
-      private void processChange(VirtualFile file) {
-        if (myReader != null && myProjectFileIndex.isInSourceContent(file) && myFileTypes.contains(file.getFileType())) {
-          final Module module = myProjectFileIndex.getModuleForFile(file);
-          if (module != null) {
-            if (myChangedModules.add(module)) {
-              myDirtyScope = myDirtyScope.union(module.getModuleWithDependentsScope());
+        @Override
+        public void beforeContentsChange(@NotNull VirtualFileEvent event) {
+          processChange(event.getFile());
+        }
+
+        @Override
+        public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+          processChange(event.getFile());
+        }
+
+        @Override
+        public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
+          processChange(event.getFile());
+        }
+
+        private void processChange(VirtualFile file) {
+          if (myReader != null && myProjectFileIndex.isInSourceContent(file) && myFileTypes.contains(file.getFileType())) {
+            final Module module = myProjectFileIndex.getModuleForFile(file);
+            if (module != null) {
+              if (myChangedModules.add(module)) {
+                myDirtyScope = myDirtyScope.union(module.getModuleWithDependentsScope());
+              }
             }
           }
         }
-      }
-    }, myProject);
+      }, myProject);
+    }
+
   }
 
   @Override
