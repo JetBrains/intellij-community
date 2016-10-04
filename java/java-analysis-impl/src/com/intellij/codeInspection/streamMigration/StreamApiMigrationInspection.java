@@ -659,6 +659,45 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
   }
 
+  /**
+   *
+   * @param element sort statement candidate (must be PsiExpressionStatement)
+   * @param list list which should be sorted
+   * @return comparator string representation, empty string if natural order is used or null if given statement is not sort statement
+   */
+  @Contract(value = "null, _ -> null")
+  static String tryExtractSortComparatorText(PsiElement element, PsiVariable list) {
+    if(!(element instanceof PsiExpressionStatement)) return null;
+    PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
+    if(!(expression instanceof PsiMethodCallExpression)) return null;
+    PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
+    PsiReferenceExpression methodExpression = methodCall.getMethodExpression();
+    if(!"sort".equals(methodExpression.getReferenceName())) return null;
+    PsiMethod method = methodCall.resolveMethod();
+    if(method == null) return null;
+    PsiClass containingClass = method.getContainingClass();
+    if(containingClass == null) return null;
+    PsiExpression listExpression = null;
+    PsiExpression comparatorExpression = null;
+    if(CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(containingClass.getQualifiedName())) {
+      PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+      if(args.length == 1) {
+        listExpression = args[0];
+      } else if(args.length == 2) {
+        listExpression = args[0];
+        comparatorExpression = args[1];
+      } else return null;
+    } else if(InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_LIST)) {
+      listExpression = methodExpression.getQualifierExpression();
+      PsiExpression[] args = methodCall.getArgumentList().getExpressions();
+      if(args.length != 1) return null;
+      comparatorExpression = args[0];
+    }
+    if(!(listExpression instanceof PsiReferenceExpression) || ((PsiReferenceExpression)listExpression).resolve() != list) return null;
+    if(comparatorExpression == null || ExpressionUtils.isNullLiteral(comparatorExpression)) return "";
+    return comparatorExpression.getText();
+  }
+
   @Nullable
   static PsiMethodCallExpression extractToArrayExpression(PsiForeachStatement statement, PsiMethodCallExpression expression) {
     // return collection.toArray() or collection.toArray(new Type[0]) or collection.toArray(new Type[collection.size()]);

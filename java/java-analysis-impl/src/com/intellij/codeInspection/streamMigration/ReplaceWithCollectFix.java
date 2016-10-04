@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,6 +120,12 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
               return result;
             }
           }
+        }
+        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(foreachStatement, PsiComment.class, PsiWhiteSpace.class);
+        String comparatorText = StreamApiMigrationInspection.tryExtractSortComparatorText(nextStatement, variable);
+        if(comparatorText != null) {
+          builder.append(".sorted(").append(comparatorText).append(")");
+          nextStatement.delete();
         }
         String callText = builder.append(".collect(java.util.stream.Collectors.")
           .append(createInitializerReplacementText(qualifierExpression.getType(), initializer))
