@@ -168,10 +168,7 @@ public abstract class PlatformScalingUtil {
 
     @Override
     public float getSystemScaleFactor() {
-      final int dpi = getSystemDPI();
-      float s = normalizeScaleFactor(dpi / 96.0f);
-      LOG.info("UI scale factor: " + s);
-      return s;
+      return normalizeScaleFactor(getScaleFactorFromSystemFont());
     }
 
     @Override

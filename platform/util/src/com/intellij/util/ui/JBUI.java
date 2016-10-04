@@ -44,55 +44,12 @@ public class JBUI {
 
   private static void calculateScaleFactor() {
     scaleFactor = PlatformScalingUtil.getInstance().getSystemScaleFactor();
-    /* TODO rpaquay: Determine if we still need this
-    //LOG.info("UI scale factor: " + scaleFactor;
-    //return s;
-
-    if (SystemInfo.isMac) {
-      LOG.info("UI scale factor: 1.0");
-      scaleFactor = 1.0f;
-      return;
-    }
-
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      LOG.info("UI scale factor: 1.0");
-      scaleFactor = 1.0f;
-      return;
-    }
-
-    UIUtil.initSystemFontData();
-    Pair<String, Integer> fdata = UIUtil.getSystemFontData();
-
-    int size;
-    if (fdata != null) {
-      size = fdata.getSecond();
-    } else {
-      size = Fonts.label().getSize();
-    }
-    setScaleFactor(size/UIUtil.DEF_SYSTEM_FONT_SIZE);
-    */
+    LOG.info("UI scale factor: " + scaleFactor);
   }
 
   public static void setScaleFactor(float scale) {
-    if (SystemProperties.has("hidpi") && !SystemProperties.is("hidpi")) {
-      return;
-    }
-
-    if (scale < 1.25f) scale = 1.0f;
-    else if (scale < 1.5f) scale = 1.25f;
-    else if (scale < 1.75f) scale = 1.5f;
-    else if (scale < 2f) scale = 1.75f;
-    else scale = 2.0f;
-
-    if (SystemInfo.isLinux && scale == 1.25f) {
-      //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
-      scale = 1f;
-    }
-    if (scaleFactor == scale) {
-      return;
-    }
-    LOG.info("UI scale factor: " + scale);
-
+    scale = PlatformScalingUtil.getInstance().normalizeScaleFactor(scale);
+    LOG.info("UI scale factor changed: " + scale);
     scaleFactor = scale;
     IconLoader.setScale(scale);
   }
