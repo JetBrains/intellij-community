@@ -265,12 +265,14 @@ public class JBUI {
     }
   }
 
-  /**
-   *        JComboBox<String> comboBox = new ComboBox<>(new String[] {"First", "Second", "Third"});
-   *        comboBox.setEditable(true);
-   *        comboBox.setEditor(JBUI.ComboBox.compositeComboboxEditor(new JTextField(), new JLabel(AllIcons.Icon_CE)));
-   */
   public static class ComboBox {
+    /**
+     *        JComboBox<String> comboBox = new ComboBox<>(new String[] {"First", "Second", "Third"});
+     *        comboBox.setEditable(true);
+     *        comboBox.setEditor(JBUI.ComboBox.compositeComboboxEditor(new JTextField(), new JLabel(AllIcons.Icon_CE)));
+     *
+     *        @param components an array of JComponent objects. The first one is the editable text component.
+     */
     public static ComboBoxCompositeEditor compositeComboboxEditor  (JComponent ... components) {
       return new ComboBoxCompositeEditor(components);
     }
