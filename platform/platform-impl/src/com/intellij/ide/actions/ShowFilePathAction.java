@@ -239,12 +239,20 @@ public class ShowFilePathAction extends AnAction {
    * @param file a file or directory to show and highlight in a file manager.
    */
   public static void openFile(@NotNull File file) {
-    if (!file.exists()) return;
-    file = file.getAbsoluteFile();
-    File parent = file.getParentFile();
-    if (parent == null) return;
+    if (!file.exists()) {
+      LOG.info("does not exist: " + file);
+      return;
+    }
+
     try {
-      doOpen(parent, file);
+      file = file.getAbsoluteFile();
+      File parent = file.getParentFile();
+      if (parent != null) {
+        doOpen(parent, file);
+      }
+      else {
+        doOpen(file, null);
+      }
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -256,8 +264,11 @@ public class ShowFilePathAction extends AnAction {
    *
    * @param directory a directory to show in a file manager.
    */
-  public static void openDirectory(@NotNull final File directory) {
-    if (!directory.isDirectory()) return;
+  public static void openDirectory(@NotNull File directory) {
+    if (!directory.isDirectory()) {
+      LOG.info("not a directory: " + directory);
+      return;
+    }
     try {
       doOpen(directory, null);
     }
