@@ -124,8 +124,8 @@ public class CompilerBackwardReferenceIndex {
   }
 
   public void close() {
-    final CommonProcessors.FindFirstAndOnlyProcessor<BuildDataCorruptedException> exceptionProc =
-      new CommonProcessors.FindFirstAndOnlyProcessor<BuildDataCorruptedException>();
+    final CommonProcessors.FindFirstProcessor<BuildDataCorruptedException> exceptionProc =
+      new CommonProcessors.FindFirstProcessor<BuildDataCorruptedException>();
     close(myFilePathEnumerator, exceptionProc);
     close(myBackwardHierarchyMap, exceptionProc);
     close(myBackwardReferenceMap, exceptionProc);
