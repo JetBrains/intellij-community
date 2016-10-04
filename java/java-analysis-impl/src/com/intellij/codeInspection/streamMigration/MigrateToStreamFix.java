@@ -21,15 +21,20 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.TerminalBlock;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.ListIterator;
+import java.util.Objects;
 
 /**
  * @author Tagir Valeev
@@ -50,27 +55,28 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
       final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
       if (body != null && iteratedValue != null) {
         final PsiParameter parameter = foreachStatement.getIterationParameter();
-        StreamApiMigrationInspection.TerminalBlock tb = StreamApiMigrationInspection.TerminalBlock.from(parameter, body);
+        TerminalBlock tb = TerminalBlock.from(parameter, body);
         if (!FileModificationService.getInstance().preparePsiElementForWrite(foreachStatement)) return;
-        List<Operation> operations = tb.extractOperations();
-        migrate(project, descriptor, foreachStatement, iteratedValue, body, tb, operations);
+        PsiElement result = migrate(project, descriptor, foreachStatement, iteratedValue, body, tb);
+        if(result != null) {
+          simplifyAndFormat(project, result);
+        }
       }
     }
   }
 
-  abstract void migrate(@NotNull Project project,
+  abstract PsiElement migrate(@NotNull Project project,
                         @NotNull ProblemDescriptor descriptor,
                         @NotNull PsiForeachStatement foreachStatement,
                         @NotNull PsiExpression iteratedValue,
                         @NotNull PsiStatement body,
-                        @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-                        @NotNull List<Operation> operations);
+                        @NotNull TerminalBlock tb);
 
-  static void replaceWithNumericAddition(@NotNull Project project,
-                                         PsiForeachStatement foreachStatement,
-                                         PsiVariable var,
-                                         StringBuilder builder,
-                                         PsiType expressionType) {
+  static PsiElement replaceWithNumericAddition(@NotNull Project project,
+                                               PsiForeachStatement foreachStatement,
+                                               PsiVariable var,
+                                               StringBuilder builder,
+                                               PsiType expressionType) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     restoreComments(foreachStatement, foreachStatement.getBody());
     InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, foreachStatement);
@@ -79,16 +85,13 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
       if (ExpressionUtils.isZero(initializer)) {
         PsiType type = var.getType();
         String replacement = (type.equals(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + builder;
-        replaceInitializer(foreachStatement, var, initializer, replacement, status);
-        return;
+        return replaceInitializer(foreachStatement, var, initializer, replacement, status);
       }
     }
-    PsiElement result =
-      foreachStatement.replace(elementFactory.createStatementFromText(var.getName() + "+=" + builder + ";", foreachStatement));
-    simplifyAndFormat(project, result);
+    return foreachStatement.replace(elementFactory.createStatementFromText(var.getName() + "+=" + builder + ";", foreachStatement));
   }
 
-  static void replaceInitializer(PsiForeachStatement foreachStatement,
+  static PsiElement replaceInitializer(PsiForeachStatement foreachStatement,
                                  PsiVariable var,
                                  PsiExpression initializer,
                                  String replacement,
@@ -98,14 +101,13 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
     if(status == InitializerUsageStatus.DECLARED_JUST_BEFORE) {
       initializer.replace(elementFactory.createExpressionFromText(replacement, foreachStatement));
       removeLoop(foreachStatement);
-      simplifyAndFormat(project, var);
+      return var;
     } else {
       if(status == InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
         initializer.delete();
       }
-      PsiElement result =
+      return
         foreachStatement.replace(elementFactory.createStatementFromText(var.getName() + " = " + replacement + ";", foreachStatement));
-      simplifyAndFormat(project, result);
     }
   }
 
@@ -123,12 +125,12 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
   }
 
   @NotNull
-  static StringBuilder generateStream(PsiExpression iteratedValue, List<Operation> intermediateOps) {
-    return generateStream(iteratedValue, intermediateOps, false);
+  static StringBuilder generateStream(PsiExpression iteratedValue, @Nullable Operation lastOperation) {
+    return generateStream(iteratedValue, lastOperation, false);
   }
 
   @NotNull
-  static StringBuilder generateStream(PsiExpression iteratedValue, List<Operation> intermediateOps, boolean noStreamForEmpty) {
+  static StringBuilder generateStream(PsiExpression iteratedValue, @Nullable Operation lastOperation, boolean noStreamForEmpty) {
     StringBuilder buffer = new StringBuilder();
     final PsiType iteratedValueType = iteratedValue.getType();
     if (iteratedValueType instanceof PsiArrayType) {
@@ -136,12 +138,16 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
     }
     else {
       buffer.append(getIteratedValueText(iteratedValue));
-      if (!(noStreamForEmpty && intermediateOps.isEmpty())) {
+      if (!noStreamForEmpty || lastOperation != null) {
         buffer.append(".stream()");
       }
     }
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(iteratedValue.getProject());
-    intermediateOps.stream().map(op -> op.createReplacement(factory)).forEach(buffer::append);
+    List<String> replacements =
+      StreamEx.iterate(lastOperation, Objects::nonNull, Operation::getPreviousOp).map(op -> op.createReplacement(factory)).toList();
+    for(ListIterator<String> it = replacements.listIterator(replacements.size()); it.hasPrevious(); ) {
+      buffer.append(it.previous());
+    }
     return buffer;
   }
 

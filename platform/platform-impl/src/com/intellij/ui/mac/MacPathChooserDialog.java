@@ -25,6 +25,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -84,7 +85,7 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
   }
 
   @NotNull
-  private static List<VirtualFile> getChosenFiles(final Stream<File> streamOfFiles) {
+  private List<VirtualFile> getChosenFiles(final Stream<File> streamOfFiles) {
 
     final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
     final List<VirtualFile> virtualFiles = new ArrayList<>();
@@ -97,7 +98,7 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
       }
     });
 
-    return virtualFiles;
+    return FileChooserUtil.getChosenFiles(myFileChooserDescriptor, virtualFiles);
   }
 
   @Override

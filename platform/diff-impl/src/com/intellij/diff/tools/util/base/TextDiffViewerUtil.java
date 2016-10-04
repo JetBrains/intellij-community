@@ -142,7 +142,9 @@ public class TextDiffViewerUtil {
   }
 
   public static boolean areEqualCharsets(@NotNull List<? extends DiffContent> contents) {
-    return areEqualDocumentContentProperties(contents, DocumentContent::getCharset);
+    boolean sameCharset = areEqualDocumentContentProperties(contents, DocumentContent::getCharset);
+    boolean sameBOM = areEqualDocumentContentProperties(contents, DocumentContent::getBOM);
+    return sameCharset && sameBOM;
   }
 
   private static <T> boolean areEqualDocumentContentProperties(@NotNull List<? extends DiffContent> contents,

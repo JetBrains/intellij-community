@@ -70,6 +70,7 @@ public final class MacroManager {
     registerMacro(new ProjectFileDirMacro());
     registerMacro(new ProjectNameMacro());
     registerMacro(new ProjectPathMacro());
+    registerMacro(new ContentRootMacro());
 
     registerMacro(new ModuleFilePathMacro());
     registerMacro(new ModuleFileDirMacro());

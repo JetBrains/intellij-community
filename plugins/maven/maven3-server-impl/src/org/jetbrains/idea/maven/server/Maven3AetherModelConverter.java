@@ -21,9 +21,11 @@ import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
+import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 
 import java.io.File;
@@ -77,7 +79,7 @@ public class Maven3AetherModelConverter extends MavenModelConverter {
                                                                      File localRepository) {
     List<MavenArtifactNode> result = new ArrayList<MavenArtifactNode>(nodes.size());
     for (DependencyNode each : nodes) {
-      Artifact a = RepositoryUtils.toArtifact(each.getDependency().getArtifact());
+      Artifact a = toArtifact(each.getDependency());
       MavenArtifact ma = convertArtifact(a, nativeToConvertedMap, localRepository);
 
       Map<?, ?> data = each.getData();
@@ -93,7 +95,7 @@ public class Maven3AetherModelConverter extends MavenModelConverter {
       if (winner instanceof DependencyNode) {
         DependencyNode winnerNode = (DependencyNode)winner;
         scope = winnerNode.getDependency().getScope();
-        Artifact winnerArtifact = RepositoryUtils.toArtifact(winnerNode.getDependency().getArtifact());
+        Artifact winnerArtifact = toArtifact(winnerNode.getDependency());
         relatedArtifact = convertArtifact(winnerArtifact, nativeToConvertedMap, localRepository);
         nativeToConvertedMap.put(a, relatedArtifact);
         if (!StringUtil.equals(each.getVersion().toString(), winnerNode.getVersion().toString())) {
@@ -110,6 +112,21 @@ public class Maven3AetherModelConverter extends MavenModelConverter {
       newNode.setDependencies(convertAetherDependencyNodes(newNode, each.getChildren(), nativeToConvertedMap, localRepository));
       result.add(newNode);
     }
+    return result;
+  }
+
+  @Nullable
+  public static Artifact toArtifact(@Nullable Dependency dependency) {
+    if (dependency == null) {
+      return null;
+    }
+
+    Artifact result = RepositoryUtils.toArtifact(dependency.getArtifact());
+    if(result == null) {
+      return null;
+    }
+    result.setScope(dependency.getScope());
+    result.setOptional(dependency.isOptional());
     return result;
   }
 }

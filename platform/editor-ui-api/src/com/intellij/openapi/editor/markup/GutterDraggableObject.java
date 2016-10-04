@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.markup;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 
 /**
  * Interface which should be implemented to handle drag and drop of gutter icons. An example of
@@ -28,6 +29,9 @@ import java.awt.*;
  * @see GutterIconRenderer#getDraggableObject()
  */
 public interface GutterDraggableObject {
+
+  DataFlavor flavor = new DataFlavor(GutterDraggableObject.class, "Gutter Draggable Object");
+
   /**
    * Called when the icon is dropped over the specified line.
    *
@@ -48,4 +52,6 @@ public interface GutterDraggableObject {
   Cursor getCursor(int line);
 
   default void remove() {};
+
+  static DataFlavor[] getFlavors() {return new DataFlavor[] {flavor};};
 }

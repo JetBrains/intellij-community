@@ -390,7 +390,7 @@ public class BreakpointsDialog extends DialogWrapper {
     for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
       provider.createBreakpointsGroupingRules(myRulesAvailable);
     }
-    Collections.sort(myRulesAvailable, XBreakpointGroupingRule.PRIORITY_COMPARATOR);
+    myRulesAvailable.sort(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
     myRulesEnabled.clear();
     XBreakpointsDialogState settings = (getBreakpointManager()).getBreakpointsDialogSettings();

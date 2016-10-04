@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -53,7 +52,9 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,7 +130,7 @@ public class RefactoringUtil {
   }
 
   /**
-   * @see com.intellij.psi.codeStyle.CodeStyleManager#suggestUniqueVariableName(String, com.intellij.psi.PsiElement, boolean)
+   * @see JavaCodeStyleManager#suggestUniqueVariableName(String, PsiElement, boolean)
    * Cannot use method from code style manager: a collision with fieldToReplace is not a collision
    */
   public static String suggestUniqueVariableName(String baseName, PsiElement place, PsiField fieldToReplace) {
@@ -197,11 +198,7 @@ public class RefactoringUtil {
       final PsiImportList importList = ((PsiJavaFile)element.getContainingFile()).getImportList();
       if (importList != null) {
         final PsiImportStaticStatement[] importStaticStatements = importList.getImportStaticStatements();
-        for(PsiImportStaticStatement stmt: importStaticStatements) {
-          if (stmt.isOnDemand() && stmt.resolveTargetClass() == aClass) {
-            return true;
-          }
-        }
+        return Arrays.stream(importStaticStatements).anyMatch(stmt -> stmt.isOnDemand() && stmt.resolveTargetClass() == aClass);
       }
     }
     return false;
@@ -390,7 +387,7 @@ public class RefactoringUtil {
     if (type != null && !isFunctionalType && isDenotable) {
       return type;
     }
-    ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getInstance(expr.getProject()).getExpectedTypes(expr, false);
+    ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
     if (expectedTypes.length == 1 || (isFunctionalType || !isDenotable)&& expectedTypes.length > 0 ) {
       type = expectedTypes[0].getType();
       if (!type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type;
@@ -413,7 +410,7 @@ public class RefactoringUtil {
   private static PsiType getTypeByExpression(PsiExpression expr, final PsiElementFactory factory) {
     PsiType type = RefactoringChangeUtil.getTypeByExpression(expr);
     if (PsiType.NULL.equals(type)) {
-      ExpectedTypeInfo[] infos = ExpectedTypesProvider.getInstance(expr.getProject()).getExpectedTypes(expr, false);
+      ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes(expr, false);
       if (infos.length == 1) {
         type = infos[0].getType();
       }
@@ -663,7 +660,8 @@ public class RefactoringUtil {
     return result;
   }
 
-  public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression, PsiType forcedReturnType)
+  @Contract("null, _ -> null")
+  public static PsiExpression convertInitializerToNormalExpression(@Nullable PsiExpression expression, @Nullable PsiType forcedReturnType)
     throws IncorrectOperationException {
     if (expression instanceof PsiArrayInitializerExpression && (forcedReturnType == null || forcedReturnType instanceof PsiArrayType)) {
       return createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)expression, forcedReturnType);
@@ -671,8 +669,8 @@ public class RefactoringUtil {
     return expression;
   }
 
-  public static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer, PsiType forcedType)
-    throws IncorrectOperationException {
+  public static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer,
+                                                                      @Nullable PsiType forcedType) throws IncorrectOperationException {
     PsiType initializerType = null;
     if (initializer != null) {
       if (forcedType != null) {
@@ -686,14 +684,7 @@ public class RefactoringUtil {
       return initializer;
     }
     LOG.assertTrue(initializerType instanceof PsiArrayType);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(initializer.getProject()).getElementFactory();
-    PsiNewExpression result =
-      (PsiNewExpression)factory.createExpressionFromText("new " + initializerType.getPresentableText() + "{}", null);
-    result = (PsiNewExpression)CodeStyleManager.getInstance(initializer.getProject()).reformat(result);
-    PsiArrayInitializerExpression arrayInitializer = result.getArrayInitializer();
-    LOG.assertTrue(arrayInitializer != null);
-    arrayInitializer.replace(initializer);
-    return result;
+    return ExpressionUtils.createNewExpressionFromArrayInitializer(initializer, (PsiArrayType)initializerType);
   }
 
   public static void makeMethodAbstract(@NotNull PsiClass targetClass, @NotNull PsiMethod method) throws IncorrectOperationException {
@@ -1100,13 +1091,13 @@ public class RefactoringUtil {
   }
 
   public static void fixJavadocsForParams(PsiMethod method, Set<PsiParameter> newParameters) throws IncorrectOperationException {
-    fixJavadocsForParams(method, newParameters, Conditions.<Pair<PsiParameter,String>>alwaysFalse());
+    fixJavadocsForParams(method, newParameters, Conditions.alwaysFalse());
   }
 
   public static void fixJavadocsForParams(PsiMethod method,
                                         Set<PsiParameter> newParameters,
                                         Condition<Pair<PsiParameter, String>> eqCondition) throws IncorrectOperationException {
-    fixJavadocsForParams(method, newParameters, eqCondition, Conditions.<String>alwaysTrue());
+    fixJavadocsForParams(method, newParameters, eqCondition, Conditions.alwaysTrue());
   }
 
   public static void fixJavadocsForParams(PsiMethod method,
@@ -1296,7 +1287,7 @@ public class RefactoringUtil {
   @Nullable
   public static PsiTypeParameterList createTypeParameterListWithUsedTypeParameters(@Nullable final PsiTypeParameterList fromList,
                                                                                    @NotNull final PsiElement... elements) {
-    return createTypeParameterListWithUsedTypeParameters(fromList, Conditions.<PsiTypeParameter>alwaysTrue(), elements);
+    return createTypeParameterListWithUsedTypeParameters(fromList, Conditions.alwaysTrue(), elements);
   }
 
   @Nullable
@@ -1317,7 +1308,7 @@ public class RefactoringUtil {
 
     PsiTypeParameter[] typeParameters = used.toArray(new PsiTypeParameter[used.size()]);
 
-    Arrays.sort(typeParameters, (tp1, tp2) -> tp1.getTextRange().getStartOffset() - tp2.getTextRange().getStartOffset());
+    Arrays.sort(typeParameters, Comparator.comparingInt(tp -> tp.getTextRange().getStartOffset()));
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(elements[0].getProject()).getElementFactory();
     try {
@@ -1337,7 +1328,7 @@ public class RefactoringUtil {
   }
 
   public static void collectTypeParameters(final Set<PsiTypeParameter> used, final PsiElement element) {
-    collectTypeParameters(used, element, Conditions.<PsiTypeParameter>alwaysTrue());
+    collectTypeParameters(used, element, Conditions.alwaysTrue());
   }
   public static void collectTypeParameters(final Set<PsiTypeParameter> used, final PsiElement element,
                                            final Condition<PsiTypeParameter> filter) {

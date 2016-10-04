@@ -18,16 +18,17 @@ package com.intellij.lang.properties.editor;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeConsumer;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -41,7 +42,10 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
   public boolean accept(@NotNull final Project project, @NotNull final VirtualFile file){
     if (file instanceof ResourceBundleAsVirtualFile) return true;
     if (!file.isValid()) return false;
-    PsiFile psiFile = ApplicationManager.getApplication().runReadAction((Computable<PsiFile>)() -> PsiManager.getInstance(project).findFile(file));
+    final FileType type = file.getFileType();
+    if (type != StdFileTypes.PROPERTIES && type != StdFileTypes.XML) return false;
+
+    PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(project).findFile(file));
     PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
     return propertiesFile != null &&  propertiesFile.getResourceBundle().getPropertiesFiles().size() > 1;
   }

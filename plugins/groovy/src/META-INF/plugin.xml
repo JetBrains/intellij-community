@@ -668,6 +668,11 @@
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="unused.inc.dec" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy"
+                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     key="unused.default.parameter" groupName="Declaration redundancy"
+                     level="WARNING" cleanupTool="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.unused.defaultParameter.GrUnusedDefaultParameterInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyVariableNotAssigned"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="unassigned.access" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"

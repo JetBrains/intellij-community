@@ -35,7 +35,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Paths
 
-internal class ProjectInspectionManagerTest {
+class ProjectInspectionManagerTest {
   companion object {
     @JvmField
     @ClassRule

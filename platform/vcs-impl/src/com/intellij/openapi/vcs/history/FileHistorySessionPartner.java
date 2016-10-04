@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
@@ -154,6 +155,9 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
   private void createOrSelectContentIfNeeded() {
     ToolWindow toolWindow = getToolWindow(myVcs.getProject());
     if (myRefresherI.isFirstTime()) {
+      if (toolWindow instanceof ToolWindowImpl) {
+        ((ToolWindowImpl)toolWindow).ensureContentInitialized();
+      }
       ContentManager manager = toolWindow.getContentManager();
       boolean selectedExistingContent = ContentUtilEx.selectContent(manager, myFileHistoryPanel, true);
       if (!selectedExistingContent) {

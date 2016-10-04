@@ -28,11 +28,9 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -124,6 +122,7 @@ class UndoableGroup {
     // if multiple consecutive actions share a document, then set the bulk flag only once
     final Set<DocumentEx> bulkDocuments = new THashSet<>();
     ApplicationManager.getApplication().runWriteAction(() -> {
+      UnexpectedUndoException exception = null;
       try {
         for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
           if (wrapInBulkUpdate) {
@@ -148,13 +147,14 @@ class UndoableGroup {
         }
       }
       catch (UnexpectedUndoException e) {
-        reportUndoProblem(e, isUndo);
+        exception = e;
       }
       finally {
         for (DocumentEx bulkDocument : bulkDocuments) {
           bulkDocument.setInBulkUpdate(false);
         }
       }
+      if (exception != null) reportUndoProblem(exception, isUndo);
     });
     commitAllDocuments();
   }

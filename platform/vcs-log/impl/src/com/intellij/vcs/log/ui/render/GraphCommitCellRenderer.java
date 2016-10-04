@@ -2,23 +2,29 @@ package com.intellij.vcs.log.ui.render;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TableCell;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PaintParameters;
+import com.intellij.vcs.log.ui.frame.ReferencesPanel;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
+import java.util.Map;
 
 public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   private static final Logger LOG = Logger.getInstance(GraphCommitCellRenderer.class);
@@ -62,9 +69,9 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   @Override
   public Dimension getPreferredSize() {
     Dimension preferredSize = super.getPreferredSize();
-    return new Dimension(preferredSize.width + (myReferencePainter.isLeftAligned() ? 0 :
-                                                myReferencePainter.getSize().width - LabelPainter.GRADIENT_WIDTH),
-                         getPreferredHeight());
+    int referencesSize = myReferencePainter.isLeftAligned() ? 0 : myReferencePainter.getSize().width;
+    if (referencesSize > 0) referencesSize -= LabelPainter.GRADIENT_WIDTH;
+    return new Dimension(preferredSize.width + referencesSize, getPreferredHeight());
   }
 
   public int getPreferredHeight() {
@@ -109,7 +116,7 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   }
 
   @Override
-  protected void customizeCellRenderer(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+  public void customizeCellRenderer(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (value == null) {
       return;
     }
@@ -183,6 +190,21 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
     return Registry.is("vcs.log.labels.redesign");
   }
 
+  @Nullable
+  public JComponent getTooltip(@NotNull Object value, @NotNull Point point, int width) {
+    if (!isRedesignedLabels()) return null;
+
+    GraphCommitCell cell = getAssertCommitCell(value);
+    Collection<VcsRef> refs = cell.getRefsToThisCommit();
+    if (!refs.isEmpty()) {
+      customizeRefsPainter(myReferencePainter, refs, getForeground());
+      if (myReferencePainter.getSize().getWidth() - LabelPainter.GRADIENT_WIDTH >= width - point.getX()) {
+        return new TooltipReferencesPanel(refs);
+      }
+    }
+    return null;
+  }
+
   private static class PaintInfo {
     private int myWidth;
     @NotNull private Image myImage;
@@ -229,6 +251,9 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
           nextWidth = myEmptyPainter.getSize().width;
         }
 
+        if (row == 0 && table.getRowCount() == 1) {
+          customizeRefsPainter(myEmptyPainter, ContainerUtil.emptyList(), foreground);
+        }
         myWidth = Math.max(Math.max(prevWidth, nextWidth), LabelPainter.GRADIENT_WIDTH);
       }
     }
@@ -243,6 +268,64 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
 
     public int getWidth() {
       return myWidth;
+    }
+  }
+
+  private class TooltipReferencesPanel extends ReferencesPanel {
+    private static final int REFS_LIMIT = 10;
+    private boolean myHasGroupWithMultipleRefs;
+
+    public TooltipReferencesPanel(@NotNull Collection<VcsRef> refs) {
+      super(new VerticalFlowLayout(JBUI.scale(H_GAP), JBUI.scale(V_GAP)), REFS_LIMIT);
+      VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(refs)).getRoot();
+      setReferences(
+        ContainerUtil.sorted(refs, myLogData.getLogProvider(root).getReferenceManager().getLabelsOrderComparator()));
+    }
+
+    @Override
+    public void update() {
+      super.update();
+      myHasGroupWithMultipleRefs = false;
+      for (Map.Entry<VcsRefType, Collection<VcsRef>> typeAndRefs : myGroupedVisibleReferences.entrySet()) {
+        if (typeAndRefs.getValue().size() > 1) {
+          myHasGroupWithMultipleRefs = true;
+        }
+      }
+    }
+
+    @NotNull
+    @Override
+    protected Font getLabelsFont() {
+      return myReferencePainter.getReferenceFont();
+    }
+
+    @Nullable
+    @Override
+    protected Icon createIcon(@NotNull VcsRefType type, @NotNull Collection<VcsRef> refs, int refIndex, int height) {
+      if (refIndex == 0) {
+        Color color = type.getBackgroundColor();
+        return new LabelIcon(height, getBackground(),
+                             refs.size() > 1 ? new Color[]{color, color} : new Color[]{color}) {
+          @Override
+          public int getIconWidth() {
+            return getWidth(myHasGroupWithMultipleRefs ? 2 : 1);
+          }
+        };
+      }
+      return createEmptyIcon(height);
+    }
+
+    @NotNull
+    private Icon createEmptyIcon(int height) {
+      return EmptyIcon.create(LabelIcon.getWidth(height, 2), height);
+    }
+
+    @NotNull
+    @Override
+    protected JBLabel createRestLabel(int restSize) {
+      String gray = ColorUtil.toHex(UIManager.getColor("Button.disabledText"));
+      return createLabel("<html><font color=\"#" + gray + "\">... " + restSize + " more in details pane</font></html>",
+                         createEmptyIcon(getIconHeight()));
     }
   }
 }

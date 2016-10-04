@@ -282,7 +282,8 @@ idea.fatal.error.notification=disabled
   void compileModulesAndBuildDistributions() {
     checkProductProperties()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
-    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules)
+    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
+                   buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
     buildContext.messages.block("Build platform and plugin JARs") {
       distributionJARsBuilder.buildJARs()
       distributionJARsBuilder.buildAdditionalArtifacts()

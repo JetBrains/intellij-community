@@ -203,7 +203,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         });
       if (lambdas.size() > 1) {
         ArrayList<Method> lambdasList = new ArrayList<>(lambdas);
-        Collections.sort(lambdasList, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
+        lambdasList.sort(DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
         lambdaOrdinal = lambdasList.indexOf(method);
       }
     }

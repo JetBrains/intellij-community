@@ -275,6 +275,8 @@ public class AllIcons {
     public static final Icon EvaluateExpression = IconLoader.getIcon("/debugger/evaluateExpression.png"); // 16x16
     public static final Icon Frame = IconLoader.getIcon("/debugger/frame.png"); // 16x16
     public static final Icon KillProcess = IconLoader.getIcon("/debugger/killProcess.png"); // 16x16
+    public static final Icon LambdaBreakpoint = IconLoader.getIcon("/debugger/LambdaBreakpoint.png"); // 12x12
+    public static final Icon MultipleBreakpoints = IconLoader.getIcon("/debugger/MultipleBreakpoints.png"); // 12x12
     public static final Icon MuteBreakpoints = IconLoader.getIcon("/debugger/muteBreakpoints.png"); // 16x16
     public static final Icon NewWatch = IconLoader.getIcon("/debugger/newWatch.png"); // 16x16
     public static final Icon Question_badge = IconLoader.getIcon("/debugger/question_badge.png"); // 6x9

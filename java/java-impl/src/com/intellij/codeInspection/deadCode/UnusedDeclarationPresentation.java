@@ -407,20 +407,19 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
-  @NotNull
   @Override
-  public InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl context,
-                                       @NotNull InspectionNode node,
-                                       @NotNull InspectionRVContentProvider provider,
-                                       @NotNull InspectionTreeNode parentNode,
-                                       boolean showStructure,
-                                       boolean groupByStructure) {
+  public void createToolNode(@NotNull GlobalInspectionContextImpl context,
+                             @NotNull InspectionNode node,
+                             @NotNull InspectionRVContentProvider provider,
+                             @NotNull InspectionTreeNode parentNode,
+                             boolean showStructure,
+                             boolean groupByStructure) {
     final EntryPointsNode entryPointsNode = new EntryPointsNode(context);
     InspectionToolWrapper dummyToolWrapper = entryPointsNode.getToolWrapper();
     InspectionToolPresentation presentation = context.getPresentation(dummyToolWrapper);
     presentation.updateContent();
     provider.appendToolNodeContent(context, entryPointsNode, node, showStructure, groupByStructure);
-    return entryPointsNode;
+    myToolNode = entryPointsNode;
   }
 
   @NotNull

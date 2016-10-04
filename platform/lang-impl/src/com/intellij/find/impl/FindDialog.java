@@ -1464,13 +1464,13 @@ public class FindDialog extends DialogWrapper {
     if (myDirectoryComboBox.getItemCount() > 0){
       myReplaceComboBox.removeAllItems();
     }
+    int ignoredIdx = -1;
     if (directoryName != null && !directoryName.isEmpty()){
-      if (strings.contains(directoryName)){
-        strings.remove(directoryName);
-      }
+      ignoredIdx = strings.indexOf(directoryName);
       myDirectoryComboBox.addItem(directoryName);
     }
     for(int i = strings.size() - 1; i >= 0; i--){
+      if (i == ignoredIdx) continue;
       myDirectoryComboBox.addItem(strings.get(i));
     }
     if (myDirectoryComboBox.getItemCount() == 0){

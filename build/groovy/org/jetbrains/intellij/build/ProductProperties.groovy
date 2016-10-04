@@ -157,6 +157,18 @@ abstract class ProductProperties {
   List<String> excludedPlugins = []
 
   /**
+   * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
+   * todo[nik] get rid of this
+   */
+  List<String> additionalModulesToCompile = []
+
+  /**
+   * Specified modules which tests need to be compiled when product is built.
+   * todo[nik] get rid of this
+   */
+  List<String> modulesToCompileTests = []
+
+  /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
    * (&lt;PRODUCT&gt;_JDK variable), *.vmoptions file (&lt;PRODUCT&gt;_VM_OPTIONS variable), idea.properties file (&lt;PRODUCT&gt;_PROPERTIES variable)
    */

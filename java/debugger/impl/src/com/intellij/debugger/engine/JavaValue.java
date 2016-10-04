@@ -50,6 +50,7 @@ import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
+import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -69,7 +70,7 @@ import java.util.Set;
 /**
 * @author egor
 */
-public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider {
+public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XValueTextProvider, XValueWithInlinePresentation {
   private static final Logger LOG = Logger.getInstance(JavaValue.class);
 
   private final JavaValue myParent;
@@ -616,5 +617,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       node.clearChildren();
       computePresentation(node, XValuePlace.TREE);
     });
+  }
+
+  @Nullable
+  @Override
+  public String computeInlinePresentation() {
+    ValueDescriptorImpl descriptor = getDescriptor();
+    return descriptor.isNull() || descriptor.isPrimitive() ? descriptor.getValueText() : null;
   }
 }

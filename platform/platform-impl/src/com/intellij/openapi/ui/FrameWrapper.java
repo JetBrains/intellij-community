@@ -34,6 +34,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WindowStateService;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -156,6 +157,9 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
     };
     frame.addWindowListener(focusListener);
+    if (Registry.is("ide.perProjectModality")) {
+      frame.setAlwaysOnTop(true);
+    }
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {

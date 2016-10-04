@@ -17,14 +17,11 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author Tagir Valeev
@@ -37,63 +34,64 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
   }
 
   @Override
-  void migrate(@NotNull Project project,
+  PsiElement migrate(@NotNull Project project,
                @NotNull ProblemDescriptor descriptor,
                @NotNull PsiForeachStatement foreachStatement,
                @NotNull PsiExpression iteratedValue,
                @NotNull PsiStatement body,
-               @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-               @NotNull List<Operation> operations) {
+               @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
     PsiStatement statement = tb.getSingleStatement();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    String stream = generateStream(iteratedValue, operations).append(".findFirst()").toString();
+    String stream = generateStream(iteratedValue, tb.getLastOperation()).append(".findFirst()").toString();
     if (statement instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       PsiExpression value = returnStatement.getReturnValue();
-      if (value == null) return;
+      if (value == null) return null;
       PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(foreachStatement);
-      if (nextReturnStatement == null) return;
+      if (nextReturnStatement == null) return null;
       PsiExpression orElseExpression = nextReturnStatement.getReturnValue();
-      if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return;
-      stream = generateOptionalUnwrap(stream, tb, value, orElseExpression);
+      if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return null;
+      stream = generateOptionalUnwrap(stream, tb, value, orElseExpression, null);
       restoreComments(foreachStatement, body);
-      boolean siblings = nextReturnStatement.getParent() == foreachStatement.getParent();
-      PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", foreachStatement));
-      if (siblings) {
+      if (nextReturnStatement.getParent() == foreachStatement.getParent()) {
         nextReturnStatement.delete();
       }
-      simplifyAndFormat(project, result);
+      return foreachStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", foreachStatement));
     }
     else {
       PsiStatement[] statements = tb.getStatements();
-      if (statements.length != 2) return;
+      if (statements.length != 2) return null;
       PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statements[0]);
-      if (assignment == null) return;
+      if (assignment == null) {
+        if(!(statements[0] instanceof PsiExpressionStatement)) return null;
+        PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
+        restoreComments(foreachStatement, body);
+        return foreachStatement.replace(elementFactory.createStatementFromText(
+          stream + ".ifPresent(" + LambdaUtil.createLambda(tb.getVariable(), expression) + ");", foreachStatement));
+      }
       PsiExpression lValue = assignment.getLExpression();
-      if (!(lValue instanceof PsiReferenceExpression)) return;
+      if (!(lValue instanceof PsiReferenceExpression)) return null;
       PsiElement element = ((PsiReferenceExpression)lValue).resolve();
-      if (!(element instanceof PsiVariable)) return;
+      if (!(element instanceof PsiVariable)) return null;
       PsiVariable var = (PsiVariable)element;
       PsiExpression value = assignment.getRExpression();
-      if (value == null) return;
+      if (value == null) return null;
       restoreComments(foreachStatement, body);
       InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, foreachStatement);
       if (status != InitializerUsageStatus.UNKNOWN) {
         PsiExpression initializer = var.getInitializer();
         if (initializer != null) {
-          String replacementText = generateOptionalUnwrap(stream, tb, value, initializer);
-          replaceInitializer(foreachStatement, var, initializer, replacementText, status);
-          return;
+          String replacementText = generateOptionalUnwrap(stream, tb, value, initializer, var.getType());
+          return replaceInitializer(foreachStatement, var, initializer, replacementText, status);
         }
       }
-      PsiElement result = foreachStatement.replace(elementFactory.createStatementFromText(
-        var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, lValue) + ";", foreachStatement));
-      simplifyAndFormat(project, result);
+      return foreachStatement.replace(elementFactory.createStatementFromText(
+        var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, lValue, var.getType()) + ";", foreachStatement));
     }
   }
 
   private static String generateOptionalUnwrap(String stream, @NotNull StreamApiMigrationInspection.TerminalBlock tb,
-                                               PsiExpression trueExpression, PsiExpression falseExpression) {
+                                               PsiExpression trueExpression, PsiExpression falseExpression, PsiType targetType) {
     PsiVariable var = tb.getVariable();
     if (!StreamApiMigrationInspection.isIdentityMapping(var, trueExpression)) {
       if(trueExpression instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
@@ -112,9 +110,11 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
         if(EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(falseExpression, condition.getElseExpression())) {
           return generateOptionalUnwrap(
             stream + ".filter(" + LambdaUtil.createLambda(var, condition.getCondition()) + ")", tb,
-            condition.getThenExpression(), falseExpression);
+            condition.getThenExpression(), falseExpression, targetType);
         }
       }
+      trueExpression =
+        targetType == null ? trueExpression : ExpressionUtils.convertInitializerToNormalExpression(trueExpression, targetType);
       stream += ".map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
     }
     stream += ".orElse(" + falseExpression.getText() + ")";

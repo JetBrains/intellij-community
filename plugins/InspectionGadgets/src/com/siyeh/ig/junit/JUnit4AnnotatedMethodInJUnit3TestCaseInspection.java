@@ -17,6 +17,8 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -91,7 +93,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      deleteAnnotation(descriptor, IGNORE);
+      WriteAction.run(() -> deleteAnnotation(descriptor, IGNORE));
       super.doFix(project, descriptor);
     }
   }

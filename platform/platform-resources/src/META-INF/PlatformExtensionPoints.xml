@@ -271,7 +271,11 @@
 
     <extensionPoint name="credentialStore" interface="com.intellij.credentialStore.CredentialStoreFactory"/>
 
-    <extensionPoint name="supportColorBlindness" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
+    <extensionPoint name="protanopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
+    <extensionPoint name="deuteranopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
+    <extensionPoint name="tritanopiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
+    <extensionPoint name="achromatopsiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
+
     <extensionPoint name="bundledInspectionProfile" beanClass="com.intellij.configurationStore.BundledSchemeEP"/>
   </extensionPoints>
 </idea-plugin>

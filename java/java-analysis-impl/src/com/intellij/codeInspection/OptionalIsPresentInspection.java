@@ -38,8 +38,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-
 /**
  * @author Tagir Valeev
  */
@@ -142,7 +140,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
   @Contract("null, _ -> false")
   static boolean isOptionalLambdaCandidate(PsiExpression lambdaCandidate, PsiVariable optionalVariable) {
     if(lambdaCandidate == null) return false;
-    if(!ExceptionUtil.getThrownCheckedExceptions(new PsiElement[] {lambdaCandidate}).isEmpty()) return false;
+    if(!ExceptionUtil.getThrownCheckedExceptions(lambdaCandidate).isEmpty()) return false;
     return PsiTreeUtil.processElements(lambdaCandidate, e -> {
       if (!(e instanceof PsiReferenceExpression)) return true;
       PsiElement element = ((PsiReferenceExpression)e).resolve();
@@ -154,27 +152,16 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     });
   }
 
-  static String getComments(PsiStatement statement) {
-    Collection<PsiComment> comments = PsiTreeUtil.collectElementsOfType(statement, PsiComment.class);
-    return StreamEx.of(comments)
-      .filter(c -> c.getParent() == statement ||
-                   (statement instanceof PsiExpressionStatement && c.getParent() == ((PsiExpressionStatement)statement).getExpression()))
-      .flatMap(c -> StreamEx.of(c.getPrevSibling(), c, c.getNextSibling())) // add both siblings for every comment
-      .filter(e -> e instanceof PsiComment || e instanceof PsiWhiteSpace) // select only comments and whitespace
-      .distinct()
-      .map(PsiElement::getText).joining("");
-  }
-
   @NotNull
   static String generateMapIfNeeded(PsiElementFactory factory,
                                     PsiVariable optionalVariable,
-                                    PsiStatement trueStatement,
                                     PsiExpression trueValue) {
-    String trueComments = getComments(trueStatement);
+    String name = optionalVariable.getName();
+    LOG.assertTrue(name != null);
     if(isOptionalGetCall(trueValue, optionalVariable)) {
-      return trueComments + optionalVariable.getName();
+      return name;
     } else {
-      return optionalVariable.getName() + ".map(" + trueComments + generateOptionalLambda(factory, optionalVariable, trueValue) + ")";
+      return name + ".map(" + generateOptionalLambda(factory, optionalVariable, trueValue) + ")";
     }
   }
 
@@ -235,15 +222,15 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       if (!myScenario.isApplicable(optionalVariable, thenStatement, elseStatement)) return;
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      String replacement = myScenario.generateReplacement(factory, optionalVariable, thenStatement, elseStatement);
-      final PsiElement parent = statement.getParent();
-      for (PsiElement comment : PsiTreeUtil.findChildrenOfType(statement, PsiComment.class)) {
-        // Comments inside then/else statements should be handled by scenario
-        if((thenStatement == null || !PsiTreeUtil.isAncestor(thenStatement, comment, true)) &&
-           (elseStatement == null || !PsiTreeUtil.isAncestor(elseStatement, comment, true))) {
+      PsiElement parent = statement.getParent();
+      StreamEx.of(statement, thenStatement, elseStatement).nonNull()
+        .flatCollection(st -> PsiTreeUtil.findChildrenOfType(st, PsiComment.class))
+        .distinct()
+        .forEach(comment -> {
           parent.addBefore(comment, statement);
-        }
-      }
+          comment.delete();
+        });
+      String replacement = myScenario.generateReplacement(factory, optionalVariable, thenStatement, elseStatement);
       if(thenStatement != null && !PsiTreeUtil.isAncestor(statement, thenStatement, true)) thenStatement.delete();
       if(elseStatement != null && !PsiTreeUtil.isAncestor(statement, elseStatement, true)) elseStatement.delete();
       PsiElement result = statement.replace(factory.createStatementFromText(replacement, statement));
@@ -285,8 +272,8 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       PsiExpression falseValue = ((PsiReturnStatement)falseStatement).getReturnValue();
       LOG.assertTrue(trueValue != null);
       LOG.assertTrue(falseValue != null);
-      String trueBranch = generateMapIfNeeded(factory, optionalVariable, trueStatement, trueValue);
-      return "return " + trueBranch + ".orElse(" + getComments(falseStatement) + falseValue.getText() + ");";
+      String trueBranch = generateMapIfNeeded(factory, optionalVariable, trueValue);
+      return "return " + trueBranch + ".orElse(" + falseValue.getText() + ");";
     }
   }
 
@@ -326,12 +313,12 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
       PsiExpression trueValue = trueAssignment.getRExpression();
       PsiExpression falseValue = falseAssignment.getRExpression();
       LOG.assertTrue(falseValue != null);
-      String trueBranch = generateMapIfNeeded(factory, optionalVariable, trueStatement, trueValue);
+      String trueBranch = generateMapIfNeeded(factory, optionalVariable, trueValue);
       String falseBranch;
       if(ExpressionUtils.isSimpleExpression(falseValue)) {
-        falseBranch = "orElse(" + getComments(falseStatement) + falseValue.getText() + ")";
+        falseBranch = "orElse(" + falseValue.getText() + ")";
       } else {
-        falseBranch = "orElseGet(" + getComments(falseStatement) + "() -> " + falseValue.getText() + ")";
+        falseBranch = "orElseGet(" + "() -> " + falseValue.getText() + ")";
       }
       return lValue.getText() + " = " + trueBranch + "." + falseBranch + ";";
     }

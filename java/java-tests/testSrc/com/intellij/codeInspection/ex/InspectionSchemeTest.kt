@@ -27,7 +27,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 
-internal class InspectionSchemeTest {
+class InspectionSchemeTest {
   companion object {
     @JvmField
     @ClassRule

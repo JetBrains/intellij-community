@@ -37,12 +37,12 @@ import java.util.List;
 
 public class ConfigurationModuleSelector {
   private final Project myProject;
-  private final JComboBox myModulesList;
+  private final JComboBox<Module> myModulesList;
 
   /**
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox)} instead
    */
-  public ConfigurationModuleSelector(final Project project, final JComboBox modulesList) {
+  public ConfigurationModuleSelector(final Project project, final JComboBox<Module> modulesList) {
     this(project, modulesList, "<no module>");
   }
 
@@ -59,7 +59,7 @@ public class ConfigurationModuleSelector {
   /**
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox, String)} instead
    */
-  public ConfigurationModuleSelector(final Project project, final JComboBox modulesList, final String noModule) {
+  public ConfigurationModuleSelector(final Project project, final JComboBox<Module> modulesList, final String noModule) {
     myProject = project;
     myModulesList = modulesList;
     new ComboboxSpeedSearch(modulesList){

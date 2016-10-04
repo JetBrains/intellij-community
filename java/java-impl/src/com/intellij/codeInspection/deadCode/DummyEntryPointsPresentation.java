@@ -96,14 +96,13 @@ public class DummyEntryPointsPresentation extends UnusedDeclarationPresentation 
     }
   }
 
-  @NotNull
   @Override
-  public InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionNode node,
+  public void createToolNode(@NotNull GlobalInspectionContextImpl context, @NotNull InspectionNode node,
                                        @NotNull InspectionRVContentProvider provider,
                                        @NotNull InspectionTreeNode parentNode,
                                        boolean showStructure,
                                        boolean groupByStructure) {
-    return node;
+    myToolNode = node;
   }
 
   @Override

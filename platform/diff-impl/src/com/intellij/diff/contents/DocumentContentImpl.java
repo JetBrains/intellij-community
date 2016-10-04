@@ -37,21 +37,24 @@ public class DocumentContentImpl extends DiffContentBase implements DocumentCont
 
   @Nullable private final LineSeparator mySeparator;
   @Nullable private final Charset myCharset;
+  @Nullable private final Boolean myBOM;
 
   public DocumentContentImpl(@NotNull Document document) {
-    this(document, null, null, null, null);
+    this(document, null, null, null, null, null);
   }
 
   public DocumentContentImpl(@NotNull Document document,
                              @Nullable FileType type,
                              @Nullable VirtualFile highlightFile,
                              @Nullable LineSeparator separator,
-                             @Nullable Charset charset) {
+                             @Nullable Charset charset,
+                             @Nullable Boolean bom) {
     myDocument = document;
     myType = type;
     myHighlightFile = highlightFile;
     mySeparator = separator;
     myCharset = charset;
+    myBOM = bom;
   }
 
   @NotNull
@@ -82,6 +85,12 @@ public class DocumentContentImpl extends DiffContentBase implements DocumentCont
   @Override
   public LineSeparator getLineSeparator() {
     return mySeparator;
+  }
+
+  @Override
+  @Nullable
+  public Boolean getBOM() {
+    return myBOM;
   }
 
   @Nullable

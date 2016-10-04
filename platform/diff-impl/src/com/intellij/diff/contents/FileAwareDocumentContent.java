@@ -1,26 +1,22 @@
 package com.intellij.diff.contents;
 
+import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.diff.tools.util.DiffNotifications;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.diff.Diff;
@@ -40,8 +36,9 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
                                   @Nullable FileType fileType,
                                   @Nullable VirtualFile highlightFile,
                                   @Nullable LineSeparator separator,
-                                  @Nullable Charset charset) {
-    super(document, fileType, highlightFile, separator, charset);
+                                  @Nullable Charset charset,
+                                  @Nullable Boolean bom) {
+    super(document, fileType, highlightFile, separator, charset, bom);
     myProject = project;
   }
 
@@ -78,6 +75,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     private VirtualFile myHighlightFile;
     private LineSeparator mySeparator;
     private Charset myCharset;
+    private Boolean myBOM;
     private Charset mySuggestedCharset;
     private boolean myMalformedContent;
     private String myFileName;
@@ -113,24 +111,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
       mySeparator = StringUtil.detectSeparators(content);
       String correctedContent = StringUtil.convertLineSeparators(content);
 
-      if (myProject != null && Registry.is("diff.enable.psi.highlighting")) {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          LightVirtualFile file = new LightVirtualFile(myFileName, DiffPsiFileType.INSTANCE, correctedContent);
-          file.setWritable(false);
-
-          file.putUserData(DiffPsiFileType.ORIGINAL_FILE_TYPE_KEY, myFileType);
-
-          myDocument = FileDocumentManager.getInstance().getDocument(file);
-          if (myDocument == null) {
-            myDocument = EditorFactory.getInstance().createDocument(correctedContent);
-          }
-
-          PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-        });
-      }
-      else {
-        myDocument = EditorFactory.getInstance().createDocument(correctedContent);
-      }
+      myDocument = DiffContentFactoryImpl.createDocument(myProject, correctedContent, myFileType, myFileName, true);
 
       myDocument.setReadOnly(true);
       return this;
@@ -139,6 +120,15 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     @NotNull
     private Builder create(@NotNull byte[] content) {
       assert mySuggestedCharset != null;
+
+      Charset charset = CharsetToolkit.guessFromBOM(content);
+      if (charset != null) {
+        mySuggestedCharset = charset;
+        myBOM = true;
+      }
+      else {
+        myBOM = false;
+      }
 
       myCharset = mySuggestedCharset;
       try {
@@ -165,7 +155,7 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
     public FileAwareDocumentContent build() {
       if (FileTypes.UNKNOWN.equals(myFileType)) myFileType = PlainTextFileType.INSTANCE;
       FileAwareDocumentContent content
-        = new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset);
+        = new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset, myBOM);
       DiffUtil.addNotification(createNotification(), content);
       content.putUserData(DiffUserDataKeysEx.FILE_NAME, myFileName);
       return content;

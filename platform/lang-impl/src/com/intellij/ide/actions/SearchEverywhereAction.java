@@ -252,8 +252,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private static Gradient getGradientColors() {
     return new Gradient(
-      new JBColor(new Color(101, 147, 242), new Color(64, 80, 94)),
-      new JBColor(new Color(46, 111, 205), new Color(53, 65, 87)));
+      new JBColor(0x6593f2, 0x40505e),
+      new JBColor(0x2e6fcd, 0x354157));
   }
 
   private void updateComponents() {

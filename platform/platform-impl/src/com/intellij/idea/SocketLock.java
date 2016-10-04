@@ -200,8 +200,7 @@ public final class SocketLock {
     log("trying: port=%s", portNumber);
     args = checkForJetBrainsProtocolCommand(args);
     try {
-      Socket socket = new Socket(InetAddress.getLoopbackAddress(), portNumber);
-      try {
+      try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), portNumber)) {
         socket.setSoTimeout(1000);
 
         boolean result = false;
@@ -244,9 +243,6 @@ public final class SocketLock {
 
           return ActivateStatus.CANNOT_ACTIVATE;
         }
-      }
-      finally {
-        socket.close();
       }
     }
     catch (ConnectException e) {

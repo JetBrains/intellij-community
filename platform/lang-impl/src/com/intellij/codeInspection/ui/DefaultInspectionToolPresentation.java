@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.ui;
 
-import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -65,7 +64,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   @NotNull
   private final GlobalInspectionContextImpl myContext;
   private static String ourOutputPath;
-  private InspectionNode myToolNode;
+  protected InspectionNode myToolNode;
 
   private static final Object lock = new Object();
   private final Map<RefEntity, CommonProblemDescriptor[]> myProblemElements = ContainerUtil.newConcurrentMap(TObjectHashingStrategy.IDENTITY);
@@ -76,11 +75,8 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private DescriptorComposer myComposer;
   private final Map<RefEntity, Set<QuickFix>> myQuickFixActions = Collections.synchronizedMap(
     new THashMap<>(TObjectHashingStrategy.IDENTITY));
-  private final Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements = Collections.synchronizedMap(new THashMap<RefEntity, CommonProblemDescriptor[]>(TObjectHashingStrategy.IDENTITY) {
-
-
-
-  });
+  private final Map<RefEntity, CommonProblemDescriptor[]> myIgnoredElements = Collections.synchronizedMap(
+    new THashMap<>(TObjectHashingStrategy.IDENTITY));
 
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.DescriptorProviderInspection");
   private volatile boolean isDisposed;
@@ -107,7 +103,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     return description;
   }
 
-  protected HighlightSeverity getSeverity(@NotNull RefElement element) {
+  public HighlightSeverity getSeverity(@NotNull RefElement element) {
     final PsiElement psiElement = element.getPointer().getContainingFile();
     if (psiElement != null) {
       final GlobalInspectionContextImpl context = getContext();
@@ -216,37 +212,9 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
       return;
     }
     if (myToolWrapper instanceof LocalInspectionToolWrapper && !ApplicationManager.getApplication().isUnitTestMode()) {
-      InspectionResultsView view = context.createViewIfNeed();
-      if (!isDisposed()) {
-        ApplicationManager.getApplication().assertReadAccessAllowed();
-        synchronized (view.getTreeStructureUpdateLock()) {
-          final InspectionNode toolNode;
-          final AnalysisUIOptions uiOptions = context.getUIOptions();
-          toolNode = myToolNode == null ?
-                     view.addTool(myToolWrapper, HighlightDisplayLevel.find(getSeverity((RefElement)refElement)),
-                                  uiOptions.GROUP_BY_SEVERITY, view.isSingleInspectionRun()) : myToolNode;
-
-          final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>();
-          problems.put(refElement, descriptors);
-          final Map<String, Set<RefEntity>> contents = new HashMap<>();
-          final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
-          Set<RefEntity> content = contents.get(groupName);
-          if (content == null) {
-            content = new HashSet<>();
-            contents.put(groupName, content);
-          }
-          content.add(refElement);
-
-          view.getProvider().appendToolNodeContent(context,
-                                                   toolNode,
-                                                   (InspectionTreeNode)toolNode.getParent(),
-                                                   uiOptions.SHOW_STRUCTURE,
-                                                   true,
-                                                   contents,
-                                                   problems);
-
-        }
-      }
+      context.initializeViewIfNeed().doWhenDone(() -> {
+        context.getView().addProblemDescriptors(myToolWrapper, refElement, descriptors);
+      });
     }
   }
 
@@ -283,8 +251,9 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     return Arrays.copyOfRange(out, 0, o);
   }
 
-  public void setToolNode(InspectionNode toolNode) {
-    myToolNode = toolNode;
+  @Override
+  public InspectionNode getToolNode() {
+    return myToolNode;
   }
 
   protected boolean isDisposed() {
@@ -758,14 +727,13 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     return myIgnoredElements;
   }
 
-  @NotNull
   @Override
-  public InspectionNode createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext, @NotNull InspectionNode node,
-                                       @NotNull InspectionRVContentProvider provider,
-                                       @NotNull InspectionTreeNode parentNode,
-                                       boolean showStructure,
-                                       boolean groupBySeverity) {
-    return node;
+  public void createToolNode(@NotNull GlobalInspectionContextImpl globalInspectionContext, @NotNull InspectionNode node,
+                             @NotNull InspectionRVContentProvider provider,
+                             @NotNull InspectionTreeNode parentNode,
+                             boolean showStructure,
+                             boolean groupBySeverity) {
+    myToolNode = node;
   }
 
 

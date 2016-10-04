@@ -65,7 +65,8 @@ public class RtfTransferableData extends AbstractSyntaxAwareInputStreamTransfera
 
     holder.append("\n\\s0\\box")
       .append("\\cbpat").append(mySyntaxInfo.getDefaultBackground())
-      .append("\\cb").append(mySyntaxInfo.getDefaultBackground());
+      .append("\\cb").append(mySyntaxInfo.getDefaultBackground())
+      .append("\\cf").append(mySyntaxInfo.getDefaultForeground());
     addFontSize(holder, mySyntaxInfo.getFontSize());
     holder.append('\n');
 

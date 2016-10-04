@@ -691,9 +691,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
                   final Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
                   final Dependency dependency = node.getDependency();
                   if (dependency != null && winner == null) {
-                    Artifact winnerArtifact = RepositoryUtils.toArtifact(node.getArtifact());
-                    winnerArtifact.setScope(dependency.getScope());
-                    winnerArtifact.setOptional(dependency.isOptional());
+                    Artifact winnerArtifact = Maven3AetherModelConverter.toArtifact(dependency);
                     winnerDependencyMap.put(dependency, winnerArtifact);
                   }
                   return true;

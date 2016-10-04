@@ -18,15 +18,14 @@ package com.intellij.openapi.application.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ModalityStateListener;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
-import com.intellij.util.containers.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -40,10 +39,11 @@ import static com.intellij.openapi.application.impl.LaterInvocatorTest.flushSwin
 @SkipInHeadlessEnvironment
 public class PerProjectLaterInvocatorTest extends PlatformTestCase {
 
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.application.impl.PerProjectLaterInvocatorTest");
+
   private final static Object lock = new Object();
   @SuppressWarnings("EmptySynchronizedStatement") private static Runnable blockEDT = () -> {synchronized(lock){}};
 
-  private JFrame myFrame = new JFrame("Project frame");
   private Dialog myPerProjectModalDialog = new Dialog(null, "Per-project modal dialog", Dialog.ModalityType.DOCUMENT_MODAL);
   private Dialog myApplicationModalDialog = new Dialog(null, "Owned dialog", Dialog.ModalityType.DOCUMENT_MODAL);
 
@@ -60,7 +60,7 @@ public class PerProjectLaterInvocatorTest extends PlatformTestCase {
 
     private boolean waitSuspendedEDT = false;
 
-    static Testable creatTestable() {
+    static Testable createTestable() {
       return new Testable();
     }
 
@@ -141,7 +141,7 @@ public class PerProjectLaterInvocatorTest extends PlatformTestCase {
     Integer [] expectedOrder = {1, 2, 4, 3, 5};
     java.util.List<Integer> actualIntegers = Collections.synchronizedList(new ArrayList<Integer>());
 
-    Testable.creatTestable()
+    Testable.createTestable()
       .suspendEDT()
       .execute(() -> invokeLater(NumberedRunnable.withNumber(1, actualIntegers::add), ModalityState.NON_MODAL))
       .flushEDT()
@@ -179,8 +179,9 @@ public class PerProjectLaterInvocatorTest extends PlatformTestCase {
     AtomicInteger enteringIndex = new AtomicInteger(-1);
 
     ModalityStateListener modalityStateListener = entering -> {
-      if (entering != enteringOrder[enteringIndex.incrementAndGet()])
-        throw new RuntimeException("Trying to enter a modal state. Wrong order of the modalityStateListener invocations. Step #" + enteringIndex.get());
+      if (entering != enteringOrder[enteringIndex.incrementAndGet()]) {
+        throw new RuntimeException("Entrance index: " + enteringIndex + "; value: " + entering + " expected value: " + enteringOrder[enteringIndex.get()]);
+      }
     };
 
     Disposable emptyDisposal = () -> {};
@@ -191,7 +192,7 @@ public class PerProjectLaterInvocatorTest extends PlatformTestCase {
       LaterInvocator.removeModalityStateListener(modalityStateListener);
     };
 
-    Testable.creatTestable()
+    Testable.createTestable()
       .suspendEDT()
       .execute(() -> invokeLater(NumberedRunnable.withNumber(1), ModalityState.NON_MODAL))
       .flushEDT()
