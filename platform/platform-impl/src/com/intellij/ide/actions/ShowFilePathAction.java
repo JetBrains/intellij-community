@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -280,27 +281,24 @@ public class ShowFilePathAction extends AnAction {
 
   private static void doOpen(@NotNull File _dir, @Nullable File _toSelect) throws IOException, ExecutionException {
     String dir = FileUtil.toCanonicalPath(_dir.getPath());
-    String toSelect = _toSelect == null ? null : FileUtil.toCanonicalPath(_toSelect.getPath());
+    String toSelect = _toSelect != null ? FileUtil.toCanonicalPath(_toSelect.getPath()) : null;
 
     if (SystemInfo.isWindows) {
       String cmd = toSelect != null ? "explorer /select," + toSelect : "explorer /root," + dir;
-      Runtime.getRuntime().exec(cmd);  // no quoting/escaping is needed
-      return;
+      Process process = Runtime.getRuntime().exec(cmd);  // no quoting/escaping is needed
+      new CapturingProcessHandler(process, null, cmd).runProcess().checkSuccess(LOG);
     }
-
-    if (SystemInfo.isMac) {
+    else if (SystemInfo.isMac) {
       GeneralCommandLine cmd = toSelect != null ? new GeneralCommandLine("open", "-R", toSelect) : new GeneralCommandLine("open", dir);
-      cmd.createProcess();
-      return;
+      ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
-
-    if (canUseNautilus.getValue()) {
-      new GeneralCommandLine("nautilus", toSelect != null ? toSelect : dir).createProcess();
-      return;
+    else if (canUseNautilus.getValue()) {
+      GeneralCommandLine cmd = new GeneralCommandLine("nautilus", toSelect != null ? toSelect : dir);
+      ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
-
-    if (SystemInfo.hasXdgOpen()) {
-      new GeneralCommandLine("/usr/bin/xdg-open", dir).createProcess();
+    else if (SystemInfo.hasXdgOpen()) {
+      GeneralCommandLine cmd = new GeneralCommandLine("/usr/bin/xdg-open", dir);
+      ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
       Desktop.getDesktop().open(new File(dir));
