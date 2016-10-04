@@ -807,6 +807,13 @@ public class RedundantCastUtil {
         }
       }
     }
+    else if (stripParenthesisOperand instanceof PsiConditionalExpression) {
+      final PsiExpression thenExpr = PsiUtil.skipParenthesizedExprDown(((PsiConditionalExpression)stripParenthesisOperand).getThenExpression());
+      final PsiExpression elseExpr = PsiUtil.skipParenthesizedExprDown(((PsiConditionalExpression)stripParenthesisOperand).getElseExpression());
+      if (thenExpr instanceof PsiFunctionalExpression || elseExpr instanceof PsiFunctionalExpression) {
+        return true;
+      }
+    }
 
     PsiElement parent = typeCast.getParent();
     while(parent instanceof PsiParenthesizedExpression) parent = parent.getParent();
