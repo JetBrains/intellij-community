@@ -222,7 +222,7 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows ||
+    return SystemInfo.isWindows || SystemInfo.isMac ||
            SystemInfo.hasXdgOpen() || canUseNautilus.getValue() ||
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
