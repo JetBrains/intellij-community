@@ -53,7 +53,7 @@ public class StudySubtaskUtils {
       }
       updatePlaceholderTexts(project, document, taskFile, fromSubtaskIndex, toSubtaskIndex);
       EditorNotifications.getInstance(project).updateNotifications(virtualFile);
-      if (StudyUtils.isStudyProject(project)) {
+      if (StudyUtils.isStudentProject(project)) {
         WolfTheProblemSolver.getInstance(project).clearProblems(virtualFile);
         taskFile.setHighlightErrors(false);
       }
