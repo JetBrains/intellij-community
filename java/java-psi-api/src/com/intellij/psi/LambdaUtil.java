@@ -126,15 +126,27 @@ public class LambdaUtil {
 
   @Contract("null -> false")
   public static boolean isValidLambdaContext(@Nullable PsiElement context) {
-    return context instanceof PsiTypeCastExpression ||
+    context = PsiUtil.skipParenthesizedExprUp(context);
+    return isAssignmentOrInvocationContext(context) ||
+           context instanceof PsiTypeCastExpression ||
+           context instanceof PsiConditionalExpression && isAssignmentOrInvocationContext(PsiUtil.skipParenthesizedExprUp(context.getParent())) ||
+           context instanceof PsiExpressionStatement;
+  }
+
+  private static boolean isAssignmentOrInvocationContext(PsiElement context) {
+    return isAssignmentContext(context) || isInvocationContext(context);
+  }
+
+  private static boolean isInvocationContext(@Nullable PsiElement context) {
+    return context instanceof PsiExpressionList;
+  }
+
+  private static boolean isAssignmentContext(PsiElement context) {
+    return context instanceof PsiLambdaExpression ||
+           context instanceof PsiReturnStatement ||
            context instanceof PsiAssignmentExpression ||
            context instanceof PsiVariable ||
-           context instanceof PsiLambdaExpression ||
-           context instanceof PsiReturnStatement ||
-           context instanceof PsiExpressionList ||
-           context instanceof PsiParenthesizedExpression ||
-           context instanceof PsiArrayInitializerExpression ||
-           context instanceof PsiConditionalExpression && PsiTreeUtil.getParentOfType(context, PsiTypeCastExpression.class) == null;
+           context instanceof PsiArrayInitializerExpression;
   }
 
   public static boolean isLambdaFullyInferred(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
