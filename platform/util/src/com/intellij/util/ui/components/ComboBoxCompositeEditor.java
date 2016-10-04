@@ -49,6 +49,7 @@ public class ComboBoxCompositeEditor extends JComponent implements ComboBoxEdito
 
     for (int i = 0; i < components.length; i ++) {
       final int index = i;
+      add(components[i]);
       myComponents[i] = new ComboBoxCompositeEditor.EditorComponent () {
         public void setItem(String anObject) {
           if (components[index] instanceof JTextField) {
@@ -96,6 +97,8 @@ public class ComboBoxCompositeEditor extends JComponent implements ComboBoxEdito
       };
     }
 
+    invalidate();
+
     focusableComponentIndex = 0;
     final JComponent component = myComponents[focusableComponentIndex].getDelegate();
     component.setBorder(null);
@@ -105,7 +108,7 @@ public class ComboBoxCompositeEditor extends JComponent implements ComboBoxEdito
 
       @Override
       public void focusGained(FocusEvent e) {
-        parent = component.getParent();
+        parent = getParent();
         parent.repaint();
       }
 
@@ -118,7 +121,7 @@ public class ComboBoxCompositeEditor extends JComponent implements ComboBoxEdito
 
   @Override
   public Component getEditorComponent() {
-    return myComponents[focusableComponentIndex].getDelegate();
+    return this;
   }
 
   @Override

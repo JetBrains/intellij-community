@@ -266,9 +266,9 @@ public class JBUI {
   }
 
   /**
-   *    JComboBox<String> comboBox = new ComboBox<>();
-   *    comboBox.setEditable(true);
-   *    comboBox.setEditor(JBUI.ComboBox.compositeComboboxEditor(new JTextField("Text Field")));
+   *        JComboBox<String> comboBox = new ComboBox<>(new String[] {"First", "Second", "Third"});
+   *        comboBox.setEditable(true);
+   *        comboBox.setEditor(JBUI.ComboBox.compositeComboboxEditor(new JTextField(), new JLabel(AllIcons.Icon_CE)));
    */
   public static class ComboBox {
     public static ComboBoxCompositeEditor compositeComboboxEditor  (JComponent ... components) {
