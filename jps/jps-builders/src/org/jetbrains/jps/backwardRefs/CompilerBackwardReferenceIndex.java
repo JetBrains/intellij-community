@@ -16,6 +16,8 @@
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
 import gnu.trove.THashSet;
@@ -23,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.java.dependencyView.*;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -121,17 +124,18 @@ public class CompilerBackwardReferenceIndex {
   }
 
   public void close() {
-    try {
-      myFilePathEnumerator.close();
-      myBackwardHierarchyMap.close();
-      myBackwardReferenceMap.close();
-      myReferenceMap.close();
-      myHierarchyMap.close();
-      myNameEnumerator.close();
-    }
-    catch (IOException e) {
+    final CommonProcessors.FindFirstAndOnlyProcessor<BuildDataCorruptedException> exceptionProc =
+      new CommonProcessors.FindFirstAndOnlyProcessor<BuildDataCorruptedException>();
+    close(myFilePathEnumerator, exceptionProc);
+    close(myBackwardHierarchyMap, exceptionProc);
+    close(myBackwardReferenceMap, exceptionProc);
+    close(myHierarchyMap, exceptionProc);
+    close(myReferenceMap, exceptionProc);
+    close(myNameEnumerator, exceptionProc);
+    final BuildDataCorruptedException exception = exceptionProc.getFoundValue();
+    if (exception != null) {
       removeIndexFiles(myIndicesDir);
-      throw new BuildDataCorruptedException(e);
+      throw exception;
     }
   }
 
@@ -157,6 +161,24 @@ public class CompilerBackwardReferenceIndex {
     }
     catch (final IOException e) {
       return true;
+    }
+  }
+
+  private static void close(Closeable closeable, Processor<BuildDataCorruptedException> exceptionProcessor) {
+    try {
+      closeable.close();
+    }
+    catch (IOException e) {
+      exceptionProcessor.process(new BuildDataCorruptedException(e));
+    }
+  }
+
+  private static void close(CloseableMaplet closeable, Processor<BuildDataCorruptedException> exceptionProcessor) {
+    try {
+      closeable.close();
+    }
+    catch (BuildDataCorruptedException e) {
+      exceptionProcessor.process(e);
     }
   }
 }
