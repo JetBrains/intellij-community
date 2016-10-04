@@ -16,6 +16,7 @@
 package org.jetbrains.java.generate;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
@@ -79,6 +80,9 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
     }
 
     private static void doExecuteAction(@NotNull final Project project, @NotNull final PsiClass clazz, final Editor editor) {
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(clazz)) {
+            return;
+        }
         logger.debug("+++ doExecuteAction - START +++");
 
         if (logger.isDebugEnabled()) {
