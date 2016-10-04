@@ -80,12 +80,4 @@ public abstract class ComponentsListFocusTraversalPolicy extends LayoutFocusTrav
     }
     return null;
   }
-
-  /**
-   * Returns {@code true} to keep the focus cycling only through the components of the {@link #getOrderedComponents} list.
-   * Returns {@code false} to allows the focus to cycle through components outside of the {@link #getOrderedComponents} list.
-   */
-  protected boolean isFocusCycleRoot() {
-    return true;
-  }
 }

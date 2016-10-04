@@ -197,12 +197,6 @@ public class GithubLoginPanel {
     protected List<Component> getOrderedComponents() {
       return ContainerUtil.filter(myOrder, component -> component.isVisible() && component.isEnabled());
     }
-
-    @Override
-    protected boolean isFocusCycleRoot() {
-      // So that the focus cycles through the OK/Cancel/Help buttons.
-      return false;
-    }
   }
 }
 
