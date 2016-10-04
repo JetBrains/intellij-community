@@ -292,6 +292,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
                  "Variable 'hello' is accessed for writing");
   }
 
+  public void testAvoidTypeSpecificationWhenPossibleToAvoid() throws Exception {
+    doTest(false);
+  }
+
   private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {
     try {
       doTest(inlineDef);
