@@ -39,8 +39,11 @@ public class FStringsAnnotator extends PyAnnotator {
         final FStringParser.ParseResult result = FStringParser.parse(nodeText);
         TextRange unclosedBraceRange = null;
         for (Fragment fragment : result.getFragments()) {
-          final int fragmentEndOffset = fragment.getRightBraceOffset() == -1 ? nodeContentEnd : fragment.getRightBraceOffset() + 1;
-          final TextRange wholeFragmentRange = TextRange.create(fragment.getLeftBraceOffset(), fragmentEndOffset);
+          final int fragLeftBrace = fragment.getLeftBraceOffset();
+          final int fragContentEnd = fragment.getContentEndOffset();
+          final int fragRightBrace = fragment.getRightBraceOffset();
+
+          final TextRange wholeFragmentRange = TextRange.create(fragLeftBrace, fragRightBrace == -1 ? nodeContentEnd : fragRightBrace + 1);
           if (fragment.getDepth() > 2) {
             // Do not report anything about expression fragments nested deeper that three times
             if (fragment.getDepth() == 3) {
@@ -48,22 +51,19 @@ public class FStringsAnnotator extends PyAnnotator {
             }
             continue;
           }
-          final int fragContentEnd = fragment.getContentEndOffset();
-          if (CharArrayUtil.isEmptyOrSpaces(nodeText, fragment.getLeftBraceOffset() + 1, fragContentEnd)) {
-            final int endOffset = fragContentEnd == nodeContentEnd ? fragContentEnd : fragContentEnd + 1;
-            final TextRange range = TextRange.create(fragment.getLeftBraceOffset(), endOffset);
+          if (CharArrayUtil.isEmptyOrSpaces(nodeText, fragLeftBrace + 1, fragContentEnd) && fragContentEnd < nodeContentEnd) {
+            final TextRange range = TextRange.create(fragLeftBrace, fragContentEnd + 1);
             report("Empty expression fragments are not allowed inside f-strings", range, node);
           }
-          if (fragment.getRightBraceOffset() == -1 && unclosedBraceRange == null) {
+          if (fragRightBrace == -1 && unclosedBraceRange == null) {
             unclosedBraceRange = wholeFragmentRange;
           }
           if (fragment.getFirstHashOffset() != -1) {
             final TextRange range = TextRange.create(fragment.getFirstHashOffset(), fragment.getContentEndOffset());
             report("Expression fragments inside f-strings cannot include line comments", range, node);
           }
-          for (int i = fragment.getLeftBraceOffset() + 1; i < fragment.getContentEndOffset(); i++) {
-            final char c = nodeText.charAt(i);
-            if (c == '\\') {
+          for (int i = fragLeftBrace + 1; i < fragment.getContentEndOffset(); i++) {
+            if (nodeText.charAt(i) == '\\') {
               reportCharacter("Expression fragments inside f-strings cannot include backslashes", i, node);
             }
           }
@@ -71,7 +71,7 @@ public class FStringsAnnotator extends PyAnnotator {
           if (fragContentEnd < nodeContentEnd && nodeText.charAt(fragContentEnd) == '!' && fragContentEnd + 1 < nodeContentEnd) {
             final char conversionChar = nodeText.charAt(fragContentEnd + 1);
             // No conversion character -- highlight only "!"
-            if (fragContentEnd + 1 == fragment.getRightBraceOffset() || conversionChar == ':') {
+            if (fragContentEnd + 1 == fragRightBrace || conversionChar == ':') {
               reportCharacter("Conversion character is expected: should be one of 's', 'r', 'a'", fragContentEnd, node);
             }
             // Wrong conversion character -- highlight both "!" and the following symbol
