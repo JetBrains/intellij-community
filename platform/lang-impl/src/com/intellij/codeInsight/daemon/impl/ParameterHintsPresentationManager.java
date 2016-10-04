@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
@@ -186,7 +186,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     @Override
     public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
       if (myText != null && (step > steps || startWidth != 0)) {
-        TextAttributes attributes = editor.getColorsScheme().getAttributes(JavaHighlightingColors.INLINE_PARAMETER_HINT);
+        TextAttributes attributes = editor.getColorsScheme().getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
         if (attributes != null) {
           MyFontMetrics fontMetrics = getFontMetrics(editor);
           Color backgroundColor = attributes.getBackgroundColor();

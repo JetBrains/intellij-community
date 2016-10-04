@@ -22,7 +22,6 @@ import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.daemon.UsedColors;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -36,6 +35,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.EditorHighlightingProvidingColorSettingsPage;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Alarm;
@@ -54,7 +54,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.editor.colors.CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES;
+
 public class SimpleEditorPreview implements PreviewPanel {
+  private static final Map<String, TextAttributesKey> INLINE_ELEMENTS =
+    Collections.singletonMap("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+
   private final ColorSettingsPage myPage;
 
   private final EditorEx myEditor;
@@ -74,7 +79,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     myOptions = options;
     myPage = page;
 
-    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap());
+    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(), INLINE_ELEMENTS);
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
       myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
       10, 3, -1, myOptions, false);
@@ -187,12 +192,19 @@ public class SimpleEditorPreview implements PreviewPanel {
   private void updateHighlighters() {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myEditor.isDisposed()) return;
-      myEditor.getMarkupModel().removeAllHighlighters();
+      removeDecorations(myEditor);
       final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(myPage);
       for (final HighlightData data : myHighlightData) {
         data.addHighlToView(myEditor, myOptions.getSelectedScheme(), displayText);
       }
     });
+  }
+
+  private static void removeDecorations(Editor editor) {
+    editor.getMarkupModel().removeAllHighlighters();
+    for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength())) {
+      Disposer.dispose(inlay);
+    }
   }
 
   private static final int BLINK_COUNT = 3 * 2;
@@ -248,18 +260,14 @@ public class SimpleEditorPreview implements PreviewPanel {
                                                       final int count,
                                                       final ColorSettingsPage page) {
     if (show && count <= 0) return Collections.emptyList();
-    editor.getMarkupModel().removeAllHighlighters();
+    removeDecorations(editor);
     boolean found = false;
     List<HighlightData> highlights = new ArrayList<>();
     List<HighlightData> matchingHighlights = new ArrayList<>();
     for (HighlightData highlightData : myHighlightData) {
-      String type = highlightData.getHighlightType();
-      highlights.add(highlightData);
-      if (show && type.equals(attrKey)) {
-        highlightData =
-          new HighlightData(highlightData.getStartOffset(), highlightData.getEndOffset(),
-                            CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
-        highlights.add(highlightData);
+      boolean highlight = show && highlightData.getHighlightType().equals(attrKey);
+      highlightData.addToCollection(highlights, highlight);
+      if (highlight) {
         matchingHighlights.add(highlightData);
         found = true;
       }
@@ -272,8 +280,7 @@ public class SimpleEditorPreview implements PreviewPanel {
         for (final TextAttributesKey tokenHighlight : tokenHighlights) {
           String type = tokenHighlight.getExternalName();
           if (show && type != null && type.equals(attrKey)) {
-            HighlightData highlightData = new HighlightData(iterator.getStart(), iterator.getEnd(),
-                                                            CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
+            HighlightData highlightData = new HighlightData(iterator.getStart(), iterator.getEnd(), BLINKING_HIGHLIGHTS_ATTRIBUTES);
             highlights.add(highlightData);
             matchingHighlights.add(highlightData);
           }

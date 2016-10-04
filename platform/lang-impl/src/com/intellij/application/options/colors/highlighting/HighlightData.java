@@ -25,11 +25,15 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Collection;
 import java.util.Map;
 
-public final class HighlightData {
+import static com.intellij.openapi.editor.colors.CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES;
+
+public class HighlightData {
   private final int myStartOffset;
   private int myEndOffset;
   private final TextAttributesKey myHighlightType;
@@ -43,6 +47,11 @@ public final class HighlightData {
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myHighlightType = highlightType;
+  }
+
+  public void addToCollection(@NotNull Collection<HighlightData> list, boolean highlighted) {
+    list.add(this);
+    if (highlighted) list.add(new HighlightData(getStartOffset(), getEndOffset(), BLINKING_HIGHLIGHTS_ATTRIBUTES));
   }
 
   public void addHighlToView(final Editor view, EditorColorsScheme scheme, final Map<TextAttributesKey,String> displayText) {
