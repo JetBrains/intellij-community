@@ -56,12 +56,12 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
     doTest(
       "foo/bar/baz/test2.txt",
       "ans: $FileDirPathFromParent(bar)$ ",
-      "ans: baz/ "
+      "ans: baz" + File.separator + " "
     );
     doTest(
       "foo/bar/baz/test3.txt",
       "ans: $FileDirPathFromParent(foo/bar)$ ",
-      "ans: baz/ "
+      "ans: baz" + File.separator + " "
     );
     doTest(
       "foo/bar/baz/test4.txt",
@@ -74,7 +74,7 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
     PsiFile file = myFixture.addFileToProject("foo/bar/baz/test.txt", "");
     String args = "ans: $FileDirPathFromParent(qqq/)$ ";
     String actual = MacroManager.getInstance().expandMacrosInString(args, false, getContext(file.getVirtualFile()));
-    String expected = "ans: " + StringUtil.trimEnd(file.getVirtualFile().getParent().getPath(), "/") + "/ ";
+    String expected = "ans: " + FileUtil.toSystemDependentName(StringUtil.trimEnd(file.getVirtualFile().getParent().getPath(), "/") + "/ ");
     assertEquals(expected, actual);
   }
 
