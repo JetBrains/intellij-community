@@ -140,7 +140,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
 
   @Nullable
   @Override
-  public GlobalSearchScope getScopeWithoutReferences(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
+  public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
     if (!isServiceEnabled()) return null;
 
     final ParameterizedCachedValueProvider<GlobalSearchScope, CompilerSearchAdapter> cachedValueProvider =
