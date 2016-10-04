@@ -87,7 +87,7 @@ public class ShowFilePathAction extends AnAction {
       }
 
       String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-      if (appName == null || !appName.matches("nautilus.*\\.desktop")) return false;
+      if (appName == null || !appName.matches(".*(?i:nautilus).*\\.desktop")) return false;
 
       String version = ExecUtil.execAndReadLine(new GeneralCommandLine("nautilus", "--version"));
       if (version == null) return false;
