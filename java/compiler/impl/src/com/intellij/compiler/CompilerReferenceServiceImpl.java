@@ -15,10 +15,8 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileTask;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -40,9 +38,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.Set;
+import java.util.UUID;
 
 import static com.intellij.psi.search.GlobalSearchScope.*;
-import static com.intellij.psi.search.GlobalSearchScope.notScope;
 
 public class CompilerReferenceServiceImpl extends CompilerReferenceService {
   private static final Key<ParameterizedCachedValue<GlobalSearchScope, CompilerSearchAdapter>> CACHE_KEY = Key.create("compiler.ref.service.search");
@@ -64,21 +62,21 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
   @Override
   public void projectOpened() {
     if (isEnabled()) {
-      CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
+      myProject.getMessageBus().connect(myProject).subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
-        public boolean execute(CompileContext context) {
-          closeReaderIfNeed();
-          return true;
+        public void beforeBuildProcessStarted(Project project, UUID sessionId) {
         }
-      });
 
-      CompilerManager.getInstance(myProject).addAfterTask(new CompileTask() {
         @Override
-        public boolean execute(CompileContext context) {
+        public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
+          closeReaderIfNeed();
+        }
+
+        @Override
+        public void buildFinished(Project project, UUID sessionId, boolean isAutomake) {
           myChangedModules.clear();
           myDirtyScope = EMPTY_SCOPE;
           openReaderIfNeed();
-          return true;
         }
       });
 
