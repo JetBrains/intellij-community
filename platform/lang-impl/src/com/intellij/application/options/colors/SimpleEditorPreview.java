@@ -49,10 +49,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.openapi.editor.colors.CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES;
 
@@ -117,7 +115,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     int offset = myEditor.logicalPositionToOffset(pos);
     final SyntaxHighlighter highlighter = myPage.getHighlighter();
 
-    String type = null;
+    String type;
     HighlightData highlightData = getDataFromOffset(offset);
     if (highlightData != null) {
       // tag-based navigation first
@@ -127,7 +125,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     }
     else {
       // if failed, try the highlighter-based navigation
-      type = selectItem(((EditorEx)myEditor).getHighlighter().createIterator(offset), highlighter);
+      type = selectItem(myEditor.getHighlighter().createIterator(offset), highlighter);
     }
 
     setCursor(type == null ? Cursor.TEXT_CURSOR : Cursor.HAND_CURSOR);
@@ -293,7 +291,7 @@ public class SimpleEditorPreview implements PreviewPanel {
     final Map<TextAttributesKey, String> displayText = ColorSettingsUtil.keyToDisplayTextMap(page);
 
     // sort highlights to avoid overlappings
-    Collections.sort(highlights, (highlightData1, highlightData2) -> highlightData1.getStartOffset() - highlightData2.getStartOffset());
+    Collections.sort(highlights, Comparator.comparingInt(HighlightData::getStartOffset));
     for (int i = highlights.size() - 1; i >= 0; i--) {
       HighlightData highlightData = highlights.get(i);
       int startOffset = highlightData.getStartOffset();

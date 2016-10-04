@@ -63,24 +63,21 @@ public class HighlightData {
 
     final TextAttributes attr = scheme.getAttributes(myHighlightType);
     if (attr != null) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            // IDEA-53203: add ERASE_MARKER for manually defined attributes
-            view.getMarkupModel().addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                      TextAttributes.ERASE_MARKER, HighlighterTargetArea.EXACT_RANGE);
-            RangeHighlighter highlighter = view.getMarkupModel()
-              .addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX, attr,
-                                   HighlighterTargetArea.EXACT_RANGE);
-            final Color errorStripeColor = attr.getErrorStripeColor();
-            highlighter.setErrorStripeMarkColor(errorStripeColor);
-            final String tooltip = displayText.get(myHighlightType);
-            highlighter.setErrorStripeTooltip(tooltip);
-          }
-          catch (Exception e) {
-            throw new RuntimeException(e);
-          }
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        try {
+          // IDEA-53203: add ERASE_MARKER for manually defined attributes
+          view.getMarkupModel().addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                    TextAttributes.ERASE_MARKER, HighlighterTargetArea.EXACT_RANGE);
+          RangeHighlighter highlighter = view.getMarkupModel()
+            .addRangeHighlighter(myStartOffset, myEndOffset, HighlighterLayer.ADDITIONAL_SYNTAX, attr,
+                                 HighlighterTargetArea.EXACT_RANGE);
+          final Color errorStripeColor = attr.getErrorStripeColor();
+          highlighter.setErrorStripeMarkColor(errorStripeColor);
+          final String tooltip = displayText.get(myHighlightType);
+          highlighter.setErrorStripeTooltip(tooltip);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
         }
       });
     }
