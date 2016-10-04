@@ -289,17 +289,8 @@ public class ShowFilePathAction extends AnAction {
     }
 
     if (SystemInfo.isMac) {
-      if (toSelect != null) {
-        final String script = String.format(
-          "tell application \"Finder\"\n" +
-          "\treveal {\"%s\"} as POSIX file\n" +
-          "\tactivate\n" +
-          "end tell", toSelect);
-        new GeneralCommandLine(ExecUtil.getOsascriptPath(), "-e", script).createProcess();
-      }
-      else {
-        new GeneralCommandLine("open", dir).createProcess();
-      }
+      GeneralCommandLine cmd = toSelect != null ? new GeneralCommandLine("open", "-R", toSelect) : new GeneralCommandLine("open", dir);
+      cmd.createProcess();
       return;
     }
 
