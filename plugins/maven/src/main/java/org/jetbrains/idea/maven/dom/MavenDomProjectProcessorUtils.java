@@ -465,7 +465,7 @@ public class MavenDomProjectProcessorUtils {
     if (processProfiles(projectDom.getProfiles(), mavenProjectOrNull, processor, domProfileFunction)) return true;
 
     T t = projectDomFunction.fun(projectDom);
-    return t == null ? false : processor.process(t);
+    return t != null && processor.process(t);
   }
 
   private static <T> boolean processProfilesXml(VirtualFile projectFile,
