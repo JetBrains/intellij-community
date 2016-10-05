@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
@@ -178,25 +179,34 @@ public class IdeBackgroundUtil {
     }
   }
 
+  static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
+    @Override
+    public boolean isCompatibleValue(Object val) {
+      return val instanceof Boolean;
+    }
+  };
+
   private static class MyGraphics extends Graphics2DDelegate {
     final PaintersHelper helper;
     final int[] offsets;
-    
+    Color preserved;
+
     static Graphics2D wrap(Graphics g, PaintersHelper helper, JComponent component) {
-      return new MyGraphics(g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : g,
-                            helper, helper.computeOffsets(g, component));
+      MyGraphics gg = g instanceof MyGraphics ? (MyGraphics)g : null;
+      return new MyGraphics(gg != null ? gg.myDelegate : g, helper, helper.computeOffsets(g, component), gg != null ? gg.preserved : null);
     }
 
-    MyGraphics(Graphics g, PaintersHelper helper, int[] offsets) {
+    MyGraphics(Graphics g, PaintersHelper helper, int[] offsets, Color preserved) {
       super((Graphics2D)g);
       this.helper = helper;
       this.offsets = offsets;
+      this.preserved = preserved;
     }
 
     @NotNull
     @Override
     public Graphics create() {
-      return new MyGraphics(getDelegate().create(), helper, offsets);
+      return new MyGraphics(getDelegate().create(), helper, offsets, preserved);
     }
 
     @Override
@@ -246,13 +256,20 @@ public class IdeBackgroundUtil {
         if (!(reason instanceof BufferedImage)) return;
         if (((BufferedImage)reason).getColorModel().hasAlpha()) return;
       }
+      boolean preserve = reason instanceof Color && reason.equals(preserved);
+      if (preserve) {
+        myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
+      }
 
       Shape s = getClip();
       Rectangle newClip = s == null ? new Rectangle(x, y, width, height) :
                           SwingUtilities.computeIntersection(x, y, width, height, s.getBounds());
       setClip(newClip);
-      helper.runAllPainters(getDelegate(), offsets);
+      helper.runAllPainters(myDelegate, offsets);
       setClip(s);
+      if (preserve) {
+        myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.FALSE);
+      }
     }
   }
 
@@ -260,13 +277,30 @@ public class IdeBackgroundUtil {
     @Override
     public Graphics2D fun(JComponent c, Graphics2D g) {
       String type = getComponentType(c);
+      if (type == null) return g;
+      if ("frame".equals(type)) return withFrameBackground(g, c);
       if ("editor".equals(type)) {
+        //noinspection CastConflictsWithInstanceof
         Editor editor = c instanceof EditorComponentImpl ? ((EditorComponentImpl)c).getEditor() :
                         c instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)c) : null;
-        if (Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) return g;
+        if (editor != null) {
+          if (!(g instanceof MyGraphics) && Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(editor))) return g;
+          Graphics2D gg = withEditorBackground(g, c);
+          if (gg instanceof MyGraphics) {
+            ((MyGraphics)gg).preserved = editor.getColorsScheme().getColor(EditorColors.SELECTION_BACKGROUND_COLOR);
+          }
+          return gg;
+        }
       }
-      if ("frame".equals(type)) return withFrameBackground(g, c);
-      return type != null ? withEditorBackground(g, c) : g;
+      Graphics2D gg = withEditorBackground(g, c);
+      if (gg instanceof MyGraphics) {
+        Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
+        ((MyGraphics)gg).preserved = view instanceof JTree ? UIUtil.getTreeSelectionBackground() :
+                                     view instanceof JList ? UIUtil.getListSelectionBackground() :
+                                     view instanceof JTable ? UIUtil.getTableSelectionBackground() :
+                                     null;
+      }
+      return gg;
     }
   }
 }
