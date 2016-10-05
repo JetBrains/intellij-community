@@ -16,6 +16,7 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.IdeBundle;
@@ -63,11 +64,14 @@ public class SearchAgainAction extends AnAction implements DumbAware {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      presentation.setEnabled(false);
+    presentation.setEnabled(false);
+    if (project == null)
       return;
-    }
-    FileEditor editor = event.getData(PlatformDataKeys.FILE_EDITOR);
-    presentation.setEnabled(editor instanceof TextEditor);
+    final FileEditor editor = event.getData(PlatformDataKeys.FILE_EDITOR);
+    if (!(editor instanceof TextEditor))
+      return;
+
+    final EditorSearchSession search = EditorSearchSession.get(event.getData(PlatformDataKeys.EDITOR));
+    presentation.setEnabled(search != null);
   }
 }
