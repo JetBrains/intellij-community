@@ -350,6 +350,7 @@ public class ExternalSystemTaskActivator {
   }
 
   public enum Phase {
+    BEFORE_RUN("external.system.task.before.run"),
     BEFORE_SYNC("external.system.task.before.sync"),
     AFTER_SYNC("external.system.task.after.sync"),
     BEFORE_COMPILE("external.system.task.before.compile"),
