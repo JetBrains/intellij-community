@@ -31,6 +31,9 @@ public class TokenSet {
   public static final TokenSet EMPTY = new TokenSet(Short.MAX_VALUE, (short)0) {
     @Override public boolean contains(IElementType t) { return false; }
   };
+  public static final TokenSet ANY = new TokenSet(Short.MAX_VALUE, (short)0) {
+    @Override public boolean contains(IElementType t) { return true; }
+  };
 
   private final short myShift;
   private final short myMax;
