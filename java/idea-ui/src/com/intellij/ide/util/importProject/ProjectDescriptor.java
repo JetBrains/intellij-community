@@ -17,6 +17,7 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.JavaModuleSourceRoot;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,8 +27,6 @@ import java.util.*;
  * @author nik
  */
 public class ProjectDescriptor {
-  public static final Key<ProjectDescriptor> PROJECT_DESCRIPTOR_KEY = Key.create("ProjectDescriptor");
-
   private List<ModuleDescriptor> myModules = Collections.emptyList();
   private List<LibraryDescriptor> myLibraries = Collections.emptyList();
   private Set<LibraryDescriptor> myLibrariesSet = Collections.emptySet();
@@ -58,7 +57,14 @@ public class ProjectDescriptor {
     return available.contains(lib);
   }
 
-  public boolean isWithModuleInfo() {
+  public JavaSdkVersion getRequiredJdkVersion() {
+    if (isWithModuleInfo()) {
+      return JavaSdkVersion.JDK_1_9;
+    }
+    return null;
+  }
+
+  private boolean isWithModuleInfo() {
     return myModules.stream()
       .flatMap(module -> module.getSourceRoots().stream())
       .anyMatch(sourceRoot -> sourceRoot instanceof JavaModuleSourceRoot && ((JavaModuleSourceRoot)sourceRoot).isWithModuleInfoFile());

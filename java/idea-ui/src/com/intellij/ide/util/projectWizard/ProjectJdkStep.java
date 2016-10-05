@@ -43,6 +43,7 @@ import java.awt.*;
  */
 public class ProjectJdkStep extends ModuleWizardStep {
   private final WizardContext myContext;
+  private ProjectDescriptor myProjectDescriptor;
 
   protected final ProjectJdksConfigurable myProjectJdksConfigurable;
 
@@ -81,9 +82,9 @@ public class ProjectJdkStep extends ModuleWizardStep {
   public void updateStep() {
     final Sdk jdk = myContext.getProjectJdk();
     if (jdk == null) {
-      final ProjectDescriptor projectDescriptor = myContext.getUserData(ProjectDescriptor.PROJECT_DESCRIPTOR_KEY);
-      if (projectDescriptor != null && projectDescriptor.isWithModuleInfo()) {
-        myProjectJdksConfigurable.selectJdkVersion(JavaSdkVersion.JDK_1_9);
+      JavaSdkVersion requiredJdkVersion = myProjectDescriptor != null ? myProjectDescriptor.getRequiredJdkVersion() : null;
+      if (requiredJdkVersion != null) {
+        myProjectJdksConfigurable.selectJdkVersion(requiredJdkVersion);
       }
     }
   }
@@ -122,5 +123,9 @@ public class ProjectJdkStep extends ModuleWizardStep {
   public void disposeUIResources() {
     super.disposeUIResources();
     myProjectJdksConfigurable.disposeUIResources();
+  }
+
+  public void setProjectDescriptor(ProjectDescriptor projectDescriptor) {
+    myProjectDescriptor = projectDescriptor;
   }
 }
