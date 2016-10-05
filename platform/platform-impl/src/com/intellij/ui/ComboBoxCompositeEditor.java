@@ -20,31 +20,43 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.function.BiConsumer;
+
+import static java.awt.GridBagConstraints.CENTER;
 
 /**
  * @author Denis Fokin
- */
-
-/**
+ *
  * JComboBox<String> comboBox = new ComboBox<>(new String[] {"First", "Second", "Third"});
  * comboBox.setEditable(true);
  * comboBox.setEditor(new ComboBoxCompositeEditor(new EditorTextField(), new JLabel(AllIcons.Icon_CE)));
- * @param <ItemType>
- * @param <FocusableComponentType>
+ * @param <I>
+ * @param <F>
  */
 
-public class ComboBoxCompositeEditor<ItemType, FocusableComponentType extends JComponent> extends JComponent implements ComboBoxEditor {
+public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel implements ComboBoxEditor {
 
-  public interface EditorComponent<FocusableComponentType, ItemType> {
-    void setItem(ItemType anObject);
-    ItemType getItem();
+  public static <ItemType, FocusableComponentType extends JComponent> ComboBoxCompositeEditor<ItemType, FocusableComponentType> withComponents (final JComponent ... components) {
+    return new ComboBoxCompositeEditor<>(components);
+  }
+
+  private BiConsumer<I, F>  myOnSetItemHandler = null;
+
+  public ComboBoxCompositeEditor<I, F> onSetItem (BiConsumer<I, F> onSetItemHandler) {
+    myOnSetItemHandler = onSetItemHandler;
+    return this;
+  }
+
+  public interface EditorComponent<F, I> {
+    void setItem(I anObject);
+    I getItem();
     void selectAll();
     void addActionListener(ActionListener l);
     void removeActionListener(ActionListener l);
     JComponent getDelegate();
   }
 
-  public ComboBoxCompositeEditorStrategy getStrategy(FocusableComponentType focuasbleComponent) {
+  private ComboBoxCompositeEditorStrategy getStrategy(F focuasbleComponent) {
     ComboBoxCompositeEditorStrategy strategy = null;
     if (focuasbleComponent instanceof JTextField) {
       strategy = jTextFieldStrategy;
@@ -54,20 +66,25 @@ public class ComboBoxCompositeEditor<ItemType, FocusableComponentType extends JC
     return strategy;
   }
 
-  abstract class ComboBoxCompositeEditorStrategy<FocusableComponentType> {
+  abstract class ComboBoxCompositeEditorStrategy {
 
-    abstract void setItem(JComponent component, ItemType anObject);
+    abstract void setItem(F component, I anObject);
 
-    abstract void selectAll(JComponent component);
+    abstract void selectAll(F component);
 
-    abstract void addActionListener(JComponent component, ActionListener l) ;
+    abstract void addActionListener(F component, ActionListener l) ;
 
-    abstract void removeActionListener(JComponent component, ActionListener l) ;
+    abstract void removeActionListener(F component, ActionListener l) ;
   }
 
-  private ComboBoxCompositeEditorStrategy editorTextFieldStrategy = new ComboBoxCompositeEditorStrategy<ItemType> () {
-    public void setItem(JComponent component, ItemType anObject) {
-      ((EditorTextField)component).setText((anObject == null) ? "" : anObject.toString());
+  private ComboBoxCompositeEditorStrategy editorTextFieldStrategy = new ComboBoxCompositeEditorStrategy () {
+    BiConsumer<I, EditorTextField> defaultOnSetHandler = (anObject, component) -> (component).setText((anObject == null) ? "" : anObject.toString());
+    public void setItem(F component, I anObject) {
+      if (myOnSetItemHandler == null) {
+        defaultOnSetHandler.accept(anObject, (EditorTextField)component);
+      } else {
+        myOnSetItemHandler.accept(anObject, component);
+      }
     }
 
     public void selectAll(JComponent component) {
@@ -83,9 +100,16 @@ public class ComboBoxCompositeEditor<ItemType, FocusableComponentType extends JC
     }
   };
 
-  private ComboBoxCompositeEditorStrategy jTextFieldStrategy =  new ComboBoxCompositeEditorStrategy<ItemType> (){
-    public void setItem(JComponent component, ItemType anObject) {
-      ((JTextField)component).setText((anObject ==null) ? "" : anObject.toString());
+  private ComboBoxCompositeEditorStrategy jTextFieldStrategy =  new ComboBoxCompositeEditorStrategy(){
+
+    BiConsumer<I, JTextField> defaultOnSetHandler = (anObject, component) ->  component.setText((anObject ==null) ? "" : anObject.toString());
+
+    public void setItem(F component, I anObject) {
+      if (myOnSetItemHandler == null) {
+        defaultOnSetHandler.accept(anObject, (JTextField)component);
+      } else {
+        myOnSetItemHandler.accept(anObject, component);
+      }
     }
 
     public void selectAll(JComponent component) {
@@ -101,49 +125,59 @@ public class ComboBoxCompositeEditor<ItemType, FocusableComponentType extends JC
     }
   };
 
-  private final EditorComponent<FocusableComponentType, ItemType>[] myComponents;
-  private ItemType myItem = null;
+  private final EditorComponent<F, I>[] myComponents;
   private int focusableComponentIndex;
 
   public ComboBoxCompositeEditor(final JComponent ... components) {
     assert components.length > 0;
-    setLayout(new GridLayout(1, 0));
+    //setLayout(new GridLayout(1, 0));
+    setLayout(new GridBagLayout());
     setFocusable(false);
     myComponents = new EditorComponent[components.length];
 
+    GridBagConstraints c = new GridBagConstraints();
+
+    c.fill = GridBagConstraints.BOTH;
+    c.weightx = 1;
+    c.gridy = 0;
+    c.anchor = CENTER;
+    c.ipadx = 0;
+    c.ipady = 0;
+
     for (int i = 0; i < components.length; i ++) {
-      final int index = i;
-      add(components[i]);
+      c.gridx = i;
+      add(components[i], c);
+      c.weightx = 0;
     }
 
-    final ComboBoxCompositeEditorStrategy strategy = getStrategy((FocusableComponentType)components[focusableComponentIndex]);
+    final ComboBoxCompositeEditorStrategy strategy = getStrategy((F)components[focusableComponentIndex]);
 
-    myComponents[focusableComponentIndex] = new ComboBoxCompositeEditor.EditorComponent<FocusableComponentType, ItemType>() {
+    myComponents[focusableComponentIndex] = new ComboBoxCompositeEditor.EditorComponent<F, I>() {
 
-      ItemType myItem;
+      I myItem;
 
-      public void setItem(ItemType anObject) {
+      public void setItem(I anObject) {
         myItem = anObject;
-        strategy.setItem(components[focusableComponentIndex], anObject);
+        strategy.setItem((F)components[focusableComponentIndex], anObject);
       }
 
-      public ItemType getItem() {
+      public I getItem() {
         return myItem;
       }
 
       @Override
       public void selectAll() {
-        strategy.selectAll(components[focusableComponentIndex]);
+        strategy.selectAll((F)components[focusableComponentIndex]);
       }
 
       @Override
       public void addActionListener(ActionListener l) {
-        strategy.addActionListener(components[focusableComponentIndex], l);
+        strategy.addActionListener((F)components[focusableComponentIndex], l);
       }
 
       @Override
       public void removeActionListener(ActionListener l) {
-        strategy.removeActionListener(components[focusableComponentIndex], l);
+        strategy.removeActionListener((F)components[focusableComponentIndex], l);
       }
 
       @Override
@@ -151,7 +185,6 @@ public class ComboBoxCompositeEditor<ItemType, FocusableComponentType extends JC
         return components[focusableComponentIndex];
       }
     };
-
 
     invalidate();
 
@@ -182,12 +215,12 @@ public class ComboBoxCompositeEditor<ItemType, FocusableComponentType extends JC
 
   @Override
   public void setItem(Object anObject) {
-    myComponents[focusableComponentIndex].setItem((ItemType)anObject);
+    myComponents[focusableComponentIndex].setItem((I)anObject);
   }
 
   @Override
   public Object getItem() {
-    return myItem;
+    return myComponents[focusableComponentIndex].getItem();
   }
 
   @Override
