@@ -34,7 +34,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -108,14 +107,7 @@ public class MigrationMapSet {
 
       for (PredefinedMigrationProvider provider : Extensions.getExtensions(PredefinedMigrationProvider.EP_NAME)) {
         URL migrationMap = provider.getMigrationMap();
-        File migrationFile;
-        try {
-          migrationFile = Paths.get(migrationMap.toURI()).toFile();
-        }
-        catch (URISyntaxException e) {
-          migrationFile = new File(migrationMap.getFile());
-        }
-        copyMap(dir, migrationMap, migrationFile.getName());
+        copyMap(dir, migrationMap, new File(migrationMap.getFile()).getName());
       }
 
       for (String defaultTemplate : DEFAULT_MAPS) {
