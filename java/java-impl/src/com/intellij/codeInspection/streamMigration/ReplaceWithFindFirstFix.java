@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -114,7 +115,7 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
         }
       }
       trueExpression =
-        targetType == null ? trueExpression : ExpressionUtils.convertInitializerToNormalExpression(trueExpression, targetType);
+        targetType == null ? trueExpression : RefactoringUtil.convertInitializerToNormalExpression(trueExpression, targetType);
       stream += ".map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
     }
     stream += ".orElse(" + falseExpression.getText() + ")";

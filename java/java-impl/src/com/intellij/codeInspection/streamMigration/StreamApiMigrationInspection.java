@@ -35,6 +35,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
@@ -884,7 +885,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       } else if(myVariable.getType() instanceof PsiPrimitiveType) {
         operationName = "mapToObj";
       }
-      PsiExpression expression = myType == null ? myExpression : ExpressionUtils.convertInitializerToNormalExpression(myExpression, myType);
+      PsiExpression expression = myType == null ? myExpression : RefactoringUtil.convertInitializerToNormalExpression(myExpression, myType);
       return "." + operationName + "(" + LambdaUtil.createLambda(myVariable, expression) + ")";
     }
   }

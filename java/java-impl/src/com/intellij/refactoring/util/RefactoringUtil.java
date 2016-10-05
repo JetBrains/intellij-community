@@ -52,7 +52,6 @@ import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -661,7 +660,7 @@ public class RefactoringUtil {
   }
 
   @Contract("null, _ -> null")
-  public static PsiExpression convertInitializerToNormalExpression(@Nullable PsiExpression expression, @Nullable PsiType forcedReturnType)
+  public static PsiExpression convertInitializerToNormalExpression(PsiExpression expression, PsiType forcedReturnType)
     throws IncorrectOperationException {
     if (expression instanceof PsiArrayInitializerExpression && (forcedReturnType == null || forcedReturnType instanceof PsiArrayType)) {
       return createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)expression, forcedReturnType);
@@ -669,8 +668,8 @@ public class RefactoringUtil {
     return expression;
   }
 
-  public static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer,
-                                                                      @Nullable PsiType forcedType) throws IncorrectOperationException {
+  public static PsiExpression createNewExpressionFromArrayInitializer(PsiArrayInitializerExpression initializer, PsiType forcedType)
+    throws IncorrectOperationException {
     PsiType initializerType = null;
     if (initializer != null) {
       if (forcedType != null) {
@@ -684,7 +683,14 @@ public class RefactoringUtil {
       return initializer;
     }
     LOG.assertTrue(initializerType instanceof PsiArrayType);
-    return ExpressionUtils.createNewExpressionFromArrayInitializer(initializer, (PsiArrayType)initializerType);
+    PsiElementFactory factory = JavaPsiFacade.getInstance(initializer.getProject()).getElementFactory();
+    PsiNewExpression result =
+      (PsiNewExpression)factory.createExpressionFromText("new " + initializerType.getPresentableText() + "{}", null);
+    result = (PsiNewExpression)CodeStyleManager.getInstance(initializer.getProject()).reformat(result);
+    PsiArrayInitializerExpression arrayInitializer = result.getArrayInitializer();
+    LOG.assertTrue(arrayInitializer != null);
+    arrayInitializer.replace(initializer);
+    return result;
   }
 
   public static void makeMethodAbstract(@NotNull PsiClass targetClass, @NotNull PsiMethod method) throws IncorrectOperationException {
