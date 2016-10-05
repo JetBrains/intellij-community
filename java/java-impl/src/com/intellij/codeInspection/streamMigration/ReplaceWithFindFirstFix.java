@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,7 +108,8 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       }
       if(trueExpression instanceof PsiConditionalExpression) {
         PsiConditionalExpression condition = (PsiConditionalExpression)trueExpression;
-        if(EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(falseExpression, condition.getElseExpression())) {
+        PsiExpression elseExpression = condition.getElseExpression();
+        if(elseExpression != null && PsiEquivalenceUtil.areElementsEquivalent(falseExpression, elseExpression)) {
           return generateOptionalUnwrap(
             stream + ".filter(" + LambdaUtil.createLambda(var, condition.getCondition()) + ")", tb,
             condition.getThenExpression(), falseExpression, targetType);

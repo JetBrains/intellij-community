@@ -17,6 +17,7 @@ package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
@@ -41,7 +42,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntArrayList;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -759,8 +759,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     PsiMethodCallExpression maybeSizeCall = (PsiMethodCallExpression)dimensions[0];
     if (maybeSizeCall.getArgumentList().getExpressions().length != 0) return null;
     PsiReferenceExpression maybeSizeExpression = maybeSizeCall.getMethodExpression();
-    if (!"size".equals(maybeSizeExpression.getReferenceName()) || !EquivalenceChecker.getCanonicalPsiEquivalence()
-      .expressionsAreEquivalent(qualifierExpression, maybeSizeExpression.getQualifierExpression())) {
+    PsiExpression sizeQualifier = maybeSizeExpression.getQualifierExpression();
+    if (sizeQualifier != null &&
+        !("size".equals(maybeSizeExpression.getReferenceName()) &&
+          PsiEquivalenceUtil.areElementsEquivalent(qualifierExpression, sizeQualifier))) {
       return null;
     }
     return call;
