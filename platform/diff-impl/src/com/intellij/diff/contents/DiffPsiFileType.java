@@ -85,13 +85,6 @@ public class DiffPsiFileType extends LanguageFileType implements FileTypeIdentif
   }
 
 
-  public static class TypeFactory extends FileTypeFactory {
-    @Override
-    public void createFileTypes(@NotNull FileTypeConsumer consumer) {
-      consumer.consume(INSTANCE);
-    }
-  }
-
   public static class Substitutor extends LanguageSubstitutor {
     @Nullable
     @Override

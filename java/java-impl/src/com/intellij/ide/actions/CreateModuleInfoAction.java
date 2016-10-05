@@ -52,7 +52,7 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
     DataContext ctx = e.getDataContext();
     boolean available = Optional.ofNullable(LangDataKeys.IDE_VIEW.getData(ctx))
       .map(view -> getTargetDirectory(ctx, view))
-      .filter(dir -> JavaDirectoryService.getInstance().isSourceRoot(dir) && PsiUtil.isLanguageLevel9OrHigher(dir))
+      .filter(PsiUtil::isLanguageLevel9OrHigher)
       .map(ModuleUtilCore::findModuleForPsiElement)
       .map(module -> FilenameIndex.getVirtualFilesByName(module.getProject(), MODULE_INFO_FILE, module.getModuleScope(false)).isEmpty())
       .orElse(false);
@@ -63,7 +63,15 @@ public class CreateModuleInfoAction extends CreateFromTemplateActionBase {
   @Override
   protected PsiDirectory getTargetDirectory(DataContext dataContext, IdeView view) {
     PsiDirectory[] directories = view.getDirectories();
-    return directories.length == 1 ? directories[0] : null;
+    if (directories.length == 1) {
+      PsiDirectory directory = directories[0];
+      JavaDirectoryService service = JavaDirectoryService.getInstance();
+      if (service.isSourceRoot(directory) && service.getPackage(directory) != null) {
+        return directory;
+      }
+    }
+
+    return null;
   }
 
   @Override

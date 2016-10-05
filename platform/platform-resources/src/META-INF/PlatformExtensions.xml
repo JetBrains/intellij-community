@@ -107,7 +107,6 @@
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
 
-    <fileTypeFactory implementation="com.intellij.diff.contents.DiffPsiFileType$TypeFactory"/>
     <lang.substitutor language="TEXT" implementationClass="com.intellij.diff.contents.DiffPsiFileType$Substitutor" order="first"/>
     <daemon.highlightInfoFilter implementation="com.intellij.diff.contents.DiffPsiFileType$HighlightFilter"/>
     <daemon.intentionActionFilter implementation="com.intellij.diff.contents.DiffPsiFileType$IntentionFilter"/>

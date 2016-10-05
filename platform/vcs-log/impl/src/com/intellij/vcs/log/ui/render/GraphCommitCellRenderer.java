@@ -37,7 +37,7 @@ import java.util.Map;
 
 public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
   private static final Logger LOG = Logger.getInstance(GraphCommitCellRenderer.class);
-  private static final int MAX_GRAPH_WIDTH = 10;
+  private static final int MAX_GRAPH_WIDTH = 6;
 
   private static final int VERTICAL_PADDING = JBUI.scale(7);
 

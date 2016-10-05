@@ -31,13 +31,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import java.io.File
 
-class ReportMissingOrExcessiveInlineHint : AnAction() {
+class ReportExcessiveInlineHint : AnAction() {
   
-  private val text = "Report Missing or Excessive Inline Hint"
+  private val text = "Report Excessive Inline Hint"
   private val description = "Text line at caret will be anonymously reported to our servers"
   
   companion object {
-    private val LOG = Logger.getInstance(ReportMissingOrExcessiveInlineHint::class.java)
+    private val LOG = Logger.getInstance(ReportExcessiveInlineHint::class.java)
   }
   
   init {

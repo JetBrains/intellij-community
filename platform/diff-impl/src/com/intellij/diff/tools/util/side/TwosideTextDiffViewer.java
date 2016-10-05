@@ -354,10 +354,6 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   @Override
   public Object getData(@NonNls String dataId) {
     EditorEx editor = getCurrentEditor();
-    if (myProject != null && !myProject.isDisposed() && Registry.is("diff.enable.psi.highlighting")) {
-      final Object o = FileEditorManager.getInstance(myProject).getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
-      if (o != null) return o;
-    }
 
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return editor;

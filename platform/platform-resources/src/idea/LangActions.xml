@@ -298,7 +298,12 @@
       <separator/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
-
+    
+    <group id="ParameterNameHints" popup="true">
+      <action id="ToggleInlineHintsAction" class="com.intellij.analysis.actions.ToggleInlineHintsAction"/>
+      <action id="ReportExcessiveInlineHint" class="com.intellij.reporting.ReportExcessiveInlineHint"/>
+    </group>
+    
     <!-- Analyze -->
     <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>
     <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction"/>

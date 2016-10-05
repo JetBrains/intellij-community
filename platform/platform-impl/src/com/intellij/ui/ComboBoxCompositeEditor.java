@@ -21,6 +21,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 import static java.awt.GridBagConstraints.CENTER;
 
@@ -41,9 +42,15 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
   }
 
   private BiConsumer<I, F>  myOnSetItemHandler = null;
+  private BiFunction<I, F, I>  myOnGetItemHandler = null;
 
   public ComboBoxCompositeEditor<I, F> onSetItem (BiConsumer<I, F> onSetItemHandler) {
     myOnSetItemHandler = onSetItemHandler;
+    return this;
+  }
+
+  public ComboBoxCompositeEditor<I, F> onGetItem (BiFunction<I, F, I> onGetItemHandler) {
+    myOnGetItemHandler = onGetItemHandler;
     return this;
   }
 
@@ -75,15 +82,27 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
     abstract void addActionListener(F component, ActionListener l) ;
 
     abstract void removeActionListener(F component, ActionListener l) ;
+
+    abstract I getItem(F component, I item);
   }
 
   private ComboBoxCompositeEditorStrategy editorTextFieldStrategy = new ComboBoxCompositeEditorStrategy () {
-    BiConsumer<I, EditorTextField> defaultOnSetHandler = (anObject, component) -> (component).setText((anObject == null) ? "" : anObject.toString());
+
+    BiConsumer<I, EditorTextField> defaultOnSetHandler = (anObject, component) -> component.setText((anObject == null) ? "" : anObject.toString());
+
     public void setItem(F component, I anObject) {
       if (myOnSetItemHandler == null) {
         defaultOnSetHandler.accept(anObject, (EditorTextField)component);
       } else {
         myOnSetItemHandler.accept(anObject, component);
+      }
+    }
+
+    public I getItem(F component, I anObject) {
+      if (myOnGetItemHandler == null) {
+        return anObject;
+      } else {
+        return myOnGetItemHandler.apply(anObject, component);
       }
     }
 
@@ -100,7 +119,7 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
     }
   };
 
-  private ComboBoxCompositeEditorStrategy jTextFieldStrategy =  new ComboBoxCompositeEditorStrategy(){
+  private ComboBoxCompositeEditorStrategy jTextFieldStrategy =  new ComboBoxCompositeEditorStrategy() {
 
     BiConsumer<I, JTextField> defaultOnSetHandler = (anObject, component) ->  component.setText((anObject ==null) ? "" : anObject.toString());
 
@@ -109,6 +128,14 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
         defaultOnSetHandler.accept(anObject, (JTextField)component);
       } else {
         myOnSetItemHandler.accept(anObject, component);
+      }
+    }
+
+    public I getItem(F component, I anObject) {
+      if (myOnGetItemHandler == null) {
+        return anObject;
+      } else {
+        return myOnGetItemHandler.apply(anObject, component);
       }
     }
 
@@ -162,7 +189,7 @@ public class ComboBoxCompositeEditor<I, F extends JComponent> extends JPanel imp
       }
 
       public I getItem() {
-        return myItem;
+        return strategy.getItem((F)components[focusableComponentIndex], myItem);
       }
 
       @Override
