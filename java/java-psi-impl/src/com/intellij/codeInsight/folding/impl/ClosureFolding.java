@@ -75,10 +75,7 @@ class ClosureFolding {
     String contents = getClosureContents(rangeStart, rangeEnd, seq);
     if (contents == null) return null;
 
-    String methodName = shouldShowMethodName() ? myMethod.getName() : "";
-    if (StringUtil.isEmpty(methodName) && PsiUtil.isLanguageLevel8OrHigher(myAnonymousClass)) return null;
-
-    String header = getFoldingHeader(methodName);
+    String header = getFoldingHeader();
     if (showSingleLineFolding(document, contents, header)) {
       return createDescriptors(classRBrace, trimStartSpaces(seq, rangeStart), trimTailSpaces(seq, rangeEnd), header + " ", " }");
     }
@@ -149,8 +146,8 @@ class ClosureFolding {
     return seq.subSequence(firstLineStart, lastLineEnd).toString();
   }
 
-  @NotNull
-  private String getFoldingHeader(String methodName) {
+  private String getFoldingHeader() {
+    String methodName = shouldShowMethodName() ? myMethod.getName() : "";
     String type = myQuick ? "" : getOptionalLambdaType();
     String params = StringUtil.join(myMethod.getParameterList().getParameters(), new Function<PsiParameter, String>() {
       @Override
@@ -166,7 +163,7 @@ class ClosureFolding {
     PsiElement parent = anonymousClass.getParent();
     if (parent instanceof PsiNewExpression && hasNoArguments((PsiNewExpression)parent)) {
       PsiClass baseClass = quick ? null : anonymousClass.getBaseClassType().resolve();
-      if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && (quick || seemsLikeLambda(baseClass))) {
+      if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && (quick || seemsLikeLambda(baseClass, anonymousClass))) {
         PsiMethod method = anonymousClass.getMethods()[0];
         PsiCodeBlock body = method.getBody();
         if (body != null) {
@@ -214,8 +211,14 @@ class ClosureFolding {
     return true;
   }
 
-  static boolean seemsLikeLambda(@Nullable PsiClass baseClass) {
-    return baseClass != null && PsiUtil.hasDefaultConstructor(baseClass, true);
+  static boolean seemsLikeLambda(@Nullable PsiClass baseClass, @NotNull PsiElement context) {
+    if (baseClass == null || !PsiUtil.hasDefaultConstructor(baseClass, true)) return false;
+
+    if (PsiUtil.isLanguageLevel8OrHigher(context) && LambdaUtil.isFunctionalClass(baseClass)) {
+      return false;
+    }
+
+    return true;
   }
 
   private String getOptionalLambdaType() {

@@ -78,6 +78,25 @@ class Test {
     assert !foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2("))
   }
 
+  void "test closure folding when implementing a single abstract method in a class"() {
+    myFixture.addClass('abstract class MyAction { public abstract void run(); }')
+    def text = """\
+class Test {
+  void test() {
+    MyAction action = new MyAction() {
+      public void run() {
+        System.out.println();
+      }
+    }
+  }
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction("))?.placeholderText == '() ' + JavaFoldingBuilder.rightArrow + ' { '
+  }
+
   private def configure(String text) {
     myFixture.configureByText("a.java", text)
     CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor)

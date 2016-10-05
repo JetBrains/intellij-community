@@ -329,7 +329,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       if (anonymousClass != null) {
         classReference = anonymousClass.getBaseClassReference();
 
-        if (quick || ClosureFolding.seemsLikeLambda(anonymousClass.getSuperClass())) {
+        if (quick || ClosureFolding.seemsLikeLambda(anonymousClass.getSuperClass(), anonymousClass)) {
           return;
         }
       }
