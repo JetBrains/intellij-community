@@ -159,6 +159,12 @@ public class ParameterHintsPresentationManager implements Disposable {
       updateState(editor, newText);
     }
 
+    @Nullable
+    @Override
+    public String getContextMenuGroupId() {
+      return "ParameterNameHints";
+    }
+
     private void updateState(Editor editor, String text) {
       FontMetrics metrics = getFontMetrics(editor).metrics;
       startWidth = doCalcWidth(myText, metrics);
