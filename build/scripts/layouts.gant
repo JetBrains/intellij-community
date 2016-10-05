@@ -976,7 +976,7 @@ def layout_core(String home, String target) {
       include(name: "picocontainer.jar")
       include(name: "trove4j.jar")
       include(name: "cli-parser-1.1.jar")
-      include(name: "snappy-in-java-0.3.1.jar")
+      include(name: "snappy-in-java-0.5.1.jar")
       include(name: "jayatana-1.2.4.jar")
       include(name: "imgscalr-lib-4.2.jar")
       include(name: "batik-all.jar")
