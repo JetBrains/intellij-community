@@ -20,6 +20,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.EventListener;
 import java.util.List;
 
@@ -55,6 +56,13 @@ public interface InlayModel {
    * Only visual position to the left of the element is recognized.
    */
   boolean hasInlineElementAt(@NotNull VisualPosition visualPosition);
+
+  /**
+   * Return a custom visual element at given coordinates in editor's coordinate space,
+   * or <code>null</code> if there's no element at given point.
+   */
+  @Nullable
+  Inlay getElementAt(@NotNull Point point);
 
   /**
    * Adds a listener that will be notified after adding, updating and removal of custom visual elements.

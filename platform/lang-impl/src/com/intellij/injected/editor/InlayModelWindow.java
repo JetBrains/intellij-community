@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,6 +55,13 @@ public class InlayModelWindow implements InlayModel {
   public boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
     logUnsupported();
     return false;
+  }
+
+  @Nullable
+  @Override
+  public Inlay getElementAt(@NotNull Point point) {
+    logUnsupported();
+    return null;
   }
 
   @Override

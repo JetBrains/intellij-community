@@ -7148,7 +7148,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         event.getArea() == EditorMouseEventArea.EDITING_AREA &&
         event.getMouseEvent().isPopupTrigger() &&
         !event.isConsumed()) {
-      AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(myContextMenuGroupId);
+      String contextMenuGroupId = myContextMenuGroupId;
+      Inlay inlay = myInlayModel.getElementAt(event.getMouseEvent().getPoint());
+      if (inlay != null) {
+        String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId();
+        if (inlayContextMenuGroupId != null) contextMenuGroupId = inlayContextMenuGroupId;
+      }
+      AnAction action = CustomActionsSchema.getInstance().getCorrectedAction(contextMenuGroupId);
       if (action instanceof ActionGroup) {
         ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.EDITOR_POPUP, (ActionGroup)action);
         MouseEvent e = event.getMouseEvent();
