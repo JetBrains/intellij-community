@@ -452,6 +452,9 @@ public class RemoteDebugger implements ProcessDebugger {
       else if (AbstractCommand.isInputRequested(frame.getCommand())) {
         myDebugProcess.consoleInputRequested(ProtocolParser.parseInputCommand(frame.getPayload()));
       }
+      else if (ProcessCreatedCommand.isProcessCreatedCommand(frame.getCommand())) {
+        onProcessCreatedEvent();
+      }
       else {
         placeResponse(frame.getSequence(), frame);
       }
@@ -634,6 +637,9 @@ public class RemoteDebugger implements ProcessDebugger {
         }
       }
     }
+  }
+
+  protected void onProcessCreatedEvent() throws PyDebuggerException {
   }
 
   protected void fireCloseEvent() {

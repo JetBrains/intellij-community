@@ -54,6 +54,7 @@ public abstract class AbstractCommand<T> {
   public static final int SHOW_RETURN_VALUES = 146;
   public static final int INPUT_REQUESTED = 147;
 
+  public static final int PROCESS_CREATED = 149;
 
   public static final int ERROR = 901;
 
