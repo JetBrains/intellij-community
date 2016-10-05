@@ -344,6 +344,10 @@ public class RefManagerImpl extends RefManager {
   public void inspectionReadActionFinished() {
     myIsInProcess = false;
     if (myScope != null) myScope.invalidate();
+
+    synchronized (myRefTable) {
+      mySortedRefs = null;
+    }
   }
 
   public void startOfflineView() {
