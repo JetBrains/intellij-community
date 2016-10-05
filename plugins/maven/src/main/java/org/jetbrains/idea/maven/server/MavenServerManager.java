@@ -496,6 +496,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     };
   }
 
+  @NotNull
   public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
     return perform(new Retriable<MavenModel>() {
       @Override

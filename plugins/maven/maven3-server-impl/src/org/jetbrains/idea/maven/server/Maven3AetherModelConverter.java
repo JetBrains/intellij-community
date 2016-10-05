@@ -25,6 +25,7 @@ import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 
@@ -40,6 +41,7 @@ import java.util.*;
  */
 public class Maven3AetherModelConverter extends MavenModelConverter {
 
+  @NotNull
   public static MavenModel convertModelWithAetherDependencyTree(Model model,
                                                                 List<String> sources,
                                                                 List<String> testSources,

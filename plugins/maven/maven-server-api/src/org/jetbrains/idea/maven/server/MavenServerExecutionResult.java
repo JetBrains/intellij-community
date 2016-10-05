@@ -31,21 +31,22 @@ public class MavenServerExecutionResult implements Serializable {
   @NotNull public final Collection<MavenProjectProblem> problems;
   @NotNull public final Set<MavenId> unresolvedArtifacts;
 
-  public MavenServerExecutionResult(ProjectData projectData,
-                                    Collection<MavenProjectProblem> problems,
-                                    Set<MavenId> unresolvedArtifacts) {
+  public MavenServerExecutionResult(@Nullable ProjectData projectData,
+                                    @NotNull Collection<MavenProjectProblem> problems,
+                                    @NotNull Set<MavenId> unresolvedArtifacts) {
     this.projectData = projectData;
     this.problems = problems;
     this.unresolvedArtifacts = unresolvedArtifacts;
   }
 
   public static class ProjectData implements Serializable {
+    @NotNull
     public final MavenModel mavenModel;
     public final Map<String, String> mavenModelMap;
     public final NativeMavenProjectHolder nativeMavenProject;
     public final Collection<String> activatedProfiles;
 
-    public ProjectData(MavenModel mavenModel,
+    public ProjectData(@NotNull MavenModel mavenModel,
                        Map<String, String> mavenModelMap,
                        NativeMavenProjectHolder nativeMavenProject,
                        Collection<String> activatedProfiles) {

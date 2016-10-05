@@ -130,7 +130,6 @@ public class MavenProjectReader {
 
       if (result == null) {
         result = new MavenModel();
-        result.setMavenId(new MavenId(UNKNOWN, UNKNOWN, UNKNOWN));
         result.setPackaging(MavenConstants.TYPE_JAR);
         return new RawModelReadResult(result, problems, alwaysOnProfiles);
       }
@@ -142,7 +141,6 @@ public class MavenProjectReader {
     result = new MavenModel();
     Element xmlProject = readXml(file, problems, MavenProjectProblem.ProblemType.SYNTAX);
     if (xmlProject == null || !"project".equals(xmlProject.getName())) {
-      result.setMavenId(new MavenId(UNKNOWN, UNKNOWN, UNKNOWN));
       result.setPackaging(MavenConstants.TYPE_JAR);
       return new RawModelReadResult(result, problems, alwaysOnProfiles);
     }
