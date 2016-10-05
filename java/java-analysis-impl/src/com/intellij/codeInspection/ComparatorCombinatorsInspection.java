@@ -232,7 +232,7 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       PsiElement body = lambda.getBody();
       if (body == null) return;
-      if (LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(factory, lambda) == lambda) {
+      if (LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(lambda) == lambda) {
         PsiParameter parameter = parameters[0];
         String name = parameter.getName();
         SuggestedNameInfo nameCandidate = null;
