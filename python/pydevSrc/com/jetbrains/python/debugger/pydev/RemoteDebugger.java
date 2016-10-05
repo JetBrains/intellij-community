@@ -16,6 +16,7 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.pydev.transport.ClientModeDebuggerTransport;
 import com.jetbrains.python.debugger.pydev.transport.DebuggerTransport;
 import com.jetbrains.python.debugger.pydev.transport.ServerModeDebuggerTransport;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +54,11 @@ public class RemoteDebugger implements ProcessDebugger {
   private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull private final DebuggerTransport myDebuggerTransport;
+
+  public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull String host, int port) {
+    myDebugProcess = debugProcess;
+    myDebuggerTransport = new ClientModeDebuggerTransport(debugProcess, this, host, port);
+  }
 
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull ServerSocket socket, int timeout) {
     myDebugProcess = debugProcess;

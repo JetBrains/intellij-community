@@ -1004,7 +1004,7 @@ def process_command_line(argv):
     """ parses the arguments.
         removes our arguments from the command line """
     setup = {}
-    setup['client'] = ''
+    setup['client'] = None
     setup['server'] = False
     setup['port'] = 0
     setup['file'] = ''
@@ -1179,10 +1179,6 @@ def _locked_settrace(
             pass
         else:
             pydev_monkey.patch_new_process_functions()
-
-    if host is None:
-        from _pydev_bundle import pydev_localhost
-        host = pydev_localhost.get_localhost()
 
     global connected
     global bufferStdOutToServer
