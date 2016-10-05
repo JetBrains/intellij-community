@@ -27,6 +27,7 @@ import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.execution.junit.RepeatCount;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,5 +73,11 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
   @Override
   public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
     return new RerunFailedTestsAction(consoleView, this);
+  }
+
+  @Override
+  public boolean isUndefined() {
+    final String mode = getConfiguration().getRepeatMode();
+    return RepeatCount.UNLIMITED.equals(mode) || RepeatCount.UNTIL_FAILURE.equals(mode);
   }
 }

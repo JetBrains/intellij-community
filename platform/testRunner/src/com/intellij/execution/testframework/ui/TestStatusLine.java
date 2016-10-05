@@ -22,6 +22,7 @@ import com.intellij.ui.JBProgressBar;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +44,7 @@ public class TestStatusLine extends JPanel {
     add(myProgressPanel, BorderLayout.WEST);
     myProgressBar.setMaximum(100);
     myProgressPanel.add(myProgressBar, new GridBagConstraints(0, 0, 0, 0, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL,
-                                                              new Insets(2, 8, 0, 8), 0, 0));
+                                                              JBUI.insets(2, 8, 0, 8), 0, 0));
     setStatusColor(ColorProgressBar.GREEN);
     add(myState, BorderLayout.CENTER);
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
@@ -61,7 +62,7 @@ public class TestStatusLine extends JPanel {
       if (testsTotal == 0) return;
     }
     if (duration == null || endTime == 0) {
-      myState.append(finishedTestsCount + " of " + getTestsTotalMessage(testsTotal) + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
+      myState.append(finishedTestsCount + " of " + (testsTotal > 0 ? getTestsTotalMessage(testsTotal) : "<undefined>") + (failuresCount + ignoredTestsCount > 0 ? ": " : ""));
       appendFailuresAndIgnores(failuresCount, ignoredTestsCount);
       return;
     }
