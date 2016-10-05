@@ -17,31 +17,19 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorCustomElementRenderer;
-import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
-import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
@@ -51,17 +39,14 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
-import com.intellij.xdebugger.ui.DebuggerColors;
 import gnu.trove.TObjectLongHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Comparator;
-import java.util.List;
 
 /**
  * @author nik
@@ -179,23 +164,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     if (!(container instanceof XValueWithInlinePresentation)) return false;
     String presentation = ((XValueWithInlinePresentation)container).computeInlinePresentation();
     if (presentation == null) return false;
-    UIUtil.invokeLaterIfNeeded(() -> {
-      FileEditor editor = FileEditorManager.getInstance(myTree.getProject()).getSelectedEditor(file);
-      if (editor instanceof TextEditor) {
-        Editor e = ((TextEditor)editor).getEditor();
-        List<Inlay> existing = e.getInlayModel().getInlineElementsInRange(position.getOffset(), position.getOffset());
-        for (Inlay inlay : existing) {
-          if (inlay.getRenderer() instanceof MyRenderer) {
-            Disposer.dispose(inlay);
-          }
-        }
-        CharSequence text = e.getDocument().getImmutableCharSequence();
-        int offset = position.getOffset();
-        while (offset < text.length() && Character.isJavaIdentifierPart(text.charAt(offset))) offset++;
-
-        e.getInlayModel().addInlineElement(offset, new MyRenderer(presentation));
-      }
-    });
+    XDebuggerInlayUtil.createInlay(myTree.getProject(), file, position.getOffset(), presentation);
     return true;
   }
 
@@ -320,40 +289,5 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   @Override
   public String toString() {
     return getName();
-  }
-
-  public static class MyRenderer implements EditorCustomElementRenderer {
-    private final String myText;
-
-    private MyRenderer(String text) {
-      myText = "(" + text + ")";
-    }
-
-    private static FontInfo getFontInfo(@NotNull Editor editor) {
-      EditorColorsScheme colorsScheme = editor.getColorsScheme();
-      FontPreferences fontPreferences = colorsScheme.getFontPreferences();
-      TextAttributes attributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
-      int fontStyle = attributes == null ? Font.PLAIN : attributes.getFontType();
-      return ComplementaryFontsRegistry.getFontAbleToDisplay('a', fontStyle, fontPreferences);
-    }
-
-    @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      FontInfo fontInfo = getFontInfo(editor);
-      return fontInfo.fontMetrics().stringWidth(myText);
-    }
-
-    @Override
-    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-      TextAttributes attributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
-      if (attributes == null) return;
-      Color fgColor = attributes.getForegroundColor();
-      if (fgColor == null) return;
-      g.setColor(fgColor);
-      FontInfo fontInfo = getFontInfo(editor);
-      g.setFont(fontInfo.getFont());
-      FontMetrics metrics = fontInfo.fontMetrics();
-      g.drawString(myText, r.x, r.y + metrics.getAscent());
-    }
   }
 }
