@@ -346,13 +346,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
     }
-
-    final String removeOption = element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME);
-    if (Boolean.valueOf(removeOption)) {
-      keymap.removeShortcut(actionId, shortcut);
-    } else {
-      keymap.addShortcut(actionId, shortcut);
-    }
+    processRemoveAndReplace(element, actionId, keymap, shortcut);
   }
 
   private static void assertActionIsGroupOrStub(final AnAction action) {
@@ -911,16 +905,20 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionWarning(pluginId, "keymap \"" + keymapName + "\" not found");
       return;
     }
-    final String removeOption = element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME);
     final KeyboardShortcut shortcut = new KeyboardShortcut(firstKeyStroke, secondKeyStroke);
-    final String replaceOption = element.getAttributeValue(REPLACE_SHORTCUT_ATTR_NAME);
-    if (Boolean.valueOf(removeOption)) {
+    processRemoveAndReplace(element, actionId, keymap, shortcut);
+  }
+
+  private static void processRemoveAndReplace(Element element, String actionId, Keymap keymap, Shortcut shortcut) {
+    boolean remove = Boolean.parseBoolean(element.getAttributeValue(REMOVE_SHORTCUT_ATTR_NAME));
+    boolean replace = Boolean.parseBoolean(element.getAttributeValue(REPLACE_SHORTCUT_ATTR_NAME));
+    if (remove) {
       keymap.removeShortcut(actionId, shortcut);
     }
-    if (Boolean.valueOf(replaceOption)) {
+    if (replace) {
       keymap.removeAllActionShortcuts(actionId);
     }
-    if (!Boolean.valueOf(removeOption)) {
+    if (!remove) {
       keymap.addShortcut(actionId, shortcut);
     }
   }
