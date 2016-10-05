@@ -22,7 +22,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import com.intellij.util.ui.components.ComboBoxCompositeEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -273,8 +272,8 @@ public class JBUI {
      *
      *        @param components an array of JComponent objects. The first one is the editable text component.
      */
-    public static ComboBoxCompositeEditor compositeComboboxEditor  (JComponent ... components) {
+/*    public static ComboBoxCompositeEditor compositeComboboxEditor  (JComponent ... components) {
       return new ComboBoxCompositeEditor(components);
-    }
+    }*/
   }
 }
