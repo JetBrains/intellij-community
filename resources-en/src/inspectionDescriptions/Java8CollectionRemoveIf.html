@@ -1,6 +1,6 @@
 <html>
 <body>
-The inspection reports the loops which could be collapsed into single <code>Collection.removeIf</code> call in Java 8.
+The inspection reports the loops which could be collapsed into single <code>Collection.removeIf</code> call.
 <!-- tooltip end -->
 <p>The loops like this are reported:</p>
 <pre>
@@ -11,6 +11,7 @@ The inspection reports the loops which could be collapsed into single <code>Coll
     }
   }
 </pre>
+<p>This conversion is available since Java 8 only.</p>
 <small>New in 2016.3</small>
 </body>
 </html>

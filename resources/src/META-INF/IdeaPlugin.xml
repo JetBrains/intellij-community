@@ -816,22 +816,22 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionsApiInspection"
-                     displayName="Map.putIfAbsent() can be used in Java 8"/>
+                     displayName="Map.putIfAbsent() can be used"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java8ListSort"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8ListSortInspection"
-                     displayName="Collections.sort() can be replaced with List.sort() in Java 8"/>
+                     displayName="Collections.sort() can be replaced with List.sort()"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java8CollectionRemoveIf"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionRemoveIfInspection"
-                     displayName="The loop can be replaced with Collection.removeIf() in Java 8"/>
+                     displayName="Loop can be replaced with Collection.removeIf()"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Java8ReplaceMapGet"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8ReplaceMapGetInspection"
-                     displayName="Map.get() call followed by condition can be replaced with single method in Java 8"/>
+                     displayName="Simplifiable conditional usage of Map.get()"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
