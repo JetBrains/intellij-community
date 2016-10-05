@@ -593,7 +593,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     format = format.replace('%', '')
     col_formats = []
 
-    get_label = lambda label: str(label) if not isinstance(label, tuple) else '/'.join([str(i) for i in label])
+    get_label = lambda label: str(label) if not isinstance(label, tuple) else '/'.join(map(str, label))
 
     for col in range(cols):
         dtype = df.dtypes.iloc[col].kind
