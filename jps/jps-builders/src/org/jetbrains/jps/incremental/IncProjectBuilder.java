@@ -592,7 +592,7 @@ public class IncProjectBuilder {
           File rootFile = descriptor.getRootFile();
           //some roots aren't marked by as generated but in fact they are produced by some builder and it's safe to remove them.
           //However if a root isn't excluded it means that its content will be shown in 'Project View' and an user can create new files under it so it would be dangerous to clean such roots
-          if (moduleIndex.isInContent(rootFile) && !moduleIndex.isExcluded(rootFile)) {
+          if (moduleIndex.isInContent(rootFile)) {
             allSourceRoots.add(rootFile);
           }
         }

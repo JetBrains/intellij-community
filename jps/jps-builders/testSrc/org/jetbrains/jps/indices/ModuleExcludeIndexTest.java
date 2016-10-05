@@ -16,6 +16,7 @@
 package org.jetbrains.jps.indices;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.JpsJavaModelTestCase;
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
@@ -38,13 +39,13 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     myRoot = FileUtil.createTempDirectory("excludes", null);
   }
 
-  public void testExcludeProjectOutput() throws IOException {
+  public void testProjectOutput() throws IOException {
     File out = new File(myRoot, "out");
     getJavaService().getOrCreateProjectExtension(myProject).setOutputUrl(JpsPathUtil.pathToUrl(out.getAbsolutePath()));
     JpsModule module1 = addModule();
     getJavaService().getOrCreateModuleExtension(module1).setInheritOutput(true);
     JpsModule module2 = addModule();
-    module2.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(out.getAbsolutePath()));
+    addContentRoot(module2, out);
     getJavaService().getOrCreateModuleExtension(module2).setInheritOutput(true);
 
     assertNotExcluded(myRoot);
@@ -53,7 +54,7 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     assertSameElements(getModuleExcludes(module2), out);
   }
 
-  public void testExcludeModuleOutput() {
+  public void testModuleOutput() {
     File out = new File(myRoot, "out");
     JpsModule module = addModule();
     JpsJavaModuleExtension extension = getJavaService().getOrCreateModuleExtension(module);
@@ -69,25 +70,96 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     assertEmpty(getModuleExcludes(module));
   }
 
-  public void testExcludeExcludedFolder() {
+  public void testExcludedFolder() {
     File exc = new File(myRoot, "exc");
     JpsModule module = addModule();
-    module.getExcludeRootsList().addUrl(JpsPathUtil.pathToUrl(exc.getAbsolutePath()));
+    addExcludedRoot(module, exc);
 
     assertNotExcluded(myRoot);
     assertExcluded(exc);
     assertSameElements(getModuleExcludes(module), exc);
   }
 
+  public void testContentRootUnderExcluded() {
+    File contentRoot = new File(myRoot, "project");
+    File excluded = new File(contentRoot, "exc");
+    File unexcluded = new File(excluded, "src");
+    JpsModule module = addModule();
+    addContentRoot(module, contentRoot);
+    addExcludedRoot(module, excluded);
+    addContentRoot(module, unexcluded);
+    assertNotExcluded(contentRoot);
+    assertExcluded(excluded);
+    assertNotExcluded(unexcluded);
+    ModuleExcludeIndexImpl index = createIndex();
+    assertFalse(index.isExcludedFromModule(contentRoot, module));
+    assertTrue(index.isExcludedFromModule(excluded, module));
+    assertFalse(index.isExcludedFromModule(unexcluded, module));
+  }
+
+  public void testInnerModules() {
+    File outerRoot = new File(myRoot, "outer");
+    File inner1Root = new File(outerRoot, "inner1");
+    File inner2Root = new File(outerRoot, "inner2");
+    JpsModule outer = addModule("outer");
+    addContentRoot(outer, outerRoot);
+    JpsModule inner1 = addModule("inner1");
+    JpsModule inner2 = addModule("inner2");
+    addContentRoot(inner1, inner1Root);
+    addContentRoot(inner2, inner2Root);
+    assertNotExcluded(outerRoot);
+    assertNotExcluded(inner1Root);
+    assertNotExcluded(inner2Root);
+    assertSameElements(getModuleExcludes(outer), inner1Root, inner2Root);
+    assertEmpty(getModuleExcludes(inner1));
+    assertEmpty(getModuleExcludes(inner2));
+    ModuleExcludeIndexImpl index = createIndex();
+    assertTrue(index.isExcludedFromModule(inner1Root, outer));
+    assertTrue(index.isExcludedFromModule(inner2Root, outer));
+    assertFalse(index.isExcludedFromModule(inner1Root, inner1));
+    assertFalse(index.isExcludedFromModule(inner2Root, inner2));
+  }
+
+  public void testInnerModuleUnderExcludedRoot() {
+    File outerRoot = new File(myRoot, "outer");
+    File exc = new File(outerRoot, "exc");
+    File innerRoot = new File(exc, "inner");
+    JpsModule outer = addModule("outer");
+    addContentRoot(outer, outerRoot);
+    addExcludedRoot(outer, exc);
+    JpsModule inner = addModule("inner");
+    addContentRoot(inner, innerRoot);
+    assertNotExcluded(outerRoot);
+    assertNotExcluded(innerRoot);
+    assertSameElements(getModuleExcludes(outer), exc, innerRoot);
+    assertEmpty(getModuleExcludes(inner));
+    ModuleExcludeIndexImpl index = createIndex();
+    assertTrue(index.isExcludedFromModule(innerRoot, outer));
+    assertFalse(index.isExcludedFromModule(innerRoot, inner));
+  }
+
+  private static void addExcludedRoot(JpsModule module, File root) {
+    module.getExcludeRootsList().addUrl(JpsPathUtil.pathToUrl(root.getAbsolutePath()));
+  }
+
+  private static void addContentRoot(JpsModule module, File root) {
+    module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(root.getAbsolutePath()));
+  }
+
   private Collection<File> getModuleExcludes(JpsModule module) {
-    return new ModuleExcludeIndexImpl(myModel).getModuleExcludes(module);
+    return createIndex().getModuleExcludes(module);
   }
 
   private void assertExcluded(File file) {
-    assertTrue(new ModuleExcludeIndexImpl(myModel).isExcluded(file));
+    assertTrue(createIndex().isExcluded(file));
   }
 
   private void assertNotExcluded(File file) {
-    assertFalse(new ModuleExcludeIndexImpl(myModel).isExcluded(file));
+    assertFalse(createIndex().isExcluded(file));
+  }
+
+  @NotNull
+  private ModuleExcludeIndexImpl createIndex() {
+    return new ModuleExcludeIndexImpl(myModel);
   }
 }
