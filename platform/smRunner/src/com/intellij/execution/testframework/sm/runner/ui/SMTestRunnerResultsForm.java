@@ -712,7 +712,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private void updateProgressOnTestDone() {
     int doneTestCount = myFinishedTestCount;
     // update progress
-    if (myTotalTestCount != 0 && !isUndefined()) {
+    if (isUndefined()) {
+      myStatusLine.setFraction(1.0);
+    }
+    else if (myTotalTestCount != 0) {
       // if total is set
       myStatusLine.setFraction((double) doneTestCount / myTotalTestCount);
     }
