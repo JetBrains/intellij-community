@@ -48,6 +48,16 @@ public class PySpellCheckerTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-20987
+  public void testGluedStringNodesAfterFirstWithPrefix() {
+    doTest();
+  }
+
+  // PY-20987
+  public void testGluedStringNodesAfterFirstRawWithBackslashes() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.enableInspections(SpellCheckingInspection.class);
     myFixture.configureByFile("inspections/spelling/" + getTestName(true) + ".py");
