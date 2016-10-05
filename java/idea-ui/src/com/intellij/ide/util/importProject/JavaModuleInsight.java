@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,10 +118,7 @@ public class JavaModuleInsight extends ModuleInsight {
   @Override
   protected List<DetectedSourceRoot> getSourceRootsToScan() {
     final List<DetectedSourceRoot> allRoots = super.getSourceRootsToScan();
-    return StreamEx
-      .of(allRoots)
-      .filter(r -> !(r instanceof JavaModuleSourceRoot) || !((JavaModuleSourceRoot)r).isWithModuleInfoFile())
-      .toList();
+    return ContainerUtil.filter(allRoots, r -> !(r instanceof JavaModuleSourceRoot) || !((JavaModuleSourceRoot)r).isWithModuleInfoFile());
   }
 
   private ModuleInfo scanModuleInfoFile(@NotNull File directory) {

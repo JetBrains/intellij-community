@@ -59,14 +59,8 @@ public class ProjectDescriptor {
   }
 
   public boolean isWithModuleInfo() {
-    for (ModuleDescriptor module : myModules) {
-      final Collection<? extends DetectedProjectRoot> sourceRoots = module.getSourceRoots();
-      for (DetectedProjectRoot sourceRoot : sourceRoots) {
-        if (sourceRoot instanceof JavaModuleSourceRoot && ((JavaModuleSourceRoot)sourceRoot).isWithModuleInfoFile()) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return myModules.stream()
+      .flatMap(module -> module.getSourceRoots().stream())
+      .anyMatch(sourceRoot -> sourceRoot instanceof JavaModuleSourceRoot && ((JavaModuleSourceRoot)sourceRoot).isWithModuleInfoFile());
   }
 }
