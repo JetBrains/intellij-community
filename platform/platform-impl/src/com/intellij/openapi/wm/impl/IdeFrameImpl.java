@@ -57,7 +57,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.io.PowerSupplyKit;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -169,13 +168,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     // UIUtil.suppressFocusStealing();
 
   }
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    PowerSupplyKit.checkPowerSupply();
-  }
-
 
 
   private void updateBorder() {
