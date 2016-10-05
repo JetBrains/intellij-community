@@ -126,6 +126,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
          executionConsole, processHandler);
   }
 
+  public PyDebugProcess(final @NotNull XDebugSession session,
+                        @NotNull final ExecutionConsole executionConsole,
+                        @Nullable final ProcessHandler processHandler,
+                        @NotNull String serverHost, int serverPort) {
+    this(session, process -> new ClientModeMultiProcessDebugger(process, serverHost, serverPort), executionConsole, processHandler);
+  }
+
   private PyDebugProcess(@NotNull XDebugSession session,
                         @NotNull DebuggerFactory debuggerFactory,
                         @NotNull ExecutionConsole executionConsole,
