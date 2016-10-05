@@ -143,6 +143,8 @@ CMD_SHOW_RETURN_VALUES = 146
 CMD_INPUT_REQUESTED = 147
 CMD_GET_DESCRIPTION = 148
 
+CMD_PROCESS_CREATED = 149
+
 CMD_VERSION = 501
 CMD_RETURN = 502
 CMD_ERROR = 901
@@ -198,6 +200,8 @@ ID_TO_MEANING = {
     '146': 'CMD_SHOW_RETURN_VALUES',
     '147': 'CMD_INPUT_REQUESTED',
     '148': 'CMD_GET_DESCRIPTION',
+
+    '149': 'CMD_PROCESS_CREATED',
 
     '501': 'CMD_VERSION',
     '502': 'CMD_RETURN',
@@ -559,6 +563,9 @@ class NetCommandFactory:
         cmdText = "<xml>" + self._thread_to_xml(thread) + "</xml>"
         return NetCommand(CMD_THREAD_CREATE, 0, cmdText)
 
+    def make_process_created_message(self):
+        cmdText = '<process/>'
+        return NetCommand(CMD_PROCESS_CREATED, 0, cmdText)
 
     def make_custom_frame_created_message(self, frameId, frameDescription):
         frameDescription = pydevd_xml.make_valid_xml_value(frameDescription)
