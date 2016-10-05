@@ -42,7 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Optional;
 
 /**
  * @author Tagir Valeev
@@ -71,11 +70,10 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
           PsiIfStatement ifStatement = (PsiIfStatement)statements[0];
           PsiExpression condition = checkAndExtractCondition(declaration, ifStatement);
           if (condition == null) return;
-          declaration.iteratorRefs(condition).collect(MoreCollectors.onlyOne()).ifPresent(ref -> {
-            if(declaration.isIteratorMethodCall(ref.getParent().getParent(), "next") && isAlwaysExecuted(condition, ref)) {
-              registerProblem(statement, endToken);
-            }
-          });
+          PsiElement ref = declaration.findOnlyIteratorRef(condition);
+          if (ref != null && declaration.isIteratorMethodCall(ref.getParent().getParent(), "next") && isAlwaysExecuted(condition, ref)) {
+            registerProblem(statement, endToken);
+          }
         }
       }
 
@@ -182,9 +180,9 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
       else if (statements.length == 1 && statements[0] instanceof PsiIfStatement){
         PsiExpression condition = ((PsiIfStatement)statements[0]).getCondition();
         if (condition == null) return;
-        Optional<PsiElement> iteratorRef = declaration.iteratorRefs(condition).collect(MoreCollectors.onlyOne());
-        if(iteratorRef.isPresent()) {
-          PsiElement call = iteratorRef.get().getParent().getParent();
+        PsiElement ref = declaration.findOnlyIteratorRef(condition);
+        if(ref != null) {
+          PsiElement call = ref.getParent().getParent();
           if(!declaration.isIteratorMethodCall(call, "next")) return;
           PsiType type = ((PsiExpression)call).getType();
           JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
@@ -222,13 +220,15 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
       return isIteratorMethodCall(condition, "hasNext");
     }
 
-    public StreamEx<PsiElement> iteratorRefs(PsiExpression parent) {
+    @Nullable
+    public PsiElement findOnlyIteratorRef(PsiExpression parent) {
       PsiElement element = PsiUtil.getVariableCodeBlock(myIterator, null);
       PsiCodeBlock block =
         element instanceof PsiCodeBlock ? (PsiCodeBlock)element : PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
-      if(block == null) return StreamEx.empty();
+      if(block == null) return null;
       return StreamEx.of(DefUseUtil.getRefs(block, myIterator, myIterator.getInitializer()))
-                  .filter(e -> PsiTreeUtil.isAncestor(parent, e, false));
+                  .filter(e -> PsiTreeUtil.isAncestor(parent, e, false))
+                  .collect(MoreCollectors.onlyOne()).orElse(null);
     }
 
     boolean isIteratorMethodCall(PsiElement candidate, String method) {
