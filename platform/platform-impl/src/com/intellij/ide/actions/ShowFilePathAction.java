@@ -280,8 +280,8 @@ public class ShowFilePathAction extends AnAction {
   }
 
   private static void doOpen(@NotNull File _dir, @Nullable File _toSelect) throws IOException, ExecutionException {
-    String dir = FileUtil.toCanonicalPath(_dir.getPath());
-    String toSelect = _toSelect != null ? FileUtil.toCanonicalPath(_toSelect.getPath()) : null;
+    String dir = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_dir.getPath()));
+    String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
 
     if (SystemInfo.isWindows) {
       String cmd = toSelect != null ? "explorer /select," + toSelect : "explorer /root," + dir;
