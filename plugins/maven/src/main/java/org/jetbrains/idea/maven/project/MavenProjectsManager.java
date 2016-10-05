@@ -71,6 +71,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 @State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
@@ -80,6 +81,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private static final NotificationGroup NON_MANAGED_POM_NOTIFICATION_GROUP =
     NotificationGroup.balloonGroup(NON_MANAGED_POM_NOTIFICATION_GROUP_ID);
 
+  private final ReentrantLock initLock = new ReentrantLock();
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
   private MavenProjectsManagerState myState = new MavenProjectsManagerState();
@@ -267,7 +269,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void doInit(final boolean isNew) {
-    synchronized (isInitialized) {
+    initLock.lock();
+    try {
       if (isInitialized.getAndSet(true)) return;
 
       initProjectsTree(!isNew);
@@ -276,15 +279,16 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       listenForSettingsChanges();
       listenForProjectsTreeChanges();
 
-      MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
-        public void run() {
-          if (!isUnitTestMode()) {
-            fireActivated();
-            listenForExternalChanges();
-          }
-          scheduleUpdateAllProjects(isNew);
+      MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
+        if (!isUnitTestMode()) {
+          fireActivated();
+          listenForExternalChanges();
         }
+        scheduleUpdateAllProjects(isNew);
       });
+    }
+    finally {
+      initLock.unlock();
     }
   }
 
@@ -489,7 +493,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @Override
   public void projectClosed() {
-    synchronized (isInitialized) {
+    initLock.lock();
+    try {
       if (!isInitialized.getAndSet(false)) return;
 
       Disposer.dispose(myImportingQueue);
@@ -506,6 +511,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       if (isUnitTestMode()) {
         FileUtil.delete(getProjectsTreesDir());
       }
+    } finally {
+      initLock.unlock();
     }
   }
 
@@ -514,7 +521,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private boolean isInitialized() {
-    return isInitialized.get();
+    return !initLock.isLocked() && isInitialized.get();
   }
 
   public boolean isMavenizedProject() {
@@ -809,17 +816,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                                                       final boolean forceUpdate,
                                                       final boolean forceImportAndResolve) {
     final AsyncPromise<Void> promise = new AsyncPromise<>();
-    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
-      public void run() {
-        if (projects == null) {
-          myWatcher.scheduleUpdateAll(forceUpdate, forceImportAndResolve).processed(promise);
-        }
-        else {
-          myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects),
-                                   Collections.<VirtualFile>emptyList(),
-                                   forceUpdate,
-                                   forceImportAndResolve).processed(promise);
-        }
+    MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
+      if (projects == null) {
+        myWatcher.scheduleUpdateAll(forceUpdate, forceImportAndResolve).processed(promise);
+      }
+      else {
+        myWatcher.scheduleUpdate(MavenUtil.collectFiles(projects),
+                                 Collections.emptyList(),
+                                 forceUpdate,
+                                 forceImportAndResolve).processed(promise);
       }
     });
     return promise;
@@ -851,7 +856,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           scheduleImport().processed(result);
         }
         else {
-          result.setResult(Collections.<Module>emptyList());
+          result.setResult(Collections.emptyList());
         }
       };
 
@@ -923,7 +928,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       Iterator<MavenProject> it = projects.iterator();
       while (it.hasNext()) {
         MavenProject each = it.next();
-        Runnable onCompletion = it.hasNext() ? null : (Runnable)() -> {
+        Runnable onCompletion = it.hasNext() ? null : () -> {
           if (hasScheduledProjects()) scheduleImport();
         };
         myFoldersResolvingProcessor.scheduleTask(
