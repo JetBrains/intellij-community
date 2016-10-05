@@ -129,8 +129,7 @@ public class LambdaUtil {
     context = PsiUtil.skipParenthesizedExprUp(context);
     return isAssignmentOrInvocationContext(context) ||
            context instanceof PsiTypeCastExpression ||
-           context instanceof PsiConditionalExpression && isAssignmentOrInvocationContext(PsiUtil.skipParenthesizedExprUp(context.getParent())) ||
-           context instanceof PsiExpressionStatement;
+           context instanceof PsiConditionalExpression && isAssignmentOrInvocationContext(PsiUtil.skipParenthesizedExprUp(context.getParent()));
   }
 
   private static boolean isAssignmentOrInvocationContext(PsiElement context) {
