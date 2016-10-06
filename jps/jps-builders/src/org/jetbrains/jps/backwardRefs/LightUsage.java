@@ -224,8 +224,8 @@ public abstract class LightUsage implements RW.Savable {
 
     @NotNull
     @Override
-    public LightClassUsage override(int ownerOverrider) {
-      return new LightClassUsage(ownerOverrider);
+    public LightFunExprUsage override(int ownerOverrider) {
+      return new LightFunExprUsage(ownerOverrider);
     }
 
     @Override
