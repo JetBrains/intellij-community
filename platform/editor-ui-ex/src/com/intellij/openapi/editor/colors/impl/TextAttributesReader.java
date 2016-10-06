@@ -66,10 +66,6 @@ class TextAttributesReader extends ValueElementReader {
         readChild(Color.class, element, ERROR_STRIPE),
         Effect.read(this, element),
         FontStyle.read(this, element));
-      // needed for compatibility with TextAttributes(Element)
-      if (attributes.isEmpty()) {
-        attributes.setEnforceEmpty(true);
-      }
     }
     //noinspection unchecked
     return (T)attributes;

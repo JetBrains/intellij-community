@@ -91,8 +91,8 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         // we don't need to update digest for bundled scheme because
         // 1) it can be computed on demand later (because bundled scheme is not mutable)
         // 2) in the future user copy of bundled scheme will use bundled scheme as parent (not as full copy)
-        if (!isBundled) {
-          //dataHolder.updateDigest(scheme);
+        if (isBundled) {
+          scheme.optimizeAttributeMap();
         }
         return scheme;
       }
@@ -180,7 +180,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   private void initEditableBundledSchemesCopies() {
     for (EditorColorsScheme scheme : mySchemeManager.getAllSchemes()) {
       if (scheme instanceof BundledScheme) {
-        createEditableCopy((BundledScheme)scheme, ((BundledScheme)scheme).getEditableCopyName());
+        createEditableCopy((BundledScheme)scheme, SchemeManager.EDITABLE_COPY_PREFIX + scheme.getName());
       }
     }
   }
@@ -220,10 +220,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
     @Override
     public boolean isVisible() {
       return false;
-    }
-    
-    public String getEditableCopyName() {
-      return SchemeManager.EDITABLE_COPY_PREFIX + getName();
     }
   }
 
@@ -333,7 +329,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
       editableCopyName = ((DefaultColorsScheme)scheme).getEditableCopyName();
     }
     else if (scheme instanceof BundledScheme) {
-      editableCopyName = ((BundledScheme)scheme).getEditableCopyName();
+      editableCopyName = SchemeManager.EDITABLE_COPY_PREFIX + scheme.getName();
     }
     if (editableCopyName != null) {
       EditorColorsScheme editableCopy = getScheme(editableCopyName);
