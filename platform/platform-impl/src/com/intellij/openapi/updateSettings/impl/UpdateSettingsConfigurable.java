@@ -47,7 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.util.List;
 
 /**
@@ -160,7 +159,6 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     private JLabel myBuildNumber;
     private JLabel myVersionNumber;
     private JLabel myLastCheckedDate;
-    private JPanel mySettingsPanel;
     private JPanel myStatusPanel;
     @SuppressWarnings("unused") private ActionLink myIgnoredBuildsLink;
 
@@ -201,7 +199,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
       ChannelStatus current = mySettings.getSelectedActiveChannel();
-      myUpdateChannels.setModel(new CollectionComboBoxModel<ChannelStatus>(mySettings.getActiveChannels(), current));
+      myUpdateChannels.setModel(new CollectionComboBoxModel<>(mySettings.getActiveChannels(), current));
       myUpdateChannels.setEnabled(!ApplicationInfoEx.getInstanceEx().isEAP() || !tweaker.forceEapUpdateChannelForEapBuilds());
       myUpdateChannels.addActionListener(e -> {
         boolean lessStable = current.compareTo(getSelectedChannelType()) > 0;
@@ -228,24 +226,8 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       for (ExternalComponentSource source : ExternalComponentManager.getInstance().getComponentSources()) {
         extraStatuses.addAll(source.getStatuses());
       }
-      mySettingsPanel = new JPanel(new GridLayoutManager(1, 3));
-      mySettingsPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
-      myCheckForUpdates = new JCheckBox(IdeBundle.message("updates.settings.checkbox"));
-
-      myUpdateChannels = new JComboBox();
       int row = 0;
-      GridConstraints enabledConstraints =
-        new GridConstraints(row, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                            GridConstraints.SIZEPOLICY_FIXED, null, null, null);
-      GridConstraints controlConstraints =
-        new GridConstraints(row, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW,
-                            GridConstraints.SIZEPOLICY_FIXED, null, null, null);
-
-      mySettingsPanel.add(myCheckForUpdates, enabledConstraints);
-      mySettingsPanel.add(myUpdateChannels, controlConstraints);
-
       myStatusPanel = new JPanel(new GridLayoutManager(extraStatuses.size() + 3, 2));
-      row = 0;
       GridConstraints statusLabelConstraints =
         new GridConstraints(row, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
                             GridConstraints.SIZEPOLICY_FIXED, null, null, null);
