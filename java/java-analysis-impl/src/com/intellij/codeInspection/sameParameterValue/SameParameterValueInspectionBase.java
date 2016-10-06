@@ -24,6 +24,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -246,7 +247,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                             PsiParameter parameter,
                                             String value) {
     final String name = parameter.getName();
-    return manager.createProblemDescriptor(parameter,
+    return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      "<code>" + name + "</code>",
                                                                      "<code>" + value + "</code>"),
