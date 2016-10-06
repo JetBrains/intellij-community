@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
    */
   @NotNull
   public static <E> JBIterable<E> of(@Nullable E... elements) {
-    return elements == null ? JBIterable.<E>empty() : from(ContainerUtilRt.newArrayList(elements));
+    return elements == null || elements.length == 0 ? JBIterable.<E>empty() : from(ContainerUtilRt.newArrayList(elements));
   }
 
   private static final JBIterable EMPTY = new JBIterable() {
@@ -363,7 +363,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
   /**
    * Returns a {@code JBIterable} that applies {@code function} to each element of this
-   * iterable and concats the produced iterables in one.
+   * iterable and concatenates the produced iterables in one.
    * <p/>
    * <p>The returned iterable's iterator supports {@code remove()} if an underlying iterable's
    * iterator does. After a successful {@code remove()} call, this iterable no longer
