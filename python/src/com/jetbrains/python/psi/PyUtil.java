@@ -28,7 +28,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -862,26 +862,31 @@ public class PyUtil {
     return result;
   }
 
+  /**
+   * This method is allowed to be called from any thread, but in general you should not set {@code modal=true} if you're calling it
+   * from the write action, because in this case {@code function} will be executed right in the current thread (presumably EDT)
+   * without any progress whatsoever to avoid possible deadlock.
+   *
+   * @see ApplicationImpl#runProcessWithProgressSynchronously(Runnable, String, boolean, Project, JComponent, String)
+   */
   public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
                                      boolean modal, boolean canBeCancelled, @NotNull final Consumer<ProgressIndicator> function) {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (modal) {
-        ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            function.consume(indicator);
-          }
-        });
-      }
-      else {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            function.consume(indicator);
-          }
-        });
-      }
-    }, ModalityState.current());
+    if (modal) {
+      ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          function.consume(indicator);
+        }
+      });
+    }
+    else {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          function.consume(indicator);
+        }
+      });
+    }
   }
 
   /**

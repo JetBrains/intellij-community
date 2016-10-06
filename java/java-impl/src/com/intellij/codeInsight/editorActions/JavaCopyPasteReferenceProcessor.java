@@ -17,11 +17,14 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportConstantFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -103,16 +106,33 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
       }
     }
 
-    if (CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) {
+    if (CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY ||
+        CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY) {
       for (int i = 0; i < refs.length; i++) {
-        PsiJavaCodeReferenceElement ref = refs[i];
-        if (ref != null && new ImportClassFix(ref).getClassesToImport().size() <= 1) {
+        if (isUnambiguous(refs[i])) {
           refs[i] = null;
         }
       }
     }
 
     return refs;
+  }
+
+  private static boolean isUnambiguous(@Nullable PsiJavaCodeReferenceElement ref) {
+    if (ref == null) return false;
+
+    PsiElement parent = ref.getParent();
+    if (parent instanceof PsiMethodCallExpression) {
+      return CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY &&
+             new StaticImportMethodFix((PsiMethodCallExpression)parent).getMembersToImport().size() <= 1;
+    }
+
+    int constCount = new StaticImportConstantFix(ref).getMembersToImport().size();
+    int classCount = new ImportClassFix(ref).getClassesToImport().size();
+    if (constCount + classCount > 1) return false;
+    if (constCount + classCount == 0) return true;
+    return constCount == 1 ? CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY
+                           : CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   }
 
   @Override

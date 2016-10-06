@@ -122,6 +122,21 @@ public class TransformationContextImpl implements TransformationContext {
     return PsiImplUtil.getAnnotation(getCodeClass(), fqn);
   }
 
+  @Override
+  public boolean isInheritor(@NotNull PsiClass baseClass) {
+    if (getManager().areElementsEquivalent(getCodeClass(), baseClass)) return false;
+    if (getCodeClass().isInterface() && !baseClass.isInterface()) return false;
+
+    for (PsiClassType superType : getSuperTypes()) {
+      PsiClass superClass = superType.resolve();
+      if (superClass == null) continue;
+      if (getManager().areElementsEquivalent(superClass, baseClass)) return true;
+      if (superClass.isInheritor(baseClass, true)) return true;
+    }
+
+    return false;
+  }
+
   @NotNull
   @Override
   public Collection<PsiMethod> findMethodsByName(@NotNull String name, boolean checkBases) {
