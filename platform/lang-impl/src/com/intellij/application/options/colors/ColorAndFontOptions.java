@@ -839,7 +839,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       if (scheme == null) {
         scheme = getScheme();
       }
-      scheme.setAttributes(key, isInherited() ? new TextAttributes() : getTextAttributes());
+      scheme.setAttributes(key, isInherited() ? USE_INHERITED_MARKER : getTextAttributes());
     }
 
     @Override
@@ -865,11 +865,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     @Override
     public Pair<ColorSettingsPage,AttributesDescriptor> getBaseAttributeDescriptor() {
       return myBaseAttributeDescriptor;
-    }
-
-    @Override
-    public void setInherited(boolean isInherited) {
-      super.setInherited(isInherited);
     }
   }
 
@@ -1174,7 +1169,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         if (myParentScheme instanceof AbstractColorsScheme) {
           TextAttributes ownAttrs = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key);
           if (ownAttrs != null) {
-            return ownAttrs.isFallbackEnabled();
+            return ownAttrs == TextAttributes.USE_INHERITED_MARKER;
           }
         }
         TextAttributes attributes = getAttributes(key);

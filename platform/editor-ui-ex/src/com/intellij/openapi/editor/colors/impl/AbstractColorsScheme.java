@@ -48,6 +48,7 @@ import java.util.List;
 
 import static com.intellij.openapi.editor.colors.CodeInsightColors.*;
 import static com.intellij.openapi.editor.colors.EditorColors.*;
+import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
 import static com.intellij.openapi.util.Couple.of;
 import static com.intellij.ui.ColorUtil.fromHex;
 
@@ -79,7 +80,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   private int myVersion = CURR_VERSION;
 
   protected Map<ColorKey, Color>                   myColorsMap     = ContainerUtilRt.newHashMap();
-  protected Map<TextAttributesKey, TextAttributes> myAttributesMap = ContainerUtilRt.newHashMap();
+  protected Map<TextAttributesKey, TextAttributes> myAttributesMap = new THashMap<>();
 
   @NonNls private static final String EDITOR_FONT       = "font";
   @NonNls private static final String CONSOLE_FONT      = "console-font";
@@ -180,7 +181,7 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
       newScheme.setFont(type, font);
     }
 
-    newScheme.myAttributesMap = new HashMap<>(myAttributesMap);
+    newScheme.myAttributesMap = new THashMap<>(myAttributesMap);
     newScheme.myColorsMap = new HashMap<>(myColorsMap);
     newScheme.myVersion = myVersion;
   }
@@ -403,14 +404,16 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
 
   public void readAttributes(@NotNull Element childNode) {
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
-      TextAttributesKey key = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
       Element valueElement = e.getChild(VALUE_ELEMENT);
-      TextAttributes attr = myValueReader.read(TextAttributes.class, valueElement);
-      String baseKeyName = e.getAttributeValue(BASE_ATTRIBUTES_ATTR);
-      if (baseKeyName != null) {
-        // For now inheritance overriding is not supported, just make sure that empty attributes mean inheritance.
-        attr.setEnforceEmpty(false);
+      TextAttributesKey key = TextAttributesKey.find(e.getAttributeValue(NAME_ATTR));
+      if (valueElement == null) {
+        if (e.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null) {
+          myAttributesMap.put(key, USE_INHERITED_MARKER);
+        }
+        continue;
       }
+
+      TextAttributes attr = myValueReader.read(TextAttributes.class, valueElement);
       myAttributesMap.put(key, attr);
       migrateErrorStripeColorFrom14(key, attr);
     }
@@ -623,24 +626,54 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
   private void writeAttributes(@NotNull Element attrElements) throws WriteExternalException {
     List<TextAttributesKey> list = new ArrayList<>(myAttributesMap.keySet());
     list.sort(null);
-    for (TextAttributesKey key: list) {
-      TextAttributes defaultAttr = myParentScheme != null ? myParentScheme.getAttributes(key) : new TextAttributes();
+    for (TextAttributesKey key : list) {
+      TextAttributes attributes = myAttributesMap.get(key);
       TextAttributesKey baseKey = key.getFallbackAttributeKey();
-      TextAttributes defaultFallbackAttr =
-        baseKey != null && myParentScheme instanceof AbstractColorsScheme ?
-        ((AbstractColorsScheme)myParentScheme).getFallbackAttributes(baseKey) : null;
-      TextAttributes value = myAttributesMap.get(key);                
-      if (baseKey != null && value.isFallbackEnabled()) {
-        if (isParentOverwritingInheritance(key)) {
-          attrElements.addContent(new Element(OPTION_ELEMENT).setAttribute(NAME_ATTR, key.getExternalName()).setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName()));
+      if (attributes == USE_INHERITED_MARKER) {
+        if (baseKey != null) {
+          attrElements.addContent(new Element(OPTION_ELEMENT)
+                                    .setAttribute(NAME_ATTR, key.getExternalName())
+                                    .setAttribute(BASE_ATTRIBUTES_ATTR, baseKey.getExternalName()));
+        }
+        continue;
+      }
+
+      if (myParentScheme != null) {
+        // fallback attributes must be not used, otherwise derived scheme as copy will not have such ke
+        TextAttributes parentAttributes = myParentScheme instanceof AbstractColorsScheme
+                                          ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key)
+                                          : myParentScheme.getAttributes(key);
+        if (parentAttributes != null && attributes.equals(parentAttributes)) {
+          continue;
         }
       }
-      else {
-        if (value.containsValue() && !value.equals(defaultAttr) || defaultAttr == defaultFallbackAttr) {
-          Element valueElement = new Element(VALUE_ELEMENT);
-          value.writeExternal(valueElement);
-          attrElements.addContent(new Element(OPTION_ELEMENT).setAttribute(NAME_ATTR, key.getExternalName()).addContent(valueElement));
+
+      Element valueElement = new Element(VALUE_ELEMENT);
+      attributes.writeExternal(valueElement);
+      attrElements.addContent(new Element(OPTION_ELEMENT).setAttribute(NAME_ATTR, key.getExternalName()).addContent(valueElement));
+    }
+  }
+
+  public void optimizeAttributeMap() {
+    EditorColorsScheme parentScheme = myParentScheme;
+    if (parentScheme == null) {
+      return;
+    }
+
+    for (TextAttributesKey key : new ArrayList<>(myAttributesMap.keySet())) {
+      TextAttributes attributes = myAttributesMap.get(key);
+      if (attributes == USE_INHERITED_MARKER) {
+        if (key.getFallbackAttributeKey() == null) {
+          myAttributesMap.remove(key);
         }
+        continue;
+      }
+
+      TextAttributes parentAttributes = parentScheme instanceof DefaultColorsScheme
+                                        ? ((DefaultColorsScheme)parentScheme).getAttributes(key, false)
+                                        : parentScheme.getAttributes(key);
+      if (Comparing.equal(parentAttributes, attributes)) {
+        myAttributesMap.remove(key);
       }
     }
   }
@@ -659,15 +692,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
       metaInfoElement.addContent(propertyInfo);
     }
     return metaInfoElement;
-  }
-
-  private boolean isParentOverwritingInheritance(@NotNull TextAttributesKey key) {
-    TextAttributes parentAttrs =
-      myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
-    if (parentAttrs != null) {
-      return !parentAttrs.isFallbackEnabled();
-    }
-    return false;
   }
 
   protected Color getOwnColor(ColorKey key) {
@@ -698,7 +722,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
       }
     }
     return true;
-
   }
 
   @NotNull
@@ -756,15 +779,13 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
     myConsoleLineSpacing = lineSpacing;
   }
 
-  protected TextAttributes getFallbackAttributes(TextAttributesKey fallbackKey) {
-    if (fallbackKey == null) return null;
+  protected TextAttributes getFallbackAttributes(@NotNull TextAttributesKey fallbackKey) {
     TextAttributes fallbackAttributes = getDirectlyDefinedAttributes(fallbackKey);
-    if (fallbackAttributes != null) {
-      if (!fallbackAttributes.isFallbackEnabled() || fallbackKey.getFallbackAttributeKey() == null) {
-        return fallbackAttributes;
-      }
+    TextAttributesKey fallbackKeyFallbackKey = fallbackKey.getFallbackAttributeKey();
+    if (fallbackAttributes != null && (fallbackAttributes != USE_INHERITED_MARKER || fallbackKeyFallbackKey == null)) {
+      return fallbackAttributes;
     }
-    return getFallbackAttributes(fallbackKey.getFallbackAttributeKey());
+    return fallbackKeyFallbackKey == null ? null : getFallbackAttributes(fallbackKeyFallbackKey);
   }
 
   /**
@@ -780,10 +801,6 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme, Serial
       return attributes;
     }
     return myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) : null;
-  }
-
-  protected static boolean containsValue(@Nullable TextAttributes attributes) {
-    return attributes != null && attributes.containsValue();
   }
 
   public boolean isSaveNeeded() {
