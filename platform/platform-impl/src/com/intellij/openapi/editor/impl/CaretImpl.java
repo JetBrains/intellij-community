@@ -117,66 +117,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     myDocumentUpdateCounter = editor.getCaretModel().myDocumentUpdateCounter;
   }
 
-  //void beforeDocumentChange(DocumentEvent e) {
-  //  int startOffset = e.getOffset();
-  //  boolean insideChangedRegion = myOffset >= startOffset && myOffset <= startOffset + e.getOldLength();
-  //  myAfterInlayOnDocumentUpdate = insideChangedRegion &&
-  //                                 e.getNewLength() == 0 &&
-  //                                 myEditor.getInlayModel().hasInlineElementAt(startOffset) ||
-  //                                 !insideChangedRegion &&
-  //                                 myLogicalCaret.leansForward &&
-  //                                 myEditor.getInlayModel().hasInlineElementAt(myOffset);
-  //}
-  //
-  //void afterDocumentChange(@NotNull final DocumentEventImpl event) {
-  //  final DocumentEx document = myEditor.getDocument();
-  //  boolean performSoftWrapAdjustment = event.getNewLength() > 0 // We want to put caret just after the last added symbol
-  //                                      // There is a possible case that the user removes text just before the soft wrap. We want to keep caret
-  //                                      // on a visual line with soft wrap start then.
-  //                                      || myEditor.getSoftWrapModel().getSoftWrap(event.getOffset()) != null;
-  //
-  //  if (event.isWholeTextReplaced()) {
-  //    int newLength = document.getTextLength();
-  //    if (myOffset == newLength - event.getNewLength() + event.getOldLength() || newLength == 0) {
-  //      moveToOffset(newLength, performSoftWrapAdjustment);
-  //    }
-  //    else {
-  //      try {
-  //        final int line = event.translateLineViaDiff(myLogicalCaret.line);
-  //        moveToLogicalPosition(new LogicalPosition(line, myLogicalCaret.column), performSoftWrapAdjustment, null, true);
-  //      }
-  //      catch (FilesTooBigForDiffException e1) {
-  //        LOG.info(e1);
-  //        moveToOffset(0);
-  //      }
-  //    }
-  //  }
-  //  else {
-  //    int startOffset = event.getOffset();
-  //    int oldEndOffset = startOffset + event.getOldLength();
-  //
-  //    int newOffset = myOffset;
-  //
-  //    if (myOffset > oldEndOffset || myOffset == oldEndOffset && needToShiftWhiteSpaces(event)) {
-  //      newOffset += event.getNewLength() - event.getOldLength();
-  //    }
-  //    else if (myOffset >= startOffset && myOffset <= oldEndOffset) {
-  //      newOffset = Math.min(newOffset, startOffset + event.getNewLength());
-  //    }
-  //
-  //    newOffset = Math.min(newOffset, document.getTextLength());
-  //
-  //    if (myOffset != startOffset || myAfterInlayOnDocumentUpdate) {
-  //      LogicalPosition pos = myEditor.offsetToLogicalPosition(newOffset);
-  //      moveToLogicalPosition(new LogicalPosition(pos.line, pos.column + myVirtualSpaceOffset, myAfterInlayOnDocumentUpdate),
-  //                            performSoftWrapAdjustment, null, true);
-  //    }
-  //    else {
-  //      moveToOffset(newOffset, performSoftWrapAdjustment);
-  //    }
-  //  }
-  //}
-
   @Override
   public void moveToOffset(int offset) {
     moveToOffset(offset, false);
