@@ -19,9 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.Operation;
-import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.TerminalBlock;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -30,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -49,65 +46,61 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    if (element instanceof PsiForeachStatement) {
-      PsiForeachStatement foreachStatement = (PsiForeachStatement)element;
-      PsiStatement body = foreachStatement.getBody();
-      final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
-      if (body != null && iteratedValue != null) {
-        final PsiParameter parameter = foreachStatement.getIterationParameter();
-        TerminalBlock tb = TerminalBlock.from(parameter, body);
-        if (!FileModificationService.getInstance().preparePsiElementForWrite(foreachStatement)) return;
-        PsiElement result = migrate(project, descriptor, foreachStatement, iteratedValue, body, tb);
-        if(result != null) {
-          simplifyAndFormat(project, result);
-        }
+    if (element instanceof PsiLoopStatement) {
+      PsiLoopStatement loopStatement = (PsiLoopStatement)element;
+      StreamSource source = StreamSource.tryCreate(loopStatement);
+      PsiStatement body = loopStatement.getBody();
+      if(body == null || source == null) return;
+      TerminalBlock tb = TerminalBlock.from(source, body);
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(loopStatement)) return;
+      PsiElement result = migrate(project, loopStatement, body, tb);
+      if(result != null) {
+        simplifyAndFormat(project, result);
       }
     }
   }
 
   abstract PsiElement migrate(@NotNull Project project,
-                        @NotNull ProblemDescriptor descriptor,
-                        @NotNull PsiForeachStatement foreachStatement,
-                        @NotNull PsiExpression iteratedValue,
-                        @NotNull PsiStatement body,
-                        @NotNull TerminalBlock tb);
+                              @NotNull PsiLoopStatement loopStatement,
+                              @NotNull PsiStatement body,
+                              @NotNull TerminalBlock tb);
 
   static PsiElement replaceWithNumericAddition(@NotNull Project project,
-                                               PsiForeachStatement foreachStatement,
+                                               PsiLoopStatement loopStatement,
                                                PsiVariable var,
                                                StringBuilder builder,
                                                PsiType expressionType) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    restoreComments(foreachStatement, foreachStatement.getBody());
-    InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, foreachStatement);
+    restoreComments(loopStatement, loopStatement.getBody());
+    InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, loopStatement);
     if (status != InitializerUsageStatus.UNKNOWN) {
       PsiExpression initializer = var.getInitializer();
       if (ExpressionUtils.isZero(initializer)) {
         PsiType type = var.getType();
         String replacement = (type.equals(expressionType) ? "" : "(" + type.getCanonicalText() + ") ") + builder;
-        return replaceInitializer(foreachStatement, var, initializer, replacement, status);
+        return replaceInitializer(loopStatement, var, initializer, replacement, status);
       }
     }
-    return foreachStatement.replace(elementFactory.createStatementFromText(var.getName() + "+=" + builder + ";", foreachStatement));
+    return loopStatement.replace(elementFactory.createStatementFromText(var.getName() + "+=" + builder + ";", loopStatement));
   }
 
-  static PsiElement replaceInitializer(PsiForeachStatement foreachStatement,
+  static PsiElement replaceInitializer(PsiLoopStatement loopStatement,
                                  PsiVariable var,
                                  PsiExpression initializer,
                                  String replacement,
                                  InitializerUsageStatus status) {
-    Project project = foreachStatement.getProject();
+    Project project = loopStatement.getProject();
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     if(status == InitializerUsageStatus.DECLARED_JUST_BEFORE) {
-      initializer.replace(elementFactory.createExpressionFromText(replacement, foreachStatement));
-      removeLoop(foreachStatement);
+      initializer.replace(elementFactory.createExpressionFromText(replacement, loopStatement));
+      removeLoop(loopStatement);
       return var;
     } else {
       if(status == InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
         initializer.delete();
       }
       return
-        foreachStatement.replace(elementFactory.createStatementFromText(var.getName() + " = " + replacement + ";", foreachStatement));
+        loopStatement.replace(elementFactory.createStatementFromText(var.getName() + " = " + replacement + ";", loopStatement));
     }
   }
 
@@ -117,34 +110,26 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
     CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
   }
 
-  static void restoreComments(PsiForeachStatement foreachStatement, PsiStatement body) {
-    final PsiElement parent = foreachStatement.getParent();
+  static void restoreComments(PsiLoopStatement loopStatement, PsiStatement body) {
+    final PsiElement parent = loopStatement.getParent();
     for (PsiElement comment : PsiTreeUtil.findChildrenOfType(body, PsiComment.class)) {
-      parent.addBefore(comment, foreachStatement);
+      parent.addBefore(comment, loopStatement);
     }
   }
 
   @NotNull
-  static StringBuilder generateStream(PsiExpression iteratedValue, @Nullable Operation lastOperation) {
-    return generateStream(iteratedValue, lastOperation, false);
+  static StringBuilder generateStream(@NotNull Operation lastOperation) {
+    return generateStream(lastOperation, false);
   }
 
   @NotNull
-  static StringBuilder generateStream(PsiExpression iteratedValue, @Nullable Operation lastOperation, boolean noStreamForEmpty) {
+  static StringBuilder generateStream(@NotNull Operation lastOperation, boolean noStreamForEmpty) {
     StringBuilder buffer = new StringBuilder();
-    final PsiType iteratedValueType = iteratedValue.getType();
-    if (iteratedValueType instanceof PsiArrayType) {
-      buffer.append("java.util.Arrays.stream(").append(iteratedValue.getText()).append(")");
+    if(noStreamForEmpty && lastOperation instanceof CollectionStream) {
+      return buffer.append(lastOperation.getExpression().getText());
     }
-    else {
-      buffer.append(getIteratedValueText(iteratedValue));
-      if (!noStreamForEmpty || lastOperation != null) {
-        buffer.append(".stream()");
-      }
-    }
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(iteratedValue.getProject());
     List<String> replacements =
-      StreamEx.iterate(lastOperation, Objects::nonNull, Operation::getPreviousOp).map(op -> op.createReplacement(factory)).toList();
+      StreamEx.iterate(lastOperation, Objects::nonNull, Operation::getPreviousOp).map(Operation::createReplacement).toList();
     for(ListIterator<String> it = replacements.listIterator(replacements.size()); it.hasPrevious(); ) {
       buffer.append(it.previous());
     }
@@ -158,7 +143,7 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
            iteratedValue instanceof PsiParenthesizedExpression ? iteratedValue.getText() : "(" + iteratedValue.getText() + ")";
   }
 
-  static void removeLoop(@NotNull PsiForeachStatement statement) {
+  static void removeLoop(@NotNull PsiLoopStatement statement) {
     PsiElement parent = statement.getParent();
     if (parent instanceof PsiLabeledStatement) {
       parent.delete();

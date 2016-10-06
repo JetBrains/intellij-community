@@ -1221,6 +1221,20 @@ public class PyTypeTest extends PyTestCase {
            "        expr = x\n");
   }
 
+  // PY-20818
+  public void testIsInstanceForSuperclass() {
+    doTest("B",
+           "class A:\n" +
+           "    pass\n" +
+           "class B(A):\n" +
+           "    def foo(self):\n" +
+           "        pass\n" +
+           "def test():\n" +
+           "    b = B()\n" +
+           "    assert(isinstance(b, A))\n" +
+           "    expr = b\n");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

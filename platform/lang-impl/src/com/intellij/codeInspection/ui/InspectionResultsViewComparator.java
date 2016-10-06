@@ -32,6 +32,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefFile;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
@@ -107,8 +108,18 @@ public class InspectionResultsViewComparator implements Comparator {
         if (diff != 0) {
           return diff;
         }
-        return PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)descriptor2).getEndElement(),
+        diff = PsiUtilCore.compareElementsByPosition(((ProblemDescriptor)descriptor2).getEndElement(),
                                                      ((ProblemDescriptor)descriptor1).getEndElement());
+        if (diff != 0) return diff;
+
+        final TextRange range1 = ((ProblemDescriptor)descriptor1).getTextRangeInElement();
+        final TextRange range2 = ((ProblemDescriptor)descriptor2).getTextRangeInElement();
+        if (range1 != null && range2 != null) {
+          diff = range1.getStartOffset() - range2.getStartOffset();
+          if (diff != 0) return diff;
+          diff = range1.getEndOffset() - range2.getEndOffset();
+          if (diff != 0) return diff;
+        }
       }
       if (descriptor1 != null && descriptor2 != null) {
         return descriptor1.getDescriptionTemplate().compareToIgnoreCase(descriptor2.getDescriptionTemplate());

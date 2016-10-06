@@ -91,7 +91,15 @@ public abstract class ProjectTaskManager {
 
   public abstract ProjectTask createAllModulesBuildTask(boolean isIncrementalBuild, Project project);
 
-  public abstract ProjectTask createModulesBuildTask(boolean isIncrementalBuild, Module... modules);
+  public abstract ProjectTask createModulesBuildTask(Module module,
+                                                     boolean isIncrementalBuild,
+                                                     boolean includeDependentModules,
+                                                     boolean includeRuntimeDependencies);
+
+  public abstract ProjectTask createModulesBuildTask(Module[] modules,
+                                                     boolean isIncrementalBuild,
+                                                     boolean includeDependentModules,
+                                                     boolean includeRuntimeDependencies);
 
   public abstract ProjectTask createArtifactsBuildTask(boolean isIncrementalBuild, Artifact... artifacts);
 
