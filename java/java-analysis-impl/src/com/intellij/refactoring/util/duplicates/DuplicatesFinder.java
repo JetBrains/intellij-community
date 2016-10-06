@@ -401,12 +401,10 @@ public class DuplicatesFinder {
       final PsiType type1 = ((PsiNewExpression)pattern).getType();
       final PsiType type2 = ((PsiNewExpression)candidate).getType();
       if (type1 == null || type2 == null) return false;
-      final PsiJavaCodeReferenceElement classReference1 = ((PsiNewExpression)pattern).getClassReference();
-      final PsiJavaCodeReferenceElement classReference2 = ((PsiNewExpression)candidate).getClassReference();
-      if (classReference1 != null && classReference2 != null) {
-        final PsiElement resolved1 = classReference1.resolve();
-        final PsiElement resolved2 = classReference2.resolve();
-        if (!pattern.getManager().areElementsEquivalent(resolved1, resolved2)) return false;
+      final PsiMethod constructor1 = ((PsiNewExpression)pattern).resolveConstructor();
+      final PsiMethod constructor2 = ((PsiNewExpression)candidate).resolveConstructor();
+      if (constructor1 != null && constructor2 != null) {
+        if (!pattern.getManager().areElementsEquivalent(constructor1, constructor2)) return false;
       }
       else {
         if (!canTypesBeEquivalent(type1, type2)) return false;
