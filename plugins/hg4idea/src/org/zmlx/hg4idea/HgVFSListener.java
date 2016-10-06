@@ -102,7 +102,7 @@ public class HgVFSListener extends VcsVFSListener {
           try {
             untrackedFiles
               .addAll(new HgStatusCommand.Builder(false).unknown(true).removed(true).build(myProject)
-                        .getHgUntrackedFiles(repo, new ArrayList<>(files)));
+                        .getFiles(repo, new ArrayList<>(files)));
           }
           catch (final VcsException ex) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
