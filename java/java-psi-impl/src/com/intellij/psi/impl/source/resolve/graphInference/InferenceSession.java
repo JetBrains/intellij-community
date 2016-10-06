@@ -382,7 +382,6 @@ public class InferenceSession {
           final Ref<String> errorMessage = new Ref<String>();
           final PsiType targetType = getTargetTypeFromParent(parent, errorMessage, false);
           if (targetType == null && errorMessage.get() != null) {
-            registerIncompatibleErrorMessage(errorMessage.get());
             return;
           }
 
