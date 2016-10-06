@@ -27,7 +27,11 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ParameterizedCachedValue;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
@@ -143,19 +147,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
   public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
     if (!isServiceEnabled()) return null;
 
-    final ParameterizedCachedValueProvider<GlobalSearchScope, CompilerSearchAdapter> cachedValueProvider =
-      new ParameterizedCachedValueProvider<GlobalSearchScope, CompilerSearchAdapter>() {
-        @Nullable
-        @Override
-        public CachedValueProvider.Result<GlobalSearchScope> compute(CompilerSearchAdapter param) {
-          return CachedValueProvider.Result.create(calculateScopeWithoutReferences(element, param), PsiModificationTracker.MODIFICATION_COUNT);
-        }
-      };
-    return CachedValuesManager.getManager(myProject).getParameterizedCachedValue(element,
-                                                                                 CACHE_KEY,
-                                                                                 cachedValueProvider,
-                                                                                 false,
-                                                                                 adapter);
+    return CachedValuesManager.getCachedValue(element,
+                                              () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<CompilerSearchAdapter, GlobalSearchScope>() {
+                                                  @Nullable
+                                                  @Override
+                                                  protected GlobalSearchScope create(CompilerSearchAdapter key) {
+                                                    return calculateScopeWithoutReferences(element, key);
+                                                  }
+                                              },
+                                              PsiModificationTracker.MODIFICATION_COUNT)).get(adapter);
   }
 
   private boolean isServiceEnabled() {
