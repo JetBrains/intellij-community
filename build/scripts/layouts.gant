@@ -833,6 +833,7 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         exclude(name: "**/fest-*.jar")
         exclude(name: "src/*.jar")
       }
+      fileset(dir: "${home}/../../out/studio/runtime")
 
       jar("android-common.jar") {
         module("android-common")
