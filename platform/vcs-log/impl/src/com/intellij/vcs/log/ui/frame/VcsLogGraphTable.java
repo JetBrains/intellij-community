@@ -94,6 +94,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final GraphTableController myController;
+  private final StringCellRenderer myStringCellRenderer;
   private boolean myColumnsSizeInitialized = false;
 
   @Nullable private Selection mySelection = null;
@@ -113,12 +114,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myUi = ui;
     myLogData = logData;
     myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, myGraphCellPainter, this);
+    myStringCellRenderer = new StringCellRenderer();
 
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
-    setDefaultRenderer(String.class, new StringCellRenderer());
+    setDefaultRenderer(String.class, myStringCellRenderer);
 
     setShowHorizontalLines(false);
     setIntercellSpacing(JBUI.emptySize());
@@ -187,11 +189,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
           maxWidth = Math.max(getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(value), maxWidth);
           if (!value.isEmpty()) sizeCalculated = true;
         }
-        int min = Math.min(maxWidth + UIUtil.DEFAULT_HGAP, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH);
+        int min =
+          Math.min(maxWidth + UIUtil.DEFAULT_HGAP, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH + myStringCellRenderer.getHorizontalTextPadding());
         column.setPreferredWidth(min);
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
-        int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth("mm" + DateFormatUtil.formatDateTime(new Date()));
+        int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
+                  myStringCellRenderer.getHorizontalTextPadding();
         column.setPreferredWidth(min);
       }
     }
@@ -645,7 +649,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return;
       }
       append(value.toString(), applyHighlighters(this, row, column, value.toString(), hasFocus, selected));
-      setBorder(null);
+    }
+
+    public int getHorizontalTextPadding() {
+      Insets borderInsets = getMyBorder().getBorderInsets(this);
+      Insets ipad = getIpad();
+      return borderInsets.left + borderInsets.right + ipad.left + ipad.right;
     }
   }
 
