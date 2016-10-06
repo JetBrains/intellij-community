@@ -34,6 +34,7 @@ import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgBranchesCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.provider.HgLocalIgnoredHolder;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.*;
@@ -50,6 +51,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @NotNull private volatile HgConfig myConfig;
   private boolean myIsFresh = true;
+  private final HgLocalIgnoredHolder myLocalIgnoredHolder;
 
 
   @SuppressWarnings("ConstantConditions")
@@ -61,6 +63,8 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     assert myHgDir != null : ".hg directory wasn't found under " + rootDir.getPresentableUrl();
     myReader = new HgRepositoryReader(vcs, VfsUtilCore.virtualToIoFile(myHgDir));
     myConfig = HgConfig.getInstance(getProject(), rootDir);
+    myLocalIgnoredHolder = new HgLocalIgnoredHolder(this);
+    Disposer.register(this, myLocalIgnoredHolder);
     update();
   }
 
@@ -79,6 +83,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   private void setupUpdater() {
     HgRepositoryUpdater updater = new HgRepositoryUpdater(this);
     Disposer.register(this, updater);
+    myLocalIgnoredHolder.startRescan();
   }
 
   @NotNull
@@ -254,5 +259,10 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   public void updateConfig() {
     myConfig = HgConfig.getInstance(getProject(), getRoot());
+  }
+
+  @Override
+  public HgLocalIgnoredHolder getLocalIgnoredHolder() {
+    return myLocalIgnoredHolder;
   }
 }
