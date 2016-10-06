@@ -1275,6 +1275,31 @@ public class PyTypeTest extends PyTestCase {
            "        expr = x\n");
   }
 
+  public void testHeterogeneousListLiteral() {
+    doTest("List[Union[str, int]]", "expr = ['1', 1, 1]");
+
+    doTest("List[Union[Union[str, int], Any]]", "expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]");
+  }
+
+  public void testHeterogeneousSetLiteral() {
+    doTest("Set[Union[str, int]]", "expr = {'1', 1, 1}");
+
+    doTest("Set[Union[Union[str, int], Any]]", "expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}");
+  }
+
+  public void testHeterogeneousDictLiteral() {
+    doTest("Dict[Union[str, int], Union[str, int]]", "expr = {'1': 1, 1: '1', 1: 1}");
+
+    doTest("Dict[Union[Union[str, int], Any], Union[Union[str, int], Any]]",
+           "expr = {'1': 1, 1: '1', 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1}");
+  }
+
+  public void testHeterogeneousTupleLiteral() {
+    doTest("Tuple[str, int, int]", "expr = ('1', 1, 1)");
+
+    doTest("Tuple[str, int, int, int, int, int, int, int, int, int, int]", "expr = ('1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)");
+  }
+
   // PY-20818
   public void testIsInstanceForSuperclass() {
     doTest("B",
