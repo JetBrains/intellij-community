@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -46,43 +45,40 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
 
   @Override
   PsiElement migrate(@NotNull Project project,
-               @NotNull ProblemDescriptor descriptor,
-               @NotNull PsiForeachStatement foreachStatement,
-               @NotNull PsiExpression iteratedValue,
-               @NotNull PsiStatement body,
-               @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
+                     @NotNull PsiLoopStatement loopStatement,
+                     @NotNull PsiStatement body,
+                     @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    StringBuilder builder = generateStream(tb.getLastOperation());
     if(tb.getSingleStatement() instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
       PsiExpression value = returnStatement.getReturnValue();
       if (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE)) {
         boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-        PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(foreachStatement);
+        PsiReturnStatement nextReturnStatement = StreamApiMigrationInspection.getNextReturnStatement(loopStatement);
         if (nextReturnStatement != null) {
           PsiExpression returnValue = nextReturnStatement.getReturnValue();
           if(returnValue == null) return null;
           String methodName = foundResult ? "anyMatch" : "noneMatch";
-          String streamText = generateStream(iteratedValue, tb.getLastOperation()).toString();
-          streamText = addTerminalOperation(streamText, methodName, foreachStatement, tb);
-          restoreComments(foreachStatement, body);
-          if (nextReturnStatement.getParent() == foreachStatement.getParent()) {
+          String streamText = addTerminalOperation(builder.toString(), methodName, loopStatement, tb);
+          restoreComments(loopStatement, body);
+          if (nextReturnStatement.getParent() == loopStatement.getParent()) {
             if(!ExpressionUtils.isLiteral(returnValue, !foundResult)) {
               streamText+= (foundResult ? "||" : "&&") + ParenthesesUtils.getText(returnValue, ParenthesesUtils.AND_PRECEDENCE);
             }
-            removeLoop(foreachStatement);
+            removeLoop(loopStatement);
             return returnValue.replace(elementFactory.createExpressionFromText(streamText, nextReturnStatement));
           }
-          return foreachStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", foreachStatement));
+          return loopStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", loopStatement));
         }
       }
     }
     PsiStatement[] statements = tb.getStatements();
-    if (!(statements.length == 1 || (statements.length == 2 && ControlFlowUtils.statementBreaksLoop(statements[1], foreachStatement)))) {
+    if (!(statements.length == 1 || (statements.length == 2 && ControlFlowUtils.statementBreaksLoop(statements[1], loopStatement)))) {
       return null;
     }
-    restoreComments(foreachStatement, body);
-    String streamText = generateStream(iteratedValue, tb.getLastOperation()).toString();
-    streamText = addTerminalOperation(streamText, "anyMatch", foreachStatement, tb);
+    restoreComments(loopStatement, body);
+    String streamText = addTerminalOperation(builder.toString(), "anyMatch", loopStatement, tb);
     PsiStatement statement = statements[0];
     PsiAssignmentExpression assignment = ExpressionUtils.getAssignment(statement);
     if(assignment != null) {
@@ -96,7 +92,7 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
         // for(....) if(...) {flag = true; break;}
         PsiVariable var = (PsiVariable)maybeVar;
         PsiExpression initializer = var.getInitializer();
-        InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, foreachStatement);
+        InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, loopStatement);
         if(initializer != null && status != InitializerUsageStatus.UNKNOWN) {
           String replacement;
           if(ExpressionUtils.isLiteral(initializer, Boolean.FALSE) &&
@@ -108,12 +104,12 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
           } else {
             replacement = streamText + "?" + rValue.getText() + ":" + initializer.getText();
           }
-          return replaceInitializer(foreachStatement, var, initializer, replacement, status);
+          return replaceInitializer(loopStatement, var, initializer, replacement, status);
         }
       }
     }
     String replacement = "if(" + streamText + "){" + statement.getText() + "}";
-    return foreachStatement.replace(elementFactory.createStatementFromText(replacement, foreachStatement));
+    return loopStatement.replace(elementFactory.createStatementFromText(replacement, loopStatement));
   }
 
   private static String addTerminalOperation(String origStream, String methodName, @NotNull PsiElement contextElement,

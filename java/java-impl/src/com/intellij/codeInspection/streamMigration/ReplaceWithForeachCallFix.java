@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -41,24 +40,22 @@ class ReplaceWithForeachCallFix extends MigrateToStreamFix {
 
   @Override
   PsiElement migrate(@NotNull Project project,
-               @NotNull ProblemDescriptor descriptor,
-               @NotNull PsiForeachStatement foreachStatement,
-               @NotNull PsiExpression iteratedValue,
-               @NotNull PsiStatement body,
-               @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
-    restoreComments(foreachStatement, body);
+                     @NotNull PsiLoopStatement loopStatement,
+                     @NotNull PsiStatement body,
+                     @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
+    restoreComments(loopStatement, body);
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
-    StringBuilder buffer = generateStream(iteratedValue, tb.getLastOperation(), true);
+    StringBuilder buffer = generateStream(tb.getLastOperation(), true);
     PsiElement block = tb.convertToElement(elementFactory);
 
     buffer.append(".").append(myForEachMethodName).append("(");
 
     final String functionalExpressionText = tb.getVariable().getName() + " -> " + wrapInBlock(block);
     PsiExpressionStatement callStatement = (PsiExpressionStatement)elementFactory
-      .createStatementFromText(buffer.toString() + functionalExpressionText + ");", foreachStatement);
-    callStatement = (PsiExpressionStatement)foreachStatement.replace(callStatement);
+      .createStatementFromText(buffer.toString() + functionalExpressionText + ");", loopStatement);
+    callStatement = (PsiExpressionStatement)loopStatement.replace(callStatement);
 
     final PsiExpressionList argumentList = ((PsiCallExpression)callStatement.getExpression()).getArgumentList();
     LOG.assertTrue(argumentList != null, callStatement.getText());
