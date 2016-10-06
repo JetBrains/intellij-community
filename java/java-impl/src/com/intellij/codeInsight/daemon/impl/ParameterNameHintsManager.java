@@ -15,7 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.util.Couple;
+import com.intellij.codeInsight.hints.filtering.Matcher;
+import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -26,22 +27,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class ParameterNameHintsManager {
-  private static final List<Couple<String>> COMMONLY_USED_PARAMETER_PAIR = ContainerUtil.newArrayList(
-    Couple.of("begin", "end"),
-    Couple.of("start", "end"),
-    Couple.of("first", "last"),
-    Couple.of("first", "second"),
-    Couple.of("from", "to"),
-    Couple.of("key", "value"),
-    Couple.of("min", "max"),
-    Couple.of("format", "arg")
-  );
-  
+
+  private static List<Matcher> MATCHERS = Stream.of(
+    "(begin*, end*)",
+    "(start*, end*)",
+    "(first*, last*)",
+    "(first*, second*)",
+    "(from*, to*)",
+    "(min*, max*)",
+    "(key, value)",
+    "(format, arg)"
+  ).map((s) -> MatcherConstructor.INSTANCE.createMatcher(s))
+    .collect(Collectors.toList());
+    
   private static final Set<String> COMMON_METHOD_NAMES = ContainerUtil.newHashSet("set", "print", "println");
   
   @NotNull
@@ -173,7 +177,7 @@ public class ParameterNameHintsManager {
 
     final int totalDescriptors = descriptors.size();
     if (totalDescriptors == 1 && shouldIgnoreSingleHint(parameters, descriptors)
-        || totalDescriptors == 2 && parameters.length == 2 && isParamPairToIgnore(descriptors.get(0), descriptors.get(1))) 
+        || totalDescriptors == 2 && parameters.length == 2 && isParamPairToIgnore(descriptors)) 
     {
       return ContainerUtil.emptyList();
     }
@@ -206,18 +210,13 @@ public class ParameterNameHintsManager {
     return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset(), callArgument);
   }
 
-  private static boolean isParamPairToIgnore(InlayInfo first, InlayInfo second) {
-    String firstParamName = first.getText();
-    String secondParamName = second.getText();
+  private static boolean isParamPairToIgnore(List<InlayInfo> descriptors) {
+    List<String> params = descriptors
+      .stream()
+      .map((e) -> e.getText())
+      .collect(Collectors.toList());
 
-    for (Couple<String> knownPair : COMMONLY_USED_PARAMETER_PAIR) {
-      if (containsIgnoreCase(firstParamName, knownPair.first) 
-          && containsIgnoreCase(secondParamName, knownPair.second)) {
-        return true;
-      }
-    }
-
-    return false;
+    return MATCHERS.stream().anyMatch((e) -> e.isMatching("", params));
   }
 
   private static boolean shouldInlineParameterName(@NotNull PsiExpression argument,

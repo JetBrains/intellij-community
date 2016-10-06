@@ -17,15 +17,12 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
-import com.intellij.ide.IdeTooltip;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -33,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -59,7 +55,6 @@ import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
-import com.intellij.vcs.log.util.VcsUserUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +69,9 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.EventObject;
 import java.util.List;
 
 public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {
@@ -94,6 +91,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final GraphTableController myController;
+  private final StringCellRenderer myStringCellRenderer;
   private boolean myColumnsSizeInitialized = false;
 
   @Nullable private Selection mySelection = null;
@@ -113,12 +111,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     myUi = ui;
     myLogData = logData;
     myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, myGraphCellPainter, this);
+    myStringCellRenderer = new StringCellRenderer();
 
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUi));
     setDefaultRenderer(GraphCommitCell.class, myGraphCommitCellRenderer);
-    setDefaultRenderer(String.class, new StringCellRenderer());
+    setDefaultRenderer(String.class, myStringCellRenderer);
 
     setShowHorizontalLines(false);
     setIntercellSpacing(JBUI.emptySize());
@@ -187,11 +186,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
           maxWidth = Math.max(getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(value), maxWidth);
           if (!value.isEmpty()) sizeCalculated = true;
         }
-        int min = Math.min(maxWidth + UIUtil.DEFAULT_HGAP, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH);
+        int min =
+          Math.min(maxWidth + UIUtil.DEFAULT_HGAP, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH + myStringCellRenderer.getHorizontalTextPadding());
         column.setPreferredWidth(min);
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
-        int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth("mm" + DateFormatUtil.formatDateTime(new Date()));
+        int min = getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(DateFormatUtil.formatDateTime(new Date())) +
+                  myStringCellRenderer.getHorizontalTextPadding();
         column.setPreferredWidth(min);
       }
     }
@@ -645,7 +646,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return;
       }
       append(value.toString(), applyHighlighters(this, row, column, value.toString(), hasFocus, selected));
-      setBorder(null);
+    }
+
+    public int getHorizontalTextPadding() {
+      Insets borderInsets = getMyBorder().getBorderInsets(this);
+      Insets ipad = getIpad();
+      return borderInsets.left + borderInsets.right + ipad.left + ipad.right;
     }
   }
 
