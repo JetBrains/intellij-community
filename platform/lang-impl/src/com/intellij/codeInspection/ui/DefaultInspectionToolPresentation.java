@@ -211,7 +211,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     if (context.isViewClosed() || !(refElement instanceof RefElement)) {
       return;
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (myToolWrapper instanceof LocalInspectionToolWrapper && !ApplicationManager.getApplication().isUnitTestMode()) {
       context.initializeViewIfNeed().doWhenDone(() -> context.getView().addProblemDescriptors(myToolWrapper, refElement, descriptors));
     }
   }
@@ -313,7 +313,13 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @Override
   public void ignoreElement(@NotNull final RefEntity refEntity) {
-    getProblemElements().remove(refEntity);
+    final CommonProblemDescriptor[] removedDescriptors = getProblemElements().remove(refEntity);
+    if (removedDescriptors != null) {
+      for (CommonProblemDescriptor descriptor : removedDescriptors) {
+        getProblemToElements().remove(descriptor);
+      }
+    }
+
     getQuickFixActions().remove(refEntity);
   }
 

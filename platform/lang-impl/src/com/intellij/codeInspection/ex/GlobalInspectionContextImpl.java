@@ -470,7 +470,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       GlobalSimpleInspectionTool tool = (GlobalSimpleInspectionTool)toolWrapper.getTool();
       ProblemDescriptionsProcessor problemDescriptionProcessor = getProblemDescriptionProcessor(toolWrapper, map);
       tool.inspectionFinished(inspectionManager, this, problemDescriptionProcessor);
+
     }
+
+    addProblemsToView(globalSimpleTools);
   }
 
   private void inspectFile(@NotNull final PsiFile file,
@@ -656,12 +659,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         LOG.error(e);
       }
     }
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(globalTools, this, createContentProvider())).booleanValue()) {
-        return;
-      }
-      initializeViewIfNeed().doWhenDone(() -> myView.addTools(globalTools));
-    }
+
+    addProblemsToView(globalTools);
   }
 
   public ActionCallback initializeViewIfNeed() {
@@ -993,5 +992,15 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   private InspectionRVContentProvider createContentProvider() {
     return new InspectionRVContentProviderImpl(getProject());
+  }
+
+  private void addProblemsToView(List<Tools> tools) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      return;
+    }
+    if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(tools, this, createContentProvider())).booleanValue()) {
+      return;
+    }
+    initializeViewIfNeed().doWhenDone(() -> myView.addTools(tools));
   }
 }
