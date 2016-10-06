@@ -32,6 +32,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -43,6 +44,7 @@ import com.intellij.util.containers.IntArrayList;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -123,7 +125,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   static boolean isReferencedInOperations(PsiElement element, TerminalBlock tb) {
-    return ReferencesSearch.search(element, new LocalSearchScope(tb.intermediateExpressions().toArray(PsiElement[]::new)))
+    return ReferencesSearch.search(element, new LocalSearchScope(tb.intermediateAndSourceExpressions().toArray(PsiElement[]::new)))
              .findFirst() != null;
   }
 
@@ -350,7 +352,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     return dependsOnCollection[0];
   }
 
-  private static boolean isTrivial(PsiStatement body, PsiParameter parameter) {
+  @Contract("_, null -> false")
+  private static boolean isTrivial(PsiStatement body, PsiLoopStatement loopStatement) {
+    if(!(loopStatement instanceof PsiForeachStatement)) return false;
+    PsiParameter parameter = ((PsiForeachStatement)loopStatement).getIterationParameter();
     //method reference
     final PsiExpression candidate = new LambdaCanBeMethodReferenceInspection()
       .canBeMethodReferenceProblem(body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : body,
@@ -383,6 +388,27 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiClass consumerClass = psiFacade.findClass("java.util.function.Consumer", GlobalSearchScope.allScope(project));
     return consumerClass != null ? psiFacade.getElementFactory().createType(consumerClass, variable.getType()) : null;
+  }
+
+  static boolean isVariableSuitableForStream(PsiVariable variable, PsiStatement statement) {
+    PsiElement declaration = variable.getParent();
+    // For-loop initializer is not effectively final, but suitable for stream conversion
+    if(declaration instanceof PsiDeclarationStatement) {
+      PsiElement grandParent = declaration.getParent();
+      if (grandParent instanceof PsiForStatement) {
+        PsiForStatement forStatement = (PsiForStatement)grandParent;
+        if (forStatement.getInitialization() == declaration) {
+          PsiStatement body = forStatement.getBody();
+          if(body != null && PsiTreeUtil.isAncestor(statement, body, false)) {
+            return ReferencesSearch.search(variable, new LocalSearchScope(body)).forEach(ref -> {
+              PsiElement element = ref.getElement();
+              return !(element instanceof PsiExpression) || !PsiUtil.isAccessedForWriting((PsiExpression)element);
+            });
+          }
+        }
+      }
+    }
+    return HighlightControlFlowUtil.isEffectivelyFinal(variable, statement, null);
   }
 
   @Contract("null -> null")
@@ -465,26 +491,22 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     @Override
     public void visitForeachStatement(PsiForeachStatement statement) {
       super.visitForeachStatement(statement);
-      final PsiExpression iteratedValue = statement.getIteratedValue();
+      processLoop(statement);
+    }
+
+    @Override
+    public void visitForStatement(PsiForStatement statement) {
+      super.visitForStatement(statement);
+      processLoop(statement);
+    }
+
+    void processLoop(PsiLoopStatement statement) {
       final PsiStatement body = statement.getBody();
-      if (iteratedValue == null || body == null) return;
-
-      final PsiType iteratedValueType = iteratedValue.getType();
-      final PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
-      PsiClass collectionClass = null;
-      final boolean isArray;
-      if(iteratedValueType instanceof PsiArrayType) {
-        if(!isSupported(((PsiArrayType)iteratedValueType).getComponentType())) return;
-        isArray = true;
-      } else {
-        collectionClass = JavaPsiFacade.getInstance(body.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, statement.getResolveScope());
-        if (collectionClass != null && InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true)) {
-          isArray = false;
-        } else return;
-      }
+      if(body == null) return;
+      StreamSource source = StreamSource.tryCreate(statement);
+      if(source == null) return;
       if (!ExceptionUtil.getThrownCheckedExceptions(body).isEmpty()) return;
-
-      TerminalBlock tb = TerminalBlock.from(statement.getIterationParameter(), body);
+      TerminalBlock tb = TerminalBlock.from(source, body);
       if(tb.isEmpty()) return;
 
       final ControlFlow controlFlow;
@@ -502,7 +524,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       int startOffset = controlFlow.getStartOffset(body);
       int endOffset = controlFlow.getEndOffset(body);
       final List<PsiVariable> nonFinalVariables = StreamEx.of(ControlFlowUtil.getUsedVariables(controlFlow, startOffset, endOffset))
-        .remove(variable -> HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null)).toList();
+        .remove(variable -> isVariableSuitableForStream(variable, statement)).toList();
 
       if (exitPoints.isEmpty()) {
         if(getIncrementedVariable(tb, nonFinalVariables) != null) {
@@ -514,8 +536,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         if(!nonFinalVariables.isEmpty()) {
           return;
         }
-        if ((isArray || !isRawSubstitution(iteratedValueType, collectionClass)) && isCollectCall(tb)) {
-          boolean addAll = !tb.hasOperations() && isAddAllCall(tb);
+        if (isCollectCall(tb)) {
+          boolean addAll = statement instanceof PsiForeachStatement && !tb.hasOperations() && isAddAllCall(tb);
           String methodName;
           if(addAll) {
             methodName = "addAll";
@@ -535,7 +557,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         }
         // do not replace for(T e : arr) {} with Arrays.stream(arr).forEach(e -> {}) even if flag is set
         else if (SUGGEST_FOREACH &&
-                 (tb.hasOperations() || (!isArray && (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, statement.getIterationParameter()))))) {
+                 (tb.hasOperations() || (!(source instanceof ArrayStream) && (REPLACE_TRIVIAL_FOREACH || !isTrivial(body, statement))))) {
           ReplaceWithForeachCallFix forEachFix = new ReplaceWithForeachCallFix("forEach");
           LocalQuickFix[] fixes = {forEachFix};
           if (tb.hasOperations()) { //for .stream()
@@ -548,8 +570,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         if (nonFinalVariables.isEmpty() && tb.getSingleStatement() instanceof PsiReturnStatement) {
           handleSingleReturn(statement, tb);
         }
-        // Intermediate ops should not refer to non-final variables
-        if (tb.intermediateExpressions()
+        // Source and intermediate ops should not refer to non-final variables
+        if (tb.intermediateAndSourceExpressions()
           .flatCollection(expr -> PsiTreeUtil.collectElementsOfType(expr, PsiReferenceExpression.class))
           .map(PsiReferenceExpression::resolve).anyMatch(nonFinalVariables::contains)) {
           return;
@@ -561,7 +583,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
             return;
           }
           if (ReferencesSearch.search(tb.getVariable(), new LocalSearchScope(statements)).findFirst() == null
-            && exitPoints.size() == 1 && exitPoints.contains(breakStatement)) {
+              && exitPoints.size() == 1 && exitPoints.contains(breakStatement)) {
             registerProblem(statement, "anyMatch", new ReplaceWithMatchFix("anyMatch"));
             return;
           }
@@ -583,14 +605,14 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     }
 
-    boolean canCollect(PsiForeachStatement statement, PsiMethodCallExpression methodCallExpression) {
+    boolean canCollect(PsiLoopStatement statement, PsiMethodCallExpression methodCallExpression) {
       if(methodCallExpression == null) return false;
       PsiLocalVariable variable = extractCollectionVariable(methodCallExpression.getMethodExpression().getQualifierExpression());
       if(variable == null) return false;
       return getInitializerUsageStatus(variable, statement) != UNKNOWN;
     }
 
-    void handleSingleReturn(PsiForeachStatement statement, TerminalBlock tb) {
+    void handleSingleReturn(PsiLoopStatement statement, TerminalBlock tb) {
       PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
       PsiExpression value = returnStatement.getReturnValue();
       PsiReturnStatement nextReturnStatement = getNextReturnStatement(statement);
@@ -616,7 +638,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
       if (!isVariableReferenced(tb.getVariable(), value)) {
         Operation lastOp = tb.getLastOperation();
-        if(!REPLACE_TRIVIAL_FOREACH && lastOp == null || (lastOp instanceof FilterOp && lastOp.getPreviousOp() == null)) return;
+        if (!REPLACE_TRIVIAL_FOREACH && lastOp instanceof StreamSource ||
+            (lastOp instanceof FilterOp && lastOp.getPreviousOp() instanceof StreamSource)) {
+          return;
+        }
         registerProblem(statement, "anyMatch", new ReplaceWithMatchFix("anyMatch"));
       }
       if(nextReturnStatement != null && ExpressionUtils.isSimpleExpression(nextReturnStatement.getReturnValue())
@@ -625,13 +650,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       }
     }
 
-    private boolean isRawSubstitution(PsiType iteratedValueType, PsiClass collectionClass) {
-      return iteratedValueType instanceof PsiClassType && PsiUtil
-        .isRawSubstitutor(collectionClass, TypeConversionUtil.getSuperClassSubstitutor(collectionClass, (PsiClassType)iteratedValueType));
-    }
-
     @NotNull
-    private TextRange getRange(PsiForeachStatement statement) {
+    private TextRange getRange(PsiLoopStatement statement) {
       boolean wholeStatement = false;
       if(myIsOnTheFly) {
         if (myKey == null) {
@@ -643,18 +663,28 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
           wholeStatement = HighlightDisplayLevel.DO_NOT_SHOW.equals(level);
         }
       }
-      PsiExpression iteratedValue = statement.getIteratedValue();
-      LOG.assertTrue(iteratedValue != null);
-      PsiJavaToken rParenth = statement.getRParenth();
-      if(wholeStatement && rParenth != null) {
-        return new TextRange(statement.getTextOffset(), rParenth.getTextOffset() + 1);
+      if(statement instanceof PsiForeachStatement) {
+        PsiJavaToken rParenth = ((PsiForeachStatement)statement).getRParenth();
+        if (wholeStatement && rParenth != null) {
+          return new TextRange(statement.getTextOffset(), rParenth.getTextOffset() + 1);
+        }
+        PsiExpression iteratedValue = ((PsiForeachStatement)statement).getIteratedValue();
+        LOG.assertTrue(iteratedValue != null);
+        return iteratedValue.getTextRange();
+      } else if(statement instanceof PsiForStatement) {
+        PsiJavaToken rParenth = ((PsiForStatement)statement).getRParenth();
+        if (wholeStatement && rParenth != null) {
+          return new TextRange(statement.getTextOffset(), rParenth.getTextOffset() + 1);
+        }
+        PsiStatement initialization = ((PsiForStatement)statement).getInitialization();
+        LOG.assertTrue(initialization != null);
+        return initialization.getTextRange();
+      } else {
+        throw new IllegalStateException("Unexpected statement type: "+statement);
       }
-      return iteratedValue.getTextRange();
     }
 
-    private void registerProblem(PsiForeachStatement statement, String methodName, LocalQuickFix... fixes) {
-      PsiExpression iteratedValue = statement.getIteratedValue();
-      LOG.assertTrue(iteratedValue != null);
+    private void registerProblem(PsiLoopStatement statement, String methodName, LocalQuickFix... fixes) {
       myHolder.registerProblem(statement, getRange(statement).shiftRight(-statement.getTextOffset()),
                                "Can be replaced with '" + methodName + "' call", fixes);
     }
@@ -700,7 +730,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   }
 
   @Nullable
-  static PsiMethodCallExpression extractToArrayExpression(PsiForeachStatement statement, PsiMethodCallExpression expression) {
+  static PsiMethodCallExpression extractToArrayExpression(PsiLoopStatement statement, PsiMethodCallExpression expression) {
     // return collection.toArray() or collection.toArray(new Type[0]) or collection.toArray(new Type[collection.size()]);
     PsiElement nextElement = PsiTreeUtil.skipSiblingsForward(statement, PsiComment.class, PsiWhiteSpace.class);
     PsiExpression toArrayCandidate;
@@ -799,7 +829,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       return StreamEx.of(myExpression);
     }
 
-    abstract String createReplacement(PsiElementFactory factory);
+    abstract String createReplacement();
   }
 
   static class FilterOp extends Operation {
@@ -815,7 +845,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
 
     @Override
-    public String createReplacement(PsiElementFactory factory) {
+    public String createReplacement() {
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myExpression.getProject());
       PsiExpression intermediate = makeIntermediateExpression(factory);
       PsiExpression expression =
         myNegated ? factory.createExpressionFromText(BoolUtils.getNegatedExpressionText(intermediate), myExpression) : intermediate;
@@ -858,7 +889,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
 
     @Override
-    public String createReplacement(PsiElementFactory factory) {
+    public String createReplacement() {
       if (isIdentityMapping(myVariable, myExpression)) {
         if (!(myType instanceof PsiPrimitiveType)) {
           return myVariable.getType() instanceof PsiPrimitiveType ? ".boxed()" : "";
@@ -894,20 +925,33 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   static class FlatMapOp extends Operation {
     private final PsiLoopStatement myLoop;
+    private final StreamSource mySource;
 
-    FlatMapOp(@Nullable Operation previousOp, PsiExpression expression, PsiVariable variable, PsiLoopStatement loop) {
-      super(previousOp, expression, variable);
+    FlatMapOp(@Nullable Operation previousOp, StreamSource source, PsiVariable variable, PsiLoopStatement loop) {
+      super(previousOp, source.getExpression(), variable);
       myLoop = loop;
+      mySource = source;
     }
 
     @Override
-    public String createReplacement(PsiElementFactory factory) {
-      return ".flatMap(" + myVariable.getName() + " -> " + getStreamExpression() + ")";
+    public String createReplacement() {
+      String operation = "flatMap";
+      PsiType type = mySource.getVariable().getType();
+      if(type instanceof PsiPrimitiveType && !type.equals(myVariable.getType())) {
+        if(type.equals(PsiType.INT)) {
+          operation = "flatMapToInt";
+        } else if(type.equals(PsiType.LONG)) {
+          operation = "flatMapToLong";
+        } else if(type.equals(PsiType.DOUBLE)) {
+          operation = "flatMapToDouble";
+        }
+      }
+      return "." + operation + "(" + myVariable.getName() + " -> " + getStreamExpression() + ")";
     }
 
     @NotNull
     String getStreamExpression() {
-      return myExpression.getText() + ".stream()";
+      return mySource.createReplacement();
     }
 
     boolean breaksMe(PsiBreakStatement statement) {
@@ -915,34 +959,154 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
   }
 
-  static class ArrayFlatMapOp extends FlatMapOp {
-    ArrayFlatMapOp(@Nullable Operation previousOp, PsiExpression expression, PsiVariable variable, PsiLoopStatement loop) {
-      super(previousOp, expression, variable, loop);
+  abstract static class StreamSource extends Operation {
+    protected StreamSource(PsiVariable variable, PsiExpression expression) {
+      super(null, expression, variable);
     }
 
-    @Override
-    public String createReplacement(PsiElementFactory factory) {
-      String operation = "flatMap";
-      PsiType type = myExpression.getType();
-      if(type instanceof PsiArrayType) {
-        PsiType componentType = ((PsiArrayType)type).getComponentType();
-        if(componentType instanceof PsiPrimitiveType) {
-          if(componentType.equals(PsiType.INT)) {
-            operation = "flatMapToInt";
-          } else if(componentType.equals(PsiType.LONG)) {
-            operation = "flatMapToLong";
-          } else if(componentType.equals(PsiType.DOUBLE)) {
-            operation = "flatMapToDouble";
-          }
-        }
+    @Contract("null -> null")
+    static StreamSource tryCreate(PsiLoopStatement statement) {
+      if(statement instanceof PsiForStatement) {
+        return CountingLoop.from((PsiForStatement)statement);
       }
-      return "." + operation + "(" + myVariable.getName() + " -> " + getStreamExpression() + ")";
+      if(statement instanceof PsiForeachStatement) {
+        ArrayStream source = ArrayStream.from((PsiForeachStatement)statement);
+        return source == null ? CollectionStream.from((PsiForeachStatement)statement) : source;
+      }
+      return null;
+    }
+  }
+
+  static class ArrayStream extends StreamSource {
+    private ArrayStream(PsiVariable variable, PsiExpression expression) {
+      super(variable, expression);
     }
 
     @Override
-    @NotNull
-    String getStreamExpression() {
+    String createReplacement() {
       return "java.util.Arrays.stream("+myExpression.getText() + ")";
+    }
+
+    @Nullable
+    public static ArrayStream from(PsiForeachStatement statement) {
+      PsiExpression iteratedValue = statement.getIteratedValue();
+      if (iteratedValue == null) return null;
+
+      PsiType iteratedValueType = iteratedValue.getType();
+      PsiParameter parameter = statement.getIterationParameter();
+
+      if (!(iteratedValueType instanceof PsiArrayType) ||
+          !isSupported(((PsiArrayType)iteratedValueType).getComponentType()) ||
+          ((parameter.getType() instanceof PsiPrimitiveType) &&
+           !parameter.getType().equals(((PsiArrayType)iteratedValueType).getComponentType()))) {
+        return null;
+      }
+
+      return new ArrayStream(parameter, iteratedValue);
+    }
+  }
+
+  static class CollectionStream extends StreamSource {
+
+    private CollectionStream(PsiVariable variable, PsiExpression expression) {
+      super(variable, expression);
+    }
+
+    @Override
+    String createReplacement() {
+      return ParenthesesUtils.getText(myExpression, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".stream()";
+    }
+
+    @Contract("null, _ -> false")
+    static boolean isRawSubstitution(PsiType iteratedValueType, PsiClass collectionClass) {
+      return iteratedValueType instanceof PsiClassType && PsiUtil
+        .isRawSubstitutor(collectionClass, TypeConversionUtil.getSuperClassSubstitutor(collectionClass, (PsiClassType)iteratedValueType));
+    }
+
+    @Nullable
+    public static CollectionStream from(PsiForeachStatement statement) {
+      PsiExpression iteratedValue = statement.getIteratedValue();
+      if (iteratedValue == null) return null;
+
+      PsiType iteratedValueType = iteratedValue.getType();
+      PsiClass collectionClass =
+        JavaPsiFacade.getInstance(statement.getProject()).findClass(CommonClassNames.JAVA_UTIL_COLLECTION, statement.getResolveScope());
+      PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
+      if (collectionClass == null ||
+          !InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true) ||
+          isRawSubstitution(iteratedValueType, collectionClass)) {
+        return null;
+      }
+      return new CollectionStream(statement.getIterationParameter(), iteratedValue);
+    }
+  }
+
+  static class CountingLoop extends StreamSource {
+    final PsiExpression myBound;
+    final boolean myIncluding;
+
+    private CountingLoop(PsiLocalVariable counter, PsiExpression initializer, PsiExpression bound, boolean including) {
+      super(counter, initializer);
+      myBound = bound;
+      myIncluding = including;
+    }
+
+    @Override
+    StreamEx<PsiExpression> expressions() {
+      return StreamEx.of(myExpression, myBound);
+    }
+
+    @Override
+    public String createReplacement() {
+      String className = myVariable.getType().equals(PsiType.LONG) ? "java.util.stream.LongStream" : "java.util.stream.IntStream";
+      String methodName = myIncluding ? "rangeClosed" : "range";
+      return className+"."+methodName+"("+myExpression.getText()+", "+myBound.getText()+")";
+    }
+
+    @Nullable
+    public static CountingLoop from(PsiForStatement forStatement) {
+      // check that initialization is for(int/long i = <initial_value>;...;...)
+      if(!(forStatement.getInitialization() instanceof PsiDeclarationStatement)) return null;
+      PsiDeclarationStatement initialization = (PsiDeclarationStatement)forStatement.getInitialization();
+      if(initialization.getDeclaredElements().length != 1) return null;
+      PsiElement declaration = initialization.getDeclaredElements()[0];
+      if(!(declaration instanceof PsiLocalVariable)) return null;
+      PsiLocalVariable counter = (PsiLocalVariable)declaration;
+      if(!counter.getType().equals(PsiType.INT) && !counter.getType().equals(PsiType.LONG)) return null;
+
+      PsiExpression initializer = counter.getInitializer();
+      if(initializer == null) return null;
+
+      // check that increment is like for(...;...;i++)
+      if(!(forStatement.getUpdate() instanceof PsiExpressionStatement)) return null;
+      PsiExpression lValue = extractIncrementedLValue(((PsiExpressionStatement)forStatement.getUpdate()).getExpression());
+      if(!(lValue instanceof PsiReferenceExpression) || ((PsiReferenceExpression)lValue).resolve() != counter) return null;
+
+      // check that condition is like for(...;i<bound;...) or for(...;i<=bound;...)
+      if(!(forStatement.getCondition() instanceof PsiBinaryExpression)) return null;
+      PsiBinaryExpression condition = (PsiBinaryExpression)forStatement.getCondition();
+      IElementType type = condition.getOperationTokenType();
+      boolean closed = false;
+      PsiExpression bound;
+      PsiExpression ref;
+      if(type.equals(JavaTokenType.LE)) {
+        bound = condition.getROperand();
+        ref = condition.getLOperand();
+        closed = true;
+      } else if(type.equals(JavaTokenType.LT)) {
+        bound = condition.getROperand();
+        ref = condition.getLOperand();
+      } else if(type.equals(JavaTokenType.GE)) {
+        bound = condition.getLOperand();
+        ref = condition.getROperand();
+        closed = true;
+      } else if(type.equals(JavaTokenType.GT)) {
+        bound = condition.getLOperand();
+        ref = condition.getROperand();
+      } else return null;
+      if(bound == null || !(ref instanceof PsiReferenceExpression) || ((PsiReferenceExpression)ref).resolve() != counter) return null;
+      if(!TypeConversionUtil.areTypesAssignmentCompatible(counter.getType(), bound)) return null;
+      return new CountingLoop(counter, initializer, bound, closed);
     }
   }
 
@@ -952,11 +1116,12 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
    * some intermediate operations extracted.
    */
   static class TerminalBlock {
-    private final @Nullable Operation myPreviousOp;
+    private final @NotNull Operation myPreviousOp;
     private final @NotNull PsiVariable myVariable;
     private final @NotNull PsiStatement[] myStatements;
 
-    private TerminalBlock(@Nullable Operation previousOp, @NotNull PsiVariable variable, @NotNull PsiStatement... statements) {
+    // At least one previous operation is present (stream source)
+    private TerminalBlock(@NotNull Operation previousOp, @NotNull PsiVariable variable, @NotNull PsiStatement... statements) {
       myVariable = variable;
       while(true) {
         if(statements.length == 1 && statements[0] instanceof PsiBlockStatement) {
@@ -1052,46 +1217,32 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       TerminalBlock withFilter = extractFilter();
       if(withFilter != null) return withFilter;
       // extract flatMap
-      if(getSingleStatement() instanceof PsiForeachStatement) {
-        // flatMapping of primitive variable is not supported yet
-        if(myVariable.getType() instanceof PsiPrimitiveType) return null;
-        PsiForeachStatement foreachStatement = (PsiForeachStatement)getSingleStatement();
-        final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
-        final PsiStatement body = foreachStatement.getBody();
-        if (iteratedValue != null && body != null) {
-          final PsiType iteratedValueType = iteratedValue.getType();
-          FlatMapOp op = null;
-          if(iteratedValueType instanceof PsiArrayType) {
-            if (!isSupported(((PsiArrayType)iteratedValueType).getComponentType())) return null;
-            op = new ArrayFlatMapOp(myPreviousOp, iteratedValue, myVariable, foreachStatement);
-          } else {
-            final PsiClass iteratorClass = PsiUtil.resolveClassInClassTypeOnly(iteratedValueType);
-            final PsiClass collectionClass =
-              JavaPsiFacade.getInstance(body.getProject())
-                .findClass(CommonClassNames.JAVA_UTIL_COLLECTION, foreachStatement.getResolveScope());
-            if (collectionClass != null && InheritanceUtil.isInheritorOrSelf(iteratorClass, collectionClass, true)) {
-              op = new FlatMapOp(myPreviousOp, iteratedValue, myVariable, foreachStatement);
-            }
-          }
-          if(op != null) {
-            TerminalBlock withFlatMap = new TerminalBlock(op, foreachStatement.getIterationParameter(), body);
-            if(ReferencesSearch.search(myVariable, new LocalSearchScope(body)).findFirst() == null) {
-              return withFlatMap;
-            } else {
-              // Try extract nested filter like this:
-              // for(List subList : list) for(T t : subList) if(condition.test(t)) { ...; break; }
-              // if t is not used in "...", then this could be converted to
-              // list.stream().filter(subList -> subList.stream().anyMatch(condition)).forEach(subList -> ...)
-              TerminalBlock withFlatMapFilter = withFlatMap.extractFilter();
-              if(withFlatMapFilter != null && !withFlatMapFilter.isEmpty()) {
-                PsiStatement[] statements = withFlatMapFilter.getStatements();
-                PsiStatement lastStatement = statements[statements.length-1];
-                if (lastStatement instanceof PsiBreakStatement && op.breaksMe((PsiBreakStatement)lastStatement) &&
-                    ReferencesSearch.search(withFlatMapFilter.getVariable(), new LocalSearchScope(statements)).findFirst() == null) {
-                  return new TerminalBlock(new CompoundFilterOp((FilterOp)withFlatMapFilter.getLastOperation(), op),
-                                           myVariable, Arrays.copyOfRange(statements, 0, statements.length-1));
-                }
-              }
+      if(getSingleStatement() instanceof PsiLoopStatement) {
+        PsiLoopStatement loopStatement = (PsiLoopStatement)getSingleStatement();
+        StreamSource source = StreamSource.tryCreate(loopStatement);
+        final PsiStatement body = loopStatement.getBody();
+        if(source == null || body == null) return null;
+        // flatMap from primitive to primitive is supported only if primitive types match
+        // otherwise it would be necessary to create bogus step like
+        // .mapToObj(var -> blahblah.stream()).flatMap(Function.identity())
+        if(myVariable.getType() instanceof PsiPrimitiveType && !myVariable.getType().equals(source.getVariable().getType())) return null;
+        FlatMapOp op = new FlatMapOp(myPreviousOp, source, myVariable, loopStatement);
+        TerminalBlock withFlatMap = new TerminalBlock(op, source.getVariable(), body);
+        if(ReferencesSearch.search(myVariable, new LocalSearchScope(body)).findFirst() == null) {
+          return withFlatMap;
+        } else {
+          // Try extract nested filter like this:
+          // for(List subList : list) for(T t : subList) if(condition.test(t)) { ...; break; }
+          // if t is not used in "...", then this could be converted to
+          // list.stream().filter(subList -> subList.stream().anyMatch(condition)).forEach(subList -> ...)
+          TerminalBlock withFlatMapFilter = withFlatMap.extractFilter();
+          if(withFlatMapFilter != null && !withFlatMapFilter.isEmpty()) {
+            PsiStatement[] statements = withFlatMapFilter.getStatements();
+            PsiStatement lastStatement = statements[statements.length-1];
+            if (lastStatement instanceof PsiBreakStatement && op.breaksMe((PsiBreakStatement)lastStatement) &&
+                ReferencesSearch.search(withFlatMapFilter.getVariable(), new LocalSearchScope(statements)).findFirst() == null) {
+              return new TerminalBlock(new CompoundFilterOp((FilterOp)withFlatMapFilter.getLastOperation(), op),
+                                       myVariable, Arrays.copyOfRange(statements, 0, statements.length-1));
             }
           }
         }
@@ -1121,7 +1272,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       return null;
     }
 
-    @Nullable
+    @NotNull
     public Operation getLastOperation() {
       return myPreviousOp;
     }
@@ -1141,7 +1292,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
 
     public boolean hasOperations() {
-      return myPreviousOp != null;
+      return !(myPreviousOp instanceof StreamSource);
     }
 
     public boolean isEmpty() {
@@ -1163,6 +1314,13 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
      * @return stream of physical expressions used in intermediate operations in arbitrary order
      */
     public StreamEx<PsiExpression> intermediateExpressions() {
+      return operations().remove(StreamSource.class::isInstance).flatMap(Operation::expressions);
+    }
+
+    /**
+     * @return stream of physical expressions used in stream source and intermediate operations in arbitrary order
+     */
+    public StreamEx<PsiExpression> intermediateAndSourceExpressions() {
       return operations().flatMap(Operation::expressions);
     }
 
@@ -1184,8 +1342,8 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     }
 
     @NotNull
-    public static TerminalBlock from(PsiVariable variable, PsiStatement statement) {
-      return new TerminalBlock(null, variable, statement).extractOperations();
+    public static TerminalBlock from(StreamSource source, PsiStatement body) {
+      return new TerminalBlock(source, source.myVariable, body).extractOperations();
     }
   }
 }

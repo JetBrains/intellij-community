@@ -138,7 +138,7 @@ public class InferenceSessionContainer {
     }
 
     final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy);
-    inferenceSession.initExpressionConstraints(parameters, arguments, parent, null);
+    inferenceSession.initExpressionConstraints(parameters, arguments, parent);
     return inferenceSession.infer(parameters, arguments, parent);
   }
   

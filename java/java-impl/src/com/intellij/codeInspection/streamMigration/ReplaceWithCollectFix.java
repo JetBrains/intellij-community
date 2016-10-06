@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.MapOp;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -58,42 +58,41 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
 
   @Override
   PsiElement migrate(@NotNull Project project,
-               @NotNull ProblemDescriptor descriptor,
-               @NotNull PsiForeachStatement foreachStatement,
-               @NotNull PsiExpression iteratedValue,
-               @NotNull PsiStatement body,
-               @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
+                     @NotNull PsiLoopStatement loopStatement,
+                     @NotNull PsiStatement body,
+                     @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
-    final PsiType iteratedValueType = iteratedValue.getType();
     final PsiMethodCallExpression methodCallExpression = tb.getSingleMethodCall();
 
     if (methodCallExpression == null) return null;
 
-    restoreComments(foreachStatement, body);
-    if (!tb.hasOperations() && StreamApiMigrationInspection.isAddAllCall(tb)) {
+    restoreComments(loopStatement, body);
+    if (!tb.hasOperations() && StreamApiMigrationInspection.isAddAllCall(tb) && loopStatement instanceof PsiForeachStatement) {
+      PsiExpression iteratedValue = ((PsiForeachStatement)loopStatement).getIteratedValue();
+      if (iteratedValue == null) return null;
+      final PsiType iteratedValueType = iteratedValue.getType();
       final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
       final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() : "";
       final String collectionText =
         iteratedValueType instanceof PsiArrayType ? "java.util.Arrays.asList(" + iteratedValue.getText() + ")" :
         getIteratedValueText(iteratedValue);
       final String callText = StringUtil.getQualifiedName(qualifierText, "addAll(" + collectionText + ");");
-      return foreachStatement.replace(elementFactory.createStatementFromText(callText, foreachStatement));
+      return loopStatement.replace(elementFactory.createStatementFromText(callText, loopStatement));
     }
     PsiExpression itemToAdd = methodCallExpression.getArgumentList().getExpressions()[0];
     PsiType addedType = getAddedElementType(methodCallExpression);
     if (addedType == null) addedType = itemToAdd.getType();
-    final StringBuilder builder =
-      generateStream(iteratedValue, new StreamApiMigrationInspection.MapOp(tb.getLastOperation(), itemToAdd, tb.getVariable(), addedType));
+    StringBuilder builder = generateStream(new MapOp(tb.getLastOperation(), itemToAdd, tb.getVariable(), addedType));
 
     final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
     final PsiLocalVariable variable = StreamApiMigrationInspection.extractCollectionVariable(qualifierExpression);
     if (variable != null) {
-      InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(variable, foreachStatement);
+      InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(variable, loopStatement);
       if(status != InitializerUsageStatus.UNKNOWN) {
         PsiExpression initializer = variable.getInitializer();
         LOG.assertTrue(initializer != null);
         PsiMethodCallExpression toArrayExpression =
-          StreamApiMigrationInspection.extractToArrayExpression(foreachStatement, methodCallExpression);
+          StreamApiMigrationInspection.extractToArrayExpression(loopStatement, methodCallExpression);
         if(toArrayExpression != null) {
           PsiType type = initializer.getType();
           if(type instanceof PsiClassType) {
@@ -113,7 +112,7 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
               }
               PsiElement result =
                 toArrayExpression.replace(elementFactory.createExpressionFromText(builder.toString(), toArrayExpression));
-              removeLoop(foreachStatement);
+              removeLoop(loopStatement);
               if(status != InitializerUsageStatus.AT_WANTED_PLACE) {
                 variable.delete();
               }
@@ -121,7 +120,7 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
             }
           }
         }
-        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(foreachStatement, PsiComment.class, PsiWhiteSpace.class);
+        PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(loopStatement, PsiComment.class, PsiWhiteSpace.class);
         String comparatorText = StreamApiMigrationInspection.tryExtractSortComparatorText(nextStatement, variable);
         if(comparatorText != null) {
           builder.append(".sorted(").append(comparatorText).append(")");
@@ -130,7 +129,7 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
         String callText = builder.append(".collect(java.util.stream.Collectors.")
           .append(createInitializerReplacementText(qualifierExpression.getType(), initializer))
           .append(")").toString();
-        return replaceInitializer(foreachStatement, variable, initializer, callText, status);
+        return replaceInitializer(loopStatement, variable, initializer, callText, status);
       }
     }
     final String qualifierText = qualifierExpression != null ? qualifierExpression.getText() + "." : "";
@@ -147,7 +146,7 @@ class ReplaceWithCollectFix extends MigrateToStreamFix {
       elementFactory.createExpressionFromText(qualifierText + "add(" + varName + ")", qualifierExpression);
     final String callText =
       builder.append(".forEach(").append(varName).append("->").append(forEachBody.getText()).append(");").toString();
-    return foreachStatement.replace(elementFactory.createStatementFromText(callText, foreachStatement));
+    return loopStatement.replace(elementFactory.createStatementFromText(callText, loopStatement));
   }
 
   private static String createInitializerReplacementText(PsiType varType, PsiExpression initializer) {

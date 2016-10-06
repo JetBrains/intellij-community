@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,8 @@ public class DependencyUtils {
   private DependencyUtils() {
   }
 
-  public static Set<RefClass> calculateDependenciesForClass(
-    RefClass refClass) {
-    final Set<RefClass> dependencies =
-      refClass.getUserData(DEPENDENCY_CLASSES_KEY);
+  public static Set<RefClass> calculateDependenciesForClass(RefClass refClass) {
+    final Set<RefClass> dependencies = refClass.getUserData(DEPENDENCY_CLASSES_KEY);
     if (dependencies != null) {
       return dependencies;
     }
@@ -57,40 +55,32 @@ public class DependencyUtils {
     return newDependencies;
   }
 
-  @SuppressWarnings({"MethodWithMultipleLoops"})
-  static void tabulateDependencyClasses(RefJavaElement element,
-                                        Set<RefClass> dependencies) {
-    final Collection<RefElement> references = element.getOutReferences();
-    final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-    for (RefElement reference : references) {
-      final RefClass refClass = refUtil.getTopLevelClass(reference);
-      if (refClass != null) {
-        dependencies.add(refClass);
-      }
-    }
-    final Collection<RefClass> typeReferences =
-      element.getOutTypeReferences();
-    for (RefElement reference : typeReferences) {
-      final RefClass refClass = refUtil.getTopLevelClass(reference);
-      if (refClass != null) {
-        dependencies.add(refClass);
-      }
-    }
+  private static void tabulateDependencyClasses(RefJavaElement element, Set<RefClass> dependencies) {
+    addOwnerClassesToSet(element.getOutReferences(), dependencies);
+    addOwnerClassesToSet(element.getOutTypeReferences(), dependencies);
     final List<RefEntity> children = element.getChildren();
     if (children == null) {
       return;
     }
     for (RefEntity child : children) {
-      if (child instanceof RefJavaElement) {
+      if (child instanceof RefJavaElement && !(child instanceof RefClass)) {
         tabulateDependencyClasses((RefJavaElement)child, dependencies);
       }
     }
   }
 
-  public static Set<RefClass> calculateTransitiveDependenciesForClass(
-    RefClass refClass) {
-    final Set<RefClass> dependencies =
-      refClass.getUserData(TRANSITIVE_DEPENDENCY_CLASSES_KEY);
+  private static void addOwnerClassesToSet(Collection<? extends RefElement> references, Set<RefClass> set) {
+    final RefJavaUtil refUtil = RefJavaUtil.getInstance();
+    for (RefElement reference : references) {
+      final RefClass refClass = (reference instanceof RefClass) ? (RefClass)reference : refUtil.getOwnerClass(reference);
+      if (refClass != null && !refClass.isAnonymous() && !refClass.isLocalClass()) {
+        set.add(refClass);
+      }
+    }
+  }
+
+  public static Set<RefClass> calculateTransitiveDependenciesForClass(RefClass refClass) {
+    final Set<RefClass> dependencies = refClass.getUserData(TRANSITIVE_DEPENDENCY_CLASSES_KEY);
     if (dependencies != null) {
       return dependencies;
     }
@@ -122,51 +112,36 @@ public class DependencyUtils {
   }
 
   public static Set<RefClass> calculateDependentsForClass(RefClass refClass) {
-    final Set<RefClass> dependents =
-      refClass.getUserData(DEPENDENT_CLASSES_KEY);
+    final Set<RefClass> dependents = refClass.getUserData(DEPENDENT_CLASSES_KEY);
     if (dependents != null) {
       return dependents;
     }
     final Set<RefClass> newDependents = new HashSet<>();
     tabulateDependentClasses(refClass, newDependents);
-    final Set<RefElement> typeReferences = refClass.getInTypeReferences();
-    final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-    for (RefElement typeReference : typeReferences) {
-      final RefClass referencingClass =
-        refUtil.getTopLevelClass(typeReference);
-      newDependents.add(referencingClass);
-    }
     newDependents.remove(refClass);
     refClass.putUserData(DEPENDENT_CLASSES_KEY, newDependents);
     return newDependents;
   }
 
-  @SuppressWarnings({"MethodWithMultipleLoops"})
-  private static void tabulateDependentClasses(RefElement element,
-                                               Set<RefClass> dependents) {
-    final Collection<RefElement> references = element.getInReferences();
-    final RefJavaUtil refUtil = RefJavaUtil.getInstance();
-    for (RefElement reference : references) {
-      final RefClass refClass = refUtil.getTopLevelClass(reference);
-      if (refClass != null) {
-        dependents.add(refClass);
-      }
+  private static void tabulateDependentClasses(RefElement element, Set<RefClass> dependents) {
+    addOwnerClassesToSet(element.getInReferences(), dependents);
+    if (element instanceof RefClass) {
+      final RefClass refClass = (RefClass)element;
+      addOwnerClassesToSet(refClass.getInTypeReferences(), dependents);
     }
     final List<RefEntity> children = element.getChildren();
     if (children == null) {
       return;
     }
     for (RefEntity child : children) {
-      if (child instanceof RefElement) {
+      if (child instanceof RefElement && !(child instanceof RefClass)) {
         tabulateDependentClasses((RefElement)child, dependents);
       }
     }
   }
 
-  public static Set<RefClass> calculateTransitiveDependentsForClass(
-    RefClass refClass) {
-    final Set<RefClass> dependents =
-      refClass.getUserData(TRANSITIVE_DEPENDENT_CLASSES_KEY);
+  public static Set<RefClass> calculateTransitiveDependentsForClass(RefClass refClass) {
+    final Set<RefClass> dependents = refClass.getUserData(TRANSITIVE_DEPENDENT_CLASSES_KEY);
     if (dependents != null) {
       return dependents;
     }
@@ -205,15 +180,13 @@ public class DependencyUtils {
       return dependencies;
     }
     final Set<RefPackage> newDependencies = new HashSet<>();
-
     tabulateDependencyPackages(refPackage, newDependencies);
     newDependencies.remove(refPackage);
     refPackage.putUserData(DEPENDENCY_PACKAGES_KEY, newDependencies);
     return newDependencies;
   }
 
-  static void tabulateDependencyPackages(RefEntity entity,
-                                         Set<RefPackage> dependencies) {
+  private static void tabulateDependencyPackages(RefEntity entity, Set<RefPackage> dependencies) {
     if (entity instanceof RefElement) {
       final RefElement element = (RefElement)entity;
       final Collection<RefElement> references = element.getOutReferences();
@@ -249,7 +222,7 @@ public class DependencyUtils {
     return newDependents;
   }
 
-  static void tabulateDependentPackages(RefEntity entity, Set<RefPackage> dependents) {
+  private static void tabulateDependentPackages(RefEntity entity, Set<RefPackage> dependents) {
     if (entity instanceof RefElement) {
       final RefElement element = (RefElement)entity;
       final Collection<RefElement> references = element.getInReferences();

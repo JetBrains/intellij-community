@@ -16,21 +16,16 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.find.EditorSearchSession;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindUtil;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 
 public class SearchAgainAction extends AnAction implements DumbAware {
@@ -64,14 +59,11 @@ public class SearchAgainAction extends AnAction implements DumbAware {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getData(CommonDataKeys.PROJECT);
-    presentation.setEnabled(false);
-    if (project == null)
+    if (project == null) {
+      presentation.setEnabled(false);
       return;
-    final FileEditor editor = event.getData(PlatformDataKeys.FILE_EDITOR);
-    if (!(editor instanceof TextEditor))
-      return;
-
-    final EditorSearchSession search = EditorSearchSession.get(event.getData(PlatformDataKeys.EDITOR));
-    presentation.setEnabled(search != null);
+    }
+    FileEditor editor = event.getData(PlatformDataKeys.FILE_EDITOR);
+    presentation.setEnabled(editor instanceof TextEditor);
   }
 }

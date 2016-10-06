@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.MapOp;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -33,11 +33,9 @@ class ReplaceWithSumFix extends MigrateToStreamFix {
 
   @Override
   PsiElement migrate(@NotNull Project project,
-               @NotNull ProblemDescriptor descriptor,
-               @NotNull PsiForeachStatement foreachStatement,
-               @NotNull PsiExpression iteratedValue,
-               @NotNull PsiStatement body,
-               @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
+                     @NotNull PsiLoopStatement loopStatement,
+                     @NotNull PsiStatement body,
+                     @NotNull StreamApiMigrationInspection.TerminalBlock tb) {
     PsiAssignmentExpression assignment = tb.getSingleExpression(PsiAssignmentExpression.class);
     if (assignment == null) return null;
     PsiVariable var = StreamApiMigrationInspection.extractAccumulator(assignment);
@@ -50,9 +48,8 @@ class ReplaceWithSumFix extends MigrateToStreamFix {
     if (!type.equals(PsiType.DOUBLE) && !type.equals(PsiType.LONG)) {
       type = PsiType.INT;
     }
-    final StringBuilder builder =
-      generateStream(iteratedValue, new StreamApiMigrationInspection.MapOp(tb.getLastOperation(), addend, tb.getVariable(), type));
+    StringBuilder builder = generateStream(new MapOp(tb.getLastOperation(), addend, tb.getVariable(), type));
     builder.append(".sum()");
-    return replaceWithNumericAddition(project, foreachStatement, var, builder, type);
+    return replaceWithNumericAddition(project, loopStatement, var, builder, type);
   }
 }

@@ -39,6 +39,7 @@ import java.util.List;
 public abstract class AbstractJavaFxPackager {
   private static final Logger LOG = Logger.getInstance("#" + AbstractJavaFxPackager.class.getName());
   private static final String JB_JFX_JKS = "jb-jfx.jks";
+  private static final String NATIVE_BUNDLES = "bundles";
 
   //artifact description
   protected String getArtifactRootName() {
@@ -137,7 +138,7 @@ public abstract class AbstractJavaFxPackager {
   private void copyLibraries(String zipPath, File tempUnzippedArtifactOutput) throws IOException {
     final File[] outFiles = new File(getArtifactOutputPath()).listFiles();
     if (outFiles != null) {
-      final String[] generatedItems = new String[] {JB_JFX_JKS, zipPath + ".jar", zipPath + ".jnlp", zipPath + ".html"};
+      final String[] generatedItems = new String[]{JB_JFX_JKS, zipPath + ".jar", zipPath + ".jnlp", zipPath + ".html", NATIVE_BUNDLES};
       for (File file : outFiles) {
         final String fileName = file.getName();
         if (ArrayUtilRt.find(generatedItems, fileName) < 0) {

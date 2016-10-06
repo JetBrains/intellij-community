@@ -77,6 +77,10 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
         modifyRoots(file, entry);
       }
     }
+    commitModel(module, model);
+  }
+
+  static void commitModel(@NotNull Module module, ModifiableRootModel model) {
     DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
                                             () -> ApplicationManager.getApplication().runWriteAction(() -> {
                                               model.commit();
@@ -148,7 +152,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   }
 
   @Nullable
-  private static Module getModule(@NotNull AnActionEvent e, @Nullable VirtualFile[] files) {
+  static Module getModule(@NotNull AnActionEvent e, @Nullable VirtualFile[] files) {
     if (files == null) return null;
     Module module = e.getData(LangDataKeys.MODULE);
     if (module == null) {

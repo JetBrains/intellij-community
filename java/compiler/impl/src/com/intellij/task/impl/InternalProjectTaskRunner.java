@@ -22,6 +22,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +46,8 @@ import java.util.stream.Stream;
  * @since 5/11/2016
  */
 public class InternalProjectTaskRunner extends ProjectTaskRunner {
+  private static final Logger LOG = Logger.getInstance(InternalProjectTaskRunner.class);
+
   @Override
   public void run(@NotNull Project project,
                   @NotNull ProjectTaskContext context,
@@ -89,39 +92,60 @@ public class InternalProjectTaskRunner extends ProjectTaskRunner {
 
 
     if (!ContainerUtil.isEmpty(buildTasks)) {
-      List<Module> toMake = new SmartList<>();
-      List<Module> toCompile = new SmartList<>();
+      List<Module> modules = new SmartList<>();
+
+      Boolean isIncrementalBuild = null;
+      Boolean includeDependentModules = null;
+      Boolean includeRuntimeDependencies = null;
 
       for (ProjectTask buildProjectTask : buildTasks) {
         ModuleBuildTask moduleBuildTask = (ModuleBuildTask)buildProjectTask;
-
-        if (moduleBuildTask.isIncrementalBuild()) {
-          toMake.add(moduleBuildTask.getModule());
+        assertModuleBuildSettings(moduleBuildTask, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies);
+        modules.add(moduleBuildTask.getModule());
+        if (!moduleBuildTask.isIncrementalBuild()) {
+          isIncrementalBuild = false;
         }
-        else {
-          toCompile.add(moduleBuildTask.getModule());
+        if (moduleBuildTask.isIncludeDependentModules()) {
+          includeDependentModules = true;
+        }
+        if (moduleBuildTask.isIncludeRuntimeDependencies()) {
+          includeRuntimeDependencies = true;
         }
       }
       CompilerManager compilerManager = CompilerManager.getInstance(project);
-      if (!toMake.isEmpty()) {
-        CompileScope scope = createScope(project, compilerManager, context, toMake);
-        // TODO handle multiple notifications
+      CompileScope scope = createScope(
+        compilerManager, context, modules, includeDependentModules != null, includeRuntimeDependencies != null);
+      if (isIncrementalBuild == null) {
         compilerManager.make(scope, compileNotification);
       }
-      if (!toCompile.isEmpty()) {
-        CompileScope scope = createScope(project, compilerManager, context, toCompile);
-        // TODO handle multiple notifications
+      else {
         compilerManager.compile(scope, compileNotification);
       }
     }
   }
 
+  private static void assertModuleBuildSettings(ModuleBuildTask moduleBuildTask,
+                                                Boolean isIncrementalBuild,
+                                                Boolean includeDependentModules,
+                                                Boolean includeRuntimeDependencies) {
+    if (isIncrementalBuild != null && moduleBuildTask.isIncrementalBuild()) {
+      LOG.warn("Incremental build setting for the module '" + moduleBuildTask.getModule().getName() + "' will be ignored");
+    }
+    if (includeDependentModules != null && !moduleBuildTask.isIncludeDependentModules()) {
+      LOG.warn("'Module '" + moduleBuildTask.getModule().getName() + "' will be built along with dependent modules");
+    }
+    if (includeRuntimeDependencies != null && !moduleBuildTask.isIncludeRuntimeDependencies()) {
+      LOG.warn("'Module '" + moduleBuildTask.getModule().getName() + "' will be built along with runtime dependencies");
+    }
+  }
 
-  private static CompileScope createScope(Project project,
-                                          CompilerManager compilerManager,
+  private static CompileScope createScope(CompilerManager compilerManager,
                                           ProjectTaskContext context,
-                                          Collection<Module> modules) {
-    CompileScope scope = compilerManager.createModuleGroupCompileScope(project, modules.toArray(new Module[modules.size()]), true);
+                                          Collection<Module> modules,
+                                          boolean includeDependentModules,
+                                          boolean includeRuntimeDependencies) {
+    CompileScope scope = compilerManager.createModulesCompileScope(
+      modules.toArray(new Module[modules.size()]), includeDependentModules, includeRuntimeDependencies);
     RunConfiguration configuration = context.getRunConfiguration();
     if (configuration != null) {
       scope.putUserData(CompilerManager.RUN_CONFIGURATION_KEY, configuration);
