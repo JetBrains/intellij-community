@@ -9,3 +9,6 @@ java.io.PrintStream.println(1) in Bar
 java.lang.Object.<init>(0) in Bar
 java.lang.System in Bar
 java.lang.System.out in Bar
+
+Class Definitions:
+Inner in Bar

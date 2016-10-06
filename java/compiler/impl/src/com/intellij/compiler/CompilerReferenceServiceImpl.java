@@ -200,7 +200,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
       if (myReader == null) return null;
       TIntHashSet referentFileIds = new TIntHashSet();
       for (CompilerElement compilerElement : compilerElements) {
-        referentFileIds.addAll(myReader.findReferentFileIds(compilerElement, adapter).toArray());
+        final TIntHashSet referents = myReader.findReferentFileIds(compilerElement, adapter);
+        if (referents == null) return null;
+        referentFileIds.addAll(referents.toArray());
       }
       return referentFileIds;
     }

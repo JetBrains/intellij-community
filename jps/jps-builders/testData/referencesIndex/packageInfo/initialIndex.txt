@@ -5,3 +5,6 @@ Backward References:
 java.lang.Deprecated in package-info
 myPackage.A in package-info
 myPackage.A.<init>(0) in package-info
+
+Class Definitions:
+myPackage.A in package-info

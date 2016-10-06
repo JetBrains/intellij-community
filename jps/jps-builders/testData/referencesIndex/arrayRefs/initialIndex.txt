@@ -10,3 +10,8 @@ Bar.<init>(0) in Bar
 Foo in Array Foo
 Foo.<init>(0) in Foo
 java.lang.Object.<init>(0) in Array Bar Foo
+
+Class Definitions:
+Array in Array
+Bar in Bar
+Foo in Foo

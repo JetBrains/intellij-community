@@ -74,5 +74,20 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
   fun testPrivateMembers() {
     assertIndexOnRebuild("PrivateMembers.java")
   }
+
+  fun testClassDeleted() {
+    assertIndexOnRebuild("Foo.java")
+    changeFileContent("Foo.java", "Foo_1.java")
+    buildAllModules()
+    assertIndexEquals("classDeletedIndex.txt")
+  }
+
+  fun testFileDeleted() {
+    assertIndexOnRebuild("Foo.java", "Bar.java")
+    changeFileContent("Foo.java", "Foo_1.java")
+    deleteFile("m/Bar.java")
+    buildAllModules()
+    assertIndexEquals("fileDeletedIndex.txt")
+  }
 }
 

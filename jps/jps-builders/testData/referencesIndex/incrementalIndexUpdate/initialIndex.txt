@@ -17,3 +17,8 @@ java.lang.Object.<init>(0) in Bar FooImpl
 java.lang.String in Foo FooImpl
 java.lang.System in Bar
 java.lang.System.out in Bar
+
+Class Definitions:
+Bar in Bar
+Foo in Foo
+FooImpl in FooImpl

@@ -54,29 +54,26 @@ public abstract class LightUsage implements RW.Savable {
     MEMBER_REFERENCE = memberReference;
   }
 
-  public final int myOwner;
-
-  protected LightUsage(int owner) {
-    myOwner = owner;
-  }
-
-  public int getOwner() {
-    return myOwner;
-  }
+  public abstract int getName();
 
   @NotNull
-  public abstract LightUsage override(int ownerOverrider);
+  public abstract LightUsage override(LightUsage overriderClass);
+
+  @NotNull
+  public abstract LightUsage getOwner();
 
   public static class LightMethodUsage extends LightUsage {
+    private final int myOwner;
     private final int myName;
     private final int myParameterCount;
 
     public LightMethodUsage(int owner, int name, int parameterCount) {
-      super(owner);
+      myOwner = owner;
       myName = name;
       myParameterCount = parameterCount;
     }
 
+    @Override
     public int getName() {
       return myName;
     }
@@ -86,10 +83,16 @@ public abstract class LightUsage implements RW.Savable {
     }
 
     @Override
+    @NotNull
+    public LightUsage getOwner() {
+      return new LightClassUsage(myOwner);
+    }
+
+    @Override
     public void save(DataOutput out) {
       try {
         out.writeByte(METHOD_MARKER);
-        DataInputOutputUtil.writeINT(out, getOwner());
+        DataInputOutputUtil.writeINT(out, myOwner);
         DataInputOutputUtil.writeINT(out, getName());
         DataInputOutputUtil.writeINT(out, getParameterCount());
       }
@@ -122,28 +125,36 @@ public abstract class LightUsage implements RW.Savable {
 
     @NotNull
     @Override
-    public LightMethodUsage override(int ownerOverrider) {
-      return new LightMethodUsage(ownerOverrider, getName(), getParameterCount());
+    public LightMethodUsage override(LightUsage overriderClass) {
+      return new LightMethodUsage(overriderClass.getName(), getName(), getParameterCount());
     }
   }
 
   public static class LightFieldUsage extends LightUsage {
+    private final int myOwner;
     private final int myName;
 
     public LightFieldUsage(int owner, int name) {
-      super(owner);
+      myOwner = owner;
       myName = name;
     }
 
+    @Override
     public int getName() {
       return myName;
+    }
+
+    @NotNull
+    @Override
+    public LightUsage getOwner() {
+      return new LightClassUsage(myOwner);
     }
 
     @Override
     public void save(DataOutput out) {
       try {
         out.writeByte(FIELD_MARKER);
-        DataInputOutputUtil.writeINT(out, getOwner());
+        DataInputOutputUtil.writeINT(out, myOwner);
         DataInputOutputUtil.writeINT(out, getName());
       }
       catch (IOException e) {
@@ -171,28 +182,42 @@ public abstract class LightUsage implements RW.Savable {
 
     @NotNull
     @Override
-    public LightFieldUsage override(int ownerOverrider) {
-      return new LightFieldUsage(ownerOverrider, getName());
+    public LightFieldUsage override(LightUsage overriderClass) {
+      return new LightFieldUsage(overriderClass.getName(), getName());
     }
 
   }
 
   public static class LightClassUsage extends LightUsage {
-    public LightClassUsage(int owner) {
-      super(owner);
+    private final int myName;
+
+    public LightClassUsage(int name) {
+      myName = name;
+    }
+
+    @Override
+    public int getName() {
+      return myName;
     }
 
     @NotNull
     @Override
-    public LightClassUsage override(int ownerOverrider) {
-      return new LightClassUsage(ownerOverrider);
+    public LightClassUsage override(LightUsage overriderClass) {
+      return (LightClassUsage)overriderClass;
     }
+
+    @NotNull
+    @Override
+    public LightUsage getOwner() {
+      return this;
+    }
+
 
     @Override
     public void save(DataOutput out) {
       try {
         out.writeByte(CLASS_MARKER);
-        DataInputOutputUtil.writeINT(out, getOwner());
+        DataInputOutputUtil.writeINT(out, getName());
       }
       catch (IOException e) {
         throw new BuildDataCorruptedException(e);
@@ -206,33 +231,46 @@ public abstract class LightUsage implements RW.Savable {
 
       LightClassUsage usage = (LightClassUsage)o;
 
-      if (myOwner != usage.myOwner) return false;
+      if (myName != usage.myName) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      return myOwner;
+      return myName;
     }
   }
 
   public static class LightFunExprUsage extends LightUsage {
-    public LightFunExprUsage(int owner) {
-      super(owner);
+    private final int myName;
+
+    public LightFunExprUsage(int name) {
+      myName = name;
     }
 
     @NotNull
     @Override
-    public LightFunExprUsage override(int ownerOverrider) {
-      return new LightFunExprUsage(ownerOverrider);
+    public LightFunExprUsage override(LightUsage overriderClass) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public LightUsage getOwner() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getName() {
+      return myName;
     }
 
     @Override
     public void save(DataOutput out) {
       try {
         out.writeByte(FUN_EXPR_MARKER);
-        DataInputOutputUtil.writeINT(out, getOwner());
+        DataInputOutputUtil.writeINT(out, getName());
       }
       catch (IOException e) {
         throw new BuildDataCorruptedException(e);
@@ -246,14 +284,14 @@ public abstract class LightUsage implements RW.Savable {
 
       LightFunExprUsage usage = (LightFunExprUsage)o;
 
-      if (myOwner != usage.myOwner) return false;
+      if (myName != usage.myName) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      return myOwner;
+      return myName;
     }
   }
 

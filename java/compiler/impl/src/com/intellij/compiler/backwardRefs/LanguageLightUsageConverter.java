@@ -20,12 +20,12 @@ import com.sun.tools.javac.util.Convert;
 import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
 import org.jetbrains.jps.backwardRefs.LightUsage;
 
-public interface CompilerElementAsLightUsageConverter {
-  CompilerElementAsLightUsageConverter[] INSTANCES = new CompilerElementAsLightUsageConverter[]{new Java()};
+public interface LanguageLightUsageConverter {
+  LanguageLightUsageConverter[] INSTANCES = new LanguageLightUsageConverter[]{new Java()};
 
   LightUsage asLightUsage(CompilerElement element, ByteArrayEnumerator names);
 
-  class Java implements CompilerElementAsLightUsageConverter {
+  class Java implements LanguageLightUsageConverter {
     @Override
     public LightUsage asLightUsage(CompilerElement element, ByteArrayEnumerator names) {
       if (element instanceof CompilerElement.CompilerClass) {

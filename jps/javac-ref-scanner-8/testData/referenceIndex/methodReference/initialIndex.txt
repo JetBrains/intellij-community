@@ -11,3 +11,6 @@ java.lang.String in MethodReference
 java.lang.Thread in MethodReference
 java.util.Collections in MethodReference
 java.util.Collections.emptyList(0) in MethodReference
+
+Class Definitions:
+MethodReference in MethodReference

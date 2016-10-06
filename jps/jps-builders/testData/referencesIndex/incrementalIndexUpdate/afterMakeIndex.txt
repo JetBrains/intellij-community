@@ -14,3 +14,8 @@ FooImpl.TITLE in FooImpl
 FooImpl.getSomeText(0) in FooImpl
 java.lang.Object.<init>(0) in Bar FooImpl
 java.lang.String in Foo FooImpl
+
+Class Definitions:
+Bar in Bar
+Foo in Foo
+FooImpl in FooImpl

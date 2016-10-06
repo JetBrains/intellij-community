@@ -22,6 +22,7 @@ import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
 
 import java.io.IOException;
+import java.util.Collection;
 
 public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   public BackwardReferenceIndexBuilder() {
@@ -43,7 +44,7 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   public void buildFinished(CompileContext context) {
     final BackwardReferenceIndexWriter writer = BackwardReferenceIndexWriter.getInstance();
     if (writer != null) {
-      writer.closeIfNeed();
+      writer.close();
     }
   }
 
@@ -52,6 +53,13 @@ public class BackwardReferenceIndexBuilder extends ModuleLevelBuilder {
                         ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                         OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
+    final BackwardReferenceIndexWriter writer = BackwardReferenceIndexWriter.getInstance();
+    if (writer != null) {
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        final Collection<String> files = dirtyFilesHolder.getRemovedFiles(target);
+        writer.processDeletedFiles(files);
+      }
+    }
     return null;
   }
 }

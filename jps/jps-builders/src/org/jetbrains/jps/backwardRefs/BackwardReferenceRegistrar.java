@@ -22,6 +22,7 @@ import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRefSymbol;
 
 import javax.tools.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -44,6 +45,9 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
 
   @Override
   public void registerFile(JavaFileObject file, Set<JavacRefSymbol> refs, Collection<JavacRefSymbol> defs) {
+    final int fileId = myWriter.enumerateFile(file);
+
+    final List<LightUsage> definedClasses = new ArrayList<LightUsage>(defs.size());
     for (JavacRefSymbol def : defs) {
       Tree.Kind kind = def.getPlaceKind();
       if (kind == Tree.Kind.CLASS) {
@@ -63,10 +67,26 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
         for (Type anInterface : interfaces) {
           supers[i++] = anInterface.asElement();
         }
-        myWriter.writeHierarchy(sym, supers);
+
+
+        final LightUsage.LightClassUsage aClass = myWriter.asClassUsage(sym);
+        definedClasses.add(aClass);
+
+        if (supers.length != 0) {
+
+          final LightUsage.LightClassUsage[] superIds = new LightUsage.LightClassUsage[supers.length];
+          for (int j = 0; j < supers.length; j++) {
+            superIds[j] = myWriter.asClassUsage(supers[j]);
+          }
+
+          myWriter.writeHierarchy(fileId, aClass, superIds);
+        }
+
       }
     }
 
-    myWriter.writeReferences(file, refs);
+    myWriter.writeClassDefinitions(fileId, definedClasses);
+
+    myWriter.writeReferences(fileId, refs);
   }
 }

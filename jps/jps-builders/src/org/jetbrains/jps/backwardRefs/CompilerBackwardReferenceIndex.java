@@ -18,16 +18,16 @@ package org.jetbrains.jps.backwardRefs;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.java.dependencyView.*;
+import org.jetbrains.jps.builders.java.dependencyView.CloseableMaplet;
+import org.jetbrains.jps.builders.java.dependencyView.CollectionFactory;
+import org.jetbrains.jps.builders.java.dependencyView.IntObjectPersistentMultiMaplet;
+import org.jetbrains.jps.builders.java.dependencyView.ObjectObjectPersistentMultiMaplet;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.Collection;
 
 public class CompilerBackwardReferenceIndex {
@@ -38,13 +38,18 @@ public class CompilerBackwardReferenceIndex {
   private final static String BACK_USAGES_TAB = "back.refs.tab";
   private final static String HIERARCHY_TAB = "hierarchy.tab";
   private final static String BACK_HIERARCHY_TAB = "back.hierarchy.tab";
+  private final static String CLASS_DEF_TAB = "class.def.tab";
+  private final static String BACK_CLASS_DEF_TAB = "back.class.def.tab";
   public static final String VERSION_FILE = ".version";
 
   private final IntObjectPersistentMultiMaplet<LightUsage> myReferenceMap;
-  private final IntIntPersistentMultiMaplet myHierarchyMap;
+  private final ObjectObjectPersistentMultiMaplet<LightDefinition, LightUsage> myHierarchyMap;
 
   private final ObjectObjectPersistentMultiMaplet<LightUsage, Integer> myBackwardReferenceMap;
-  private final IntIntPersistentMultiMaplet myBackwardHierarchyMap;
+  private final ObjectObjectPersistentMultiMaplet<LightUsage, LightDefinition> myBackwardHierarchyMap;
+
+  private final ObjectObjectPersistentMultiMaplet<LightUsage, Integer> myBackwardClassDefinitionMap;
+  private final IntObjectPersistentMultiMaplet<LightUsage> myClassDefinitionMap;
 
   private final ByteArrayEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
@@ -63,8 +68,11 @@ public class CompilerBackwardReferenceIndex {
       }
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB));
 
+      final KeyDescriptor<LightUsage> lightUsageDescriptor = LightUsage.createDescriptor();
+      final KeyDescriptor<LightDefinition> defDescriptor = LightDefinition.createDescriptor(lightUsageDescriptor);
+
       myBackwardReferenceMap = new ObjectObjectPersistentMultiMaplet<LightUsage, Integer>(new File(myIndicesDir, BACK_USAGES_TAB),
-                                                                                          LightUsage.createDescriptor(),
+                                                                                          lightUsageDescriptor,
                                                                                           EnumeratorIntegerDescriptor.INSTANCE,
                                                                                           new CollectionFactory<Integer>() {
                                                                                         @Override
@@ -72,18 +80,54 @@ public class CompilerBackwardReferenceIndex {
                                                                                           return new THashSet<Integer>();
                                                                                         }
                                                                                       });
-      myBackwardHierarchyMap = new IntIntPersistentMultiMaplet(new File(myIndicesDir, BACK_HIERARCHY_TAB),
-                                                               EnumeratorIntegerDescriptor.INSTANCE);
+      myBackwardHierarchyMap = new ObjectObjectPersistentMultiMaplet<LightUsage, LightDefinition>(new File(myIndicesDir, BACK_HIERARCHY_TAB),
+                                                                                                  lightUsageDescriptor,
+                                                                                                  defDescriptor,
+                                                                                                  new CollectionFactory<LightDefinition>() {
+                                                                       @Override
+                                                                       public Collection<LightDefinition> create() {
+                                                                         return new THashSet<LightDefinition>();
+                                                                       }
+                                                                     });
+
 
       myReferenceMap = new IntObjectPersistentMultiMaplet<LightUsage>(new File(myIndicesDir, USAGES_TAB),
                                                                       EnumeratorIntegerDescriptor.INSTANCE,
-                                                                      LightUsage.createDescriptor(), new CollectionFactory<LightUsage>() {
+                                                                      lightUsageDescriptor, new CollectionFactory<LightUsage>() {
         @Override
         public Collection<LightUsage> create() {
           return new THashSet<LightUsage>();
         }
       });
-      myHierarchyMap = new IntIntPersistentMultiMaplet(new File(myIndicesDir, HIERARCHY_TAB), EnumeratorIntegerDescriptor.INSTANCE);
+      myHierarchyMap = new ObjectObjectPersistentMultiMaplet<LightDefinition, LightUsage>(new File(myIndicesDir, HIERARCHY_TAB),
+                                                                                     defDescriptor,
+                                                                                     lightUsageDescriptor,
+                                                                                     new CollectionFactory<LightUsage>() {
+                                                                                       @Override
+                                                                                       public Collection<LightUsage> create() {
+                                                                                         return new THashSet<LightUsage>();
+                                                                                       }
+                                                                                     });
+
+      myClassDefinitionMap = new IntObjectPersistentMultiMaplet<LightUsage>(new File(myIndicesDir, CLASS_DEF_TAB),
+                                                                            EnumeratorIntegerDescriptor.INSTANCE,
+                                                                            lightUsageDescriptor,
+                                                                            new CollectionFactory<LightUsage>() {
+                                                                                    @Override
+                                                                                    public Collection<LightUsage> create() {
+                                                                                      return new THashSet<LightUsage>();
+                                                                                    }
+                                                                                  });
+
+      myBackwardClassDefinitionMap = new ObjectObjectPersistentMultiMaplet<LightUsage, Integer>(new File(myIndicesDir, BACK_CLASS_DEF_TAB),
+                                                                                                lightUsageDescriptor,
+                                                                                                EnumeratorIntegerDescriptor.INSTANCE,
+                                                                                                new CollectionFactory<Integer>() {
+                                                                                                        @Override
+                                                                                                        public Collection<Integer> create() {
+                                                                                                          return new THashSet<Integer>();
+                                                                                                        }
+                                                                                                      });
 
       myNameEnumerator = new ByteArrayEnumerator(new File(myIndicesDir, INCOMPLETE_FILES_TAB));
     }
@@ -99,7 +143,7 @@ public class CompilerBackwardReferenceIndex {
   }
 
   @NotNull
-  public IntIntPersistentMultiMaplet getBackwardHierarchyMap() {
+  public ObjectObjectPersistentMultiMaplet<LightUsage, LightDefinition> getBackwardHierarchyMap() {
     return myBackwardHierarchyMap;
   }
 
@@ -109,8 +153,18 @@ public class CompilerBackwardReferenceIndex {
   }
 
   @NotNull
-  public IntIntPersistentMultiMaplet getHierarchyMap() {
+  public ObjectObjectPersistentMultiMaplet<LightDefinition, LightUsage> getHierarchyMap() {
     return myHierarchyMap;
+  }
+
+  @NotNull
+  public ObjectObjectPersistentMultiMaplet<LightUsage, Integer> getBackwardClassDefinitionMap() {
+    return myBackwardClassDefinitionMap;
+  }
+
+  @NotNull
+  public IntObjectPersistentMultiMaplet<LightUsage> getClassDefinitionMap() {
+    return myClassDefinitionMap;
   }
 
   @NotNull
@@ -129,8 +183,10 @@ public class CompilerBackwardReferenceIndex {
     close(myFilePathEnumerator, exceptionProc);
     close(myBackwardHierarchyMap, exceptionProc);
     close(myBackwardReferenceMap, exceptionProc);
+    close(myBackwardClassDefinitionMap, exceptionProc);
     close(myHierarchyMap, exceptionProc);
     close(myReferenceMap, exceptionProc);
+    close(myClassDefinitionMap, exceptionProc);
     close(myNameEnumerator, exceptionProc);
     final BuildDataCorruptedException exception = exceptionProc.getFoundValue();
     if (exception != null) {
@@ -179,6 +235,67 @@ public class CompilerBackwardReferenceIndex {
     }
     catch (BuildDataCorruptedException e) {
       exceptionProcessor.process(e);
+    }
+  }
+
+  public static class LightDefinition {
+    private final LightUsage myUsage;
+    private final int myFileId;
+
+    LightDefinition(LightUsage usage, int id) {
+      myUsage = usage;
+      myFileId = id;
+    }
+
+    public LightUsage getUsage() {
+      return myUsage;
+    }
+
+    public int getFileId() {
+      return myFileId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      LightDefinition that = (LightDefinition)o;
+
+      if (!myUsage.equals(that.myUsage)) return false;
+      if (myFileId != that.myFileId) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return myUsage.hashCode();
+    }
+
+    private static KeyDescriptor<LightDefinition> createDescriptor(final DataExternalizer<LightUsage> usageDataExternalizer) {
+      return new KeyDescriptor<LightDefinition>() {
+        @Override
+        public int getHashCode(LightDefinition value) {
+          return value.hashCode();
+        }
+
+        @Override
+        public boolean isEqual(LightDefinition val1, LightDefinition val2) {
+          return val1.equals(val2);
+        }
+
+        @Override
+        public void save(@NotNull DataOutput out, LightDefinition value) throws IOException {
+          usageDataExternalizer.save(out, value.getUsage());
+          EnumeratorIntegerDescriptor.INSTANCE.save(out, value.getFileId());
+        }
+
+        @Override
+        public LightDefinition read(@NotNull DataInput in) throws IOException {
+          return new LightDefinition(usageDataExternalizer.read(in), EnumeratorIntegerDescriptor.INSTANCE.read(in));
+        }
+      };
     }
   }
 }

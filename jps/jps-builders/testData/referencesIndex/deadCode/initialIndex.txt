@@ -11,3 +11,6 @@ java.lang.Object.<init>(0) in Bar
 java.lang.System in Bar
 java.lang.System.out in Bar
 java.util.ArrayList in Bar
+
+Class Definitions:
+Bar in Bar

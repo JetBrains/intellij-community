@@ -9,3 +9,6 @@ fun_expr(java.lang.Runnable) in Lambda
 java.lang.Object.<init>(0) in Lambda
 java.lang.String in Lambda
 java.lang.Thread in Lambda
+
+Class Definitions:
+Lambda in Lambda

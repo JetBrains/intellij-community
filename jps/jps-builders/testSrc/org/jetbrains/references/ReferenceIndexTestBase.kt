@@ -83,10 +83,10 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       result.append("Backward Hierarchy:\n")
       val hierarchyText = mutableListOf<String>()
       index.backwardHierarchyMap.forEachEntry { superClass, inheritors ->
-        val superClassName = superClass.asName(nameEnumerator)
+        val superClassName = superClass.asText(nameEnumerator)
         val inheritorsText = mutableListOf<String>()
         inheritors.forEach { id ->
-          inheritorsText.add(id.asName(nameEnumerator))
+          inheritorsText.add(id.asText(nameEnumerator))
           true
         }
         inheritorsText.sort()
@@ -112,6 +112,22 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       referencesText.sort()
       result.append(referencesText.joinToString(separator = "\n"))
 
+      result.append("\n\nClass Definitions:\n")
+      val classDefs = mutableListOf<String>()
+      index.backwardClassDefinitionMap.forEachEntry { usage, files ->
+        val definitionFiles = mutableListOf<String>()
+        files.forEach { id ->
+          val file = File(fileEnumerator.valueOf(id))
+          val fileName = FileUtil.getNameWithoutExtension(file)
+          definitionFiles.add(fileName)
+        }
+        definitionFiles.sort()
+        classDefs.add(usage.asText(nameEnumerator) + " in " + definitionFiles.joinToString(separator = " "))
+        true
+      }
+      classDefs.sort()
+      result.append(classDefs.joinToString(separator = "\n"))
+
       return result.toString()
     } finally {
       index.close()
@@ -120,16 +136,18 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
 
   private fun getTestDataPath() = testDataRootPath + "/" + getTestName(true) + "/"
 
-  fun Int.asName(byteArrayEnumerator: ByteArrayEnumerator): String = Convert.utf2string(
+  private fun Int.asName(byteArrayEnumerator: ByteArrayEnumerator): String = Convert.utf2string(
       byteArrayEnumerator.valueOf(this))
 
-  fun LightUsage.asText(byteArrayEnumerator: ByteArrayEnumerator): String =
+  private fun CompilerBackwardReferenceIndex.LightDefinition.asText(byteArrayEnumerator: ByteArrayEnumerator) = this.usage.asText(byteArrayEnumerator)
+
+  private fun LightUsage.asText(byteArrayEnumerator: ByteArrayEnumerator): String =
       when (this) {
-        is LightUsage.LightMethodUsage -> this.owner.asName(byteArrayEnumerator) + "." + this.name.asName(
+        is LightUsage.LightMethodUsage -> this.owner.name.asName(byteArrayEnumerator) + "." + this.name.asName(
             byteArrayEnumerator) + "(" + this.parameterCount + ")"
-        is LightUsage.LightFieldUsage -> this.owner.asName(byteArrayEnumerator) + "." + this.name.asName(byteArrayEnumerator)
-        is LightUsage.LightClassUsage -> this.owner.asName(byteArrayEnumerator)
-        is LightUsage.LightFunExprUsage -> "fun_expr(" + this.owner.asName(byteArrayEnumerator) + ")"
+        is LightUsage.LightFieldUsage -> this.owner.name.asName(byteArrayEnumerator) + "." + this.name.asName(byteArrayEnumerator)
+        is LightUsage.LightClassUsage -> this.name.asName(byteArrayEnumerator)
+        is LightUsage.LightFunExprUsage -> "fun_expr(" + this.name.asName(byteArrayEnumerator) + ")"
         else -> throw UnsupportedOperationException()
       }
 }

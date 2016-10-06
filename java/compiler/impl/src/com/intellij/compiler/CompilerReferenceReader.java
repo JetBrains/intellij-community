@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.compiler.backwardRefs.CompilerElementAsLightUsageConverter;
+import com.intellij.compiler.backwardRefs.LanguageLightUsageConverter;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -23,15 +23,17 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.Queue;
+import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
 import org.jetbrains.jps.backwardRefs.LightUsage;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Set;
 
 public class CompilerReferenceReader {
   private final static Logger LOG = Logger.getInstance(CompilerReferenceReader.class);
@@ -42,21 +44,16 @@ public class CompilerReferenceReader {
     myIndex = new CompilerBackwardReferenceIndex(buildDir);
   }
 
-  @NotNull
+  @Nullable
   public TIntHashSet findReferentFileIds(@NotNull CompilerElement element, @NotNull CompilerSearchAdapter adapter) {
-    LightUsage usage = null;
-    for (CompilerElementAsLightUsageConverter converter : CompilerElementAsLightUsageConverter.INSTANCES) {
-      usage = converter.asLightUsage(element, myIndex.getByteSeqEum());
-      if (usage != null) {
-        break;
-      }
-    }
-    LOG.assertTrue(usage != null);
+    LightUsage usage = asLightUsage(element);
 
     TIntHashSet set = new TIntHashSet();
     if (adapter.needOverrideElement()) {
-      for (int classId : getWholeHierarchy(usage.getOwner())) {
-        final LightUsage overriderUsage = usage.override(classId);
+      final LightUsage[] hierarchy = getWholeHierarchy(usage.getOwner());
+      if (hierarchy == null) return null;
+      for (LightUsage aClass : hierarchy) {
+        final LightUsage overriderUsage = usage.override(aClass);
         addUsages(overriderUsage, set);
       }
     } else {
@@ -94,6 +91,19 @@ public class CompilerReferenceReader {
     }
   }
 
+  @NotNull
+  private LightUsage asLightUsage(@NotNull CompilerElement element) {
+    LightUsage usage = null;
+    for (LanguageLightUsageConverter converter : LanguageLightUsageConverter.INSTANCES) {
+      usage = converter.asLightUsage(element, myIndex.getByteSeqEum());
+      if (usage != null) {
+        break;
+      }
+    }
+    LOG.assertTrue(usage != null);
+    return usage;
+  }
+
   private VirtualFile findFile(int id) {
     try {
       String path = myIndex.getFilePathEnumerator().valueOf(id);
@@ -105,25 +115,26 @@ public class CompilerReferenceReader {
     }
   }
 
-  private int[] getWholeHierarchy(int classId) {
-    TIntHashSet result = new TIntHashSet();
-    Queue<Integer> q = new Queue<>(10);
-    q.addLast(classId);
+  @Nullable("return null if the class hierarchy contains ambiguous qualified names")
+  private LightUsage[] getWholeHierarchy(LightUsage aClass) {
+    Set<LightUsage> result = new THashSet<>();
+    Queue<LightUsage> q = new Queue<>(10);
+    q.addLast(aClass);
     while (!q.isEmpty()) {
-      int curId = q.pullFirst();
-      if (result.add(curId)) {
-        final TIntHashSet subclasses = myIndex.getBackwardHierarchyMap().get(curId);
-        if (subclasses != null) {
-          subclasses.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int nextId) {
-              q.addLast(nextId);
-              return true;
-            }
-          });
+      LightUsage curClass = q.pullFirst();
+      if (result.add(curClass)) {
+        final Collection<Integer> definitionFiles = myIndex.getBackwardClassDefinitionMap().get(curClass);
+        if (definitionFiles.size() != 1) {
+          return null;
+        }
+        final Collection<CompilerBackwardReferenceIndex.LightDefinition> subClassDefs = myIndex.getBackwardHierarchyMap().get(curClass);
+        if (subClassDefs != null) {
+          for (CompilerBackwardReferenceIndex.LightDefinition subclass : subClassDefs) {
+            q.addLast(subclass.getUsage());
+          }
         }
       }
     }
-    return result.toArray();
+    return result.toArray(new LightUsage[result.size()]);
   }
 }
