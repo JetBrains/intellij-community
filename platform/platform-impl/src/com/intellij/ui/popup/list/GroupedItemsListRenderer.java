@@ -24,8 +24,8 @@ import com.intellij.util.ui.JBUI;
 import javax.swing.*;
 import java.awt.*;
 
-public class GroupedItemsListRenderer extends GroupedElementsRenderer.List implements ListCellRenderer {
-  protected ListItemDescriptor myDescriptor;
+public class GroupedItemsListRenderer<E> extends GroupedElementsRenderer.List implements ListCellRenderer<E> {
+  protected ListItemDescriptor<E> myDescriptor;
 
   protected JLabel myNextStepLabel;
 
@@ -34,12 +34,12 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
   }
 
 
-  public GroupedItemsListRenderer(ListItemDescriptor descriptor) {
+  public GroupedItemsListRenderer(ListItemDescriptor<E> descriptor) {
     myDescriptor = descriptor;
   }
 
   @Override
-  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+  public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
     String caption = myDescriptor.getCaptionAboveOf(value);
     boolean hasSeparator = myDescriptor.hasSeparatorAboveOf(value);
     if (index == 0 && StringUtil.isEmptyOrSpaces(caption)) hasSeparator = false;
@@ -73,6 +73,6 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
       .withBorder(getDefaultItemComponentBorder());
   }
 
-  protected void customizeComponent(JList list, Object value, boolean isSelected) {
+  protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
   }
 }

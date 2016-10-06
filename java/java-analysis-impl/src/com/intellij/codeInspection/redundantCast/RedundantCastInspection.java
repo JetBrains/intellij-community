@@ -133,7 +133,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   private static class AcceptSuggested implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.redundant.cast.remove.quickfix");
     }
 
@@ -145,12 +145,6 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
       if (cast != null) {
         RedundantCastUtil.removeCast(cast);
       }
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,6 @@ public class SystemFileProcessor extends ProjectTemplateFileProcessor {
   protected String encodeFileText(String content, VirtualFile file, Project project) throws IOException {
     final String fileName = file.getName();
     if (file.getParent().getName().equals(Project.DIRECTORY_STORE_FOLDER) && fileName.equals("workspace.xml")) {
-
       List<Object> componentList = new ArrayList<>();
       for (String componentName : COMPONENT_NAMES) {
         Object component = project.getComponent(componentName);

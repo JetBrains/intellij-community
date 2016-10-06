@@ -33,6 +33,5 @@ public interface UISettingsListener extends EventListener {
 
   Topic<UISettingsListener> TOPIC = Topic.create("UI settings", UISettingsListener.class);
 
-  void uiSettingsChanged(UISettings source);
-
+  void uiSettingsChanged(UISettings uiSettings);
 }

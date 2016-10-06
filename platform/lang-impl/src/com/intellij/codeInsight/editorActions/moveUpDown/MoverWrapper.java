@@ -140,7 +140,7 @@ class MoverWrapper {
     }
 
     if (hasSelection) {
-      restoreSelection(editor, selectionStart, selectionEnd, start, myInfo.range2.getStartOffset());
+      restoreSelection(editor, selectionStart, selectionEnd, start, end, myInfo.range2.getStartOffset());
     }
 
     caretModel.moveToOffset(myInfo.range2.getStartOffset() + caretRelativePos);
@@ -215,10 +215,12 @@ class MoverWrapper {
     return text.trim().length() != 0;
   }
 
-  private static void restoreSelection(final Editor editor, final int selectionStart, final int selectionEnd, final int moveOffset, int insOffset) {
-    final int selectionRelativeOffset = selectionStart - moveOffset;
-    int newSelectionStart = insOffset + selectionRelativeOffset;
-    int newSelectionEnd = newSelectionStart + selectionEnd - selectionStart;
+  private static void restoreSelection(Editor editor,
+                                       int selectionStart, int selectionEnd, int moveStartOffset, int moveEndOffset, int insOffset) {
+    int selectionRelativeStartOffset = Math.max(0, selectionStart - moveStartOffset);
+    int selectionRelativeEndOffset = Math.min(moveEndOffset - moveStartOffset, selectionEnd - moveStartOffset);
+    int newSelectionStart = insOffset + selectionRelativeStartOffset;
+    int newSelectionEnd = insOffset + selectionRelativeEndOffset;
     EditorUtil.setSelectionExpandingFoldedRegionsIfNeeded(editor, newSelectionStart, newSelectionEnd);
   }
 }

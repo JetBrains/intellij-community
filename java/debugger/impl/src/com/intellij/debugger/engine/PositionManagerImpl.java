@@ -109,9 +109,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
             classPattern = parentQName + "*";
             prepareRequestor = new ClassPrepareRequestor() {
               public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-                final CompoundPositionManager positionManager = ((DebugProcessImpl)debuggerProcess).getPositionManager();
-                final List<ReferenceType> positionClasses = positionManager.getAllClasses(position);
-                if (positionClasses.contains(referenceType)) {
+                if (((DebugProcessImpl)debuggerProcess).getPositionManager().getAllClasses(position).contains(referenceType)) {
                   requestor.processClassPrepare(debuggerProcess, referenceType);
                 }
               }
@@ -205,7 +203,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         });
       if (lambdas.size() > 1) {
         ArrayList<Method> lambdasList = new ArrayList<>(lambdas);
-        Collections.sort(lambdasList, DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
+        lambdasList.sort(DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR);
         lambdaOrdinal = lambdasList.indexOf(method);
       }
     }

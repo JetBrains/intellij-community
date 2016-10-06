@@ -27,6 +27,7 @@ import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.all
+import org.jetbrains.concurrency.nullPromise
 import org.jetbrains.concurrency.resolvedPromise
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -72,7 +73,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
     var vmBreakpoints: Collection<Breakpoint> = emptySet()
     synchronized (lock) {
       if (disable) {
-        val list = IDE_TO_VM_BREAKPOINTS_KEY.get(vm)?.let { it.get(breakpoint) } ?: return resolvedPromise()
+        val list = IDE_TO_VM_BREAKPOINTS_KEY.get(vm)?.let { it.get(breakpoint) } ?: return nullPromise()
         val iterator = list.iterator()
         vmBreakpoints = list
         while (iterator.hasNext()) {
@@ -84,13 +85,13 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
         }
       }
       else {
-        vmBreakpoints = IDE_TO_VM_BREAKPOINTS_KEY.get(vm)?.let { it.remove(breakpoint) } ?: return resolvedPromise()
+        vmBreakpoints = IDE_TO_VM_BREAKPOINTS_KEY.get(vm)?.let { it.remove(breakpoint) } ?: return nullPromise()
         if (!vmBreakpoints.isEmpty()) {
           for (vmBreakpoint in vmBreakpoints) {
             vmToIdeBreakpoints.remove(vmBreakpoint, breakpoint)
             if (vmToIdeBreakpoints.containsKey(vmBreakpoint)) {
               // we must not remove vm breakpoint - it is used for another ide breakpoints
-              return resolvedPromise()
+              return nullPromise()
             }
           }
         }
@@ -98,7 +99,7 @@ abstract class LineBreakpointManager(internal val debugProcess: DebugProcessImpl
     }
 
     if (vmBreakpoints.isEmpty()) {
-      return resolvedPromise()
+      return nullPromise()
     }
 
     val breakpointManager = vm.breakpointManager

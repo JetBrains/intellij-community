@@ -17,7 +17,6 @@ package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.ValueContainer;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntIterator;
 
 public class IdSet extends TIntHashSet implements RandomAccessIntContainer {
   public IdSet(final int initialCapacity) {
@@ -51,33 +50,9 @@ public class IdSet extends TIntHashSet implements RandomAccessIntContainer {
     return new IntSetIterator();
   }
 
-  private class IntSetIterator implements ValueContainer.IntIterator {
-    private final TIntIterator mySetIterator;
-    private final int mySize;
-
+  private class IntSetIterator extends TroveSetIntIterator {
     public IntSetIterator() {
-      mySetIterator = iterator();
-      mySize = IdSet.this.size();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return mySetIterator.hasNext();
-    }
-
-    @Override
-    public int next() {
-      return mySetIterator.next();
-    }
-
-    @Override
-    public int size() {
-      return mySize;
-    }
-
-    @Override
-    public boolean hasAscendingOrder() {
-      return false;
+      super(IdSet.this);
     }
 
     @Override

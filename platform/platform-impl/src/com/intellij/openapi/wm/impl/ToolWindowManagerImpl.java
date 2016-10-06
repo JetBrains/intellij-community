@@ -37,14 +37,11 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
@@ -62,8 +59,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickAccessSettings;
 import com.intellij.ui.switcher.SwitchManager;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -101,7 +98,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final Map<String, WindowedDecorator> myId2WindowedDecorator = new HashMap<>();
   private final Map<String, StripeButton> myId2StripeButton = new HashMap<>();
   private final Map<String, FocusWatcher> myId2FocusWatcher = new HashMap<>();
-  private final Set<String> myDumbAwareIds = Collections.synchronizedSet(ContainerUtil.<String>newTroveSet());
 
   private final EditorComponentFocusWatcher myEditorComponentFocusWatcher = new EditorComponentFocusWatcher();
   private final MyToolWindowPropertyChangeListener myToolWindowPropertyChangeListener = new MyToolWindowPropertyChangeListener();
@@ -147,6 +143,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private final Alarm myUpdateHeadersAlarm = new Alarm();
+  private final CommandProcessor myCommandProcessor = new CommandProcessor();
 
   /**
    * invoked by reflection
@@ -382,40 +379,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myToolWindowsPane = new ToolWindowsPane(myFrame, this);
     Disposer.register(myProject, myToolWindowsPane);
     ((IdeRootPane)myFrame.getRootPane()).setToolWindowsPane(myToolWindowsPane);
-    List<FinalizableCommand> commandsList = new ArrayList<>();
-    appendUpdateToolWindowsPaneCmd(commandsList);
-
     myFrame.setTitle(FrameTitleBuilder.getInstance().getProjectTitle(myProject));
-    JComponent editorComponent = createEditorComponent(myProject);
-    myEditorComponentFocusWatcher.install(editorComponent);
-
-    appendSetEditorComponentCmd(editorComponent, commandsList);
-    if (myEditorWasActive && editorComponent instanceof EditorsSplitters) {
-      activateEditorComponentImpl(commandsList, true);
-    }
-    execute(commandsList);
-
-    final DumbService.DumbModeListener dumbModeListener = new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-        disableStripeButtons();
-      }
-
-      @Override
-      public void exitDumbMode() {
-        for (final String id : getToolWindowIds()) {
-          getStripeButton(id).setEnabled(true);
-        }
-      }
-    };
-    myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, dumbModeListener);
-
-    StartupManager.getInstance(myProject).registerPostStartupActivity((DumbAwareRunnable)() -> {
-      registerToolWindowsFromBeans();
-      if (DumbService.getInstance(myProject).isDumb()) {
-        disableStripeButtons();
-      }
-    });
 
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof KeyEvent) {
@@ -428,17 +392,15 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }, myProject);
   }
 
-  private void disableStripeButtons() {
-    for (final String id : getToolWindowIds()) {
-      if (!myDumbAwareIds.contains(id)) {
-        if (isToolWindowVisible(id)) {
-          hideToolWindow(id, true);
-        }
-        StripeButton button = getStripeButton(id);
-        if (button != null) {
-          button.setEnabled(false);
-        }
-      }
+  private void initAll(List<FinalizableCommand> commandsList) {
+    appendUpdateToolWindowsPaneCmd(commandsList);
+
+    JComponent editorComponent = createEditorComponent(myProject);
+    myEditorComponentFocusWatcher.install(editorComponent);
+
+    appendSetEditorComponentCmd(editorComponent, commandsList);
+    if (myEditorWasActive && editorComponent instanceof EditorsSplitters) {
+      activateEditorComponentImpl(commandsList, true);
     }
   }
 
@@ -446,62 +408,31 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return FrameEditorComponentProvider.EP.getExtensions()[0].createEditorComponent(project);
   }
 
-  private void registerToolWindowsFromBeans() {
-    List<ToolWindowEP> beans = new ArrayList<>(Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME)));
-    Collections.reverse(beans);
-
-    checkConditionsInReadAction(beans, new ArrayList<>());
-  }
-
-  private void checkConditionsInReadAction(@NotNull List<ToolWindowEP> beans, @NotNull List<ToolWindowEP> checkedSuccessfully) {
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
-      @Nullable
-      @Override
-      public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-        for (int i = beans.size() - 1; i >= 0; i--) {
-          indicator.checkCanceled();
-          ToolWindowEP bean = beans.remove(i);
-          Condition<Project> condition = ObjectUtils.notNull(bean.getCondition(), Conditions.<Project>alwaysTrue());
-          if (!myProject.isDisposed() && condition.value(myProject)) {
-            checkedSuccessfully.add(bean);
+  private void registerToolWindowsFromBeans(List<FinalizableCommand> list) {
+    List<ToolWindowEP> beans = Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME));
+    for (ToolWindowEP bean : beans) {
+      Condition<Project> condition = bean.getCondition();
+      if (condition == null || condition.value(myProject)) {
+        list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
+          @Override
+          public void run() {
+            initToolWindow(bean);
           }
-        }
-        return new Continuation(() -> {
-          if (!myProject.isDisposed()) {
-            for (ToolWindowEP bean : checkedSuccessfully) {
-              if (getToolWindow(bean.id) == null) {
-                try {
-                  initToolWindow(bean);
-                }
-                catch (Throwable e) {
-                  LOG.error(String.format("Tool window %s initialization failed", bean.id), e);
-                }
-              }
-            }
-          }
-        }, ModalityState.any());
+        });
       }
-
-      @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-        checkConditionsInReadAction(beans, checkedSuccessfully);
-      }
-    });
+    }
   }
 
   @Override
   public void initToolWindow(@NotNull ToolWindowEP bean) {
-    JLabel label = new JLabel("Initializing...", SwingConstants.CENTER);
-    label.setOpaque(true);
-    final Color treeBg = UIManager.getColor("Tree.background");
-    label.setBackground(ColorUtil.toAlpha(treeBg, 180));
-    final Color treeFg = UIUtil.getTreeForeground();
-    label.setForeground(ColorUtil.toAlpha(treeFg, 180));
+    WindowInfoImpl before = myLayout.getInfo(bean.id, false);
+    boolean visible = before != null && before.isVisible();
+    JLabel label = createInitializingLabel();
     ToolWindowAnchor toolWindowAnchor = ToolWindowAnchor.fromText(bean.anchor);
     final ToolWindowFactory factory = bean.getToolWindowFactory();
-    final ToolWindowImpl toolWindow =
-      (ToolWindowImpl)registerToolWindow(bean.id, label, toolWindowAnchor, myProject, DumbService.isDumbAware(factory),
-                                         bean.canCloseContents);
+    ToolWindow window = registerToolWindow(bean.id, label, toolWindowAnchor, false, bean.canCloseContents,
+                                           DumbService.isDumbAware(factory), factory.shouldBeAvailable(myProject));
+    final ToolWindowImpl toolWindow = (ToolWindowImpl)registerDisposable(bean.id, myProject, window);
     toolWindow.setContentFactory(factory);
     if (bean.icon != null && toolWindow.getIcon() == null) {
       Icon icon = IconLoader.findIcon(bean.icon, factory.getClass());
@@ -528,12 +459,23 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       toolWindow.ensureContentInitialized();
       activation.setDone();
     };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (visible || ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
     }
     else {
       UiNotifyConnector.doWhenFirstShown(label, () -> ApplicationManager.getApplication().invokeLater(runnable));
     }
+  }
+
+  @NotNull
+  private static JLabel createInitializingLabel() {
+    JLabel label = new JLabel("Initializing...", SwingConstants.CENTER);
+    label.setOpaque(true);
+    final Color treeBg = UIManager.getColor("Tree.background");
+    label.setBackground(ColorUtil.toAlpha(treeBg, 180));
+    final Color treeFg = UIUtil.getTreeForeground();
+    label.setForeground(ColorUtil.toAlpha(treeFg, 180));
+    return label;
   }
 
   @Override
@@ -592,7 +534,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     for (FinalizableCommand each : commandList) {
       each.beforeExecute(this);
     }
-    myWindowManager.getCommandProcessor().execute(commandList, myProject.getDisposed());
+    myCommandProcessor.execute(commandList, myProject.getDisposed());
+  }
+
+  private void flushCommands() {
+    myCommandProcessor.flush();
   }
 
   @Override
@@ -742,9 +688,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     }
     ApplicationManager.getApplication().assertIsDispatchThread();
     checkId(id);
-    if (DumbService.getInstance(myProject).isDumb() && !myDumbAwareIds.contains(id)) {
-      return;
-    }
 
     List<FinalizableCommand> commandList = new ArrayList<>();
     activateToolWindowImpl(id, commandList, forced, autoFocusContents);
@@ -1025,10 +968,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return;
     }
 
-    if (DumbService.getInstance(myProject).isDumb() && !myDumbAwareIds.contains(id)) {
-      return;
-    }
-
     toBeShownInfo.setVisible(true);
     final InternalDecorator decorator = getInternalDecorator(id);
 
@@ -1117,7 +1056,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        @NotNull ToolWindowAnchor anchor,
                                        @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode, boolean canCloseContents) {
-    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode));
+    return registerDisposable(id, parentDisposable, registerToolWindow(id, component, anchor, false, canCloseContents, canWorkInDumbMode, true));
   }
 
   @NotNull
@@ -1125,13 +1064,13 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                         @NotNull final JComponent component,
                                         @NotNull final ToolWindowAnchor anchor,
                                         boolean canWorkInDumbMode) {
-    return registerToolWindow(id, component, anchor, false, false, canWorkInDumbMode);
+    return registerToolWindow(id, component, anchor, false, false, canWorkInDumbMode, true);
   }
 
   @NotNull
   @Override
   public ToolWindow registerToolWindow(@NotNull final String id, final boolean canCloseContent, @NotNull final ToolWindowAnchor anchor) {
-    return registerToolWindow(id, null, anchor, false, canCloseContent, false);
+    return registerToolWindow(id, null, anchor, false, canCloseContent, false, true);
   }
 
   @NotNull
@@ -1140,7 +1079,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        final boolean canCloseContent,
                                        @NotNull final ToolWindowAnchor anchor,
                                        final boolean secondary) {
-    return registerToolWindow(id, null, anchor, secondary, canCloseContent, false);
+    return registerToolWindow(id, null, anchor, secondary, canCloseContent, false, true);
   }
 
 
@@ -1162,7 +1101,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                        @NotNull Disposable parentDisposable,
                                        boolean canWorkInDumbMode,
                                        boolean secondary) {
-    ToolWindow window = registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode);
+    ToolWindow window = registerToolWindow(id, null, anchor, secondary, canCloseContent, canWorkInDumbMode, true);
     return registerDisposable(id, parentDisposable, window);
   }
 
@@ -1172,7 +1111,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                         @NotNull final ToolWindowAnchor anchor,
                                         boolean sideTool,
                                         boolean canCloseContent,
-                                        final boolean canWorkInDumbMode) {
+                                        final boolean canWorkInDumbMode,
+                                        boolean shouldBeAvailable) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: installToolWindow(" + id + "," + component + "," + anchor + "\")");
     }
@@ -1186,11 +1126,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final boolean wasVisible = info.isVisible();
     info.setActive(false);
     info.setVisible(false);
+    info.setShowStripeButton(shouldBeAvailable);
 
     // Create decorator
 
     ToolWindowImpl toolWindow = new ToolWindowImpl(this, id, canCloseContent, component);
-    InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow);
+    InternalDecorator decorator = new InternalDecorator(myProject, info.copy(), toolWindow, canWorkInDumbMode);
     ActivateToolWindowAction.ensureToolWindowActionRegistered(toolWindow);
     myId2InternalDecorator.put(id, decorator);
     decorator.addInternalDecoratorListener(myInternalDecoratorListener);
@@ -1203,13 +1144,6 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myId2StripeButton.put(id, button);
     List<FinalizableCommand> commandsList = new ArrayList<>();
     appendAddButtonCmd(button, info, commandsList);
-
-    if (canWorkInDumbMode) {
-      myDumbAwareIds.add(id);
-    }
-    else if (DumbService.getInstance(getProject()).isDumb()) {
-      button.setEnabled(false);
-    }
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the autohide
@@ -1371,7 +1305,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   @Override
   public void invokeLater(@NotNull final Runnable runnable) {
     List<FinalizableCommand> commandList = new ArrayList<>();
-    commandList.add(new InvokeLaterCmd(runnable, myWindowManager.getCommandProcessor()));
+    commandList.add(new InvokeLaterCmd(runnable, myCommandProcessor));
     execute(commandList);
   }
 
@@ -1653,7 +1587,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     if (wasActive) {
       activateToolWindowImpl(id, commandList, true, true);
     }
-    commandList.add(myToolWindowsPane.createUpdateButtonPositionCmd(id, myWindowManager.getCommandProcessor()));
+    commandList.add(myToolWindowsPane.createUpdateButtonPositionCmd(id, myCommandProcessor));
   }
 
   ToolWindowType getToolWindowInternalType(@NotNull String id) {
@@ -1753,7 +1687,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void appendApplyWindowInfoCmd(@NotNull WindowInfoImpl info, @NotNull List<FinalizableCommand> commandsList) {
     final StripeButton button = getStripeButton(info.getId());
     final InternalDecorator decorator = getInternalDecorator(info.getId());
-    commandsList.add(new ApplyWindowInfoCmd(info, button, decorator, myWindowManager.getCommandProcessor()));
+    commandsList.add(new ApplyWindowInfoCmd(info, button, decorator, myCommandProcessor));
   }
 
   /**
@@ -1763,7 +1697,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
                                      @NotNull WindowInfoImpl info,
                                      final boolean dirtyMode,
                                      @NotNull List<FinalizableCommand> commandsList) {
-    final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
+    final CommandProcessor commandProcessor = myCommandProcessor;
     final FinalizableCommand command = myToolWindowsPane.createAddDecoratorCmd(decorator, info, dirtyMode, commandProcessor);
     commandsList.add(command);
   }
@@ -1772,7 +1706,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * @see ToolWindowsPane#createRemoveDecoratorCmd
    */
   private void appendRemoveDecoratorCmd(@NotNull String id, final boolean dirtyMode, @NotNull List<FinalizableCommand> commandsList) {
-    final FinalizableCommand command = myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, myWindowManager.getCommandProcessor());
+    final FinalizableCommand command = myToolWindowsPane.createRemoveDecoratorCmd(id, dirtyMode, myCommandProcessor);
     commandsList.add(command);
   }
 
@@ -1791,7 +1725,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    */
   private void appendAddButtonCmd(final StripeButton button, @NotNull WindowInfoImpl info, @NotNull List<FinalizableCommand> commandsList) {
     final Comparator<StripeButton> comparator = myLayout.comparator(info.getAnchor());
-    final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
+    final CommandProcessor commandProcessor = myCommandProcessor;
     final FinalizableCommand command = myToolWindowsPane.createAddButtonCmd(button, info, comparator, commandProcessor);
     commandsList.add(command);
   }
@@ -1800,14 +1734,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
    * @see ToolWindowsPane#createAddButtonCmd
    */
   private void appendRemoveButtonCmd(@NotNull String id, @NotNull List<FinalizableCommand> commandsList) {
-    final FinalizableCommand command = myToolWindowsPane.createRemoveButtonCmd(id, myWindowManager.getCommandProcessor());
+    final FinalizableCommand command = myToolWindowsPane.createRemoveButtonCmd(id, myCommandProcessor);
     commandsList.add(command);
   }
 
   private ActionCallback appendRequestFocusInEditorComponentCmd(List<FinalizableCommand> commandList, boolean forced) {
     if (myProject.isDisposed()) return ActionCallback.DONE;
     EditorsSplitters splitters = getSplittersToFocus();
-    CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
+    CommandProcessor commandProcessor = myCommandProcessor;
     RequestFocusInEditorComponentCmd command = new RequestFocusInEditorComponentCmd(splitters, getFocusManager(), commandProcessor, forced);
     commandList.add(command);
     return command.getDoneCallback();
@@ -1817,14 +1751,14 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final ToolWindowImpl toolWindow = (ToolWindowImpl)getToolWindow(id);
     final FocusWatcher focusWatcher = myId2FocusWatcher.get(id);
     commandList
-      .add(new RequestFocusInToolWindowCmd(getFocusManager(), toolWindow, focusWatcher, myWindowManager.getCommandProcessor(), forced));
+      .add(new RequestFocusInToolWindowCmd(getFocusManager(), toolWindow, focusWatcher, myCommandProcessor, forced));
   }
 
   /**
    * @see ToolWindowsPane#createSetEditorComponentCmd
    */
   private void appendSetEditorComponentCmd(@Nullable final JComponent component, @NotNull List<FinalizableCommand> commandsList) {
-    final CommandProcessor commandProcessor = myWindowManager.getCommandProcessor();
+    final CommandProcessor commandProcessor = myCommandProcessor;
     final FinalizableCommand command = myToolWindowsPane.createSetEditorComponentCmd(component, commandProcessor);
     commandsList.add(command);
   }
@@ -1832,7 +1766,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void appendUpdateToolWindowsPaneCmd(final List<FinalizableCommand> commandsList) {
     final JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) {
-      final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, myWindowManager.getCommandProcessor());
+      final FinalizableCommand command = new UpdateRootPaneCmd(rootPane, myCommandProcessor);
       commandsList.add(command);
     }
   }
@@ -1993,7 +1927,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
      * Creates floating decorator for specified internal decorator.
      */
     private AddFloatingDecoratorCmd(@NotNull InternalDecorator decorator, @NotNull WindowInfoImpl info) {
-      super(myWindowManager.getCommandProcessor());
+      super(myCommandProcessor);
       myFloatingDecorator = new FloatingDecorator(myFrame, info.copy(), decorator);
       myId2FloatingDecorator.put(info.getId(), myFloatingDecorator);
       final Rectangle bounds = info.getFloatingBounds();
@@ -2032,7 +1966,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     private final FloatingDecorator myFloatingDecorator;
 
     private RemoveFloatingDecoratorCmd(@NotNull WindowInfoImpl info) {
-      super(myWindowManager.getCommandProcessor());
+      super(myCommandProcessor);
       myFloatingDecorator = getFloatingDecorator(info.getId());
       myId2FloatingDecorator.remove(info.getId());
       info.setFloatingBounds(myFloatingDecorator.getBounds());
@@ -2065,7 +1999,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
      * Creates windowed decorator for specified internal decorator.
      */
     private AddWindowedDecoratorCmd(@NotNull InternalDecorator decorator, @NotNull WindowInfoImpl info) {
-      super(myWindowManager.getCommandProcessor());
+      super(myCommandProcessor);
       myWindowedDecorator = new WindowedDecorator(myProject, info.copy(), decorator);
       Window window = myWindowedDecorator.getFrame();
       final Rectangle bounds = info.getFloatingBounds();
@@ -2119,7 +2053,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     private final WindowedDecorator myWindowedDecorator;
 
     private RemoveWindowedDecoratorCmd(@NotNull WindowInfoImpl info) {
-      super(myWindowManager.getCommandProcessor());
+      super(myCommandProcessor);
       myWindowedDecorator = getWindowedDecorator(info.getId());
       myId2WindowedDecorator.remove(info.getId());
 
@@ -2157,7 +2091,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private final class EditorComponentFocusWatcher extends FocusWatcher {
     @Override
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
-      if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null) {
+      if (myCommandProcessor.getCommandCount() > 0 || component == null) {
         return;
       }
       final KeyboardFocusManager mgr = KeyboardFocusManager.getCurrentKeyboardFocusManager();
@@ -2202,12 +2136,12 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     @Override
     protected boolean isFocusedComponentChangeValid(final Component comp, final AWTEvent cause) {
-      return myWindowManager.getCommandProcessor().getCommandCount() == 0 && comp != null;
+      return myCommandProcessor.getCommandCount() == 0 && comp != null;
     }
 
     @Override
     protected void focusedComponentChanged(final Component component, final AWTEvent cause) {
-      if (myWindowManager.getCommandProcessor().getCommandCount() > 0 || component == null) {
+      if (myCommandProcessor.getCommandCount() > 0 || component == null) {
         return;
       }
       final WindowInfoImpl info = getInfo(myId);
@@ -2503,5 +2437,22 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   boolean isShowStripeButton(@NotNull String id) {
     WindowInfoImpl info = getInfo(id);
     return info == null || info.isShowStripeButton();
+  }
+
+  public static class InitToolWindowsActivity implements StartupActivity, DumbAware {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      ToolWindowManagerEx ex = ToolWindowManagerEx.getInstanceEx(project);
+      if (ex instanceof ToolWindowManagerImpl) {
+        ToolWindowManagerImpl manager = (ToolWindowManagerImpl)ex;
+        List<FinalizableCommand> list = new ArrayList<>();
+        manager.registerToolWindowsFromBeans(list);
+        manager.initAll(list);
+        EdtInvocationManager.getInstance().invokeLater(() -> {
+          manager.execute(list);
+          manager.flushCommands();
+        });
+      }
+    }
   }
 }

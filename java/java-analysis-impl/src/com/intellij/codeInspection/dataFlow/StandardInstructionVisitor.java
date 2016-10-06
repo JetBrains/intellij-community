@@ -472,6 +472,14 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                 DfaMemoryState memState,
                                                                 DfaValue dfaRight,
                                                                 DfaValue dfaLeft, IElementType opSign) {
+    if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
+      Number leftValue = getKnownNumberValue(memState, (DfaVariableValue)dfaLeft);
+      Number rightValue = getKnownNumberValue(memState, (DfaVariableValue)dfaRight);
+      if (leftValue != null && rightValue != null) {
+        return checkComparisonWithKnownValue(instruction, runner, memState, opSign, leftValue, rightValue);
+      }
+    }
+    
     if (dfaRight instanceof DfaConstValue && dfaLeft instanceof DfaVariableValue) {
       Object value = ((DfaConstValue)dfaRight).getValue();
       if (value instanceof Number) {
@@ -509,10 +517,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                   DfaMemoryState memState,
                                                                   DfaVariableValue var,
                                                                   IElementType opSign, Number comparedWith) {
-    DfaConstValue knownConstantValue = memState.getConstantValue(var);
-    Object knownValue = knownConstantValue == null ? null : knownConstantValue.getValue();
-    if (knownValue instanceof Number) {
-      return checkComparisonWithKnownRange(instruction, runner, memState, opSign, comparedWith, (Number)knownValue, (Number)knownValue);
+    Object knownValue = getKnownNumberValue(memState, var);
+    if (knownValue != null) {
+      return checkComparisonWithKnownValue(instruction, runner, memState, opSign, (Number)knownValue, comparedWith);
     }
 
     PsiType varType = var.getVariableType();
@@ -530,6 +537,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                                                          Long.MAX_VALUE;
 
     return checkComparisonWithKnownRange(instruction, runner, memState, opSign, comparedWith, minValue, maxValue);
+  }
+
+  @Nullable
+  private static Number getKnownNumberValue(DfaMemoryState memState, DfaVariableValue var) {
+    DfaConstValue knownConstantValue = memState.getConstantValue(var);
+    return knownConstantValue != null && knownConstantValue.getValue() instanceof Number ? (Number)knownConstantValue.getValue() : null;
+  }
+
+  private static DfaInstructionState[] checkComparisonWithKnownValue(BinopInstruction instruction,
+                                                                     DataFlowRunner runner,
+                                                                     DfaMemoryState memState,
+                                                                     IElementType opSign,
+                                                                     Number leftValue,
+                                                                     Number rightValue) {
+    return checkComparisonWithKnownRange(instruction, runner, memState, opSign, rightValue, leftValue, leftValue);
   }
 
   private static int compare(Number a, Number b) {

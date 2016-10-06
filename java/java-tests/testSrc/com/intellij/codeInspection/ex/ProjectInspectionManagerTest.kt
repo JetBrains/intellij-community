@@ -21,11 +21,10 @@ import com.intellij.configurationStore.StoreAwareProjectManager
 import com.intellij.configurationStore.loadAndUseProject
 import com.intellij.configurationStore.saveStore
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.Assertions.assertThat
 import com.intellij.util.io.delete
@@ -36,7 +35,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Paths
 
-internal class ProjectInspectionManagerTest {
+class ProjectInspectionManagerTest {
   companion object {
     @JvmField
     @ClassRule
@@ -182,16 +181,11 @@ internal class ProjectInspectionManagerTest {
       currentProfile.profileChanged()
 
       project.saveStore()
-      val projectFile = Paths.get((project.stateStore as IProjectStore).projectFilePath)
+      val projectFile = Paths.get((project.stateStore).projectFilePath)
 
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
 
-      assertThat(projectFile.readText()).isEqualTo(emptyProjectFile)
-
-      currentProfile.disableAllTools(project)
-      currentProfile.profileChanged()
-      project.saveStore()
-      assertThat(projectFile.readText()).isEqualTo("""
+      val expected = """
       <?xml version="1.0" encoding="UTF-8"?>
       <project version="4">
         <component name="InspectionProjectProfileManager">
@@ -201,7 +195,13 @@ internal class ProjectInspectionManagerTest {
           </profile>
           <version value="1.0" />
         </component>
-      </project>""".trimIndent())
+      </project>""".trimIndent()
+      assertThat(projectFile.readText()).isEqualTo(expected)
+
+      currentProfile.disableAllTools(project)
+      currentProfile.profileChanged()
+      project.saveStore()
+      assertThat(projectFile.readText()).isNotEqualTo(expected)
       assertThat(projectFile.parent.resolve(".inspectionProfiles")).doesNotExist()
     }
   }

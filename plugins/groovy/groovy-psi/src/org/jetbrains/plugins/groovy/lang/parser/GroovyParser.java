@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.declaration.D
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.AssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.ExpressionStatement;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.PathExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.imports.ImportStatement;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.typeDefinitions.TypeDefinition;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.toplevel.CompilationUnit;
@@ -454,7 +455,7 @@ public class GroovyParser implements PsiParser {
     return GroovyTokenTypes.kCLASS == builder.getTokenType() ||               //class
            GroovyTokenTypes.kINTERFACE == builder.getTokenType() ||           //interface
            GroovyTokenTypes.kENUM == builder.getTokenType() ||                //enum
-           GroovyTokenTypes.kTRAIT == builder.getTokenType() ||               //trait
+           GroovyTokenTypes.kTRAIT == builder.getTokenType() && !PathExpression.isQualificationDotAhead(builder) ||               //trait
            ParserUtils.lookAhead(builder, GroovyTokenTypes.mAT, GroovyTokenTypes.kINTERFACE);  //@interface
   }
 

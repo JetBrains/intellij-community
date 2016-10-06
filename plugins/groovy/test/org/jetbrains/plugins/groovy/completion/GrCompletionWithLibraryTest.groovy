@@ -59,27 +59,27 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
 
   void testCategoryForArray() { doCompletionTest(null, null, '\n', CompletionType.BASIC) }
 
-  void testArrayLikeAccessForList() throws Throwable { doBasicTest(); }
+  void testArrayLikeAccessForList() throws Throwable { doBasicTest() }
 
-  void testArrayLikeAccessForMap() throws Throwable { doBasicTest(); }
+  void testArrayLikeAccessForMap() throws Throwable { doBasicTest() }
 
-  void testEachMethodForList() throws Throwable { doBasicTest(); }
+  void testEachMethodForList() throws Throwable { doBasicTest() }
 
-  void testEachMethodForMapWithKeyValue() throws Throwable { doBasicTest(); }
+  void testEachMethodForMapWithKeyValue() throws Throwable { doBasicTest() }
 
-  void testEachMethodForMapWithEntry() throws Throwable { doBasicTest(); }
+  void testEachMethodForMapWithEntry() throws Throwable { doBasicTest() }
 
-  void testWithMethod() throws Throwable { doBasicTest(); }
+  void testWithMethod() throws Throwable { doBasicTest() }
 
-  void testInjectMethodForCollection() throws Throwable { doBasicTest(); }
+  void testInjectMethodForCollection() throws Throwable { doBasicTest() }
 
-  void testInjectMethodForArray() throws Throwable { doBasicTest(); }
+  void testInjectMethodForArray() throws Throwable { doBasicTest() }
 
-  void testInjectMethodForMap() throws Throwable { doBasicTest(); }
+  void testInjectMethodForMap() throws Throwable { doBasicTest() }
 
-  void testClosureDefaultParameterInEachMethod() throws Throwable { doBasicTest(); }
+  void testClosureDefaultParameterInEachMethod() throws Throwable { doBasicTest() }
 
-  void testEachMethodForRanges() throws Throwable { doBasicTest(); }
+  void testEachMethodForRanges() throws Throwable { doBasicTest() }
 
   void testEachMethodForEnumRanges() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".groovy")

@@ -221,38 +221,31 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
    * TODO: formats. And should be removed when 1.6 working copies are no longer supported by IDEA.
    */
   private void cleanup17copies() {
-    final Runnable callCleanupWorker = new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
-        new CleanupWorker(VirtualFile.EMPTY_ARRAY, myProject, "action.Subversion.cleanup.progress.title") {
-          @Override
-          protected void chanceToFillRoots() {
-            final List<WCInfo> infos = getAllWcInfos();
-            final LocalFileSystem lfs = LocalFileSystem.getInstance();
-            final List<VirtualFile> roots = new ArrayList<>(infos.size());
-            for (WCInfo info : infos) {
-              if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
-                final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
-                if (file == null) {
-                  LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
-                }
-                else {
-                  roots.add(file);
-                }
+    Runnable callCleanupWorker = () -> {
+      if (myProject.isDisposed()) return;
+      new CleanupWorker(VirtualFile.EMPTY_ARRAY, myProject, "action.Subversion.cleanup.progress.title") {
+        @Override
+        protected void chanceToFillRoots() {
+          final List<WCInfo> infos = getAllWcInfos();
+          final LocalFileSystem lfs = LocalFileSystem.getInstance();
+          final List<VirtualFile> roots = new ArrayList<>(infos.size());
+          for (WCInfo info : infos) {
+            if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
+              final VirtualFile file = lfs.refreshAndFindFileByIoFile(new File(info.getPath()));
+              if (file == null) {
+                LOG.info("Wasn't able to find virtual file for wc root: " + info.getPath());
+              }
+              else {
+                roots.add(file);
               }
             }
-            myRoots = roots.toArray(new VirtualFile[roots.size()]);
           }
-        }.execute();
-      }
+          myRoots = roots.toArray(new VirtualFile[roots.size()]);
+        }
+      }.execute();
     };
 
-    myCopiesRefreshManager.waitRefresh(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(callCleanupWorker, ModalityState.any());
-      }
-    });
+    myCopiesRefreshManager.waitRefresh(() -> ApplicationManager.getApplication().invokeLater(callCleanupWorker));
   }
 
   public boolean checkCommandLineVersion() {

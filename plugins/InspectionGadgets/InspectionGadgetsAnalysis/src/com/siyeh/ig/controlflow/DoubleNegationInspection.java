@@ -58,13 +58,8 @@ public class DoubleNegationInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("double.negation.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("double.negation.quickfix");
     }
 
     @Override

@@ -78,11 +78,13 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/fsnotifier*")
           exclude(name: "bin/*.vmoptions")
           exclude(name: "bin/*.sh")
+          exclude(name: "bin/*.py")
           exclude(name: "bin/idea.properties")
           exclude(name: "help/**")
         }
-        zipfileset(dir: "$linuxDistPath/bin", filemode: "775", prefix: "bin") {
+        zipfileset(dir: "$linuxDistPath/bin", prefix: "bin", filemode: "775") {
           include(name: "*.sh")
+          include(name: "*.py")
         }
         zipfileset(dir: "$linuxDistPath/bin", prefix: "bin/linux", filemode: "775") {
           include(name: "fsnotifier*")
@@ -97,9 +99,8 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/idea.properties")
           exclude(name: "bin/*.vmoptions")
         }
-        zipfileset(dir: "$macDistPath/bin", filemode: "775", prefix: "bin") {
+        zipfileset(dir: "$macDistPath/bin", prefix: "bin", filemode: "775") {
           include(name: "restarter*")
-          include(name: "*.py")
         }
         zipfileset(dir: "$macDistPath/bin", prefix: "bin/mac", filemode: "775") {
           include(name: "fsnotifier*")

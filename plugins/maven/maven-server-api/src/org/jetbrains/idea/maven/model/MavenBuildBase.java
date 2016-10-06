@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -56,7 +57,7 @@ public class MavenBuildBase implements Serializable {
   }
 
   public void setResources(List<MavenResource> resources) {
-    myResources = resources;
+    myResources = new ArrayList<MavenResource>(resources);
   }
 
   public List<MavenResource> getTestResources() {
@@ -64,7 +65,7 @@ public class MavenBuildBase implements Serializable {
   }
 
   public void setTestResources(List<MavenResource> testResources) {
-    myTestResources = testResources;
+    myTestResources = new ArrayList<MavenResource>(testResources);
   }
 
   public List<String> getFilters() {
@@ -72,6 +73,6 @@ public class MavenBuildBase implements Serializable {
   }
 
   public void setFilters(List<String> filters) {
-    myFilters = filters;
+    myFilters = new ArrayList<String>(filters);
   }
 }

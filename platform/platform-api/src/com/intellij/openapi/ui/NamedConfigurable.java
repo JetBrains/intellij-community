@@ -116,4 +116,9 @@ public abstract class NamedConfigurable<T> implements Configurable {
   public Icon getIcon(boolean expanded) {
     return null;
   }
+
+  @Override
+  public String toString() {
+    return getDisplayName();
+  }
 }

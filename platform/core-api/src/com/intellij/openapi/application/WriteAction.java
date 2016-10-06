@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,8 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
   public RunResult<T> execute() {
     final RunResult<T> result = new RunResult<T>(this);
 
-    final Application application = ApplicationManager.getApplication();
-    boolean dispatchThread = application.isDispatchThread();
-    if (dispatchThread) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
       AccessToken token = start(getClass());
       try {
         result.run();
@@ -60,15 +59,17 @@ public abstract class WriteAction<T> extends BaseActionRunnable<T> {
       }
     });
 
-    result.throwException();
+    if (!isSilentExecution()) {
+      result.throwException();
+    }
+
     return result;
   }
 
   @NotNull
   public static AccessToken start() {
     // get useful information about the write action
-    Class aClass = ObjectUtils.notNull(ReflectionUtil.getGrandCallerClass(), WriteAction.class);
-    return start(aClass);
+    return start(ObjectUtils.notNull(ReflectionUtil.getGrandCallerClass(), WriteAction.class));
   }
 
   @NotNull

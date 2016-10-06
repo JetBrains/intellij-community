@@ -104,6 +104,10 @@ public class LaterInvocator {
     }
   }
 
+  public static void removeModalityStateListener(@NotNull ModalityStateListener listener) {
+    ourModalityStateMulticaster.removeListener(listener);
+  }
+
   @NotNull
   static ModalityStateEx modalityStateForWindow(@NotNull Window window) {
     int index = ourModalEntities.indexOf(window);
@@ -221,7 +225,10 @@ public class LaterInvocator {
 
     if (project == null) {
       enterModal(dialog);
+      return;
     }
+
+    ourModalityStateMulticaster.getMulticaster().beforeModalityStateChanged(true);
 
     List<Dialog> modalEntitiesList = projectToModalEntities.getOrDefault(project, ContainerUtil.createLockFreeCopyOnWriteList());
     projectToModalEntities.put(project, modalEntitiesList);
@@ -250,7 +257,7 @@ public class LaterInvocator {
       for (int i = 1; i < ourModalityStack.size(); i++) {
         ((ModalityStateEx)ourModalityStack.get(i)).removeModality(dialog);
       }
-    } else {
+    } else if (project != null) {
       List<Dialog> dialogs = projectToModalEntities.get(project);
       int perProjectIndex = dialogs.indexOf(dialog);
       LOG.assertTrue(perProjectIndex >= 0);
@@ -299,7 +306,7 @@ public class LaterInvocator {
 
   public static Object[] getCurrentModalEntitiesForProject(Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (ourModalEntities.isEmpty()) {
+    if (project == null || !ourModalEntities.isEmpty()) {
       return ArrayUtil.toObjectArray(ourModalEntities);
     }
     return ArrayUtil.toObjectArray(projectToModalEntities.get(project));
@@ -312,6 +319,7 @@ public class LaterInvocator {
 
   @NotNull
   public static ModalityState getCurrentModalityState() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return ourModalityStack.peek();
   }
 

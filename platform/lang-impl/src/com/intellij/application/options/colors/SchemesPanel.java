@@ -21,12 +21,12 @@ import com.intellij.application.options.SaveSchemeDialog;
 import com.intellij.application.options.SkipSelfSearchComponent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.impl.*;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
+import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.SchemeImportException;
-import com.intellij.openapi.options.SchemeImportUtil;
-import com.intellij.openapi.options.SchemeImporter;
-import com.intellij.openapi.options.SchemeImporterEP;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.MessageType;
@@ -83,7 +83,7 @@ public class SchemesPanel extends JPanel implements SkipSelfSearchComponent {
             selected instanceof AbstractColorsScheme ? ((AbstractColorsScheme)selected).getOriginal() : null;
           myResetButton.setEnabled(
             !readOnly &&
-            selectedName.startsWith(DefaultColorsScheme.EDITABLE_COPY_PREFIX) &&
+            selectedName.startsWith(SchemeManager.EDITABLE_COPY_PREFIX) &&
             originalScheme instanceof ReadOnlyColorsScheme);
         }
       }

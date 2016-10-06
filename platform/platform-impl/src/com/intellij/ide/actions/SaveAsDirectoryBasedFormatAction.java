@@ -18,49 +18,44 @@ package com.intellij.ide.actions;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.PathUtilRt;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 
-/**
- * @author spleaner
- */
 public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || ProjectKt.isDirectoryBased(project) || Messages.showOkCancelDialog(project,
-                                                                                              "Project will be saved and reopened in new Directory-Based format.\nAre you sure you want to continue?",
-                                                                                              "Save project to Directory-Based format",
-                                                                                              Messages.getWarningIcon()) != Messages.OK) {
+    if (!isConvertableProject(project) || Messages.showOkCancelDialog(project,
+                                                                   "Project will be saved and reopened in new Directory-Based format.\nAre you sure you want to continue?",
+                                                                   "Save Project to Directory-Based Format",
+                                                                   Messages.getWarningIcon()) != Messages.OK) {
       return;
     }
 
-    VirtualFile baseDir = project.getBaseDir();
-    assert baseDir != null;
-
-    File ideaDir = new File(baseDir.getPath(), Project.DIRECTORY_STORE_FOLDER + File.separatorChar);
+    IProjectStore store = ProjectKt.getStateStore(project);
+    String baseDir = PathUtilRt.getParentPath(store.getProjectFilePath());
+    File ideaDir = new File(baseDir, Project.DIRECTORY_STORE_FOLDER);
     if ((ideaDir.exists() && ideaDir.isDirectory()) || createDir(ideaDir)) {
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ideaDir);
 
-      IProjectStore projectStore = (IProjectStore)ServiceKt.getStateStore(project);
-      projectStore.clearStorages();
-      projectStore.setPath(baseDir.getPath());
+      store.clearStorages();
+      store.setPath(baseDir);
       project.save();
       ProjectUtil.closeAndDispose(project);
-      ProjectUtil.openProject(baseDir.getPath(), null, false);
+      ProjectUtil.openProject(baseDir, null, false);
     }
     else {
-      Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s)", ideaDir), "Error saving project!");
+      Messages.showErrorDialog(project, String.format("Unable to create '.idea' directory (%s)", ideaDir), "Error Saving Project!");
     }
   }
 
@@ -77,6 +72,10 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
   @Override
   public void update(AnActionEvent e) {
     Project project = e.getProject();
-    e.getPresentation().setVisible(project != null && !ProjectKt.isDirectoryBased(project));
+    e.getPresentation().setVisible(isConvertableProject(project));
+  }
+
+  private static boolean isConvertableProject(@Nullable Project project) {
+    return project != null && !project.isDefault() && !ProjectKt.isDirectoryBased(project);
   }
 }

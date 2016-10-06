@@ -54,6 +54,7 @@ import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
@@ -197,6 +198,28 @@ public class UIUtil {
 
   public static boolean isAppleRetina() {
     return isRetina() && SystemInfo.isAppleJvm;
+  }
+
+  public static Couple<Color> getCellColors(JTable table, boolean isSel, int row, int column) {
+    return Couple.of(isSel ? table.getSelectionForeground() : table.getForeground(),
+                                 isSel
+                                 ? table.getSelectionBackground()
+                                 : isUnderNimbusLookAndFeel() && row % 2 == 1 ? TRANSPARENT_COLOR : table.getBackground());
+  }
+
+  public static void fixOSXEditorBackground(@NotNull JTable table) {
+    if (!SystemInfo.isMac) return;
+
+    if (table.isEditing()) {
+      int column = table.getEditingColumn();
+      int row = table.getEditingRow();
+      Component renderer = column>=0 && row >= 0 ? table.getCellRenderer(row, column)
+        .getTableCellRendererComponent(table, table.getValueAt(row, column), true, table.hasFocus(), row, column) : null;
+      Component component = table.getEditorComponent();
+      if (component != null && renderer != null) {
+        changeBackGround(component, renderer.getBackground());
+      }
+    }
   }
 
   public enum FontSize {NORMAL, SMALL, MINI}
@@ -2031,6 +2054,35 @@ public class UIUtil {
     g.drawString(s, x, y);
   }
 
+  /**
+   * Draws a centered string in the passed rectangle.
+   * @param g the {@link Graphics} instance to draw to
+   * @param rect the {@link Rectangle} to use as bounding box
+   * @param str the string to draw
+   * @param horzCentered if true, the string will be centered horizontally
+   * @param vertCentered if true, the string will be centered vertically
+   */
+  public static void drawCenteredString(Graphics2D g, Rectangle rect, String str, boolean horzCentered, boolean vertCentered) {
+    FontMetrics fm = g.getFontMetrics(g.getFont());
+    int textWidth = fm.stringWidth(str);
+    int x = horzCentered ? Math.max(rect.x, rect.x + (rect.width - textWidth) / 2) : rect.x;
+    int y = vertCentered ? Math.max(rect.y, rect.y + rect.height / 2 + fm.getAscent() * 2 / 5) : rect.y;
+    Shape oldClip = g.getClip();
+    g.clip(rect);
+    g.drawString(str, x, y);
+    g.setClip(oldClip);
+  }
+
+  /**
+   * Draws a centered string in the passed rectangle.
+   * @param g the {@link Graphics} instance to draw to
+   * @param rect the {@link Rectangle} to use as bounding box
+   * @param str the string to draw
+   */
+  public static void drawCenteredString(Graphics2D g, Rectangle rect, String str) {
+    drawCenteredString(g, rect, str, true, true);
+  }
+
   public static boolean isFocusAncestor(@NotNull final JComponent component) {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (owner == null) return false;
@@ -2078,7 +2130,7 @@ public class UIUtil {
   }
 
   @Nullable
-  public static Component findParentByCondition(@NotNull Component c, Condition<Component> condition) {
+  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
@@ -2318,13 +2370,38 @@ public class UIUtil {
     final StyleSheet style = new StyleSheet();
     style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
     style.addRule(customCss);
+    scaleStyleSheetFontSize(style);
 
     return new HTMLEditorKit() {
+
+      @Override
+      public Document createDefaultDocument() {
+        Document document = super.createDefaultDocument();
+        if (document instanceof HTMLDocument) {
+          scaleStyleSheetFontSize(((HTMLDocument)document).getStyleSheet());
+        }
+        return document;
+      }
+
       @Override
       public StyleSheet getStyleSheet() {
         return style;
       }
     };
+  }
+
+  private static void scaleStyleSheetFontSize(@Nullable StyleSheet styleSheet) {
+    if (styleSheet == null) {
+      return;
+    }
+    // 'baseFontSize' equals to javax.swing.text.html.StyleSheet.sizeMapDefault[3],
+    // where '3' == javax.swing.text.html.CSS.baseFontSizeIndex
+    // See javax.swing.text.html.StyleSheet.rebaseSizeMap()
+    int baseFontSize = 14;
+    int scaledBaseFontSize = JBUI.scaleFontSize(baseFontSize);
+    if (baseFontSize != scaledBaseFontSize) {
+      styleSheet.addRule("BASE_SIZE " + scaledBaseFontSize);
+    }
   }
 
   public static void removeScrollBorder(final Component c) {

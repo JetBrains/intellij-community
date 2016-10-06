@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class ModulesComboBox extends ComboBox {
+public class ModulesComboBox extends ComboBox<Module> {
   private final SortedComboBoxModel<Module> myModel;
   private boolean myAllowEmptySelection;
 

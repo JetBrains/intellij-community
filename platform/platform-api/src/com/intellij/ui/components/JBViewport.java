@@ -44,7 +44,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
     @Override
     public void layoutContainer(Container parent) {
-      if (parent instanceof JViewport && Registry.is("ide.scroll.new.layout")) {
+      if (parent instanceof JViewport) {
         JViewport viewport = (JViewport)parent;
         Component view = viewport.getView();
         if (view != null) {
@@ -56,38 +56,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
             super.layoutContainer(parent);
           }
         }
-        return;
       }
-      JBViewport viewport = (JBViewport)parent;
-      Component view = viewport.getView();
-      JBScrollPane scrollPane = UIUtil.getParentOfType(JBScrollPane.class, parent);
-      // do not force viewport size on editor component, e.g. EditorTextField and LanguageConsole
-      if (view == null || scrollPane == null || view instanceof TypingTarget) {
-        super.layoutContainer(parent);
-        return;
-      }
-
-      Dimension size = doSuperLayoutContainer(viewport);
-
-      Dimension visible = viewport.getExtentSize();
-      if (scrollPane.getHorizontalScrollBarPolicy() == ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
-        size.width = visible.width;
-      }
-      if (scrollPane.getVerticalScrollBarPolicy() == ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER) {
-        size.height = visible.height;
-      }
-      viewport.setViewSize(size);
-    }
-
-    private Dimension doSuperLayoutContainer(JBViewport viewport) {
-      try {
-        viewport.mySaveTempViewSize = true;
-        super.layoutContainer(viewport);
-      }
-      finally {
-        viewport.mySaveTempViewSize = false;
-      }
-      return viewport.myTempViewSize;
     }
   };
 
@@ -96,8 +65,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private ZoomingDelegate myZoomer;
 
-  private Dimension myTempViewSize;
-  private boolean mySaveTempViewSize;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
 
   public JBViewport() {
@@ -145,18 +112,6 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Override
   protected LayoutManager createLayoutManager() {
     return ourLayoutManager;
-  }
-
-  @Override
-  public void setViewSize(Dimension newSize) {
-    // only store newSize from ViewportLayout.layoutContainer
-    // if we're going to fix it the next moment in our layoutContainer code
-    if (mySaveTempViewSize) {
-      myTempViewSize = newSize;
-    }
-    else {
-      super.setViewSize(newSize);
-    }
   }
 
   @Override
@@ -233,7 +188,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   private static boolean isAlignmentNeeded(JComponent view, boolean horizontal) {
     return (!SystemInfo.isMac || horizontal && Registry.is("mac.scroll.horizontal.gap")) &&
-           (view instanceof JList || view instanceof JTree || Registry.is("ide.scroll.align.component"));
+           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && Registry.is("ide.scroll.align.component")));
   }
 
   static Insets getViewInsets(JComponent view) {

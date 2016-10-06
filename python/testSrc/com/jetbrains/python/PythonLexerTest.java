@@ -388,6 +388,13 @@ public class PythonLexerTest extends PyLexerTestCase {
     doTest("10_000_000J", "Py:IMAGINARY_LITERAL", "Py:STATEMENT_BREAK");
   }
 
+  public void testFStringLiterals() {
+    doTest("s = f'{x}'", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+    doTest("s = rf\"{x}\"", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+    doTest("s = fr'''{x}\n'''", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+    doTest("s = f\"\"\"{x}\n\"\"\"", "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:TRIPLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
+  }
+
   private static void doTest(String text, String... expectedTokens) {
     PyLexerTestCase.doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }

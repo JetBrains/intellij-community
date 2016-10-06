@@ -72,9 +72,9 @@ public class ComplementaryFontsRegistry {
 
     // Reset font info on 'use antialiasing' setting change.
     // Assuming that the listener is notified from the EDT only.
-    settings.addUISettingsListener(new UISettingsListener() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
+      public void uiSettingsChanged(UISettings uiSettings) {
         if (ourOldUseAntialiasing ^ !AntialiasingType.OFF.equals(settings.EDITOR_AA_TYPE)) {
           ourOldUseAntialiasing = !AntialiasingType.OFF.equals(settings.EDITOR_AA_TYPE);
           for (FontInfo fontInfo : ourUsedFonts.values()) {
@@ -83,7 +83,7 @@ public class ComplementaryFontsRegistry {
           ourUsedFonts.clear();
         }
       }
-    }, ApplicationManager.getApplication());
+    });
   }
   
   private ComplementaryFontsRegistry() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -103,6 +104,7 @@ public class StringTokenizerDelimiterInspection extends BaseJavaBatchLocalInspec
       }
       final String newDelimiters = StringUtil.join(uniqueChars, "");
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       delimiterArgument.replace(elementFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(StringUtil.escaper(true, null).fun(
         newDelimiters)), null));
     }

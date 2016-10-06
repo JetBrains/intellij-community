@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.ComponentSerializationUtil;
@@ -29,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -43,6 +45,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
@@ -393,11 +396,19 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
   protected void updateIcon() {
     final Icon icon = calculateSpecialIcon();
-    myIcon = icon != null ? icon : getType().getEnabledIcon();
+    setIcon(icon != null ? icon : getType().getEnabledIcon());
   }
 
   protected void setIcon(Icon icon) {
-    myIcon = icon;
+    if (!XDebuggerUtilImpl.isEmptyExpression(getConditionExpression())) {
+      LayeredIcon newIcon = new LayeredIcon(2);
+      newIcon.setIcon(icon, 0);
+      newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, 10, 6);
+      myIcon = newIcon;
+    }
+    else {
+      myIcon = icon;
+    }
   }
 
   @Nullable

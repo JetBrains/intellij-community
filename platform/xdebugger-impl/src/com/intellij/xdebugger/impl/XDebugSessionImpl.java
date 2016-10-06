@@ -921,7 +921,7 @@ public class XDebugSessionImpl implements XDebugSession {
 
   @Override
   public void reportMessage(@NotNull final String message, @NotNull final MessageType type, @Nullable final HyperlinkListener listener) {
-    NotificationListener notificationListener = listener == null ? null : (NotificationListener)(notification, event) -> listener.hyperlinkUpdate(event);
+    NotificationListener notificationListener = listener == null ? null : (notification, event) -> listener.hyperlinkUpdate(event);
     NOTIFICATION_GROUP.createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
   }
 

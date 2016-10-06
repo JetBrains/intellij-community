@@ -32,4 +32,9 @@ public class VcsLogRootFilterImpl implements VcsLogRootFilter {
   public Collection<VirtualFile> getRoots() {
     return myRoots;
   }
+
+  @Override
+  public String toString() {
+    return "roots:" + myRoots;
+  }
 }

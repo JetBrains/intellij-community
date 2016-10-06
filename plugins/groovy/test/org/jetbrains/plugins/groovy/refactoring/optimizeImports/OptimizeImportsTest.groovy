@@ -99,7 +99,7 @@ class OptimizeImportsTest extends LightGroovyTestCase {
     doTest()
   }
 
-  void testPreserveImportAnnotations() { doTest(); }
+  void testPreserveImportAnnotations() { doTest() }
 
   void testUtilListMasked() {
     myFixture.addClass("package java.awt; public class List {}")
@@ -139,27 +139,27 @@ class OptimizeImportsTest extends LightGroovyTestCase {
     doTest()
   }
 
-  void testRemoveImplicitlyImported() { doTest(); }
+  void testRemoveImplicitlyImported() { doTest() }
 
-  void testRemoveImplicitlyDemandImported() { doTest(); }
+  void testRemoveImplicitlyDemandImported() { doTest() }
 
-  void testDontRemoveRedImports() { doTest(); }
+  void testDontRemoveRedImports() { doTest() }
 
-  void testDontRemoveRedImports2() { doTest(); }
+  void testDontRemoveRedImports2() { doTest() }
 
-  void testDontRemoveRedImports3() { doTest(); }
+  void testDontRemoveRedImports3() { doTest() }
 
-  void testDontRemoveRedImports4() { doTest(); }
+  void testDontRemoveRedImports4() { doTest() }
 
-  void testDontRemoveRedImports5() { doTest(); }
+  void testDontRemoveRedImports5() { doTest() }
 
-  void testDontRemoveRedImports6() { doTest(); }
+  void testDontRemoveRedImports6() { doTest() }
 
-  void testDontRemoveRedImports7() { doTest(); }
+  void testDontRemoveRedImports7() { doTest() }
 
-  void testDontRemoveRedImports8() { doTest(); }
+  void testDontRemoveRedImports8() { doTest() }
 
-  void testDontRemoveRedImports9() { doTest(); }
+  void testDontRemoveRedImports9() { doTest() }
 
   void testRemoveSamePackaged() {
     myFixture.addClass("package foo.bar; public class Aaaa {}")

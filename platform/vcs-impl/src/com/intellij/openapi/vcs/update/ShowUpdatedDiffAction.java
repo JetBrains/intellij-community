@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.diff.*;
+import com.intellij.diff.DiffContentFactoryEx;
+import com.intellij.diff.DiffDialogHints;
+import com.intellij.diff.DiffManager;
+import com.intellij.diff.DiffRequestFactoryImpl;
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -178,20 +181,22 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
           DiffContent content1;
           DiffContent content2;
 
+          DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
+
           if (FileStatus.ADDED.equals(myFileStatus)) {
-            content1 = DiffContentFactory.getInstance().createEmpty();
+            content1 = contentFactory.createEmpty();
           }
           else {
             byte[] bytes1 = loadContent(myFilePointer, myBefore);
-            content1 = DiffContentFactoryImpl.getInstanceImpl().createFromBytes(myProject, myFilePath, bytes1);
+            content1 = contentFactory.createFromBytes(myProject, bytes1, myFilePath);
           }
 
           if (FileStatus.DELETED.equals(myFileStatus)) {
-            content2 = DiffContentFactory.getInstance().createEmpty();
+            content2 = contentFactory.createEmpty();
           }
           else {
             byte[] bytes2 = loadContent(myFilePointer, myAfter);
-            content2 = DiffContentFactoryImpl.getInstanceImpl().createFromBytes(myProject, myFilePath, bytes2);
+            content2 = contentFactory.createFromBytes(myProject, bytes2, myFilePath);
           }
 
           String title = DiffRequestFactoryImpl.getContentTitle(myFilePath);

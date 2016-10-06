@@ -148,10 +148,19 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         messageName = MapSerializerUtil.TEST_IGNORED;
       }
       if (messageName != null && myFinishCount == 0) {
-        for (TestIdentifier childIdentifier : myTestPlan.getDescendants(testIdentifier)) {
-          testStarted(childIdentifier);
-          testFailure(childIdentifier, messageName, throwableOptional, 0, reason, true);
-          testFinished(childIdentifier, 0);
+        final Set<TestIdentifier> descendants = myTestPlan.getDescendants(testIdentifier);
+        if (!descendants.isEmpty()) {
+          for (TestIdentifier childIdentifier : descendants) {
+            testStarted(childIdentifier);
+            testFailure(childIdentifier, messageName, throwableOptional, 0, reason, true);
+            testFinished(childIdentifier, 0);
+          }
+        }
+        else {
+          testStarted(testIdentifier);
+          testFailure(testIdentifier, messageName, throwableOptional, 0, reason, true);
+          testFinished(testIdentifier, 0);
+          myFinishCount++;
         }
       }
       myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "\']");

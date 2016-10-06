@@ -140,13 +140,6 @@ public class SuspiciousLocalesLanguagesInspection extends BaseLocalInspectionToo
       myResourceBundle = bundle;
     }
 
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
     @NotNull
     @Override
     public String getFamilyName() {

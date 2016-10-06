@@ -40,7 +40,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     try {
       Result result;
       if (count == 1) {
-        result = startRunnerWithArgs(args, listeners, name, sendTree);
+        result = startRunnerWithArgs(args, listeners, name, sendTree, count);
         if (result == null) {
           return -1;
         }
@@ -50,19 +50,20 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
           boolean success = true;
           int i = 0;
           while (i++ < count) {
-            result = startRunnerWithArgs(args, listeners, name, sendTree);
+            result = startRunnerWithArgs(args, listeners, name, sendTree, count);
             if (result == null) {
               return -1;
             }
             success &= result.wasSuccessful();
+            sendTree = false;
           }
-          
+
           return success ? 0 : -1;
         }
         else {
           boolean success = true;
           while (true) {
-            result = startRunnerWithArgs(args, listeners, name, sendTree);
+            result = startRunnerWithArgs(args, listeners, name, sendTree, count);
             if (result == null) {
               return -1;
             }
@@ -85,8 +86,8 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
       return -2;
     }
   }
-  
-  private Result startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree) throws
+
+  private Result startRunnerWithArgs(String[] args, ArrayList listeners, String name, boolean sendTree, int count) throws
                                                                                                         InstantiationException,
                                                                                                         IllegalAccessException,
                                                                                                         ClassNotFoundException,
@@ -101,7 +102,10 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
     }
 
     if (sendTree) {
-      ((JUnit4TestListener)myTestsListener).sendTree(description);
+      do {
+        ((JUnit4TestListener)myTestsListener).sendTree(description);
+      }
+      while (--count > 0);
     }
 
     final JUnitCore runner = new JUnitCore();

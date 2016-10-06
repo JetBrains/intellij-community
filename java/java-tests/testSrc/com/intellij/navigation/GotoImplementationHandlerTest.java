@@ -50,6 +50,28 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertEquals(2, impls.length);
   }
 
+  public void testFromIncompleteCode() {
+    PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {\n" +
+                                                          "    abstract void foo();\n" +
+                                                          "\n" +
+                                                          "    class A {\n" +
+                                                          "        {\n" +
+                                                          "            Hello<caret>\n" +
+                                                          "        }\n" +
+                                                          "    }\n" +
+                                                          "    class Hello1 extends Hello {\n" +
+                                                          "        void foo() {}\n" +
+                                                          "    }\n" +
+                                                          "}" +
+                                                          "class Hello2 extends Hello {\n" +
+                                                          "    void foo() {}\n" +
+                                                          "}\n");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    final PsiElement[] impls = getTargets(file);
+    assertEquals(2, impls.length);
+  }
+
   public void testToStringOnUnqualified() {
     final PsiFile file = myFixture.addFileToProject("Foo.java", "public class Fix {\n" +
                                                                 "    {\n" +

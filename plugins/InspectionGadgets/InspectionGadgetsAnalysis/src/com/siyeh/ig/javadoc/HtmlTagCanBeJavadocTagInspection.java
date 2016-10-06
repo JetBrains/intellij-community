@@ -65,13 +65,8 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.quickfix");
-    }
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.quickfix");
     }
 
     @Override

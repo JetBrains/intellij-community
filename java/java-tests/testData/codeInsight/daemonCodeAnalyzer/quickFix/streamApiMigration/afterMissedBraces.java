@@ -6,9 +6,9 @@ import java.util.Objects;
 class Sample {
   List<String> foo = new ArrayList<>();
   String foo(){
-      foo.stream().filter(Objects::isNull).forEach(s -> {
-          int i = 0;
-      });
+      foo.stream().filter(Objects::isNull).forEach(s -> bar());
     return null;
   }
+
+  bar() {}
 }

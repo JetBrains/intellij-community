@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
+import static com.intellij.testFramework.Assertions.assertThat;
 import static java.util.Collections.singletonList;
 
 @SuppressWarnings("Duplicates")
@@ -198,17 +199,12 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertSame(result.second, fallbackAttrs);
   }
 
-  public void testSaveNoInheritanceAndDefaults() throws Exception {
-    TextAttributes identifierAttrs = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME)
-      .getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER);
-    TextAttributes declarationAttrs = identifierAttrs.clone();
-    Pair<EditorColorsScheme, TextAttributes> result =
-      doTestWriteRead(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, declarationAttrs);
-    TextAttributes fallbackAttrs = result.first.getAttributes(
-      DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey()
-    );
-    assertEquals(result.second, fallbackAttrs);
-    assertNotSame(result.second, fallbackAttrs);
+  public void testSaveNoInheritanceAndDefaults() {
+    TextAttributes declarationAttrs = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME)
+      .getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER).clone();
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, declarationAttrs);
+    TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
+    assertThat(result.second).isEqualTo(fallbackAttrs);
   }
 
   public void testSaveInheritanceForEmptyAttrs() throws Exception {
@@ -224,7 +220,6 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertTrue(directlyDefined != null && directlyDefined.isFallbackEnabled());
     assertSame(fallbackAttrs, result.second);
   }
-
 
   public void testUpgradeFromVer141() throws Exception {
     TextAttributesKey constKey = DefaultLanguageHighlighterColors.CONSTANT;
@@ -279,7 +274,6 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       TextAttributesKey.removeTextAttributesKey("C");
       TextAttributesKey.removeTextAttributesKey("D");
     }
-    
   }
   
   public void testIdea152156() throws Exception {
@@ -311,6 +305,4 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());
     }
   }
-
-  
 }

@@ -89,7 +89,7 @@ public class AnnotationsPreloader {
           }
         }
         catch (VcsException e) {
-          LOG.warn(e);
+          LOG.info(e);
         }
       }
     });

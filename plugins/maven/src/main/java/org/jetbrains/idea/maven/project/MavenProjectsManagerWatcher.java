@@ -42,6 +42,9 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -64,7 +67,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class MavenProjectsManagerWatcher {
 
-  private static final Key<ConcurrentMap<Project, Integer>> CRC_WITHOUT_SPACES = Key.create("MavenProjectsManagerWatcher.CRC_WITHOUT_SPACES");
+  private static final Key<ConcurrentMap<Project, Long>> CRC_WITHOUT_SPACES = Key.create("MavenProjectsManagerWatcher.CRC_WITHOUT_SPACES");
 
   public static final Key<Boolean> FORCE_IMPORT_AND_RESOLVE_ON_REFRESH =
     Key.create(MavenProjectsManagerWatcher.class + "FORCE_IMPORT_AND_RESOLVE_ON_REFRESH");
@@ -146,8 +149,9 @@ public class MavenProjectsManagerWatcher {
         VirtualFile file = FileDocumentManager.getInstance().getFile(doc);
 
         if (file == null) return;
-        boolean isMavenFile =
-          file.getName().equals(MavenConstants.POM_XML) || file.getName().equals(MavenConstants.PROFILES_XML) || isSettingsFile(file);
+        String fileName = file.getName();
+        boolean isMavenFile = fileName.equals(MavenConstants.POM_XML) || fileName.equals(MavenConstants.PROFILES_XML) ||
+                              isSettingsFile(file) || fileName.startsWith("pom.");
         if (!isMavenFile) return;
 
         synchronized (myChangedDocuments) {
@@ -343,7 +347,8 @@ public class MavenProjectsManagerWatcher {
   }
 
   private boolean isPomFile(String path) {
-    if (!path.endsWith("/" + MavenConstants.POM_XML)) return false;
+    String nameWithoutExtension = FileUtil.getNameWithoutExtension(new File(path));
+    if (!MavenConstants.POM_EXTENSION.equals(nameWithoutExtension)) return false;
     return myProjectsTree.isPotentialProject(path);
   }
 
@@ -402,7 +407,7 @@ public class MavenProjectsManagerWatcher {
 
       VirtualFile pom = getPomFileProfilesFile(file);
       if (pom != null) {
-        if (remove || xmlFileWasChanged(pom, event)) {
+        if (remove || fileWasChanged(pom, event)) {
           filesToUpdate.add(pom);
         }
         return;
@@ -412,32 +417,37 @@ public class MavenProjectsManagerWatcher {
         filesToRemove.add(file);
       }
       else {
-        if (xmlFileWasChanged(file, event)) {
+        if (fileWasChanged(file, event)) {
           filesToUpdate.add(file);
         }
       }
     }
 
-    private boolean xmlFileWasChanged(VirtualFile xmlFile, VFileEvent event) {
-      if (!xmlFile.isValid() || !(event instanceof VFileContentChangeEvent)) return true;
+    private boolean fileWasChanged(VirtualFile file, VFileEvent event) {
+      if (!file.isValid() || !(event instanceof VFileContentChangeEvent)) return true;
 
-      ConcurrentMap<Project, Integer> map = xmlFile.getUserData(CRC_WITHOUT_SPACES);
+      ConcurrentMap<Project, Long> map = file.getUserData(CRC_WITHOUT_SPACES);
       if (map == null) {
-        ConcurrentMap<Project, Integer> value = ContainerUtil.createConcurrentWeakMap();
-        map = xmlFile.putUserDataIfAbsent(CRC_WITHOUT_SPACES, value);
+        ConcurrentMap<Project, Long> value = ContainerUtil.createConcurrentWeakMap();
+        map = file.putUserDataIfAbsent(CRC_WITHOUT_SPACES, value);
       }
 
-      Integer crc = map.get(myProject);
-      Integer newCrc;
+      Long crc = map.get(myProject);
+      Long newCrc;
 
-      try {
-        newCrc = MavenUtil.crcWithoutSpaces(xmlFile);
-      }
-      catch (IOException ignored) {
-        return true;
+      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
+      if(psiFile instanceof XmlFile) {
+        try {
+          newCrc = Long.valueOf(MavenUtil.crcWithoutSpaces(file));
+        }
+        catch (IOException ignored) {
+          return true;
+        }
+      } else {
+        newCrc = file.getModificationStamp();
       }
 
-      if (newCrc == -1 // XML is invalid
+      if (newCrc == -1 // file is invalid
           || newCrc.equals(crc)) {
         return false;
       }

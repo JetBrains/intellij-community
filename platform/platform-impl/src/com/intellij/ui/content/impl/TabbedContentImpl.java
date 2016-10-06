@@ -17,10 +17,12 @@ package com.intellij.ui.content.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.ui.WatermarkIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -156,6 +158,20 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
   @Override
   public void setTitlePrefix(String titlePrefix) {
     myPrefix = titlePrefix;
+  }
+
+  @Override
+  public void setIcon(Icon icon) {
+    for (Pair<String, JComponent> nextTabWithName : getTabs()) {
+      if (nextTabWithName.getFirst().equals(ContentUtilEx.getTabNameWithoutPrefix(this, getTabName()))) {
+        JComponent tab = nextTabWithName.getSecond();
+        if (tab instanceof Iconable) {
+          Icon baseIcon = ((Iconable)tab).getIcon(Iconable.ICON_FLAG_VISIBILITY);
+          super.setIcon(isSelected() || baseIcon == null ? baseIcon : new WatermarkIcon(baseIcon, .5f));
+          break;
+        }
+      }
+    }
   }
 
   @Override

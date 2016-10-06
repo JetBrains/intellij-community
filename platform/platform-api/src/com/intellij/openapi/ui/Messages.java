@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -1568,11 +1567,10 @@ public class Messages {
     UIUtil.FontSize fixedFontSize = fontSize == null ? UIUtil.FontSize.NORMAL : fontSize;
     messageComponent.setFont(UIUtil.getLabelFont(fixedFontSize));
     if (BasicHTML.isHTMLString(message)) {
-      HTMLEditorKit editorKit = new HTMLEditorKit();
+      HTMLEditorKit editorKit = UIUtil.getHTMLEditorKit();
       Font font = UIUtil.getLabelFont(fixedFontSize);
       editorKit.getStyleSheet().addRule(UIUtil.displayPropertiesToCSS(font, UIUtil.getLabelForeground()));
       messageComponent.setEditorKit(editorKit);
-      messageComponent.setContentType(UIUtil.HTML_MIME);
     }
     messageComponent.setText(message);
     messageComponent.setEditable(false);

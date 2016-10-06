@@ -253,6 +253,14 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     assertContainsElements(MethodReferencesSearch.search(method).findAll(), ref);
   }
 
+  public void testConditionalAssignedToJava3Object() throws Exception {
+    ModuleRootModificationUtil.addDependency(myJava8Module, myJava3Module);
+    final String name = getTestName(false);
+    myFixture.copyFileToProject("java3/p/" + name + ".java");
+    myFixture.configureByFiles("java8/p/" + name + ".java");
+    myFixture.checkHighlighting();
+  }
+
   private void doTestWithoutLibrary() {
     final String name = getTestName(false);
     myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");

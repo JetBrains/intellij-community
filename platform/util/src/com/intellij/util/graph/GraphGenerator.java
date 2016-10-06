@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@ package com.intellij.util.graph;
 import java.util.*;
 
 /**
- *  @author dsl
+ * @author dsl
  */
-public class GraphGenerator<Node> implements Graph <Node>{
-  private final SemiGraph<Node> myGraph;
-
+public class GraphGenerator<Node> implements Graph<Node> {
   public interface SemiGraph<Node> {
     Collection<Node> getNodes();
+
     Iterator<Node> getIn(Node n);
   }
 
+  private final SemiGraph<Node> myGraph;
   private final Map<Node, Set<Node>> myOuts;
 
   public GraphGenerator(SemiGraph<Node> graph) {
@@ -73,5 +73,4 @@ public class GraphGenerator<Node> implements Graph <Node>{
   public Iterator<Node> getOut(Node n) {
     return myOuts.get(n).iterator();
   }
-
 }

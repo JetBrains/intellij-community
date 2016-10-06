@@ -16,11 +16,9 @@
 package com.intellij.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
-import com.intellij.codeInsight.folding.JavaCodeFoldingSettings
-import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.DocumentUtil
@@ -29,24 +27,27 @@ import org.assertj.core.api.Assertions.assertThat
 
 class InlayParameterHintsTest: LightCodeInsightFixtureTestCase() {
 
-  lateinit var registryStateBefore: String
-  lateinit var myFoldingSettings: JavaCodeFoldingSettingsImpl
-  lateinit var myFoldingStateToRestore: JavaCodeFoldingSettingsImpl
-  
+  private var isParamHintsEnabledBefore = false
+  private var minParamLength = 3
+  private var minArgsToShow = 2
+
   override fun setUp() {
     super.setUp()
-    val registry = Registry.get("editor.inline.parameter.hints")
-    registryStateBefore = registry.asString()
-    registry.setValue(true)
     
-    myFoldingSettings = JavaCodeFoldingSettings.getInstance() as JavaCodeFoldingSettingsImpl
-    myFoldingStateToRestore = JavaCodeFoldingSettingsImpl()
-    myFoldingStateToRestore.loadState(myFoldingSettings)
+    val settings = EditorSettingsExternalizable.getInstance()
+    isParamHintsEnabledBefore = settings.isShowParameterNameHints
+    minParamLength = settings.minParamNameLengthToShow
+    minArgsToShow = settings.minArgsToShow
+    
+    settings.isShowParameterNameHints = true
   }
 
   override fun tearDown() {
-    Registry.get("editor.inline.parameter.hints").setValue(registryStateBefore)
-    myFoldingSettings.loadState(myFoldingStateToRestore)
+    val settings = EditorSettingsExternalizable.getInstance()
+    settings.isShowParameterNameHints = isParamHintsEnabledBefore
+    settings.minParamNameLengthToShow = minParamLength
+    settings.minArgsToShow = minArgsToShow
+    
     super.tearDown()
   }
 
@@ -85,6 +86,26 @@ class Groo {
     onLineStartingWith("configure(testNow").assertNoInlays()
   }
 
+  fun `test show hint for single string literal if there is multiple string params`() {
+    setup("""class Groo {
+
+ public void test() {
+   String message = "sdfsdfdsf";
+   assertEquals("fooo", message);
+
+   String title = "TT";
+   show(title, "Hi");
+ }
+
+ public void assertEquals(String expected, String actual) {}
+ public void show(String title, String message) {}
+
+}""")
+
+    onLineStartingWith("assertEquals").assertInlays("expected->\"fooo\"")
+    onLineStartingWith("show").assertInlays("message->\"Hi\"")
+  }
+
   fun `test do not show hints on setters`() {
     setup("""class Groo {
 
@@ -120,7 +141,7 @@ public class VarArgTest {
 """)
     
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("test->13", "booleans...->false")
+        .assertInlays("test->13", "...booleans->false")
   }
   
   fun `test no hint if varargs null`() {
@@ -139,7 +160,7 @@ public class VarArgTest {
 }
 """)
     
-    onLineStartingWith("testBooleanVarargs").assertNoInlays()
+    onLineStartingWith("testBooleanVarargs").assertInlays("test->13")
   }
   
   fun `test multiple vararg hint`() {
@@ -159,7 +180,7 @@ public class VarArgTest {
 """)
     
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("test->13", "booleans...->false")
+        .assertInlays("test->13", "...booleans->false")
   }
   
   fun `test do not inline if parameter length is one or two`() {
@@ -178,7 +199,7 @@ public class CharSymbol {
 }
 """)
     
-    onLineStartingWith("count").assertNoInlays()
+    onLineStartingWith("count").assertInlays("t->1", "fa->false")
   }
   
   fun `test do not inline known subsequent parameter names`() {
@@ -259,11 +280,10 @@ public class CharSymbol {
   }
   
   fun `test inline literal arguments with crazy settings`() {
-    val foldingSettings = JavaCodeFoldingSettings.getInstance()
-    foldingSettings.isInlineParameterNamesForLiteralCallArguments = true;
-    foldingSettings.inlineLiteralParameterMinArgumentsToFold = 1;
-    foldingSettings.inlineLiteralParameterMinNameLength = 1;
-    
+    val settings = EditorSettingsExternalizable.getInstance()
+    settings.minArgsToShow = 1
+    settings.minParamNameLengthToShow = 1
+
     setup("""
 public class Test {
   public void main(boolean isActive, boolean requestFocus, int xoo) {
@@ -274,22 +294,70 @@ public class Test {
 """)
     
     onLineStartingWith("System")
-        .assertInlays("""x->"AAA"""")
+        .assertNoInlays()
     
     onLineStartingWith("main(t")
         .assertInlays("isActive->true", "requestFocus->false", "xoo->2")
   }
   
+  
+  fun `test ignored methods`() {
+    setup("""
+public class Test {
+  
+  List<String> list = new ArrayList<>();
+  StringBuilder builder = new StringBuilder();
+
+  public void main() {
+    System.out.println("A");
+    System.out.print("A");
+    
+    list.get(1);
+    list.set(1, "sss");
+    
+    setNewIndex(10);
+    "sss".contains("s");
+    builder.append("sdfsdf");
+    "sfsdf".startWith("s");
+    "sss".charAt(3);
+    
+    clearStatus(false);
+  }
+  
+  void print(String s) {}
+  void println(String s) {}
+  void get(int index) {}
+  void set(int index, Object object) {}
+  void append(String s) {}
+  void clearStatus(boolean updatedRecently) {}
+
+}
+""")
+
+    val inlays = getInlays()
+    assertThat(inlays).hasSize(1)
+    
+    assertThat(inlays[0].offset).isEqualTo(myFixture.editor.document.text.indexOf("false"))
+  }
+  
   fun `test hints for generic arguments`() {
-    val foldingSettings = JavaCodeFoldingSettings.getInstance()
-    foldingSettings.isInlineParameterNamesForLiteralCallArguments = true
-    foldingSettings.inlineLiteralParameterMinArgumentsToFold = 1
-    foldingSettings.inlineLiteralParameterMinNameLength = 1
+    val settings = EditorSettingsExternalizable.getInstance()
+    settings.minArgsToShow = 1
+    settings.minParamNameLengthToShow = 1
     
     setup("""
-import java.util.*;
+
+class QList<E> {
+  void add(int query, E obj) {}
+}
+
+class QCmp<E> {
+  void compare(E o1, E o2) {}
+}
+
+
 public class Test {
-  public void main(Comparator<Integer> c, List<String> l) {
+  public void main(QCmp<Integer> c, QList<String> l) {
     c.compare(0, /** ddd */3);
     l.add(1, "uuu");
   }
@@ -300,7 +368,7 @@ public class Test {
         .assertInlays("o1->0", "o2->3")
     
     onLineStartingWith("l.add")
-        .assertInlays("index->1", """element->"uuu"""")
+        .assertInlays("query->1", """obj->"uuu"""")
   }
   
   fun `test inline constructor literal arguments names`() {
@@ -368,18 +436,229 @@ public class VarArgTest {
 """)
     
     onLineStartingWith("testBooleanVarargs")
-        .assertInlays("booleans...->isCheck")
+        .assertInlays("...booleans->isCheck")
+  }
+
+  fun `test if any param matches inline all`() {
+    setup("""
+public class VarArgTest {
+  
+  public void main() {
+    check(10, 1000);
+  }
+
+  public void check(int x, int paramNameLength) {
+  }
+
+}
+""")
+
+    onLineStartingWith("check(")
+        .assertInlays("x->10", "paramNameLength->1000")
+  }
+
+  fun `test inline common name pair if more that 2 args`() {
+    setup("""
+public class VarArgTest {
+  
+  public void main() {
+    String s = "su";
+    check(10, 1000, s);
+  }
+
+  public void check(int beginIndex, int endIndex, String params) {
+  }
+
+}
+""")
+
+    onLineStartingWith("check(")
+        .assertInlays("beginIndex->10", "endIndex->1000")
+  }
+  
+  fun `test ignore String methods`() {
+    setup("""
+class Test {
+  
+  public void main() {
+    String.format("line", "eee", "www");
+  }
+  
+}
+""")
+    
+    onLineStartingWith("String").assertNoInlays()
+  }
+
+  fun `test inline common name pair if more that 2 args xxx`() {
+    setup("""
+public class VarArgTest {
+  
+  public void main() {
+    check(10, 1000, "su");
+  }
+
+  public void check(int beginIndex, int endIndex, String x) {
+  }
+
+}
+""")
+
+    onLineStartingWith("check(")
+        .assertInlays("beginIndex->10", "endIndex->1000", """x->"su"""" )
+  }
+  
+  fun `test inline this`() {
+    setup("""
+public class VarArgTest {
+  
+  public void main() {
+    check(this, 1000);
+  }
+
+  public void check(VarArgTest test, int endIndex) {
+  }
+
+}
+""")
+    
+    onLineStartingWith("check(t")
+        .assertInlays("test->this", "endIndex->1000")
+  }
+  
+  fun `test inline strange methods`() {
+    setup("""
+public class Test {
+  
+  void main() {
+    createContent(null);
+    createNewContent(this);
+  }
+
+  Content createContent(DockManager manager) {}
+  Content createNewContent(Test test) {}
+
+}
+interface DockManager {}
+interface Content {}
+""")
+
+    onLineStartingWith("createContent").assertInlays("manager->null")
+    onLineStartingWith("createNewContent").assertInlays("test->this")
+  }
+  
+  fun `test do not inline builder pattern`() {
+    setup("""
+class Builder {
+  void await(boolean value) {}
+  Builder bwait(boolean xvalue) {}
+  Builder timeWait(int time) {}
+}
+
+class Test {
+  
+  public void test() {
+    Builder builder = new Builder();
+    builder.await(true);
+    builder.bwait(false).timeWait(100);
+  }
+  
+}
+""")
+
+    onLineStartingWith("builder.await").assertInlays("value->true")
+    onLineStartingWith("builder.bwait").assertNoInlays()
+  }
+
+  fun `test do not show single parameter hint if it is string literal`() {
+    setup("""
+public class Test {
+  
+  public void test() {
+    debug("Error message");
+    info("Error message", new Object());
+  }
+
+  void debug(String message) {}
+  void info(String message, Object error) {}
+  
+}
+""")
+
+    onLineStartingWith("debug(").assertNoInlays()
+    onLineStartingWith("info(").assertNoInlays()
+  }
+
+  fun `test show hints for literals if there are many of them`() {
+    setup("""
+public class Test {
+  
+  public void test() {
+    int a = 2;
+    debug("Debug", "DTitle", a);
+    info("Error message", "Title");
+  }
+
+  void debug(String message, String title, int value) {}
+  void info(String message, String title) {}
+  
+}
+""")
+
+    onLineStartingWith("debug(").assertInlays("message->\"Debug\"", "title->\"DTitle\"")
+    onLineStartingWith("info(").assertInlays("message->\"Error message\"", "title->\"Title\"")
+  }
+  
+  fun `test show single`() {
+    setup("""
+class Test {
+
+  void main() {
+    blah(1, 2);
+    int z = 2;
+    draw(10, 20, z);
+    int x = 10;
+    int y = 12;
+    drawRect(x, y, 10, 12);
+  }
+
+  void blah(int a, int b) {}
+  void draw(int x, int y, int z) {}
+  void drawRect(int x, int y, int w, int h) {}
+
+}
+""")
+    
+    onLineStartingWith("blah").assertInlays("a->1", "b->2")
+    onLineStartingWith("draw").assertInlays("x->10", "y->20")
+    onLineStartingWith("drawRect").assertInlays("w->10", "h->12")
+  }
+  
+  fun `test show for method with boolean param and return value`() {
+    setup("""
+class Test {
+  
+  void test() {
+    String name = getTestName(true);
+    System.out.println("");
+  }
+  
+  String getTestName(boolean lowerCase) {}
+}
+""")
+    
+    onLineStartingWith("String name").assertInlays("lowerCase->true")
+  }
+  
+  private fun getInlays(): List<Inlay> {
+    val editor = myFixture.editor
+    return editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)
   }
 
   private fun onLineStartingWith(text: String): InlayAssert {
     val range = getLineRangeStartingWith(text)
     val inlays = myFixture.editor.inlayModel.getInlineElementsInRange(range.startOffset, range.endOffset)
     return InlayAssert(myFixture.file, inlays)
-  }
-  
-  private fun getInlays(range: TextRange): List<Inlay> {
-    val inlays = myFixture.editor.inlayModel
-    return inlays.getInlineElementsInRange(range.startOffset, range.endOffset)
   }
   
   private fun getLineRangeStartingWith(text: String): TextRange {

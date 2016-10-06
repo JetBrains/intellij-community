@@ -624,6 +624,12 @@ public class CharsetToolkit {
     return CHARSET_TO_MANDATORY_BOM.get(charset);
   }
 
+  @Nullable
+  public static byte[] getBom(@NotNull Charset charset) {
+    if (charset.equals(UTF8_CHARSET)) return UTF8_BOM;
+    return CHARSET_TO_MANDATORY_BOM.get(charset);
+  }
+
   // byte sequence for this encoding is allowed to be prepended with this BOM
   public static boolean canHaveBom(@NotNull Charset charset, @NotNull byte[] bom) {
     return charset.equals(UTF8_CHARSET) && Arrays.equals(bom, UTF8_BOM)

@@ -297,19 +297,19 @@ class GrIntroduceParameterTest extends LightGroovyTestCase {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false)
   }
 
-  void testDelegate1() { doDelegateTest(); }
+  void testDelegate1() { doDelegateTest() }
 
-  void testDelegate2() { doDelegateTest(); }
+  void testDelegate2() { doDelegateTest() }
 
-  void testDelegaterInSuper() { doDelegateTest(); }
+  void testDelegaterInSuper() { doDelegateTest() }
 
-  void testClosureArg() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false); }
+  void testClosureArg() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false) }
 
-  void testClosureArgWithEmptyArgList() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false); }
+  void testClosureArgWithEmptyArgList() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false) }
 
-  void testScriptMethod() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false); }
+  void testScriptMethod() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, true, false) }
 
-  void testAppStatement() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false); }
+  void testAppStatement() { doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false) }
 
   void testStringPart0() {
     doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_NONE, false, false, null, false, '''\

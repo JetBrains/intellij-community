@@ -23,7 +23,7 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil;
  * User: anna
  * Date: 30-Jan-2006
  */
-public class ClassNode extends BasePsiNode<PsiClass> implements Comparable<ClassNode>{
+public class ClassNode extends MemberNode<PsiClass> implements Comparable<ClassNode>{
   public ClassNode(final PsiClass aClass) {
     super(aClass);
   }
@@ -31,12 +31,6 @@ public class ClassNode extends BasePsiNode<PsiClass> implements Comparable<Class
   public String toString() {
     final PsiClass aClass = (PsiClass)getPsiElement();
     return aClass != null && aClass.isValid() ? ClassPresentationUtil.getNameForClass(aClass, false) : "";
-  }
-
-  @Override
-  public boolean isDeprecated() {
-    final PsiClass psiClass = (PsiClass)getPsiElement();
-    return psiClass != null && psiClass.isDeprecated();
   }
 
   public int compareTo(final ClassNode o) {

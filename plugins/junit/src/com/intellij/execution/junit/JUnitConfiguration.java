@@ -16,6 +16,7 @@
 
 package com.intellij.execution.junit;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -42,6 +43,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.RepeatCount;
 import org.jdom.Element;
@@ -452,7 +455,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     final LinkedHashSet<String> patterns = new LinkedHashSet<>();
     final String methodSufiix;
     if (method != null) {
-      myData.METHOD_NAME = method.getName();
+      myData.METHOD_NAME = Data.getMethodPresentation(method);
       methodSufiix = "," + myData.METHOD_NAME;
     } else {
       methodSufiix = "";
@@ -602,13 +605,24 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
     public Module setTestMethod(final Location<PsiMethod> methodLocation) {
       final PsiMethod method = methodLocation.getPsiElement();
-      METHOD_NAME = method.getName();
+      METHOD_NAME = getMethodPresentation(method);
       TEST_OBJECT = TEST_METHOD;
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
+    public static String getMethodPresentation(PsiMethod method) {
+      return method.getParameterList().getParametersCount() > 0 && AnnotationUtil.isAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)
+             ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
+                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                          PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES)
+             : method.getName();
+    }
+
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
       if (TEST_PACKAGE.equals(TEST_OBJECT) || TEST_DIRECTORY.equals(TEST_OBJECT)) {
+        if (TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT) {
+          return ExecutionBundle.message("default.junit.config.name.whole.project");
+        }
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
         final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(getDirName(), '/');
         if (packageName.length() == 0) {
@@ -625,8 +639,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       if (TEST_PATTERN.equals(TEST_OBJECT)) {
         final int size = myPattern.size();
         if (size == 0) return "Temp suite";
-        final String fqName = myPattern.iterator().next();
-        return (fqName.contains("*") ? fqName : StringUtil.getShortName(fqName)) + (size > 1 ? " and " + (size - 1) + " more" : "");
+        String fqName = myPattern.iterator().next();
+        String firstName =
+          fqName.contains("*") ? fqName
+                               : StringUtil.getShortName(fqName.contains(",") ? StringUtil.getPackageName(fqName, ',') : fqName);
+        return firstName + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
       if (TEST_CATEGORY.equals(TEST_OBJECT)) {
         return "@Category(" + (StringUtil.isEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";

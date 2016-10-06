@@ -17,23 +17,20 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,8 +75,18 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
            && !(candidates == null ? candidates = getMembersToImport(false) : candidates).isEmpty()
       ;
   }
-  
+
+  public final List<T> getMembersToImport() {
+    return getMembersToImport(false);
+  }
+
   @NotNull protected abstract List<T> getMembersToImport(boolean applicableOnly);
+
+  public static boolean isExcluded(PsiMember method) {
+    String name = PsiUtil.getMemberQualifiedName(method);
+    return name != null && JavaProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
+  }
+
   @NotNull protected abstract QuestionAction createQuestionAction(List<T> methodsToImport, @NotNull Project project, Editor editor);
 
   @Nullable protected abstract PsiElement getElement();

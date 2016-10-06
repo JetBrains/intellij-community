@@ -52,14 +52,8 @@ public class MissingPackageInfoInspection extends MissingPackageInfoInspectionBa
       return new InspectionGadgetsFix() {
         @NotNull
         @Override
-        public String getName() {
-          return "Create 'package-info.java'";
-        }
-
-        @NotNull
-        @Override
         public String getFamilyName() {
-          return getName();
+          return "Create 'package-info.java'";
         }
 
         @Override

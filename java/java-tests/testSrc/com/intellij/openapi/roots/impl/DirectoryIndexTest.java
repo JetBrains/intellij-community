@@ -856,6 +856,12 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertTrue(myFileIndex.isInSource(fileSourceRoot));
   }
 
+  public void testContentRootUnderExcludedRoot() {
+    VirtualFile dirUnderExcluded = createChildDirectory(myExcludeDir, "generated");
+    PsiTestUtil.addSourceContentToRoots(myModule2, dirUnderExcluded);
+    checkInfo(dirUnderExcluded, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
+  }
+
   private void checkInfo(VirtualFile file,
                          @Nullable Module module,
                          boolean isInLibraryClasses,

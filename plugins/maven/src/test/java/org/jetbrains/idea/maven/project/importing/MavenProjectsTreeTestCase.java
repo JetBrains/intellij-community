@@ -31,7 +31,7 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
-  protected MavenProjectsTree myTree = new MavenProjectsTree();
+  protected MavenProjectsTree myTree = new MavenProjectsTree(myProject);
 
   protected void updateAll(VirtualFile... files) throws MavenProcessCanceledException {
     updateAll(Collections.<String>emptyList(), files);

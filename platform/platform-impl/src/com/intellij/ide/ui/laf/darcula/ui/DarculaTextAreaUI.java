@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfo;
 
 import javax.swing.*;
@@ -25,8 +26,6 @@ import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.event.KeyEvent;
-
-import static javax.swing.SwingConstants.WEST;
 
 public class DarculaTextAreaUI extends BasicTextAreaUI{
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -49,9 +48,7 @@ public class DarculaTextAreaUI extends BasicTextAreaUI{
   @Override
   public int getNextVisualPositionFrom(JTextComponent t, int pos, Position.Bias b, int direction, Position.Bias[] biasRet)
     throws BadLocationException {
-    if (direction == WEST && t.getSelectionStart() < t.getSelectionEnd() && t.getSelectionEnd() == pos) {
-      return t.getSelectionStart();
-    }
-    return super.getNextVisualPositionFrom(t, pos, b, direction, biasRet);
+    int position = DarculaUIUtil.getPatchedNextVisualPositionFrom(t, pos, direction);
+    return position != -1 ? position : super.getNextVisualPositionFrom(t, pos, b, direction, biasRet);
   }
 }

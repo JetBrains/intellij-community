@@ -20,7 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -178,7 +178,9 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     final VirtualFile virtualFile = psiRoot.getContainingFile().getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return false;
 
-    if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return false;
+    if (ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) {
+      return false;
+    }
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     if (ProjectScope.getLibrariesScope(project).contains(virtualFile) && !fileIndex.isInContent(virtualFile)) return false;

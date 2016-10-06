@@ -80,15 +80,8 @@ public class DiamondCanBeReplacedWithExplicitTypeArgumentsInspection extends Bas
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("diamond.can.be.replaced.with.explicit.type.arguments.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("diamond.can.be.replaced.with.explicit.type.arguments.quickfix");
     }
 
     @Override

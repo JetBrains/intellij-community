@@ -624,7 +624,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     // initializing will be "launchedAndFinished"
     final boolean launchedAndFinished = myTestsRootNode.wasLaunched() && !myTestsRootNode.isInProgress();
     if (!TestsPresentationUtil.hasNonDefaultCategories(myMentionedCategories)) {
-      myStatusLine.formatTestMessage(myTotalTestCount, myFinishedTestCount, myFailedTestCount, myIgnoredTestCount, myTestsRootNode.getDuration(), myEndTime);
+      myStatusLine.formatTestMessage(isUndefined() ? -1 : myTotalTestCount, myFinishedTestCount, myFailedTestCount, myIgnoredTestCount, myTestsRootNode.getDuration(), myEndTime);
     }
     else {
       myStatusLine.setText(TestsPresentationUtil.getProgressStatus_Text(myStartTime, myEndTime,
@@ -632,6 +632,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                                                         myFailedTestCount, myMentionedCategories,
                                                                         launchedAndFinished));
     }
+  }
+
+  private boolean isUndefined() {
+    return myProperties instanceof SMTRunnerConsoleProperties && ((SMTRunnerConsoleProperties)myProperties).isUndefined();
   }
 
   /**
@@ -708,7 +712,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private void updateProgressOnTestDone() {
     int doneTestCount = myFinishedTestCount;
     // update progress
-    if (myTotalTestCount != 0) {
+    if (isUndefined()) {
+      myStatusLine.setFraction(1.0);
+    }
+    else if (myTotalTestCount != 0) {
       // if total is set
       myStatusLine.setFraction((double) doneTestCount / myTotalTestCount);
     }

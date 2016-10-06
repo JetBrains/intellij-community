@@ -108,6 +108,8 @@ class EarModelBuilderImpl implements ModelBuilderService {
           earModel.deploymentDescriptor = writer.toString()
         }
 
+        earModel.archivePath = earTask.archivePath
+
         Manifest manifest = earTask.manifest
         if (manifest != null) {
           def writer = new StringWriter()

@@ -38,7 +38,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -51,10 +54,8 @@ import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Alarm;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +70,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static com.intellij.openapi.util.io.FileUtil.sanitizeFileName;
 
 public abstract class InspectionToolsConfigurable extends BaseConfigurable
   implements ErrorsConfigurable, SearchableConfigurable, Configurable.NoScroll {
@@ -242,20 +245,10 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
       }
 
       @Override
-      public void moveToProject() {
+      public void copyToAnotherLevel() {
         final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
         LOG.assertTrue(selectedPanel != null, "No settings selectedPanel for: " + getSelectedObject());
         copyToNewProfile(getSelectedObject(), getProject(), false, true);
-      }
-
-      @Override
-      public void setAsGlobal() {
-        final SingleInspectionProfilePanel selectedPanel = getSelectedPanel();
-        LOG.assertTrue(selectedPanel != null, "No settings selectedPanel for: " + getSelectedObject());
-        selectedPanel.getProfile().setProjectLevel(false);
-        myProfiles.getProfilesComboBox().resort();
-        myProfiles.invalidate();
-        myProfiles.repaint();
       }
 
       @Override
@@ -337,26 +330,23 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable
 
       @Override
       public void export() {
-        final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         descriptor.setDescription("Choose directory to store profile file");
-        FileChooser.chooseFile(descriptor, getProject(), wholePanel, null, file -> {
-          final Element element = new Element("inspections");
+        FileChooser.chooseFile(descriptor, getProject(), wholePanel, null, dir -> {
           try {
-            final SingleInspectionProfilePanel panel = getSelectedPanel();
+            SingleInspectionProfilePanel panel = getSelectedPanel();
             LOG.assertTrue(panel != null);
-            final InspectionProfileImpl profile = getSelectedObject();
+            InspectionProfileImpl profile = getSelectedObject();
             LOG.assertTrue(true);
-            profile.writeExternal(element);
-            final String filePath =
-              FileUtil.toSystemDependentName(file.getPath()) + File.separator + FileUtil.sanitizeFileName(profile.getName()) + ".xml";
-            if (new File(filePath).isFile()) {
-              if (Messages
-                    .showOkCancelDialog(wholePanel, "File \'" + filePath + "\' already exist. Do you want to overwrite it?", "Warning",
-                                        Messages.getQuestionIcon()) != Messages.OK) {
-                return;
-              }
+            Element element = profile.writeScheme();
+            File file = new File(FileUtil.toSystemDependentName(dir.getPath()), sanitizeFileName(profile.getName()) + ".xml");
+            if (file.isFile() &&
+                Messages.showOkCancelDialog(wholePanel, "File \'" + file + "\' already exist. Do you want to overwrite it?", "Warning",
+                                            Messages.getQuestionIcon()) != Messages.OK) {
+              return;
             }
-            JDOMUtil.writeDocument(new Document(element), filePath, SystemProperties.getLineSeparator());
+
+            JDOMUtil.writeParent(element, file, "\n");
           }
           catch (IOException e1) {
             LOG.error(e1);

@@ -76,12 +76,6 @@ public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
       return InspectionGadgetsBundle.message("confusing.floating.point.literal.change.quickfix");
     }
 

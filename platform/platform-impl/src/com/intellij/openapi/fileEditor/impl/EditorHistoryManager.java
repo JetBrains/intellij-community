@@ -60,17 +60,18 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
    */
   private final List<HistoryEntry> myEntriesList = new ArrayList<>();
 
-  EditorHistoryManager(@NotNull Project project, @NotNull UISettings uiSettings) {
+  EditorHistoryManager(@NotNull Project project) {
     myProject = project;
 
-    uiSettings.addUISettingsListener(new UISettingsListener() {
+    MessageBusConnection connection = project.getMessageBus().connect();
+
+    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
+      public void uiSettingsChanged(UISettings uiSettings) {
         trimToSize();
       }
-    }, project);
+    });
 
-    MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
       @Override
       public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {

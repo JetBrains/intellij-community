@@ -56,15 +56,10 @@ public class ProtectedMemberInFinalClassInspection extends ProtectedMemberInFina
   }
 
   private static class MakePrivateFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("make.private.quickfix");
     }
 

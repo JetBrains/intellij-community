@@ -43,37 +43,32 @@ class MoveCaretLeftOrRightHandler extends EditorActionHandler {
     ScrollingModel scrollingModel = editor.getScrollingModel();
 
     if (selectionModel.hasSelection() && (!(editor instanceof EditorEx) || !((EditorEx)editor).isStickySelection())) {
-      if (editor.getIndentsModel().getCaretIndentGuide() != null) {
-        selectionModel.removeSelection();
-      }
-      else {
-        int start = selectionModel.getSelectionStart();
-        int end = selectionModel.getSelectionEnd();
-        int caretOffset = caretModel.getOffset();
+      int start = selectionModel.getSelectionStart();
+      int end = selectionModel.getSelectionEnd();
+      int caretOffset = caretModel.getOffset();
 
-        if (start <= caretOffset && end >= caretOffset) { // See IDEADEV-36957
+      if (start <= caretOffset && end >= caretOffset) { // See IDEADEV-36957
 
-          VisualPosition targetPosition = null;
-          if (Registry.is("editor.new.rendering")) {
-            targetPosition = myDirection == Direction.RIGHT  ? caret.getSelectionEndPosition() : caret.getSelectionStartPosition();
-          }
-          else if (caretModel.supportsMultipleCarets() && editor.isColumnMode()) {
-            targetPosition = myDirection == Direction.RIGHT ? 
-                             selectionModel.getSelectionEndPosition() : selectionModel.getSelectionStartPosition();
-          }
-
-          selectionModel.removeSelection();
-          if (targetPosition != null) {
-            caretModel.moveToVisualPosition(targetPosition);
-          }
-          else {
-            caretModel.moveToOffset(myDirection == Direction.RIGHT ^ caret.isAtRtlLocation() ? end : start);
-          }
-          if (caret == editor.getCaretModel().getPrimaryCaret()) {
-            scrollingModel.scrollToCaret(ScrollType.RELATIVE);
-          }
-          return;
+        VisualPosition targetPosition = null;
+        if (Registry.is("editor.new.rendering")) {
+          targetPosition = myDirection == Direction.RIGHT  ? caret.getSelectionEndPosition() : caret.getSelectionStartPosition();
         }
+        else if (caretModel.supportsMultipleCarets() && editor.isColumnMode()) {
+          targetPosition = myDirection == Direction.RIGHT ?
+                           selectionModel.getSelectionEndPosition() : selectionModel.getSelectionStartPosition();
+        }
+
+        selectionModel.removeSelection();
+        if (targetPosition != null) {
+          caretModel.moveToVisualPosition(targetPosition);
+        }
+        else {
+          caretModel.moveToOffset(myDirection == Direction.RIGHT ^ caret.isAtRtlLocation() ? end : start);
+        }
+        if (caret == editor.getCaretModel().getPrimaryCaret()) {
+          scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+        }
+        return;
       }
     }
     VisualPosition currentPosition = caret.getVisualPosition();

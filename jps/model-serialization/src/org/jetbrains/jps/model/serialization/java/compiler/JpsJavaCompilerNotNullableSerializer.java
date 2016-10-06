@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.serialization.java.compiler;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsProject;
@@ -22,13 +23,17 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @author vladimir.dolzhenko
  */
 public class JpsJavaCompilerNotNullableSerializer extends JpsProjectExtensionSerializer {
-  private static final String DEFAULT_VALUE = NotNull.class.getName();
-  private static final String NOTNULL_ANNOTATION = "myDefaultNotNull";
-  private static final String VALUE = "value";
+  public static final List<String> DEFAULT_NOT_NULLS = Arrays.asList(
+    NotNull.class.getName(), "javax.annotation.Nonnull",
+    "edu.umd.cs.findbugs.annotations.NonNull", "android.support.annotation.NonNull"
+  );
 
   public JpsJavaCompilerNotNullableSerializer() {
     super("misc.xml", "NullableNotNullManager");
@@ -37,20 +42,27 @@ public class JpsJavaCompilerNotNullableSerializer extends JpsProjectExtensionSer
   @Override
   public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-    String value = DEFAULT_VALUE;
-    for (Element element : componentTag.getChildren("option")) {
-      if (NOTNULL_ANNOTATION.equals(element.getAttributeValue("name"))){
-          value = element.getAttributeValue(VALUE, DEFAULT_VALUE);
-          break;
+    List<String> annoNames = ContainerUtil.newArrayList();
+    for (Element option : componentTag.getChildren("option")) {
+      if ("myNotNulls".equals(option.getAttributeValue("name"))){
+        for (Element value : option.getChildren("value")) {
+          for (Element list : value.getChildren("list")) {
+            for (Element item : list.getChildren("item")) {
+              ContainerUtil.addIfNotNull(annoNames, item.getAttributeValue("itemvalue"));
+            }
+          }
+        }
       }
     }
-    configuration.setNotNullAnnotation(value);
+    if (annoNames.isEmpty()) {
+      annoNames.addAll(DEFAULT_NOT_NULLS);
+    }
+    configuration.setNotNullAnnotations(annoNames);
   }
 
   @Override
   public void loadExtensionWithDefaultSettings(@NotNull JpsProject project) {
-    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-    configuration.setNotNullAnnotation(DEFAULT_VALUE);
+    JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project).setNotNullAnnotations(DEFAULT_NOT_NULLS);
   }
 
   @Override

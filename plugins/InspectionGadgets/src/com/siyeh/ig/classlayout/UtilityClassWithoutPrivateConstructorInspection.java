@@ -75,14 +75,8 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
 
     @Override
     @NotNull
-    public String getName() {
-      return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
     }
 
     @Override
@@ -119,15 +113,10 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
   }
 
   private static class MakeConstructorPrivateFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("utility.class.without.private.constructor.make.quickfix");
     }
 

@@ -419,7 +419,7 @@ public class MigrationPanel extends JPanel implements Disposable {
             typeElement = ((PsiMethod)element).getReturnTypeElement();
           }
           if (typeElement == null) typeElement = element;
-          PsiDocumentManager.getInstance(element.getProject()).commitAllDocuments();
+
           final UsagePresentation presentation = UsageInfoToUsageConverter.convert(new PsiElement[]{typeElement}, new UsageInfo(typeElement)).getPresentation();
           boolean isPrefix = true;  //skip usage position
           for (TextChunk chunk : presentation.getText()) {

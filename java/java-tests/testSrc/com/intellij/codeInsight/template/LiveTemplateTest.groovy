@@ -1128,7 +1128,7 @@ class Foo {
     ((TemplateImpl)template).templateContext.setEnabled(contextType(JavaCodeContextType.class), true)
     CodeInsightTestUtil.addTemplate(template, testRootDisposable)
 
-    writeCommand { startTemplate(template); }
+    writeCommand { startTemplate(template) }
     myFixture.checkResult """\
 class Foo {
   {
@@ -1477,5 +1477,29 @@ java.util.List<? extends Integer> list;
         
     }
 }}'''
+  }
+
+  void "test home end go outside template fragments if already on their bounds"() {
+    myFixture.configureByText 'a.txt', ' <caret> g'
+
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate("empty", "user", '$VAR$')
+    template.addVariable("VAR", "", '"foo"', true)
+    manager.startTemplate(myFixture.editor, template)
+
+    myFixture.checkResult ' <selection>foo<caret></selection> g'
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START)
+    myFixture.checkResult ' <caret>foo g'
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_START)
+    myFixture.checkResult '<caret> foo g'
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
+    myFixture.checkResult ' foo<caret> g'
+
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
+    myFixture.checkResult ' foo g<caret>'
   }
 }

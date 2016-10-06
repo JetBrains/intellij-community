@@ -531,20 +531,34 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
   private static void patchHiDPI(UIDefaults defaults) {
     Object prevScaleVal = defaults.get("hidpi.scaleFactor");
-    float prevScale = prevScaleVal != null ? (Float)prevScaleVal : JBUI.scale(1f);
+    // used to normalize previously patched values
+    float prevScale = prevScaleVal != null ? (Float)prevScaleVal : 1f;
 
     if (prevScale == JBUI.scale(1f) && prevScaleVal != null) return;
 
     List<String> myIntKeys = Arrays.asList("Tree.leftChildIndent",
-                                           "Tree.rightChildIndent");
+                                           "Tree.rightChildIndent",
+                                           "Tree.rowHeight");
+
+    List<String> myDimensionKeys = Arrays.asList("Slider.horizontalSize",
+                                                 "Slider.verticalSize",
+                                                 "Slider.minimumHorizontalSize",
+                                                 "Slider.minimumVerticalSize");
+
     for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
       Object value = entry.getValue();
       String key = entry.getKey().toString();
-      if (value instanceof Dimension && value instanceof UIResource) {
-        entry.setValue(JBUI.size((Dimension)value).asUIResource());
-      } else if (value instanceof Insets && value instanceof UIResource) {
-        entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
-      } else if (value instanceof Integer) {
+      if (value instanceof Dimension) {
+        if (value instanceof UIResource || myDimensionKeys.contains(key)) {
+          entry.setValue(JBUI.size((Dimension)value).asUIResource());
+        }
+      }
+      else if (value instanceof Insets) {
+        if (value instanceof UIResource) {
+          entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
+        }
+      }
+      else if (value instanceof Integer) {
         if (key.endsWith(".maxGutterIconWidth") || myIntKeys.contains(key)) {
           int normValue = (int)((Integer)value / prevScale);
           entry.setValue(Integer.valueOf(JBUI.scale(normValue)));

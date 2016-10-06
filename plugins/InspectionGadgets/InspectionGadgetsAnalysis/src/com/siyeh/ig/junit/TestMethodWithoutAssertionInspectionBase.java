@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,6 +152,10 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
 
     @Override
     public void visitElement(@NotNull PsiElement element) {
+      if ((element instanceof PsiCompiledElement)) {
+        // assume no assertions in libraries (prevents assertion in recursive element walking visitor)
+        return;
+      }
       if (!containsAssertion) {
         super.visitElement(element);
       }

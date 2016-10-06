@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.tooling.internal.ear;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ear.EarConfiguration;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -29,6 +30,7 @@ public class EarModelImpl implements EarConfiguration.EarModel {
   private final String myEarName;
   private final String myAppDirName;
   private final String myLibDirName;
+  private File myArchivePath;
   private List<EarConfiguration.EarResource> myEarResources;
   private String myManifestContent;
   private String myDeploymentDescriptor;
@@ -43,6 +45,15 @@ public class EarModelImpl implements EarConfiguration.EarModel {
   @Override
   public String getEarName() {
     return myEarName;
+  }
+
+  @Override
+  public File getArchivePath() {
+    return myArchivePath;
+  }
+
+  public void setArchivePath(File artifactFile) {
+    myArchivePath = artifactFile;
   }
 
   @NotNull

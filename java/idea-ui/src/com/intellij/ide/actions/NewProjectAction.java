@@ -26,6 +26,11 @@ import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import org.jetbrains.annotations.NotNull;
 
 public class NewProjectAction extends AnAction implements DumbAware {
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
   public void actionPerformed(AnActionEvent e) {
     NewProjectWizard wizard = new NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null);
     NewProjectUtil.createNewProject(getEventProject(e), wizard);

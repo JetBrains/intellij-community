@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2455,7 +2455,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String by = "void $a$(int i);";
     assertEquals("abstract class A {\n" +
                  "  abstract void a(int i);\n" +
-                 "}", replacer.testReplace(in, what, by, options));
+                 "}",
+                 replacer.testReplace(in, what, by, options));
   }
 
   public void testReplaceParameterWithComment() {
@@ -2466,6 +2467,23 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String by = "final long /*!*/ $a$ = $b$;";
     assertEquals("class A {\n" +
                  "  void a(final long /*!*/ b) {}\n" +
-                 "}", replacer.testReplace(in, what, by, options));
+                 "}",
+                 replacer.testReplace(in, what, by, options));
+  }
+
+  public void testReplaceInnerClass() {
+    String in = "public class A {" +
+                 "  public class B<T> extends A implements Serializable {}" +
+                 "}";
+    String what = "class '_A {" +
+                   "  class '_B {}" +
+                   "}";
+    String by = "class $A$ {" +
+                 "  private class $B$ {}" +
+                 "}";
+    assertEquals("public class A {" +
+                 "  private class B<T> extends A implements Serializable {}" +
+                 "}",
+                 replacer.testReplace(in, what, by, options));
   }
 }

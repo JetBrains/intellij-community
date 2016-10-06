@@ -55,9 +55,9 @@ import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -284,7 +284,7 @@ public class BuildManager implements Disposable {
           }
 
           if (fileIndex.isInContent(eventFile)) {
-            if (ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile) || GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(eventFile, project)) {
+            if (ProjectUtil.isProjectOrWorkspaceFile(eventFile) || GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(eventFile, project)) {
               // changes in project files or generated stuff should not trigger auto-make
               continue;
             }

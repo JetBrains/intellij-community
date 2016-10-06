@@ -226,12 +226,12 @@
 
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
 
-    <action id="Diff.PrevChange" class="com.intellij.openapi.vcs.changes.actions.ShowPrevChangeAction"
-      icon="AllIcons.Actions.Prevfile" use-shortcut-of="PreviousTab"/>
-    <action id="Diff.NextChange" class="com.intellij.openapi.vcs.changes.actions.ShowNextChangeAction"
-      icon="AllIcons.Actions.Nextfile" use-shortcut-of="NextTab"/>
-    <action id="Diff.SelectedChange" class="com.intellij.openapi.vcs.changes.actions.ShowSelectedChangeAction"
-      icon="AllIcons.Actions.ShowAsTree" use-shortcut-of="GotoChangedFile"/>
+    <action id="Diff.PrevChange" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Actions.Prevfile" use-shortcut-of="PreviousTab"/>
+    <action id="Diff.NextChange" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Actions.Nextfile" use-shortcut-of="NextTab"/>
+    <action id="Diff.SelectedChange" class="com.intellij.openapi.actionSystem.EmptyAction"
+            icon="AllIcons.Actions.ShowAsTree" use-shortcut-of="GotoChangedFile"/>
 
     <group id="EditorGutterVcsPopupMenu">
       <separator/>

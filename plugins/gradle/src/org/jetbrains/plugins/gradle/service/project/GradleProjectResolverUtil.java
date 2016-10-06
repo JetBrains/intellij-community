@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
@@ -194,6 +195,19 @@ public class GradleProjectResolverUtil {
       moduleId += (':' + projectDependency.getConfigurationName());
     }
     return moduleId;
+  }
+
+  @Nullable
+  public static String getSourceSetName(final Module module) {
+    if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
+    if (!GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(ExternalSystemApiUtil.getExternalModuleType(module))) return null;
+
+    String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
+    if (externalProjectId == null) return null;
+    int i = externalProjectId.lastIndexOf(':');
+    if (i == -1 || externalProjectId.length() < i + 1) return null;
+
+    return externalProjectId.substring(i + 1);
   }
 
   @NotNull

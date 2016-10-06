@@ -18,7 +18,6 @@ package com.intellij.profile.codeInspection;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileChangeAdapter;
 import com.intellij.profile.ProfileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,12 +34,6 @@ public interface InspectionProfileManager extends ProfileManager, SeverityProvid
   static InspectionProfileManager getInstance(@NotNull Project project) {
     return InspectionProjectProfileManager.getInstance(project);
   }
-
-  @Deprecated
-  void addProfileChangeListener(@NotNull ProfileChangeAdapter listener);
-
-  @Deprecated
-  void removeProfileChangeListener(@NotNull ProfileChangeAdapter listener);
 
   void fireProfileChanged(@Nullable Profile profile);
 

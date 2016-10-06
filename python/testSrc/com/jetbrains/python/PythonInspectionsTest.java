@@ -69,6 +69,10 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, true);
   }
 
+  public void testPyMethodParametersInspectionInitSubclass() {
+    doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON36);
+  }
+
   public void testPyNestedDecoratorsInspection() {
     LocalInspectionTool inspection = new PyNestedDecoratorsInspection();
     doTest(getTestName(false), inspection);
@@ -107,6 +111,16 @@ public class PythonInspectionsTest extends PyTestCase {
   public void testPyUnusedLocalCoroutine() {
     myFixture.copyDirectoryToProject("inspections/" + getTestName(false), "");
     doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON34);
+  }
+
+  // PY-20805
+  public void testUnusedLocalFStringReferences() {
+    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON36);
+  }
+
+  // PY-8219
+  public void testUnusedLocalDoctestReference() {
+    doHighlightingTest(PyUnusedLocalInspection.class);
   }
 
   public void testPyDictCreationInspection() {

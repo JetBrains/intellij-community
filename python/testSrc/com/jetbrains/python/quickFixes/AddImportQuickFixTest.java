@@ -52,7 +52,7 @@ public class AddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import", fix -> {
       final List<ImportCandidateHolder> candidates = fix.getCandidates();
       final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText("MyClass"));
-      assertSameElements(names, "foo.MyClass", "bar.MyClass");
+      assertOrderedEquals(names, "bar.MyClass", "foo.MyClass");
       return true;
     });
   }

@@ -7,6 +7,7 @@
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
     <appStarter implementation="com.intellij.help.impl.IntentionDump"/>
     <appStarter implementation="com.intellij.help.impl.InspectionDump"/>
+    <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
 
     <applicationService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                         serviceImplementation="com.intellij.configurationStore.ApplicationStoreImpl"/>
@@ -105,6 +106,12 @@
     <statistics.usagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
+
+    <lang.substitutor language="TEXT" implementationClass="com.intellij.diff.contents.DiffPsiFileType$Substitutor" order="first"/>
+    <daemon.highlightInfoFilter implementation="com.intellij.diff.contents.DiffPsiFileType$HighlightFilter"/>
+    <daemon.intentionActionFilter implementation="com.intellij.diff.contents.DiffPsiFileType$IntentionFilter"/>
+    <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider"
+                                        implementation="com.intellij.diff.contents.DiffPsiFileType$HighlightingSettingProvider"/>
 
     <applicationService serviceInterface="com.intellij.ui.SystemNotifications"
                         serviceImplementation="com.intellij.ui.SystemNotificationsImpl"/>
@@ -353,6 +360,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.UiInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.JdkInfoUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.BuildNumberUsageCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.ScaleInfoUsageCollector"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
                              displayName="Usage Statistics"/>
@@ -375,6 +383,7 @@
 
     <postStartupActivity implementation="com.intellij.ide.TipOfTheDayManager"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>
+    <postStartupActivity implementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl$InitToolWindowsActivity" order="after OpenFilesActivity"/>
     <postStartupActivity id="OpenFilesActivity" implementation="com.intellij.openapi.fileEditor.impl.OpenFilesActivity"/>
     <postStartupActivity implementation="com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"/>
 
@@ -428,6 +437,7 @@
       <className>com.intellij.openapi.editor.actions.FlipCommaIntention</className>
     </intentionAction>
 
+    <daemon.intentionActionFilter implementation="com.intellij.psi.IntentionFilterOwnerActionFilter"/>
 
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupLocalConfiguration"/>
     <projectService serviceImplementation="com.intellij.execution.startup.ProjectStartupSharedConfiguration"/>

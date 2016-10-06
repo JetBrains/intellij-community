@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,12 +102,12 @@ public class IdeaApplication {
     }
     else {
       Splash splash = null;
-      if (myArgs.length == 0) {
-        myStarter = getStarter();
-        if (myStarter instanceof IdeStarter) {
-          splash = ((IdeStarter)myStarter).showSplash(myArgs);
-        }
+      //if (myArgs.length == 0) {
+      myStarter = getStarter();
+      if (myStarter instanceof IdeStarter) {
+        splash = ((IdeStarter)myStarter).showSplash(myArgs);
       }
+      //}
 
       ApplicationManagerEx.createApplication(isInternal, isUnitTest, false, false, ApplicationManagerEx.IDEA_APPLICATION, splash);
     }
@@ -252,10 +252,10 @@ public class IdeaApplication {
       return null;
     }
 
-    private void updateSplashScreen(ApplicationInfoEx appInfo, SplashScreen splashScreen) {
+    private void updateSplashScreen(@NotNull ApplicationInfoEx appInfo, SplashScreen splashScreen) {
       final Graphics2D graphics = splashScreen.createGraphics();
       final Dimension size = splashScreen.getSize();
-      if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor())) {
+      if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor(), appInfo)) {
         splashScreen.update();
       }
     }

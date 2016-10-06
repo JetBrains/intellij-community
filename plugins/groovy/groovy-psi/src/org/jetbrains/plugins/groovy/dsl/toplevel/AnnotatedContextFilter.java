@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.dsl.toplevel;
 
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
@@ -58,7 +59,7 @@ public class AnnotatedContextFilter implements ContextFilter {
   private static Map<String, Boolean> getPossibleAnnotations(final PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () -> {
       Map<String, Boolean> result = StringUtil.contains(file.getViewProvider().getContents(), "@")
-                                    ? ConcurrentFactoryMap.createMap(anno -> containsString(anno, file))
+                                    ? ConcurrentFactoryMap.createConcurrentMap(anno -> containsString(anno, file))
                                     : Collections.emptyMap();
       return CachedValueProvider.Result.create(result, file);
     });
@@ -66,7 +67,9 @@ public class AnnotatedContextFilter implements ContextFilter {
 
   @NotNull
   private static Boolean containsString(String anno, PsiFile file) {
-    if (file.getVirtualFile() == null) return StringUtil.contains(file.getViewProvider().getContents(), anno);
+    if (file.getVirtualFile() == null || DumbService.isDumb(file.getProject())) {
+      return StringUtil.contains(file.getViewProvider().getContents(), anno);
+    }
 
     GlobalSearchScope scope = GlobalSearchScope.fileScope(file);
     return !FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, new IdIndexEntry(anno, true), scope).isEmpty();

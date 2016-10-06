@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
@@ -45,6 +46,7 @@ public class ImportOldConfigsPanel extends JDialog {
   private JLabel mySuggestLabel;
   private JLabel myHomeLabel;
   private JRadioButton myRbImportAuto;
+  private JPanel myCustomPanel;
 
   private final File myGuessedOldConfig;
   private final ConfigImportSettings mySettings;
@@ -119,6 +121,11 @@ public class ImportOldConfigsPanel extends JDialog {
         close();
       }
     });
+
+    CloudConfigProvider configProvider = CloudConfigProvider.getProvider();
+    if (configProvider != null) {
+      configProvider.initConfigsPanel(this, myCustomPanel, mySettings);
+    }
 
     getContentPane().setLayout(new BorderLayout());
     getContentPane().add(myRootPanel);

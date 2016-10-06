@@ -45,7 +45,7 @@ public class PersistentUtil {
   }
 
   @NotNull
-  private static File getStorageFile(@NotNull String storageKind, @NotNull String logId, int version) {
+  public static File getStorageFile(@NotNull String storageKind, @NotNull String logId, int version) {
     File subdir = new File(LOG_CACHE, storageKind);
     String safeLogId = PathUtilRt.suggestFileName(logId, true, true);
     final File mapFile = new File(subdir, safeLogId + "." + version);
@@ -66,7 +66,20 @@ public class PersistentUtil {
                                                                            int version) throws IOException {
     File storageFile = getStorageFile(storageKind, logId, version);
 
-    return IOUtil.openCleanOrResetBroken(() -> new PersistentBTreeEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE, null, version),
+    return IOUtil.openCleanOrResetBroken(() ->
+                                           new PersistentBTreeEnumerator<>(storageFile, keyDescriptor, Page.PAGE_SIZE, null, version),
+                                         storageFile);
+  }
+
+  @NotNull
+  public static <V> PersistentHashMap<Integer, V> createPersistentHashMap(@NotNull DataExternalizer<V> externalizer,
+                                                                          @NotNull String storageKind,
+                                                                          @NotNull String logId,
+                                                                          int version) throws IOException {
+    File storageFile = getStorageFile(storageKind, logId, version);
+
+    return IOUtil.openCleanOrResetBroken(() ->
+                                           new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), externalizer, Page.PAGE_SIZE),
                                          storageFile);
   }
 }

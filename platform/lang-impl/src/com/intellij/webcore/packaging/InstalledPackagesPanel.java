@@ -208,19 +208,20 @@ public class InstalledPackagesPanel extends JPanel {
         }
 
         ApplicationManager.getApplication().invokeLater(() -> {
+          ModalityState modalityState = ModalityState.current();
           final PackageManagementService.Listener listener = new PackageManagementService.Listener() {
             @Override
             public void operationStarted(final String packageName) {
-              UIUtil.invokeLaterIfNeeded(() -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
                 myPackagesTable.setPaintBusy(true);
                 myCurrentlyInstalling.add(packageName);
-              });
+              }, modalityState);
             }
 
             @Override
             public void operationFinished(final String packageName,
                                           @Nullable final PackageManagementService.ErrorDescription errorDescription) {
-              UIUtil.invokeLaterIfNeeded(() -> {
+              ApplicationManager.getApplication().invokeLater(() -> {
                 myPackagesTable.clearSelection();
                 updatePackages(selPackageManagementService);
                 myPackagesTable.setPaintBusy(false);
@@ -236,7 +237,7 @@ public class InstalledPackagesPanel extends JPanel {
                 if (myCurrentlyInstalling.isEmpty() && !myWaitingToUpgrade.isEmpty()) {
                   upgradePostponedPackages();
                 }
-              });
+              }, modalityState);
             }
           };
           PackageManagementServiceEx serviceEx = getServiceEx();

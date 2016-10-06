@@ -106,13 +106,13 @@ abstract class VmConnection<T : Vm> : Disposable {
 
   open fun detachAndClose(): Promise<*> {
     if (opened.isPending) {
-      opened.setError(createError("detached and closed", false))
+      opened.setError(createError("detached and closed"))
     }
 
     val currentVm = vm
     val callback: Promise<*>
     if (currentVm == null) {
-      callback = resolvedPromise()
+      callback = nullPromise()
     }
     else {
       vm = null

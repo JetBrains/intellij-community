@@ -200,12 +200,17 @@ idea.fatal.error.notification=disabled
   void layoutShared() {
     buildContext.messages.block("Copy files shared among all distributions") {
       new File(buildContext.paths.distAll, "build.txt").text = buildContext.fullBuildNumber
+
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/bin") {
         fileset(dir: "$buildContext.paths.communityHome/bin") {
           include(name: "*.*")
           exclude(name: "idea.properties")
+          exclude(name: "log.xml")
         }
       }
+
+      copyLogXml()
+
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/license") {
         fileset(dir: "$buildContext.paths.communityHome/license")
         buildContext.productProperties.additionalDirectoriesWithLicenses.each {
@@ -215,6 +220,13 @@ idea.fatal.error.notification=disabled
 
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
     }
+  }
+
+  private void copyLogXml() {
+    def src = new File("$buildContext.paths.communityHome/bin/log.xml")
+    def dst = new File("$buildContext.paths.distAll/bin/log.xml")
+    dst.parentFile.mkdirs()
+    src.filterLine { String it -> !it.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(dst.newWriter()).close()
   }
 
   @Override
@@ -270,7 +282,8 @@ idea.fatal.error.notification=disabled
   void compileModulesAndBuildDistributions() {
     checkProductProperties()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
-    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules)
+    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
+                   buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
     buildContext.messages.block("Build platform and plugin JARs") {
       distributionJARsBuilder.buildJARs()
       distributionJARsBuilder.buildAdditionalArtifacts()
@@ -457,6 +470,11 @@ idea.fatal.error.notification=disabled
     def jarsBuilder = new DistributionJARsBuilder(buildContext)
     jarsBuilder.buildJARs()
     layoutShared()
+
+    //todo[nik]
+    buildContext.ant.copy(todir: "$targetDirectory/lib/libpty/") {
+      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/")
+    }
 /*
     //todo[nik] uncomment this to update os-specific files (e.g. in 'bin' directory) as well
     def propertiesFile = patchIdeaPropertiesFile()

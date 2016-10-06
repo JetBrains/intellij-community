@@ -149,6 +149,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.parameter"), DefaultLanguageHighlighterColors.PARAMETER),
     new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint"), DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT),
+    new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.interface.name"), DefaultLanguageHighlighterColors.INTERFACE_NAME),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.metadata"), DefaultLanguageHighlighterColors.METADATA),
@@ -220,7 +222,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       " */</doc_comment>\n" +
       "Function <func_decl>declaration</func_decl> (<param>parameter1</param> <param>parameter2</param> <param>parameter3</param> <param>parameter4</param>)\n" +
       "    Local <local_var>variable1</local_var> <local_var>variable2</local_var> <local_var>variable3</local_var> <local_var>variable4</local_var>\n" +
-      "Function <func_call>call</func_call>()\n" +
+      "Function <func_call>call</func_call>(<parameter_hint value>0)\n" +
       "Interface <interface>Name</interface>\n" +
       "<metadata>@Metadata</metadata>\n" +
       "Class <class_name>Name</class_name>\n" +

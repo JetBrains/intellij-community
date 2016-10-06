@@ -43,6 +43,15 @@ import static com.intellij.openapi.util.text.StringUtil.startsWith;
  */
 public class PythonStringUtil {
   private static final ImmutableList<String> QUOTES = ImmutableList.of("'''", "\"\"\"", "'", "\"");
+  /**
+   * Valid string prefix characters (lowercased) as defined in Python lexer.
+   */
+  public static final String PREFIX_CHARACTERS = "ubcrf";
+  
+  /**
+   * Maximum length of a string prefix as defined in Python lexer.
+   */
+  public static final int MAX_PREFIX_LENGTH = 3;
 
   private PythonStringUtil() {
   }
@@ -199,24 +208,8 @@ public class PythonStringUtil {
    */
   @Nullable
   public static Pair<String, String> getQuotes(@NotNull final String text) {
-    boolean start = true;
-    int pos = 0;
-    for (int i = 0; i < text.length(); i++) {
-      final char c = Character.toLowerCase(text.charAt(i));
-      if (start) {
-        if (c == 'u' || c == 'r' || c == 'b') {
-          pos = i + 1;
-        }
-        else {
-          start = false;
-        }
-      }
-      else {
-        break;
-      }
-    }
-    final String prefix = text.substring(0, pos);
-    final String mainText = text.substring(pos);
+    final String prefix = getPrefix(text);
+    final String mainText = text.substring(prefix.length());
     for (String quote : QUOTES) {
       final Pair<String, String> quotes = getQuotes(mainText, prefix, quote);
       if (quotes != null) {
@@ -224,6 +217,67 @@ public class PythonStringUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Finds the end offset of the string prefix starting from {@code startOffset} in the given char sequence. 
+   * String prefix may contain only up to {@link #MAX_PREFIX_LENGTH} characters from {@link #PREFIX_CHARACTERS}
+   * (case insensitively).  
+   * 
+   * @return end offset of found string prefix
+   */
+  public static int getPrefixEndOffset(@NotNull CharSequence text, int startOffset) {
+    int offset;
+    for (offset = startOffset; offset < Math.min(startOffset + MAX_PREFIX_LENGTH, text.length()); offset++) {
+      if (PREFIX_CHARACTERS.indexOf(Character.toLowerCase(text.charAt(offset))) < 0) {
+        break;
+      }
+    }
+    return offset;
+  }
+
+  @NotNull
+  public static String getPrefix(@NotNull CharSequence text) {
+    return getPrefix(text, 0);
+  }
+
+  /**
+   * Extracts string prefix from the given char sequence using {@link #getPrefixEndOffset(CharSequence, int)}.
+   *
+   * @return extracted string prefix
+   * @see #getPrefixEndOffset(CharSequence, int)
+   */
+  @NotNull
+  public static String getPrefix(@NotNull CharSequence text, int startOffset) {
+    return text.subSequence(startOffset, getPrefixEndOffset(text, startOffset)).toString();
+  }
+
+  /**
+   * @return whether the given prefix contains either 'u' or 'U' character
+   */
+  public static boolean isUnicodePrefix(@NotNull String prefix) {
+    return StringUtil.indexOfIgnoreCase(prefix, 'u', 0) >= 0;
+  }
+
+  /**
+   * @return whether the given prefix contains either 'b' or 'B' character
+   */
+  public static boolean isBytesPrefix(@NotNull String prefix) {
+    return StringUtil.indexOfIgnoreCase(prefix, 'b', 0) >= 0;
+  }
+
+  /**
+   * @return whether the given prefix contains either 'r' or 'R' character
+   */
+  public static boolean isRawPrefix(@NotNull String prefix) {
+    return StringUtil.indexOfIgnoreCase(prefix, 'r', 0) >= 0;
+  }
+
+  /**
+   * @return whether the given prefix contains either 'f' or 'F' character
+   */
+  public static boolean isFormattedPrefix(@NotNull String prefix) {
+    return StringUtil.indexOfIgnoreCase(prefix, 'f', 0) >= 0;
   }
 
   @Nullable

@@ -112,6 +112,11 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       return null;
     }
 
+    if (NullableNotNullManager.findNullabilityDefaultInHierarchy(method, true) != null ||
+        NullableNotNullManager.findNullabilityDefaultInHierarchy(method, false) != null) {
+      return null;
+    }
+
     Nullness nullness = NullityInference.inferNullity(method);
     if (nullness == Nullness.NOT_NULL) {
       return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();

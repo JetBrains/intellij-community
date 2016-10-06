@@ -62,15 +62,10 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
   }
 
   private static class KeySetIterationMapUseEntrySetFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("key.set.iteration.may.use.entry.set.quickfix");
     }
 

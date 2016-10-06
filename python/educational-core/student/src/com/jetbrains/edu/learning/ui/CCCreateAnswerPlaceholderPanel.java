@@ -10,7 +10,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,7 +20,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CCCreateAnswerPlaceholderPanel {
-  private static String ourFirstHintText = "Type here to add hint";
+  private static final String NEXT_HINT = "Next Hint";
+  private static final String PREVIOUS_HINT = "Previous Hint";
+  private static final String ADD_HINT = "Add Hint";
+  private static final String REMOVE_HINT = "Remove Hint";
+  private static final String HINT_PLACEHOLDER = "Type here to add hint";
 
   private JPanel myPanel;
   private JTextArea myHintTextArea;
@@ -29,16 +32,15 @@ public class CCCreateAnswerPlaceholderPanel {
   private JBLabel myHintLabel;
   private JPanel actionsPanel;
   private JTextArea myPlaceholderTextArea;
-  private List<String> myHints = new ArrayList<String>() {
-  };
+  private List<String> myHints = new ArrayList<>();
   private int myShownHintNumber = 0;
 
-  public CCCreateAnswerPlaceholderPanel(@NotNull final AnswerPlaceholder answerPlaceholder) {
-    if (answerPlaceholder.getHints().isEmpty()) {
-      myHints.add(ourFirstHintText);
+  public CCCreateAnswerPlaceholderPanel(String placeholderText, List<String> hints) {
+    if (hints.isEmpty()) {
+      myHints.add(HINT_PLACEHOLDER);
     }
     else {
-      myHints.addAll(answerPlaceholder.getHints());
+      myHints.addAll(hints);
     }
 
     myPlaceholderTextArea.setBorder(BorderFactory.createLineBorder(JBColor.border()));
@@ -50,6 +52,7 @@ public class CCCreateAnswerPlaceholderPanel {
 
     actionsPanel.add(createHintToolbarComponent(), BorderLayout.WEST);
     showHint(myHints.get(myShownHintNumber));
+    myPlaceholderTextArea.setText(placeholderText);
   }
 
   @NotNull
@@ -57,7 +60,7 @@ public class CCCreateAnswerPlaceholderPanel {
     return new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        if (myHintTextArea.getText().equals(ourFirstHintText)) {
+        if (myHintTextArea.getText().equals(HINT_PLACEHOLDER)) {
           myHintTextArea.setForeground(UIUtil.getActiveTextColor());
           myHintTextArea.setText("");
         }
@@ -67,7 +70,7 @@ public class CCCreateAnswerPlaceholderPanel {
       public void focusLost(FocusEvent e) {
         if (myShownHintNumber == 0 && myHintTextArea.getText().isEmpty()) {
           myHintTextArea.setForeground(UIUtil.getInactiveTextColor());
-          myHintTextArea.setText(ourFirstHintText);
+          myHintTextArea.setText(HINT_PLACEHOLDER);
         }
       }
     };
@@ -89,12 +92,8 @@ public class CCCreateAnswerPlaceholderPanel {
     }
   }
 
-  public void showAnswerPlaceholderText(String answerPlaceholderText) {
-    myPlaceholderTextArea.setText(answerPlaceholderText);
-  }
-
   public void showHint(String hintText) {
-    if (myHints.get(myShownHintNumber).equals(ourFirstHintText)) {
+    if (myHints.get(myShownHintNumber).equals(HINT_PLACEHOLDER)) {
       myHintTextArea.setForeground(UIUtil.getInactiveTextColor());
     }
     else {
@@ -111,7 +110,7 @@ public class CCCreateAnswerPlaceholderPanel {
 
   public List<String> getHints() {
     final String hintText = myHintTextArea.getText();
-    if (myShownHintNumber == 0 && hintText.equals(ourFirstHintText)) {
+    if (myShownHintNumber == 0 && hintText.equals(HINT_PLACEHOLDER)) {
       myHints.set(myShownHintNumber, "");
     }
     else {
@@ -132,7 +131,7 @@ public class CCCreateAnswerPlaceholderPanel {
   private class ShowNext extends AnAction {
 
     public ShowNext() {
-      super("Next Hint", "Next Hint", AllIcons.Actions.Forward);
+      super(NEXT_HINT, NEXT_HINT, AllIcons.Actions.Forward);
     }
 
     @Override
@@ -150,7 +149,7 @@ public class CCCreateAnswerPlaceholderPanel {
   private class ShowPrevious extends AnAction {
 
     public ShowPrevious() {
-      super("Previous Hint", "Previous Hint", AllIcons.Actions.Back);
+      super(PREVIOUS_HINT, PREVIOUS_HINT, AllIcons.Actions.Back);
     }
 
     @Override
@@ -168,7 +167,7 @@ public class CCCreateAnswerPlaceholderPanel {
   private class AddHint extends AnAction {
 
     public AddHint() {
-      super("Add Hint", "Add Hint", AllIcons.General.Add);
+      super(ADD_HINT, ADD_HINT, AllIcons.General.Add);
     }
 
     @Override
@@ -182,7 +181,7 @@ public class CCCreateAnswerPlaceholderPanel {
   private class RemoveHint extends AnAction {
 
     public RemoveHint() {
-      super("Remove Hint", "Remove Hint", AllIcons.General.Remove);
+      super(REMOVE_HINT, REMOVE_HINT, AllIcons.General.Remove);
     }
 
     @Override

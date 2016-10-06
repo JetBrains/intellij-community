@@ -30,41 +30,41 @@ class MissingReturnTest extends LightGroovyTestCase {
     return "${TestUtils.testDataPath}highlighting/missingReturn"
   }
 
-  void testMissingReturnWithLastLoop() throws Throwable { doTest(); }
+  void testMissingReturnWithLastLoop() throws Throwable { doTest() }
 
-  void testMissingReturnWithUnknownCall() throws Throwable { doTest(); }
+  void testMissingReturnWithUnknownCall() throws Throwable { doTest() }
 
-  void testMissingReturnWithIf() throws Throwable { doTest(); }
+  void testMissingReturnWithIf() throws Throwable { doTest() }
 
-  void testMissingReturnWithAssertion() throws Throwable { doTest(); }
+  void testMissingReturnWithAssertion() throws Throwable { doTest() }
 
-  void testMissingReturnThrowException() throws Throwable { doTest(); }
+  void testMissingReturnThrowException() throws Throwable { doTest() }
 
-  void testMissingReturnTryCatch() throws Throwable { doTest(); }
+  void testMissingReturnTryCatch() throws Throwable { doTest() }
 
-  void testMissingReturnLastNull() throws Throwable { doTest(); }
+  void testMissingReturnLastNull() throws Throwable { doTest() }
 
-  void testMissingReturnImplicitReturns() throws Throwable { doTest(); }
+  void testMissingReturnImplicitReturns() throws Throwable { doTest() }
 
-  void testMissingReturnOvertReturnType() throws Throwable { doTest(); }
+  void testMissingReturnOvertReturnType() throws Throwable { doTest() }
 
-  void testMissingReturnFromClosure() throws Throwable { doTest(); }
+  void testMissingReturnFromClosure() throws Throwable { doTest() }
 
-  void testReturnsWithoutValue() throws Throwable { doTest(); }
+  void testReturnsWithoutValue() throws Throwable { doTest() }
 
-  void testEndlessLoop() throws Throwable { doTest(); }
+  void testEndlessLoop() throws Throwable { doTest() }
 
-  void testEndlessLoop2() throws Throwable { doTest(); }
+  void testEndlessLoop2() throws Throwable { doTest() }
 
-  void testExceptionWithFinally() throws Throwable { doTest(); }
+  void testExceptionWithFinally() throws Throwable { doTest() }
 
-  void testOnlyAssert() throws Throwable { doTest(); }
+  void testOnlyAssert() throws Throwable { doTest() }
 
-  void testImplicitReturnNull() throws Throwable { doTest(); }
+  void testImplicitReturnNull() throws Throwable { doTest() }
 
-  void testMissingReturnInClosure() { doTest(); }
+  void testMissingReturnInClosure() { doTest() }
 
-  void testFinally() { doTest(); }
+  void testFinally() { doTest() }
 
   void testClosureWithExplicitExpectedType() { doTest() }
 

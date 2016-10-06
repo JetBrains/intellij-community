@@ -27,6 +27,9 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+
 public class FreezeLoggerImpl extends FreezeLogger {
   
   private static final Logger LOG = Logger.getInstance(FreezeLoggerImpl.class);
@@ -35,7 +38,7 @@ public class FreezeLoggerImpl extends FreezeLogger {
   
   @Override
   public void runUnderPerformanceMonitor(@Nullable Project project, @NotNull Runnable action) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (isUnderDebug() || ApplicationManager.getApplication().isUnitTestMode()) {
       action.run();
       return;
     }
@@ -57,7 +60,8 @@ public class FreezeLoggerImpl extends FreezeLogger {
       return;
     }
     
-    final String edtTrace = ThreadDumper.dumpEdtStackTrace();
+    final ThreadInfo[] infos = ThreadDumper.getThreadInfos();
+    final String edtTrace = ThreadDumper.dumpEdtStackTrace(infos);
     if (edtTrace.contains("java.lang.ClassLoader.loadClass")) {
       return;
     }
@@ -69,7 +73,7 @@ public class FreezeLoggerImpl extends FreezeLogger {
                  + "\n\n\n";
 
     if (Registry.is("typing.freeze.report.dumps")) {
-      ThreadDumpInfo info = new ThreadDumpInfo(dumps, isInDumbMode);
+      ThreadDumpInfo info = new ThreadDumpInfo(infos, isInDumbMode);
       String report = ReporterKt.createReportLine("typing-freeze-dumps", info);
       if (!StatsSender.INSTANCE.send(report, true)) {
         LOG.debug("Error while reporting thread dump");
@@ -80,18 +84,22 @@ public class FreezeLoggerImpl extends FreezeLogger {
     }
   }
   
+  private static boolean isUnderDebug() {
+    return ManagementFactory.getRuntimeMXBean().getInputArguments().toString().contains("jdwp");
+  }
+  
 }
 
 class ThreadDumpInfo {
-  public final String dump;
+  public final ThreadInfo[] threadInfos;
   public final String version;
   public final String product;
   public final String buildNumber;
   public final boolean isEAP;
   public final boolean isInDumbMode;
 
-  public ThreadDumpInfo(String dump, boolean isInDumbMode) {
-    this.dump = dump;
+  public ThreadDumpInfo(ThreadInfo[] threadInfos, boolean isInDumbMode) {
+    this.threadInfos = threadInfos;
     this.product = ApplicationInfo.getInstance().getVersionName();
     this.version = ApplicationInfo.getInstance().getFullVersion();
     this.buildNumber = ApplicationInfo.getInstance().getBuild().toString();

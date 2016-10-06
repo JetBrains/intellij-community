@@ -42,12 +42,10 @@ public class PageUpWithSelectionAction extends EditorAction {
       }
       if (editor.isColumnMode()) {
         int lines = editor.getScrollingModel().getVisibleArea().height / editor.getLineHeight();
-        Caret currentCaret = caret == null ? editor.getCaretModel().getPrimaryCaret() : caret;
+        CloneCaretActionHandler handler = new CloneCaretActionHandler(true);
         for (int i = 0; i < lines; i++) {
-          if (!EditorActionUtil.cloneOrRemoveCaret(editor, currentCaret, true)) {
-            break;
-          }
-          currentCaret = editor.getCaretModel().getPrimaryCaret();
+          handler.execute(editor, caret, dataContext);
+          handler.setRepeatedInvocation(true);
         }
       }
       else {

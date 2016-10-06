@@ -15,10 +15,11 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -40,12 +41,18 @@ import java.io.IOException;
 import java.util.*;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+import static org.jetbrains.idea.maven.utils.MavenUtil.getBaseDir;
 
 public class MavenProjectReader {
   private static final String UNKNOWN = MavenId.UNKNOWN_VALUE;
 
   private final Map<VirtualFile, RawModelReadResult> myRawModelsCache = new THashMap<>();
+  private final Project myProject;
   private SettingsProfilesCache mySettingsProfilesCache;
+
+  public MavenProjectReader(Project project) {
+    myProject = project;
+  }
 
   public MavenProjectReaderResult readProject(MavenGeneralSettings generalSettings,
                                               VirtualFile file,
@@ -72,10 +79,6 @@ public class MavenProjectReader {
                                         null,
                                         readResult.first.problems,
                                         new THashSet<>());
-  }
-
-  private static File getBaseDir(VirtualFile file) {
-    return new File(file.getParent().getPath());
   }
 
   private Pair<RawModelReadResult, MavenExplicitProfiles> doReadProjectModel(MavenGeneralSettings generalSettings,
@@ -107,15 +110,38 @@ public class MavenProjectReader {
   }
 
   private RawModelReadResult doReadProjectModel(VirtualFile file, boolean headerOnly) {
-    MavenModel result = new MavenModel();
+    MavenModel result = null;
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     Set<String> alwaysOnProfiles = new THashSet<>();
 
+    String fileExtension = file.getExtension();
+    if (!"pom".equalsIgnoreCase(fileExtension) && !"xml".equalsIgnoreCase(fileExtension)) {
+      File basedir = getBaseDir(file);
+      MavenEmbeddersManager manager = MavenProjectsManager.getInstance(myProject).getEmbeddersManager();
+      MavenEmbedderWrapper embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, basedir.getPath(), basedir.getPath());
+      try {
+        result = embedder.readModel(VfsUtilCore.virtualToIoFile(file));
+      }
+      catch (MavenProcessCanceledException ignore) {
+      }
+      finally {
+        manager.release(embedder);
+      }
+
+      if (result == null) {
+        result = new MavenModel();
+        result.setPackaging(MavenConstants.TYPE_JAR);
+        return new RawModelReadResult(result, problems, alwaysOnProfiles);
+      }
+      else {
+        return new RawModelReadResult(result, problems, alwaysOnProfiles);
+      }
+    }
+
+    result = new MavenModel();
     Element xmlProject = readXml(file, problems, MavenProjectProblem.ProblemType.SYNTAX);
     if (xmlProject == null || !"project".equals(xmlProject.getName())) {
-      result.setMavenId(new MavenId(UNKNOWN, UNKNOWN, UNKNOWN));
       result.setPackaging(MavenConstants.TYPE_JAR);
-
       return new RawModelReadResult(result, problems, alwaysOnProfiles);
     }
 
@@ -219,7 +245,7 @@ public class MavenProjectReader {
   }
 
   private MavenResource createResource(String directory) {
-    return new MavenResource(directory, false, null, Collections.<String>emptyList(), Collections.<String>emptyList());
+    return new MavenResource(directory, false, null, Collections.emptyList(), Collections.emptyList());
   }
 
   private List<MavenProfile> collectProfiles(VirtualFile projectFile,

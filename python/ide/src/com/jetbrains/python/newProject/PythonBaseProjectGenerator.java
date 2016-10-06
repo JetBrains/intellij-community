@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,16 +59,18 @@ public class PythonBaseProjectGenerator extends PythonProjectGenerator<PyNewProj
   }
 
   @Override
-  public void configureProject(@NotNull final Project project, @NotNull VirtualFile baseDir, @NotNull final PyNewProjectSettings settings,
+  public void configureProject(@NotNull final Project project, 
+                               @NotNull VirtualFile baseDir, 
+                               @Nullable final PyNewProjectSettings settings,
                                @NotNull final Module module) {
     if (settings instanceof RemoteProjectSettings) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       assert manager != null;
       manager.createDeployment(project, baseDir, (RemoteProjectSettings)settings,
-                               (RemoteSdkCredentials)((RemoteProjectSettings)settings).getSdk().getSdkAdditionalData());
+                               (RemoteSdkCredentials)settings.getSdk().getSdkAdditionalData());
     }
-    else if (settings instanceof PyNewProjectSettings) {
-      ApplicationManager.getApplication().runWriteAction(() -> ModuleRootModificationUtil.setModuleSdk(module, ((PyNewProjectSettings)settings).getSdk()));
+    else if (settings != null) {
+      ApplicationManager.getApplication().runWriteAction(() -> ModuleRootModificationUtil.setModuleSdk(module, settings.getSdk()));
     }
   }
 

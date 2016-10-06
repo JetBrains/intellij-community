@@ -36,7 +36,7 @@ import java.util.List;
  */
 public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunctionStub>, PsiNameIdentifierOwner, PyStatement, PyCallable,
                                     PyDocStringOwner, ScopeOwner, PyDecoratable, PyTypedElement, PyStatementListContainer,
-                                    PyPossibleClassMember, PyTypeCommentOwner {
+                                    PyPossibleClassMember, PyTypeCommentOwner, PyAnnotationOwner {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = count -> new PyFunction[count];

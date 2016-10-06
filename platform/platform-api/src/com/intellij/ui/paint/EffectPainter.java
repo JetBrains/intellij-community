@@ -245,7 +245,9 @@ public enum EffectPainter implements RegionPainter<Paint> {
       }
     };
 
-    private final ConcurrentHashMap<Long, BufferedImage> myCache = new ConcurrentHashMap<>();
+    // we should not recalculate caches when IDEA is on Retina and non-Retina
+    private final ConcurrentHashMap<Long, BufferedImage> myNormalCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, BufferedImage> myRetinaCache = new ConcurrentHashMap<>();
 
     abstract int getPeriod(int height);
 
@@ -263,12 +265,8 @@ public enum EffectPainter implements RegionPainter<Paint> {
 
     BufferedImage getImage(Graphics2D g, Color color, int height) {
       Long key = color.getRGB() ^ ((long)height << 32);
-      BufferedImage image = myCache.get(key);
-      if (image == null || UIUtil.isRetina(g) != (image instanceof JBHiDPIScaledImage)) {
-        image = createImage(g, color, height);
-        myCache.put(key, image);
-      }
-      return image;
+      ConcurrentHashMap<Long, BufferedImage> cache = UIUtil.isRetina(g) ? myRetinaCache : myNormalCache;
+      return cache.computeIfAbsent(key, k -> createImage(g, color, height));
     }
 
     BufferedImage createImage(Graphics2D g, Paint paint, int height) {
@@ -286,6 +284,7 @@ public enum EffectPainter implements RegionPainter<Paint> {
       g.setComposite(AlphaComposite.SrcOver);
       BufferedImage image = paint instanceof Color ? getImage(g, (Color)paint, height) : createImage(g, paint, height);
       int period = image.getWidth(null);
+      if (image instanceof JBHiDPIScaledImage) period /= 2;
       int offset = (x % period + period) % period; // normalize
       for (int dx = -offset; dx < width; dx += period) {
         UIUtil.drawImage(g, image, dx, 0, null);

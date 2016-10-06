@@ -125,7 +125,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     JvmArchitecture.values().each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
       //todo[nik] why we don't add yourkit agent on unix?
-      def options = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, null) + " -Dawt.useSystemAAFontSettings=lcd"
+      def options = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, null) + \
+                    " -Dawt.useSystemAAFontSettings=lcd -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine"
       new File(unixDistPath, "bin/$fileName").text = options.replace(' ', '\n') + "\n"
     }
   }
@@ -156,6 +157,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         paths.each {
           tarfileset(dir: it, prefix: tarRoot) {
             exclude(name: "bin/*.sh")
+            exclude(name: "bin/*.py")
             exclude(name: "bin/fsnotifier*")
             extraBins.each {
               exclude(name: it)
@@ -165,8 +167,9 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
 
         paths.each {
-          tarfileset(dir: it, filemode: "755", prefix: tarRoot) {
+          tarfileset(dir: it, prefix: tarRoot, filemode: "755") {
             include(name: "bin/*.sh")
+            include(name: "bin/*.py")
             include(name: "bin/fsnotifier*")
             extraBins.each {
               include(name: it)

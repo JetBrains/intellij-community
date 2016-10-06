@@ -88,13 +88,6 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
       this.shortName = shortName;
     }
 
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
     @Override
     @NotNull
     public String getFamilyName() {
@@ -139,12 +132,6 @@ public class PropertiesInspectionSuppressor implements InspectionSuppressor {
 
     private SuppressForFile(String shortName) {
       this.shortName = shortName;
-    }
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return getFamilyName();
     }
 
     @Override

@@ -16,32 +16,20 @@
 package com.intellij.codeInsight.daemon
 
 import com.intellij.psi.PsiJavaModule
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.VfsTestUtil
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
+import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.assertj.core.api.Assertions.assertThat
 
-class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor
-
+class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
   }
 
-  override fun tearDown() {
-    MultiModuleJava9ProjectDescriptor.cleanupSourceRoots()
-    super.tearDown()
-  }
-
   fun testWrongFileName() {
-    myFixture.configureByText("M.java", """/* ... */ <error descr="Module declaration should be in a file named 'module-info.java'">module M</error> { }""")
-    myFixture.checkHighlighting()
+    highlight("M.java", """/* ... */ <error descr="Module declaration should be in a file named 'module-info.java'">module M</error> { }""")
   }
 
   fun testFileDuplicate() {
@@ -50,9 +38,7 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
   }
 
   fun testWrongFileLocation() {
-    val file = addFile("pkg/module-info.java", """<warning descr="Module declaration should be located in a module's source root">module M</warning> { }""")
-    myFixture.configureFromExistingVirtualFile(file)
-    myFixture.checkHighlighting()
+    highlight("pkg/module-info.java", """<warning descr="Module declaration should be located in a module's source root">module M</warning> { }""")
   }
 
   fun testDuplicateStatements() {
@@ -149,11 +135,38 @@ class ModuleHighlightingTest : LightCodeInsightFixtureTestCase() {
     fixes("module M { uses <caret>pkg.m3.C3; }", "AddModuleDependencyFix")
   }
 
-  //<editor-fold desc="Helpers.">
-  private fun addFile(path: String, text: String, module: ModuleDescriptor = MAIN) = VfsTestUtil.createFile(module.root(), path, text)
+  fun testPackageAccessibility() {
+    addFile("module-info.java", "module M { requires M2; requires M6; }")
+    addFile("module-info.java", "module M2 { exports pkg.m2; }", M2)
+    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
+    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
+    addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
+    addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
+    addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
+    addFile("module-info.java", "module M6 { requires public M7; }", M6)
+    addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
+    addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
 
-  private fun highlight(text: String, filter: Boolean = false) {
-    myFixture.configureByText("module-info.java", text)
+    highlight("test.java", """
+        import pkg.m2.C2;
+        import pkg.m2.*;
+        import <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>;
+        import <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl</error>.*;
+        import <error descr="A named module cannot access packages of an unnamed one">pkg.m4.C4</error>;
+        import <error descr="The module 'M' does not have the module 'M5' in requirements">pkg.m5.C5</error>;
+        import pkg.m7.C7;
+
+        import static <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make;
+
+        class C { }
+        """.trimIndent(), true)
+  }
+
+  //<editor-fold desc="Helpers.">
+  private fun highlight(text: String, filter: Boolean = false) = highlight("module-info.java", text, filter)
+
+  private fun highlight(path: String, text: String, filter: Boolean = false) {
+    myFixture.configureFromExistingVirtualFile(addFile(path, text))
     if (filter) {
       (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter { it.name != PsiJavaModule.MODULE_INFO_FILE }
     }

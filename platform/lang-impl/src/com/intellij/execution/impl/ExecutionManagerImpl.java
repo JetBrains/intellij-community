@@ -619,13 +619,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements Disposable
         }
       }, ModalityState.any());
 
-      //noinspection ConstantConditions
-      int exitCode = myProcessHandler.getExitCode();
-      
       myProject.getMessageBus().syncPublisher(EXECUTION_TOPIC).processTerminated(myExecutorId,
                                                                                  myEnvironment,
                                                                                  myProcessHandler,
-                                                                                 exitCode);
+                                                                                 event.getExitCode());
 
       SaveAndSyncHandler saveAndSyncHandler = SaveAndSyncHandler.getInstance();
       if (saveAndSyncHandler != null) {

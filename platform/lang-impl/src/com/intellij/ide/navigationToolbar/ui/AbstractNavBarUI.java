@@ -92,7 +92,6 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     final boolean selected = item.isSelected() && item.isFocused();
     boolean nextSelected = item.isNextSelected() && navbar.hasFocus();
 
-    Map<ImageType, BufferedImage> cached = myCache.get(item);
 
     ImageType type;
     if (floating) {
@@ -105,16 +104,9 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       }
     }
 
-    if (cached == null) {
-      cached = new HashMap<>();
-      myCache.put(item, cached);
-    }
+    Map<ImageType, BufferedImage> cached = myCache.computeIfAbsent(item, k -> new HashMap<>());
 
-    BufferedImage image = cached.get(type);
-    if (image == null) {
-      image = drawToBuffer(item, floating, toolbarVisible, selected, navbar);
-      cached.put(type, image);
-    }
+    BufferedImage image = cached.computeIfAbsent(type, k -> drawToBuffer(item, floating, toolbarVisible, selected, navbar));
 
     UIUtil.drawImage(g, image, 0, 0, null);
 

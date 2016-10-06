@@ -43,7 +43,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -330,13 +329,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (oldPopup != null) {
       oldPopup.close(false);
     }
-    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, provider, oldPopup, predefinedText, mayRequestOpenInCurrentWindow, initialIndex) {
-      @NotNull
-      @Override
-      protected Set<Object> filter(@NotNull Set<Object> elements) {
-        return model instanceof EdtSortingModel ? super.filter(((EdtSortingModel)model).sort(elements)) : super.filter(elements);
-      }
-    };
+    ChooseByNamePopup newPopup = new ChooseByNamePopup(project, model, provider, oldPopup, predefinedText, mayRequestOpenInCurrentWindow, initialIndex);
 
     if (project != null) {
       project.putUserData(CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, newPopup);

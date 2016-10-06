@@ -80,7 +80,7 @@ class ProjectInspectionProfileManager(val project: Project,
 
   private var state = State()
 
-  private val initialLoadSchemesFuture: Promise<*>
+  private val initialLoadSchemesFuture: Promise<Any?>
 
   private val skipDefaultsSerializationFilter = object : SkipDefaultValuesSerializationFilters(State()) {
     override fun accepts(accessor: Accessor, bean: Any, beanValue: Any?): Boolean {
@@ -96,7 +96,8 @@ class ProjectInspectionProfileManager(val project: Project,
   override val schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
-                              attributeProvider: Function<String, String?>): InspectionProfileImpl {
+                              attributeProvider: Function<String, String?>,
+                              isBundled: Boolean): InspectionProfileImpl {
       val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager,
                                           InspectionProfileImpl.getDefaultProfile(), dataHolder)
       profile.isProjectLevel = true

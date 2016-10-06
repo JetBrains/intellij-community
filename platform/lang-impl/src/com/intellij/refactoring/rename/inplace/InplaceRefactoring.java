@@ -42,6 +42,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -802,6 +803,7 @@ public abstract class InplaceRefactoring {
         myEditor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null);
       }
     });
+    EditorUtil.disposeWithEditor(myEditor, myBalloon);
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {

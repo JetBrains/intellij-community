@@ -74,7 +74,6 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.local.variable"), JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.reassigned.parameter"), JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.implicit.anonymous.parameter"), JavaHighlightingColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES),
-    new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint"), JavaHighlightingColors.INLINE_PARAMETER_HINT),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.instance.field"), JavaHighlightingColors.INSTANCE_FIELD_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.instance.final.field"), JavaHighlightingColors.INSTANCE_FINAL_FIELD_ATTRIBUTES),
     new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.static.field"), JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES),

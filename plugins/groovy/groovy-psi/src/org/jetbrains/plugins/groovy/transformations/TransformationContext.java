@@ -87,6 +87,13 @@ public interface TransformationContext {
     return getAnnotation(fqn) != null;
   }
 
+  default boolean isInheritor(@NotNull String fqn) {
+    PsiClass baseClass = getPsiFacade().findClass(fqn, getResolveScope());
+    return baseClass != null && isInheritor(baseClass);
+  }
+
+  boolean isInheritor(@NotNull PsiClass baseClass);
+
   @NotNull
   Collection<PsiMethod> findMethodsByName(@NotNull String name, boolean checkBases);
 

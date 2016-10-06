@@ -62,12 +62,6 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
       return InspectionGadgetsBundle.message("make.static.quickfix");
     }
 

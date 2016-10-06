@@ -205,8 +205,9 @@ public class FindUtil {
       return;
     }
     FindManager findManager = FindManager.getInstance(project);
+    FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(project);
     String s = text.subSequence(start, end).toString();
-    FindSettings.getInstance().addStringToFind(s);
+    findInProjectSettings.addStringToFind(s);
     findManager.getFindInFileModel().setStringToFind(s);
     findManager.setFindWasPerformed();
     findManager.clearFindingNextUsageInFile();

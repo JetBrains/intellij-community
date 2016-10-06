@@ -444,7 +444,7 @@ public class GenerateMembersUtil {
         paramName = generator.generateUniqueName(paramName);
       }
       generator.addExistingName(paramName);
-      result[i] = factory.createParameter(paramName, substituted, target);
+      result[i] = factory.createParameter(paramName, GenericsUtil.getVariableTypeByExpressionType(substituted), target);
     }
     return result;
   }

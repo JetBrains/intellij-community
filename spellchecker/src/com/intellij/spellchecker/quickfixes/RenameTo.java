@@ -47,11 +47,6 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return SpellCheckerBundle.message("rename.to");
-  }
-
-  @NotNull
   public String getFamilyName() {
     return SpellCheckerBundle.message("rename.to");
   }

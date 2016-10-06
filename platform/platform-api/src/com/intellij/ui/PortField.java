@@ -91,6 +91,8 @@ public class PortField extends JSpinner {
 
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
+      int units = e.getUnitsToScroll();
+      if (units == 0) return;
       final Object source = e.getSource();
       if (source instanceof JSpinner) {
         final JSpinner spinner = (JSpinner)source;
@@ -101,7 +103,7 @@ public class PortField extends JSpinner {
           final Number stepSize = numberModel.getStepSize();
           final Comparable minimum = numberModel.getMinimum();
           final Comparable maximum = numberModel.getMaximum();
-          final Number newValue = calculateNewValue(value, stepSize, minimum, maximum, e.getUnitsToScroll());
+          final Number newValue = calculateNewValue(value, stepSize, minimum, maximum, units);
           if (newValue != null) {
             numberModel.setValue(newValue);
           }

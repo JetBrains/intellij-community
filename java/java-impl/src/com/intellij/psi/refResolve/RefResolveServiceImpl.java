@@ -287,7 +287,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
   public static boolean isSupportedFileType(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) return true;
     if (virtualFile.getFileType() == StdFileTypes.JAVA) return true;
-    if (virtualFile.getFileType() == StdFileTypes.XML && !ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
+    if (virtualFile.getFileType() == StdFileTypes.XML && !ProjectUtil.isProjectOrWorkspaceFile(virtualFile)) return true;
     if ("groovy".equals(virtualFile.getExtension())) return true;
     return false;
   }

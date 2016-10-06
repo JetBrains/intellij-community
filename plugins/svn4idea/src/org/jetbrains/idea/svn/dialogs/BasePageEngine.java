@@ -15,17 +15,17 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
-import com.intellij.openapi.vcs.CollectionSplitter;
+import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class BasePageEngine<T> implements PageEngine<List<T>> {
-  private List<List<T>> mySplitData;
+  @NotNull private final List<List<T>> mySplitData;
   private int myIdx;
 
-  public BasePageEngine(final List<T> data, final int pageSize) {
-    final CollectionSplitter<T> splitter = new CollectionSplitter<>(pageSize);
-    mySplitData = splitter.split(data);
+  public BasePageEngine(@NotNull List<T> data, int pageSize) {
+    mySplitData = JBIterable.from(data).partition(pageSize, false).toList();
     myIdx = 0;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,19 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.ExternalizableScheme;
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-/**
- * @author Yura Cangea
- */
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
   public EditorColorsSchemeImpl(EditorColorsScheme parentScheme) {
     super(parentScheme);
   }
 
   @Override
-  public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
-    if (attributes != getAttributes(key)) {
+  public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
+    if (!attributes.equals(getAttributes(key))) {
       myAttributesMap.put(key, attributes);
     }
   }
@@ -48,20 +46,31 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   }
 
   @Override
-  public TextAttributes getAttributes(TextAttributesKey key) {
-    if (key != null) {
-      TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
-      TextAttributes attributes = getDirectlyDefinedAttributes(key);
-      if (fallbackKey == null) {
-        if (containsValue(attributes)) return attributes;
-      }
-      else {
-        if (containsValue(attributes) && !attributes.isFallbackEnabled()) return attributes;
-        attributes = getFallbackAttributes(fallbackKey);
-        if (containsValue(attributes)) return attributes;
+  public TextAttributes getAttributes(@Nullable TextAttributesKey key) {
+    TextAttributes attributes = key == null ? null : getOwnAttributes(key);
+    return attributes == null ? myParentScheme.getAttributes(key) : attributes;
+  }
+
+  @Nullable
+  private TextAttributes getOwnAttributes(@NotNull TextAttributesKey key) {
+    TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
+    TextAttributes attributes = getDirectlyDefinedAttributes(key);
+    if (fallbackKey == null) {
+      if (containsValue(attributes)) {
+        return attributes;
       }
     }
-    return myParentScheme.getAttributes(key);
+    else {
+      if (containsValue(attributes) && !attributes.isFallbackEnabled()) {
+        return attributes;
+      }
+
+      attributes = getFallbackAttributes(fallbackKey);
+      if (containsValue(attributes)) {
+        return attributes;
+      }
+    }
+    return null;
   }
 
   @Nullable

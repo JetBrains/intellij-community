@@ -125,6 +125,15 @@ public class VcsUserRegistryImpl implements Disposable, VcsUserRegistry {
     }
   }
 
+  public int getUserId(@NotNull VcsUser user) throws IOException {
+    return myPersistentEnumerator.enumerate(user);
+  }
+
+  @Nullable
+  public VcsUser getUserById(Integer userId) throws IOException {
+    return myPersistentEnumerator.valueOf(userId);
+  }
+
   private class MyDescriptor implements KeyDescriptor<VcsUser> {
     @Override
     public void save(@NotNull DataOutput out, VcsUser value) throws IOException {

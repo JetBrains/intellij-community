@@ -54,14 +54,8 @@ public class NegatedEqualityExpressionInspection extends BaseInspection {
 
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("negated.equality.expression.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("negated.equality.expression.quickfix");
     }
 
     @Override

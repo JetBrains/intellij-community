@@ -221,7 +221,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
         ApplicationEx app = ApplicationManagerEx.getApplicationEx();
         if (ApplicationManager.getApplication().isRestartCapable()) {
-          app.invokeLater(() -> ((ApplicationImpl)app).exit(false, true, true, command));
+          app.invokeLater(() -> ((ApplicationImpl)app).exit(true, true, true, command));
         }
         else {
           showPatchInstructions(command);

@@ -53,26 +53,26 @@ class SmartTypeCompletionDfaTest extends LightFixtureCompletionTestCase {
     checkResultByTestName()
   }
 
-  void testSuggestCastedValueAfterCast() { doTest(); }
+  void testSuggestCastedValueAfterCast() { doTest() }
 
   void testSuggestInstanceofedValue() { doTest() }
 
   void testSuggestInstanceofedValueInTernary() { doTest() }
 
-  void testSuggestInstanceofedValueInComplexIf() { doTest(); }
+  void testSuggestInstanceofedValueInComplexIf() { doTest() }
 
-  void testSuggestInstanceofedValueInElseNegated() { doTest(); }
+  void testSuggestInstanceofedValueInElseNegated() { doTest() }
 
-  void testSuggestInstanceofedValueAfterReturn() { doTest(); }
+  void testSuggestInstanceofedValueAfterReturn() { doTest() }
 
-  void testNoInstanceofedValueWhenBasicSuits() { doTest(); }
+  void testNoInstanceofedValueWhenBasicSuits() { doTest() }
 
-  void testNoInstanceofedValueInElse() { doAntiTest(); }
+  void testNoInstanceofedValueInElse() { doAntiTest() }
 
-  void testNoInstanceofedValueInThenNegated() { doAntiTest(); }
+  void testNoInstanceofedValueInThenNegated() { doAntiTest() }
 
-  void testNoInstanceofedValueInElseWithComplexIf() { doAntiTest(); }
+  void testNoInstanceofedValueInElseWithComplexIf() { doAntiTest() }
 
-  void testInstanceofedInsideAnonymous() { doTest(); }
+  void testInstanceofedInsideAnonymous() { doTest() }
 
 }

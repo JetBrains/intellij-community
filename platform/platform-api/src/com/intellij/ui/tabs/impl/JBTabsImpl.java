@@ -245,13 +245,12 @@ public class JBTabsImpl extends JComponent
         }
       }
     });
-    addMouseWheelListener(new MouseWheelListener() {
-      @Override
-      public void mouseWheelMoved(MouseWheelEvent e) {
-        if (mySingleRowLayout.myLastSingRowLayout != null) {
-          mySingleRowLayout.scroll(e.getUnitsToScroll() * mySingleRowLayout.getScrollUnitIncrement());
-          revalidateAndRepaint(false);
-        }
+    addMouseWheelListener(event -> {
+      int units = event.getUnitsToScroll();
+      if (units == 0) return;
+      if (mySingleRowLayout.myLastSingRowLayout != null) {
+        mySingleRowLayout.scroll(units * mySingleRowLayout.getScrollUnitIncrement());
+        revalidateAndRepaint(false);
       }
     });
 
@@ -329,7 +328,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  public void uiSettingsChanged(UISettings source) {
+  public void uiSettingsChanged(UISettings uiSettings) {
     myImage = null;
     for (Map.Entry<TabInfo, TabLabel> entry : myInfo2Label.entrySet()) {
       entry.getKey().revalidate();

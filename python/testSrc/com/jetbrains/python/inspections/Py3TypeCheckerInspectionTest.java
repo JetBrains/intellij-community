@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   }
 
   private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       myFixture.copyDirectoryToProject("typing", "");
       myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
       myFixture.enableInspections(PyTypeCheckerInspection.class);
@@ -40,7 +40,7 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   }
 
   private void doMultiFileTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
       myFixture.copyDirectoryToProject("typing", "");
       myFixture.configureFromTempProjectFile("a.py");
@@ -109,6 +109,16 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20460
+  public void testStringGetItemWithSlice() {
+    doTest();
+  }
+
+  // PY-20460
+  public void testBytesGetItemWithSlice() {
+    doTest();
+  }
+
   // PY-19796
   public void testOrd() {
     doTest();
@@ -121,6 +131,31 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
 
   // PY-16055
   public void testFunctionReturnTypePy3() {
+    doTest();
+  }
+
+  // PY-20770
+  public void testAsyncForOverAsyncGenerator() {
+    doTest();
+  }
+
+  // PY-20770
+  public void testForOverAsyncGenerator() {
+    doTest();
+  }
+
+  // PY-20770
+  public void testAsyncComprehensionsOverAsyncGenerator() {
+    doTest();
+  }
+
+  // PY-20770
+  public void testAsyncComprehensionsOverGenerator() {
+    doTest();
+  }
+
+  // PY-20770
+  public void testComprehensionsOverAsyncGenerator() {
     doTest();
   }
 }

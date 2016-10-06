@@ -123,6 +123,11 @@ public class TestVcsLogProvider implements VcsLogProvider {
     return new LogDataImpl(myRefs, Collections.<VcsUser>emptySet());
   }
 
+  @Override
+  public void readAllFullDetails(@NotNull VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer) throws VcsException {
+
+  }
+
   private void assertRoot(@NotNull VirtualFile root) {
     assertEquals("Requested data for unknown root", myRoot, root);
   }

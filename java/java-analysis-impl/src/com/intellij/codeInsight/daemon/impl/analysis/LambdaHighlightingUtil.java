@@ -113,11 +113,8 @@ public class LambdaHighlightingUtil {
     final PsiClass aClass = resolveResult.getElement();
     if (aClass != null) {
       if (aClass instanceof PsiTypeParameter) return null; //should be logged as cyclic inference
-      final List<HierarchicalMethodSignature> signatures = LambdaUtil.findFunctionCandidates(aClass);
-      if (signatures != null && signatures.size() == 1) {
-        final MethodSignature functionalMethod = signatures.get(0);
-        if (functionalMethod.getTypeParameters().length > 0) return "Target method is generic";
-      }
+      MethodSignature functionalMethod = LambdaUtil.getFunction(aClass);
+      if (functionalMethod != null && functionalMethod.getTypeParameters().length > 0) return "Target method is generic";
       if (checkReturnTypeApplicable(resolveResult, aClass)) {
         return "No instance of type " + functionalInterfaceType.getPresentableText() + " exists so that lambda expression can be type-checked";
       }

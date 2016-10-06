@@ -12,6 +12,6 @@ class T {
                 break; /* inline */
             }
         }
-        ret<caret>urn n;
+        ret<caret>urn /* return 1 */ n /* return 2 */;
     }
 }

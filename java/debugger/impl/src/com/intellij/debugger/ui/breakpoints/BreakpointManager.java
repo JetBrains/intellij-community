@@ -47,7 +47,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiField;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -494,12 +493,8 @@ public class BreakpointManager {
 
   @NotNull
   public List<Breakpoint> getBreakpoints() {
-    return ApplicationManager.getApplication().runReadAction((Computable<List<Breakpoint>>)() -> ContainerUtil.mapNotNull(getXBreakpointManager().getAllBreakpoints(), new Function<XBreakpoint<?>, Breakpoint>() {
-      @Override
-      public Breakpoint fun(XBreakpoint<?> xBreakpoint) {
-        return getJavaBreakpoint(xBreakpoint);
-      }
-    }));
+    return ApplicationManager.getApplication().runReadAction((Computable<List<Breakpoint>>)() ->
+      ContainerUtil.mapNotNull(getXBreakpointManager().getAllBreakpoints(), BreakpointManager::getJavaBreakpoint));
   }
 
   @Nullable

@@ -63,9 +63,11 @@ public class TestPackage extends TestObject {
       protected void search() {
         myClasses.clear();
         SourceScope sourceScope = getSourceScope();
-        if (sourceScope != null && !ReadAction.compute(() -> JUnitUtil.isJUnit5(sourceScope.getGlobalSearchScope(), myProject))) {
+        if (sourceScope != null && !ReadAction.compute(() -> JUnitUtil.isJUnit5(sourceScope.getLibrariesScope(), myProject))) {
           try {
-            ConfigurationUtil.findAllTestClasses(getClassFilter(data), myClasses);
+            final TestClassFilter classFilter = getClassFilter(data);
+            LOG.assertTrue(classFilter.getBase() != null);
+            ConfigurationUtil.findAllTestClasses(classFilter, myClasses);
           }
           catch (CantRunException ignored) {}
         }

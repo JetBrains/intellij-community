@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,9 +70,9 @@ public class FileTemplatesLoader {
 
   protected FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager, @Nullable Project project) {
     myTypeManager = typeManager;
-    File configDir = project == null
+    File configDir = project == null || project.isDefault()
                      ? new File(PathManager.getConfigPath(), TEMPLATES_DIR)
-                     : new File(project.getBasePath(), Project.DIRECTORY_STORE_FOLDER + "/" + TEMPLATES_DIR);
+                     : new File(ProjectKt.getStateStore(project).getDirectoryStorePath(true) + "/" + TEMPLATES_DIR);
     myDefaultTemplatesManager = new FTManager(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, configDir);
     myInternalTemplatesManager = new FTManager(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, new File(configDir, INTERNAL_DIR), true);
     myPatternsManager = new FTManager(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, new File(configDir, INCLUDES_DIR));

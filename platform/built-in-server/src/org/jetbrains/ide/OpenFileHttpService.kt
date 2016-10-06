@@ -38,10 +38,7 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager
 import org.jetbrains.builtInWebServer.checkAccess
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.catchError
-import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.*
 import org.jetbrains.io.orInSafeMode
 import org.jetbrains.io.send
 import java.nio.file.Path
@@ -50,7 +47,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.regex.Pattern
 import javax.swing.SwingUtilities
 
-private val NOT_FOUND = Promise.createError("not found")
+private val NOT_FOUND = createError("not found")
 private val LINE_AND_COLUMN = Pattern.compile("^(.*?)(?::(\\d+))?(?::(\\d+))?$")
 
 /**

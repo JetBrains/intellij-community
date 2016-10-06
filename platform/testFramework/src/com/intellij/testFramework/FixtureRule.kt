@@ -20,7 +20,6 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -34,6 +33,7 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.project.stateStore
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.systemIndependentPath
 import org.junit.rules.ExternalResource
@@ -214,7 +214,7 @@ class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
  * So must be a strong reason to explicitly use this method.
  */
 inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
-  val store = stateStore as IProjectStore
+  val store = stateStore
   val isModeDisabled = store.isOptimiseTestLoadSpeed
   if (isModeDisabled) {
     store.isOptimiseTestLoadSpeed = false

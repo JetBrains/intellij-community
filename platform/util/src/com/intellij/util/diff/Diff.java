@@ -202,7 +202,7 @@ public class Diff {
 
   /**
    * Tries to translate given line that pointed to the text before change to the line that points to the same text after the change.
-   * 
+   *
    * @param change    target change
    * @param line      target line before change
    * @return          translated line if the processing is ok; negative value otherwise
@@ -228,7 +228,7 @@ public class Diff {
 
     return result;
   }
-  
+
   public static class Change {
     // todo remove. Return lists instead.
     /**

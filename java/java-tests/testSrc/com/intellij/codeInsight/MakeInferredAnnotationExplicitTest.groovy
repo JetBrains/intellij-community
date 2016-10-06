@@ -73,7 +73,7 @@ class Foo {
 
   @Override
   protected void tearDown() throws Exception {
-    NullableNotNullManager.getInstance(project).notNulls = NullableNotNullManager.DEFAULT_NOT_NULLS
+    NullableNotNullManager.getInstance(project).notNulls = NullableNotNullManager.getInstance(project).predefinedNotNulls as String[]
     NullableNotNullManager.getInstance(project).defaultNotNull = AnnotationUtil.NOT_NULL
 
     super.tearDown()

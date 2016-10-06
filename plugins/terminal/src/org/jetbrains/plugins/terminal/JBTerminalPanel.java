@@ -44,15 +44,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
-import java.io.IOException;
 import java.util.List;
 
 public class JBTerminalPanel extends TerminalPanel implements FocusListener, TerminalSettingsListener, Disposable,
@@ -69,6 +66,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ActivateStructureToolWindow",
     "ActivateHierarchyToolWindow",
     "ActivateVersionControlToolWindow",
+    "HideAllWindows",
 
     "ShowBookmarks",
     "GotoBookmark0",
@@ -239,11 +237,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   @Override
   protected boolean isRetina() {
     return UIUtil.isRetina();
-  }
-
-  @Override
-  protected String getClipboardContent() throws IOException, UnsupportedFlavorException {
-    return CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
   }
 
   @Override

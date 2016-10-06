@@ -16,7 +16,9 @@
 package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.JBProtocolCommand;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 
@@ -34,7 +36,8 @@ public class JBProtocolOpenProjectCommand extends JBProtocolCommand {
   @Override
   public void perform(String target, Map<String, String> parameters) {
     String path = URLDecoder.decode(target);
-    path = StringUtil.trimStart(path, LocalFileSystem.PROTOCOL_PREFIX);
-    ProjectUtil.openProject(path, null, true);
+    String projectPath = StringUtil.trimStart(path, LocalFileSystem.PROTOCOL_PREFIX);
+    ApplicationManager.getApplication().invokeLater(
+      () -> ProjectUtil.openProject(projectPath, null, true), ModalityState.NON_MODAL);
   }
 }

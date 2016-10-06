@@ -439,7 +439,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
           if (contentEntryFile.equals(file)) {
             throw new Exception(ProjectBundle.message("module.paths.add.content.already.exists.error", file.getPresentableUrl()));
           }
-          if (VfsUtilCore.isAncestor(contentEntryFile, file, true)) {
+          if (VfsUtilCore.isAncestor(contentEntryFile, file, true) && !ContentEntryEditor.isExcludedOrUnderExcludedDirectory(myProject, contentEntry, file)) {
             // intersection not allowed
             throw new Exception(
               ProjectBundle.message("module.paths.add.content.intersect.error", file.getPresentableUrl(),

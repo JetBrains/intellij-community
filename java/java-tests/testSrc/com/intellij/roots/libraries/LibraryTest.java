@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,7 +168,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     LibraryTable table = getLibraryTable();
     Library library = new WriteAction<Library>() {
       @Override
-      protected void run(Result<Library> result) throws Throwable {
+      protected void run(@NotNull Result<Library> result) throws Throwable {
         Library res = table.createLibrary("native");
         result.setResult(res);
       }

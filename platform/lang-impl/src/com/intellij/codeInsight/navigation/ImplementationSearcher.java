@@ -19,6 +19,7 @@ package com.intellij.codeInsight.navigation;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -68,7 +69,7 @@ public class ImplementationSearcher {
     if (elements.length > 0) {
       if (!includeSelfAlways) return filterElements(element, elements, offset);
       final PsiElement[] all;
-      if (element.getTextRange() != null) {
+      if (ReadAction.compute(() -> element.getTextRange()) != null) {
         all = new PsiElement[elements.length + 1];
         all[0] = element;
         System.arraycopy(elements, 0, all, 1, elements.length);

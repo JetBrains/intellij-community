@@ -96,15 +96,8 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("auto.closeable.resource.quickfix");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("auto.closeable.resource.quickfix");
     }
 
     @Override

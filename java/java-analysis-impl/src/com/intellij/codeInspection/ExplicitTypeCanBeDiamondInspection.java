@@ -84,14 +84,8 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaBatchLocalInspec
   private static class ReplaceWithDiamondFix implements LocalQuickFix, HighPriorityAction {
     @NotNull
     @Override
-    public String getName() {
-      return "Replace with <>";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Replace with <>";
     }
 
     @Override

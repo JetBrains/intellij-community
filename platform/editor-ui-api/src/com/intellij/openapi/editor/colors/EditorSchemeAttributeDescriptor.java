@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.editor.colors;
+
+import org.jetbrains.annotations.Nullable;
 
 public interface EditorSchemeAttributeDescriptor {
   String getGroup();
@@ -23,7 +24,8 @@ public interface EditorSchemeAttributeDescriptor {
 
   EditorColorsScheme getScheme();
 
-  void apply(EditorColorsScheme scheme);
+  default void apply(@Nullable EditorColorsScheme scheme) {
+  }
 
   boolean isModified();
 }

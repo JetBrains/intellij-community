@@ -73,7 +73,6 @@ public class JBScrollPane extends JScrollPane {
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
   private int myViewportBorderWidth = -1;
-  private boolean myHasOverlayScrollbars;
   private volatile boolean myBackgroundRequested; // avoid cyclic references
 
   public JBScrollPane(int viewportWidth) {
@@ -149,7 +148,7 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private void init(boolean setupCorners) {
-    setLayout(Registry.is("ide.scroll.new.layout") ? new Layout() : new ScrollPaneLayout());
+    setLayout(new Layout());
 
     if (setupCorners) {
       setupCorners();
@@ -201,11 +200,8 @@ public class JBScrollPane extends JScrollPane {
 
   @Override
   public boolean isOptimizedDrawingEnabled() {
-    if (getLayout() instanceof Layout) {
-      return isOptimizedDrawingEnabledFor(getVerticalScrollBar()) &&
-             isOptimizedDrawingEnabledFor(getHorizontalScrollBar());
-    }
-    return !myHasOverlayScrollbars;
+    return isOptimizedDrawingEnabledFor(getVerticalScrollBar()) &&
+           isOptimizedDrawingEnabledFor(getHorizontalScrollBar());
   }
 
   /**
@@ -242,112 +238,10 @@ public class JBScrollPane extends JScrollPane {
     return new JBViewport();
   }
 
-  @SuppressWarnings("deprecation")
-  @Override
-  public void layout() {
-    LayoutManager layout = getLayout();
-    ScrollPaneLayout scrollLayout = layout instanceof ScrollPaneLayout ? (ScrollPaneLayout)layout : null;
-
-    // Now we let JScrollPane layout everything as necessary
-    super.layout();
-
-    if (layout instanceof Layout) return;
-
-    if (scrollLayout != null) {
-      // Now it's time to jump in and expand the viewport so it fits the whole area
-      // (taking into consideration corners, headers and other stuff).
-      myHasOverlayScrollbars = relayoutScrollbars(
-        this, scrollLayout,
-        myHasOverlayScrollbars // If last time we did relayouting, we should restore it back.
-      );
-    }
-    else {
-      myHasOverlayScrollbars = false;
-    }
-  }
-
-  private boolean relayoutScrollbars(@NotNull JComponent container, @NotNull ScrollPaneLayout layout, boolean forceRelayout) {
-    JViewport viewport = layout.getViewport();
-    if (viewport == null) return false;
-
-    JScrollBar vsb = layout.getVerticalScrollBar();
-    JScrollBar hsb = layout.getHorizontalScrollBar();
-    JViewport colHead = layout.getColumnHeader();
-    JViewport rowHead = layout.getRowHeader();
-
-    Rectangle viewportBounds = viewport.getBounds();
-
-    boolean extendViewportUnderVScrollbar = vsb != null && shouldExtendViewportUnderScrollbar(vsb);
-    boolean extendViewportUnderHScrollbar = hsb != null && shouldExtendViewportUnderScrollbar(hsb);
-    boolean hasOverlayScrollbars = extendViewportUnderVScrollbar || extendViewportUnderHScrollbar;
-
-    if (!hasOverlayScrollbars && !forceRelayout) return false;
-
-    container.setComponentZOrder(viewport, container.getComponentCount() - 1);
-    if (vsb != null) container.setComponentZOrder(vsb, 0);
-    if (hsb != null) container.setComponentZOrder(hsb, 0);
-
-    if (extendViewportUnderVScrollbar) {
-      int x2 = Math.max(vsb.getX() + vsb.getWidth(), viewportBounds.x + viewportBounds.width);
-      viewportBounds.x = Math.min(viewportBounds.x, vsb.getX());
-      viewportBounds.width = x2 - viewportBounds.x;
-    }
-    if (extendViewportUnderHScrollbar) {
-      int y2 = Math.max(hsb.getY() + hsb.getHeight(), viewportBounds.y + viewportBounds.height);
-      viewportBounds.y = Math.min(viewportBounds.y, hsb.getY());
-      viewportBounds.height = y2 - viewportBounds.y;
-    }
-
-    if (extendViewportUnderVScrollbar) {
-      if (hsb != null) {
-        Rectangle scrollbarBounds = hsb.getBounds();
-        scrollbarBounds.width = viewportBounds.x + viewportBounds.width - scrollbarBounds.x;
-        hsb.setBounds(scrollbarBounds);
-      }
-      if (colHead != null) {
-        Rectangle headerBounds = colHead.getBounds();
-        headerBounds.width = viewportBounds.width;
-        colHead.setBounds(headerBounds);
-      }
-      hideFromView(layout.getCorner(UPPER_RIGHT_CORNER));
-      hideFromView(layout.getCorner(LOWER_RIGHT_CORNER));
-    }
-    if (extendViewportUnderHScrollbar) {
-      if (vsb != null) {
-        Rectangle scrollbarBounds = vsb.getBounds();
-        scrollbarBounds.height = viewportBounds.y + viewportBounds.height - scrollbarBounds.y;
-        vsb.setBounds(scrollbarBounds);
-      }
-      if (rowHead != null) {
-        Rectangle headerBounds = rowHead.getBounds();
-        headerBounds.height = viewportBounds.height;
-        rowHead.setBounds(headerBounds);
-      }
-
-      hideFromView(layout.getCorner(LOWER_LEFT_CORNER));
-      hideFromView(layout.getCorner(LOWER_RIGHT_CORNER));
-    }
-
-    viewport.setBounds(viewportBounds);
-
-    return hasOverlayScrollbars;
-  }
-
-  private boolean shouldExtendViewportUnderScrollbar(@Nullable JScrollBar scrollbar) {
-    if (scrollbar == null || !scrollbar.isVisible()) return false;
-    return isOverlaidScrollbar(scrollbar);
-  }
-
+  @Deprecated
   protected boolean isOverlaidScrollbar(@Nullable JScrollBar scrollbar) {
-    if (!ButtonlessScrollBarUI.isMacOverlayScrollbarSupported()) return false;
-
     ScrollBarUI vsbUI = scrollbar == null ? null : scrollbar.getUI();
     return vsbUI instanceof ButtonlessScrollBarUI && !((ButtonlessScrollBarUI)vsbUI).alwaysShowTrack();
-  }
-
-  private static void hideFromView(Component component) {
-    if (component == null) return;
-    component.setBounds(-10, -10, 1, 1);
   }
 
   private class MyScrollBar extends ScrollBar implements IdeGlassPane.TopComponent {
@@ -433,27 +327,6 @@ public class JBScrollPane extends JScrollPane {
     protected void paintComponent(Graphics g) {
       g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
-
-      if (SystemInfo.isMac || !Registry.is("ide.scroll.track.border.paint")) return;
-      g.setColor(getForeground());
-
-      int x2 = getWidth() - 1;
-      int y2 = getHeight() - 1;
-
-      if (myPos == UPPER_LEFT_CORNER || myPos == UPPER_RIGHT_CORNER) {
-        g.drawLine(0, y2, x2, y2);
-      }
-      if (myPos == LOWER_LEFT_CORNER || myPos == LOWER_RIGHT_CORNER) {
-        g.drawLine(0, 0, x2, 0);
-      }
-
-      if (myPos == UPPER_LEFT_CORNER || myPos == LOWER_LEFT_CORNER) {
-        g.drawLine(x2, 0, x2, y2);
-      }
-
-      if (myPos == UPPER_RIGHT_CORNER || myPos == LOWER_RIGHT_CORNER) {
-        g.drawLine(0, 0, 0, y2);
-      }
     }
   }
 

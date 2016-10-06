@@ -31,14 +31,17 @@ public interface JpsJavaCompilerConfiguration extends JpsElement {
   boolean isAddNotNullAssertions();
   void setAddNotNullAssertions(boolean addNotNullAssertions);
 
-  String getNotNullAnnotation();
-  void setNotNullAnnotation(String notNullAnnotation);
+  List<String> getNotNullAnnotations();
+  void setNotNullAnnotations(List<String> notNullAnnotations);
 
   boolean isClearOutputDirectoryOnRebuild();
   void setClearOutputDirectoryOnRebuild(boolean clearOutputDirectoryOnRebuild);
 
   @NotNull
   JpsCompilerExcludes getCompilerExcludes();
+
+  @NotNull
+  JpsCompilerExcludes getValidationExcludes();
 
   @NotNull
   ProcessorConfigProfile getDefaultAnnotationProcessingProfile();

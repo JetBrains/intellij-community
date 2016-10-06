@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -28,9 +29,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,76 +38,36 @@ import java.util.List;
 public class Restarter {
   private Restarter() { }
 
-  private static int getRestartCode() {
-    return SystemProperties.getIntProperty("jb.restart.code", 0);
-  }
-
   public static boolean isSupported() {
-    if (getRestartCode() != 0) {
-      return true;
-    }
     if (SystemInfo.isWindows) {
       return JnaLoader.isLoaded() && new File(PathManager.getBinPath(), "restarter.exe").exists();
     }
     if (SystemInfo.isMac) {
-      return PathManager.getHomePath().contains(".app");
+      return PathManager.getHomePath().contains(".app") && new File(PathManager.getBinPath(), "restarter").canExecute();
     }
+    if (SystemInfo.isUnix) {
+      return CreateDesktopEntryAction.getLauncherScript() != null && new File(PathManager.getBinPath(), "restart.py").canExecute();
+    }
+
     return false;
   }
 
-  public static int scheduleRestart(@NotNull String... beforeRestart) throws IOException {
-    try {
-      int restartCode = getRestartCode();
-      if (restartCode != 0) {
-        runCommand(beforeRestart);
-        return restartCode;
-      }
-      else if (SystemInfo.isWindows) {
-        restartOnWindows(beforeRestart);
-        return 0;
-      }
-      else if (SystemInfo.isMac) {
-        restartOnMac(beforeRestart);
-        return 0;
-      }
+  public static void scheduleRestart(@NotNull String... beforeRestart) throws IOException {
+    if (SystemInfo.isWindows) {
+      restartOnWindows(beforeRestart);
     }
-    catch (Throwable t) {
-      throw new IOException("Cannot restart application: " + t.getMessage(), t);
+    else if (SystemInfo.isMac) {
+      restartOnMac(beforeRestart);
     }
-
-    runCommand(beforeRestart);
-    throw new IOException("Cannot restart application: not supported.");
-  }
-
-  private static void runCommand(String... beforeRestart) throws IOException {
-    if (beforeRestart.length == 0) return;
-
-    File restartDir = new File(getRestarterDir());
-    String systemPath = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/system/restart").getPath();
-    if (! systemPath.equals(restartDir.getPath())){
-      throw new IOException("idea.system.path was changed. Restart is not supported.");
+    else if (SystemInfo.isUnix) {
+      restartOnUnix(beforeRestart);
     }
-    if (!FileUtilRt.createDirectory(restartDir)) {
-      throw new IOException("Cannot create dir: " + restartDir);
-    }
-
-    File restarter = new File(restartDir, "restarter.sh");
-    try (BufferedWriter output = new BufferedWriter(new FileWriter(restarter))) {
-      output.write("#!/bin/sh\n");
-      for (int i = 0; i < beforeRestart.length; i++) {
-        output.write(beforeRestart[i]);
-        if (i <= beforeRestart.length - 2) output.write(' ');
-        if (i >= beforeRestart.length - 2) output.write('"');
-      }
-      output.write('\n');
-    }
-
-    if (!restarter.setExecutable(true, true)) {
-      throw new IOException("Cannot make file executable: " + restarter);
+    else {
+      throw new IOException("Cannot restart application: not supported.");
     }
   }
 
-  private static void restartOnWindows(@NotNull String... beforeRestart) throws IOException {
+  private static void restartOnWindows(String... beforeRestart) throws IOException {
     Kernel32 kernel32 = (Kernel32)Native.loadLibrary("kernel32", Kernel32.class);
     Shell32 shell32 = (Shell32)Native.loadLibrary("shell32", Shell32.class);
 
@@ -144,18 +103,6 @@ public class Restarter {
     TimeoutUtil.sleep(500);
   }
 
-  private static void restartOnMac(@NotNull String... beforeRestart) throws IOException {
-    String homePath = PathManager.getHomePath();
-    int p = homePath.indexOf(".app");
-    if (p < 0) throw new IOException("Application bundle not found: " + homePath);
-
-    String bundlePath = homePath.substring(0, p + 4);
-    doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), commands -> {
-      Collections.addAll(commands, bundlePath);
-      Collections.addAll(commands, beforeRestart);
-    });
-  }
-
   private static String[] getRestartArgv(String[] argv) {
     int countArgs = argv.length;
     for (int i = argv.length-1; i >=0; i--) {
@@ -174,6 +121,26 @@ public class Restarter {
     return restartArg;
   }
 
+  private static void restartOnMac(String... beforeRestart) throws IOException {
+    String homePath = PathManager.getHomePath();
+    int p = homePath.indexOf(".app");
+    if (p < 0) throw new IOException("Application bundle not found: " + homePath);
+    String bundlePath = homePath.substring(0, p + 4);
+    doScheduleRestart(new File(PathManager.getBinPath(), "restarter"), commands -> {
+      commands.add(bundlePath);
+      Collections.addAll(commands, beforeRestart);
+    });
+  }
+
+  private static void restartOnUnix(String... beforeRestart) throws IOException {
+    String launcherScript = CreateDesktopEntryAction.getLauncherScript();
+    if (launcherScript == null) throw new IOException("Launcher script not found in " + PathManager.getBinPath());
+    doScheduleRestart(new File(PathManager.getBinPath(), "restart.py"), commands -> {
+      commands.add(launcherScript);
+      Collections.addAll(commands, beforeRestart);
+    });
+  }
+
   private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {
     List<String> commands = new ArrayList<>();
     commands.add(createTempExecutable(restarterFile).getPath());
@@ -181,32 +148,33 @@ public class Restarter {
     Runtime.getRuntime().exec(ArrayUtil.toStringArray(commands));
   }
 
-  public static String getRestarterDir() {
-    return PathManager.getSystemPath() + "/restart";
-  }
+  @NotNull
+  public static File createTempExecutable(@NotNull File executable) throws IOException {
+    File tempDir = new File(PathManager.getSystemPath(), "restart");
+    if (!FileUtilRt.createDirectory(tempDir)) {
+      throw new IOException("Cannot create directory: " + tempDir);
+    }
 
-  public static File createTempExecutable(File executable) throws IOException {
-    File executableDir = new File(getRestarterDir());
-    if (!FileUtilRt.createDirectory(executableDir)) throw new IOException("Cannot create dir: " + executableDir);
-    File copy = new File(executableDir.getPath() + "/" + executable.getName());
+    File copy = new File(tempDir, executable.getName());
     if (!FileUtilRt.ensureCanCreateFile(copy) || (copy.exists() && !copy.delete())) {
-       String ext = FileUtilRt.getExtension(executable.getName());
-       copy = FileUtilRt.createTempFile(executableDir, FileUtilRt.getNameWithoutExtension(copy.getName()),
-                                        StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext),
-                                        true, false);
+      String prefix = FileUtilRt.getNameWithoutExtension(copy.getName());
+      String ext = FileUtilRt.getExtension(executable.getName());
+      String suffix = StringUtil.isEmptyOrSpaces(ext) ? ".tmp" : ("." + ext);
+      copy = FileUtilRt.createTempFile(tempDir, prefix, suffix, true, false);
     }
     FileUtilRt.copy(executable, copy);
-    if (!copy.setExecutable(executable.canExecute())) throw new IOException("Cannot make file executable: " + copy);
+
+    if (executable.canExecute() && !copy.setExecutable(true)) {
+      throw new IOException("Cannot make file executable: " + copy);
+    }
+
     return copy;
   }
 
   private interface Kernel32 extends StdCallLibrary {
     int GetCurrentProcessId();
-
     WString GetCommandLineW();
-
     Pointer LocalFree(Pointer pointer);
-
     WinDef.DWORD GetModuleFileNameW(WinDef.HMODULE hModule, char[] lpFilename, WinDef.DWORD nSize);
   }
 

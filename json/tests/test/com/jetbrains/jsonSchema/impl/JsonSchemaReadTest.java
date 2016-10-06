@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -64,6 +65,27 @@ public class JsonSchemaReadTest {
     final JsonSchemaReader reader = new JsonSchemaReader(null);
     final JsonSchemaObject read = reader.read(new FileReader(file), null);
     Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
+  }
+
+  @Test
+  public void testArrayItemsSchema() throws Exception {
+    final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/arrayItemsSchema.json");
+    Assert.assertTrue(file.exists());
+    final JsonSchemaReader reader = new JsonSchemaReader(null);
+    final JsonSchemaObject read = reader.read(new FileReader(file), null);
+    final Map<String, JsonSchemaObject> properties = read.getProperties();
+    Assert.assertEquals(1, properties.size());
+    final JsonSchemaObject object = properties.get("color-hex-case");
+    final List<JsonSchemaObject> oneOf = object.getOneOf();
+    Assert.assertEquals(2, oneOf.size());
+    final JsonSchemaObject second = oneOf.get(1);
+    final List<JsonSchemaObject> list = second.getItemsSchemaList();
+    Assert.assertEquals(2, list.size());
+    final JsonSchemaObject firstItem = list.get(0);
+    final List<Object> anEnum = firstItem.getEnum();
+    Assert.assertEquals(2, anEnum.size());
+    Assert.assertTrue(anEnum.contains("\"lower\""));
+    Assert.assertTrue(anEnum.contains("\"upper\""));
   }
 
   @Test

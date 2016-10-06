@@ -74,6 +74,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
           war.setWebResources(mapWebResources(model.getWebResources()));
           war.setClasspath(model.getClasspath());
           war.setManifestContent(model.getManifestContent());
+          war.setArchivePath(model.getArchivePath());
           return war;
         }
       });
@@ -90,6 +91,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
           ear.setManifestContent(model.getManifestContent());
           ear.setDeploymentDescriptor(model.getDeploymentDescriptor());
           ear.setResources(mapEarResources(model.getResources()));
+          ear.setArchivePath(model.getArchivePath());
           return ear;
         }
       });

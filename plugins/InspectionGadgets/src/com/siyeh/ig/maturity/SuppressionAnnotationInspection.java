@@ -73,12 +73,6 @@ public class SuppressionAnnotationInspection extends SuppressionAnnotationInspec
 
     @NotNull
     @Override
-    public String getName() {
-      return getFamilyName();
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
       return "Remove //" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME;
     }

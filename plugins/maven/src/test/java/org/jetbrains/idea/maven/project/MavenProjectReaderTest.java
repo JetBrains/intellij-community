@@ -1581,7 +1581,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
   private MavenProjectReaderResult readProject(VirtualFile file,
                                                MavenProjectReaderProjectLocator locator,
                                                String... profiles) {
-    MavenProjectReaderResult result = new MavenProjectReader().readProject(getMavenGeneralSettings(),
+    MavenProjectReaderResult result = new MavenProjectReader(myProject).readProject(getMavenGeneralSettings(),
                                                                            file,
                                                                            new MavenExplicitProfiles(Arrays.asList(profiles)),
                                                                            locator);

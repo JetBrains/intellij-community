@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,7 @@ public class RemoveInitializerFix implements LocalQuickFix {
 
   @Override
   @NotNull
-  public String getName() {
+  public String getFamilyName() {
     return InspectionsBundle.message("inspection.unused.assignment.remove.quickfix");
   }
 
@@ -61,13 +62,12 @@ public class RemoveInitializerFix implements LocalQuickFix {
     RemoveUnusedVariableUtil.RemoveMode res = RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
     if (hasSideEffects) {
       hasSideEffects = PsiUtil.isStatement(psiInitializer);
+      PsiTypeElement typeElement = variable.getTypeElement();
       res = RemoveUnusedVariableFix.showSideEffectsWarning(sideEffects, variable,
                                                            FileEditorManager.getInstance(project).getSelectedTextEditor(),
                                                            hasSideEffects, sideEffects.get(0).getText(),
-                                                           variable.getTypeElement().getText() +
-                                                           " " +
-                                                           variable.getName() +
-                                                           ";<br>" +
+                                                           (typeElement != null ? typeElement.getText() + " " + variable.getName() + ";<br>"
+                                                                                : "") +
                                                            PsiExpressionTrimRenderer.render(psiInitializer)
       );
     }
@@ -90,11 +90,5 @@ public class RemoveInitializerFix implements LocalQuickFix {
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
-  }
-  
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return getName();
   }
 }

@@ -86,7 +86,7 @@ public class JUnit4TestListener extends RunListener {
     dumpQueue(true);
     for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
       Object parent = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
-      myPrintStream.print("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName((String)parent)) + "\']");
+      myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName((String)parent)) + "\']");
     }
     myStartedSuites.clear();
   }
@@ -268,7 +268,7 @@ public class JUnit4TestListener extends RunListener {
       return;
     }
 
-    final Map attrs = new HashMap();
+    final Map attrs = new LinkedHashMap();
     attrs.put("name", methodName);
     final long duration = currentTime() - myCurrentTestStart;
     if (duration > 0) {

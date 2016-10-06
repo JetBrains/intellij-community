@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class TypeSpec {
     if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType())) {
       return parseBuiltInType(builder);
     }
-    if (builder.getTokenType() == GroovyTokenTypes.mIDENT) {
+    if (TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(builder.getTokenType())) {
       return parseClassType(builder, isUpper, expressionPossible);
     }
     return ReferenceElement.ReferenceElementResult.FAIL;

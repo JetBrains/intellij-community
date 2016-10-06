@@ -66,7 +66,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.docking.DockContainer;
@@ -74,7 +73,6 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
@@ -991,30 +989,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                        composite == null ? EMPTY_PROVIDER_ARRAY : composite.getProviders());
   }
 
-  /**
-   * Commit all documents and execute the runnable on EDT.
-   * When called not on EDT, performs commit asynchronously to avoid UI freezes:
-   * {@link #restoreEditorState} requires a committed document (to apply folding info in PsiAwareTextEditorProvider#setStateImpl).
-   */
-  private void commitAndInvoke(@NotNull Runnable runnable) {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      runnable.run();
-    } else {
-      Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-        try {
-          runnable.run();
-        } finally {
-          semaphore.up();
-        }
-      });
-      //noinspection StatementWithEmptyBody
-      while (!semaphore.waitFor(10) && !myProject.isDisposed());
-    }
-  }
-
   @Nullable
   private EditorWithProviderComposite createComposite(@NotNull VirtualFile file,
                                                       @NotNull FileEditor[] editors, @NotNull FileEditorProvider[] providers) {
@@ -1038,9 +1012,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   private static void clearWindowIfNeeded(@NotNull EditorWindow window) {
     if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE || UISettings.getInstance().PRESENTATION_MODE) {
-      for (EditorWithProviderComposite composite : window.getEditors()) {
-        Disposer.dispose(composite);
-      }
+      window.clear();
     }
   }
 
@@ -1508,8 +1480,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     /*
       Extends/cuts number of opened tabs. Also updates location of tabs.
      */
-    final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
-    UISettings.getInstance().addUISettingsListener(myUISettingsListener, myProject);
+    connection.subscribe(UISettingsListener.TOPIC, new MyUISettingsListener());
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       @Override
@@ -1925,16 +1896,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
    */
   private final class MyUISettingsListener implements UISettingsListener {
     @Override
-    public void uiSettingsChanged(final UISettings source) {
+    public void uiSettingsChanged(final UISettings uiSettings) {
       assertDispatchThread();
-      setTabsMode(source.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE && !UISettings.getInstance().PRESENTATION_MODE);
+      setTabsMode(uiSettings.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE && !uiSettings.PRESENTATION_MODE);
 
       for (EditorsSplitters each : getAllSplitters()) {
-        each.setTabsPlacement(source.EDITOR_TAB_PLACEMENT);
-        each.trimToSize(source.EDITOR_TAB_LIMIT);
+        each.setTabsPlacement(uiSettings.EDITOR_TAB_PLACEMENT);
+        each.trimToSize(uiSettings.EDITOR_TAB_LIMIT);
 
         // Tab layout policy
-        if (source.SCROLL_TAB_LAYOUT_IN_EDITOR) {
+        if (uiSettings.SCROLL_TAB_LAYOUT_IN_EDITOR) {
           each.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         }
         else {

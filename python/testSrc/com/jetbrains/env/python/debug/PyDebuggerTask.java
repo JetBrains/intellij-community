@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.ServerSocket;
 import java.util.concurrent.Semaphore;
 
@@ -167,7 +168,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     myPausedSemaphore = new Semaphore(0);
     
 
-    mySession.addSessionListener(new XDebugSessionAdapter() {
+    mySession.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionPaused() {
         if (myPausedSemaphore != null) {
@@ -193,6 +194,21 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
   public void setMultiprocessDebug(boolean multiprocessDebug) {
     myMultiprocessDebug = multiprocessDebug;
+  }
+
+  protected void waitForAllThreadsPause() throws InterruptedException, InvocationTargetException {
+    waitForPause();
+    Assert.assertTrue(String.format("All threads didn't stop within timeout\n" +
+                                    "Output: %s", output()), waitForAllThreads());
+    XDebuggerTestUtil.waitForSwing();
+  }
+
+  protected boolean waitForAllThreads() throws InterruptedException {
+    long until = System.currentTimeMillis() + NORMAL_TIMEOUT;
+    while (System.currentTimeMillis() < until && getRunningThread() != null) {
+      Thread.sleep(1000);
+    }
+    return getRunningThread() == null;
   }
 
   @Override

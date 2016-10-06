@@ -40,14 +40,8 @@ public class DownloadResourceFix implements LocalQuickFix {
   }
 
   @NotNull
-  public String getName() {
-    return "Download External Resource";
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return "Download External Resource";
   }
 
   @Override

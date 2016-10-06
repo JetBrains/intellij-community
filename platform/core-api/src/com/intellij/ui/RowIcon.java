@@ -28,6 +28,8 @@ import java.util.List;
 
 public class RowIcon extends AbstractSizeAdjustingIcon {
   private final Alignment myAlignment;
+  // Extra scale factor, not counting the global UI scale,
+  // thus the effective icon scale is myScale * JBUI.scale(1f)
   private float myScale = 1f;
 
   public enum Alignment {TOP, CENTER, BOTTOM}

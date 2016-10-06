@@ -26,10 +26,8 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LoadingDecorator;
-import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.OnePixelSplitter;
@@ -191,50 +189,26 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     myLoadingDecorator = new LoadingDecorator(myEditor, this, 10, true);
     myBanner = new Banner(myEditor.getResetAction());
     mySearchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    JComponent left = myTreeView;
-    JComponent right = myLoadingDecorator.getComponent();
-    if (Registry.is("ide.settings.old.style")) {
-      myBanner.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
-      mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-      mySearchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-      mySearchPanel.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent event) {
-          Dimension size = myBanner.getPreferredSize();
-          size.height = mySearchPanel.getHeight() - 5;
-          myBanner.setPreferredSize(size);
-          myBanner.setSize(size);
-          myBanner.revalidate();
-          myBanner.repaint();
-        }
-      });
-      left = new JPanel(new BorderLayout());
-      left.add(BorderLayout.NORTH, mySearchPanel);
-      left.add(BorderLayout.CENTER, myTreeView);
-
-      right = new JPanel(new BorderLayout());
-      right.add(BorderLayout.NORTH, myBanner);
-      right.add(BorderLayout.CENTER, myLoadingDecorator.getComponent());
-    }
-    else {
-      myBanner.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-      myTreeView.addComponentListener(new ComponentAdapter() {
-        @Override
-        public void componentResized(ComponentEvent event) {
-          Dimension size = mySearchPanel.getPreferredSize();
-          size.width = myTreeView.getWidth();
-          mySearchPanel.setPreferredSize(size);
-          mySearchPanel.setSize(size);
-          mySearchPanel.revalidate();
-          mySearchPanel.repaint();
-        }
-      });
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.add(BorderLayout.WEST, mySearchPanel);
-      panel.add(BorderLayout.CENTER, myBanner);
-      panel.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 0, 0, 1, 0));
-      add(BorderLayout.NORTH, panel);
-    }
+    myBanner.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
+    mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    mySearchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
+    mySearchPanel.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent event) {
+        Dimension size = myBanner.getPreferredSize();
+        size.height = mySearchPanel.getHeight() - 5;
+        myBanner.setPreferredSize(size);
+        myBanner.setSize(size);
+        myBanner.revalidate();
+        myBanner.repaint();
+      }
+    });
+    JComponent left = new JPanel(new BorderLayout());
+    left.add(BorderLayout.NORTH, mySearchPanel);
+    left.add(BorderLayout.CENTER, myTreeView);
+    JComponent right = new JPanel(new BorderLayout());
+    right.add(BorderLayout.NORTH, myBanner);
+    right.add(BorderLayout.CENTER, myLoadingDecorator.getComponent());
     mySplitter = new OnePixelSplitter(false, myProperties.getFloat(SPLITTER_PROPORTION, .2f));
     mySplitter.setHonorComponentsMinimumSize(true);
     mySplitter.setFirstComponent(left);

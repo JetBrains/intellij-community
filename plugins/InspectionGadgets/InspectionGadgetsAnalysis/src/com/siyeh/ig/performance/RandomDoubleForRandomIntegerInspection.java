@@ -63,15 +63,9 @@ public class RandomDoubleForRandomIntegerInspection
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "random.double.for.random.integer.replace.quickfix");
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

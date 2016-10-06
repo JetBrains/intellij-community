@@ -5,7 +5,7 @@ import java.util.*;
 public class Main {
   void sort(List<Person> persons) {
     String p;
-    persons.sort(Comparator.comparing(p1 -> p1.name));
+    persons.sort(Comparator.comparing(p2 -> p2.name));
   }
 
   class Person {

@@ -16,6 +16,7 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.ShutDownTracker
@@ -37,7 +38,7 @@ import org.eclipse.jgit.transport.*
 import org.jetbrains.settingsRepository.*
 import org.jetbrains.settingsRepository.RepositoryManager.Updater
 import java.io.IOException
-import java.nio.file.Files
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.concurrent.write
 
@@ -229,7 +230,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
 
   override fun canCommit() = repository.repositoryState.canCommit()
 
-  fun renameDirectory(pairs: Map<String, String?>): Boolean {
+  fun renameDirectory(pairs: Map<String, String?>, commitMessage: String): Boolean {
     var addCommand: AddCommand? = null
     val toDelete = SmartList<DeleteDirectory>()
     for ((oldPath, newPath) in pairs) {
@@ -242,30 +243,30 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       old.directoryStreamIfExists {
         val new = if (newPath == null) dir else dir.resolve(newPath)
         for (file in it) {
-          try {
+          LOG.catchAndLog {
             if (file.isHidden()) {
               file.delete()
             }
             else {
-              Files.move(file, new.resolve(file.fileName))
+              try {
+                file.move(new.resolve(file.fileName))
+              }
+              catch (ignored: FileAlreadyExistsException) {
+                return@catchAndLog
+              }
+
               if (addCommand == null) {
                 addCommand = AddCommand(repository)
               }
               addCommand!!.addFilepattern(if (newPath == null) file.fileName.toString() else "$newPath/${file.fileName}")
             }
           }
-          catch (e: Throwable) {
-            LOG.error(e)
-          }
         }
         toDelete.add(DeleteDirectory(oldPath))
       }
 
-      try {
+      LOG.catchAndLog {
         old.delete()
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
       }
     }
 
@@ -278,7 +279,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
       addCommand!!.call()
     }
 
-    repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append("Get rid of \$ROOT_CONFIG$ and \$APP_CONFIG").toString())
+    repository.commit(with(IdeaCommitMessageFormatter()) { StringBuilder().appendCommitOwnerInfo(true) }.append(commitMessage).toString())
     return true
   }
 

@@ -289,12 +289,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   }
 
   private <T extends XBreakpointProperties> EventDispatcher<XBreakpointListener> getOrCreateDispatcher(final XBreakpointType<?,T> type) {
-    EventDispatcher<XBreakpointListener> dispatcher = myDispatchers.get(type);
-    if (dispatcher == null) {
-      dispatcher = EventDispatcher.create(XBreakpointListener.class);
-      myDispatchers.put(type, dispatcher);
-    }
-    return dispatcher;
+    return myDispatchers.computeIfAbsent(type, k -> EventDispatcher.create(XBreakpointListener.class));
   }
 
   @Override
@@ -496,12 +491,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
 
   @NotNull
   public BreakpointState getBreakpointDefaults(@NotNull XBreakpointType type) {
-    BreakpointState defaultState = myBreakpointsDefaults.get(type);
-    if (defaultState == null) {
-      defaultState = createBreakpointDefaults(type);
-      myBreakpointsDefaults.put(type, defaultState);
-    }
-    return defaultState;
+    return myBreakpointsDefaults.computeIfAbsent(type, k -> createBreakpointDefaults(type));
   }
 
   @NotNull

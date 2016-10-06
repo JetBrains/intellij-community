@@ -32,19 +32,18 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author nik
  */
-class AddLibraryToDependenciesFix extends OrderEntryFix {
+class AddLibraryToDependenciesFix extends AddOrderEntryFix {
   private final Library myLibrary;
   private final Module myCurrentModule;
-  private final PsiReference myReference;
   private final String myQualifiedClassName;
 
   public AddLibraryToDependenciesFix(@NotNull Module currentModule,
                                      @NotNull Library library,
                                      @NotNull PsiReference reference,
                                      @Nullable String qualifiedClassName) {
+    super(reference);
     myLibrary = library;
     myCurrentModule = currentModule;
-    myReference = reference;
     myQualifiedClassName = qualifiedClassName;
   }
 

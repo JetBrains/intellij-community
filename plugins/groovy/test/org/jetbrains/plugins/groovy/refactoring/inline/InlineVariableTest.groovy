@@ -38,57 +38,57 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 class InlineVariableTest extends LightCodeInsightFixtureTestCase {
   final String basePath = TestUtils.testDataPath + "groovy/refactoring/inlineLocal/"
 
-  void testGRVY_1232() { doTest(); }
+  void testGRVY_1232() { doTest() }
 
-  void testGRVY_1248() { doTest(); }
+  void testGRVY_1248() { doTest() }
 
-  void testVar1() { doTest(); }
+  void testVar1() { doTest() }
 
-  void testVar2() { doTest(); }
+  void testVar2() { doTest() }
 
-  void testVar3() { doTest(); }
+  void testVar3() { doTest() }
 
-  void testVar4() { doTest(); }
+  void testVar4() { doTest() }
 
-  void testVar5() { doTest(); }
+  void testVar5() { doTest() }
 
-  void testVar6() { doTest(); }
+  void testVar6() { doTest() }
 
-  void testVarInGString() { doTest(); }
+  void testVarInGString() { doTest() }
 
-  void testVarInGString2() { doTest(); }
+  void testVarInGString2() { doTest() }
 
-  void testVarInGString3() { doTest(); }
+  void testVarInGString3() { doTest() }
 
-  void testVarInGString4() { doTest(); }
+  void testVarInGString4() { doTest() }
 
-  void testField() { doFieldTest(); }
+  void testField() { doFieldTest() }
 
-  void testPartial1() { doTest(); }
+  void testPartial1() { doTest() }
 
-  void testPartial2() { doTest(); }
+  void testPartial2() { doTest() }
 
-  void testPartial3() { doTest(); }
+  void testPartial3() { doTest() }
 
-  void testPartial4() { doTest(); }
+  void testPartial4() { doTest() }
 
-  void testClosure1() { doTest(); }
+  void testClosure1() { doTest() }
 
-  void testClosure2() { doTest(); }
+  void testClosure2() { doTest() }
 
-  void testClosure3() { doTest(); }
+  void testClosure3() { doTest() }
 
-  void testAnonymousClass1() { doTest(); }
+  void testAnonymousClass1() { doTest() }
 
-  void testRegexInCommandArg1() { doTest(); }
+  void testRegexInCommandArg1() { doTest() }
 
-  void testRegexInCommandArg2() { doTest(); }
+  void testRegexInCommandArg2() { doTest() }
 
-  void testRegexInCommandArg3() { doTest(); }
+  void testRegexInCommandArg3() { doTest() }
 
-  void testRegexInCommandArg4() { doTest(); }
+  void testRegexInCommandArg4() { doTest() }
 
-  void testRegexInCommandArg5() { doTest(); }
+  void testRegexInCommandArg5() { doTest() }
 
   void testUndefinedVarInline() { doTest() }
 

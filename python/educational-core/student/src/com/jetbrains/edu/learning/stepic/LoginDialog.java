@@ -1,10 +1,7 @@
 package com.jetbrains.edu.learning.stepic;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.ui.LoginPanel;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,6 +9,7 @@ import javax.swing.*;
 
 public class LoginDialog extends DialogWrapper {
   protected final LoginPanel myLoginPanel;
+  private StepicUser myStepicUser;
 
   public LoginDialog() {
     super(false);
@@ -44,13 +42,9 @@ public class LoginDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (!validateLoginAndPasswordFields()) return;
-    final StepicUser user = EduStepicConnector.login(myLoginPanel.getLogin(), myLoginPanel.getPassword());
-    if (user != null) {
+    myStepicUser = EduStepicAuthorizedClient.login(myLoginPanel.getLogin(), myLoginPanel.getPassword());
+    if (myStepicUser != null) {
       doJustOkAction();
-      final Project project = ProjectUtil.guessCurrentProject(myLoginPanel.getContentPanel());
-      user.setEmail(myLoginPanel.getLogin());
-      user.setPassword(myLoginPanel.getPassword());
-      StudyTaskManager.getInstance(project).setUser(user);
     }
     else {
       setErrorText("Login failed");
@@ -75,5 +69,9 @@ public class LoginDialog extends DialogWrapper {
 
   public void clearErrors() {
     setErrorText(null);
+  }
+
+  public StepicUser getStepicUser() {
+    return myStepicUser;
   }
 }

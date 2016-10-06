@@ -17,7 +17,6 @@ package com.intellij.ui;
 
 import com.intellij.ide.StartupProgress;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.util.IconLoader;
@@ -26,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,6 +51,7 @@ public class Splash extends JDialog implements StartupProgress {
   @Nullable public static Rectangle BOUNDS;
 
   private final Icon myImage;
+  private final ApplicationInfoEx myInfo;
   private int myProgressHeight;
   private Color myProgressColor = null;
   private int myProgressX;
@@ -61,17 +62,26 @@ public class Splash extends JDialog implements StartupProgress {
   private final JLabel myLabel;
   private Icon myProgressTail;
 
-  public Splash(String imageName, final Color textColor) {
+  public Splash(@NotNull ApplicationInfoEx info) {
     super((Frame)null, false);
 
+    myInfo = info;
+    if (info instanceof ApplicationInfoImpl) {
+      final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
+      myProgressHeight = appInfo.getProgressHeight();
+      myProgressColor = appInfo.getProgressColor();
+      myProgressX = appInfo.getProgressX();
+      myProgressY = appInfo.getProgressY();
+      myProgressTail = appInfo.getProgressTailIcon();
+    }
     setUndecorated(true);
     if (!(SystemInfo.isLinux && SystemInfo.isJavaVersionAtLeast("1.7"))) {
       setResizable(false);
     }
     setFocusableWindowState(false);
 
-    Icon originalImage = IconLoader.getIcon(imageName);
-    myImage = new SplashImage(IconLoader.getIconSnapshot(originalImage), textColor);
+    Icon originalImage = IconLoader.getIcon(info.getSplashImageUrl());
+    myImage = new SplashImage(IconLoader.getIconSnapshot(originalImage), info.getSplashTextColor());
     myLabel = new JLabel(myImage) {
       @Override
       protected void paintComponent(Graphics g) {
@@ -98,18 +108,6 @@ public class Splash extends JDialog implements StartupProgress {
     setLocation(UIUtil.getCenterPoint(bounds, getSize()));
   }
 
-  public Splash(ApplicationInfoEx info) {
-    this(info.getSplashImageUrl(), info.getSplashTextColor());
-    if (info instanceof ApplicationInfoImpl) {
-      final ApplicationInfoImpl appInfo = (ApplicationInfoImpl)info;
-      myProgressHeight = appInfo.getProgressHeight();
-      myProgressColor = appInfo.getProgressColor();
-      myProgressX = appInfo.getProgressX();
-      myProgressY = appInfo.getProgressY();
-      myProgressTail = appInfo.getProgressTailIcon();
-    }
-  }
-
   @SuppressWarnings("deprecation")
   public void show() {
     super.show();
@@ -125,9 +123,10 @@ public class Splash extends JDialog implements StartupProgress {
   @Override
   public void showProgress(String message, float progress) {
     if (getProgressColor() == null) return;
-    //myMessage = message;
-    myProgress = progress;
-    myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
+    if (progress - myProgress > 0.01) {
+      myProgress = progress;
+      myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
+    }
   }
 
   private void paintProgress(Graphics g) {
@@ -170,7 +169,7 @@ public class Splash extends JDialog implements StartupProgress {
     return (int)uiScale((float)myProgressY);
   }
 
-  public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor) {
+  public static boolean showLicenseeInfo(Graphics g, int x, int y, final int height, final Color textColor, ApplicationInfo info) {
     if (ApplicationInfoImpl.getShadowInstance().showLicenseeInfo()) {
       final LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
@@ -183,7 +182,6 @@ public class Splash extends JDialog implements StartupProgress {
         int offsetX = uiScale(15);
         int offsetY = 30;
         if (Registry.is("ide.new.about")) {
-          ApplicationInfo info = getAppInfo();
           if (info instanceof ApplicationInfoImpl) {
             offsetX = Math.max(offsetX, uiScale(((ApplicationInfoImpl)info).getProgressX()));
             offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
@@ -200,9 +198,6 @@ public class Splash extends JDialog implements StartupProgress {
       return true;
     }
     return false;
-  }
-  private static ApplicationInfo getAppInfo() {
-    return ApplicationManager.getApplication() == null ? ApplicationInfoImpl.getShadowInstance() : ApplicationInfo.getInstance();
   }
 
   private static float JBUI_INIT_SCALE = JBUI.scale(1f);
@@ -229,7 +224,7 @@ public class Splash extends JDialog implements StartupProgress {
 
       myIcon.paintIcon(c, g, x, y);
 
-      showLicenseeInfo(g, x, y, getIconHeight(), myTextColor);
+      showLicenseeInfo(g, x, y, getIconHeight(), myTextColor, myInfo);
     }
 
     public int getIconWidth() {

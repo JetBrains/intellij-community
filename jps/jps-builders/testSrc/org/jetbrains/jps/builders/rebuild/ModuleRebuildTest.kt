@@ -58,6 +58,17 @@ class ModuleRebuildTest: JpsRebuildTestCase() {
     })
   }
 
+  fun testContentRootUnderExcluded() {
+    doTest("contentRootUnderExcluded/contentRootUnderExcluded.ipr", fs {
+      dir("production") {
+        dir("contentRootUnderExcluded") {
+          file("A.class")
+          file("B.class")
+        }
+      }
+    })
+  }
+
   fun testResourceCopying() {
     doTest("resourceCopying/resourceCopying.ipr", fs {
       dir("production") {

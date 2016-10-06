@@ -28,6 +28,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
+import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
@@ -472,7 +473,7 @@ public abstract class JBListTable {
         editor.setFocusCycleRoot(true);
 
         editor.setFocusTraversalPolicy(new JBListTableFocusTraversalPolicy(editor));
-        MouseSuppressor.install(editor);
+        editor.addMouseListener(MouseEventHandler.CONSUMER);
 
         myCellEditor = new MyCellEditor(editor);
         return myCellEditor;

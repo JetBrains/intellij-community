@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Main {
   void sort(List<Person> persons) {
-    persons.sort((p1, p2) -> Double.com<caret>pare(p1.getName().length(), p2.getName().length()));
+    persons.sort((first, second) -> Double.com<caret>pare(first.getName().length(), second.getName().length()));
   }
 
   interface Person {

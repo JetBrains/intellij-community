@@ -46,10 +46,14 @@ public class CloneCaretActionHandler extends EditorActionHandler {
     IdeActions.ACTION_EDITOR_MOVE_CARET_UP_WITH_SELECTION,
     IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION,
     IdeActions.ACTION_EDITOR_MOVE_LINE_START_WITH_SELECTION,
-    IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION
+    IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP_WITH_SELECTION,
+    IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_DOWN_WITH_SELECTION
   ));
 
   private final boolean myCloneAbove;
+
+  private boolean myRepeatedInvocation;
 
   public CloneCaretActionHandler(boolean above) {
     myCloneAbove = above;
@@ -107,7 +111,11 @@ public class CloneCaretActionHandler extends EditorActionHandler {
     }
   }
 
-  private static int getLevel(Caret caret) {
+  public void setRepeatedInvocation(boolean value) {
+    myRepeatedInvocation = value;
+  }
+
+  private int getLevel(Caret caret) {
     if (isRepeatedActionInvocation()) {
       Integer value = caret.getUserData(LEVEL);
       return value == null ? 0 : value;
@@ -118,7 +126,8 @@ public class CloneCaretActionHandler extends EditorActionHandler {
     }
   }
 
-  private static boolean isRepeatedActionInvocation() {
+  private boolean isRepeatedActionInvocation() {
+    if (myRepeatedInvocation) return true;
     String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
     return OUR_ACTIONS.contains(lastActionId);
   }

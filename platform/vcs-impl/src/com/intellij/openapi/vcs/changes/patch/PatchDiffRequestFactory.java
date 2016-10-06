@@ -124,9 +124,9 @@ public class PatchDiffRequestFactory {
 
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
     DocumentContent localContent = file != null ? contentFactory.createDocument(project, file) : null;
-    if (localContent == null) localContent = contentFactory.create(contents.get(0), fileType);
-    DocumentContent baseContent = contentFactory.create(contents.get(1), fileType);
-    DocumentContent patchedContent = contentFactory.create(contents.get(2), fileType);
+    if (localContent == null) localContent = contentFactory.create(project, contents.get(0), fileType);
+    DocumentContent baseContent = contentFactory.create(project, contents.get(1), fileType);
+    DocumentContent patchedContent = contentFactory.create(project, contents.get(2), fileType);
 
     return new SimpleDiffRequest(windowTitle, localContent, baseContent, patchedContent,
                                  localTitle, baseTitle, patchedTitle);
@@ -147,7 +147,7 @@ public class PatchDiffRequestFactory {
     if (patchTitle == null) patchTitle = VcsBundle.message("patch.apply.conflict.patch");
 
     DocumentContent resultContent = DiffContentFactory.getInstance().createDocument(project, file);
-    if (resultContent == null) resultContent = DiffContentFactory.getInstance().create(localContent, file);
+    if (resultContent == null) resultContent = DiffContentFactory.getInstance().create(project, localContent, file);
     return new ApplyPatchDiffRequest(resultContent, textPatch, localContent, windowTitle, localTitle, resultTitle, patchTitle);
   }
 

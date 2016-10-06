@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -165,6 +166,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   public Set<String> getGroupIds() {
+    ProgressIndicatorProvider.checkCanceled();
     Set<String> result = getProjectGroupIds();
     for (MavenIndex each : myProjectIndices) {
       result.addAll(each.getGroupIds());
@@ -173,6 +175,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   public Set<String> getArtifactIds(String groupId) {
+    ProgressIndicatorProvider.checkCanceled();
     Set<String> result = getProjectArtifactIds(groupId);
     for (MavenIndex each : myProjectIndices) {
       result.addAll(each.getArtifactIds(groupId));
@@ -181,6 +184,7 @@ public class MavenProjectIndicesManager extends MavenSimpleProjectComponent {
   }
 
   public Set<String> getVersions(String groupId, String artifactId) {
+    ProgressIndicatorProvider.checkCanceled();
     Set<String> result = getProjectVersions(groupId, artifactId);
     for (MavenIndex each : myProjectIndices) {
       result.addAll(each.getVersions(groupId, artifactId));

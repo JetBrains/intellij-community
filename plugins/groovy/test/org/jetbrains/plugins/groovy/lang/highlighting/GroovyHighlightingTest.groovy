@@ -74,15 +74,15 @@ class GroovyHighlightingTest extends GrHighlightingTestBase {
     doRefTest()
   }
 
-  void testAnonymousClassConstructor() { doTest(); }
+  void testAnonymousClassConstructor() { doTest() }
 
-  void testAnonymousClassAbstractMethod() { doTest(); }
+  void testAnonymousClassAbstractMethod() { doTest() }
 
   //public void _testAnonymousClassStaticMethod() { doTest(); }
 
-  void testAnonymousClassShouldImplementMethods() { doTest(); }
+  void testAnonymousClassShouldImplementMethods() { doTest() }
 
-  void testAnonymousClassShouldImplementSubstitutedMethod() { doTest(); }
+  void testAnonymousClassShouldImplementSubstitutedMethod() { doTest() }
 
   void testUnresolvedLhsAssignment() { doRefTest() }
 
@@ -90,36 +90,36 @@ class GroovyHighlightingTest extends GrHighlightingTestBase {
 
   void testBooleanProperties() { doRefTest() }
 
-  void testDuplicateInnerClass() { doTest(); }
+  void testDuplicateInnerClass() { doTest() }
 
-  void testThisInStaticContext() { doTest(); }
+  void testThisInStaticContext() { doTest() }
 
-  void testLocalVariableInStaticContext() { doTest(); }
+  void testLocalVariableInStaticContext() { doTest() }
 
   void testModifiersInPackageAndImportStatements() {
     myFixture.copyFileToProject(getTestName(false) + ".groovy", "x/" + getTestName(false) + ".groovy")
     myFixture.testHighlighting(true, false, false, "x/" + getTestName(false) + ".groovy")
   }
 
-  void testBreakOutside() { doTest(); }
+  void testBreakOutside() { doTest() }
 
-  void testUndefinedLabel() { doTest(); }
+  void testUndefinedLabel() { doTest() }
 
   void testNestedMethods() {
     doTest()
   }
 
-  void testRawOverriddenMethod() { doTest(); }
+  void testRawOverriddenMethod() { doTest() }
 
   void testFQNJavaClassesUsages() {
     doTest()
   }
 
-  void testGstringAssignableToString() { doTest(); }
+  void testGstringAssignableToString() { doTest() }
 
-  void testGstringAssignableToStringInClosureParameter() { doTest(); }
+  void testGstringAssignableToStringInClosureParameter() { doTest() }
 
-  void testEachOverRange() { doTest(); }
+  void testEachOverRange() { doTest() }
 
   void testEllipsisParam() {
     myFixture.configureByText('a.groovy', '''\
@@ -131,58 +131,58 @@ class A {
     myFixture.checkHighlighting(true, false, false)
   }
 
-  void testStringAndGStringUpperBound() { doTest(); }
+  void testStringAndGStringUpperBound() { doTest() }
 
-  void testWithMethod() { doTest(); }
+  void testWithMethod() { doTest() }
 
-  void testArrayLikeAccess() { doTest(); }
+  void testArrayLikeAccess() { doTest() }
 
-  void testSetInitializing() { doTest(); }
+  void testSetInitializing() { doTest() }
 
-  void testEmptyTupleAssignability() { doTest(); }
+  void testEmptyTupleAssignability() { doTest() }
 
   void testGrDefFieldsArePrivateInJavaCode() {
     myFixture.configureByText("X.groovy", "public class X{def x=5}")
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java")
   }
 
-  void testSuperConstructorInvocation() { doTest(); }
+  void testSuperConstructorInvocation() { doTest() }
 
-  void testDuplicateMapKeys() { doTest(); }
+  void testDuplicateMapKeys() { doTest() }
 
-  void testIndexPropertyAccess() { doTest(); }
+  void testIndexPropertyAccess() { doTest() }
 
-  void testPropertyAndFieldDeclaration() { doTest(); }
+  void testPropertyAndFieldDeclaration() { doTest() }
 
-  void testGenericsMethodUsage() { doTest(); }
+  void testGenericsMethodUsage() { doTest() }
 
-  void testWildcardInExtendsList() { doTest(); }
+  void testWildcardInExtendsList() { doTest() }
 
-  void testOverrideAnnotation() { doTest(); }
+  void testOverrideAnnotation() { doTest() }
 
-  void testClosureCallWithTupleTypeArgument() { doTest(); }
+  void testClosureCallWithTupleTypeArgument() { doTest() }
 
-  void testMethodDuplicates() { doTest(); }
+  void testMethodDuplicates() { doTest() }
 
-  void testAmbiguousCodeBlock() { doTest(); }
+  void testAmbiguousCodeBlock() { doTest() }
 
-  void testAmbiguousCodeBlockInMethodCall() { doTest(); }
+  void testAmbiguousCodeBlockInMethodCall() { doTest() }
 
-  void testNotAmbiguousClosableBlock() { doTest(); }
+  void testNotAmbiguousClosableBlock() { doTest() }
 
-  void testDuplicateParameterInClosableBlock() { doTest(); }
+  void testDuplicateParameterInClosableBlock() { doTest() }
 
-  void testCyclicInheritance() { doTest(); }
+  void testCyclicInheritance() { doTest() }
 
-  void testNoDefaultConstructor() { doTest(); }
+  void testNoDefaultConstructor() { doTest() }
 
-  void testNumberDuplicatesInMaps() { doTest(); }
+  void testNumberDuplicatesInMaps() { doTest() }
 
-  void testBuiltInTypeInstantiation() { doTest(); }
+  void testBuiltInTypeInstantiation() { doTest() }
 
-  void testSOEInFieldDeclarations() { doTest(); }
+  void testSOEInFieldDeclarations() { doTest() }
 
-  void testWrongAnnotation() { doTest(); }
+  void testWrongAnnotation() { doTest() }
 
   void testAmbiguousMethods() {
     myFixture.copyFileToProject(getTestName(false) + ".java")
@@ -215,7 +215,7 @@ class A {
     myFixture.checkHighlighting(true, false, false)
   }
 
-  void testDuplicatedNamedArgs() { doTest(); }
+  void testDuplicatedNamedArgs() { doTest() }
 
   void testConstructorWithAllParametersOptional() {
     doTest()

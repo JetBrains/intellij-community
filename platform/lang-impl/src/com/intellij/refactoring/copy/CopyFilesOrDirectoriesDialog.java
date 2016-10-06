@@ -65,7 +65,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   private static final String COPY_OPEN_IN_EDITOR = "Copy.OpenInEditor";
   private static final String RECENT_KEYS = "CopyFile.RECENT_KEYS";
 
-  public static String shortenPath(VirtualFile file) {
+  public static String shortenPath(@NotNull VirtualFile file) {
     return StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), MAX_PATH_LENGTH);
   }
 
@@ -106,6 +106,12 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
 
     setTitle(RefactoringBundle.message(doClone ? "copy.files.clone.title" : "copy.files.copy.title"));
     init();
+
+    for (int i = 0; i < elements.length; i++) {
+      if (elements[i] instanceof PsiFile) {
+        elements[i] = ((PsiFile)elements[i]).getOriginalFile();
+      }
+    }
 
     if (elements.length == 1) {
       String text;

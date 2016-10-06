@@ -1,6 +1,6 @@
 try:
     do_smth()
-<warning descr="Python version 2.4, 2.5 do not support this syntax.">except ImportError as e:
+<warning descr="Python versions < 2.6 do not support this syntax.">except ImportError as e:
     do()</warning>
 
 try:

@@ -33,7 +33,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstance;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -107,7 +106,6 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -588,6 +586,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     int countAfter = tool.visited.size();
     assertTrue(tool.visited.toString(), countAfter > 0);
+    tool.visited.clear();
+
+    //ensure started on another file
+    configureByExistingFile(otherFile.getVirtualFile());
+    infos = doHighlighting(HighlightSeverity.WARNING);
+    assertEmpty(infos);
+
+    int countAfter2 = tool.visited.size();
+    assertTrue(tool.visited.toString(), countAfter2 > 0);
   }
 
   public void testOverriddenMethodMarkers() throws Exception {
@@ -1293,8 +1300,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDaemonIgnoresFrameDeactivation() throws Throwable {
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-    InspectionProfileManager.getInstance().setRootProfile(InspectionProfileImpl.getDefaultProfile().getName()); // reset to default profile from the custom one to avoid unnecessary save
+    // return default value to avoid unnecessary save
+    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
     String text = "class S { ArrayList<caret>XXX x;}";
     configureByText(StdFileTypes.JAVA, text);
@@ -1317,7 +1324,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       settings.setSaveOnFrameDeactivation(frameSave);
     }
   }
-
 
   public void testApplyLocalQuickFix() throws Throwable {
     configureByText(StdFileTypes.JAVA, "class X { static int sss; public int f() { return this.<caret>sss; }}");

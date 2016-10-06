@@ -73,7 +73,15 @@ public class LabelIcon implements Icon {
 
   @Override
   public int getIconWidth() {
-    return mySize + (mySize * (myColors.length - 1) / 4);
+    return getWidth(myColors.length);
+  }
+
+  protected int getWidth(int labelsCount) {
+    return getWidth(mySize, labelsCount);
+  }
+
+  public static int getWidth(int height, int labelsCount) {
+    return height + (height * (labelsCount - 1) / 4);
   }
 
   @Override

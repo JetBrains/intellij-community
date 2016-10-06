@@ -95,7 +95,7 @@ class StudyHint(private val myPlaceholder: AnswerPlaceholder?,
   private inner class EditHint : AnAction("Edit Hint", "Edit Hint", AllIcons.Modules.Edit) {
     
     override fun actionPerformed(e: AnActionEvent?) {
-      val dialog = CCCreateAnswerPlaceholderDialog(e!!.project!!, myPlaceholder!!)
+      val dialog = CCCreateAnswerPlaceholderDialog(e!!.project!!, myPlaceholder!!.taskText, myPlaceholder.hints)
       dialog.show()
     }
 

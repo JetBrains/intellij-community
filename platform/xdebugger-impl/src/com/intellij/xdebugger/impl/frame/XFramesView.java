@@ -35,7 +35,6 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,12 +191,7 @@ public class XFramesView extends XDebugView {
   }
 
   private StackFramesListBuilder getOrCreateBuilder(XExecutionStack executionStack, XDebugSession session) {
-    StackFramesListBuilder builder = myBuilders.get(executionStack);
-    if (builder == null) {
-      builder = new StackFramesListBuilder(executionStack, session);
-      myBuilders.put(executionStack, builder);
-    }
-    return builder;
+    return myBuilders.computeIfAbsent(executionStack, k -> new StackFramesListBuilder(executionStack, session));
   }
 
   @Override

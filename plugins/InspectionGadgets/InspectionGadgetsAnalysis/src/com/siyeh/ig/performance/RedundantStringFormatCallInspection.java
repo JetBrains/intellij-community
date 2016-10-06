@@ -56,14 +56,9 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "redundant.string.format.call.quickfix");
-    }
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     @Override

@@ -42,10 +42,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +52,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -75,8 +72,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.content.*;
-import com.intellij.util.*;
-import com.intellij.util.containers.*;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
+import com.intellij.util.TripleFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -92,7 +92,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Constructor;
 import java.util.*;
-import java.util.Queue;
 import java.util.concurrent.*;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
@@ -474,13 +473,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     }
   }
 
-  private boolean inspectFile(@NotNull final PsiFile file,
+  private void inspectFile(@NotNull final PsiFile file,
                               @NotNull final InspectionManager inspectionManager,
                               @NotNull List<Tools> localTools,
                               @NotNull List<Tools> globalSimpleTools,
                               @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
-    if (document == null) return true;
+    if (document == null) return;
 
     VirtualFile virtualFile = file.getVirtualFile();
     String url = ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), getProject(), true, false);
@@ -521,7 +520,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     finally {
       InjectedLanguageManager.getInstance(getProject()).dropFileCaches(file);
     }
-    return true;
   }
 
   protected boolean includeDoNotShow(final InspectionProfile profile) {
@@ -543,7 +541,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
           final FileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
           scope.accept(file -> {
             indicator.checkCanceled();
-            if (ProjectCoreUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file)) return true;
+            if (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file)) return true;
 
             PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
               @Override
@@ -662,28 +660,28 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(globalTools, this, createContentProvider())).booleanValue()) {
         return;
       }
-      createViewIfNeed();
-      if (!myView.isDisposed()) {
-        myView.addTools(globalTools);
-      }
+      initializeViewIfNeed().doWhenDone(() -> myView.addTools(globalTools));
     }
   }
 
-  @NotNull
-  public InspectionResultsView createViewIfNeed() {
-    if (myView == null) {
-      LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
-      return  UIUtil.invokeAndWaitIfNeeded(() -> {
-        InspectionResultsView newView = getView();
-        if (newView != null) {
-          return newView;
-        }
-        newView = new InspectionResultsView(this, createContentProvider());
-        addView(newView);
-        return newView;
-      });
+  public ActionCallback initializeViewIfNeed() {
+    if (myView != null) {
+      return ActionCallback.DONE;
     }
-    return myView;
+    final Application app = ApplicationManager.getApplication();
+    final Runnable createView = () -> {
+      InspectionResultsView view = getView();
+      if (view == null) {
+        view = new InspectionResultsView(this, createContentProvider());
+        addView(view);
+      }
+    };
+    if (app.isUnitTestMode()) {
+      createView.run();
+      return ActionCallback.DONE;
+    } else {
+      return app.getInvokator().invokeLater(createView);
+    }
   }
 
   private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,

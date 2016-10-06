@@ -68,15 +68,10 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   }
 
   private static class TrivialIfFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message(
         "constant.conditional.expression.simplify.quickfix");
     }
@@ -232,6 +227,10 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     final PsiElement nextStatement = PsiTreeUtil.skipSiblingsForward(statement, PsiWhiteSpace.class);
     if (nextStatement == null) {
       return;
+    }
+    final PsiElement nextSibling = statement.getNextSibling();
+    if (nextSibling != nextStatement) {
+      statement.getParent().deleteChildRange(nextSibling, nextStatement.getPrevSibling());
     }
     @NonNls final String newStatement = "return " + conditionText + ';';
     PsiReplacementUtil.replaceStatement(statement, newStatement);

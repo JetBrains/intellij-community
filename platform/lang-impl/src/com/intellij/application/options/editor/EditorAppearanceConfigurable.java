@@ -26,13 +26,12 @@ import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 /**
@@ -64,6 +63,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private JCheckBox myShowCodeLensInEditorCheckBox;
   private JCheckBox myShowVerticalIndentGuidesCheckBox;
   private JCheckBox myShowBreadcrumbsCheckBox;
+  private JBCheckBox myShowParameterNameHints;
   //private JCheckBox myUseLCDRendering;
 
   public EditorAppearanceConfigurable() {
@@ -73,20 +73,14 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     //    myUseLCDRendering.setEnabled(myAntialiasingInEditorCheckBox.isSelected());
     //  }
     //});
-    myCbBlinkCaret.addActionListener(
-    new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        myBlinkIntervalField.setEnabled(myCbBlinkCaret.isSelected());
-      }
-    }
-    );
-    myCbShowWhitespaces.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateWhitespaceCheckboxesState();
-      }
-    });
+    
+    myCbBlinkCaret.addActionListener((e) -> myBlinkIntervalField.setEnabled(myCbBlinkCaret.isSelected()));
+    myCbShowWhitespaces.addActionListener((e) -> updateWhitespaceCheckboxesState());
+  }
+  
+  private void applyNameHintsSettings() {
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    settings.setShowParameterNameHints(myShowParameterNameHints.isSelected());
   }
 
   private void updateWhitespaceCheckboxesState() {
@@ -118,6 +112,8 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().SHOW_EDITOR_TOOLTIP);
 
     updateWhitespaceCheckboxesState();
+
+    myShowParameterNameHints.setSelected(editorSettings.isShowParameterNameHints());
 
     super.reset();
   }
@@ -177,6 +173,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     }
     EditorOptionsPanel.restartDaemons();
 
+    applyNameHintsSettings();
     super.apply();
   }
 
@@ -202,7 +199,8 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     //isModified |= myUseLCDRendering.isSelected() != UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR;
     isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().SHOW_EDITOR_TOOLTIP;
     isModified |= myShowBreadcrumbsCheckBox.isSelected() != editorSettings.isBreadcrumbsShown();
-
+    isModified |= myShowParameterNameHints.isSelected() != editorSettings.isShowParameterNameHints();
+    
     return isModified;
   }
 

@@ -167,7 +167,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static class MyQuickFixAction implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
@@ -186,12 +186,6 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
         LOG.error(e);
       }
     }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
   }
 
   //separate quickfix is needed to invalidate initial method reference
@@ -199,7 +193,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   private static class MyMethodReferenceFixAction implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
@@ -211,12 +205,6 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       if (expression != null) {
         expression.replace(createMethodReference(expression, typeElement));
       }
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 }

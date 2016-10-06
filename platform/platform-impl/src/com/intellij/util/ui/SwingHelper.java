@@ -429,16 +429,11 @@ public class SwingHelper {
                                                        @NotNull TextComponentAccessor<T> textComponentAccessor) {
     fileChooserDescriptor = fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix);
     componentWithBrowseButton.addBrowseFolderListener(
+      browseDialogTitle,
+      null,
       project,
-      new ComponentWithBrowseButton.BrowseFolderActionListener<>(
-        browseDialogTitle,
-        null,
-        componentWithBrowseButton,
-        project,
-        fileChooserDescriptor,
-        textComponentAccessor
-      ),
-      true
+      fileChooserDescriptor,
+      textComponentAccessor
     );
     FileChooserFactory.getInstance().installFileCompletion(
       textField,
@@ -625,7 +620,7 @@ public class SwingHelper {
       textPane = new JEditorPane();
     }
     textPane.setFont(font != null ? font : UIUtil.getLabelFont());
-    textPane.setContentType(UIUtil.HTML_MIME);
+    textPane.setEditorKit(UIUtil.getHTMLEditorKit());
     textPane.setEditable(false);
     if (background != null) {
       textPane.setBackground(background);

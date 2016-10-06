@@ -154,7 +154,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix");
     }
 
@@ -177,12 +177,6 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
     @Override
     public boolean startInWriteAction() {
       return false;
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     private static void makeMethodHierarchyVoid(Project project, @NotNull PsiMethod psiMethod) {

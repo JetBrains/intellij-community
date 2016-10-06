@@ -94,6 +94,7 @@ public class PyNames {
   public static final String FAKE_METHOD = "__method";
   public static final String FAKE_NAMEDTUPLE = "__namedtuple";
   public static final String FAKE_COROUTINE = "__coroutine";
+  public static final String FAKE_ASYNC_GENERATOR = "__asyncgenerator";
 
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";
@@ -142,7 +143,8 @@ public class PyNames {
   public static final String MUTABLE_MAPPING = "MutableMapping";
   public static final String ABC_SET = "Set";
   public static final String ABC_MUTABLE_SET = "MutableSet";
-  
+
+  public static final String AWAITABLE = "Awaitable";
   public static final String ASYNC_ITERABLE = "AsyncIterable";
 
   public static final String ABC_NUMBER = "Number";
@@ -170,6 +172,7 @@ public class PyNames {
   public static final String AENTER = "__aenter__";
   public static final String AEXIT = "__aexit__";
   public static final String SIZEOF = "__sizeof__";
+  public static final String INIT_SUBCLASS = "__init_subclass__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -432,8 +435,17 @@ public class PyNames {
     .put(ANEXT, _only_self_descr)
     .build();
 
+  public static final ImmutableMap<String, BuiltinDescription> PY36_BUILTIN_METHODS = ImmutableMap.<String, BuiltinDescription>builder()
+    .putAll(PY35_BUILTIN_METHODS)
+    .put(INIT_SUBCLASS, new BuiltinDescription("(cls, **kwargs)"))
+    .put("__set_name__", new BuiltinDescription("(self, owner, name)"))
+    .build();
+
   public static ImmutableMap<String, BuiltinDescription> getBuiltinMethods(LanguageLevel level) {
-    if (level.isAtLeast(LanguageLevel.PYTHON35)) {
+    if (level.isAtLeast(LanguageLevel.PYTHON36)) {
+      return PY36_BUILTIN_METHODS;
+    }
+    else if (level.isAtLeast(LanguageLevel.PYTHON35)) {
       return PY35_BUILTIN_METHODS;
     }
     else if (level.isAtLeast(LanguageLevel.PYTHON30)) {

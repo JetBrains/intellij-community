@@ -21,7 +21,16 @@ class NotNullClass {
   static native Object foo(String s);
   
   public Object foo() {
-    return <warning descr="'null' is returned by the method declared as @NotNull">null</warning>;
+    return <warning descr="'null' is returned by the method declared as @MethodsAreNotNullByDefault">null</warning>;
+  }
+
+  private String privateFoo() {
+    return <warning descr="'null' is returned by the method declared as @MethodsAreNotNullByDefault">null</warning>;
+  }
+
+  {
+    String s2 = privateFoo();
+    int i2 = s2.length();
   }
 
   @Nullable

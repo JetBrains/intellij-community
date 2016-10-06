@@ -308,7 +308,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
       final Editor editor = myEditor;
-      TrailingSpacesStripper.stripIfNotCurrentLine(editor.getDocument(), false);
+      TrailingSpacesStripper.strip(editor.getDocument(), false, true);
       EditorUtil.fillVirtualSpaceUntilCaret(editor);
     }
 

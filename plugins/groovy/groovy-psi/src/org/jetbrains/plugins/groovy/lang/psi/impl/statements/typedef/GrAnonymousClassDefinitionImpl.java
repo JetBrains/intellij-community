@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
@@ -43,7 +42,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  * @author Maxim.Medvedev
  */
 public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl implements GrAnonymousClassDefinition {
-  private SoftReference<PsiClassType> myCachedBaseType = null;
+
+  private SoftReference<PsiClassType> myCachedBaseType;
 
   public GrAnonymousClassDefinitionImpl(@NotNull ASTNode node) {
     super(node);
@@ -62,9 +62,11 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   public GrCodeReferenceElement getBaseClassReferenceGroovy() {
     GrTypeDefinitionStub stub = getStub();
     if (stub != null) {
-      return GroovyPsiElementFactory.getInstance(getProject()).createReferenceElementFromText(stub.getBaseClassName(), this);
+      GrCodeReferenceElement reference = stub.getBaseClassReference();
+      assert reference != null;
+      return reference;
     }
-    //noinspection ConstantConditions
+
     return findNotNullChildByClass(GrCodeReferenceElement.class); //not null because of definition =)
   }
 

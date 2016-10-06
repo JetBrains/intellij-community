@@ -27,9 +27,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ComponentTreeEventDispatcher;
-import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
@@ -139,7 +137,6 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean SORT_BOOKMARKS = false;
   public boolean MERGE_EQUAL_STACKTRACES = true;
 
-  private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
   private final ComponentTreeEventDispatcher<UISettingsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener.class);
 
   public UISettings() {
@@ -162,39 +159,30 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   }
 
   /**
-   * @deprecated use {@link UISettings#addUISettingsListener(UISettingsListener, Disposable disposable)} instead.
+   * @deprecated Please use {@link UISettingsListener#TOPIC}
    */
-  public void addUISettingsListener(UISettingsListener listener) {
-    myDispatcher.addListener(listener);
-  }
-
-  public void addUISettingsListener(@NotNull final UISettingsListener listener, @NotNull Disposable parentDisposable) {
-    myDispatcher.addListener(listener, parentDisposable);
+  @Deprecated
+  public void addUISettingsListener(@NotNull UISettingsListener listener, @NotNull Disposable parentDisposable) {
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(UISettingsListener.TOPIC, listener);
   }
 
   /**
    * Notifies all registered listeners that UI settings has been changed.
    */
   public void fireUISettingsChanged() {
+    ColorBlindnessSupport support = ColorBlindnessSupport.get(COLOR_BLINDNESS);
+    IconLoader.setFilter(support == null ? null : support.getFilter());
+
     incModificationCount();
-    myDispatcher.getMulticaster().uiSettingsChanged(this);
+    if (myCounter == 1) {
+      return;
+    }
 
     if (ourSettings == this) {
       // if this is the main UISettings instance push event to bus and to all current components
       myTreeDispatcher.getMulticaster().uiSettingsChanged(this);
       ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
     }
-
-    IconLoader.setFilter(Registry.is("color.blindness.daltonization")
-                         ? DaltonizationFilter.get(COLOR_BLINDNESS)
-                         : MatrixFilter.get(COLOR_BLINDNESS));
-  }
-
-  /**
-   * @deprecated use {@link UISettings#addUISettingsListener(UISettingsListener, Disposable disposable)} instead.
-   */
-  public void removeUISettingsListener(UISettingsListener listener) {
-    myDispatcher.removeListener(listener);
   }
 
   private void setSystemFontFaceAndSize() {

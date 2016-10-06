@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -197,9 +198,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
             ShowFilePathAction.openFile(file);
           }
           else if (configuration.SHOW_PATCH_IN_EXPLORER == null) {
-            configuration.SHOW_PATCH_IN_EXPLORER =
-              ShowFilePathAction.showDialog(myProject, VcsBundle.message("create.patch.success.confirmation", file.getPath()),
-                                            VcsBundle.message("create.patch.commit.action.title"), file);
+            configuration.SHOW_PATCH_IN_EXPLORER = showDialog(file);
           }
         }, null, myProject);
       } catch (ProcessCanceledException e) {
@@ -225,5 +224,45 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     public String getHelpId() {
       return null;
     }
+  }
+
+  private Boolean showDialog(File file) {
+    String message = VcsBundle.message("create.patch.success.confirmation", file.getPath());
+    String title = VcsBundle.message("create.patch.commit.action.title");
+
+    Boolean[] ref = new Boolean[1];
+    DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+      @Override
+      public boolean isToBeShown() {
+        return true;
+      }
+
+      @Override
+      public void setToBeShown(boolean value, int exitCode) {
+        if (!value) {
+          ref[0] = exitCode == 0;
+        }
+      }
+
+      @Override
+      public boolean canBeHidden() {
+        return true;
+      }
+
+      @Override
+      public boolean shouldSaveOptionsOnCancel() {
+        return true;
+      }
+
+      @NotNull
+      @Override
+      public String getDoNotShowMessage() {
+        return CommonBundle.message("dialog.options.do.not.ask");
+      }
+    };
+
+    ShowFilePathAction.showDialog(myProject, message, title, file, option);
+
+    return ref[0];
   }
 }

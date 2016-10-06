@@ -19,11 +19,16 @@ import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -60,7 +65,21 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
     assertNull(attributes.getForegroundColor());
   }
 
-  public static class TestAnnotator implements Annotator {
+  public void testPersistentHighlighterUpdateOnPartialDocumentUpdate() {
+    Document document = new DocumentImpl("line0\nline1\nline2");
+    MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
+    RangeHighlighterEx highlighter = model.addPersistentLineHighlighter(2, 0, null);
+    new WriteCommandAction<Void>(getProject()){
+      @Override
+      protected void run(@NotNull Result<Void> result) throws Throwable {
+        document.deleteString(document.getLineStartOffset(1), document.getTextLength());
+      }
+    }.execute();
+    assertTrue(highlighter.isValid());
+    assertEquals(6, highlighter.getStartOffset());
+  }
+
+    public static class TestAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       holder.createInfoAnnotation(element, null);

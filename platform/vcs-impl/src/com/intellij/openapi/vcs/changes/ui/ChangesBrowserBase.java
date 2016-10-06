@@ -91,14 +91,14 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
     myViewer.setChangeDecorator(decorator);
   }
 
-  protected ChangesBrowserBase(final Project project,
+  protected ChangesBrowserBase(@NotNull final Project project,
                                @NotNull List<T> changes,
                                final boolean capableOfExcludingChanges,
                                final boolean highlightProblems,
                                @Nullable final Runnable inclusionListener,
-                               ChangesBrowser.MyUseCase useCase,
+                               @NotNull ChangesBrowser.MyUseCase useCase,
                                @Nullable VirtualFile toSelect,
-                               Class<T> clazz) {
+                               @NotNull Class<T> clazz) {
     super(new BorderLayout());
     setFocusable(false);
 

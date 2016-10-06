@@ -44,113 +44,113 @@ class InlineMethodTest extends LightCodeInsightFixtureTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/refactoring/inlineMethod/"
 
-  void testAbstr1() throws Throwable { doTest(); }
+  void testAbstr1() throws Throwable { doTest() }
 
-  void testBlock1() throws Throwable { doTest(); }
+  void testBlock1() throws Throwable { doTest() }
 
-  void testBlock2() throws Throwable { doTest(); }
+  void testBlock2() throws Throwable { doTest() }
 
-  void testBlock3() throws Throwable { doTest(); }
+  void testBlock3() throws Throwable { doTest() }
 
-  void testBlock4() throws Throwable { doTest(); }
+  void testBlock4() throws Throwable { doTest() }
 
-  void testCase1() throws Throwable { doTest(); }
+  void testCase1() throws Throwable { doTest() }
 
-  void testCase2() throws Throwable { doTest(); }
+  void testCase2() throws Throwable { doTest() }
 
-  void testClos_arg1() throws Throwable { doTest(); }
+  void testClos_arg1() throws Throwable { doTest() }
 
-  void testClos_arg2() throws Throwable { doTest(); }
+  void testClos_arg2() throws Throwable { doTest() }
 
-  void testClos_arg3() throws Throwable { doTest(); }
+  void testClos_arg3() throws Throwable { doTest() }
 
-  void testCond() throws Throwable { doTest(); }
+  void testCond() throws Throwable { doTest() }
 
-  void _testExpr1() throws Throwable { doTest(); }
+  void _testExpr1() throws Throwable { doTest() }
 
-  void testExpr2() throws Throwable { doTest(); }
+  void testExpr2() throws Throwable { doTest() }
 
-  void testExpr3() throws Throwable { doTest(); }
+  void testExpr3() throws Throwable { doTest() }
 
-  void _testExpr4() throws Throwable { doTest(); }
+  void _testExpr4() throws Throwable { doTest() }
 
-  void testFact() throws Throwable { doTest(); }
+  void testFact() throws Throwable { doTest() }
 
-  void testFact2() throws Throwable { doTest(); }
+  void testFact2() throws Throwable { doTest() }
 
-  void testInit1() throws Throwable { doTest(); }
+  void testInit1() throws Throwable { doTest() }
 
-  void testMap_arg1() throws Throwable { doTest(); }
+  void testMap_arg1() throws Throwable { doTest() }
 
-  void testQual1() throws Throwable { doTest(); }
+  void testQual1() throws Throwable { doTest() }
 
-  void testQual2() throws Throwable { doTest(); }
+  void testQual2() throws Throwable { doTest() }
 
-  void testQual3() throws Throwable { doTest(); }
+  void testQual3() throws Throwable { doTest() }
 
-  void testQual4() throws Throwable { doTest(); }
+  void testQual4() throws Throwable { doTest() }
 
-  void testQual5() throws Throwable { doTest(); }
+  void testQual5() throws Throwable { doTest() }
 
-  void testRef1() throws Throwable { doTest(); }
+  void testRef1() throws Throwable { doTest() }
 
-  void testRename1() throws Throwable { doTest(); }
+  void testRename1() throws Throwable { doTest() }
 
-  void testRename2() throws Throwable { doTest(); }
+  void testRename2() throws Throwable { doTest() }
 
-  void testRet1() throws Throwable { doTest(); }
+  void testRet1() throws Throwable { doTest() }
 
-  void testRet2() throws Throwable { doTest(); }
+  void testRet2() throws Throwable { doTest() }
 
-  void testRet3() throws Throwable { doTest(); }
+  void testRet3() throws Throwable { doTest() }
 
-  void testRet4() throws Throwable { doTest(); }
+  void testRet4() throws Throwable { doTest() }
 
-  void testRet5() throws Throwable { doTest(); }
+  void testRet5() throws Throwable { doTest() }
 
-  void testTail1() throws Throwable { doTest(); }
+  void testTail1() throws Throwable { doTest() }
 
-  void testTail1_1() throws Throwable { doTest(); }
+  void testTail1_1() throws Throwable { doTest() }
 
-  void testTail2() throws Throwable { doTest(); }
+  void testTail2() throws Throwable { doTest() }
 
-  void testTail3() throws Throwable { doTest(); }
+  void testTail3() throws Throwable { doTest() }
 
-  void testTail4() throws Throwable { doTest(); }
+  void testTail4() throws Throwable { doTest() }
 
-  void testTail5() throws Throwable { doTest(); }
+  void testTail5() throws Throwable { doTest() }
 
-  void testTail6() throws Throwable { doTest(); }
+  void testTail6() throws Throwable { doTest() }
 
-  void testVen_tail() throws Throwable { doTest(); }
+  void testVen_tail() throws Throwable { doTest() }
 
-  void testVen_tail2() throws Throwable { doTest(); }
+  void testVen_tail2() throws Throwable { doTest() }
 
-  void testVoid() throws Throwable { doTest(); }
+  void testVoid() throws Throwable { doTest() }
 
-  void testExpressionInParameter() throws Throwable { doTest(); }
+  void testExpressionInParameter() throws Throwable { doTest() }
 
-  void testFinalParameter() throws Throwable { doTest(); }
+  void testFinalParameter() throws Throwable { doTest() }
 
-  void testParameterIsUsedAfterCall() throws Throwable { doTest(); }
+  void testParameterIsUsedAfterCall() throws Throwable { doTest() }
 
-  void testFieldAsParameter() throws Throwable { doTest(); }
+  void testFieldAsParameter() throws Throwable { doTest() }
 
-  void testWritableVariable() throws Throwable { doTest(); }
+  void testWritableVariable() throws Throwable { doTest() }
 
-  void testSingleExpression() { doTest(); }
+  void testSingleExpression() { doTest() }
 
-  void testNamedArg() { doTest(); }
+  void testNamedArg() { doTest() }
 
-  void _testInlineInGString() throws Throwable { doTest(); }
+  void _testInlineInGString() throws Throwable { doTest() }
 
-  void testDontRemoveReturnValueExpr() { doTest(); }
+  void testDontRemoveReturnValueExpr() { doTest() }
 
-  void testDontRemoveLastStatement() { doTest(); }
+  void testDontRemoveLastStatement() { doTest() }
 
-  void testSideEffectInitializer() { doTest(); }
+  void testSideEffectInitializer() { doTest() }
 
-  void testVarargs() { doTest(); }
+  void testVarargs() { doTest() }
 
   void testTypeParameterDeclaredInFile() { doTest() }
 
@@ -169,7 +169,7 @@ class InlineMethodTest extends LightCodeInsightFixtureTestCase {
     })
   }
 
-  void testInlineNamedArgs() { doTest(); }
+  void testInlineNamedArgs() { doTest() }
 
   void testInlineVarargs() { doTest() }
 

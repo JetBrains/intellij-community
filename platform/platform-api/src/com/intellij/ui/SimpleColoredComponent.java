@@ -402,7 +402,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       width += myIcon.getIconWidth() + myIconTextGap;
     }
 
-    final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : new Insets(0, 0, 0, 0);
+    final Insets borderInsets = myBorder != null ? myBorder.getBorderInsets(this) : JBUI.emptyInsets();
     width += borderInsets.left;
 
     Font font = getBaseFont();
@@ -415,7 +415,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     int height = myIpad.top + myIpad.bottom;
 
     final FontMetrics metrics = getFontMetrics(font);
-    int textHeight = metrics.getHeight();
+    int textHeight = Math.max(JBUI.scale(16), metrics.getHeight()); //avoid too narrow rows
     textHeight += borderInsets.top + borderInsets.bottom;
 
     if (myIcon != null) {
@@ -996,7 +996,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     private Insets myInsets;
 
     public MyBorder() {
-      myInsets = new JBInsets(1, 1, 1, 1);
+      myInsets = JBUI.insets(1);
     }
 
     public void setInsets(final Insets insets) {
@@ -1005,7 +1005,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     @Override
     public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      g.setColor(Color.BLACK);
+      g.setColor(JBColor.foreground());
       UIUtil.drawDottedRectangle(g, x, y, x + width - 1, y + height - 1);
     }
 

@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Performs lazy initialization of a toolwindow registered in plugin.xml.
+ * Please implement {@link com.intellij.openapi.project.DumbAware} marker interface to indicate that the toolwindow content should be
+ * available during indexing process.
  *
  * @author yole
  * @author Konstantin Bulenkov
@@ -34,6 +36,12 @@ public interface ToolWindowFactory {
    * @param window Tool Window
    */
   default void init(ToolWindow window) {}
+
+  /**
+   * Check if toolwindow (and its stripe button) should be visible after startup.
+   * @see ToolWindow#isAvailable()
+   */
+  default boolean shouldBeAvailable(@NotNull Project project) { return true;}
 
   /**
    * Tool Window saves its state on project close and restore on when project opens

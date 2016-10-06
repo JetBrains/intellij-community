@@ -1,2 +1,2 @@
-print('{quantity:s} pounds of '
-      '{type:s}'.format(quantity=42, type='spam'))
+print('{quantity} pounds of '
+      '{type}'.format(quantity=42, type='spam'))
