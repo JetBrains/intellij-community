@@ -110,15 +110,13 @@
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
 
-    <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkJavaSourceRootAction">
+    <group>
+      <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkJavaSourceRootAction"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction"/>
+      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
+      <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
       <add-to-group group-id="MarkRootGroup"/>
-    </action>
-    <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" icon="AllIcons.Modules.ExcludeRoot">
-      <add-to-group group-id="MarkRootGroup"/>
-    </action>
-    <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction">
-      <add-to-group group-id="MarkRootGroup"/>
-    </action>
+    </group>
 
     <action overrides="true" id="ForceStepInto" class="com.intellij.openapi.actionSystem.EmptyAction"/>
 

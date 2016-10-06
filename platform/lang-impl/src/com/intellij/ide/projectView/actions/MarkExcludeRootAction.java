@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.projectView.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.module.Module;
@@ -29,6 +30,10 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class MarkExcludeRootAction extends MarkRootActionBase {
+  public MarkExcludeRootAction() {
+    super(null, null, AllIcons.Modules.ExcludeRoot);
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
