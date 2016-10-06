@@ -2360,7 +2360,7 @@ public class UIUtil {
   public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     Font font = getLabelFont();
     @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : JBUI.scale(11);
+    final int size = font != null ? font.getSize() : JBUI.scale(11);
 
     String customCss = String.format("body, div, p { font-family: %s; font-size: %s; }", family, size);
     if (noGapsBetweenParagraphs) {
@@ -2370,7 +2370,7 @@ public class UIUtil {
     final StyleSheet style = new StyleSheet();
     style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
     style.addRule(customCss);
-    scaleStyleSheetFontSize(style);
+    scaleStyleSheetFontSize(style, size);
 
     return new HTMLEditorKit() {
 
@@ -2378,7 +2378,7 @@ public class UIUtil {
       public Document createDefaultDocument() {
         Document document = super.createDefaultDocument();
         if (document instanceof HTMLDocument) {
-          scaleStyleSheetFontSize(((HTMLDocument)document).getStyleSheet());
+          scaleStyleSheetFontSize(((HTMLDocument)document).getStyleSheet(), size);
         }
         return document;
       }
@@ -2390,17 +2390,11 @@ public class UIUtil {
     };
   }
 
-  private static void scaleStyleSheetFontSize(@Nullable StyleSheet styleSheet) {
-    if (styleSheet == null) {
-      return;
-    }
-    // 'baseFontSize' equals to javax.swing.text.html.StyleSheet.sizeMapDefault[3],
-    // where '3' == javax.swing.text.html.CSS.baseFontSizeIndex
-    // See javax.swing.text.html.StyleSheet.rebaseSizeMap()
-    int baseFontSize = 14;
-    int scaledBaseFontSize = JBUI.scaleFontSize(baseFontSize);
-    if (baseFontSize != scaledBaseFontSize) {
-      styleSheet.addRule("BASE_SIZE " + scaledBaseFontSize);
+  private static void scaleStyleSheetFontSize(@Nullable StyleSheet styleSheet, int bodyFontSize) {
+    // In compliance with javax.swing.text.html.StyleSheet logic, where 14pt font size is specified in
+    // javax/swing/text/html/default.css and javax.swing.text.html.StyleSheet.sizeMapDefault[3].
+    if (styleSheet != null) {
+      styleSheet.addRule("BASE_SIZE " + bodyFontSize);
     }
   }
 
