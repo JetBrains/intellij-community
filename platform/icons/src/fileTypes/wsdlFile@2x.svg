@@ -1,0 +1,14 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>wsdlFile@2x</title>
+  <g>
+    <rect x="2" y="18" width="30" height="14" fill="#40b6e0" opacity="0.6"/>
+    <g>
+      <polygon points="12 0 4 8 12 8 12 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+      <polygon points="14 0 14 8 14 10 12 10 4 10 4 16 26 16 26 0 14 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+    </g>
+    <path d="M5,20H8.2992A4.68763,4.68763,0,0,1,13,24.9715v0.02908A4.71131,4.71131,0,0,1,8.2992,30H5V20Zm1.55493,1.60056v6.79888H8.2992A3.078,3.078,0,0,0,11.37,25.0285V25.00058a3.10281,3.10281,0,0,0-3.07075-3.4H6.55493Z" fill="#231f20" opacity="0.6"/>
+    <g opacity="0.6">
+      <path d="M14,20h1.75759v8.39944h5.25648V30H14V20Z" fill="#231f20"/>
+    </g>
+  </g>
+</svg>
