@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +53,9 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       VirtualFile[][] allRoots = getModuleContentAndSourceRoots(myModule);
       for (VirtualFile[] roots : allRoots) {
         for (VirtualFile root : roots) {
+          DirectoryInfo info = getInfoForFileOrDirectory(root);
+          if (!info.isInProject()) continue;
+
           VirtualFile parent = root.getParent();
           if (parent != null) {
             DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);

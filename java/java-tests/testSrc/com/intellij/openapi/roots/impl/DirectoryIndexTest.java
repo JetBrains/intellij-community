@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.testFramework.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -915,6 +916,12 @@ public class DirectoryIndexTest extends IdeaTestCase {
     PsiTestUtil.addExcludedRoot(myModule2, src);
     assertExcluded(src, myModule2);
     assertIteratedContent(myModule2, null, Arrays.asList(sourceFile));
+  }
+
+  public void testSourceRootFromUnsupportedFileSystem() {
+    VirtualFile httpFile = HttpFileSystem.getInstance().findFileByPath("example.com");
+    PsiTestUtil.addSourceRoot(myModule, httpFile);
+    assertNotInProject(httpFile);
   }
 
   private void checkInfo(VirtualFile file,

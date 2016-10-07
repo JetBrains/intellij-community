@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
@@ -179,6 +180,10 @@ public class RootIndex {
   }
 
   private static boolean ensureValid(@NotNull VirtualFile file, @NotNull Object container) {
+    if (!(file instanceof VirtualFileWithId)) {
+      //skip roots from unsupported file systems (e.g. http)
+      return false;
+    }
     if (!file.isValid()) {
       LOG.error("Invalid root " + file + " in " + container);
       return false;
