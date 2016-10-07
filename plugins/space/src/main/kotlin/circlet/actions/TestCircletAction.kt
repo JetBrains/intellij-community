@@ -25,11 +25,10 @@ class TestCircletAction : AnAction() {
         project ?: return
         val client = project.component<IdePluginClient>()
         val connection = client.connectionState?.connection ?: return
+
         ServerApi(connection).getProjects() then {
-            val it1: List<Project> = it
-            it1.forEach { project ->
-                val name = project.name
-                log.info { "Project: $name" }
+            it.forEach {
+                log.info { "Project: ${it.name}" }
             }
         } catch {
             // >>> wtf...

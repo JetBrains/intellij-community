@@ -1,7 +1,8 @@
 package circlet.components
 
+import circlet.modelApi.*
 import circlet.protocol.*
-import lifetime.*
+import circlet.utils.lifetime.*
 import javax.websocket.*
 
 data class IdePluginConnectionState (

@@ -2,8 +2,10 @@ package circlet.components
 
 import circlet.client.*
 import circlet.client.auth.*
+import circlet.modelApi.*
 import circlet.ring.*
 import circlet.utils.*
+import circlet.utils.lifetime.*
 import com.intellij.ide.passwordSafe.*
 import com.intellij.notification.*
 import com.intellij.openapi.components.*
@@ -12,7 +14,6 @@ import com.intellij.openapi.project.*
 import com.intellij.util.net.ssl.*
 import json.*
 import klogging.*
-import lifetime.*
 import nl.komponents.kovenant.*
 import org.apache.http.client.utils.*
 import org.jetbrains.hub.oauth2.client.*
