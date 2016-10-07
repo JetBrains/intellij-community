@@ -80,7 +80,10 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
-        final PsiMethod method = methodCall.resolveMethod();
+        PsiMethod method = methodCall.resolveMethod();
+        if(method == null) return;
+        PsiClass psiClass = method.getContainingClass();
+        if(psiClass == null) return;
         if (isCallOf(method, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
           handleCollectionStream(methodCall);
         }
@@ -90,27 +93,28 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         else if (isCallOf(method, CommonClassNames.JAVA_UTIL_OPTIONAL, IS_PRESENT_METHOD, 0)) {
           handleOptionalIsPresent(methodCall);
         }
-        else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, ANY_MATCH_METHOD, 1)) {
+        else if (isStreamCall(method, ANY_MATCH_METHOD)) {
           if(isParentNegated(methodCall)) {
             boolean argNegated = isArgumentLambdaNegated(methodCall);
             registerMatchFix(methodCall,
-                             new SimplifyMatchNegationFix(argNegated ? "!Stream.anyMatch(x -> !(...))" : "!Stream.anyMatch(...)",
+                             new SimplifyMatchNegationFix(
+                               "!" + psiClass.getName() + (argNegated ? ".anyMatch(x -> !(...))" : ".anyMatch(...)"),
                                                           argNegated ? ALL_MATCH_METHOD : NONE_MATCH_METHOD));
           }
         }
-        else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, NONE_MATCH_METHOD, 1)) {
+        else if (isStreamCall(method, NONE_MATCH_METHOD)) {
           if(isParentNegated(methodCall)) {
-            registerMatchFix(methodCall, new SimplifyMatchNegationFix("!Stream.noneMatch(...)", ANY_MATCH_METHOD));
+            registerMatchFix(methodCall, new SimplifyMatchNegationFix("!"+psiClass.getName()+".noneMatch(...)", ANY_MATCH_METHOD));
           }
           if(isArgumentLambdaNegated(methodCall)) {
-            registerMatchFix(methodCall, new SimplifyMatchNegationFix("Stream.noneMatch(x -> !(...))", ALL_MATCH_METHOD));
+            registerMatchFix(methodCall, new SimplifyMatchNegationFix(psiClass.getName()+".noneMatch(x -> !(...))", ALL_MATCH_METHOD));
           }
         }
-        else if (isCallOf(method, CommonClassNames.JAVA_UTIL_STREAM_STREAM, ALL_MATCH_METHOD, 1)) {
+        else if (isStreamCall(method, ALL_MATCH_METHOD)) {
           if(isArgumentLambdaNegated(methodCall)) {
             boolean parentNegated = isParentNegated(methodCall);
             registerMatchFix(methodCall,
-                             new SimplifyMatchNegationFix(parentNegated ? "!Stream.allMatch(x -> !(...))" : "Stream.allMatch(x -> !(...))",
+                             new SimplifyMatchNegationFix((parentNegated ? "!" : "") + psiClass.getName() + ".allMatch(x -> !(...))",
                                                           parentNegated ? ANY_MATCH_METHOD : NONE_MATCH_METHOD));
           }
         }
@@ -309,6 +313,14 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       }
     }
     return false;
+  }
+
+  static boolean isStreamCall(@Nullable PsiMethod method, @NotNull String methodName) {
+    if (method == null || !methodName.equals(method.getName()) || method.getParameterList().getParametersCount() != 1) {
+      return false;
+    }
+    final PsiClass containingClass = method.getContainingClass();
+    return containingClass != null && InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
   }
 
   interface CallChainFix {
@@ -627,11 +639,11 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
 
     @Override
     public String getName() {
-      return "Replace "+myFrom+" with Stream."+myTo+"(...)";
+      return "Replace "+myFrom+" with "+myTo+"(...)";
     }
 
     public String getMessage() {
-      return myFrom+" can be replaced with Stream."+myTo+"(...)";
+      return myFrom+" can be replaced with "+myTo+"(...)";
     }
 
     @Override
