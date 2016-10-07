@@ -49,18 +49,11 @@ public class GuiTestRunner extends BlockJUnit4ClassRunner {
 
   private final List<GarbageCollectorMXBean> myGarbageCollectorMXBeans = ManagementFactory.getGarbageCollectorMXBeans();
   private final MemoryMXBean myMemoryMXBean = ManagementFactory.getMemoryMXBean();
-  private Class<? extends IdeTestApplication> myIdeTestApplicationClass;
 
   @Nullable private final ScreenshotTaker myScreenshotTaker;
 
   public GuiTestRunner(Class<?> testClass) throws InitializationError {
     super(testClass);
-
-    Class<?> guiTestCaseClass = testClass.getSuperclass();
-    //check test extends GuiTestBase
-    guiTestCaseClass.isInstance(GuiTestBase.class);
-    myIdeTestApplicationClass = guiTestCaseClass.getAnnotation(TestWithIde.class).value();
-
     myScreenshotTaker = canRunGuiTests() ? new ScreenshotTaker() : null;
 
   }
@@ -144,8 +137,7 @@ public class GuiTestRunner extends BlockJUnit4ClassRunner {
   }
 
   private void loadClassesWithIdeClassLoader() throws Exception {
-    IdeTestApplication ideTestApplication = (IdeTestApplication) myIdeTestApplicationClass.getMethod("getInstance").invoke(null);
-    ClassLoader ideClassLoader =  ideTestApplication.getIdeClassLoader();
+    ClassLoader ideClassLoader = IdeTestApplication.getInstance().getIdeClassLoader();
     Thread.currentThread().setContextClassLoader(ideClassLoader);
 
     Class<?> testClass = getTestClass().getJavaClass();

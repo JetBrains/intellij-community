@@ -26,7 +26,6 @@ import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -80,7 +79,6 @@ public class FrameworksTreeFixture {
         return this;
       }
     }
-    Assert.fail();
     return this;
   }
 

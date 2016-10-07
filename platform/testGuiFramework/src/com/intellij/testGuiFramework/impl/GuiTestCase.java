@@ -17,7 +17,6 @@ package com.intellij.testGuiFramework.impl;
 
 import com.intellij.testFramework.vcs.ExecutableHelper;
 import com.intellij.testGuiFramework.framework.GuiTestBase;
-import com.intellij.testGuiFramework.framework.TestWithIde;
 import com.intellij.util.net.HttpConfigurable;
 import git4idea.config.GitVcsApplicationSettings;
 import org.fest.swing.core.FastRobot;
@@ -28,7 +27,6 @@ import static com.intellij.testGuiFramework.framework.GuiTestUtil.setUpSdks;
 /**
  * @author Sergey Karashevich
  */
-@TestWithIde(IdeaGuiTestApp.class)
 public class GuiTestCase extends GuiTestBase {
 
   public GuiTestCase() {

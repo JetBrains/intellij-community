@@ -313,7 +313,7 @@ public final class GuiTestUtil {
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
 
-      //TODO: clarify here what the hell is going on?
+      //TODO: clarify why we are skipping event here?
       // We know the IDE event queue was pushed in front of the AWT queue. Some JDKs will leave a dummy event in the AWT queue, which
       // we attempt to clear here. All other events, including those posted by the Robot, will go through the IDE event queue.
       //try {

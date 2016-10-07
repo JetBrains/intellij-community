@@ -9,7 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="library" name="fest" level="project" />
+    <orderEntry type="library" exported="" name="fest" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />
@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="external-system-rt" />
     <orderEntry type="module" module-name="external-system-impl" />
-    <orderEntry type="module" module-name="main_idea_tests" scope="TEST" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -34,5 +33,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="git4idea" />
     <orderEntry type="module" module-name="vcs-tests" />
+    <orderEntry type="module" module-name="platform-main" />
   </component>
 </module>
