@@ -10,12 +10,12 @@ import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
+import java.awt.event.MouseListener;
 
 public class IpnbCodeOutputPanel<K extends IpnbOutputCell> extends IpnbPanel<JComponent, K> {
   protected final IpnbFilePanel myParent;
 
-  public IpnbCodeOutputPanel(@NotNull final K cell, @Nullable final IpnbFilePanel parent, @NotNull final MouseAdapter hideOutputAdapter) {
+  public IpnbCodeOutputPanel(@NotNull final K cell, @Nullable final IpnbFilePanel parent, @Nullable final MouseListener hideOutputAdapter) {
     super(cell, new BorderLayout());
     myParent = parent;
     myViewPanel = createViewPanel();
@@ -34,7 +34,7 @@ public class IpnbCodeOutputPanel<K extends IpnbOutputCell> extends IpnbPanel<JCo
     return textArea;
   }
   
-  public void addHideOutputListener(@NotNull final MouseAdapter mouseAdapter) {
+  public void addHideOutputListener(@Nullable final MouseListener mouseAdapter) {
     myViewPanel.addMouseListener(mouseAdapter);
   }
 }
