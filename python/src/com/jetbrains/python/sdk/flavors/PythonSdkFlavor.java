@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk.flavors;
 import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -80,7 +81,7 @@ public abstract class PythonSdkFlavor {
     List<PythonSdkFlavor> result = new ArrayList<>();
 
     if (SystemInfo.isWindows) {
-      result.add(WinPythonSdkFlavor.INSTANCE);
+      result.add(ServiceManager.getService(WinPythonSdkFlavor.class));
     }
     else if (SystemInfo.isMac) {
       result.add(MacPythonSdkFlavor.INSTANCE);
