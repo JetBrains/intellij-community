@@ -459,6 +459,9 @@ public abstract class ModuleInsight {
               catch (IOException e) {
                 LOG.info(e);
               }
+              catch (IllegalArgumentException e) { // may be thrown from java.util.zip.ZipCoder.toString for corrupted archive
+                LOG.info(e);
+              }
               catch (InternalError e) { // indicates that file is somehow damaged and cannot be processed
                 LOG.info(e);
               }

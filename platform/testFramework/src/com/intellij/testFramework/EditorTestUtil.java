@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -473,6 +473,18 @@ public class EditorTestUtil {
     public CaretAndSelectionState(List<CaretInfo> carets, @Nullable TextRange blockSelection) {
       this.carets = carets;
       this.blockSelection = blockSelection;
+    }
+
+    /**
+     * Returns true if current CaretAndSelectionState contains at least one caret or selection explicitly specified
+     */
+    public boolean hasExplicitCaret() {
+      if(carets.isEmpty()) return false;
+      if(blockSelection == null && carets.size() == 1) {
+        CaretInfo caret = carets.get(0);
+        return caret.position != null || caret.selection != null;
+      }
+      return true;
     }
   }
 

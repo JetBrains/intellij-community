@@ -380,7 +380,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
 
   @Contract("_, null -> false")
   static boolean isIdentityMapping(PsiVariable variable, PsiExpression mapperCall) {
-    return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).resolve() == variable;
+    return mapperCall instanceof PsiReferenceExpression && ((PsiReferenceExpression)mapperCall).isReferenceTo(variable);
   }
 
   @Nullable
@@ -724,7 +724,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       if(args.length != 1) return null;
       comparatorExpression = args[0];
     }
-    if(!(listExpression instanceof PsiReferenceExpression) || ((PsiReferenceExpression)listExpression).resolve() != list) return null;
+    if(!(listExpression instanceof PsiReferenceExpression) || !((PsiReferenceExpression)listExpression).isReferenceTo(list)) return null;
     if(comparatorExpression == null || ExpressionUtils.isNullLiteral(comparatorExpression)) return "";
     return comparatorExpression.getText();
   }
@@ -762,7 +762,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
     PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
     if (!(qualifierExpression instanceof PsiReferenceExpression)) return null;
     PsiLocalVariable collectionVariable = extractCollectionVariable(expression.getMethodExpression().getQualifierExpression());
-    if (collectionVariable == null || ((PsiReferenceExpression)qualifierExpression).resolve() != collectionVariable) return null;
+    if (collectionVariable == null || !((PsiReferenceExpression)qualifierExpression).isReferenceTo(collectionVariable)) return null;
     PsiExpression initializer = collectionVariable.getInitializer();
     if (initializer == null) return null;
     PsiType type = initializer.getType();
@@ -1080,7 +1080,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
       // check that increment is like for(...;...;i++)
       if(!(forStatement.getUpdate() instanceof PsiExpressionStatement)) return null;
       PsiExpression lValue = extractIncrementedLValue(((PsiExpressionStatement)forStatement.getUpdate()).getExpression());
-      if(!(lValue instanceof PsiReferenceExpression) || ((PsiReferenceExpression)lValue).resolve() != counter) return null;
+      if(!(lValue instanceof PsiReferenceExpression) || !((PsiReferenceExpression)lValue).isReferenceTo(counter)) return null;
 
       // check that condition is like for(...;i<bound;...) or for(...;i<=bound;...)
       if(!(forStatement.getCondition() instanceof PsiBinaryExpression)) return null;
@@ -1104,7 +1104,7 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
         bound = condition.getLOperand();
         ref = condition.getROperand();
       } else return null;
-      if(bound == null || !(ref instanceof PsiReferenceExpression) || ((PsiReferenceExpression)ref).resolve() != counter) return null;
+      if(bound == null || !(ref instanceof PsiReferenceExpression) || !((PsiReferenceExpression)ref).isReferenceTo(counter)) return null;
       if(!TypeConversionUtil.areTypesAssignmentCompatible(counter.getType(), bound)) return null;
       return new CountingLoop(counter, initializer, bound, closed);
     }

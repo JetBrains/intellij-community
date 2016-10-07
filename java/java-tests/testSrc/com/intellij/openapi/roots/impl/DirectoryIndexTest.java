@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.testFramework.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -712,16 +713,20 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertIteratedContent(myFileIndex, Arrays.asList(fileSourceRoot, fileTestSourceRoot), Collections.singletonList(fileRoot));
   }
 
-  private static void assertIteratedContent(ProjectFileIndex fileIndex,
+  private void assertIteratedContent(Module module, @Nullable List<VirtualFile> contains, @Nullable List<VirtualFile> doesntContain) {
+    assertIteratedContent(ModuleRootManager.getInstance(module).getFileIndex(), contains, doesntContain);
+    assertIteratedContent(myFileIndex, contains, doesntContain);
+  }
+
+  private static void assertIteratedContent(FileIndex fileIndex,
                                             @Nullable List<VirtualFile> contains,
                                             @Nullable List<VirtualFile> doesntContain) {
     final Set<VirtualFile> collected = new THashSet<>();
-    fileIndex.iterateContent(new ContentIterator() {
-      @Override
-      public boolean processFile(VirtualFile fileOrDir) {
-        collected.add(fileOrDir);
-        return true;
+    fileIndex.iterateContent(fileOrDir -> {
+      if (!collected.add(fileOrDir)) {
+        fail(fileOrDir + " visited twice");
       }
+      return true;
     });
     if (contains != null) assertContainsElements(collected, contains);
     if (doesntContain != null) assertDoesntContain(collected, doesntContain);
@@ -856,10 +861,67 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertTrue(myFileIndex.isInSource(fileSourceRoot));
   }
 
-  public void testContentRootUnderExcludedRoot() {
-    VirtualFile dirUnderExcluded = createChildDirectory(myExcludeDir, "generated");
-    PsiTestUtil.addSourceContentToRoots(myModule2, dirUnderExcluded);
-    checkInfo(dirUnderExcluded, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
+  public void testSourceContentRootsUnderExcludedRoot() {
+    VirtualFile contentRoot = createChildDirectory(myExcludeDir, "content");
+    PsiTestUtil.addContentRoot(myModule2, contentRoot);
+    checkInfo(contentRoot, myModule2, false, false, null, null, myModule2, myModule3);
+    VirtualFile excludedFile = createChildData(myExcludeDir, "excluded.txt");
+
+    VirtualFile sourceRoot = createChildDirectory(myExcludeDir, "src");
+    VirtualFile sourceFile = createChildData(sourceRoot, "source.txt");
+    PsiTestUtil.addSourceRoot(myModule2, sourceRoot);
+    assertEquals(myModule2Dir, assertInProject(sourceRoot).getContentRoot());
+    checkInfo(sourceRoot, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
+
+    VirtualFile contentSourceRoot = createChildDirectory(myExcludeDir, "content-src");
+    VirtualFile contentSourceFile = createChildData(sourceRoot, "content-source.txt");
+    PsiTestUtil.addSourceContentToRoots(myModule2, contentSourceRoot);
+    checkInfo(contentSourceRoot, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
+
+    assertIteratedContent(myModule2, Arrays.asList(sourceFile, contentSourceFile, sourceRoot, contentSourceRoot),
+                          Arrays.asList(excludedFile, myExcludeDir));
+  }
+
+  public void testSourceContentRootsUnderExcludedRootUnderSourceRoot() {
+    VirtualFile excluded = createChildDirectory(myModule2Dir, "excluded");
+    PsiTestUtil.addExcludedRoot(myModule2, excluded);
+    VirtualFile excludedFile = createChildData(excluded, "excluded.txt");
+
+    VirtualFile contentRoot = createChildDirectory(excluded, "content");
+    PsiTestUtil.addContentRoot(myModule2, contentRoot);
+    checkInfo(contentRoot, myModule2, false, false, null, null);
+
+    VirtualFile sourceRoot = createChildDirectory(excluded, "src");
+    PsiTestUtil.addSourceRoot(myModule2, sourceRoot);
+    VirtualFile sourceFile = createChildData(sourceRoot, "source.txt");
+    assertEquals(myModule2Dir, assertInProject(sourceRoot).getContentRoot());
+    checkInfo(sourceRoot, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
+
+    VirtualFile contentSourceRoot = createChildDirectory(excluded, "content-src");
+    VirtualFile contentSourceFile = createChildData(contentSourceRoot, "content-source.txt");
+    PsiTestUtil.addSourceContentToRoots(myModule2, contentSourceRoot);
+    checkInfo(contentSourceRoot, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
+
+    assertIteratedContent(myModule2, Arrays.asList(sourceFile, contentSourceFile, sourceRoot, contentSourceRoot),
+                          Arrays.asList(excludedFile, myExcludeDir));
+  }
+
+  public void testExcludedSourceRootUnderExcluded() {
+    VirtualFile excluded = createChildDirectory(myModule2Dir, "excluded");
+    PsiTestUtil.addExcludedRoot(myModule2, excluded);
+
+    VirtualFile src = createChildDirectory(excluded, "src");
+    VirtualFile sourceFile = createChildData(src, "src.txt");
+    PsiTestUtil.addSourceRoot(myModule2, src);
+    PsiTestUtil.addExcludedRoot(myModule2, src);
+    assertExcluded(src, myModule2);
+    assertIteratedContent(myModule2, null, Arrays.asList(sourceFile));
+  }
+
+  public void testSourceRootFromUnsupportedFileSystem() {
+    VirtualFile httpFile = HttpFileSystem.getInstance().findFileByPath("example.com");
+    PsiTestUtil.addSourceRoot(myModule, httpFile);
+    assertNotInProject(httpFile);
   }
 
   private void checkInfo(VirtualFile file,

@@ -42,6 +42,7 @@ public class BuildoutFrameworkDetector extends FacetBasedFrameworkDetector<Build
     super("buildout-python");
   }
 
+  @NotNull
   @Override
   public FacetType<BuildoutFacet, BuildoutFacetConfiguration> getFacetType() {
     return BuildoutFacetType.getInstance();

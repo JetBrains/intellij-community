@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -66,6 +67,11 @@ public class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
         File contentRoot = JpsPathUtil.urlToFile(contentUrl);
         moduleContent.add(contentRoot);
         contentToModule.put(contentRoot, module);
+      }
+      for (JpsModuleSourceRoot root : module.getSourceRoots()) {
+        File sourceRoot = root.getFile();
+        moduleContent.add(sourceRoot);
+        contentToModule.put(sourceRoot, module);
       }
       myModuleToExcludesMap.put(module, moduleExcludes);
       myModuleToContentMap.put(module, moduleContent);

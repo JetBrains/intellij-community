@@ -17,11 +17,13 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.util.Producer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,17 +120,8 @@ public class InferenceSessionContainer {
           }
 
           if (session != null) {
-            final CompoundInitialState compoundInitialState = createState(session);
-            final InitialInferenceState initialInferenceState = compoundInitialState.getInitialState(PsiTreeUtil.getParentOfType(argumentList, PsiCall.class));
-            if (initialInferenceState != null) {
-              InferenceSession childSession = new InferenceSession(initialInferenceState);
-              final List<String> errorMessages = session.getIncompatibleErrorMessages();
-              if (errorMessages != null) {
-                return childSession.prepareSubstitution();
-              }
-              return childSession
-                .collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
-            }
+            final PsiSubstitutor childSubstitutor = inferNested(typeParameters, parameters, arguments, partialSubstitutor, (PsiCall)parent, policy, properties, session);
+            if (childSubstitutor != null) return childSubstitutor;
           }
           else if (topLevelCall instanceof PsiMethodCallExpression) {
             return new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy).prepareSubstitution();
@@ -141,7 +134,80 @@ public class InferenceSessionContainer {
     inferenceSession.initExpressionConstraints(parameters, arguments, parent);
     return inferenceSession.infer(parameters, arguments, parent);
   }
-  
+
+  private static PsiSubstitutor inferNested(final PsiTypeParameter[] typeParameters,
+                                            @NotNull final PsiParameter[] parameters,
+                                            @NotNull final PsiExpression[] arguments,
+                                            final PsiSubstitutor partialSubstitutor,
+                                            @NotNull final PsiCall parent,
+                                            @NotNull final ParameterTypeInferencePolicy policy,
+                                            final MethodCandidateInfo.CurrentCandidateProperties properties,
+                                            final InferenceSession parentSession) {
+    final CompoundInitialState compoundInitialState = createState(parentSession);
+    InitialInferenceState initialInferenceState = compoundInitialState.getInitialState(parent);
+    if (initialInferenceState != null) {
+      final InferenceSession childSession = new InferenceSession(initialInferenceState);
+      final List<String> errorMessages = parentSession.getIncompatibleErrorMessages();
+      if (errorMessages != null) {
+        return childSession.prepareSubstitution();
+      }
+      return childSession.collectAdditionalAndInfer(parameters, arguments, properties, compoundInitialState.getInitialSubstitutor());
+    }
+
+    //we do not investigate lambda return expressions when lambda's return type is already inferred (proper)
+    //this way all calls from lambda's return expressions won't appear in nested sessions
+    else {
+      PsiElement gParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+      //find the nearest parent which appears in the map and start inference with a provided target type for a nested lambda
+      while (true) {
+        if (gParent instanceof PsiReturnStatement) { //process code block lambda
+          final PsiElement returnContainer = gParent.getParent();
+          if (returnContainer instanceof PsiCodeBlock) {
+            gParent = returnContainer.getParent();
+          }
+        }
+        if (gParent instanceof PsiLambdaExpression) {
+          final PsiCall call = PsiTreeUtil.getParentOfType(gParent, PsiCall.class);
+          if (call != null) {
+            initialInferenceState = compoundInitialState.getInitialState(call);
+            if (initialInferenceState != null) {
+              final int idx = LambdaUtil.getLambdaIdx(call.getArgumentList(), gParent);
+              final PsiMethod method = call.resolveMethod();
+              if (method != null && idx > -1) {
+                final PsiType parameterType = PsiTypesUtil.getParameterType(method.getParameterList().getParameters(), idx, true);
+                final PsiType parameterTypeInTermsOfSession = initialInferenceState.getInferenceSubstitutor().substitute(parameterType);
+                final PsiType lambdaTargetType = compoundInitialState.getInitialSubstitutor().substitute(parameterTypeInTermsOfSession);
+                return LambdaUtil.performWithLambdaTargetType((PsiLambdaExpression)gParent, lambdaTargetType, new Producer<PsiSubstitutor>() {
+                  @Nullable
+                  @Override
+                  public PsiSubstitutor produce() {
+                    if (call.equals(PsiTreeUtil.getParentOfType(parent, PsiCall.class, true))) {
+                      //parent was mentioned in the top inference session
+                      //just proceed with the target type
+                      final InferenceSession inferenceSession = new InferenceSession(typeParameters, partialSubstitutor, parent.getManager(), parent, policy);
+                      inferenceSession.initExpressionConstraints(parameters, arguments, parent);
+                      return inferenceSession.infer(parameters, arguments, parent);
+                    }
+                    //one of the grand parents were found in the top inference session
+                    //start from it as it is the top level call
+                    final InferenceSession sessionInsideLambda = startTopLevelInference(call, policy);
+                    return inferNested(typeParameters, parameters, arguments, partialSubstitutor, parent, policy, properties, sessionInsideLambda);
+                  }
+                });
+              }
+            }
+            else {
+              gParent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+              continue;
+            }
+          }
+        }
+        break;
+      }
+    }
+    return null;
+  }
+
   private static CompoundInitialState createState(InferenceSession topLevelSession) {
     final PsiSubstitutor topInferenceSubstitutor = replaceVariables(topLevelSession.getInferenceVariables());
     final Map<PsiElement, InitialInferenceState> nestedStates = new LinkedHashMap<PsiElement, InitialInferenceState>();

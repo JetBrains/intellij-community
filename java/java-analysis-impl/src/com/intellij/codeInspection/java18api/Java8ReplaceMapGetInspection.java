@@ -159,7 +159,7 @@ public class Java8ReplaceMapGetInspection extends BaseJavaBatchLocalInspectionTo
       PsiElement[] elements = declaration.getDeclaredElements();
       if(elements.length > 0) {
         PsiElement lastDeclaration = elements[elements.length - 1];
-        if(lastDeclaration instanceof PsiLocalVariable && lastDeclaration == target.resolve()) {
+        if(lastDeclaration instanceof PsiLocalVariable && target.isReferenceTo(lastDeclaration)) {
           PsiLocalVariable var = (PsiLocalVariable)lastDeclaration;
           PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(var.getInitializer());
           if (initializer instanceof PsiMethodCallExpression &&

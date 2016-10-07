@@ -60,6 +60,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testExceptionFromFinallyNesting() throws Throwable { doTest(); }
   public void testNestedFinally() { doTest(); }
   public void testTryFinallyInsideFinally() { doTest(); }
+  public void testBreakContinueViaFinally() { doTest(); }
   public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
 
   public void testGeneratedEquals() throws Throwable { doTest(); }

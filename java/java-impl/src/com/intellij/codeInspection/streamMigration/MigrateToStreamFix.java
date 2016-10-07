@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
@@ -151,5 +152,17 @@ abstract class MigrateToStreamFix implements LocalQuickFix {
     else {
       statement.delete();
     }
+  }
+
+  static boolean isReachable(PsiReturnStatement target) {
+    ControlFlow flow;
+    try {
+      flow = ControlFlowFactory.getInstance(target.getProject())
+        .getControlFlow(target.getParent(), LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+    }
+    catch (AnalysisCanceledException e) {
+      return true;
+    }
+    return ControlFlowUtil.isInstructionReachable(flow, flow.getStartOffset(target), 0);
   }
 }

@@ -184,6 +184,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
     }
   }
 
+  @SuppressWarnings("WeakerAccess")  // called via reflection from com.intellij.InternalTestDiscoveryListener.flushCurrentTraces()
   public static void processAvailableTraces(final String[] fullTestNames,
                                             final String tracesDirectory,
                                             final String moduleName,

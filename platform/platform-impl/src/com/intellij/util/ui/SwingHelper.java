@@ -192,6 +192,7 @@ public class SwingHelper {
 
   public static void adjustDialogSizeToFitPreferredSize(@NotNull DialogWrapper dialogWrapper) {
     JRootPane rootPane = dialogWrapper.getRootPane();
+    if (rootPane == null) return;
     Dimension componentSize = rootPane.getSize();
     Dimension componentPreferredSize = rootPane.getPreferredSize();
     if (componentPreferredSize.width <= componentSize.width && componentPreferredSize.height <= componentSize.height) {

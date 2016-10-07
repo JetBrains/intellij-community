@@ -37,7 +37,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
   static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   @NotNull private final String myName;
-  private final LowMemoryWatcherManager myLowMemoryWatcherManager = new LowMemoryWatcherManager();
+  private final LowMemoryWatcherManager myLowMemoryWatcherManager;
   private Consumer<Thread> newThreadListener;
   private final AtomicInteger counter = new AtomicInteger();
 
@@ -68,6 +68,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
         return thread;
       }
     });
+    myLowMemoryWatcherManager = new LowMemoryWatcherManager(this);
   }
 
   public void setNewThreadListener(@NotNull Consumer<Thread> threadListener) {
