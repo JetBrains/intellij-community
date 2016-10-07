@@ -105,7 +105,10 @@
                         serviceImplementation="com.jetbrains.python.packaging.PyCondaPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
-
+    <applicationService serviceInterface="com.jetbrains.python.sdk.flavors.WinRegistryService"
+                        serviceImplementation="com.jetbrains.python.sdk.flavors.WinRegistryServiceImpl"/>
+    <applicationService
+        serviceImplementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyKeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
     <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
@@ -180,7 +183,7 @@
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertStaticMethodToFunctionIntention</className>
       <category>Python</category>
     </intentionAction>
-    
+
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.SpecifyTypeInDocstringIntention</className>
       <category>Python</category>
@@ -310,7 +313,7 @@
       <className>com.jetbrains.python.codeInsight.intentions.PyYieldFromIntention</className>
       <category>Python</category>
     </intentionAction>
-    
+
     <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.convertToFString.PyConvertToFStringIntention</className>
       <category>Python</category>
@@ -570,7 +573,7 @@
     <highlightErrorFilter implementation="com.jetbrains.python.documentation.doctest.PyDocstringErrorFilter"/>
 
     <!-- PyFunctionTypeAnnotation -->
-    <lang.parserDefinition language="PyFunctionTypeComment" 
+    <lang.parserDefinition language="PyFunctionTypeComment"
                            implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition"/>
 
     <!-- Packaging -->
@@ -595,7 +598,7 @@
 
     <!-- f-strings -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringsInjector"/>
-    
+
     <!-- postfix templates!-->
     <codeInsight.template.postfixTemplateProvider language="Python"
                                                   implementationClass="com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider"/>
