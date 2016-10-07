@@ -30,4 +30,7 @@ public interface PsiJavaModule extends NavigatablePsiElement, PsiNamedElement, P
 
   @NotNull PsiJavaModuleReferenceElement getNameElement();
   @NotNull String getModuleName();
+
+  @NotNull Iterable<PsiRequiresStatement> getRequires();
+  @NotNull Iterable<PsiExportsStatement> getExports();
 }

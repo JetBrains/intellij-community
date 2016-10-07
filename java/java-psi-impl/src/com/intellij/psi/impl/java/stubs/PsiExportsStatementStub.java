@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi;
+package com.intellij.psi.impl.java.stubs;
 
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiExportsStatement;
+import com.intellij.psi.stubs.StubElement;
 
-/**
- * Represents a {@code requires} statement of a Java module declaration.
- *
- * @since 2016.3
- */
-public interface PsiRequiresStatement extends PsiElement {
-  PsiRequiresStatement[] EMPTY_ARRAY = new PsiRequiresStatement[0];
+import java.util.List;
 
-  @Nullable PsiJavaModuleReferenceElement getReferenceElement();
+public interface PsiExportsStatementStub extends StubElement<PsiExportsStatement> {
+  String getPackageName();
+  List<String> getTargets();
 }

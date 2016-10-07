@@ -39,6 +39,8 @@ public interface JavaStubElementTypes {
   JavaClassInitializerElementType CLASS_INITIALIZER = new JavaClassInitializerElementType();
   JavaImportListElementType IMPORT_LIST = new JavaImportListElementType();
   JavaModuleElementType MODULE = new JavaModuleElementType();
+  JavaRequiresStatementElementType REQUIRES_STATEMENT = new JavaRequiresStatementElementType();
+  JavaExportsStatementElementType EXPORTS_STATEMENT = new JavaExportsStatementElementType();
 
   JavaClassElementType CLASS = new JavaClassElementType("CLASS") {
     @NotNull
