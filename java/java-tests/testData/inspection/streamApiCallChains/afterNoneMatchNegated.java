@@ -1,4 +1,4 @@
-// "Replace !Stream.noneMatch(...) with Stream.anyMatch(...)" "true"
+// "Replace !Stream.noneMatch(...) with anyMatch(...)" "true"
 
 import java.util.*;
 

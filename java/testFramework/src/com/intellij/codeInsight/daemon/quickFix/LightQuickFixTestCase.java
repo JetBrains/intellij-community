@@ -336,7 +336,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
       @Override
       public void configureFromFileText(String name, String contents) throws IOException {
-        LightPlatformCodeInsightTestCase.configureFromFileText(name, contents);
+        LightPlatformCodeInsightTestCase.configureFromFileText(name, contents, true);
       }
 
       @Override

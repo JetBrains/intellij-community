@@ -431,26 +431,30 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private void paintTextEffect(Graphics2D g, float xFrom, float xTo, int y, Color effectColor, EffectType effectType, boolean allowBorder) {
+    g.setColor(effectColor);
     int xStart = (int)xFrom;
     int xEnd = (int)xTo;
     if (effectType == EffectType.LINE_UNDERSCORE) {
-      EffectPainter.LINE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
+      EffectPainter.LINE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(),
+                                          myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
     }
     else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-      EffectPainter.BOLD_LINE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
+      EffectPainter.BOLD_LINE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(),
+                                               myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
     }
     else if (effectType == EffectType.STRIKEOUT) {
-      EffectPainter.STRIKE_THROUGH.paint(g, xStart, y, xEnd - xStart, myView.getCharHeight(), effectColor);
+      EffectPainter.STRIKE_THROUGH.paint(g, xStart, y, xEnd - xStart, myView.getCharHeight(),
+                                         myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
     }
     else if (effectType == EffectType.WAVE_UNDERSCORE) {
-      EffectPainter.WAVE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
+      EffectPainter.WAVE_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(),
+                                          myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
     }
     else if (effectType == EffectType.BOLD_DOTTED_LINE) {
-      g.setColor(myEditor.getBackgroundColor());
-      EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(), effectColor);
+      EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g, xStart, y, xEnd - xStart, myView.getDescent(),
+                                                 myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
     }
     else if (allowBorder && (effectType == EffectType.BOXED || effectType == EffectType.ROUNDED_BOX)) {
-      g.setColor(effectColor);
       drawSimpleBorder(g, xStart, xEnd - 1, y - myView.getAscent(), effectType == EffectType.ROUNDED_BOX);
     }
   }

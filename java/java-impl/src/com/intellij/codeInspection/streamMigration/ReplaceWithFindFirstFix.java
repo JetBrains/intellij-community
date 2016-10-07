@@ -19,6 +19,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.InitializerUsageStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -52,10 +53,12 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       if (!ExpressionUtils.isSimpleExpression(orElseExpression)) return null;
       stream = generateOptionalUnwrap(stream, tb, value, orElseExpression, null);
       restoreComments(loopStatement, body);
-      if (nextReturnStatement.getParent() == loopStatement.getParent()) {
+      boolean sibling = nextReturnStatement.getParent() == loopStatement.getParent();
+      PsiElement replacement = loopStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", loopStatement));
+      if(sibling || !isReachable(nextReturnStatement)) {
         nextReturnStatement.delete();
       }
-      return loopStatement.replace(elementFactory.createStatementFromText("return " + stream + ";", loopStatement));
+      return replacement;
     }
     else {
       PsiStatement[] statements = tb.getStatements();
@@ -82,6 +85,17 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
         if (initializer != null) {
           String replacementText = generateOptionalUnwrap(stream, tb, value, initializer, var.getType());
           return replaceInitializer(loopStatement, var, initializer, replacementText, status);
+        }
+      }
+      PsiAssignmentExpression previousAssignment =
+        ExpressionUtils.getAssignment(PsiTreeUtil.skipSiblingsBackward(loopStatement, PsiWhiteSpace.class, PsiComment.class));
+      if(previousAssignment != null) {
+        PsiExpression prevRValue = previousAssignment.getRExpression();
+        PsiExpression prevLValue = previousAssignment.getLExpression();
+        if(prevRValue != null && prevLValue instanceof PsiReferenceExpression && ((PsiReferenceExpression)prevLValue).isReferenceTo(var)) {
+          previousAssignment.delete();
+          return loopStatement.replace(elementFactory.createStatementFromText(
+            var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, prevRValue, var.getType()) + ";", loopStatement));
         }
       }
       return loopStatement.replace(elementFactory.createStatementFromText(

@@ -105,7 +105,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     RootsSelection selection = getSelection(e);
-    doUpdate(e, e.getData(LangDataKeys.MODULE), selection);
+    doUpdate(e, selection.myModule, selection);
   }
 
   protected void doUpdate(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
@@ -121,21 +121,16 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
     Module module = getModule(e, files);
     if (module == null) return RootsSelection.EMPTY;
 
-    RootsSelection selection = new RootsSelection();
+    RootsSelection selection = new RootsSelection(module);
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
     for (VirtualFile file : files) {
       if (!file.isDirectory()) {
         return RootsSelection.EMPTY;
       }
-      if (!fileIndex.isInContent(file)) {
-        ExcludeFolder excludeFolder = ProjectRootsUtil.findExcludeFolder(module, file);
-        if (excludeFolder != null) {
-          selection.mySelectedExcludeRoots.add(excludeFolder);
-          continue;
-        }
-        else {
-          return RootsSelection.EMPTY;
-        }
+      ExcludeFolder excludeFolder = ProjectRootsUtil.findExcludeFolder(module, file);
+      if (excludeFolder != null) {
+        selection.mySelectedExcludeRoots.add(excludeFolder);
+        continue;
       }
       SourceFolder folder = ProjectRootsUtil.findSourceFolder(module, file);
       if (folder != null) {
@@ -180,7 +175,12 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   }
 
   public static class RootsSelection {
-    public static final RootsSelection EMPTY = new RootsSelection();
+    public static final RootsSelection EMPTY = new RootsSelection(null);
+    public final Module myModule;
+
+    public RootsSelection(Module module) {
+      myModule = module;
+    }
 
     public List<SourceFolder> mySelectedRoots = new ArrayList<>();
     public List<ExcludeFolder> mySelectedExcludeRoots = new ArrayList<>();

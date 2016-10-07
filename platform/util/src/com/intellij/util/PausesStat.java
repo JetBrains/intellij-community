@@ -67,7 +67,7 @@ public class PausesStat {
     long finishStamp = System.currentTimeMillis();
     int duration = (int)(finishStamp - startTimeStamp);
     started = false;
-    duration = Math.min(duration, (1 << 16) - 1);
+    duration = Math.min(duration, Short.MAX_VALUE);
     if (duration > maxDuration) {
       maxDuration = duration;
       maxDurationDescription = description;

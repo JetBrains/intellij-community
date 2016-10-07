@@ -52,7 +52,7 @@ public class RemoteServersViewImpl extends RemoteServersView {
   }
 
   private static String getToolWindowId(ServerConnection<?> connection) {
-    String customToolWindowId = connection.getServer().getType().getCustomToolWindowId();
+    String customToolWindowId = RemoteServersViewContribution.getRemoteServerToolWindowId(connection.getServer());
     return StringUtil.notNullize(customToolWindowId, DefaultServersToolWindowManager.WINDOW_ID);
   }
 }

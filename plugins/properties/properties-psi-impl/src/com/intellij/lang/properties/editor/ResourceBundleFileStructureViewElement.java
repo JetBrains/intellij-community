@@ -69,12 +69,13 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
     final HashSet<String> remains = new HashSet<>(myElements.keySet());
     for (Map.Entry<String, Collection<IProperty>> entry : propertyNames.entrySet()) {
       final String propKey = entry.getKey();
-      final IProperty representative = entry.getValue().iterator().next();
+      Collection<IProperty> properties = entry.getValue();
       final ResourceBundlePropertyStructureViewElement oldPropertyNode = myElements.get(propKey);
-      if (oldPropertyNode != null && oldPropertyNode.getProperty() == representative) {
+      if (oldPropertyNode != null && properties.contains(oldPropertyNode.getProperty())) {
         remains.remove(propKey);
         continue;
       }
+      final IProperty representative = properties.iterator().next();
       final ResourceBundlePropertyStructureViewElement node = new ResourceBundlePropertyStructureViewElement(representative);
       myElements.put(propKey, node);
     }

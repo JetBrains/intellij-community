@@ -239,7 +239,7 @@ public class Java8CollectionRemoveIfInspection extends BaseJavaBatchLocalInspect
       if(!method.equals(expression.getReferenceName())) return false;
       PsiExpression qualifier = expression.getQualifierExpression();
       if(!(qualifier instanceof PsiReferenceExpression)) return false;
-      return ((PsiReferenceExpression)qualifier).resolve() == myIterator;
+      return ((PsiReferenceExpression)qualifier).isReferenceTo(myIterator);
     }
 
     public PsiVariable getNextElementVariable(PsiStatement statement) {

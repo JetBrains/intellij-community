@@ -134,7 +134,7 @@ public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionToo
     if(!"get".equals(call.getMethodExpression().getReferenceName())) return false;
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if(!(qualifier instanceof PsiReferenceExpression)) return false;
-    return ((PsiReferenceExpression)qualifier).resolve() == variable;
+    return ((PsiReferenceExpression)qualifier).isReferenceTo(variable);
   }
 
   @Contract("null, _ -> false")

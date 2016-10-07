@@ -1,4 +1,4 @@
-// "Replace Stream.allMatch(x -> !(...)) with Stream.noneMatch(...)" "true"
+// "Replace Stream.allMatch(x -> !(...)) with noneMatch(...)" "true"
 
 import java.util.*;
 
