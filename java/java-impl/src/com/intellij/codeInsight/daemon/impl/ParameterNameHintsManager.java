@@ -42,7 +42,7 @@ public class ParameterNameHintsManager {
     "(from*, to*)",
     "(min*, max*)",
     "(key, value)",
-    "(format, arg)"
+    "(format, arg*)"
   ).map((s) -> MatcherConstructor.INSTANCE.createMatcher(s))
     .collect(Collectors.toList());
     
