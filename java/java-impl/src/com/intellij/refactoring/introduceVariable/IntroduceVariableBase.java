@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -855,8 +856,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             settings.getSelectedType());
           initializer = simplifyVariableInitializer(initializer, selectedType.getType());
 
+          PsiType type = stripNullabilityAnnotationsFromTargetType(selectedType, project);
           PsiDeclarationStatement declaration = JavaPsiFacade.getInstance(project).getElementFactory()
-            .createVariableDeclarationStatement(settings.getEnteredName(), selectedType.getType(), initializer, container);
+            .createVariableDeclarationStatement(settings.getEnteredName(), type, initializer, container);
           if (!isInsideLoop) {
             declaration = addDeclaration(declaration, initializer);
             LOG.assertTrue(expr1.isValid());
@@ -944,6 +946,26 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         return  (PsiDeclarationStatement) container.addBefore(declaration, anchor);
       }
     };
+  }
+
+  private static PsiType stripNullabilityAnnotationsFromTargetType(SmartTypePointer selectedType, final Project project) {
+    PsiType type = selectedType.getType();
+    if (type == null) return null;
+    final PsiAnnotation[] annotations = type.getAnnotations();
+    type = type.annotate(new TypeAnnotationProvider() {
+      @NotNull
+      @Override
+      public PsiAnnotation[] getAnnotations() {
+        final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
+        final Set<String> nullables = new HashSet<>();
+        nullables.addAll(manager.getNotNulls());
+        nullables.addAll(manager.getNullables());
+        return Arrays.stream(annotations)
+          .filter(annotation -> !nullables.contains(annotation.getQualifiedName()))
+          .toArray(PsiAnnotation[]::new);
+      }
+    });
+    return type;
   }
 
   private static boolean isFinalVariableOnLHS(PsiExpression expr) {
