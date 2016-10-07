@@ -68,7 +68,7 @@ public class GrClassImplUtil {
   private static final Logger LOG = Logger.getInstance(GrClassImplUtil.class);
 
   private static final Condition<PsiClassType> IS_GROOVY_OBJECT =
-    psiClassType -> TypesUtil.isClassType(psiClassType, GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME);
+    psiClassType -> TypesUtil.isClassType(psiClassType, GroovyCommonClassNames.GROOVY_OBJECT);
 
   private GrClassImplUtil() {
   }
@@ -161,7 +161,7 @@ public class GrClassImplUtil {
   }
 
   public static PsiClassType getGroovyObjectType(@NotNull PsiElement context) {
-    return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME, context);
+    return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_OBJECT, context);
   }
 
   @NotNull

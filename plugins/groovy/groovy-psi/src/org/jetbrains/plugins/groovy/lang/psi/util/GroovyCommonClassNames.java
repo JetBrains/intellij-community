@@ -27,7 +27,6 @@ public final class GroovyCommonClassNames {
   public static final String GROOVY_OBJECT_SUPPORT = "groovy.lang.GroovyObjectSupport";
   public static final String GROOVY_OBJECT = "groovy.lang.GroovyObject";
   public static final String GROOVY_LANG_CLOSURE = "groovy.lang.Closure";
-  public static final String DEFAULT_BASE_CLASS_NAME = "groovy.lang.GroovyObject";
   public static final String GROOVY_LANG_GSTRING = "groovy.lang.GString";
   public static final String DEFAULT_GROOVY_METHODS = "org.codehaus.groovy.runtime.DefaultGroovyMethods";
   public static final String GROOVY_LANG_SCRIPT = "groovy.lang.Script";
