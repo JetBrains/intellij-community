@@ -120,15 +120,15 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     }
 
     final QuestionAction action = createQuestionAction(candidates, element.getProject(), editor);
-    PsiFile psiFile = element.getContainingFile();
-    if (candidates.size() == 1 &&
+    /* PsiFile psiFile = element.getContainingFile();
+   if (candidates.size() == 1 &&
         ImportClassFixBase.isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
         (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
         !LaterInvocator.isInModalContext()) {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
       return ImportClassFixBase.Result.CLASS_AUTO_IMPORTED;
     }
-
+*/
     String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(candidates.get(0)));
     if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
       final TextRange textRange = element.getTextRange();
