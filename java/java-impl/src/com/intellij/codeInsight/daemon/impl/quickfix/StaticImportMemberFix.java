@@ -30,8 +30,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
-import com.intellij.psi.util.FileTypeUtils;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaFile;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,9 +122,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     final QuestionAction action = createQuestionAction(candidates, element.getProject(), editor);
     PsiFile psiFile = element.getContainingFile();
     if (candidates.size() == 1 &&
-        (FileTypeUtils.isInServerPageFile(psiFile) ?
-         CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
-         CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) &&
+        ImportClassFixBase.isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
         (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
         !LaterInvocator.isInModalContext()) {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
