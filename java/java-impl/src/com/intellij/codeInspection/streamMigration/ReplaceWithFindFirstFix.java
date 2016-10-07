@@ -92,7 +92,7 @@ class ReplaceWithFindFirstFix extends MigrateToStreamFix {
       if(previousAssignment != null) {
         PsiExpression prevRValue = previousAssignment.getRExpression();
         PsiExpression prevLValue = previousAssignment.getLExpression();
-        if(prevRValue != null && prevLValue instanceof PsiReferenceExpression && ((PsiReferenceExpression)prevLValue).resolve() == var) {
+        if(prevRValue != null && prevLValue instanceof PsiReferenceExpression && ((PsiReferenceExpression)prevLValue).isReferenceTo(var)) {
           previousAssignment.delete();
           return loopStatement.replace(elementFactory.createStatementFromText(
             var.getName() + " = " + generateOptionalUnwrap(stream, tb, value, prevRValue, var.getType()) + ";", loopStatement));
