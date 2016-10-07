@@ -44,6 +44,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private int myFinishCount = 0;
   private String myRootName;
   private Set<TestIdentifier> myRoots;
+  private boolean mySuccessful = true;
 
   public JUnit5TestExecutionListener() {
     this(System.out);
@@ -52,6 +53,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   public JUnit5TestExecutionListener(PrintStream printStream) {
     myPrintStream = printStream;
     myPrintStream.println("##teamcity[enteredTheMatrix]");
+  }
+
+  public boolean wasSuccessful() {
+    return mySuccessful;
   }
 
   @Override
@@ -121,6 +126,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     final TestExecutionResult.Status status = testExecutionResult.getStatus();
     final Throwable throwableOptional = testExecutionResult.getThrowable().orElse(null);
     executionFinished(testIdentifier, status, throwableOptional, null);
+    mySuccessful &= TestExecutionResult.Status.SUCCESSFUL == testExecutionResult.getStatus();
   }
 
   private void executionFinished(TestIdentifier testIdentifier,
