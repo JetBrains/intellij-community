@@ -87,17 +87,16 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   }
 
   public JPanel createHideableOutputPanel() {
-    OnePixelSplitter splitter = new OnePixelSplitter(true);
-    JPanel firstComponent = createToggleBar(splitter);
-    JPanel secondComponent = createOutputPanel(createHideOutputListener(splitter, firstComponent));
-
+    final OnePixelSplitter splitter = new OnePixelSplitter(true);
+    final JPanel secondComponent = createOutputPanel(splitter);
     splitter.setSecondComponent(secondComponent);
 
     return splitter;
   }
 
   @NotNull
-  private JPanel createOutputPanel(MouseAdapter hideOutputListener) {
+  private JPanel createOutputPanel(@NotNull OnePixelSplitter splitter) {
+    final MouseAdapter hideOutputListener = createHideOutputListener(splitter);
     final JPanel outputPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, true, false));
     outputPanel.setBackground(IpnbEditorUtil.getBackground());
     for (IpnbOutputCell outputCell : myCell.getCellOutputs()) {
@@ -109,7 +108,8 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   }
 
   @NotNull
-  private MouseAdapter createHideOutputListener(final OnePixelSplitter splitter, final JPanel firstComponent) {
+  private MouseAdapter createHideOutputListener(final OnePixelSplitter splitter) {
+    final JPanel toggleBar = createToggleBar(splitter);
     return new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -120,7 +120,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
       private void hideOutputPanel() {
         setOutputStateInCell(true);
-        splitter.setFirstComponent(firstComponent);
+        splitter.setFirstComponent(toggleBar);
         splitter.setSecondComponent(null);
       }
     };
@@ -155,7 +155,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         setOutputStateInCell(false);
         updateBackground(IpnbEditorUtil.getBackground());
         splitter.setFirstComponent(null);
-        splitter.setSecondComponent(createOutputPanel(createHideOutputListener(splitter, secondPanel)));
+        splitter.setSecondComponent(createOutputPanel(splitter));
       }
     };
   }
