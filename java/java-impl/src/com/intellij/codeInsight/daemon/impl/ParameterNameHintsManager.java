@@ -122,9 +122,9 @@ public class ParameterNameHintsManager {
 
   private static boolean isSetter(PsiMethod method) {
     String methodName = method.getName();
-    if (hasSingleParameter(method)
-        && methodName.startsWith("set")
-        && methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3))) {
+    if (hasSingleParameter(method) && methodName.startsWith("set")
+        && (methodName.length() == 3 
+            || methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3)))) {
       return true;
     }
     return false;

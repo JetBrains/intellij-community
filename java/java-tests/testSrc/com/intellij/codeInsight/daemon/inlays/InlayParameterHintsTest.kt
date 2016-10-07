@@ -633,6 +633,22 @@ class Test {
     onLineStartingWith("draw").assertInlays("x->10", "y->20")
     onLineStartingWith("drawRect").assertInlays("w->10", "h->12")
   }
+
+  fun `test do not show for setters`() {
+    setup("""
+class Test {
+  
+  void main() {
+    set(10);
+  }
+  
+  void set(int newValue) {}
+  
+}
+""")
+    
+    onLineStartingWith("set(").assertNoInlays()
+  }
   
   fun `test show for method with boolean param and return value`() {
     setup("""
