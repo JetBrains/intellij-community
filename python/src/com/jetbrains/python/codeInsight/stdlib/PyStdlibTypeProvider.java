@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -165,6 +166,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           return getOpenFunctionType(qname, mapping.getMappedParameters(), callSite);
         }
       }
+      else if ("__builtin__.tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
+        return getTupleInitializationType((PyCallExpression)callSite, context);
+      }
       else if ("__builtin__.tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {
         return getTupleConcatenationResultType((PyBinaryExpression)callSite, context);
       }
@@ -279,6 +283,26 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
         return Ref.create(PyTupleType.create(addition, elementTypes));
       }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getTupleInitializationType(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final PyExpression[] arguments = call.getArguments();
+
+    if (arguments.length != 1) return null;
+
+    final PyExpression argument = arguments[0];
+    final PyType argumentType = context.getType(argument);
+
+    if (argumentType instanceof PyTupleType) {
+      return Ref.create(argumentType);
+    }
+    else if (argumentType instanceof PyCollectionType) {
+      final PyType iteratedValueType = ContainerUtil.getFirstItem(((PyCollectionType)argumentType).getElementTypes(context));
+      return Ref.create(PyTupleType.createHomogeneous(call, iteratedValueType));
     }
 
     return null;
