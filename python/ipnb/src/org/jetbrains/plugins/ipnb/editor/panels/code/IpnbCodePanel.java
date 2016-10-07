@@ -127,7 +127,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   }
 
   @NotNull
-  private MouseAdapter createShowOutputListener(final OnePixelSplitter splitter, final JPanel secondPanel) {
+  private MouseAdapter createShowOutputListener(final OnePixelSplitter splitter, final JPanel secondPanel, JLabel label) {
     return new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -136,8 +136,24 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         }
       }
 
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        updateBackground(UIUtil.getListSelectionBackground());
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        updateBackground(IpnbEditorUtil.getBackground());
+      }
+
+      private void updateBackground(Color background) {
+        secondPanel.setBackground(background);
+        label.setBackground(background);
+      }
+
       private void showOutputPanel() {
         setOutputStateInCell(false);
+        updateBackground(IpnbEditorUtil.getBackground());
         splitter.setFirstComponent(null);
         splitter.setSecondComponent(createOutputPanel(createHideOutputListener(splitter, secondPanel)));
       }
@@ -156,9 +172,9 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     final JLabel label = new JLabel(AllIcons.Actions.Down);
     panel.setBackground(IpnbEditorUtil.getBackground());
     label.setBackground(IpnbEditorUtil.getBackground());
-    panel.add(label, BorderLayout.WEST);
+    panel.add(label, BorderLayout.CENTER);
 
-    panel.addMouseListener(createShowOutputListener(splitter, panel));
+    panel.addMouseListener(createShowOutputListener(splitter, panel, label));
 
     return panel;
   }
