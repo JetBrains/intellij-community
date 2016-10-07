@@ -18,12 +18,12 @@ package com.jetbrains.python.packaging.ui;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunCanceledByUserException;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,10 +58,13 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
 
   private final Project myProject;
   protected final Sdk mySdk;
+  protected final ExecutorService myExecutorService;
 
   public PyPackageManagementService(@NotNull Project project, @NotNull Sdk sdk) {
     myProject = project;
     mySdk = sdk;
+    // Dumb heuristic for the size of IO-bound tasks pool: safer than unlimited, snappier than a single thread
+    myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PyPackageManagementService pool", 4);
   }
 
   @NotNull
@@ -361,18 +365,17 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     installPackage(new RepoPackage(installedPackage.getName(), null), null, true, null, listener, false);
   }
 
+  /**
+   * @return whether the latest version should be requested independently for each package
+   */
   @Override
   public boolean shouldFetchLatestVersionsForOnlyInstalledPackages() {
-    /*
-    final List<String> repositories = PyPackageService.getInstance().additionalRepositories;
-    return repositories.size() > 1  || (repositories.size() == 1 && !repositories.get(0).equals(PyPIPackageUtil.PYPI_LIST_URL));
-    */
     return true;
   }
 
   @Override
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    myExecutorService.submit(() -> {
       try {
         PyPIPackageUtil.INSTANCE.loadAndGetPackages();
         final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(pkg.getName());
