@@ -26,11 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class ParameterNameHintsManager {
 
@@ -42,11 +39,20 @@ public class ParameterNameHintsManager {
     "(from*, to*)",
     "(min*, max*)",
     "(key, value)",
-    "(format, arg*)"
+    "(format, arg*)",
+    "*.set(*,*)",
+    "*.print(*)",
+    "*.println(*)",
+    "*.get(*)",
+    "*.append(*)",
+    "*.charAt(*)",
+    "*.contains(*)",
+    "*.startsWith(*)",
+    "*.endsWith(*)",
+    "(message)",
+    "(message, error)"
   ).map((s) -> MatcherConstructor.INSTANCE.createMatcher(s))
     .collect(Collectors.toList());
-    
-  private static final Set<String> COMMON_METHOD_NAMES = ContainerUtil.newHashSet("set", "print", "println");
   
   @NotNull
   private final List<InlayInfo> myDescriptors;
@@ -72,24 +78,10 @@ public class ParameterNameHintsManager {
     PsiElement element = resolveResult.getElement();
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
-      if (isSetter(method) || isBuilder(callExpression, method)) return false;
-      if (hasSingleParameter(method)) {
-        PsiParameter parameter = method.getParameterList().getParameters()[0];
-        return PsiType.VOID.equals(method.getReturnType()) || isBoolean(parameter) || isNullOrThis(callExpression);
+      if (isSetter(method) || isBuilder(callExpression, method)) {
+        return false;
       }
-      return !isCommonMethod(method);
-    }
-    return false;
-  }
-
-  private static boolean isNullOrThis(@NotNull PsiCallExpression callExpression) {
-    PsiExpressionList list = callExpression.getArgumentList();
-    PsiExpression[] expressions = list != null ? list.getExpressions() : null;
-    if (expressions != null && expressions.length > 0) {
-      PsiExpression expression = expressions[0];
-      if (expression.textMatches("null") || expression.textMatches("this")) {
-        return true;
-      }
+      return !isBlackListed(method);
     }
     return false;
   }
@@ -106,18 +98,20 @@ public class ParameterNameHintsManager {
     }
     return false;
   }
-
-  private static boolean isBoolean(PsiParameter parameter) {
-    PsiType type = parameter.getType();
-    return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
-  }
-
+  
   private static boolean hasSingleParameter(PsiMethod method) {
     return method.getParameterList().getParametersCount() == 1;
   }
 
-  private static boolean isCommonMethod(PsiMethod method) {
-    return COMMON_METHOD_NAMES.contains(method.getName());
+  private static boolean isBlackListed(PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    String qualifier = aClass != null ? aClass.getQualifiedName() : "";
+    String fullMethodName = qualifier + "." + method.getName();
+
+    PsiParameter[] params = method.getParameterList().getParameters();
+    List<String> paramNames = ContainerUtil.map(params, (e) -> e.getName());
+
+    return MATCHERS.stream().anyMatch((e) -> e.isMatching(fullMethodName, paramNames));
   }
 
   private static boolean isSetter(PsiMethod method) {
@@ -174,34 +168,7 @@ public class ParameterNameHintsManager {
         descriptors.add(createInlayInfo(arg, param));
       }
     }
-
-    final int totalDescriptors = descriptors.size();
-    if (totalDescriptors == 1 && shouldIgnoreSingleHint(parameters, descriptors)
-        || totalDescriptors == 2 && parameters.length == 2 && isParamPairToIgnore(descriptors)) 
-    {
-      return ContainerUtil.emptyList();
-    }
-    
     return descriptors;
-  }
-  
-  private static boolean shouldIgnoreSingleHint(@NotNull PsiParameter[] parameters, List<InlayInfo> descriptors) {
-    return isStringLiteral(descriptors.get(0)) && !hasMultipleStringParams(parameters);
-  }
-  
-  private static boolean hasMultipleStringParams(PsiParameter[] parameters) {
-    int stringParams = 0;
-    for (PsiParameter parameter : parameters) {
-      if (parameter.getType().equalsToText(JAVA_LANG_STRING)) {
-        stringParams++;
-      }
-    }
-    return stringParams > 1;
-  }
-
-  private static boolean isStringLiteral(InlayInfo info) {
-    PsiType type = info.getArgument().getType();
-    return type != null && type.equalsToText(JAVA_LANG_STRING);
   }
 
   @NotNull
@@ -209,16 +176,7 @@ public class ParameterNameHintsManager {
     String paramName = ((methodParam.getType() instanceof PsiEllipsisType) ? "..." : "") + methodParam.getName();
     return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset(), callArgument);
   }
-
-  private static boolean isParamPairToIgnore(List<InlayInfo> descriptors) {
-    List<String> params = descriptors
-      .stream()
-      .map((e) -> e.getText())
-      .collect(Collectors.toList());
-
-    return MATCHERS.stream().anyMatch((e) -> e.isMatching("", params));
-  }
-
+  
   private static boolean shouldInlineParameterName(@NotNull PsiExpression argument,
                                                    @NotNull PsiParameter parameter,
                                                    @NotNull JavaResolveResult resolveResult) {
