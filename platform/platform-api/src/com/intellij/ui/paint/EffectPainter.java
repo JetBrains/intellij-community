@@ -51,8 +51,8 @@ public enum EffectPainter implements RegionPainter<Font> {
       if (!Registry.is("ide.text.effect.new")) {
         g.drawLine(x, y + 1, x + width, y + 1);
       }
-      else if (width > 0 && height > 0) {
-        drawLineUnderscore(g, x, y, width, height, font, 1, this);
+      else {
+        paintUnderline(g, x, y, width, height, font, 1, this);
       }
     }
   },
@@ -76,8 +76,8 @@ public enum EffectPainter implements RegionPainter<Font> {
         int h = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
         g.fillRect(x, y, width, h);
       }
-      else if (width > 0 && height > 0) {
-        drawLineUnderscore(g, x, y, width, height, font, 2, this);
+      else {
+        paintUnderline(g, x, y, width, height, font, 2, this);
       }
     }
   },
@@ -97,9 +97,7 @@ public enum EffectPainter implements RegionPainter<Font> {
      */
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
-      if (width > 0 && height > 0) {
-        drawLineUnderscore(g, x, y, width, height, font, 2, this);
-      }
+      paintUnderline(g, x, y, width, height, font, 2, this);
     }
   },
   /**
@@ -161,14 +159,13 @@ public enum EffectPainter implements RegionPainter<Font> {
     return height > 7 && Registry.is("ide.text.effect.new.scale") ? height >> 1 : 3;
   }
 
-  private static void drawLineUnderscore(Graphics2D g, int x, int y, int width, int height, Font font, int thickness,
-                                         EffectPainter painter) {
+  private static void paintUnderline(Graphics2D g, int x, int y, int width, int height, Font font, int thickness, EffectPainter painter) {
     if (width > 0 && height > 0) {
       if (Registry.is("ide.text.effect.new.metrics")) {
         if (font == null) font = g.getFont();
         LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
-        int offset = Math.max(1, (int)(0.5 + metrics.getUnderlineOffset()));
         thickness = Math.max(thickness, (int)(0.5 + thickness * metrics.getUnderlineThickness()));
+        int offset = Math.min(height - thickness, Math.max(1, (int)(0.5 + metrics.getUnderlineOffset())));
         drawLine(g, x, y + offset, width, thickness, painter);
       }
       else {
