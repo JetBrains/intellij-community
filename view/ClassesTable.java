@@ -214,6 +214,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       changeSelection(ix,
           DiffViewTableModel.CLASSNAME_COLUMN_INDEX, false, false);
     }
+
+    getRowSorter().allRowsChanged();
   }
 
   void hideContent() {
