@@ -1,0 +1,22 @@
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <title>modulesNode</title>
+  <g>
+    <g opacity="0.7">
+      <polygon points="8 8 12 8 12 1 1 1 1 12 8 12 8 8" fill="#9aa7b0"/>
+    </g>
+    <g>
+      <g id="_Rectangle_" data-name=" Rectangle ">
+        <rect x="13" y="13" width="3" height="3" fill="#40b6e0"/>
+      </g>
+      <g id="_Rectangle_2" data-name=" Rectangle 2">
+        <rect x="9" y="13" width="3" height="3" fill="#40b6e0"/>
+      </g>
+      <g id="_Rectangle_3" data-name=" Rectangle 3">
+        <rect x="13" y="9" width="3" height="3" fill="#40b6e0"/>
+      </g>
+      <g id="_Rectangle_4" data-name=" Rectangle 4">
+        <rect x="9" y="9" width="3" height="3" fill="#40b6e0"/>
+      </g>
+    </g>
+  </g>
+</svg>

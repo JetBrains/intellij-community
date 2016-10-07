@@ -25,24 +25,24 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="GradleToolingExtension">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-build-init-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-ide-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-java-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-jvm-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-base-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-jvm-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-plugins-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-base-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-jvm-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-scala-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-scala-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-reporting-2.13.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-ear-2.13.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-build-init-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-ide-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-java-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-jvm-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-base-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-jvm-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-plugins-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-base-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-jvm-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-scala-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-scala-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-reporting-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-ear-2.14.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/tooling-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.13-src.zip!/gradle-2.13/subprojects/ear/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/ear/src/main/groovy" />
         </SOURCES>
       </library>
     </orderEntry>

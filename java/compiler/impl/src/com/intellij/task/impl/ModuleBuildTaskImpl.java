@@ -26,16 +26,37 @@ import org.jetbrains.annotations.NotNull;
 public class ModuleBuildTaskImpl extends AbstractBuildTask implements ModuleBuildTask {
   @NotNull
   private final Module myModule;
+  private final boolean myIncludeDependentModules;
+  private final boolean myIncludeRuntimeDependencies;
 
   public ModuleBuildTaskImpl(@NotNull Module module, boolean isIncrementalBuild) {
+    this(module, isIncrementalBuild, false, false);
+  }
+
+  public ModuleBuildTaskImpl(@NotNull Module module,
+                             boolean isIncrementalBuild,
+                             boolean includeDependentModules,
+                             boolean includeRuntimeDependencies) {
     super(isIncrementalBuild);
     myModule = module;
+    myIncludeDependentModules = includeDependentModules;
+    myIncludeRuntimeDependencies = includeRuntimeDependencies;
   }
 
   @NotNull
   @Override
   public Module getModule() {
     return myModule;
+  }
+
+  @Override
+  public boolean isIncludeDependentModules() {
+    return myIncludeDependentModules;
+  }
+
+  @Override
+  public boolean isIncludeRuntimeDependencies() {
+    return myIncludeRuntimeDependencies;
   }
 
   @NotNull

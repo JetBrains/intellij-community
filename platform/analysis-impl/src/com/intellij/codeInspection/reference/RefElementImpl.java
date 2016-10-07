@@ -61,14 +61,12 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private String[] mySuppressions = null;
 
   private boolean myIsDeleted ;
-  private final Module myModule;
   protected static final int IS_REACHABLE_MASK = 0x40;
 
   protected RefElementImpl(@NotNull String name, @NotNull RefElement owner) {
     super(name, owner.getRefManager());
     myID = null;
     myFlags = 0;
-    myModule = ModuleUtilCore.findModuleForPsiElement(owner.getElement());
   }
 
   protected RefElementImpl(PsiFile file, RefManager manager) {
@@ -79,7 +77,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     super(name, manager);
     myID = SmartPointerManager.getInstance(manager.getProject()).createSmartPsiElementPointer(element);
     myFlags = 0;
-    myModule = ModuleUtilCore.findModuleForPsiElement(element);
   }
 
   @Override
@@ -114,7 +111,8 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
 
   @Override
   public RefModule getModule() {
-    return myManager.getRefModule(myModule);
+    final RefEntity owner = getOwner();
+    return owner instanceof RefElement ? ((RefElement)owner).getModule() : null;
   }
 
   @Override

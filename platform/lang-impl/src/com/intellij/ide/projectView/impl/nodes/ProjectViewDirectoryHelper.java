@@ -42,6 +42,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FontUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,6 +213,19 @@ public class ProjectViewDirectoryHelper {
     return topLevelContentRoots;
   }
 
+  public List<VirtualFile> getTopLevelModuleRoots(Module module, ViewSettings settings) {
+    return ContainerUtil.filter(ModuleRootManager.getInstance(module).getContentRoots(), root -> {
+      if (!shouldBeShown(root, settings)) return false;
+      VirtualFile parent = root.getParent();
+      if (parent == null) return true;
+      DirectoryInfo info = myIndex.getInfoForFile(parent);
+      if (!module.equals(info.getModule())) return true;
+      //show inner content root separately only if it won't be shown under outer content root
+      return info.isExcluded() && !shouldShowExcludedFiles(settings);
+    });
+  }
+
+
   private static boolean isFileInContent(ProjectFileIndex index, VirtualFile file) {
     while (file != null) {
       if (index.isInContent(file)) {
@@ -260,12 +274,11 @@ public class ProjectViewDirectoryHelper {
 
   private boolean shouldBeShown(VirtualFile dir, ViewSettings settings) {
     DirectoryInfo directoryInfo = myIndex.getInfoForFile(dir);
-    if (directoryInfo.isInProject()) return true;
+    return directoryInfo.isInProject() || shouldShowExcludedFiles(settings) && directoryInfo.isExcluded();
+  }
 
-    if (!Registry.is("ide.hide.excluded.files") && settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles()) {
-      return directoryInfo.isExcluded();
-    }
-    return false;
+  private static boolean shouldShowExcludedFiles(ViewSettings settings) {
+    return !Registry.is("ide.hide.excluded.files") && settings instanceof ProjectViewSettings && ((ProjectViewSettings)settings).isShowExcludedFiles();
   }
 
   // used only for non-flatten packages mode

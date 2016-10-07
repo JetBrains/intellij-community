@@ -295,10 +295,9 @@ public class SeverityEditorDialog extends DialogWrapper {
     if (info == null) {
       return;
     }
-    final MyTextAttributesDescription description =
-      new MyTextAttributesDescription(info.getType().toString(), null, new TextAttributes(), info.getType().getAttributesKey());
+    MyTextAttributesDescription description = new MyTextAttributesDescription(info.getType().toString(), null, new TextAttributes(), info.getType().getAttributesKey());
     myOptionsPanel.apply(description, null);
-    @NonNls Element textAttributes = new Element("temp");
+    Element textAttributes = new Element("temp");
     try {
       description.getTextAttributes().writeExternal(textAttributes);
       info.getAttributes().readExternal(textAttributes);

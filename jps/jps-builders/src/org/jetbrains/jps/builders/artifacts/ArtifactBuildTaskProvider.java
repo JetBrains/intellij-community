@@ -22,6 +22,10 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import java.util.List;
 
 /**
+ * Allows to perform additional tasks when artifacts are built. Implementations of this class are registered as Java services, by creating
+ * a file META-INF/services/org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider containing the qualified name of your
+ * implementation class.
+ *
  * @author nik
  */
 public abstract class ArtifactBuildTaskProvider {
@@ -38,6 +42,13 @@ public abstract class ArtifactBuildTaskProvider {
     }
   }
 
+  /**
+   * Returns list of tasks which need to be executed during {@code buildPhase} when {@code artifact} is building. Firstly tasks returned for
+   * {@link ArtifactBuildPhase#PRE_PROCESSING PRE_PROCESSING} are executed, then files specified in the artifact layout are copied to the output directory.
+   * If all files in the artifact output were up to date, i.e. no copying was performed, the build finishes. Otherwise all tasks returned for
+   * {@link ArtifactBuildPhase#FINISHING_BUILD FINISHING_BUILD} are executed and then all tasks returned for
+   * {@link ArtifactBuildPhase#POST_PROCESSING POST_PROCESSING} are executed.
+   */
   @NotNull
   public abstract List<? extends BuildTask> createArtifactBuildTasks(@NotNull JpsArtifact artifact, @NotNull ArtifactBuildPhase buildPhase);
 }
