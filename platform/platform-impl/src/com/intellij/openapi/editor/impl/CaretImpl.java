@@ -1440,7 +1440,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   }
 
   void updateCachedStateIfNeeded() {
-    assertIsDispatchThread();
+    if (!ApplicationManager.getApplication().isDispatchThread()) return;
     int modelCounter = myEditor.getCaretModel().myDocumentUpdateCounter;
     if (myDocumentUpdateCounter != modelCounter) {
       LogicalPosition lp = myEditor.offsetToLogicalPosition(getOffset());
