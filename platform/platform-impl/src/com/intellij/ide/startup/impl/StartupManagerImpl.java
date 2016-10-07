@@ -302,6 +302,8 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void startCacheUpdate() {
+    if (myProject.isDisposed()) return;
+
     try {
       DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
 
