@@ -25,7 +25,10 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +36,7 @@ import java.util.Map;
 public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   private final Project myProject;
   @NotNull private final IpnbFileEditor myParent;
+  private final static String COLLAPSED_METADATA = "collapsed";
   private IpnbCodeSourcePanel myCodeSourcePanel;
   private final List<IpnbPanel> myOutputPanels = Lists.newArrayList();
   private boolean mySelectNext;
@@ -87,15 +91,23 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
   public JPanel createHideableOutputPanel() {
     final OnePixelSplitter splitter = new OnePixelSplitter(true);
-    final JPanel secondComponent = createOutputPanel(splitter);
+    final JPanel toggleBar = createToggleBar(splitter);
+    final JPanel secondComponent = createOutputPanel(createHideOutputListener(splitter, toggleBar));
+    final Map<String, Object> metadata = myCell.getMetadata();
+    if (metadata != null && metadata.containsKey(COLLAPSED_METADATA)) {
+      final Boolean isCollapsed = (Boolean)metadata.get(COLLAPSED_METADATA);
+      if (isCollapsed) {
+        splitter.setFirstComponent(toggleBar);
+        return splitter;
+      }
+    }
     splitter.setSecondComponent(secondComponent);
 
     return splitter;
   }
 
   @NotNull
-  private JPanel createOutputPanel(@NotNull OnePixelSplitter splitter) {
-    final MouseAdapter hideOutputListener = createHideOutputListener(splitter);
+  private JPanel createOutputPanel(MouseAdapter hideOutputListener) {
     final JPanel outputPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, true, false));
     outputPanel.setBackground(IpnbEditorUtil.getBackground());
     for (IpnbOutputCell outputCell : myCell.getCellOutputs()) {
@@ -107,15 +119,14 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   }
 
   @NotNull
-  private MouseAdapter createHideOutputListener(final OnePixelSplitter splitter) {
-    final JPanel toggleBar = createToggleBar(splitter);
+  private MouseAdapter createHideOutputListener(final OnePixelSplitter splitter, final JPanel toggleBar) {
     return new MouseAdapter() {
-      private final String TOGGLE_OUTPUT_TEXT = "Toggle output  Double Click";
+      private static final String TOGGLE_OUTPUT_TEXT = " Toggle output                                                (Double-Click)";
       private JPopupMenu myMenu;
 
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (e.getClickCount() == 2) {
+        if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
           hideOutputPanel();
         }
       }
@@ -173,7 +184,8 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         setOutputStateInCell(false);
         updateBackground(IpnbEditorUtil.getBackground());
         splitter.setFirstComponent(null);
-        splitter.setSecondComponent(createOutputPanel(splitter));
+        splitter.setSecondComponent(createOutputPanel(
+          IpnbCodePanel.this.createHideOutputListener(splitter, IpnbCodePanel.this.createToggleBar(splitter))));
       }
     };
   }
@@ -182,7 +194,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     final Map<String, Object> metadata = myCell.getMetadata();
     if (metadata != null) {
       metadata.put("collapsed", isCollapsed);
-    }
+    }    
   }
 
   private JPanel createToggleBar(OnePixelSplitter splitter) {
