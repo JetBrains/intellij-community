@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleFileIndex;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -60,6 +62,7 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
 
   @Override
   protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
-    return true;
+    ModuleFileIndex index = ModuleRootManager.getInstance(module).getFileIndex();
+    return selection.mySelectedDirectories.stream().allMatch(file -> index.isInContent(file));
   }
 }
