@@ -19,9 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +29,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType, PyCollectionType {
+public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   private final PyType[] myElementTypes;
   private final boolean myHomogeneous;
 
@@ -80,14 +78,13 @@ public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType,
     return true;
   }
 
-  public PyType getElementType(PyExpression index, TypeEvalContext context) {
-    final Object value = PyConstantExpressionEvaluator.evaluate(index);
-    if (value instanceof Integer) {
-      return getElementType(((Integer)value).intValue());
-    }
-    return null;
-  }
-
+  /**
+   * Access elements by zero-based index.
+   *
+   * @param index an index of item
+   * @return type of item
+   */
+  @Nullable
   public PyType getElementType(int index) {
     if (myHomogeneous) {
       return myElementTypes[0];
