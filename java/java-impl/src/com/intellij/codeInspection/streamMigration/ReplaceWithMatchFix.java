@@ -69,7 +69,11 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
             removeLoop(loopStatement);
             return returnValue.replace(elementFactory.createExpressionFromText(streamText, nextReturnStatement));
           }
-          return loopStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", loopStatement));
+          PsiElement result = loopStatement.replace(elementFactory.createStatementFromText("return " + streamText + ";", loopStatement));
+          if(!isReachable(nextReturnStatement)) {
+            nextReturnStatement.delete();
+          }
+          return result;
         }
       }
     }
@@ -84,27 +88,30 @@ class ReplaceWithMatchFix extends MigrateToStreamFix {
     if(assignment != null) {
       PsiExpression lValue = assignment.getLExpression();
       PsiExpression rValue = assignment.getRExpression();
-      if (!(lValue instanceof PsiReferenceExpression) || rValue == null) return null;
-      PsiElement maybeVar = ((PsiReferenceExpression)lValue).resolve();
-      if(maybeVar instanceof PsiVariable) {
-        // Simplify single assignments like this:
-        // boolean flag = false;
-        // for(....) if(...) {flag = true; break;}
-        PsiVariable var = (PsiVariable)maybeVar;
-        PsiExpression initializer = var.getInitializer();
-        InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, loopStatement);
-        if(initializer != null && status != InitializerUsageStatus.UNKNOWN) {
-          String replacement;
-          if(ExpressionUtils.isLiteral(initializer, Boolean.FALSE) &&
-             ExpressionUtils.isLiteral(rValue, Boolean.TRUE)) {
-            replacement = streamText;
-          } else if(ExpressionUtils.isLiteral(initializer, Boolean.TRUE) &&
-                    ExpressionUtils.isLiteral(rValue, Boolean.FALSE)) {
-            replacement = "!"+streamText;
-          } else {
-            replacement = streamText + "?" + rValue.getText() + ":" + initializer.getText();
+      if ((lValue instanceof PsiReferenceExpression) && rValue != null) {
+        PsiElement maybeVar = ((PsiReferenceExpression)lValue).resolve();
+        if (maybeVar instanceof PsiVariable) {
+          // Simplify single assignments like this:
+          // boolean flag = false;
+          // for(....) if(...) {flag = true; break;}
+          PsiVariable var = (PsiVariable)maybeVar;
+          PsiExpression initializer = var.getInitializer();
+          InitializerUsageStatus status = StreamApiMigrationInspection.getInitializerUsageStatus(var, loopStatement);
+          if (initializer != null && status != InitializerUsageStatus.UNKNOWN) {
+            String replacement;
+            if (ExpressionUtils.isLiteral(initializer, Boolean.FALSE) &&
+                ExpressionUtils.isLiteral(rValue, Boolean.TRUE)) {
+              replacement = streamText;
+            }
+            else if (ExpressionUtils.isLiteral(initializer, Boolean.TRUE) &&
+                     ExpressionUtils.isLiteral(rValue, Boolean.FALSE)) {
+              replacement = "!" + streamText;
+            }
+            else {
+              replacement = streamText + "?" + rValue.getText() + ":" + initializer.getText();
+            }
+            return replaceInitializer(loopStatement, var, initializer, replacement, status);
           }
-          return replaceInitializer(loopStatement, var, initializer, replacement, status);
         }
       }
     }
