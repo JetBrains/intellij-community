@@ -57,8 +57,8 @@ import static com.jetbrains.python.psi.types.functionalParser.FunctionalParserBa
  * @author vlan
  */
 public class PyTypeParser {
-  private static final ParseResult EMPTY_RESULT = new ParseResult(null, null, Collections.<TextRange, PyType>emptyMap(), Collections.<PyType, TextRange>emptyMap(),
-                                                                  Collections.<PyType, PyImportElement>emptyMap());
+  private static final ParseResult EMPTY_RESULT = new ParseResult(null, null, Collections.emptyMap(), Collections.emptyMap(),
+                                                                  Collections.emptyMap());
 
   public static class ParseResult {
     @Nullable private final PsiElement myElement;
@@ -78,7 +78,7 @@ public class PyTypeParser {
     }
 
     ParseResult(@Nullable PsiElement element, @NotNull PyType type, @NotNull TextRange range) { 
-      this(element, type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.<PyType, PyImportElement>of());
+      this(element, type, ImmutableMap.of(range, type), ImmutableMap.of(type, range), ImmutableMap.of());
     }
 
     @Nullable
@@ -165,7 +165,7 @@ public class PyTypeParser {
             result = result.merge(r);
             types.add(r.getType());
           }
-          return result.withType(PyTupleType.create(anchor, types.toArray(new PyType[types.size()])));
+          return result.withType(PyTupleType.create(anchor, types));
         })
         .named("tuple-type");
 

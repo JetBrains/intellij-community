@@ -367,20 +367,17 @@ public class PyTypeChecker {
         return new PyCollectionTypeImpl(collection.getPyClass(), collection.isDefinition(), substitutes);
       }
       else if (type instanceof PyTupleType) {
-        final PyTupleType tuple = (PyTupleType)type;
+        final PyTupleType tupleType = (PyTupleType)type;
+        final PyClass tupleClass = tupleType.getPyClass();
 
-        if (tuple.isHomogeneous()) {
-          return PyTupleType.createHomogeneous(tuple.getPyClass(), substitute(tuple.getElementType(0), substitutions, context));
-        } else {
-          final int elementCount = tuple.getElementCount();
-          final PyType[] elementTypes = new PyType[elementCount];
+        final List<PyType> oldElementTypes = tupleType.isHomogeneous()
+                                             ? Collections.singletonList(tupleType.getElementType(0))
+                                             : tupleType.getElementTypes(context);
 
-          for (int i = 0; i < elementCount; i++) {
-            elementTypes[i] = substitute(tuple.getElementType(i), substitutions, context);
-          }
+        final List<PyType> newElementTypes =
+          ContainerUtil.map(oldElementTypes, elementType -> substitute(elementType, substitutions, context));
 
-          return PyTupleType.create(tuple.getPyClass(), elementTypes);
-        }
+        return new PyTupleType(tupleClass, newElementTypes, tupleType.isHomogeneous());
       }
       else if (type instanceof PyCallableType) {
         final PyCallableType callable = (PyCallableType)type;
