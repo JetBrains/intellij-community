@@ -1,7 +1,6 @@
 package com.intellij.remoteServer.util;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -247,7 +246,7 @@ public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
   private static <T> T runOnEdt(final Computable<T> computable) {
     final Ref<T> result = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()));
     return result.get();
   }
 
