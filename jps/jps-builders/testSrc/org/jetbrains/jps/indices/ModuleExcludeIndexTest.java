@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.indices.impl.ModuleExcludeIndexImpl;
 import org.jetbrains.jps.model.JpsJavaModelTestCase;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -136,6 +137,24 @@ public class ModuleExcludeIndexTest extends JpsJavaModelTestCase {
     ModuleExcludeIndexImpl index = createIndex();
     assertTrue(index.isExcludedFromModule(innerRoot, outer));
     assertFalse(index.isExcludedFromModule(innerRoot, inner));
+  }
+
+  public void testSourceRootUnderExcluded() {
+    File project = new File(myRoot, "project");
+    File exc = new File(project, "exc");
+    File src = new File(exc, "src");
+    JpsModule module = addModule();
+    addContentRoot(module, project);
+    addExcludedRoot(module, exc);
+    addSourceRoot(module, src);
+    assertNotExcluded(src);
+
+    addExcludedRoot(module, src);
+    assertExcluded(src);
+  }
+
+  private static void addSourceRoot(JpsModule module, File src) {
+    module.addSourceRoot(JpsPathUtil.pathToUrl(src.getAbsolutePath()), JavaSourceRootType.SOURCE);
   }
 
   private static void addExcludedRoot(JpsModule module, File root) {
