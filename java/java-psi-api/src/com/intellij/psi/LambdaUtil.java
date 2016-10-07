@@ -906,6 +906,16 @@ public class LambdaUtil {
     }
   }
 
+  public static <T> T performWithLambdaTargetType(PsiLambdaExpression lambdaExpression, PsiType targetType, Producer<T> producer) {
+    try {
+      getFunctionalTypeMap().put(lambdaExpression, targetType);
+      return producer.produce();
+    }
+    finally {
+      getFunctionalTypeMap().remove(lambdaExpression);
+    }
+  }
+
   /**
    * Generate lambda text for single argument expression lambda
    *
