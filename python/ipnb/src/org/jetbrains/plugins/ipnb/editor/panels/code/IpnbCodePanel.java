@@ -25,8 +25,7 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -111,10 +110,29 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   private MouseAdapter createHideOutputListener(final OnePixelSplitter splitter) {
     final JPanel toggleBar = createToggleBar(splitter);
     return new MouseAdapter() {
+      private final String TOGGLE_OUTPUT_TEXT = "Toggle output  Double Click";
+      private JPopupMenu myMenu;
+
       @Override
       public void mouseClicked(MouseEvent e) {
         if (e.getClickCount() == 2) {
           hideOutputPanel();
+        }
+      }
+
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
+          myMenu = new JPopupMenu("");
+          final JMenuItem item = new JMenuItem(TOGGLE_OUTPUT_TEXT);
+          item.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              hideOutputPanel();
+            }
+          });
+          myMenu.add(item);
+          myMenu.show(e.getComponent(), e.getX(), e.getY());
         }
       }
 
