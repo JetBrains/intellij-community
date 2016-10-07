@@ -201,7 +201,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       if (myReader == null) return null;
       TIntHashSet referentFileIds = new TIntHashSet();
       for (CompilerElement compilerElement : compilerElements) {
-        final TIntHashSet referents = myReader.findReferentFileIds(compilerElement, adapter);
+        final TIntHashSet referents = myReader.findReferentFileIds(compilerElement, adapter, place == ElementPlace.SRC);
         if (referents == null) return null;
         referentFileIds.addAll(referents.toArray());
       }

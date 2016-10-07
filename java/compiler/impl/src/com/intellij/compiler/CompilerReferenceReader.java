@@ -45,12 +45,14 @@ public class CompilerReferenceReader {
   }
 
   @Nullable
-  public TIntHashSet findReferentFileIds(@NotNull CompilerElement element, @NotNull CompilerSearchAdapter adapter) {
+  public TIntHashSet findReferentFileIds(@NotNull CompilerElement element,
+                                         @NotNull CompilerSearchAdapter adapter,
+                                         boolean checkBaseClassAmbiguity) {
     LightUsage usage = asLightUsage(element);
 
     TIntHashSet set = new TIntHashSet();
     if (adapter.needOverrideElement()) {
-      final LightUsage[] hierarchy = getWholeHierarchy(usage.getOwner());
+      final LightUsage[] hierarchy = getWholeHierarchy(usage.getOwner(), checkBaseClassAmbiguity);
       if (hierarchy == null) return null;
       for (LightUsage aClass : hierarchy) {
         final LightUsage overriderUsage = usage.override(aClass);
@@ -116,16 +118,18 @@ public class CompilerReferenceReader {
   }
 
   @Nullable("return null if the class hierarchy contains ambiguous qualified names")
-  private LightUsage[] getWholeHierarchy(LightUsage aClass) {
+  private LightUsage[] getWholeHierarchy(LightUsage aClass, boolean checkBaseClassAmbiguity) {
     Set<LightUsage> result = new THashSet<>();
     Queue<LightUsage> q = new Queue<>(10);
     q.addLast(aClass);
     while (!q.isEmpty()) {
       LightUsage curClass = q.pullFirst();
       if (result.add(curClass)) {
-        final Collection<Integer> definitionFiles = myIndex.getBackwardClassDefinitionMap().get(curClass);
-        if (definitionFiles.size() != 1) {
-          return null;
+        if (checkBaseClassAmbiguity || curClass != aClass) {
+          final Collection<Integer> definitionFiles = myIndex.getBackwardClassDefinitionMap().get(curClass);
+          if (definitionFiles.size() != 1) {
+            return null;
+          }
         }
         final Collection<CompilerBackwardReferenceIndex.LightDefinition> subClassDefs = myIndex.getBackwardHierarchyMap().get(curClass);
         if (subClassDefs != null) {
