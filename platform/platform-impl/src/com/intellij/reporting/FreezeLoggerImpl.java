@@ -38,7 +38,7 @@ public class FreezeLoggerImpl extends FreezeLogger {
   
   @Override
   public void runUnderPerformanceMonitor(@Nullable Project project, @NotNull Runnable action) {
-    if (isUnderDebug() || ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!shouldReport() || isUnderDebug() || ApplicationManager.getApplication().isUnitTestMode()) {
       action.run();
       return;
     }
@@ -54,12 +54,12 @@ public class FreezeLoggerImpl extends FreezeLogger {
       ALARM.cancelAllRequests();
     }
   }
-  
+
+  private static boolean shouldReport() {
+    return Registry.is("typing.freeze.report.dumps");
+  }
+
   private static void dumpThreads(@Nullable Project project, @NotNull ModalityState initialState) {
-    if (!initialState.equals(ModalityState.current())) {
-      return;
-    }
-    
     final ThreadInfo[] infos = ThreadDumper.getThreadInfos();
     final String edtTrace = ThreadDumper.dumpEdtStackTrace(infos);
     if (edtTrace.contains("java.lang.ClassLoader.loadClass")) {
@@ -67,23 +67,23 @@ public class FreezeLoggerImpl extends FreezeLogger {
     }
 
     final boolean isInDumbMode = project != null && !project.isDisposed() && DumbService.isDumb(project);
-    final String dumps = ThreadDumper.dumpThreadsToString();
-    final String msg = "Typing freeze report, (DumbMode=" + isInDumbMode + ") thread dumps attached. EDT stacktrace:\n"
-                 + edtTrace
-                 + "\n\n\n";
 
-    if (Registry.is("typing.freeze.report.dumps")) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!initialState.equals(ModalityState.current())) return;
+      sendDumpsInBackground(infos, isInDumbMode);
+    }, ModalityState.any());
+  }
+
+  private static void sendDumpsInBackground(ThreadInfo[] infos, boolean isInDumbMode) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       ThreadDumpInfo info = new ThreadDumpInfo(infos, isInDumbMode);
       String report = ReporterKt.createReportLine("typing-freeze-dumps", info);
       if (!StatsSender.INSTANCE.send(report, true)) {
         LOG.debug("Error while reporting thread dump");
       }
-    }
-    else {
-      LOG.error(msg, dumps);
-    }
+    });
   }
-  
+
   private static boolean isUnderDebug() {
     return ManagementFactory.getRuntimeMXBean().getInputArguments().toString().contains("jdwp");
   }
