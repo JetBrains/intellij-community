@@ -538,6 +538,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myCaretListeners.getMulticaster().caretRemoved(new CaretEvent(myEditor, caret, caret.getLogicalPosition(), caret.getLogicalPosition()));
   }
 
+  public boolean isIteratingOverCarets() {
+    return myCurrentCaret != null;
+  }
+
   @NotNull
   @Override
   public String dumpState() {
