@@ -13,7 +13,7 @@ public class VcsLogIcons {
     return IconLoader.getIcon(path, VcsLogIcons.class);
   }
 
-  public static final Icon Branch = load("/icons/branch.png"); // 16x16
+  public static final Icon Branches = load("/icons/branches.png"); // 16x16
   public static final Icon CollapseBranches = load("/icons/CollapseBranches.png"); // 16x16
   public static final Icon CollapseMerges = load("/icons/CollapseMerges.png"); // 16x16
   public static final Icon ExpandBranches = load("/icons/ExpandBranches.png"); // 16x16

@@ -83,9 +83,11 @@ public interface JavaElementType {
   IElementType PARAMETER_LIST = JavaStubElementTypes.PARAMETER_LIST;
   IElementType EXTENDS_BOUND_LIST = JavaStubElementTypes.EXTENDS_BOUND_LIST;
   IElementType THROWS_LIST = JavaStubElementTypes.THROWS_LIST;
-  IElementType MODULE = JavaStubElementTypes.MODULE;
   IElementType LAMBDA_EXPRESSION = JavaStubElementTypes.LAMBDA_EXPRESSION;
   IElementType METHOD_REF_EXPRESSION = JavaStubElementTypes.METHOD_REFERENCE;
+  IElementType MODULE = JavaStubElementTypes.MODULE;
+  IElementType REQUIRES_STATEMENT = JavaStubElementTypes.REQUIRES_STATEMENT;
+  IElementType EXPORTS_STATEMENT = JavaStubElementTypes.EXPORTS_STATEMENT;
 
   IElementType IMPORT_STATIC_REFERENCE = new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", PsiImportStaticReferenceElementImpl.class);
   IElementType TYPE = new JavaCompositeElementType("TYPE", PsiTypeElementImpl.class);
@@ -140,8 +142,6 @@ public interface JavaElementType {
   IElementType ANNOTATION_ARRAY_INITIALIZER = new JavaCompositeElementType("ANNOTATION_ARRAY_INITIALIZER", PsiArrayInitializerMemberValueImpl.class);
   IElementType RECEIVER_PARAMETER = new JavaCompositeElementType("RECEIVER", PsiReceiverParameterImpl.class);
   IElementType MODULE_REFERENCE = new JavaCompositeElementType("MODULE_REFERENCE", PsiJavaModuleReferenceElementImpl.class);
-  IElementType REQUIRES_STATEMENT = new JavaCompositeElementType("REQUIRES_STATEMENT", PsiRequiresStatementImpl.class);
-  IElementType EXPORTS_STATEMENT = new JavaCompositeElementType("EXPORTS_STATEMENT", PsiExportsStatementImpl.class);
   IElementType USES_STATEMENT = new JavaCompositeElementType("USES_STATEMENT", PsiUsesStatementImpl.class);
   IElementType PROVIDES_STATEMENT = new JavaCompositeElementType("PROVIDES_STATEMENT", PsiProvidesStatementImpl.class);
 

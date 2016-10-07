@@ -15,11 +15,11 @@
  */
 package com.intellij.junit5;
 
+import com.intellij.rt.execution.junit.IDEAJUnitListener;
+import com.intellij.rt.execution.junit.IDEAJUnitListenerEx;
 import com.intellij.rt.execution.junit.IdeaTestRunner;
-import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
-import org.junit.platform.launcher.TestIdentifier;
-import org.junit.platform.launcher.TestPlan;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.launcher.*;
 import org.junit.platform.launcher.core.LauncherFactory;
 
 import java.util.ArrayList;
@@ -28,19 +28,43 @@ import java.util.Set;
 
 public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   private TestPlan myTestPlan;
+  private JUnit5TestExecutionListener myListener;
+  private ArrayList myListeners;
 
   @Override
-  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
-    Launcher launcher = LauncherFactory.create();
-    JUnit5TestExecutionListener listener = new JUnit5TestExecutionListener();
-    launcher.registerTestExecutionListeners(listener);
-    final String[] packageNameRef = new String[1];
-    final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
-    myTestPlan = launcher.discover(discoveryRequest);
-    listener.sendTree(myTestPlan, packageNameRef[0]);
-    launcher.execute(discoveryRequest);
+  public void createListeners(ArrayList listeners) {
+    myListeners = listeners;
+    myListener = new JUnit5TestExecutionListener();
+  }
 
-    return 0;
+  @Override
+  public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
+    try {
+      Launcher launcher = LauncherFactory.create();
+      launcher.registerTestExecutionListeners(myListener);
+      final String[] packageNameRef = new String[1];
+      final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
+      myTestPlan = launcher.discover(discoveryRequest);
+      for (Object listenerClassName : myListeners) {
+        final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)listenerClassName).newInstance();
+        launcher.registerTestExecutionListeners(new MyCustomListenerWrapper(junitListener));
+      }
+      if (sendTree) {
+        do {
+          myListener.sendTree(myTestPlan, packageNameRef[0]);
+        }
+        while (--count > 0);
+      }
+
+      launcher.execute(discoveryRequest);
+
+      return myListener.wasSuccessful() ? 0 : -1;
+    }
+    catch (Exception e) {
+      System.err.println("Internal Error occurred.");
+      e.printStackTrace(System.err);
+      return -2;
+    }
   }
 
   @Override
@@ -72,5 +96,35 @@ public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   @Override
   public String getTestClassName(Object child) {
     return child.toString();
+  }
+
+  private static class MyCustomListenerWrapper implements TestExecutionListener {
+    private final IDEAJUnitListener myJunitListener;
+
+    public MyCustomListenerWrapper(IDEAJUnitListener junitListener) {
+      myJunitListener = junitListener;}
+
+    @Override
+    public void executionStarted(TestIdentifier testIdentifier) {
+      if (testIdentifier.isTest()) {
+        final String className = JUnit5TestExecutionListener.getClassName(testIdentifier);
+        final String methodName = JUnit5TestExecutionListener.getMethodName(testIdentifier);
+        myJunitListener.testStarted(className, methodName);
+      }
+    }
+
+    @Override
+    public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+      if (testIdentifier.isTest()) {
+        final String className = JUnit5TestExecutionListener.getClassName(testIdentifier);
+        final String methodName = JUnit5TestExecutionListener.getMethodName(testIdentifier);
+        if (myJunitListener instanceof IDEAJUnitListenerEx) {
+          ((IDEAJUnitListenerEx)myJunitListener).testFinished(className, methodName, testExecutionResult.getStatus() == TestExecutionResult.Status.SUCCESSFUL);
+        }
+        else {
+          myJunitListener.testFinished(className, methodName);
+        }
+      }
+    }
   }
 }

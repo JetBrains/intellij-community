@@ -21,11 +21,15 @@ import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> implements PsiJavaModule {
   public PsiJavaModuleImpl(@NotNull PsiJavaModuleStub stub) {
@@ -49,8 +53,33 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     if (stub != null) {
       return stub.getName();
     }
+    else {
+      return getNameElement().getReferenceText();
+    }
+  }
 
-    return getNameElement().getReferenceText();
+  @NotNull
+  @Override
+  public Iterable<PsiRequiresStatement> getRequires() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return JBIterable.of(stub.getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY));
+    }
+    else {
+      return psiTraverser().children(this).filter(PsiRequiresStatement.class);
+    }
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiExportsStatement> getExports() {
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return JBIterable.of(stub.getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiExportsStatement.EMPTY_ARRAY));
+    }
+    else {
+      return psiTraverser().children(this).filter(PsiExportsStatement.class);
+    }
   }
 
   @Override

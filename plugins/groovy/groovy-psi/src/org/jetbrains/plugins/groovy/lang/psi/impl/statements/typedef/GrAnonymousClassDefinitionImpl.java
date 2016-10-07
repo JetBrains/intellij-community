@@ -192,9 +192,9 @@ public class GrAnonymousClassDefinitionImpl extends GrTypeDefinitionImpl impleme
   public PsiClassType[] getImplementsListTypes(boolean includeSynthetic) {
     final PsiClass baseClass = getBaseClass();
     if (baseClass != null && baseClass.isInterface()) {
-      return new PsiClassType[]{getBaseClassType(), createTypeByName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)};
+      return new PsiClassType[]{getBaseClassType(), createTypeByName(GroovyCommonClassNames.GROOVY_OBJECT)};
     }
-    return new PsiClassType[]{createTypeByName(GroovyCommonClassNames.DEFAULT_BASE_CLASS_NAME)};
+    return new PsiClassType[]{createTypeByName(GroovyCommonClassNames.GROOVY_OBJECT)};
   }
 
   @Override

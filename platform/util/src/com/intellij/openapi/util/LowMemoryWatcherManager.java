@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.ListenerNotFoundException;
@@ -53,7 +54,7 @@ public class LowMemoryWatcherManager implements Disposable {
   };
 
   public LowMemoryWatcherManager(@NotNull ExecutorService executorService) {
-    myExecutorService = executorService;
+    myExecutorService = new SequentialTaskExecutor("LowMemoryWatcherManager", executorService);
     try {
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
         if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {

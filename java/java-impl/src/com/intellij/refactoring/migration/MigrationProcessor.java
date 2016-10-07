@@ -37,7 +37,7 @@ import java.util.ArrayList;
 /**
  * @author ven
  */
-class MigrationProcessor extends BaseRefactoringProcessor {
+public class MigrationProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.migration.MigrationProcessor");
   private final MigrationMap myMigrationMap;
   private static final String REFACTORING_NAME = RefactoringBundle.message("migration.title");
@@ -103,7 +103,7 @@ class MigrationProcessor extends BaseRefactoringProcessor {
       myPsiMigration.finish();
       myPsiMigration = null;
     }
-    return usagesVector.toArray(new MigrationUsageInfo[usagesVector.size()]);
+    return usagesVector.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
@@ -147,10 +147,10 @@ class MigrationProcessor extends BaseRefactoringProcessor {
     return REFACTORING_NAME;
   }
 
-  public static class MigrationUsageInfo extends UsageInfo {
-    public MigrationMapEntry mapEntry;
+  static class MigrationUsageInfo extends UsageInfo {
+    MigrationMapEntry mapEntry;
 
-    public MigrationUsageInfo(UsageInfo info, MigrationMapEntry mapEntry) {
+    MigrationUsageInfo(UsageInfo info, MigrationMapEntry mapEntry) {
       super(info.getElement(), info.getRangeInElement().getStartOffset(), info.getRangeInElement().getEndOffset());
       this.mapEntry = mapEntry;
     }

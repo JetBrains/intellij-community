@@ -187,6 +187,7 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
 
   open fun setError(error: Throwable): Boolean {
     if (!stateRef.compareAndSet(State.PENDING, State.REJECTED)) {
+      LOG.errorIfNotMessage(error)
       return false
     }
 
@@ -290,17 +291,6 @@ private class CompoundConsumer<T>(c1: Consumer<in T>, c2: Consumer<in T>) : Cons
     for (consumer in list) {
       if (!isObsolete(consumer)) {
         consumer.consume(t)
-      }
-    }
-  }
-
-  fun add(consumer: Consumer<in T>) {
-    synchronized(this) {
-      consumers.let {
-        if (it == null) {
-          // it means that clearHandlers was called
-        }
-        consumers?.add(consumer)
       }
     }
   }

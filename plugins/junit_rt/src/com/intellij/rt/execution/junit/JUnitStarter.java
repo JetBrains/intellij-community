@@ -234,7 +234,7 @@ public class JUnitStarter {
             .startSplitting(args, name, ourCommandFileName, ourRepeatCount);
         }
       }
-      return testRunner.startRunnerWithArgs(args, listeners, name, ourCount, true);
+      return IdeaTestRunner.Repeater.startRunnerWithArgs(testRunner, args, listeners, name, ourCount, true);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);
