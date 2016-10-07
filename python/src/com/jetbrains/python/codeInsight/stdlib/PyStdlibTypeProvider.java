@@ -39,10 +39,7 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -254,7 +251,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             elementTypes[i * originalSize + j] = leftTupleType.getElementType(j);
           }
         }
-        return Ref.create(PyTupleType.create(multiplication, elementTypes));
+        return Ref.create(PyTupleType.create(multiplication, Arrays.asList(elementTypes)));
       }
     }
 
@@ -272,16 +269,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           // We may try to find the common type of elements of two homogeneous tuple as an alternative
           return null;
         }
-        
-        final PyType[] elementTypes = new PyType[leftTupleType.getElementCount() + rightTupleType.getElementCount()];
-        for (int i = 0; i < leftTupleType.getElementCount(); i++) {
-          elementTypes[i] = leftTupleType.getElementType(i);
-        }
-        for (int i = 0; i < rightTupleType.getElementCount(); i++) {
-          elementTypes[i + leftTupleType.getElementCount()] = rightTupleType.getElementType(i);
-        }
 
-        return Ref.create(PyTupleType.create(addition, elementTypes));
+        final List<PyType> newElementTypes = ContainerUtil.concat(leftTupleType.getElementTypes(context),
+                                                                  rightTupleType.getElementTypes(context));
+        return Ref.create(PyTupleType.create(addition, newElementTypes));
       }
     }
 
