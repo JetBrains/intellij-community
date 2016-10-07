@@ -331,11 +331,13 @@ public abstract class ModuleInsight {
   }
 
   public static Collection<LibraryDescriptor> getLibraryDependencies(ModuleDescriptor module,
-                                                                     final List<LibraryDescriptor> allLibraries) {
+                                                                     @Nullable List<LibraryDescriptor> allLibraries) {
     final Set<LibraryDescriptor> libs = new HashSet<>();
-    for (LibraryDescriptor library : allLibraries) {
-      if (ContainerUtil.intersects(library.getJars(), module.getLibraryFiles())) {
-        libs.add(library);
+    if (allLibraries != null) {
+      for (LibraryDescriptor library : allLibraries) {
+        if (ContainerUtil.intersects(library.getJars(), module.getLibraryFiles())) {
+          libs.add(library);
+        }
       }
     }
     return libs;
