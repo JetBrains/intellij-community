@@ -22,14 +22,13 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,14 +42,15 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
 
 import static com.intellij.psi.search.GlobalSearchScope.*;
 
-public class CompilerReferenceServiceImpl extends CompilerReferenceService {
-  private static final Key<ParameterizedCachedValue<GlobalSearchScope, CompilerSearchAdapter>> CACHE_KEY = Key.create("compiler.ref.service.search");
+public class CompilerReferenceServiceImpl extends CompilerReferenceService implements ModificationTracker {
   private final ProjectFileIndex myProjectFileIndex;
   private final Set<Module> myChangedModules = ContainerUtil.newConcurrentSet();
   private final Set<FileType> myFileTypes;
+  private final LongAdder myCompilationCount = new LongAdder();
 
   private volatile CompilerReferenceReader myReader;
   private volatile GlobalSearchScope myDirtyScope = EMPTY_SCOPE;
@@ -80,6 +80,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
         public void buildFinished(Project project, UUID sessionId, boolean isAutomake) {
           myChangedModules.clear();
           myDirtyScope = EMPTY_SCOPE;
+          myCompilationCount.increment();
           openReaderIfNeed();
         }
       });
@@ -155,7 +156,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
                                                     return calculateScopeWithoutReferences(element, key);
                                                   }
                                               },
-                                              PsiModificationTracker.MODIFICATION_COUNT)).get(adapter);
+                                              PsiModificationTracker.MODIFICATION_COUNT, this)).get(adapter);
   }
 
   private boolean isServiceEnabled() {
@@ -276,5 +277,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService {
     public boolean isSearchInLibraries() {
       return false;
     }
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myCompilationCount.longValue();
   }
 }
