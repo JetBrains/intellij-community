@@ -309,10 +309,6 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       this("stub:" + stubElement + "; mirror:" + mirrorElement);
     }
 
-    public InvalidMirrorException(@NotNull PsiElement[] stubElements, @NotNull PsiElement[] mirrorElements) {
-      this("stub:" + Arrays.toString(stubElements) + "; mirror:" + Arrays.toString(mirrorElements));
-    }
-
     public InvalidMirrorException(@NotNull List<? extends PsiElement> stubElements, @NotNull List<? extends PsiElement> mirrorElements) {
       this("stub:" + stubElements + "; mirror:" + mirrorElements);
     }
