@@ -66,7 +66,6 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   private volatile List<ReferenceType> myElems = Collections.unmodifiableList(new ArrayList<>());
 
-  // TODO: parent must be unknown in this context
   ClassesTable(@NotNull XDebugSession session, boolean onlyWithDiff, boolean onlyWithInstances,
                @NotNull ClassesFilteredView parent) {
     setModel(myModel);
@@ -103,7 +102,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (columnAtPoint(e.getPoint()) != DiffViewTableModel.DIFF_COLUMN_INDEX) {
+        if (columnAtPoint(e.getPoint()) != DiffViewTableModel.DIFF_COLUMN_INDEX ||
+            e.getButton() != MouseEvent.BUTTON1) {
           return;
         }
 
