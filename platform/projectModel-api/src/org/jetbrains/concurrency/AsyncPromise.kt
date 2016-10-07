@@ -294,17 +294,6 @@ private class CompoundConsumer<T>(c1: Consumer<in T>, c2: Consumer<in T>) : Cons
       }
     }
   }
-
-  fun add(consumer: Consumer<in T>) {
-    synchronized(this) {
-      consumers.let {
-        if (it == null) {
-          // it means that clearHandlers was called
-        }
-        consumers?.add(consumer)
-      }
-    }
-  }
 }
 
 internal fun isObsolete(consumer: Consumer<*>?) = consumer is Obsolescent && consumer.isObsolete
