@@ -23,12 +23,12 @@ import com.intellij.psi.PsiCallExpression
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 
-class ConfigureParameterHintsSettings : AnAction() {
+class ShowParameterHintsSettings : AnAction() {
 
   init {
     val presentation = templatePresentation
-    presentation.text = "Configure"
-    presentation.description = "Configure Parameter Name Hints"
+    presentation.text = "Show Settings"
+    presentation.description = "Show Parameter Name Hints Settings"
   }
   
   override fun actionPerformed(e: AnActionEvent) {

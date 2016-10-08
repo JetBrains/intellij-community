@@ -301,7 +301,7 @@
     
     <group id="ParameterNameHints" popup="true">
       <action id="BlacklistCurrentMethodAction" class="com.intellij.codeInsight.daemon.impl.BlacklistCurrentMethodAction"/>
-      <action id="ConfigureParameterHintsSettings" class="com.intellij.codeInsight.daemon.impl.ConfigureParameterHintsSettings"/>
+      <action id="ShowParameterHintsSettings" class="com.intellij.codeInsight.daemon.impl.ShowParameterHintsSettings"/>
       <action id="ToggleInlineHintsAction" class="com.intellij.analysis.actions.ToggleInlineHintsAction"/>
     </group>
     
