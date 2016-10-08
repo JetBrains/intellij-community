@@ -17,12 +17,15 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -43,44 +46,69 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.psi.search.GlobalSearchScope.*;
 
 public class CompilerReferenceServiceImpl extends CompilerReferenceService implements ModificationTracker {
-  private final ProjectFileIndex myProjectFileIndex;
-  private final Set<Module> myChangedModules = ContainerUtil.newConcurrentSet();
   private final Set<FileType> myFileTypes;
+  private final DirtyModulesHolder myDirtyModulesHolder;
+  private final ProjectFileIndex myProjectFileIndex;
   private final LongAdder myCompilationCount = new LongAdder();
 
   private volatile CompilerReferenceReader myReader;
-  private volatile GlobalSearchScope myDirtyScope = EMPTY_SCOPE;
 
   private final Object myLock = new Object();
 
   public CompilerReferenceServiceImpl(Project project) {
     super(project);
-    myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+
+    myDirtyModulesHolder = new DirtyModulesHolder();
     myFileTypes = Collections.unmodifiableSet(ContainerUtil.set(JavaFileType.INSTANCE));
+    myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
   @Override
   public void projectOpened() {
     if (isEnabled()) {
+      myDirtyModulesHolder.markAsDirty(ModuleManager.getInstance(myProject).getModules());
+
       myProject.getMessageBus().connect(myProject).subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
-        public void beforeBuildProcessStarted(Project project, UUID sessionId) {
-        }
-
-        @Override
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
+          myDirtyModulesHolder.compilationPhaseStarted();
           closeReaderIfNeed();
         }
+      });
+
+      CompilerManager.getInstance(myProject).addCompilationStatusListener(new CompilationStatusListener() {
+        @Override
+        public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+          compilationFinished(errors, compileContext);
+        }
 
         @Override
-        public void buildFinished(Project project, UUID sessionId, boolean isAutomake) {
-          myChangedModules.clear();
-          myDirtyScope = EMPTY_SCOPE;
+        public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
+          compilationFinished(errors, compileContext);
+        }
+
+        private void compilationFinished(int errors, CompileContext context) {
+          final Module[] compilationModules = context.getCompileScope().getAffectedModules();
+          final Set<Module> modulesWithErrors;
+          if (errors != 0) {
+            modulesWithErrors = Stream
+              .of(context.getMessages(CompilerMessageCategory.ERROR))
+              .map(CompilerMessage::getVirtualFile)
+              .distinct()
+              .map(myProjectFileIndex::getModuleForFile)
+              .collect(Collectors.toSet());
+          }
+          else {
+            modulesWithErrors = Collections.emptySet();
+          }
           myCompilationCount.increment();
+          myDirtyModulesHolder.compilationPhaseFinished(compilationModules, modulesWithErrors);
           openReaderIfNeed();
         }
       });
@@ -124,14 +152,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         }
 
         private void processChange(VirtualFile file) {
-          if (myReader != null && myProjectFileIndex.isInSourceContent(file) && myFileTypes.contains(file.getFileType())) {
-            final Module module = myProjectFileIndex.getModuleForFile(file);
-            if (module != null) {
-              if (myChangedModules.add(module)) {
-                myDirtyScope = myDirtyScope.union(module.getModuleWithDependentsScope());
-              }
-            }
-          }
+          myDirtyModulesHolder.fileChanged(file);
         }
       }, myProject);
     }
@@ -168,7 +189,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     TIntHashSet referentFileIds = getReferentFileIds(element, adapter);
     if (referentFileIds == null) return null;
 
-    return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds).intersectWith(notScope(myDirtyScope)),
+    return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFileIds).intersectWith(notScope(myDirtyModulesHolder.getDirtyScope())),
                                          myFileTypes.toArray(new FileType[myFileTypes.size()]));
   }
 
@@ -184,7 +205,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       return null;
     }
 
-    if (myDirtyScope.contains(vFile)) {
+    if (myDirtyModulesHolder.contains(vFile)) {
       return null;
     }
     CompilerElement[] compilerElements;
@@ -282,5 +303,66 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   @Override
   public long getModificationCount() {
     return myCompilationCount.longValue();
+  }
+
+  private class DirtyModulesHolder extends UserDataHolderBase {
+    private final Set<Module> myChangedModules = ContainerUtil.newHashSet();
+    private final Set<Module> myChangedModulesDuringCompilation = ContainerUtil.newHashSet();
+    private boolean myCompilationPhase;
+
+    private final Object myLock = new Object();
+
+    private void compilationPhaseStarted() {
+      synchronized (myLock) {
+        myCompilationPhase = true;
+      }
+    }
+
+    private void compilationPhaseFinished(Module[] compilationModules, Set<Module> modulesWithErrors) {
+      synchronized (myLock) {
+        myCompilationPhase = false;
+
+        ContainerUtil.removeAll(myChangedModules, compilationModules);
+        myChangedModules.addAll(modulesWithErrors);
+        myChangedModules.addAll(ContainerUtil.newHashSet(myChangedModulesDuringCompilation));
+        myChangedModulesDuringCompilation.clear();
+      }
+    }
+
+    private GlobalSearchScope getDirtyScope() {
+      return CachedValuesManager.getManager(myProject).getCachedValue(this, () -> {
+        synchronized (myLock) {
+          final GlobalSearchScope dirtyScope =
+            myChangedModules.stream().map(Module::getModuleWithDependentsScope).reduce(EMPTY_SCOPE, (s1, s2) -> s1.union(s2));
+          return CachedValueProvider.Result.create(dirtyScope, PsiModificationTracker.MODIFICATION_COUNT, CompilerReferenceServiceImpl.this);
+        }
+      });
+    }
+
+    private void fileChanged(VirtualFile file) {
+      if (myProjectFileIndex.isInSourceContent(file) && myFileTypes.contains(file.getFileType())) {
+        final Module module = myProjectFileIndex.getModuleForFile(file);
+        if (module != null) {
+          synchronized (myLock) {
+            if (myCompilationPhase) {
+              myChangedModulesDuringCompilation.add(module);
+            } else {
+              myChangedModules.add(module);
+            }
+          }
+        }
+      }
+    }
+
+    private boolean contains(VirtualFile file) {
+      return getDirtyScope().contains(file);
+    }
+
+    private void markAsDirty(Module[] modules) {
+      //TODO delete; the service should be available on IDE restart
+      synchronized (myLock) {
+        Collections.addAll(myChangedModules, modules);
+      }
+    }
   }
 }
