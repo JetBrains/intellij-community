@@ -36,8 +36,10 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
     final Color color = enabled ? b.getForeground() : getBorderColor1(false, false);
     g.setColor(color);
-
+    final Icon icon = MacIntelliJIconCache.getIcon("checkBox", selected, false, enabled);
     Rectangle r = new Rectangle(iconRect.x + JBUI.scale(2), iconRect.y + JBUI.scale(2), iconRect.width - JBUI.scale(4), iconRect.height - JBUI.scale(4));
+    icon.paintIcon(c, g, r.x, r.y);
+    if (true) return;
     g.drawRect(r.x, r.y, r.width, r.height);
 
     if (selected) {
