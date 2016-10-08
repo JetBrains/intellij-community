@@ -112,7 +112,8 @@ public class GitHistoryUtils {
   }
 
   @Nullable
-  public static VcsRevisionDescription getCurrentRevisionDescription(final Project project, FilePath filePath, @Nullable String branch) throws VcsException {
+  public static VcsRevisionDescription getCurrentRevisionDescription(final Project project, FilePath filePath, @Nullable String branch)
+    throws VcsException {
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME, SUBJECT, BODY, RAW_BODY);
@@ -120,7 +121,8 @@ public class GitHistoryUtils {
     h.addParameters("-n1", parser.getPretty());
     if (branch != null && !branch.isEmpty()) {
       h.addParameters(branch);
-    } else {
+    }
+    else {
       h.addParameters("--all");
     }
     h.endOptions();
@@ -136,7 +138,7 @@ public class GitHistoryUtils {
     record.setUsedHandler(h);
 
     final String author = Comparing.equal(record.getAuthorName(), record.getCommitterName()) ? record.getAuthorName() :
-                    record.getAuthorName() + " (" + record.getCommitterName() + ")";
+                          record.getAuthorName() + " (" + record.getCommitterName() + ")";
     return new VcsRevisionDescriptionImpl(new GitRevisionNumber(record.getHash(), record.getDate()), record.getDate(), author,
                                           record.getFullMessage());
   }
@@ -206,6 +208,7 @@ public class GitHistoryUtils {
 
   /**
    * Retrieves the history of the file, including renames.
+   *
    * @param project
    * @param path              FilePath which history is queried.
    * @param root              Git root - optional: if this is null, then git root will be detected automatically.
@@ -284,8 +287,8 @@ public class GitHistoryUtils {
           Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
           Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
           Collection<String> parents = Arrays.asList(parentHashes);
-          consumer.consume(new GitFileRevision(project, finalRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message, null,
-                                               new Date(record.getAuthorTimeStamp()), parents));
+          consumer.consume(new GitFileRevision(project, finalRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message,
+                                               null, new Date(record.getAuthorTimeStamp()), parents));
           List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
           if (statusInfos.isEmpty()) {
             // can safely be empty, for example, for simple merge commits that don't change anything.
@@ -323,7 +326,8 @@ public class GitHistoryUtils {
           //noinspection ThrowableInstanceNeverThrown
           try {
             exceptionConsumer.consume(new VcsException(exception));
-          } finally {
+          }
+          finally {
             criticalFailure.set(true);
             semaphore.up();
           }
@@ -433,7 +437,8 @@ public class GitHistoryUtils {
     return null;
   }
 
-  public static List<? extends VcsShortCommitDetails> readMiniDetails(final Project project, final VirtualFile root, List<String> hashes) throws VcsException {
+  public static List<? extends VcsShortCommitDetails> readMiniDetails(final Project project, final VirtualFile root, List<String> hashes)
+    throws VcsException {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -460,8 +465,9 @@ public class GitHistoryUtils {
           parents.add(HashImpl.build(parent));
         }
         return factory.createShortDetails(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
-                                          record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getCommitterName(), record.getCommitterEmail(),
-                                                                                      record.getAuthorTimeStamp());
+                                          record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getCommitterName(),
+                                          record.getCommitterEmail(),
+                                          record.getAuthorTimeStamp());
       }
     });
   }
@@ -856,13 +862,13 @@ public class GitHistoryUtils {
 
   /**
    * <p>Get & parse git log detailed output with commits, their parents and their changes.</p>
-   *
+   * <p>
    * <p>Warning: this is method is efficient by speed, but don't query too much, because the whole log output is retrieved at once,
-   *    and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
+   * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
    */
   @NotNull
   public static List<GitCommit> history(@NotNull final Project project, @NotNull final VirtualFile root, String... parameters)
-                                        throws VcsException {
+    throws VcsException {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
@@ -911,7 +917,7 @@ public class GitHistoryUtils {
                                         boolean withChanges,
                                         @NotNull NullableFunction<GitLogRecord, T> converter,
                                         String... parameters)
-                                        throws VcsException {
+    throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = createParserForDetails(h, project, withRefs, withChanges, parameters);
 
@@ -950,7 +956,7 @@ public class GitHistoryUtils {
 
   @NotNull
   private static GitHeavyCommit createCommit(@NotNull Project project, @Nullable SymbolicRefsI refs, @NotNull VirtualFile root,
-                                        @NotNull GitLogRecord record) throws VcsException {
+                                             @NotNull GitLogRecord record) throws VcsException {
     final Collection<String> currentRefs = record.getRefs();
     List<String> locals = new ArrayList<>();
     List<String> remotes = new ArrayList<>();
@@ -971,7 +977,7 @@ public class GitHistoryUtils {
 
   @Nullable
   private static String parseRefs(@Nullable SymbolicRefsI refs, Collection<String> currentRefs, List<String> locals,
-                                List<String> remotes, List<String> tags) {
+                                  List<String> remotes, List<String> tags) {
     if (refs == null) {
       return null;
     }
@@ -979,9 +985,11 @@ public class GitHistoryUtils {
       final SymbolicRefs.Kind kind = refs.getKind(ref);
       if (SymbolicRefs.Kind.LOCAL.equals(kind)) {
         locals.add(ref);
-      } else if (SymbolicRefs.Kind.REMOTE.equals(kind)) {
+      }
+      else if (SymbolicRefs.Kind.REMOTE.equals(kind)) {
         remotes.add(ref);
-      } else {
+      }
+      else {
         tags.add(ref);
       }
     }
@@ -994,7 +1002,7 @@ public class GitHistoryUtils {
   @Deprecated
   @NotNull
   public static List<GitHeavyCommit> commitsDetails(@NotNull Project project, @NotNull FilePath path, @Nullable SymbolicRefsI refs,
-                                               @NotNull final Collection<String> commitsIds) throws VcsException {
+                                                    @NotNull final Collection<String> commitsIds) throws VcsException {
     path = getLastCommitName(project, path);     // adjust path using change manager
     VirtualFile root = GitUtil.getGitRoot(path);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
@@ -1041,7 +1049,7 @@ public class GitHistoryUtils {
     final ChangeListManager changeManager = ChangeListManager.getInstance(project);
     final Change change = changeManager.getChange(path);
     if (change != null && change.getType() == Change.Type.MOVED) {
-     // GitContentRevision r = (GitContentRevision)change.getBeforeRevision();
+      // GitContentRevision r = (GitContentRevision)change.getBeforeRevision();
       assert change.getBeforeRevision() != null : "Move change always have beforeRevision";
       path = change.getBeforeRevision().getFile();
     }
