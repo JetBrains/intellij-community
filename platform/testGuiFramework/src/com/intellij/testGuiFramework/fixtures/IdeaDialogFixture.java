@@ -42,8 +42,8 @@ public abstract class IdeaDialogFixture<T extends DialogWrapper> extends Compone
   protected static <T extends DialogWrapper> T getDialogWrapperFrom(@NotNull JDialog dialog, Class<T> dialogWrapperType) {
     try {
       WeakReference<DialogWrapper> dialogWrapperRef = field("myDialogWrapper").ofType(new TypeRef<WeakReference<DialogWrapper>>() {})
-                                                                              .in(dialog)
-                                                                              .get();
+        .in(dialog)
+        .get();
       assertNotNull(dialogWrapperRef);
       DialogWrapper wrapper = dialogWrapperRef.get();
       if (dialogWrapperType.isInstance(wrapper)) {

@@ -104,34 +104,3 @@ public class SelectSdkDialogFixture implements ContainerFixture<JDialog>{
     return myRobot;
   }
 }
-
-
-//extends IdeaDialogFixture<SelectSdkDialog> {
-//@NotNull
-//public static SelectSdkDialogFixture find(@NotNull Robot robot) {
-//  return new SelectSdkDialogFixture(robot, find(robot, SelectSdkDialog.class));
-//}
-//
-//private SelectSdkDialogFixture(@NotNull Robot robot, @NotNull DialogAndWrapper<SelectSdkDialog> dialogAndWrapper) {
-//  super(robot, dialogAndWrapper);
-//}
-//
-//@NotNull
-//public SelectSdkDialogFixture setJdkPath(@NotNull final File path) {
-//  final JLabel label = robot().finder().find(target(), JLabelMatcher.withText("Select Java JDK:").andShowing());
-//  execute(new GuiTask() {
-//    @Override
-//    protected void executeInEDT() throws Throwable {
-//      Component textField = label.getLabelFor();
-//      assertThat(textField).isInstanceOf(JTextField.class);
-//      ((JTextField)textField).setText(path.getPath());
-//    }
-//  });
-//  return this;
-//}
-//
-//@NotNull
-//public SelectSdkDialogFixture clickOk() {
-//  findAndClickOkButton(this);
-//  return this;
-//}

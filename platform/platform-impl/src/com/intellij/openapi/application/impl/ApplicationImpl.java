@@ -771,11 +771,8 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       saveSettings();
 
-    if (allowListenersToCancel && !canExit()) {
-      return false;
-    }
 
-    final boolean success = disposeSelf(allowListenersToCancel);
+      boolean success = disposeSelf(!force);
     if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
       if (Boolean.getBoolean("idea.test.guimode")) {
         IdeaApplication.getInstance().shutdown();

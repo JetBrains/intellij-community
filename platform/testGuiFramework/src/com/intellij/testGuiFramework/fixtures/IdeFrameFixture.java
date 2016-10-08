@@ -479,14 +479,14 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   @NotNull
   public IdeFrameFixture waitForBackgroundTasksToFinish() {
     Pause.pause(new Condition("Background tasks to finish") {
-            @Override
-            public boolean test() {
-              ProgressManager progressManager = ProgressManager.getInstance();
-              return !progressManager.hasModalProgressIndicator() &&
-                     !progressManager.hasProgressIndicator() &&
-                     !progressManager.hasUnsafeProgressIndicator();
-            }
-          }
+                  @Override
+                  public boolean test() {
+                    ProgressManager progressManager = ProgressManager.getInstance();
+                    return !progressManager.hasModalProgressIndicator() &&
+                           !progressManager.hasProgressIndicator() &&
+                           !progressManager.hasUnsafeProgressIndicator();
+                  }
+                }
       , GuiTestUtil.LONG_TIMEOUT);
     robot().waitForIdle();
     return this;

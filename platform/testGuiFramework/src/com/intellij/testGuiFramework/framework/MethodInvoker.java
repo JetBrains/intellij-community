@@ -46,7 +46,7 @@ public class MethodInvoker extends Statement {
   @Override
   public void evaluate() throws Throwable {
     if (myTestConfigurator.shouldSkipTest()) {
-       //Message already printed in console.
+      //Message already printed in console.
       return;
     }
     String testFqn = getTestFqn();

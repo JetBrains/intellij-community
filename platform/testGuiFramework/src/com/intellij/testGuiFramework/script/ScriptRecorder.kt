@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.script
 import com.intellij.internal.inspector.UiDropperActionExtension
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.ui.components.JBList
 import org.fest.swing.core.BasicRobot
 import java.awt.Component
 import java.awt.Container
@@ -65,7 +66,7 @@ class ScriptRecorder() : AnAction(), UiDropperActionExtension {
         else
           write(Templates.findJTextFieldByLabel(label.text))
       }
-      is com.intellij.ui.components.JBList -> {
+      is JBList<*> -> {
         val itemName = e.dataContext.getData("ItemName") as String
         if (isPopupList(cmp))
           write(Templates.clickPopupItem(itemName))

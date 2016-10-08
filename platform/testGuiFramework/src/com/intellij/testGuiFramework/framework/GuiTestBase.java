@@ -18,12 +18,11 @@ package com.intellij.testGuiFramework.framework;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
@@ -101,12 +100,6 @@ public abstract class GuiTestBase {
     Application application = ApplicationManager.getApplication();
     assertNotNull(application); // verify that we are using the IDE's ClassLoader.
 
-    // There is a race condition between reloading the configuration file after file deletion detected and the serialization of IDEA model
-    // we just customized so that modules can't be loaded correctly.
-    // This is a hack to prevent StoreAwareProjectManager from doing any reloading during test.
-    ProjectManagerEx.getInstanceEx().blockReloadingProjectOnExternalChanges();
-
-    refreshFiles();
   }
 
   @After
@@ -131,7 +124,6 @@ public abstract class GuiTestBase {
         }
       }
     }
-    ProjectManagerEx.getInstanceEx().unblockReloadingProjectOnExternalChanges();
   }
 
   @NotNull
@@ -242,7 +234,9 @@ public abstract class GuiTestBase {
     execute(new GuiTask() {
       @Override
       protected void executeInEDT() throws Throwable {
-        ProjectUtil.openOrImport(projectDir.getPath(), null, false);
+        TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+          ProjectUtil.openOrImport(projectDir.getPath(), null, false);
+        });
       }
     });
   }
@@ -329,18 +323,6 @@ public abstract class GuiTestBase {
     return IdeFrameFixture.find(myRobot, null, null);
   }
 
-  protected void refreshFiles() {
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() throws Throwable {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            LocalFileSystem.getInstance().refresh(false /* synchronous */);
-          }
-        });
-      }
-    });
-  }
+
 
 }

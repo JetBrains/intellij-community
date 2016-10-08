@@ -134,7 +134,6 @@ public class IdeTestApplication {
     ourInstance = this;
 
     pluginManagerStart(args);
-    mainMain();
 
     myIdeClassLoader = createClassLoader();
 
@@ -233,11 +232,6 @@ public class IdeTestApplication {
     // Duplicates what PluginManager#start does.
     Main.setFlags(args);
     initDefaultLAF();
-  }
-
-  private static void mainMain() {
-    // Duplicates what Main#main does.
-    method("installPatch").in(Main.class).invoke();
   }
 
   public void dispose() {

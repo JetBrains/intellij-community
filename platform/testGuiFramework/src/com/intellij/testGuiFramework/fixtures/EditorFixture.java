@@ -859,7 +859,7 @@ public class EditorFixture {
         ComponentDriver driver = new ComponentDriver(robot);
         System.out.println("Invoking editor action " + actionId + " via shortcut "
                            + KeyEvent.getKeyModifiersText(firstKeyStroke.getModifiers())
-                            + KeyEvent.getKeyText(firstKeyStroke.getKeyCode()));
+                           + KeyEvent.getKeyText(firstKeyStroke.getKeyCode()));
         driver.pressAndReleaseKey(component, firstKeyStroke.getKeyCode(), new int[]{firstKeyStroke.getModifiers()});
         KeyStroke secondKeyStroke = cs.getSecondKeyStroke();
         if (secondKeyStroke != null) {

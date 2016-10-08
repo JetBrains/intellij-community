@@ -13,25 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.notification;
+package org.fest.swing.core;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAwareAction;
+import org.fest.swing.hierarchy.ComponentHierarchy;
+import org.fest.swing.hierarchy.ExistingHierarchy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+
 /**
- * @author Alexander Lobas
+ * @author Sergey Karashevich
  */
-public abstract class NotificationAction extends DumbAwareAction {
-  public NotificationAction(@Nullable String text) {
-    super(text);
+public class FastRobot extends BasicRobot {
+
+  public FastRobot(){
+    super((Object)null, new ExistingHierarchy());
   }
+
+  FastRobot(@Nullable Object screenLockOwner,
+            @NotNull ComponentHierarchy hierarchy) {
+    super(screenLockOwner, hierarchy);
+  }
+
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    actionPerformed(e, Notification.get(e));
+  public void waitForIdle() {
+    //do not wait for idle
   }
 
-  public abstract void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification);
+  public void superWaitForIdle(){
+    super.waitForIdle();
+  }
+
 }

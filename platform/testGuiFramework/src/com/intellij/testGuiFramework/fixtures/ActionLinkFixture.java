@@ -70,8 +70,8 @@ public class ActionLinkFixture extends JComponentFixture<ActionLinkFixture, Acti
 
   @NotNull
   public static ActionLinkFixture findActionLinkByName(@NotNull final String actionName,
-                                                 @NotNull final Robot robot,
-                                                 @NotNull final Container container) {
+                                                       @NotNull final Robot robot,
+                                                       @NotNull final Container container) {
     final Ref<ActionLink> actionLinkRef = new Ref<ActionLink>();
     pause(new Condition("Find ActionLink with name '" + actionName + "'") {
       @Override
