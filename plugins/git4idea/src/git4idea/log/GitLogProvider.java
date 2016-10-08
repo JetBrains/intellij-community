@@ -106,7 +106,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     boolean refresh = requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh();
 
-    DetailedLogData data = GitHistoryUtils.loadMetadata(myProject, root, true, params);
+    DetailedLogData data = GitHistoryUtils.loadMetadata(myProject, root, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
     Set<VcsRef> allRefs = new OpenTHashSet<>(safeRefs, DONT_CONSIDER_SHA);
@@ -292,7 +292,7 @@ public class GitLogProvider implements VcsLogProvider {
     params.add("--max-count=" + commitCount);
     params.addAll(unmatchedTags);
     sw.report();
-    return GitHistoryUtils.loadMetadata(myProject, root, true, ArrayUtil.toStringArray(params));
+    return GitHistoryUtils.loadMetadata(myProject, root, ArrayUtil.toStringArray(params));
   }
 
   @Override

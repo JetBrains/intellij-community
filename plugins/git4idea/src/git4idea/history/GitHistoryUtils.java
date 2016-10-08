@@ -818,7 +818,6 @@ public class GitHistoryUtils {
   @NotNull
   public static VcsLogProvider.DetailedLogData loadMetadata(@NotNull final Project project,
                                                             @NotNull final VirtualFile root,
-                                                            final boolean withRefs,
                                                             String... params) throws VcsException {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -826,14 +825,12 @@ public class GitHistoryUtils {
     }
     final Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
     final List<VcsCommitMetadata> commits =
-      loadDetails(project, root, withRefs, false, record -> {
+      loadDetails(project, root, true, false, record -> {
         GitCommit commit = createCommit(project, root, record, factory);
-        if (withRefs) {
-          Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
-          for (VcsRef ref : refsInRecord) {
-            if (!refs.add(ref)) {
-              LOG.error("Adding duplicate element to the set");
-            }
+        Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
+        for (VcsRef ref : refsInRecord) {
+          if (!refs.add(ref)) {
+            LOG.error("Adding duplicate element to the set");
           }
         }
         return commit;
