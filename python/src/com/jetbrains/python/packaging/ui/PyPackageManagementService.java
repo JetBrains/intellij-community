@@ -22,20 +22,21 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
+import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.webcore.packaging.InstalledPackage;
-import com.intellij.webcore.packaging.PackageManagementService;
+import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import org.apache.xmlrpc.AsyncCallback;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,15 +44,26 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public class PyPackageManagementService extends PackageManagementService {
+public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull private static final Pattern PATTERN_ERROR_LINE = Pattern.compile(".*error:.*", Pattern.CASE_INSENSITIVE);
+  @NonNls private static final String TEXT_PREFIX = "<html><head>" +
+                                                    "    <style type=\"text/css\">" +
+                                                    "        p {" +
+                                                    "            font-family: Arial,serif; font-size: 12pt; margin: 2px 2px" +
+                                                    "        }" +
+                                                    "    </style>" +
+                                                    "</head><body style=\"font-family: Arial,serif; font-size: 12pt; margin: 5px 5px;\">";
+  @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
   private final Project myProject;
   protected final Sdk mySdk;
+  protected final BoundedTaskExecutor myExecutorService;
 
-  public PyPackageManagementService(@NotNull final Project project, @NotNull final Sdk sdk) {
+  public PyPackageManagementService(@NotNull Project project, @NotNull Sdk sdk) {
     myProject = project;
     mySdk = sdk;
+    // Dumb heuristic for the size of IO-bound tasks pool: safer than unlimited, snappier than a single thread
+    myExecutorService = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 4);
   }
 
   @NotNull
@@ -59,11 +71,13 @@ public class PyPackageManagementService extends PackageManagementService {
     return mySdk;
   }
 
+  @Nullable
   @Override
   public List<String> getAllRepositories() {
-    List<String> result = new ArrayList<String>();
-    result.add(PyPIPackageUtil.PYPI_URL);
-    result.addAll(PyPackageService.getInstance().additionalRepositories);
+    final PyPackageService packageService = PyPackageService.getInstance();
+    final List<String> result = new ArrayList<String>();
+    result.add(PyPIPackageUtil.PYPI_LIST_URL);
+    result.addAll(packageService.additionalRepositories);
     return result;
   }
 
@@ -77,38 +91,34 @@ public class PyPackageManagementService extends PackageManagementService {
     PyPackageService.getInstance().removeRepository(repositoryUrl);
   }
 
+  @NotNull
   @Override
   public List<RepoPackage> getAllPackages() throws IOException {
-    final Map<String, String> packageToVersionMap;
-    try {
-      packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
-    }
-    catch (IOException e) {
-      throw new IOException("Could not reach URL " + e.getMessage() + ". Please, check your internet connection.");
-    }
-    List<RepoPackage> packages = versionMapToPackageList(packageToVersionMap);
-    packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames());
+    final Map<String, String> packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
+    final List<RepoPackage> packages = versionMapToPackageList(packageToVersionMap);
+    packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages());
     return packages;
   }
 
-  protected static List<RepoPackage> versionMapToPackageList(Map<String, String> packageToVersionMap) {
+  @NotNull
+  protected static List<RepoPackage> versionMapToPackageList(@NotNull Map<String, String> packageToVersionMap) {
     final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
-    String url = customRepoConfigured ? PyPIPackageUtil.PYPI_URL : "";
-    List<RepoPackage> packages = new ArrayList<RepoPackage>();
+    final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
+    final List<RepoPackage> packages = new ArrayList<RepoPackage>();
     for (Map.Entry<String, String> entry : packageToVersionMap.entrySet()) {
       packages.add(new RepoPackage(entry.getKey(), url, entry.getValue()));
     }
     return packages;
   }
 
+  @NotNull
   @Override
   public List<RepoPackage> reloadAllPackages() throws IOException {
-    final PyPackageService service = PyPackageService.getInstance();
-    PyPIPackageUtil.INSTANCE.updatePyPICache(service);
-    service.LAST_TIME_CHECKED = System.currentTimeMillis();
+    PyPIPackageUtil.INSTANCE.clearPackagesCache();
     return getAllPackages();
   }
 
+  @NotNull
   @Override
   public List<RepoPackage> getAllPackagesCached() {
     return versionMapToPackageList(PyPIPackageUtil.getPyPIPackages());
@@ -119,6 +129,7 @@ public class PyPackageManagementService extends PackageManagementService {
     return !PythonSdkType.isVirtualEnv(mySdk);
   }
 
+  @NotNull
   @Override
   public String getInstallToUserText() {
     String userSiteText = "Install to user's site packages directory";
@@ -137,6 +148,7 @@ public class PyPackageManagementService extends PackageManagementService {
     PyPackageService.getInstance().addSdkToUserSite(mySdk.getHomePath(), newValue);
   }
 
+  @NotNull
   @Override
   public Collection<InstalledPackage> getInstalledPackages() throws IOException {
     List<PyPackage> packages;
@@ -158,10 +170,10 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Override
-  public void installPackage(final RepoPackage repoPackage, String version, boolean forceUpgrade, String extraOptions,
-                             final Listener listener, boolean installToUser) {
+  public void installPackage(@NotNull RepoPackage repoPackage, @Nullable String version, boolean forceUpgrade, @Nullable String extraOptions,
+                             @NotNull final Listener listener, boolean installToUser) {
     final String packageName = repoPackage.getName();
-    final String repository = PyPIPackageUtil.PYPI_URL.equals(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
+    final String repository = PyPIPackageUtil.isPyPIRepository(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
     final List<String> extraArgs = new ArrayList<String>();
     if (installToUser) {
       extraArgs.add(PyPackageManager.USE_USER_SITE);
@@ -171,7 +183,7 @@ public class PyPackageManagementService extends PackageManagementService {
       Collections.addAll(extraArgs, extraOptions.split(" +"));
     }
     if (!StringUtil.isEmptyOrSpaces(repository)) {
-      extraArgs.add("--extra-index-url");
+      extraArgs.add("--index-url");
       extraArgs.add(repository);
     }
     if (forceUpgrade) {
@@ -208,21 +220,21 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Override
-  public void uninstallPackages(List<InstalledPackage> installedPackages, final Listener listener) {
+  public void uninstallPackages(@NotNull List<InstalledPackage> installedPackages, @NotNull final Listener listener) {
     final String packageName = installedPackages.size() == 1 ? installedPackages.get(0).getName() : null;
-    PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
+    final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
       @Override
       public void started() {
         listener.operationStarted(packageName);
       }
 
       @Override
-      public void finished(final List<ExecutionException> exceptions) {
+      public void finished(List<ExecutionException> exceptions) {
         listener.operationFinished(packageName, toErrorDescription(exceptions, mySdk));
       }
     });
 
-    List<PyPackage> pyPackages = new ArrayList<PyPackage>();
+    final List<PyPackage> pyPackages = new ArrayList<PyPackage>();
     for (InstalledPackage aPackage : installedPackages) {
       if (aPackage instanceof PyPackage) {
         pyPackages.add((PyPackage)aPackage);
@@ -232,73 +244,50 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Override
-  public void fetchPackageVersions(final String packageName, final CatchingConsumer<List<String>, Exception> consumer) {
-    PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, new AsyncCallback() {
-      @Override
-      public void handleResult(Object result, URL url, String method) {
-        final List<String> releases = (List<String>)result;
-        PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
-        consumer.consume(releases);
-      }
-
-      @Override
-      public void handleError(Exception exception, URL url, String method) {
-        consumer.consume(exception);
-      }
-    });
+  public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
+    PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, consumer);
   }
 
   @Override
-  public void fetchPackageDetails(final String packageName, final CatchingConsumer<String, Exception> consumer) {
-    PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new AsyncCallback() {
+  public void fetchPackageDetails(@NotNull String packageName, @NotNull final CatchingConsumer<String, Exception> consumer) {
+    PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new CatchingConsumer<PackageDetails.Info, Exception>() {
       @Override
-      public void handleResult(Object result, URL url, String method) {
-        final Hashtable details = (Hashtable)result;
-        PyPIPackageUtil.INSTANCE.addPackageDetails(packageName, details);
-        consumer.consume(formatPackageDetails(details));
+      public void consume(PackageDetails.Info details) {
+        consumer.consume(formatPackageInfo(details));
       }
 
       @Override
-      public void handleError(Exception exception, URL url, String method) {
-        consumer.consume(exception);
+      public void consume(Exception e) {
+        consumer.consume(e);
       }
     });
   }
 
-  @NonNls private static final String TEXT_PREFIX = "<html><head>" +
-                                                    "    <style type=\"text/css\">" +
-                                                    "        p {" +
-                                                    "            font-family: Arial,serif; font-size: 12pt; margin: 2px 2px" +
-                                                    "        }" +
-                                                    "    </style>" +
-                                                    "</head><body style=\"font-family: Arial,serif; font-size: 12pt; margin: 5px 5px;\">";
-  @NonNls private static final String TEXT_SUFFIX = "</body></html>";
-
-  private static String formatPackageDetails(Hashtable details) {
-    Object description = details.get("summary");
-    StringBuilder stringBuilder = new StringBuilder(TEXT_PREFIX);
-    if (description instanceof String) {
+  private static String formatPackageInfo(@NotNull PackageDetails.Info info) {
+    final StringBuilder stringBuilder = new StringBuilder(TEXT_PREFIX);
+    final String description = info.getSummary();
+    if (StringUtil.isNotEmpty(description)) {
       stringBuilder.append(description).append("<br/>");
     }
-    Object version = details.get("version");
-    if (version instanceof String && !StringUtil.isEmpty((String)version)) {
+    final String version = info.getVersion();
+    if (StringUtil.isNotEmpty(version)) {
       stringBuilder.append("<h4>Version</h4>");
       stringBuilder.append(version);
     }
-    Object author = details.get("author");
-    if (author instanceof String && !StringUtil.isEmpty((String)author)) {
+    final String author = info.getAuthor();
+    if (StringUtil.isNotEmpty(author)) {
       stringBuilder.append("<h4>Author</h4>");
       stringBuilder.append(author).append("<br/><br/>");
     }
-    Object authorEmail = details.get("author_email");
-    if (authorEmail instanceof String && !StringUtil.isEmpty((String)authorEmail)) {
+    final String authorEmail = info.getAuthorEmail();
+    if (StringUtil.isNotEmpty(authorEmail)) {
       stringBuilder.append("<br/>");
       stringBuilder.append(composeHref("mailto:" + authorEmail));
     }
-    Object homePage = details.get("home_page");
-    if (homePage instanceof String && !StringUtil.isEmpty((String)homePage)) {
+    final String homePage = info.getHomePage();
+    if (StringUtil.isNotEmpty(homePage)) {
       stringBuilder.append("<br/>");
-      stringBuilder.append(composeHref((String)homePage));
+      stringBuilder.append(composeHref(homePage));
     }
     stringBuilder.append(TEXT_SUFFIX);
     return stringBuilder.toString();
@@ -307,6 +296,7 @@ public class PyPackageManagementService extends PackageManagementService {
   @NonNls private static final String HTML_PREFIX = "<a href=\"";
   @NonNls private static final String HTML_SUFFIX = "</a>";
 
+  @NotNull
   private static String composeHref(String vendorUrl) {
     return HTML_PREFIX + vendorUrl + "\">" + vendorUrl + HTML_SUFFIX;
   }
@@ -370,5 +360,37 @@ public class PyPackageManagementService extends PackageManagementService {
       return result != null ? result.trim() : null;
     }
     return null;
+  }
+
+  @Override
+  public void updatePackage(@NotNull InstalledPackage installedPackage,
+                            @Nullable String version,
+                            @NotNull Listener listener) {
+    installPackage(new RepoPackage(installedPackage.getName(), null), null, true, null, listener, false);
+  }
+
+  /**
+   * @return whether the latest version should be requested independently for each package
+   */
+  @Override
+  public boolean shouldFetchLatestVersionsForOnlyInstalledPackages() {
+    return true;
+  }
+
+  @Override
+  public void fetchLatestVersion(@NotNull final InstalledPackage pkg, @NotNull final CatchingConsumer<String, Exception> consumer) {
+    myExecutorService.submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          PyPIPackageUtil.INSTANCE.loadAndGetPackages();
+          final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(pkg.getName());
+          consumer.consume(StringUtil.notNullize(version));
+        }
+        catch (IOException e) {
+          consumer.consume(e);
+        }
+      }
+    });
   }
 }
