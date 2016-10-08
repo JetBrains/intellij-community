@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -179,11 +178,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
       return null;
     }
 
-    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location);
-      }
-    });
+    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction((Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location));
     if (baseDir == null) {
       LOG.error("Couldn't find '" + location + "' in VFS");
       return null;
@@ -218,12 +213,9 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
       ((TemplateProjectDirectoryGenerator)generator).generateProject(baseDir.getName(), locationString);
     } else {
       final Object finalSettings = settings;
-      callback = new ProjectOpenedCallback() {
-        @Override
-        public void projectOpened(Project project, Module module) {
-          if (generator != null) {
-            generator.generateProject(project, baseDir, finalSettings, module);
-          }
+      callback = (p, module) -> {
+        if (generator != null) {
+          generator.generateProject(p, baseDir, finalSettings, module);
         }
       };
     }
