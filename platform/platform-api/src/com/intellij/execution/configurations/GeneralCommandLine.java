@@ -386,6 +386,13 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.putAll(getParentEnvironment());
     }
 
+    if (SystemInfo.isUnix) {
+      File workDirectory = getWorkDirectory();
+      if (workDirectory != null) {
+        environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
+      }
+    }
+
     if (!myEnvParams.isEmpty()) {
       if (SystemInfo.isWindows) {
         THashMap<String, String> envVars = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
@@ -396,13 +403,6 @@ public class GeneralCommandLine implements UserDataHolder {
       }
       else {
         environment.putAll(myEnvParams);
-      }
-    }
-
-    if (SystemInfo.isUnix) {
-      File workDirectory = getWorkDirectory();
-      if (workDirectory != null) {
-        environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
       }
     }
   }
