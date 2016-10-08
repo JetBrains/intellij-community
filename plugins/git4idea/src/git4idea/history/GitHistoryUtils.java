@@ -506,6 +506,32 @@ public class GitHistoryUtils {
   }
 
   private static void processHandlerOutputByLine(@NotNull GitLineHandler handler,
+                                                 @NotNull GitLogParser parser,
+                                                 @NotNull Consumer<GitLogRecord> recordConsumer) throws VcsException {
+    Ref<Throwable> parseError = new Ref<>();
+    processHandlerOutputByLine(handler, builder -> {
+      try {
+        GitLogRecord record = parser.parseOneRecord(builder.toString());
+        if (record != null) {
+          recordConsumer.consume(record);
+        }
+      }
+      catch (ProcessCanceledException ignored) {
+      }
+      catch (Throwable t) {
+        if (parseError.isNull()) {
+          parseError.set(t);
+          LOG.error("Could not parse \" " + builder.toString() + "\"", t);
+        }
+      }
+    }, 0);
+
+    if (!parseError.isNull()) {
+      throw new VcsException(parseError.get());
+    }
+  }
+
+  private static void processHandlerOutputByLine(@NotNull GitLineHandler handler,
                                                  @NotNull Consumer<StringBuilder> recordConsumer,
                                                  int bufferSize)
     throws VcsException {
@@ -582,24 +608,7 @@ public class GitHistoryUtils {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = createParserForDetails(h, project, false, true, ArrayUtil.toStringArray(LOG_ALL));
 
-    Ref<Throwable> parseError = new Ref<>();
-    Consumer<StringBuilder> recordConsumer = builder -> {
-      try {
-        GitLogRecord record = parser.parseOneRecord(builder.toString());
-        if (record != null) {
-          commitConsumer.consume(createCommit(project, root, record, factory));
-        }
-      }
-      catch (ProcessCanceledException ignored) {
-      }
-      catch (Throwable t) {
-        if (parseError.get() == null) {
-          parseError.set(t);
-          LOG.error("Could not parse \" " + builder.toString() + "\"", t);
-        }
-      }
-    };
-    processHandlerOutputByLine(h, recordConsumer, 0);
+    processHandlerOutputByLine(h, parser, record -> commitConsumer.consume(createCommit(project, root, record, factory)));
   }
 
   public static void readCommits(@NotNull Project project,
@@ -891,20 +900,18 @@ public class GitHistoryUtils {
                                         @NotNull NullableFunction<GitLogRecord, T> converter,
                                         String... parameters)
     throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = createParserForDetails(h, project, withRefs, withChanges, parameters);
 
+    List<T> commits = ContainerUtil.newArrayList();
+
     StopWatch sw = StopWatch.start("loading details");
-    String output = h.run();
+
+    processHandlerOutputByLine(h, parser, record -> commits.add(converter.fun(record)));
+
     sw.report();
 
-    sw = StopWatch.start("parsing");
-    List<GitLogRecord> records = parser.parse(output);
-    sw.report();
-
-    sw = StopWatch.start("Creating objects");
-    List<T> commits = ContainerUtil.mapNotNull(records, converter);
-    sw.report();
     return commits;
   }
 
