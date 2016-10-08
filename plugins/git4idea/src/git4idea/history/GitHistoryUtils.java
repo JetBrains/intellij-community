@@ -766,7 +766,7 @@ public class GitHistoryUtils {
     final List<VcsFileRevision> rc = new ArrayList<>();
     final List<VcsException> exceptions = new ArrayList<>();
 
-    history(project, path, root, startingFrom, gitFileRevision -> rc.add(gitFileRevision), e -> exceptions.add(e), parameters);
+    history(project, path, root, startingFrom, rc::add, exceptions::add, parameters);
     if (!exceptions.isEmpty()) {
       throw exceptions.get(0);
     }
@@ -922,7 +922,7 @@ public class GitHistoryUtils {
 
   @NotNull
   private static List<Hash> getParentHashes(@NotNull VcsLogObjectsFactory factory, @NotNull GitLogRecord record) {
-    return ContainerUtil.map(record.getParentsHashes(), hash -> factory.createHash(hash));
+    return ContainerUtil.map(record.getParentsHashes(), factory::createHash);
   }
 
   @NotNull
