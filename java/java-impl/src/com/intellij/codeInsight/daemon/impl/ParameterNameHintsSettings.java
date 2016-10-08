@@ -46,6 +46,7 @@ public class ParameterNameHintsSettings implements PersistentStateComponent<Para
     "*.get(*)",
     "*.append(*)",
     "*.charAt(*)",
+    "*.indexOf(*)",
     "*.contains(*)",
     "*.startsWith(*)",
     "*.endsWith(*)"
