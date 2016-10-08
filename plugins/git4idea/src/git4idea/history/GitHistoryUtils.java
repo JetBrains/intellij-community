@@ -112,19 +112,14 @@ public class GitHistoryUtils {
   }
 
   @Nullable
-  public static VcsRevisionDescription getCurrentRevisionDescription(final Project project, FilePath filePath, @Nullable String branch)
+  public static VcsRevisionDescription getCurrentRevisionDescription(final Project project, FilePath filePath)
     throws VcsException {
     filePath = getLastCommitName(project, filePath);
     GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME, SUBJECT, BODY, RAW_BODY);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
-    if (branch != null && !branch.isEmpty()) {
-      h.addParameters(branch);
-    }
-    else {
-      h.addParameters("--all");
-    }
+    h.addParameters("--all");
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = h.run();
