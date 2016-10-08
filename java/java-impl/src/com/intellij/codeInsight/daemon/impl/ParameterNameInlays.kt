@@ -18,3 +18,5 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.psi.PsiExpression
 
 class InlayInfo(val text: String, val offset: Int, val argument: PsiExpression)
+
+class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>)

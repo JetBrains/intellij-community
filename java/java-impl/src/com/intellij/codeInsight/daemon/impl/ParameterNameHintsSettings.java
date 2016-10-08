@@ -28,7 +28,7 @@ import java.util.List;
 @State(name = "ParameterNameHintsSettings", storages = @Storage("parameter.name.hints.xml"))
 public class ParameterNameHintsSettings implements PersistentStateComponent<ParameterNameHintsSettings.State> {
   
-  public static final String[] defaultBlackList = {
+  public static final String[] defaultPatterns = {
     "(begin*, end*)",
     "(start*, end*)",
     "(first*, last*)",
@@ -52,9 +52,13 @@ public class ParameterNameHintsSettings implements PersistentStateComponent<Para
     "*.endsWith(*)"
   };
 
+  public void addIgnorePattern(@NotNull String pattern) {
+    myState.ignorePatterns.add(pattern);
+  }
+
   public static class State {
     public int version = 1;
-    public List<String> blackList = ContainerUtil.newArrayList(defaultBlackList);
+    public List<String> ignorePatterns = ContainerUtil.newArrayList(defaultPatterns);
   }
 
   private ParameterNameHintsSettings.State myState = new State();
@@ -79,17 +83,16 @@ public class ParameterNameHintsSettings implements PersistentStateComponent<Para
     return myState.version;
   }
 
-  public List<String> getBlacklist() {
-    return myState.blackList;
+  public List<String> getIgnorePatternList() {
+    return myState.ignorePatterns;
   }
-
 
   public void setVersion(int newVersion) {
     myState.version = newVersion;
   }
 
-  public void setBlacklist(@NotNull List<String> newBlacklist) {
-    myState.blackList = newBlacklist;
+  public void setIgnorePatternList(@NotNull List<String> newBlacklist) {
+    myState.ignorePatterns = newBlacklist;
   }
   
 }

@@ -300,9 +300,9 @@
     </group>
     
     <group id="ParameterNameHints" popup="true">
-      <action id="ToggleInlineHintsAction" class="com.intellij.analysis.actions.ToggleInlineHintsAction"/>
-      <action id="ReportExcessiveInlineHint" class="com.intellij.reporting.ReportExcessiveInlineHint"/>
+      <action id="BlacklistCurrentMethodAction" class="com.intellij.codeInsight.daemon.impl.BlacklistCurrentMethodAction"/>
       <action id="ConfigureParameterHintsSettings" class="com.intellij.codeInsight.daemon.impl.ConfigureParameterHintsSettings"/>
+      <action id="ToggleInlineHintsAction" class="com.intellij.analysis.actions.ToggleInlineHintsAction"/>
     </group>
     
     <!-- Analyze -->

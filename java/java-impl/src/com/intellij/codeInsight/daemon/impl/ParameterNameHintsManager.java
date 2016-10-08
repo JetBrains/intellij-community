@@ -80,15 +80,20 @@ public class ParameterNameHintsManager {
     return method.getParameterList().getParametersCount() == 1;
   }
 
-  private boolean isBlackListed(PsiMethod method) {
+  public static MethodInfo getMethodInfo(PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
     String qualifier = aClass != null ? aClass.getQualifiedName() : "";
     String fullMethodName = qualifier + "." + method.getName();
 
     PsiParameter[] params = method.getParameterList().getParameters();
     List<String> paramNames = ContainerUtil.map(params, (e) -> e.getName());
-
-    return myBlackListMatchers.stream().anyMatch((e) -> e.isMatching(fullMethodName, paramNames));
+    
+    return new MethodInfo(fullMethodName, paramNames);
+  }
+  
+  private boolean isBlackListed(PsiMethod method) {
+    MethodInfo info = getMethodInfo(method);
+    return myBlackListMatchers.stream().anyMatch((e) -> e.isMatching(info.getFullyQualifiedName(), info.getParamNames()));
   }
 
   private static boolean isSetter(PsiMethod method) {

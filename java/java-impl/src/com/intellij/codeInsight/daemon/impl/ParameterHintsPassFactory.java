@@ -69,7 +69,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
 
       List<Matcher> matchers = ParameterNameHintsSettings
         .getInstance()
-        .getBlacklist()
+        .getIgnorePatternList()
         .stream()
         .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
         .collect(Collectors.toList());
