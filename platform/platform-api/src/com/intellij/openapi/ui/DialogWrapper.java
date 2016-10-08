@@ -585,7 +585,7 @@ public abstract class DialogWrapper {
   @NotNull
   protected JButton createHelpButton(Insets insets) {
     final JButton helpButton;
-    if ((SystemInfo.isWindows && UIUtil.isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui"))) {
+    if ((UIUtil.isUnderWin10LookAndFeel())) {
       helpButton = new JButton(getHelpAction()) {
         @Override
         public void paint(Graphics g) {
