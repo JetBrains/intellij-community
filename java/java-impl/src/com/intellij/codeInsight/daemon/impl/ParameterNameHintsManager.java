@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.codeInsight.hints.filtering.Matcher;
+import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -26,24 +26,28 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class ParameterNameHintsManager {
-  private static final List<Couple<String>> COMMONLY_USED_PARAMETER_PAIR = ContainerUtil.newArrayList(
-    Couple.of("begin", "end"),
-    Couple.of("start", "end"),
-    Couple.of("first", "last"),
-    Couple.of("first", "second"),
-    Couple.of("from", "to"),
-    Couple.of("key", "value"),
-    Couple.of("min", "max")
-  );
-  
-  private static final List<String> COMMON_METHODS = ContainerUtil.newArrayList(
-    "get", "set", "contains", "append", 
-    "print", "println", 
-    "charAt", "startsWith", "indexOf"
-  );
 
+  private static List<Matcher> MATCHERS = Stream.of(
+    "(begin*, end*)",
+    "(start*, end*)",
+    "(first*, last*)",
+    "(first*, second*)",
+    "(from*, to*)",
+    "(min*, max*)",
+    "(key, value)",
+    "(format, arg*)"
+  ).map((s) -> MatcherConstructor.INSTANCE.createMatcher(s))
+    .collect(Collectors.toList());
+    
+  private static final Set<String> COMMON_METHOD_NAMES = ContainerUtil.newHashSet("set", "print", "println");
+  
   @NotNull
   private final List<InlayInfo> myDescriptors;
 
@@ -53,7 +57,7 @@ public class ParameterNameHintsManager {
     
     List<InlayInfo> descriptors = Collections.emptyList();
     if (resolveResult.getElement() instanceof PsiMethod
-        && isMethodToShowParams(resolveResult)
+        && isMethodToShowParams(callExpression, resolveResult)
         && hasUnclearExpressions(callArguments)) 
     {
       PsiMethod method = (PsiMethod)resolveResult.getElement();
@@ -64,25 +68,63 @@ public class ParameterNameHintsManager {
     myDescriptors = descriptors;
   }
 
-  private static boolean isMethodToShowParams(JavaResolveResult resolveResult) {
+  private static boolean isMethodToShowParams(@NotNull PsiCallExpression callExpression, @NotNull JavaResolveResult resolveResult) {
     PsiElement element = resolveResult.getElement();
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
-      return !isSetter(method) && !isCommonMethod(method);
+      if (isSetter(method) || isBuilder(callExpression, method)) return false;
+      if (hasSingleParameter(method)) {
+        PsiParameter parameter = method.getParameterList().getParameters()[0];
+        return PsiType.VOID.equals(method.getReturnType()) || isBoolean(parameter) || isNullOrThis(callExpression);
+      }
+      return !isCommonMethod(method);
     }
     return false;
   }
 
+  private static boolean isNullOrThis(@NotNull PsiCallExpression callExpression) {
+    PsiExpressionList list = callExpression.getArgumentList();
+    PsiExpression[] expressions = list != null ? list.getExpressions() : null;
+    if (expressions != null && expressions.length > 0) {
+      PsiExpression expression = expressions[0];
+      if (expression.textMatches("null") || expression.textMatches("this")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isBuilder(PsiCallExpression expression, PsiMethod method) {
+    if (expression instanceof PsiNewExpression) {
+      return false;
+    }
+    final PsiType returnType = method.getReturnType();
+    final PsiClass aClass = method.getContainingClass();
+    final String calledMethodFqn = aClass != null ? aClass.getQualifiedName() : null;
+    if (calledMethodFqn != null && returnType != null) {
+      return returnType.equalsToText(calledMethodFqn);
+    }
+    return false;
+  }
+
+  private static boolean isBoolean(PsiParameter parameter) {
+    PsiType type = parameter.getType();
+    return PsiType.BOOLEAN.equals(type) || PsiType.BOOLEAN.equals(PsiPrimitiveType.getUnboxedType(type));
+  }
+
+  private static boolean hasSingleParameter(PsiMethod method) {
+    return method.getParameterList().getParametersCount() == 1;
+  }
+
   private static boolean isCommonMethod(PsiMethod method) {
-    String methodName = method.getName();
-    return COMMON_METHODS.stream().anyMatch((name) -> methodName.equals(name));
+    return COMMON_METHOD_NAMES.contains(method.getName());
   }
 
   private static boolean isSetter(PsiMethod method) {
     String methodName = method.getName();
-    if (method.getParameterList().getParametersCount() == 1
-        && methodName.startsWith("set")
-        && methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3))) {
+    if (hasSingleParameter(method) && methodName.startsWith("set")
+        && (methodName.length() == 3 
+            || methodName.length() > 3 && Character.isUpperCase(methodName.charAt(3)))) {
       return true;
     }
     return false;
@@ -121,65 +163,69 @@ public class ParameterNameHintsManager {
   private static List<InlayInfo> buildDescriptorsForLiteralArguments(@NotNull PsiExpression[] callArguments,
                                                                      @NotNull PsiParameter[] parameters,
                                                                      @NotNull JavaResolveResult resolveResult) {
-    if (callArguments.length == 2 && parameters.length == 2 
-        && isCommonlyNamedParameterPair(0, 1, parameters)) 
+    
+    List<InlayInfo> descriptors = ContainerUtil.newArrayList();
+    for (int i = 0; i < Math.min(callArguments.length, parameters.length); i++) {
+      PsiExpression arg = callArguments[i];
+      PsiParameter param = parameters[i];
+
+      if (isVarargParam(param.getType(), arg.getType()) && hasUnclearExpressionStartingFrom(i, callArguments) 
+          || shouldInlineParameterName(arg, param, resolveResult)) {
+        descriptors.add(createInlayInfo(arg, param));
+      }
+    }
+
+    final int totalDescriptors = descriptors.size();
+    if (totalDescriptors == 1 && shouldIgnoreSingleHint(parameters, descriptors)
+        || totalDescriptors == 2 && parameters.length == 2 && isParamPairToIgnore(descriptors)) 
     {
       return ContainerUtil.emptyList();
     }
-
-    List<InlayInfo> descriptors = ContainerUtil.newArrayList();
     
-    int index = 0;
-    while (index < callArguments.length && index < parameters.length) {
-      if (shouldInlineParameterName(index, callArguments, parameters, resolveResult)) {
-        descriptors.add(createInlayInfo(callArguments[index], parameters[index]));
-      }
-      index++;
-    }
-
     return descriptors;
+  }
+  
+  private static boolean shouldIgnoreSingleHint(@NotNull PsiParameter[] parameters, List<InlayInfo> descriptors) {
+    return isStringLiteral(descriptors.get(0)) && !hasMultipleStringParams(parameters);
+  }
+  
+  private static boolean hasMultipleStringParams(PsiParameter[] parameters) {
+    int stringParams = 0;
+    for (PsiParameter parameter : parameters) {
+      if (parameter.getType().equalsToText(JAVA_LANG_STRING)) {
+        stringParams++;
+      }
+    }
+    return stringParams > 1;
+  }
+
+  private static boolean isStringLiteral(InlayInfo info) {
+    PsiType type = info.getArgument().getType();
+    return type != null && type.equalsToText(JAVA_LANG_STRING);
   }
 
   @NotNull
   private static InlayInfo createInlayInfo(@NotNull PsiExpression callArgument, @NotNull PsiParameter methodParam) {
     String paramName = ((methodParam.getType() instanceof PsiEllipsisType) ? "..." : "") + methodParam.getName();
-    return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset());
+    return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset(), callArgument);
   }
 
-  private static boolean isCommonlyNamedParameterPair(int first, int second, PsiParameter[] parameters) {
-    if (!(first < parameters.length && second < parameters.length)) return false;
+  private static boolean isParamPairToIgnore(List<InlayInfo> descriptors) {
+    List<String> params = descriptors
+      .stream()
+      .map((e) -> e.getText())
+      .collect(Collectors.toList());
 
-    String firstParamName = parameters[first].getName();
-    String secondParamName = parameters[second].getName();
-    if (firstParamName == null || secondParamName == null) return false;
-
-    for (Couple<String> knownPair : COMMONLY_USED_PARAMETER_PAIR) {
-      if (StringUtil.containsIgnoreCase(firstParamName, knownPair.first)
-          && StringUtil.containsIgnoreCase(secondParamName, knownPair.second)) {
-        return true;
-      }
-    }
-
-    return false;
+    return MATCHERS.stream().anyMatch((e) -> e.isMatching("", params));
   }
 
-  private static boolean shouldInlineParameterName(int paramIndex,
-                                                   @NotNull PsiExpression[] callArguments,
-                                                   @NotNull PsiParameter[] parameters,
+  private static boolean shouldInlineParameterName(@NotNull PsiExpression argument,
+                                                   @NotNull PsiParameter parameter,
                                                    @NotNull JavaResolveResult resolveResult) {
-    final PsiExpression argument = callArguments[paramIndex];
-    if (argument.getType() == null) return false;
-    
-    final PsiParameter parameter = parameters[paramIndex];
-
     PsiType argType = argument.getType();
     PsiType paramType = parameter.getType();
-
-    if (isVarargParam(paramType, argType) && hasUnclearExpression(paramIndex, callArguments)) {
-      return true;
-    }
-
-    if (isUnclearExpression(argument)) {
+    
+    if (argType != null && isUnclearExpression(argument)) {
       PsiType parameterType = resolveResult.getSubstitutor().substitute(paramType);
       return TypeConversionUtil.isAssignable(parameterType, argType);
     }
@@ -187,7 +233,7 @@ public class ParameterNameHintsManager {
     return false;
   }
   
-  private static boolean hasUnclearExpression(int index, PsiExpression[] callArguments) {
+  private static boolean hasUnclearExpressionStartingFrom(int index, PsiExpression[] callArguments) {
     for (int i = index; i < callArguments.length; i++) {
       PsiExpression arg = callArguments[i];
       if (isUnclearExpression(arg)) return true;
@@ -195,9 +241,10 @@ public class ParameterNameHintsManager {
     return false;
   }
 
-  private static boolean isVarargParam(@NotNull PsiType param, @NotNull PsiType argument) {
-    PsiType deepType = param.getDeepComponentType();
-    return param instanceof PsiEllipsisType && TypeConversionUtil.isAssignable(deepType, argument);
+  private static boolean isVarargParam(@Nullable PsiType paramType, @Nullable PsiType argType) {
+    if (paramType == null || argType == null) return false;
+    PsiType deepType = paramType.getDeepComponentType();
+    return paramType instanceof PsiEllipsisType && TypeConversionUtil.isAssignable(deepType, argType);
   }
 
   private static boolean hasUnclearExpressions(@NotNull PsiExpression[] arguments) {

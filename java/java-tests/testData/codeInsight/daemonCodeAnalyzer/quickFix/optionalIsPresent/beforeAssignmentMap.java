@@ -8,7 +8,8 @@ public class Main {
     if (str.isPrese<caret>nt()) {
       val = // line comment
       // another line comment
-        str.get().trim() /* block comment *//*block comment*/;
+        str.get()//before trim
+          .trim() /* block comment *//*block comment*/;
     } else {
       val = "";
     }

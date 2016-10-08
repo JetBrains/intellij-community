@@ -15,7 +15,6 @@
  */
 package com.intellij.ui.paint;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.JBUI;
@@ -24,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WavePainter;
 
 import java.awt.*;
+import java.awt.font.LineMetrics;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Sergey.Malenkov
  */
-public enum EffectPainter implements RegionPainter<Paint> {
+public enum EffectPainter implements RegionPainter<Font> {
   /**
    * @see com.intellij.openapi.editor.markup.EffectType#LINE_UNDERSCORE
    */
@@ -44,17 +44,15 @@ public enum EffectPainter implements RegionPainter<Paint> {
      * @param y      text baseline
      * @param width  text width
      * @param height available space under text
-     * @param paint  optional color patterns
+     * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+    public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
       if (!Registry.is("ide.text.effect.new")) {
-        if (paint != null) g.setPaint(paint);
         g.drawLine(x, y + 1, x + width, y + 1);
       }
-      else if (width > 0 && height > 0) {
-        if (paint != null) g.setPaint(paint);
-        drawLineUnderscore(g, x, y, width, height, 1, this);
+      else {
+        paintUnderline(g, x, y, width, height, font, 1, this);
       }
     }
   },
@@ -70,18 +68,16 @@ public enum EffectPainter implements RegionPainter<Paint> {
      * @param y      text baseline
      * @param width  text width
      * @param height available space under text
-     * @param paint  optional color patterns
+     * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+    public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
       if (!Registry.is("ide.text.effect.new")) {
-        if (paint != null) g.setPaint(paint);
         int h = JBUI.scale(Registry.intValue("editor.bold.underline.height", 2));
         g.fillRect(x, y, width, h);
       }
-      else if (width > 0 && height > 0) {
-        if (paint != null) g.setPaint(paint);
-        drawLineUnderscore(g, x, y, width, height, 2, this);
+      else {
+        paintUnderline(g, x, y, width, height, font, 2, this);
       }
     }
   },
@@ -97,17 +93,11 @@ public enum EffectPainter implements RegionPainter<Paint> {
      * @param y      text baseline
      * @param width  text width
      * @param height available space under text
-     * @param paint  optional color patterns
+     * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
-      if (!Registry.is("ide.text.effect.new")) {
-        UIUtil.drawBoldDottedLine(g, x, x + width, SystemInfo.isMac ? y : y + 1, g.getColor(), (Color)paint, false);
-      }
-      else if (width > 0 && height > 0) {
-        if (paint != null) g.setPaint(paint);
-        drawLineUnderscore(g, x, y, width, height, 2, this);
-      }
+    public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
+      paintUnderline(g, x, y, width, height, font, 2, this);
     }
   },
   /**
@@ -122,16 +112,15 @@ public enum EffectPainter implements RegionPainter<Paint> {
      * @param y      text baseline
      * @param width  text width
      * @param height available space under text
-     * @param paint  optional color patterns
+     * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+    public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
       if (!Registry.is("ide.text.effect.new")) {
-        if (paint != null) g.setPaint(paint);
         WavePainter.forColor(g.getColor()).paint(g, x, x + width, y + height);
       }
       else if (width > 0 && height > 0) {
-        Cached.WAVE_UNDERSCORE.paint(g, x, y, width, height, paint);
+        Cached.WAVE_UNDERSCORE.paint(g, x, y, width, height, null);
       }
     }
   },
@@ -147,13 +136,21 @@ public enum EffectPainter implements RegionPainter<Paint> {
      * @param y      text baseline
      * @param width  text width
      * @param height text height
-     * @param paint  optional color patterns
+     * @param font   optional font to calculate line metrics
      */
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Paint paint) {
+    public void paint(Graphics2D g, int x, int y, int width, int height, Font font) {
       if (width > 0 && height > 0) {
-        if (paint != null) g.setPaint(paint);
-        drawLineCentered(g, x, y - height, width, height, 1, this);
+        if (!Registry.is("ide.text.effect.new.metrics")) {
+          drawLineCentered(g, x, y - height, width, height, 1, this);
+        }
+        else {
+          if (font == null) font = g.getFont();
+          LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
+          int offset = (int)(0.5 - metrics.getStrikethroughOffset());
+          int thickness = Math.max(1, (int)(0.5 + metrics.getStrikethroughThickness()));
+          drawLine(g, x, y - offset, width, thickness, this);
+        }
       }
     }
   };
@@ -162,16 +159,27 @@ public enum EffectPainter implements RegionPainter<Paint> {
     return height > 7 && Registry.is("ide.text.effect.new.scale") ? height >> 1 : 3;
   }
 
-  private static void drawLineUnderscore(Graphics2D g, int x, int y, int width, int height, int thickness, EffectPainter painter) {
-    if (height > 3) {
-      int max = getMaxHeight(height);
-      y += height - max;
-      height = max;
-      if (thickness > 1 && height > 3) {
-        thickness = JBUI.scale(thickness);
+  private static void paintUnderline(Graphics2D g, int x, int y, int width, int height, Font font, int thickness, EffectPainter painter) {
+    if (width > 0 && height > 0) {
+      if (Registry.is("ide.text.effect.new.metrics")) {
+        if (font == null) font = g.getFont();
+        LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
+        thickness = Math.max(thickness, (int)(0.5 + thickness * metrics.getUnderlineThickness()));
+        int offset = Math.min(height - thickness, Math.max(1, (int)(0.5 + metrics.getUnderlineOffset())));
+        drawLine(g, x, y + offset, width, thickness, painter);
+      }
+      else {
+        if (height > 3) {
+          int max = getMaxHeight(height);
+          y += height - max;
+          height = max;
+          if (thickness > 1 && height > 3) {
+            thickness = JBUI.scale(thickness);
+          }
+        }
+        drawLineCentered(g, x, y, width, height, thickness, painter);
       }
     }
-    drawLineCentered(g, x, y, width, height, thickness, painter);
   }
 
   private static void drawLineCentered(Graphics2D g, int x, int y, int width, int height, int thickness, EffectPainter painter) {
@@ -180,6 +188,10 @@ public enum EffectPainter implements RegionPainter<Paint> {
       y += offset - (offset >> 1);
       height = thickness;
     }
+    drawLine(g, x, y, width, height, painter);
+  }
+
+  private static void drawLine(Graphics2D g, int x, int y, int width, int height, EffectPainter painter) {
     if (painter == BOLD_DOTTED_UNDERSCORE) {
       int dx = (x % height + height) % height;
       int w = width + dx;

@@ -164,7 +164,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
                           runConfiguration.getClass().getName());
               }
             }
-            projectTask = projectTaskManager.createModulesBuildTask(true, modules);
+            projectTask = projectTaskManager.createModulesBuildTask(modules, true, true, true);
           }
           else {
             projectTask = projectTaskManager.createAllModulesBuildTask(true, myProject);

@@ -21,10 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +53,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   private static final String FIND_FIRST_METHOD = "findFirst";
   private static final String FILTER_METHOD = "filter";
   private static final String ANY_MATCH_METHOD = "anyMatch";
+  private static final String NONE_MATCH_METHOD = "noneMatch";
+  private static final String ALL_MATCH_METHOD = "allMatch";
 
   private static final String COUNTING_COLLECTOR = "counting";
   private static final String MIN_BY_COLLECTOR = "minBy";
@@ -80,7 +80,10 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
-        final PsiMethod method = methodCall.resolveMethod();
+        PsiMethod method = methodCall.resolveMethod();
+        if(method == null) return;
+        PsiClass psiClass = method.getContainingClass();
+        if(psiClass == null) return;
         if (isCallOf(method, CommonClassNames.JAVA_UTIL_COLLECTION, STREAM_METHOD, 0)) {
           handleCollectionStream(methodCall);
         }
@@ -90,8 +93,40 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         else if (isCallOf(method, CommonClassNames.JAVA_UTIL_OPTIONAL, IS_PRESENT_METHOD, 0)) {
           handleOptionalIsPresent(methodCall);
         }
+        else if (isStreamCall(method, ANY_MATCH_METHOD)) {
+          if(isParentNegated(methodCall)) {
+            boolean argNegated = isArgumentLambdaNegated(methodCall);
+            registerMatchFix(methodCall,
+                             new SimplifyMatchNegationFix(
+                               "!" + psiClass.getName() + (argNegated ? ".anyMatch(x -> !(...))" : ".anyMatch(...)"),
+                                                          argNegated ? ALL_MATCH_METHOD : NONE_MATCH_METHOD));
+          }
+        }
+        else if (isStreamCall(method, NONE_MATCH_METHOD)) {
+          if(isParentNegated(methodCall)) {
+            registerMatchFix(methodCall, new SimplifyMatchNegationFix("!"+psiClass.getName()+".noneMatch(...)", ANY_MATCH_METHOD));
+          }
+          if(isArgumentLambdaNegated(methodCall)) {
+            registerMatchFix(methodCall, new SimplifyMatchNegationFix(psiClass.getName()+".noneMatch(x -> !(...))", ALL_MATCH_METHOD));
+          }
+        }
+        else if (isStreamCall(method, ALL_MATCH_METHOD)) {
+          if(isArgumentLambdaNegated(methodCall)) {
+            boolean parentNegated = isParentNegated(methodCall);
+            registerMatchFix(methodCall,
+                             new SimplifyMatchNegationFix((parentNegated ? "!" : "") + psiClass.getName() + ".allMatch(x -> !(...))",
+                                                          parentNegated ? ANY_MATCH_METHOD : NONE_MATCH_METHOD));
+          }
+        }
         else {
           handleStreamForEach(methodCall, method);
+        }
+      }
+
+      void registerMatchFix(PsiMethodCallExpression methodCall, SimplifyMatchNegationFix fix) {
+        PsiElement nameElement = methodCall.getMethodExpression().getReferenceNameElement();
+        if(nameElement != null) {
+          holder.registerProblem(nameElement, fix.getMessage(), new SimplifyCallChainFix(fix));
         }
       }
 
@@ -212,6 +247,20 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     };
   }
 
+  static boolean isParentNegated(PsiMethodCallExpression methodCall) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
+    return parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent);
+  }
+
+  static boolean isArgumentLambdaNegated(PsiMethodCallExpression methodCall) {
+    PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
+    if(expressions.length != 1) return false;
+    PsiExpression arg = expressions[0];
+    if(!(arg instanceof PsiLambdaExpression)) return false;
+    PsiElement body = ((PsiLambdaExpression)arg).getBody();
+    return body instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)body);
+  }
+
   static boolean hasSingleArrayArgument(PsiMethodCallExpression qualifierCall) {
     final PsiExpression[] argumentExpressions = qualifierCall.getArgumentList().getExpressions();
     if (argumentExpressions.length == 1) {
@@ -264,6 +313,14 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       }
     }
     return false;
+  }
+
+  static boolean isStreamCall(@Nullable PsiMethod method, @NotNull String methodName) {
+    if (method == null || !methodName.equals(method.getName()) || method.getParameterList().getParametersCount() != 1) {
+      return false;
+    }
+    final PsiClass containingClass = method.getContainingClass();
+    return containingClass != null && InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
   }
 
   interface CallChainFix {
@@ -569,6 +626,67 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     @NotNull
     public String getMessage() {
       return "Stream.filter()." + myFindMethodName + "().isPresent() can be replaced with Stream.anyMatch()";
+    }
+  }
+
+  private static class SimplifyMatchNegationFix implements CallChainFix {
+    private final String myFrom, myTo;
+
+    private SimplifyMatchNegationFix(String from, String to) {
+      myFrom = from;
+      myTo = to;
+    }
+
+    @Override
+    public String getName() {
+      return "Replace "+myFrom+" with "+myTo+"(...)";
+    }
+
+    public String getMessage() {
+      return myFrom+" can be replaced with "+myTo+"(...)";
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getStartElement();
+      if(element instanceof PsiIdentifier) {
+        String from = element.getText();
+        boolean removeParentNegation;
+        boolean removeLambdaNegation;
+        switch(from) {
+          case ALL_MATCH_METHOD:
+            removeLambdaNegation = true;
+            removeParentNegation = myTo.equals(ANY_MATCH_METHOD);
+            break;
+          case ANY_MATCH_METHOD:
+            removeParentNegation = true;
+            removeLambdaNegation = myTo.equals(ALL_MATCH_METHOD);
+            break;
+          case NONE_MATCH_METHOD:
+            removeParentNegation = myTo.equals(ANY_MATCH_METHOD);
+            removeLambdaNegation = myTo.equals(ALL_MATCH_METHOD);
+            break;
+          default:
+            return;
+        }
+        PsiMethodCallExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
+        if (methodCall == null) return;
+        if (removeParentNegation && !isParentNegated(methodCall)) return;
+        if (removeLambdaNegation && !isArgumentLambdaNegated(methodCall)) return;
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(element.getContainingFile())) return;
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        element.replace(factory.createIdentifier(myTo));
+        if (removeLambdaNegation) {
+          // Casts and array bounds already checked in isArgumentLambdaNegated
+          PsiExpression body = (PsiExpression)((PsiLambdaExpression)methodCall.getArgumentList().getExpressions()[0]).getBody();
+          PsiExpression negated = BoolUtils.getNegated(body);
+          LOG.assertTrue(negated != null);
+          body.replace(negated);
+        }
+        if (removeParentNegation) {
+          PsiUtil.skipParenthesizedExprUp(methodCall.getParent()).replace(methodCall);
+        }
+      }
     }
   }
 }

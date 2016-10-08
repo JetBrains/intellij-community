@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 public class WholeFileLocalInspectionsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   private final Map<PsiFile, Boolean> myFileToolsCache = ContainerUtil.createConcurrentWeakMap();
   private final InspectionProjectProfileManager myProfileManager;
-  private volatile long myPsiModificationCount;
+  private final Map<PsiFile, Long> myPsiModificationCount = ContainerUtil.createConcurrentWeakMap();
 
   public WholeFileLocalInspectionsPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar,
                                               final InspectionProjectProfileManager profileManager) {
@@ -88,8 +88,9 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
-    final long psiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
-    if (psiModificationCount == myPsiModificationCount) {
+    final Long appliedModificationCount = myPsiModificationCount.get(file);
+    if (appliedModificationCount != null &&
+        appliedModificationCount == PsiManager.getInstance(myProject).getModificationTracker().getModificationCount()) {
       return null; //optimization
     }
 
@@ -126,7 +127,7 @@ public class WholeFileLocalInspectionsPassFactory extends AbstractProjectCompone
       @Override
       protected void applyInformationWithProgress() {
         super.applyInformationWithProgress();
-        myPsiModificationCount = PsiManager.getInstance(myProject).getModificationTracker().getModificationCount();
+        myPsiModificationCount.put(file, PsiManager.getInstance(myProject).getModificationTracker().getModificationCount());
       }
     };
   }

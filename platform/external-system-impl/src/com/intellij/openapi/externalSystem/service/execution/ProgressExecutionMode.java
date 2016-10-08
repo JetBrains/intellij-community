@@ -21,9 +21,17 @@ package com.intellij.openapi.externalSystem.service.execution;
  */
 public enum ProgressExecutionMode {
   /**
+   * Perform synchronously w/o progress indicator
+   */
+  NO_PROGRESS_SYNC,
+  /**
    * Perform synchronously using modal window without option to sent to background
    */
   MODAL_SYNC,
+  /**
+   * Perform asynchronously w/o progress indicator
+   */
+  NO_PROGRESS_ASYNC,
   /**
    * Perform asynchronously using background mode
    */

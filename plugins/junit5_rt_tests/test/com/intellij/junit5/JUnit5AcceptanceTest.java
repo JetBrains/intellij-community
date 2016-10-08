@@ -95,14 +95,13 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
   @Test
   void junit5LibraryAdjustments() {
     doTest(() -> {
-      myFixture.configureByText("MyTest.java", "class MyTest {@org.<error descr=\"Cannot resolve symbol 'junit'\">junit</error>.jupiter.api.Te<caret>st void method() {}}");
+      myFixture.configureByText("MyTest.java", "class MyTest {@org.junit.jupiter.api.<error descr=\"Cannot resolve symbol 'BeforeEach'\">Before<caret>Each</error> void method() {}}");
       myFixture.testHighlighting(false, false, false);
       final Set<String> frameworks = myFixture.getAllQuickFixes().stream()
         .map(action -> action.getText())
         .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
       assertAll("Detected frameworks: " + frameworks.toString(),
-                () -> assertTrue(frameworks.contains("Add 'JUnit5' to classpath")),
-                () -> assertTrue(frameworks.contains("Add 'JUnit4' to classpath")));
+                () -> assertTrue(frameworks.contains("Add 'JUnit5' to classpath")));
 
       myFixture.configureByText("MyTest.java", "class MyTest {@<error descr=\"Cannot resolve symbol 'DisplayName'\">DisplayName</error> void method() {}}");
       myFixture.testHighlighting(false, false, false);
@@ -111,8 +110,7 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
         .map(action -> action.getText())
         .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
       assertAll("Detected frameworks: " + displayNameFrameworks.toString(),
-                () -> assertTrue (displayNameFrameworks.contains("Add 'JUnit5' to classpath")),
-                () -> assertFalse(displayNameFrameworks.contains("Add 'JUnit4' to classpath")));
+                () -> assertTrue (displayNameFrameworks.contains("Add 'JUnit5' to classpath")));
 
     });
   }

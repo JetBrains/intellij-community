@@ -99,8 +99,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (!DaemonCodeAnalyzerSettings.getInstance().isImportHintEnabled()) return;
     if (!DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile)) return;
     final CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
-    if (!codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY &&
-        !codeInsightSettings.ADD_MEMBER_IMPORTS_ON_THE_FLY) return;
+    if (!codeInsightSettings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) return;
 
     Document document = getDocument();
     final List<HighlightInfo> infos = new ArrayList<>();

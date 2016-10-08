@@ -32,18 +32,17 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
-  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
+  public void createListeners(ArrayList listeners) {
     myTestsListener = new SMTestListener();
     myListeners = listeners;
+  }
+
+  public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
     setPrinter(new MockResultPrinter());
     try {
       Test suite = TestRunnerUtil.getTestSuite(this, args);
       if (suite == null) return -1;
-      TestResult result = doRun(suite);
-      if (!result.wasSuccessful()) {
-        return -1;
-      }
-      return 0;
+      return doRun(suite).wasSuccessful() ? 0 : -1;
     }
     catch (Exception e) {
       e.printStackTrace(System.err);

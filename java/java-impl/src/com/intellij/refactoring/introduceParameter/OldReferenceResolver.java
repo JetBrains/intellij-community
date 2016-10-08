@@ -117,7 +117,7 @@ public class OldReferenceResolver {
       final PsiReferenceExpression oldRef = (PsiReferenceExpression)oldExpr;
       final JavaResolveResult adv = oldRef.advancedResolve(false);
       final PsiElement scope = getClassContainingResolve(adv);
-      final PsiElement clss = PsiTreeUtil.getParentOfType(oldExpr, PsiClass.class, PsiLambdaExpression.class);
+      final PsiElement clss = PsiTreeUtil.getParentOfType(oldExpr, PsiClass.class, PsiFunctionalExpression.class);
       if (clss != null && scope != null ) {
 
         final PsiElement subj = adv.getElement();

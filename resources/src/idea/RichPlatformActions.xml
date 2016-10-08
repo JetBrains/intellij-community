@@ -389,7 +389,8 @@
 
     <group>
       <group id="MarkSourceRootGroup" class="com.intellij.ide.projectView.actions.MarkSourceRootActionGroup"/>
-      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" icon="AllIcons.Modules.ExcludeRoot"/>
+      <action id="MarkExcludeRoot" class="com.intellij.ide.projectView.actions.MarkExcludeRootAction" />
+      <action id="MarkAsContentRoot" class="com.intellij.ide.projectView.actions.MarkAsContentRootAction"/>
       <action id="UnmarkRoot" class="com.intellij.ide.projectView.actions.UnmarkRootAction"/>
       <add-to-group group-id="MarkRootGroup"/>
     </group>

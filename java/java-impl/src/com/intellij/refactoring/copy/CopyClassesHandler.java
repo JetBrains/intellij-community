@@ -161,25 +161,23 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       final PsiFile psiFile = classes.keySet().iterator().next();
       defaultTargetDirectory = psiFile.getContainingDirectory();
       LOG.assertTrue(defaultTargetDirectory != null, psiFile);
-    } else {
-      Project project = defaultTargetDirectory.getProject();
-      VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex()
-        .getSourceRootForFile(defaultTargetDirectory.getVirtualFile());
-      if (sourceRootForFile == null) {
-        final List<PsiElement> files = new ArrayList<>();
-        for (int i = 0, elementsLength = elements.length; i < elementsLength; i++) {
-          PsiFile containingFile = elements[i].getContainingFile();
-          if (containingFile != null) {
-            files.add(containingFile);
-          } else if (elements[i] instanceof PsiDirectory) {
-            files.add(elements[i]);
-          }
-        }
-        CopyFilesOrDirectoriesHandler.copyAsFiles(files.toArray(new PsiElement[files.size()]), defaultTargetDirectory, project);
-        return;
-      }
     }
     Project project = defaultTargetDirectory.getProject();
+    VirtualFile sourceRootForFile = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(defaultTargetDirectory.getVirtualFile());
+    if (sourceRootForFile == null) {
+      final List<PsiElement> files = new ArrayList<>();
+      for (PsiElement element : elements) {
+        PsiFile containingFile = element.getContainingFile();
+        if (containingFile != null) {
+          files.add(containingFile);
+        }
+        else if (element instanceof PsiDirectory) {
+          files.add(element);
+        }
+      }
+      CopyFilesOrDirectoriesHandler.copyAsFiles(files.toArray(new PsiElement[files.size()]), defaultTargetDirectory, project);
+      return;
+    }
     Object targetDirectory = null;
     String className = null;
     boolean openInEditor = true;

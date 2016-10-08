@@ -15,19 +15,24 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExportsStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiExportsStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiExportsStatementImpl extends CompositePsiElement implements PsiExportsStatement {
-  public PsiExportsStatementImpl() {
-    super(JavaElementType.EXPORTS_STATEMENT);
+public class PsiExportsStatementImpl extends JavaStubPsiElement<PsiExportsStatementStub> implements PsiExportsStatement {
+  public PsiExportsStatementImpl(@NotNull PsiExportsStatementStub stub) {
+    super(stub, JavaStubElementTypes.EXPORTS_STATEMENT);
+  }
+
+  public PsiExportsStatementImpl(@NotNull ASTNode node) {
+    super(node);
   }
 
   @Nullable

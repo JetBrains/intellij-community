@@ -107,7 +107,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private JPanel myPanel;
   private JPanel myOptionsPanel;
-  private JBList myProjectTypeList;
+  private JBList<TemplatesGroup> myProjectTypeList;
   private ProjectTemplateList myTemplatesList;
   private JPanel myFrameworksPanelPlaceholder;
   private JPanel myHeaderPanel;
@@ -132,7 +132,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
         updateSelection();
       }
     });
-    myProjectTypeList.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter<TemplatesGroup>() {
+    myProjectTypeList.setCellRenderer(new GroupedItemsListRenderer<TemplatesGroup>(new ListItemDescriptorAdapter<TemplatesGroup>() {
       @Nullable
       @Override
       public String getTextFor(TemplatesGroup value) {
@@ -474,7 +474,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   }
 
   private TemplatesGroup getSelectedGroup() {
-    return (TemplatesGroup)myProjectTypeList.getSelectedValue();
+    return myProjectTypeList.getSelectedValue();
   }
 
   @Nullable

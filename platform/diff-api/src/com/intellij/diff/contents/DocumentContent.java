@@ -39,25 +39,31 @@ public interface DocumentContent extends DiffContent {
    * Some file types can't be highlighted properly depending only on their FileType (ex: SQL dialects, PHP templates).
    */
   @Nullable
-  VirtualFile getHighlightFile();
+  default VirtualFile getHighlightFile() { return null; }
 
   /**
    * Provides a way to open given text place in editor
    */
   @Nullable
-  Navigatable getNavigatable(@NotNull LineCol position);
+  default Navigatable getNavigatable(@NotNull LineCol position) { return null; }
 
   /**
    * @return original file line separator
    */
   @Nullable
-  LineSeparator getLineSeparator();
+  default LineSeparator getLineSeparator() { return null; }
 
   /**
    * @return original file charset
    */
   @Nullable
-  Charset getCharset();
+  default Charset getCharset() { return null; }
+
+  /**
+   * @return original file byte order mark
+   */
+  @Nullable
+  default Boolean getBOM() { return null; }
 
   @Nullable
   @Deprecated

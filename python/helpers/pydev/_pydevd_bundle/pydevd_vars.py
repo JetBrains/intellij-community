@@ -570,9 +570,9 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     # need to precompute column bounds here before slicing!
     col_bounds = [None] * cols
     for col in range(cols):
-        dtype = df.dtypes.iloc[col].kind
+        dtype = df.dtypes.iloc[coffset + col].kind
         if dtype in "biufc":
-            cvalues = df.iloc[:, col]
+            cvalues = df.iloc[:, coffset + col]
             bounds = (cvalues.min(), cvalues.max())
         else:
             bounds = (0, 0)
@@ -592,23 +592,20 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     xml += "<headerdata rows=\"%s\" cols=\"%s\">\n" % (rows, cols)
     format = format.replace('%', '')
     col_formats = []
+
+    get_label = lambda label: str(label) if not isinstance(label, tuple) else '/'.join(map(str, label))
+
     for col in range(cols):
-        label = df.axes[1].values[col]
-        if isinstance(label, tuple):
-            label = '/'.join(label)
-        label = str(label)
         dtype = df.dtypes.iloc[col].kind
         fmt = format if (dtype == 'f' and format) else default_format(dtype)
         col_formats.append('%' + fmt)
         bounds = col_bounds[col]
 
         xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
-               (str(col), label, dtype, fmt, bounds[1], bounds[0])
+               (str(col), get_label(df.axes[1].values[col]), dtype, fmt, bounds[1], bounds[0])
     for row, label in enumerate(iter(df.axes[0])):
-        if isinstance(label, tuple):
-            label = '/'.join(label)
         xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % \
-               (str(row), label)
+               (str(row), get_label(label))
     xml += "</headerdata>\n"
     xml += "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
     for row in range(rows):

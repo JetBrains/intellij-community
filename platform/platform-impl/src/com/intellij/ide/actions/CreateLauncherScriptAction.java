@@ -149,9 +149,8 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   }
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {
-    String runPath;
-    if (SystemInfo.isMac) runPath = StringUtil.trimEnd(PathManager.getHomePath(), CONTENTS);
-    else runPath = PathManager.getBinPath() + "/" + ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US) + ".sh";
+    String runPath = SystemInfo.isMac ? StringUtil.trimEnd(PathManager.getHomePath(), CONTENTS) : CreateDesktopEntryAction.getLauncherScript();
+    if (runPath == null) throw new IOException(ApplicationBundle.message("desktop.entry.script.missing", PathManager.getBinPath()));
 
     ClassLoader loader = CreateLauncherScriptAction.class.getClassLoader();
     assert loader != null;
@@ -166,7 +165,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   public static String defaultScriptPath() {
     String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
-    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = "idea";
+    if (StringUtil.isEmptyOrSpaces(scriptName)) scriptName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
     return "/usr/local/bin/" + scriptName;
   }
 }

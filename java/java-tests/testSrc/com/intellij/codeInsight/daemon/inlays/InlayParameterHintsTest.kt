@@ -86,6 +86,26 @@ class Groo {
     onLineStartingWith("configure(testNow").assertNoInlays()
   }
 
+  fun `test show hint for single string literal if there is multiple string params`() {
+    setup("""class Groo {
+
+ public void test() {
+   String message = "sdfsdfdsf";
+   assertEquals("fooo", message);
+
+   String title = "TT";
+   show(title, "Hi");
+ }
+
+ public void assertEquals(String expected, String actual) {}
+ public void show(String title, String message) {}
+
+}""")
+
+    onLineStartingWith("assertEquals").assertInlays("expected->\"fooo\"")
+    onLineStartingWith("show").assertInlays("message->\"Hi\"")
+  }
+
   fun `test do not show hints on setters`() {
     setup("""class Groo {
 
@@ -285,14 +305,19 @@ public class Test {
     setup("""
 public class Test {
   
+  List<String> list = new ArrayList<>();
+  StringBuilder builder = new StringBuilder();
+
   public void main() {
-    println("A");
-    print("A");
-    get(1);
-    set(1, new Object());
+    System.out.println("A");
+    System.out.print("A");
+    
+    list.get(1);
+    list.set(1, "sss");
+    
     setNewIndex(10);
     "sss".contains("s");
-    append("sdfsdf");
+    builder.append("sdfsdf");
     "sfsdf".startWith("s");
     "sss".charAt(3);
     
@@ -321,9 +346,18 @@ public class Test {
     settings.minParamNameLengthToShow = 1
     
     setup("""
-import java.util.*;
+
+class QList<E> {
+  void add(int query, E obj) {}
+}
+
+class QCmp<E> {
+  void compare(E o1, E o2) {}
+}
+
+
 public class Test {
-  public void main(Comparator<Integer> c, List<String> l) {
+  public void main(QCmp<Integer> c, QList<String> l) {
     c.compare(0, /** ddd */3);
     l.add(1, "uuu");
   }
@@ -334,7 +368,7 @@ public class Test {
         .assertInlays("o1->0", "o2->3")
     
     onLineStartingWith("l.add")
-        .assertInlays("index->1", """element->"uuu"""")
+        .assertInlays("query->1", """obj->"uuu"""")
   }
   
   fun `test inline constructor literal arguments names`() {
@@ -441,6 +475,20 @@ public class VarArgTest {
     onLineStartingWith("check(")
         .assertInlays("beginIndex->10", "endIndex->1000")
   }
+  
+  fun `test ignore String methods`() {
+    setup("""
+class Test {
+  
+  public void main() {
+    String.format("line", "eee", "www");
+  }
+  
+}
+""")
+    
+    onLineStartingWith("String").assertNoInlays()
+  }
 
   fun `test inline common name pair if more that 2 args xxx`() {
     setup("""
@@ -477,7 +525,147 @@ public class VarArgTest {
     onLineStartingWith("check(t")
         .assertInlays("test->this", "endIndex->1000")
   }
+  
+  fun `test inline strange methods`() {
+    setup("""
+public class Test {
+  
+  void main() {
+    createContent(null);
+    createNewContent(this);
+  }
 
+  Content createContent(DockManager manager) {}
+  Content createNewContent(Test test) {}
+
+}
+interface DockManager {}
+interface Content {}
+""")
+
+    onLineStartingWith("createContent").assertInlays("manager->null")
+    onLineStartingWith("createNewContent").assertInlays("test->this")
+  }
+  
+  fun `test do not inline builder pattern`() {
+    setup("""
+class Builder {
+  void await(boolean value) {}
+  Builder bwait(boolean xvalue) {}
+  Builder timeWait(int time) {}
+}
+
+class Test {
+  
+  public void test() {
+    Builder builder = new Builder();
+    builder.await(true);
+    builder.bwait(false).timeWait(100);
+  }
+  
+}
+""")
+
+    onLineStartingWith("builder.await").assertInlays("value->true")
+    onLineStartingWith("builder.bwait").assertNoInlays()
+  }
+
+  fun `test do not show single parameter hint if it is string literal`() {
+    setup("""
+public class Test {
+  
+  public void test() {
+    debug("Error message");
+    info("Error message", new Object());
+  }
+
+  void debug(String message) {}
+  void info(String message, Object error) {}
+  
+}
+""")
+
+    onLineStartingWith("debug(").assertNoInlays()
+    onLineStartingWith("info(").assertNoInlays()
+  }
+
+  fun `test show hints for literals if there are many of them`() {
+    setup("""
+public class Test {
+  
+  public void test() {
+    int a = 2;
+    debug("Debug", "DTitle", a);
+    info("Error message", "Title");
+  }
+
+  void debug(String message, String title, int value) {}
+  void info(String message, String title) {}
+  
+}
+""")
+
+    onLineStartingWith("debug(").assertInlays("message->\"Debug\"", "title->\"DTitle\"")
+    onLineStartingWith("info(").assertInlays("message->\"Error message\"", "title->\"Title\"")
+  }
+  
+  fun `test show single`() {
+    setup("""
+class Test {
+
+  void main() {
+    blah(1, 2);
+    int z = 2;
+    draw(10, 20, z);
+    int x = 10;
+    int y = 12;
+    drawRect(x, y, 10, 12);
+  }
+
+  void blah(int a, int b) {}
+  void draw(int x, int y, int z) {}
+  void drawRect(int x, int y, int w, int h) {}
+
+}
+""")
+    
+    onLineStartingWith("blah").assertInlays("a->1", "b->2")
+    onLineStartingWith("draw").assertInlays("x->10", "y->20")
+    onLineStartingWith("drawRect").assertInlays("w->10", "h->12")
+  }
+
+  fun `test do not show for setters`() {
+    setup("""
+class Test {
+  
+  void main() {
+    set(10);
+  }
+  
+  void set(int newValue) {}
+  
+}
+""")
+    
+    onLineStartingWith("set(").assertNoInlays()
+  }
+  
+  fun `test show for method with boolean param and return value`() {
+    setup("""
+class Test {
+  
+  void test() {
+    String name = getTestName(true);
+    System.out.println("");
+  }
+  
+  String getTestName(boolean lowerCase) {}
+}
+""")
+    
+    onLineStartingWith("String name").assertInlays("lowerCase->true")
+  }
+  
   private fun getInlays(): List<Inlay> {
     val editor = myFixture.editor
     return editor.inlayModel.getInlineElementsInRange(0, editor.document.textLength)

@@ -1,5 +1,5 @@
 f'{<error descr="Expression fragments inside f-strings cannot include backslashes">\</error>t}'
-f'{<error descr="Expression fragments inside f-strings cannot include backslashes">\</error>t<error descr="'}' is expected"></error>'
+f'<error descr="'}' is expected">{<error descr="Expression fragments inside f-strings cannot include backslashes">\</error>t</error>'
 f'{<error descr="Expression fragments inside f-strings cannot include backslashes">\</error>N{GREEK SMALL LETTER ALPHA}}'
 f'{Formatable():\n\t}'
 f'{42:{<error descr="Expression fragments inside f-strings cannot include backslashes">\</error>t}}'

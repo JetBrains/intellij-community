@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -37,34 +37,33 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static com.intellij.openapi.util.text.StringUtil.defaultIfEmpty;
 
 public class ShowFilePathAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowFilePathAction");
@@ -78,22 +77,13 @@ public class ShowFilePathAction extends AnAction {
     }
   };
 
-  private static NotNullLazyValue<Boolean> canUseNautilus = new AtomicNotNullLazyValue<Boolean>() {
-    @NotNull
+  private static NullableLazyValue<String> fileManagerApp = new AtomicNullableLazyValue<String>() {
     @Override
-    protected Boolean compute() {
-      if (!SystemInfo.isUnix || !SystemInfo.hasXdgMime() || !new File("/usr/bin/nautilus").canExecute()) {
-        return false;
-      }
-
-      String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-      if (appName == null || !appName.matches("nautilus.*\\.desktop")) return false;
-
-      String version = ExecUtil.execAndReadLine(new GeneralCommandLine("nautilus", "--version"));
-      if (version == null) return false;
-
-      Matcher m = Pattern.compile("GNOME nautilus ([0-9.]+)").matcher(version);
-      return m.find() && StringUtil.compareVersionNumbers(m.group(1), "3") >= 0;
+    protected String compute() {
+      return readDesktopEntryKey("Exec")
+        .map(line -> line.split(" ")[0])
+        .filter(exec -> exec.endsWith("nautilus") || exec.endsWith("pantheon-files"))
+        .orElse(null);
     }
   };
 
@@ -103,49 +93,42 @@ public class ShowFilePathAction extends AnAction {
     protected String compute() {
       if (SystemInfo.isMac) return "Finder";
       if (SystemInfo.isWindows) return "Explorer";
-      if (SystemInfo.isUnix && SystemInfo.hasXdgMime()) {
-        String name = getUnixFileManagerName();
-        if (name != null) return name;
-      }
-      return "File Manager";
+      return readDesktopEntryKey("Name").orElse("File Manager");
     }
   };
 
-  @Nullable
-  private static String getUnixFileManagerName() {
-    String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
-    if (appName == null || !appName.matches(".+\\.desktop")) return null;
-
-    String dirs = System.getenv("XDG_DATA_DIRS");
-    if (dirs == null) return null;
-
-    try {
-      for (String dir : dirs.split(File.pathSeparator)) {
-        File appFile = new File(dir, "applications/" + appName);
-        if (appFile.exists()) {
-          BufferedReader reader = new BufferedReader(new FileReader(appFile));
-          try {
-            String line;
-            while ((line = reader.readLine()) != null) {
-              if (line.startsWith("Name=")) {
-                return line.substring(5);
-              }
-            }
-          }
-          finally {
-            reader.close();
-          }
-        }
+  private static Optional<String> readDesktopEntryKey(String key) {
+    if (SystemInfo.hasXdgMime()) {
+      String appName = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-mime", "query", "default", "inode/directory"));
+      if (appName != null && appName.endsWith(".desktop")) {
+        return Stream.of(getXdgDataDirectories().split(":"))
+          .map(dir -> new File(dir, "applications/" + appName))
+          .filter(File::exists)
+          .findFirst()
+          .map(file -> readDesktopEntryKey(file, key + '='));
       }
     }
-    catch (IOException e) {
-      LOG.info("Cannot read desktop file", e);
-    }
 
-    return null;
+    return Optional.empty();
   }
 
-  @Override
+  private static String getXdgDataDirectories() {
+    String dataHome = System.getenv("XDG_DATA_HOME");
+    String dataDirs = System.getenv("XDG_DATA_DIRS");
+    return defaultIfEmpty(dataHome, SystemProperties.getUserHome() + "/.local/share") + ':' + defaultIfEmpty(dataDirs, "/usr/local/share:/usr/share");
+  }
+
+  private static String readDesktopEntryKey(File file, String key) {
+    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+      return reader.lines().filter(l -> l.startsWith(key)).map(l -> l.substring(key.length())).findFirst().orElse(null);
+    }
+    catch (IOException | UncheckedIOException e) {
+      LOG.info("Cannot read: " + file, e);
+      return null;
+    }
+  }
+
+@Override
   public void update(@NotNull AnActionEvent e) {
     boolean visible = !SystemInfo.isMac && isSupported();
     e.getPresentation().setVisible(visible);
@@ -177,7 +160,7 @@ public class ShowFilePathAction extends AnAction {
     });
   }
 
-  private static void show(@NotNull VirtualFile file, @NotNull ShowAction show) {
+  private static void show(@NotNull VirtualFile file, @NotNull Consumer<ListPopup> action) {
     if (!isSupported()) return;
 
     List<VirtualFile> files = new ArrayList<>();
@@ -200,7 +183,7 @@ public class ShowFilePathAction extends AnAction {
         File ioFile = new File(url);
         icons.add(ioFile.exists() ? FileSystemView.getFileSystemView().getSystemIcon(ioFile) : EmptyIcon.ICON_16);
       }
-      ApplicationManager.getApplication().invokeLater(() -> show.show(createPopup(files, icons)));
+      ApplicationManager.getApplication().invokeLater(() -> action.consume(createPopup(files, icons)));
     });
   }
 
@@ -208,10 +191,6 @@ public class ShowFilePathAction extends AnAction {
     String url = file.getPresentableUrl();
     if (file.getParent() == null && SystemInfo.isWindows) url += "\\";
     return url;
-  }
-
-  private interface ShowAction {
-    void show(ListPopup popup);
   }
 
   private static ListPopup createPopup(List<VirtualFile> files, List<Icon> icons) {
@@ -236,8 +215,7 @@ public class ShowFilePathAction extends AnAction {
   }
 
   public static boolean isSupported() {
-    return SystemInfo.isWindows ||
-           SystemInfo.hasXdgOpen() || canUseNautilus.getValue() ||
+    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.hasXdgOpen() ||
            Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
   }
 
@@ -253,12 +231,20 @@ public class ShowFilePathAction extends AnAction {
    * @param file a file or directory to show and highlight in a file manager.
    */
   public static void openFile(@NotNull File file) {
-    if (!file.exists()) return;
-    file = file.getAbsoluteFile();
-    File parent = file.getParentFile();
-    if (parent == null) return;
+    if (!file.exists()) {
+      LOG.info("does not exist: " + file);
+      return;
+    }
+
     try {
-      doOpen(parent, file);
+      file = file.getAbsoluteFile();
+      File parent = file.getParentFile();
+      if (parent != null) {
+        doOpen(parent, file);
+      }
+      else {
+        doOpen(file, null);
+      }
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -268,62 +254,52 @@ public class ShowFilePathAction extends AnAction {
   /**
    * Shows system file manager with given directory open in it.
    *
-   * @param directory a directory to show in a file manager.
+   * @param directory a directory to open in a file manager.
    */
-  @SuppressWarnings("UnusedDeclaration")
-  public static void openDirectory(@NotNull final File directory) {
-    if (!directory.isDirectory()) return;
+  public static void openDirectory(@NotNull File directory) {
+    if (!directory.isDirectory()) {
+      LOG.info("not a directory: " + directory);
+      return;
+    }
+
     try {
-      doOpen(directory, null);
+      doOpen(directory.getAbsoluteFile(), null);
     }
     catch (Exception e) {
       LOG.warn(e);
     }
   }
 
-  private static void doOpen(@NotNull File dir, @Nullable File toSelect) throws IOException, ExecutionException {
-    dir = new File(FileUtil.toCanonicalPath(dir.getPath()));
-    toSelect = toSelect == null ? null : new File(FileUtil.toCanonicalPath(toSelect.getPath()));
-    
+  private static void doOpen(@NotNull File _dir, @Nullable File _toSelect) throws IOException, ExecutionException {
+    String dir = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_dir.getPath()));
+    String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
+
     if (SystemInfo.isWindows) {
-      String cmd;
-      if (toSelect != null) {
-        cmd = "explorer /select," + toSelect.getAbsolutePath();
-      }
-      else {
-        cmd = "explorer /root," + dir.getAbsolutePath();
-      }
-      // no quoting/escaping is needed
-      Runtime.getRuntime().exec(cmd);
-      return;
+      String cmd = toSelect != null ? "explorer /select," + toSelect : "explorer /root," + dir;
+      Process process = Runtime.getRuntime().exec(cmd);  // no quoting/escaping is needed
+      new CapturingProcessHandler(process, null, cmd).runProcess().checkSuccess(LOG);
     }
-
-    if (SystemInfo.isMac) {
-      if (toSelect != null) {
-        final String script = String.format(
-          "tell application \"Finder\"\n" +
-          "\treveal {\"%s\"} as POSIX file\n" +
-          "\tactivate\n" +
-          "end tell", toSelect.getAbsolutePath());
-        new GeneralCommandLine(ExecUtil.getOsascriptPath(), "-e", script).createProcess();
-      }
-      else {
-        new GeneralCommandLine("open", dir.getAbsolutePath()).createProcess();
-      }
-      return;
+    else if (SystemInfo.isMac) {
+      GeneralCommandLine cmd = toSelect != null ? new GeneralCommandLine("open", "-R", toSelect) : new GeneralCommandLine("open", dir);
+      ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
-
-    if (canUseNautilus.getValue()) {
-      new GeneralCommandLine("nautilus", (toSelect != null ? toSelect : dir).getAbsolutePath()).createProcess();
-      return;
+    else if (fileManagerApp.getValue() != null) {
+      PooledThreadExecutor.INSTANCE.submit(() -> {
+        try {
+          GeneralCommandLine cmd = new GeneralCommandLine(fileManagerApp.getValue(), toSelect != null ? toSelect : dir);
+          ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
+        }
+        catch (Exception e) {
+          LOG.warn(e);
+        }
+      });
     }
-
-    String path = dir.getAbsolutePath();
-    if (SystemInfo.hasXdgOpen()) {
-      new GeneralCommandLine("/usr/bin/xdg-open", path).createProcess();
+    else if (SystemInfo.hasXdgOpen()) {
+      GeneralCommandLine cmd = new GeneralCommandLine("/usr/bin/xdg-open", dir);
+      ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-      Desktop.getDesktop().open(new File(path));
+      Desktop.getDesktop().open(new File(dir));
     }
     else {
       Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
@@ -336,65 +312,23 @@ public class ShowFilePathAction extends AnAction {
     return files == null || files.length == 1 ? CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()) : null;
   }
 
-  public static Boolean showDialog(Project project, String message, String title, File file) {
-    final Boolean[] ref = new Boolean[1];
-    final DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
-      @Override
-      public boolean isToBeShown() {
-        return true;
-      }
-
-      @Override
-      public void setToBeShown(boolean value, int exitCode) {
-        if (!value) {
-          if (exitCode == 0) {
-            // yes
-            ref[0] = true;
-          }
-          else {
-            ref[0] = false;
-          }
-        }
-      }
-
-      @Override
-      public boolean canBeHidden() {
-        return true;
-      }
-
-      @Override
-      public boolean shouldSaveOptionsOnCancel() {
-        return true;
-      }
-
-      @NotNull
-      @Override
-      public String getDoNotShowMessage() {
-        return CommonBundle.message("dialog.options.do.not.ask");
-      }
-    };
-    showDialog(project, message, title, file, option);
-    return ref[0];
-  }
-
-  public static void showDialog(Project project, String message, String title, File file, DialogWrapper.DoNotAskOption option) {
-    if (Messages.showOkCancelDialog(project, message, title, RevealFileAction.getActionName(),
-                                    IdeBundle.message("action.close"), Messages.getInformationIcon(), option) == Messages.OK) {
+  public static void showDialog(Project project, String message, String title, @NotNull File file, @Nullable DialogWrapper.DoNotAskOption option) {
+    String ok = RevealFileAction.getActionName();
+    String cancel = IdeBundle.message("action.close");
+    if (Messages.showOkCancelDialog(project, message, title, ok, cancel, Messages.getInformationIcon(), option) == Messages.OK) {
       openFile(file);
     }
   }
 
   @Nullable
   public static VirtualFile findLocalFile(@Nullable VirtualFile file) {
-    if (file == null) return null;
-
-    if (file.isInLocalFileSystem()) {
+    if (file == null || file.isInLocalFileSystem()) {
       return file;
     }
 
     VirtualFileSystem fs = file.getFileSystem();
-    if (fs instanceof JarFileSystem && file.getParent() == null) {
-      return  ((JarFileSystem)fs).getLocalVirtualFileFor(file);
+    if (fs instanceof ArchiveFileSystem && file.getParent() == null) {
+      return ((ArchiveFileSystem)fs).getLocalByEntry(file);
     }
 
     return null;

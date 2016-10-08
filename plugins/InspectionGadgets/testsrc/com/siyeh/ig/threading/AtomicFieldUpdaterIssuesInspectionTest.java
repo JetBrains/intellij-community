@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,16 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightInspectionTestC
            "  private volatile int[] value = new int[]{0};" +
            "  private static final AtomicReferenceFieldUpdater updater = " +
            "    AtomicReferenceFieldUpdater.newUpdater(A.class, long[].class, /*Field 'value' does not have type 'long[]'*/\"value\"/**/);" +
+           "}");
+  }
+
+  public void testRightType() {
+    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
+           "import java.util.RandomAccess;" +
+           "class A<T extends RandomAccess> {" +
+           "  private volatile T value = null;" +
+           "  private static final AtomicReferenceFieldUpdater updater = " +
+           "    AtomicReferenceFieldUpdater.newUpdater(A.class, RandomAccess.class, \"value\");" +
            "}");
   }
 

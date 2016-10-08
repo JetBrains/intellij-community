@@ -41,9 +41,10 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
  */
 public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAction {
 
+  @NotNull
   private final ExternalSystemTaskActivator.Phase myPhase;
 
-  protected ToggleTaskActivationAction(ExternalSystemTaskActivator.Phase phase) {
+  protected ToggleTaskActivationAction(@NotNull ExternalSystemTaskActivator.Phase phase) {
     myPhase = phase;
   }
 

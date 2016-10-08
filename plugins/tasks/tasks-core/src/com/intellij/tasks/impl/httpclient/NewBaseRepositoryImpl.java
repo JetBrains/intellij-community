@@ -19,7 +19,6 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.routing.HttpRoute;
-import org.apache.http.conn.ssl.X509HostnameVerifier;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -63,9 +62,6 @@ public abstract class NewBaseRepositoryImpl extends BaseRepository {
     HttpClientBuilder builder = HttpClients.custom()
       .setDefaultRequestConfig(createRequestConfig())
       .setSslcontext(CertificateManager.getInstance().getSslContext())
-        // TODO: use custom one for additional certificate check
-        //.setHostnameVerifier(SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER)
-      .setHostnameVerifier((X509HostnameVerifier)CertificateManager.HOSTNAME_VERIFIER)
       .setDefaultCredentialsProvider(createCredentialsProvider())
       .addInterceptorFirst(PREEMPTIVE_BASIC_AUTH)
       .addInterceptorLast(createRequestInterceptor());

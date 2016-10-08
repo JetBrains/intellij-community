@@ -20,15 +20,17 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,70 +66,20 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       myAnnotations.clear();
       if (!isEnabled() || !(myFile instanceof PsiJavaFile)) return;
       PsiJavaFile file = (PsiJavaFile) myFile;
-
-      PsiClass[] classes = file.getClasses();
-      for (PsiClass aClass : classes) {
-        ProgressIndicatorProvider.checkCanceled();
-        addElementsToFold(aClass);
-      }
+      
+      SyntaxTraverser.psiTraverser(file).forEach(element -> process(element));
     }
 
     private static boolean isEnabled() {
       return EditorSettingsExternalizable.getInstance().isShowParameterNameHints();
     }
 
-    private void addElementsToFold(PsiClass aClass) {
-      PsiElement[] children = aClass.getChildren();
-      for (PsiElement child : children) {
-        ProgressIndicatorProvider.checkCanceled();
-
-        if (child instanceof PsiMethod) {
-          PsiMethod method = (PsiMethod)child;
-          PsiCodeBlock body = method.getBody();
-          if (body != null) {
-            addCodeBlockFolds(body);
-          }
-        }
-        else if (child instanceof PsiField) {
-          PsiField field = (PsiField)child;
-          PsiExpression initializer = field.getInitializer();
-          if (initializer != null) {
-            addCodeBlockFolds(initializer);
-          } else if (field instanceof PsiEnumConstant) {
-            addCodeBlockFolds(field);
-          }
-        }
-        else if (child instanceof PsiClassInitializer) {
-          PsiClassInitializer initializer = (PsiClassInitializer)child;
-          addCodeBlockFolds(initializer);
-        }
-        else if (child instanceof PsiClass) {
-          addElementsToFold((PsiClass)child);
-        }
+    private void process(PsiElement child) {
+      if (child instanceof PsiCallExpression) {
+        inlineLiteralArgumentsNames((PsiCallExpression)child);
       }
     }
-
-    private void addCodeBlockFolds(PsiElement scope) {
-      scope.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override
-        public void visitClass(PsiClass aClass) {
-          addElementsToFold(aClass);
-        }
-
-        @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-          inlineLiteralArgumentsNames(expression);
-          super.visitMethodCallExpression(expression);
-        }
-
-        @Override
-        public void visitNewExpression(PsiNewExpression expression) {
-          inlineLiteralArgumentsNames(expression);
-          super.visitNewExpression(expression);
-        }
-      });
-    }
-
+    
     private void inlineLiteralArgumentsNames(@NotNull PsiCallExpression expression) {
       ParameterNameHintsManager manager = new ParameterNameHintsManager(expression);
       for (InlayInfo info : manager.getDescriptors()) {
@@ -141,11 +93,16 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       boolean firstTime = myEditor.getUserData(REPEATED_PASS) == null;
       ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
       Set<String> removedHints = new HashSet<>();
+      TIntObjectHashMap<Caret> caretMap = new TIntObjectHashMap<>();
+      for (Caret caret : myEditor.getCaretModel().getAllCarets()) {
+        caretMap.put(caret.getOffset(), caret);
+      }
       for (Inlay inlay : myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength())) {
         if (!presentationManager.isParameterHint(inlay)) continue;
         int offset = inlay.getOffset();
-        String oldText = presentationManager.getHintText(inlay);
         String newText = myAnnotations.remove(offset);
+        if (delayRemoval(inlay, caretMap)) continue;
+        String oldText = presentationManager.getHintText(inlay);
         if (!Objects.equals(newText, oldText)) {
           if (newText == null) {
             removedHints.add(oldText);
@@ -162,6 +119,18 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         presentationManager.addHint(myEditor, offset, text, !firstTime && !removedHints.contains(text));
       }
       myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
+    }
+
+    private boolean delayRemoval(Inlay inlay, TIntObjectHashMap<Caret> caretMap) {
+      int offset = inlay.getOffset();
+      Caret caret = caretMap.get(offset);
+      if (caret == null) return false;
+      char afterCaret = myEditor.getDocument().getImmutableCharSequence().charAt(offset);
+      if (afterCaret != ',' && afterCaret != ')') return false;
+      VisualPosition afterInlayPosition = myEditor.offsetToVisualPosition(offset, true, false);
+      // check whether caret is to the right of inlay
+      if (!caret.getVisualPosition().equals(afterInlayPosition)) return false;
+      return true;
     }
   }
 }

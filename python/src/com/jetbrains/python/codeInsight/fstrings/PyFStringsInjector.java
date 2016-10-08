@@ -20,7 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
-import com.jetbrains.python.codeInsight.fstrings.FStringParser.FragmentOffsets;
+import com.jetbrains.python.codeInsight.fstrings.FStringParser.Fragment;
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyUtil.StringNodeInfo;
@@ -45,7 +45,7 @@ public class PyFStringsInjector extends PyInjectorBase {
     
     for (ASTNode node : pyString.getStringNodes()) {
       final int relNodeOffset = node.getTextRange().getStartOffset() - pyString.getTextRange().getStartOffset();
-      for (FragmentOffsets offsets : getInjectionRanges(node)) {
+      for (Fragment offsets : getInjectionRanges(node)) {
         if (offsets.containsNamedUnicodeEscape()) continue;
         registrar.startInjecting(PyDocstringLanguageDialect.getInstance());
         registrar.addPlace(null, null, pyString, offsets.getContentRange().shiftRight(relNodeOffset));
@@ -55,10 +55,10 @@ public class PyFStringsInjector extends PyInjectorBase {
   }
 
   @NotNull
-  private static List<FragmentOffsets> getInjectionRanges(@NotNull ASTNode node) {
+  private static List<Fragment> getInjectionRanges(@NotNull ASTNode node) {
     final StringNodeInfo nodeInfo = new StringNodeInfo(node);
     if (nodeInfo.isFormatted()) {
-      return FStringParser.parse(node.getText());
+      return FStringParser.parse(node.getText()).getFragments();
     }
     return Collections.emptyList();
   }

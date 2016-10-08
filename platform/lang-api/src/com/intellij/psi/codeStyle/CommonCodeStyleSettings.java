@@ -930,6 +930,7 @@ public class CommonCodeStyleSettings {
     private FileIndentOptionsProvider myFileIndentOptionsProvider;
     private static final Key<CommonCodeStyleSettings.IndentOptions> INDENT_OPTIONS_KEY = Key.create("INDENT_OPTIONS_KEY");
     private boolean myInaccurate;
+    private boolean myOverrideLanguageOptions;
 
     @Override
     public void readExternal(Element element) throws InvalidDataException {
@@ -1025,6 +1026,25 @@ public class CommonCodeStyleSettings {
     static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
+    }
+
+    /**
+     * @return True if the options can override the ones defined in language settings.
+     * @see CommonCodeStyleSettings.IndentOptions#setOverrideLanguageOptions(boolean) 
+     */
+    public boolean isOverrideLanguageOptions() {
+      return myOverrideLanguageOptions;
+    }
+
+    /**
+     * Make the indent options override options defined for a language block if the block implements <code>BlockEx.getLanguage()</code> 
+     * Useful when indent options provider must take a priority over any language settings for a formatter block.
+     * 
+     * @param overrideLanguageOptions True if language block options should be ignored.
+     * @see FileIndentOptionsProvider
+     */
+    public void setOverrideLanguageOptions(boolean overrideLanguageOptions) {
+      myOverrideLanguageOptions = overrideLanguageOptions;
     }
   }
 }

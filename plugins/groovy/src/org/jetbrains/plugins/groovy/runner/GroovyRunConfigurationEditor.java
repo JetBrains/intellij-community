@@ -43,6 +43,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
   private JCheckBox myDebugCB;
   private EnvironmentVariablesComponent myEnvVariables;
   private JBLabel myScriptParametersLabel;
+  private JCheckBox myAddClasspathCB;
   private final JTextField scriptPathField;
   private final JTextField workDirField;
   private JComponent anchor;
@@ -89,6 +90,8 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     myDebugCB.setEnabled(true);
     myDebugCB.setSelected(configuration.isDebugEnabled());
 
+    myAddClasspathCB.setSelected(configuration.isAddClasspathToTheRunner());
+
     myModulesBox.setModules(configuration.getValidModules());
     myModulesBox.setSelectedModule(configuration.getModule());
 
@@ -100,6 +103,7 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     configuration.setModule(myModulesBox.getSelectedModule());
     configuration.setVMParameters(myVMParameters.getText());
     configuration.setDebugEnabled(myDebugCB.isSelected());
+    configuration.setAddClasspathToTheRunner(myAddClasspathCB.isSelected());
     configuration.setScriptParameters(myParameters.getText());
     configuration.setScriptPath(scriptPathField.getText().trim());
     configuration.setWorkDir(workDirField.getText().trim());

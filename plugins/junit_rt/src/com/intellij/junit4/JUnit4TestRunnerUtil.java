@@ -16,11 +16,10 @@
 package com.intellij.junit4;
 
 import com.intellij.junit3.TestRunnerUtil;
+import junit.framework.TestCase;
 import org.junit.Ignore;
-import org.junit.internal.builders.AllDefaultPossibilitiesBuilder;
-import org.junit.internal.builders.AnnotatedBuilder;
-import org.junit.internal.builders.IgnoredBuilder;
-import org.junit.internal.builders.JUnit4Builder;
+import org.junit.Test;
+import org.junit.internal.builders.*;
 import org.junit.internal.requests.ClassRequest;
 import org.junit.runner.Description;
 import org.junit.runner.Request;
@@ -243,6 +242,12 @@ public class JUnit4TestRunnerUtil {
     final Class runnerClass = clazzAnnotation.value();
     if (Parameterized.class.isAssignableFrom(runnerClass)) {
       try {
+        if (methodName != null) {
+          final Method method = clazz.getMethod(methodName, new Class[0]);
+          if (method != null && !method.isAnnotationPresent(Test.class) && TestCase.class.isAssignableFrom(clazz)) {
+            return Request.runner(createIgnoreAnnotationAndJUnit4ClassRunner(clazz));
+          }
+        }
         Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore for junit4.4 and <
         final Constructor runnerConstructor = runnerClass.getConstructor(new Class[]{Class.class});
         return Request.runner((Runner)runnerConstructor.newInstance(new Object[] {clazz})).filterWith(new Filter() {
@@ -278,6 +283,26 @@ public class JUnit4TestRunnerUtil {
       }
     }
     return null;
+  }
+
+  private static Runner createIgnoreAnnotationAndJUnit4ClassRunner(Class clazz) throws Throwable {
+    return new AllDefaultPossibilitiesBuilder(true) {
+      protected AnnotatedBuilder annotatedBuilder() {
+        return new AnnotatedBuilder(this) {
+          public Runner runnerForClass(Class testClass) throws Exception {
+            return null;
+          }
+        };
+      }
+
+      protected JUnit4Builder junit4Builder() {
+        return new JUnit4Builder() {
+          public Runner runnerForClass(Class testClass) throws Throwable {
+            return null;
+          }
+        };
+      }
+    }.runnerForClass(clazz);
   }
 
   private static Request createIgnoreIgnoredClassRequest(final Class clazz, final boolean recursively) throws ClassNotFoundException {

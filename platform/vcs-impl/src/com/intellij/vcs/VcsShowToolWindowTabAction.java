@@ -36,18 +36,15 @@ public abstract class VcsShowToolWindowTabAction extends DumbAwareAction {
     final ChangesViewContentManager changesViewContentManager = (ChangesViewContentManager)ChangesViewContentManager.getInstance(project);
     final String tabName = getTabName();
 
-    boolean contentAlreadySelected = changesViewContentManager.isContentSelected(tabName);
-    if (toolWindow.isActive() && contentAlreadySelected) {
+    if (toolWindow.isActive() && changesViewContentManager.isContentSelected(tabName)) {
         toolWindow.hide(null);
     }
     else {
-      Runnable runnable = contentAlreadySelected ? null : new Runnable() {
-        @Override
-        public void run() {
+      toolWindow.activate(() -> {
+        if (!changesViewContentManager.isContentSelected(tabName)) {
           changesViewContentManager.selectContent(tabName, true);
         }
-      };
-      toolWindow.activate(runnable, true, true);
+      }, true, true);
     }
   }
 

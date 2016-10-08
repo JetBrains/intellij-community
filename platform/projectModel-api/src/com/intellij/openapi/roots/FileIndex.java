@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public interface FileIndex {
   /**
-   * Iterates all files and directories in the content.
+   * Iterates all files and directories under content roots skipping excluded and ignored files and directories.
    *
    * @param iterator the iterator receiving the files.
    * @return false if files processing was stopped ({@link ContentIterator#processFile(VirtualFile)} returned false)
@@ -38,8 +38,8 @@ public interface FileIndex {
   boolean iterateContent(@NotNull ContentIterator iterator);
 
   /**
-   * Iterates all files and directories in the content under directory <code>dir</code> (including the directory itself).
-   * Does not iterate anything if <code>dir</code> is not in the content.
+   * Iterates all files and directories in the content under directory <code>dir</code> (including the directory itself) skipping excluded
+   * and ignored files and directories. Does not iterate anything if <code>dir</code> is not in the content.
    *
    * @param dir      the directory the contents of which is iterated.
    * @param iterator the iterator receiving the files.
@@ -48,17 +48,14 @@ public interface FileIndex {
   boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory under a content root of this
-   * project or module.
-   *
-   * @param fileOrDir the file or directory to check.
-   * @return true if the file or directory belongs to a content root, false otherwise.
+   * Returns {@code true} if {@code fileOrDir} is a file or directory under a content root of this project or module and not excluded or
+   * ignored.
    */
   boolean isInContent(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>file</code> is a source file which belongs to sources of the content.
-   * (Returns true for both source and test source).<p/>
+   * Returns {@code true} if {@code fileOrDir} is a file located under a sources, tests or resources root and not excluded or ignored.
+   * <p/>
    * Note that sometimes a file can belong to the content and be a source file but not belong to sources of the content.
    * This happens if sources of some library are located under the content (so they belong to the project content but not as sources).
    *
@@ -68,16 +65,12 @@ public interface FileIndex {
   boolean isContentSourceFile(@NotNull VirtualFile file);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from the content source.
-   * (Returns true for both source and test source).
-   *
-   * @param fileOrDir the file or directory to check.
-   * @return true if the file or directory belongs to a source or test source root, false otherwise.
+   * Returns {@code true} if {@code fileOrDir} is a file or directory located under a sources, tests or resources root and not excluded or ignored.
    */
   boolean isInSourceContent(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from the test content source
+   * Returns true if {@code fileOrDir} is a file or directory located under a test sources or resources root and not excluded or ignored.
    * <p>
    * Use this method when you really need to check whether the file is under test roots according to project configuration.
    * <p>
@@ -92,10 +85,7 @@ public interface FileIndex {
   boolean isInTestSourceContent(@NotNull VirtualFile fileOrDir);
 
   /**
-   * Returns true if <code>fileOrDir</code> is a file or directory from the source root which have
-   *
-   * @param fileOrDir the file or directory to check.
-   * @return true if the file or directory belongs to a source root of one of specified types, false otherwise
+   * Returns {@code true} if {@code fileOrDir} is a file or directory located under a source root of type from {@code rootTypes} set and not excluded or ignored
    */
   boolean isUnderSourceRootOfType(@NotNull VirtualFile fileOrDir, @NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 }

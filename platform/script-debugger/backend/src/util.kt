@@ -69,7 +69,10 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
   if (!suffix.isNullOrEmpty()) {
     debugFile = debugFile.replace(".json", suffix + ".json")
   }
+  return createDebugLogger(debugFile)
+}
 
+fun createDebugLogger(debugFile: String): MessagingLogger? {
   val queue = ConcurrentLinkedQueue<LogEntry>()
   val logger = MessagingLogger(queue)
   ApplicationManager.getApplication().executeOnPooledThread {

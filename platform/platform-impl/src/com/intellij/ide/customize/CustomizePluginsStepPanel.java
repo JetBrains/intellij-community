@@ -82,7 +82,7 @@ public class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep imple
       gbc.fill = GridBagConstraints.BOTH;
       gbc.gridwidth = GridBagConstraints.REMAINDER;
       gbc.weightx = 1;
-      JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:left;\">" + group + "</h2></body></html>", SwingConstants.CENTER) {
+      JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:center;\">" + group + "</h2></body></html>", SwingConstants.CENTER) {
         @Override
         public boolean isEnabled() {
           return isGroupEnabled(group);

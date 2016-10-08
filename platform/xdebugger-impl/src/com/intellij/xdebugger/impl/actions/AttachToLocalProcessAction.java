@@ -54,10 +54,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class AttachToLocalProcessAction extends AnAction {
   private static final Key<LinkedHashMap<String, HistoryItem>> HISTORY_KEY = Key.create("AttachToLocalProcessAction.HISTORY_KEY");
@@ -149,13 +146,13 @@ public class AttachToLocalProcessAction extends AnAction {
     }
 
     ArrayList<XLocalAttachGroup> sortedGroups = new ArrayList<>(groupWithItems.keySet());
-    Collections.sort(sortedGroups, (a, b) -> a.getOrder() - b.getOrder());
+    sortedGroups.sort(Comparator.comparingInt(XLocalAttachGroup::getOrder));
 
     List<AttachItem> currentItems = new ArrayList<>();
     for (final XLocalAttachGroup eachGroup : sortedGroups) {
       List<Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>>> sortedItems
           = new ArrayList<>(groupWithItems.get(eachGroup));
-      Collections.sort(sortedItems, (a, b) -> eachGroup.compare(project, a.first, b.first, dataHolder));
+      sortedItems.sort((a, b) -> eachGroup.compare(project, a.first, b.first, dataHolder));
 
       boolean first = true;
       for (Pair<ProcessInfo, ArrayList<XLocalAttachDebugger>> eachItem : sortedItems) {

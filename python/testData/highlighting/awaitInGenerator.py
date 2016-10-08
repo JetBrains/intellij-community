@@ -31,12 +31,12 @@ def f32(x):
 
 
 async def f41(x):
-    y = (<error descr="'await' expressions are not supported here">await</error> z for z in [])  # fail
+    y = (<error descr="Python version 3.5 does not support 'await' inside comprehensions">await</error> z for z in [])  # fail
     await x
 
 
 async def f42(x):
-    y = (mapper(<error descr="'await' expressions are not supported here">await</error> z) for z in [])  # fail
+    y = (mapper(<error descr="Python version 3.5 does not support 'await' inside comprehensions">await</error> z) for z in [])  # fail
     await x
 
 

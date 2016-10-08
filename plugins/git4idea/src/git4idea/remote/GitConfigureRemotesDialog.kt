@@ -33,7 +33,7 @@ package git4idea.remote
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.sortRepositories
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -63,7 +63,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     DialogWrapper(project, true, getModalityType()) {
 
   private val git = service<Git>()
-  private val LOG = Logger.getInstance(GitConfigureRemotesDialog::class.java)
+  private val LOG = logger<GitConfigureRemotesDialog>()
 
   private val NAME_COLUMN = 0
   private val REMOTE_PADDING = 30

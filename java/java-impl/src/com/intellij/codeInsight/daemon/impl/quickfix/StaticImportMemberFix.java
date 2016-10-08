@@ -24,7 +24,6 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -35,7 +34,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
-import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +77,11 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
            && !(candidates == null ? candidates = getMembersToImport(false) : candidates).isEmpty()
       ;
   }
-  
+
+  public final List<T> getMembersToImport() {
+    return getMembersToImport(false);
+  }
+
   @NotNull protected abstract List<T> getMembersToImport(boolean applicableOnly);
 
   public static boolean isExcluded(PsiMember method) {
@@ -118,17 +120,15 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     }
 
     final QuestionAction action = createQuestionAction(candidates, element.getProject(), editor);
-    PsiFile psiFile = element.getContainingFile();
-    if (candidates.size() == 1 &&
-        (FileTypeUtils.isInServerPageFile(psiFile) ?
-         CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
-         CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) &&
+    /* PsiFile psiFile = element.getContainingFile();
+   if (candidates.size() == 1 &&
+        ImportClassFixBase.isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
         (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
         !LaterInvocator.isInModalContext()) {
       CommandProcessor.getInstance().runUndoTransparentAction(() -> action.execute());
       return ImportClassFixBase.Result.CLASS_AUTO_IMPORTED;
     }
-
+*/
     String hintText = ShowAutoImportPass.getMessage(candidates.size() > 1, getMemberPresentableText(candidates.get(0)));
     if (!ApplicationManager.getApplication().isUnitTestMode() && !HintManager.getInstance().hasShownHintsThatWillHideByOtherHint(true)) {
       final TextRange textRange = element.getTextRange();

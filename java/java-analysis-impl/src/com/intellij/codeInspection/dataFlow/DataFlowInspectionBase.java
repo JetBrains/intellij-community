@@ -895,7 +895,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
 
     Collection<PsiCall> getAlwaysFailingCalls() {
-      return StreamEx.of(myFailingCalls.keySet()).filter(this::isAlwaysFailing).map(MethodCallInstruction::getCallExpression).toList();
+      return StreamEx.ofKeys(myFailingCalls, v -> v).map(MethodCallInstruction::getCallExpression).toList();
     }
 
     @Override
@@ -905,7 +905,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
       if (hasNonTrivialFailingContracts(instruction)) {
         boolean allFail = Arrays.stream(states).allMatch(s -> s.getMemoryState().peek() == runner.getFactory().getConstFactory().getContractFail());
-        myFailingCalls.put(instruction, allFail && isAlwaysFailing(instruction));
+        myFailingCalls.merge(instruction, allFail, Boolean::logicalAnd);
       }
       return states;
     }
@@ -918,10 +918,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     private static boolean isNonTrivialFailingContract(MethodContract contract) {
       return contract.returnValue == MethodContract.ValueConstraint.THROW_EXCEPTION &&
              Arrays.stream(contract.arguments).anyMatch(v -> v != MethodContract.ValueConstraint.ANY_VALUE);
-    }
-
-    private boolean isAlwaysFailing(MethodCallInstruction instruction) {
-      return !Boolean.FALSE.equals(myFailingCalls.get(instruction));
     }
 
     @Override

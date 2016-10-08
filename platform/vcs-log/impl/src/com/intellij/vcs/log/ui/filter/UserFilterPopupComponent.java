@@ -47,13 +47,13 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   @NotNull
   @Override
   protected String getText(@NotNull VcsLogUserFilter filter) {
-    return displayableText(getTextValues(filter));
+    return displayableText(myFilterModel.getFilterValues(filter));
   }
 
   @Nullable
   @Override
   protected String getToolTip(@NotNull VcsLogUserFilter filter) {
-    return tooltip(getTextValues(filter));
+    return tooltip(myFilterModel.getFilterValues(filter));
   }
 
   @Override
@@ -62,19 +62,10 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
     group.add(createAllAction());
     group.add(createSelectMultipleValuesAction());
     if (!myLogData.getCurrentUser().isEmpty()) {
-      group.add(createPredefinedValueAction(Collections.singleton(VcsLogUserFilterImpl.ME)));
+      group.add(createPredefinedValueAction(Collections.singletonList(VcsLogUserFilterImpl.ME)));
     }
     group.addAll(createRecentItemsActionGroup());
     return group;
-  }
-
-  @NotNull
-  @Override
-  protected Collection<String> getTextValues(@Nullable VcsLogUserFilter filter) {
-    if (filter == null) {
-      return Collections.emptySet();
-    }
-    return ContainerUtil.newHashSet(((VcsLogUserFilterImpl)filter).getUserNamesForPresentation());
   }
 
   @NotNull
@@ -97,11 +88,5 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
       if (firstAndLastName == null) return shortPresentation;
       return VcsUserUtil.capitalizeName(firstAndLastName.first) + " " + VcsUserUtil.capitalizeName(firstAndLastName.second);
     });
-  }
-
-  @NotNull
-  @Override
-  protected VcsLogUserFilter createFilter(@NotNull Collection<String> values) {
-    return new VcsLogUserFilterImpl(values, myLogData.getCurrentUser(), myLogData.getAllUsers());
   }
 }

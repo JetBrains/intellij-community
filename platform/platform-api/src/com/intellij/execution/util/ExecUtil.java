@@ -36,53 +36,26 @@ import java.util.List;
 import java.util.Map;
 
 public class ExecUtil {
-  private static final NotNullLazyValue<Boolean> hasGkSudo = new NotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File("/usr/bin/gksudo").canExecute();
-    }
-  };
+  private static class ExecutableExistsLazyValue extends NotNullLazyValue<Boolean> {
+    private final String myPathname;
 
-  private static final NotNullLazyValue<Boolean> hasKdeSudo = new NotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File("/usr/bin/kdesudo").canExecute();
+    public ExecutableExistsLazyValue(String pathname) {
+      myPathname = pathname;
     }
-  };
 
-  private static final NotNullLazyValue<Boolean> hasPkExec = new NotNullLazyValue<Boolean>() {
     @NotNull
     @Override
     protected Boolean compute() {
-      return new File("/usr/bin/pkexec").canExecute();
+      return new File(myPathname).canExecute();
     }
-  };
+  }
 
-  private static final NotNullLazyValue<Boolean> hasGnomeTerminal = new NotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File("/usr/bin/gnome-terminal").canExecute();
-    }
-  };
-
-  private static final NotNullLazyValue<Boolean> hasKdeTerminal = new NotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File("/usr/bin/konsole").canExecute();
-    }
-  };
-
-  private static final NotNullLazyValue<Boolean> hasXTerm = new NotNullLazyValue<Boolean>() {
-    @NotNull
-    @Override
-    protected Boolean compute() {
-      return new File("/usr/bin/xterm").canExecute();
-    }
-  };
+  private static final NotNullLazyValue<Boolean> hasGkSudo = new ExecutableExistsLazyValue("/usr/bin/gksudo");
+  private static final NotNullLazyValue<Boolean> hasKdeSudo = new ExecutableExistsLazyValue("/usr/bin/kdesudo");
+  private static final NotNullLazyValue<Boolean> hasPkExec = new ExecutableExistsLazyValue("/usr/bin/pkexec");
+  private static final NotNullLazyValue<Boolean> hasGnomeTerminal = new ExecutableExistsLazyValue("/usr/bin/gnome-terminal");
+  private static final NotNullLazyValue<Boolean> hasKdeTerminal = new ExecutableExistsLazyValue("/usr/bin/konsole");
+  private static final NotNullLazyValue<Boolean> hasXTerm = new ExecutableExistsLazyValue("/usr/bin/xterm");
 
   private ExecUtil() { }
 
@@ -152,14 +125,8 @@ public class ExecUtil {
 
   @Nullable
   public static String readFirstLine(@NotNull InputStream stream, @Nullable Charset cs) {
-    try {
-      BufferedReader reader = new BufferedReader(cs == null ? new InputStreamReader(stream) : new InputStreamReader(stream, cs));
-      try {
-        return reader.readLine();
-      }
-      finally {
-        reader.close();
-      }
+    try (BufferedReader reader = new BufferedReader(cs == null ? new InputStreamReader(stream) : new InputStreamReader(stream, cs))) {
+      return reader.readLine();
     }
     catch (IOException ignored) {
       return null;
@@ -230,7 +197,7 @@ public class ExecUtil {
       sudoCommandLine = new GeneralCommandLine(getTerminalCommand("Install", script.getAbsolutePath()));
     }
     else {
-      throw new UnsupportedSystemException();
+      throw new UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
     }
 
     return sudoCommandLine
@@ -280,17 +247,10 @@ public class ExecUtil {
                            : Arrays.asList("/usr/bin/xterm", "-e", command);
     }
 
-    throw new UnsupportedSystemException();
+    throw new UnsupportedOperationException("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
   }
 
-  public static class UnsupportedSystemException extends UnsupportedOperationException {
-    public UnsupportedSystemException() {
-      super("Unsupported OS/desktop: " + SystemInfo.OS_NAME + '/' + SystemInfo.SUN_DESKTOP);
-    }
-  }
-
-  // deprecated stuff
-
+  //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@code new GeneralCommandLine(command).createProcess().waitFor()} (to be removed in IDEA 16) */
   public static int execAndGetResult(String... command) throws ExecutionException, InterruptedException {
     assert command != null && command.length > 0;
@@ -319,4 +279,5 @@ public class ExecUtil {
     if (charset != null) commandLine = commandLine.withCharset(charset);
     return execAndReadLine(commandLine);
   }
+  //</editor-fold>
 }

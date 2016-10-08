@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Comprehension-like element base, for list comps ang generators.
@@ -74,6 +75,12 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
         if (next2 == null) break;
         final PyExpression variable = (PyExpression)next.getPsi();
         final PyExpression iterated = (PyExpression)next2.getPsi();
+        final boolean isAsync = Optional
+          .ofNullable(node.getTreePrev())
+          .map(ASTNode::getTreePrev)
+          .map(asyncNode -> asyncNode.getElementType() == PyTokenTypes.ASYNC_KEYWORD)
+          .orElse(false);
+
         visitor.visitForComponent(new ComprhForComponent() {
           public PyExpression getIteratorVariable() {
             return variable;
@@ -81,6 +88,11 @@ public abstract class PyComprehensionElementImpl extends PyElementImpl implement
 
           public PyExpression getIteratedList() {
             return iterated;
+          }
+
+          @Override
+          public boolean isAsync() {
+            return isAsync;
           }
         });
       }

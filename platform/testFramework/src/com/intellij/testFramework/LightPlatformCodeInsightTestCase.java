@@ -146,12 +146,28 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    */
   @NotNull
   protected static Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) {
+    return configureFromFileText(fileName, fileText, false);
+  }
+
+  /**
+   * Same as configureByFile but text is provided directly.
+   * @param fileName - name of the file.
+   * @param fileText - data file text.
+   * @param checkCaret - if true, if will be verified that file contains at least one caret or selection marker
+   */
+  @NotNull
+  protected static Document configureFromFileText(@NonNls @NotNull final String fileName,
+                                                  @NonNls @NotNull final String fileText,
+                                                  boolean checkCaret) {
     return new WriteCommandAction<Document>(null) {
       @Override
       protected void run(@NotNull Result<Document> result) throws Throwable {
         final Document fakeDocument = new DocumentImpl(fileText);
 
         EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
+        if(checkCaret) {
+          assertTrue("No caret specified in " + fileName, caretsState.hasExplicitCaret());
+        }
 
         String newFileText = fakeDocument.getText();
         Document document;

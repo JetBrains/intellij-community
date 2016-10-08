@@ -18,7 +18,7 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.management.ListenerNotFoundException;
@@ -37,6 +37,7 @@ public class LowMemoryWatcherManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.LowMemoryWatcherManager");
 
   private static final long MEM_THRESHOLD = 5 /*MB*/ * 1024 * 1024;
+  @NotNull private final ExecutorService myExecutorService;
 
   private Future<?> mySubmitted; // guarded by ourJanitor
   private final AtomicBoolean myProcessing = new AtomicBoolean();
@@ -52,7 +53,8 @@ public class LowMemoryWatcherManager implements Disposable {
     }
   };
 
-  public LowMemoryWatcherManager() {
+  public LowMemoryWatcherManager(@NotNull ExecutorService executorService) {
+    myExecutorService = new SequentialTaskExecutor("LowMemoryWatcherManager", executorService);
     try {
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
         if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {
@@ -83,7 +85,7 @@ public class LowMemoryWatcherManager implements Disposable {
 
         synchronized (myJanitor) {
           if (mySubmitted == null) {
-            mySubmitted = myExecutor.getValue().submit(myJanitor);
+            mySubmitted = myExecutorService.submit(myJanitor);
           }
         }
       }
@@ -100,14 +102,6 @@ public class LowMemoryWatcherManager implements Disposable {
       }
     }
   }
-
-  private final NotNullLazyValue<ExecutorService> myExecutor = new NotNullLazyValue<ExecutorService>() {
-    @NotNull
-    @Override
-    protected ExecutorService compute() {
-      return AppExecutorUtil.createBoundedApplicationPoolExecutor("lowMemoryWatcher", 1);
-    }
-  };
 
   @Override
   public void dispose() {

@@ -155,6 +155,7 @@ public class Maven2ServerEmbedderImpl extends MavenRemoteObject implements Maven
     return result;
   }
 
+  @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
     Model result = Maven2ModelConverter.toNativeModel(model);
     result = doInterpolate(result, basedir);

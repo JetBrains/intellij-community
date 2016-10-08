@@ -259,18 +259,30 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final String referenceName = referenceExpression.getReferenceName();
-      if (referenceName != null && referenceExpression.resolve() instanceof PsiVariable) {
-        final PsiExpression qualifierExpression = ParenthesesUtils.stripParentheses(referenceExpression.getQualifierExpression());
-        if (qualifierExpression == null) {
-          return referenceName;
+      if (referenceName != null) {
+        final PsiElement resolved = referenceExpression.resolve();
+        if (resolved instanceof PsiVariable || resolved instanceof PsiClass) {
+          final PsiExpression qualifierExpression = ParenthesesUtils.stripParentheses(referenceExpression.getQualifierExpression());
+          if (qualifierExpression == null) {
+            return referenceName;
+          }
+          final String qualifierName = getQualifiedVariableName(qualifierExpression);
+          return qualifierName != null ? qualifierName + "." + referenceName : null;
         }
-        final String qualifierName = getQualifiedVariableName(qualifierExpression);
-        return qualifierName != null ? qualifierName + "." + referenceName : null;
       }
     }
     else if (expression instanceof PsiQualifiedExpression) {
       final PsiJavaCodeReferenceElement qualifier = ((PsiQualifiedExpression)expression).getQualifier();
-      final String name = expression instanceof PsiThisExpression ? "this" : "super";
+      final String name;
+      if (expression instanceof PsiThisExpression) {
+        name = "this";
+      }
+      else if (expression instanceof PsiSuperExpression) {
+        name = "super";
+      }
+      else {
+        return null;
+      }
       return qualifier != null ? qualifier.getQualifiedName() + "." + name : name;
     }
     return null;

@@ -49,4 +49,23 @@ class EqualsReplaceableByObjectsCall {
       return <warning descr="'t != this && (t == null || !t.equals(this))' replaceable by 'Objects.equals()' expression">t != this && (t == null || !t.equals(this))</warning>;
     }
   }
+
+  static class A {
+    static String b;
+    static class B {
+      static String c;
+    }
+  }
+  static boolean ab1(String s) {
+    return A.b.equals(s);
+  }
+  static boolean ab2(String s) {
+    return <warning descr="'A.b != null && A.b.equals(s)' replaceable by 'Objects.equals()' expression">A.b != null && A.b.equals(s)</warning>;
+  }
+  static boolean ab3(String s) {
+    return <warning descr="'A.b == s || A.b != null && A.b.equals(s)' replaceable by 'Objects.equals()' expression">A.b == s || A.b != null && A.b.equals(s)</warning>;
+  }
+  static boolean abc(String s) {
+    return <warning descr="'A.B.c == s || A.B.c != null && A.B.c.equals(s)' replaceable by 'Objects.equals()' expression">A.B.c == s || A.B.c != null && A.B.c.equals(s)</warning>;
+  }
 }

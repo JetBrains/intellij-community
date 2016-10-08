@@ -33,38 +33,38 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-public class PopupListElementRenderer extends GroupedItemsListRenderer {
+public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   private final ListPopupImpl myPopup;
   private JLabel myShortcutLabel;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
-    super(new ListItemDescriptorAdapter() {
+    super(new ListItemDescriptorAdapter<E>() {
       @Override
-      public String getTextFor(Object value) {
+      public String getTextFor(E value) {
         return aPopup.getListStep().getTextFor(value);
       }
 
       @Override
-      public Icon getIconFor(Object value) {
+      public Icon getIconFor(E value) {
         return aPopup.getListStep().getIconFor(value);
       }
 
       @Override
-      public boolean hasSeparatorAboveOf(Object value) {
+      public boolean hasSeparatorAboveOf(E value) {
         return aPopup.getListModel().isSeparatorAboveOf(value);
       }
 
       @Override
-      public String getCaptionAboveOf(Object value) {
+      public String getCaptionAboveOf(E value) {
         return aPopup.getListModel().getCaptionAboveOf(value);
       }
 
       @Nullable
       @Override
-      public String getTooltipFor(Object value) {
+      public String getTooltipFor(E value) {
         ListPopupStep<Object> listStep = aPopup.getListStep();
         if (!(listStep instanceof ListPopupStepEx)) return null;
-        return ((ListPopupStepEx)listStep).getTooltipTextFor(value);
+        return ((ListPopupStepEx<E>)listStep).getTooltipTextFor(value);
       }
     });
     myPopup = aPopup;
@@ -84,7 +84,7 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
   }
 
   @Override
-  protected void customizeComponent(JList list, Object value, boolean isSelected) {
+  protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
     ListPopupStep<Object> step = myPopup.getListStep();
     boolean isSelectable = step.isSelectable(value);
     myTextLabel.setEnabled(isSelectable);

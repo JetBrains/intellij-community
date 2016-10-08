@@ -19,32 +19,60 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
-class FilterModel<Filter extends VcsLogFilter> {
-
+abstract class FilterModel<Filter extends VcsLogFilter> {
+  @NotNull private final String myName;
+  @NotNull protected final VcsLogUiProperties myUiProperties;
   @NotNull private final Computable<VcsLogDataPack> myDataPackProvider;
   @NotNull private final Collection<Runnable> mySetFilterListeners = ContainerUtil.newArrayList();
 
   @Nullable private Filter myFilter;
 
-  FilterModel(@NotNull Computable<VcsLogDataPack> provider) {
+  FilterModel(@NotNull String name, @NotNull Computable<VcsLogDataPack> provider, @NotNull VcsLogUiProperties uiProperties) {
+    myName = name;
+    myUiProperties = uiProperties;
     myDataPackProvider = provider;
   }
 
   void setFilter(@Nullable Filter filter) {
     myFilter = filter;
+    saveFilter(filter);
     for (Runnable listener : mySetFilterListeners) {
       listener.run();
     }
   }
 
+  protected void saveFilter(@Nullable Filter filter) {
+    myUiProperties.saveFilterValues(myName, filter == null ? null : getFilterValues(filter));
+  }
+
   @Nullable
   Filter getFilter() {
+    if (myFilter == null) {
+      myFilter = getLastFilter();
+    }
     return myFilter;
+  }
+
+  @Nullable
+  protected abstract Filter createFilter(@NotNull List<String> values);
+
+  @NotNull
+  protected abstract List<String> getFilterValues(@NotNull Filter filter);
+
+  @Nullable
+  protected Filter getLastFilter() {
+    List<String> values = myUiProperties.getFilterValues(myName);
+    if (values != null) {
+      return createFilter(values);
+    }
+    return null;
   }
 
   @NotNull

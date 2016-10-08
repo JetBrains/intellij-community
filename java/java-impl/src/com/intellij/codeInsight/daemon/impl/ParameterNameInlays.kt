@@ -15,4 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl
 
-class InlayInfo(val text: String, val offset: Int)
+import com.intellij.psi.PsiExpression
+
+class InlayInfo(val text: String, val offset: Int, val argument: PsiExpression)

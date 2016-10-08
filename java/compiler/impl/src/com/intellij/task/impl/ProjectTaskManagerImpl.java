@@ -25,6 +25,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.task.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,12 +51,12 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   @Override
   public void build(@NotNull Module[] modules, @Nullable ProjectTaskNotification callback) {
-    run(createModulesBuildTask(true, modules), callback);
+    run(createModulesBuildTask(modules, true, true, false), callback);
   }
 
   @Override
   public void rebuild(@NotNull Module[] modules, @Nullable ProjectTaskNotification callback) {
-    run(createModulesBuildTask(false, modules), callback);
+    run(createModulesBuildTask(modules, false, false, false), callback);
   }
 
   @Override
@@ -91,14 +92,26 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   @Override
   public ProjectTask createAllModulesBuildTask(boolean isIncrementalBuild, Project project) {
-    return createModulesBuildTask(isIncrementalBuild, ModuleManager.getInstance(project).getModules());
+    return createModulesBuildTask(ModuleManager.getInstance(project).getModules(), isIncrementalBuild, false, false);
   }
 
   @Override
-  public ProjectTask createModulesBuildTask(boolean isIncrementalBuild, Module... modules) {
+  public ProjectTask createModulesBuildTask(Module module,
+                                            boolean isIncrementalBuild,
+                                            boolean includeDependentModules,
+                                            boolean includeRuntimeDependencies) {
+    return createModulesBuildTask(ContainerUtil.ar(module), isIncrementalBuild, includeDependentModules, includeRuntimeDependencies);
+  }
+
+  @Override
+  public ProjectTask createModulesBuildTask(Module[] modules,
+                                            boolean isIncrementalBuild,
+                                            boolean includeDependentModules,
+                                            boolean includeRuntimeDependencies) {
     return modules.length == 1
-           ? new ModuleBuildTaskImpl(modules[0], isIncrementalBuild)
-           : new ProjectTaskList(map(list(modules), module -> new ModuleBuildTaskImpl(module, isIncrementalBuild)));
+           ? new ModuleBuildTaskImpl(modules[0], isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)
+           : new ProjectTaskList(map(list(modules), module ->
+             new ModuleBuildTaskImpl(module, isIncrementalBuild, includeDependentModules, includeRuntimeDependencies)));
   }
 
   @Override
@@ -131,6 +144,11 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     };
     visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
 
+    if (toRun.isEmpty()) {
+      sendSuccessNotify(callback);
+      return;
+    }
+
     AtomicInteger inProgressCounter = new AtomicInteger(toRun.size());
     AtomicInteger errorsCounter = new AtomicInteger();
     AtomicInteger warningsCounter = new AtomicInteger();
@@ -150,7 +168,20 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
       }
     };
 
-    toRun.forEach(pair -> pair.first.run(myProject, context, chunkStatusNotification, pair.second));
+    toRun.forEach(pair -> {
+      if (pair.second.isEmpty()) {
+        sendSuccessNotify(chunkStatusNotification);
+      }
+      else {
+        pair.first.run(myProject, context, chunkStatusNotification, pair.second);
+      }
+    });
+  }
+
+  private static void sendSuccessNotify(@Nullable ProjectTaskNotification notification) {
+    if (notification != null) {
+      notification.finished(new ProjectTaskResult(false, 0, 0));
+    }
   }
 
   private static void visitTasks(@NotNull Collection<? extends ProjectTask> tasks,

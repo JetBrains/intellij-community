@@ -285,14 +285,8 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
         final String currentMavenVersion = forceMaven2 ? "2.2.1" : getCurrentMavenVersion();
         params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, currentMavenVersion);
-        String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
-        if (StringUtil.compareVersionNumbers(currentMavenVersion, "3.3.1") >= 0
-            && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
-          new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                           "Maven 3.3.1+ requires JDK 1.7+. Please set appropriate JDK at <br>" +
-                           "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer",
-                           NotificationType.WARNING).notify(null);
-        }
+        String sdkConfigLocation = "Settings | Build, Execution, Deployment | Build Tools | Maven | Importing | JDK for Importer";
+        verifyMavenSdkRequirements(jdk, currentMavenVersion, sdkConfigLocation);
 
         final List<String> classPath = new ArrayList<>();
         classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
@@ -359,6 +353,17 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
         return processHandler;
       }
     };
+  }
+
+  public static void verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion, @NotNull String sdkConfigLocation) {
+    String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") >= 0
+        && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
+      new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
+                       "Maven 3.3.1+ requires JDK 1.7+. Please set appropriate JDK at <br>" +
+                       sdkConfigLocation,
+                       NotificationType.WARNING).notify(null);
+    }
   }
 
   public static File getMavenLibDirectory() {
@@ -491,6 +496,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     };
   }
 
+  @NotNull
   public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
     return perform(new Retriable<MavenModel>() {
       @Override

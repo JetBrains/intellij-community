@@ -78,15 +78,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     @Override
     public void visitPyForStatement(PyForStatement node) {
-      final PyExpression source = node.getForPart().getSource();
-      if (source != null) {
-        final PyType type = myTypeEvalContext.getType(source);
-        final String iterableClassName = node.isAsync() ? PyNames.ASYNC_ITERABLE : PyNames.ITERABLE;
-        if (type != null && !PyTypeChecker.isUnknown(type) && !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
-          registerProblem(source, String.format("Expected 'collections.%s', got '%s' instead",
-                                                iterableClassName, PythonDocumentationProvider.getTypeName(type, myTypeEvalContext)));
-        }
-      }
+      checkIteratedValue(node.getForPart().getSource(), node.isAsync());
     }
 
     @Override
@@ -134,6 +126,15 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
+    @Override
+    public void visitPyComprehensionElement(PyComprehensionElement node) {
+      super.visitPyComprehensionElement(node);
+
+      for (ComprhForComponent forComponent : node.getForComponents()) {
+        checkIteratedValue(forComponent.getIteratedList(), forComponent.isAsync());
+      }
+    }
+
     private static class ReturnVisitor extends PyRecursiveElementVisitor {
       private final PyFunction myFunction;
       private boolean myHasReturns = false;
@@ -164,6 +165,19 @@ public class PyTypeCheckerInspection extends PyInspection {
         );
         for (Map.Entry<PyExpression, Pair<String, ProblemHighlightType>> entry : minProblems.entrySet()) {
           registerProblem(entry.getKey(), entry.getValue().getFirst(), entry.getValue().getSecond());
+        }
+      }
+    }
+
+    private void checkIteratedValue(@Nullable PyExpression iteratedValue, boolean isAsync) {
+      if (iteratedValue != null) {
+        final PyType type = myTypeEvalContext.getType(iteratedValue);
+        final String iterableClassName = isAsync ? PyNames.ASYNC_ITERABLE : PyNames.ITERABLE;
+
+        if (type != null && !PyTypeChecker.isUnknown(type) && !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
+          final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
+
+          registerProblem(iteratedValue, String.format("Expected 'collections.%s', got '%s' instead", iterableClassName, typeName));
         }
       }
     }

@@ -316,6 +316,17 @@ class Foo {
     assert lookup
   }
 
+  void "test no autopopup at the end of line comment"() {
+    LiveTemplateCompletionContributor.setShowTemplatesInTests(true, getTestRootDisposable())
+    myFixture.configureByText "a.java", """
+class Foo {
+  // foo bar <caret>
+}
+"""
+    type 't'
+    assert !lookup
+  }
+
   void testPrefixLengthDependentSorting() {
     myFixture.addClass("package foo; public class PsiJavaCodeReferenceElement {}")
     myFixture.configureByText("a.java", """

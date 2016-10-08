@@ -23,9 +23,7 @@ public interface ManageButtonBuilder {
 
   boolean canChangeProfileLevel();
 
-  void moveToProject();
-
-  void setAsGlobal();
+  void copyToAnotherLevel();
 
   void copy();
 

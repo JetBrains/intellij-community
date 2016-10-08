@@ -157,7 +157,7 @@ public class CheckRegExpForm {
       myRootPanel.revalidate();
       Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
       if (balloon != null) balloon.revalidate();
-    }, ModalityState.current());
+    });
   }
 
   @TestOnly

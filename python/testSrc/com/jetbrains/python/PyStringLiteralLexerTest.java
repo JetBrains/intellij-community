@@ -31,4 +31,11 @@ public class PyStringLiteralLexerTest extends PyLexerTestCase {
     PyLexerTestCase.doLexerTest("r'[\\w\\']'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_STRING), true,
                                 "r'[\\w\\']'");
   }
+
+  // PY-20921
+  public void testIllegalPrefixes() {
+    PyLexerTestCase.doLexerTest("ff'foo'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), "Py:SINGLE_QUOTED_UNICODE");
+    PyLexerTestCase.doLexerTest("fff'foo'", new PyStringLiteralLexer(PyTokenTypes.SINGLE_QUOTED_UNICODE), "Py:SINGLE_QUOTED_UNICODE");
+    PyLexerTestCase.doLexerTest("rrr'''foo'''", new PyStringLiteralLexer(PyTokenTypes.TRIPLE_QUOTED_UNICODE), "Py:TRIPLE_QUOTED_UNICODE");
+  }
 }

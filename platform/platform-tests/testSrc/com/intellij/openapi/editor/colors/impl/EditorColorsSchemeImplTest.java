@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.*;
+import static com.intellij.openapi.editor.markup.TextAttributes.USE_INHERITED_MARKER;
 import static com.intellij.testFramework.Assertions.assertThat;
 import static java.util.Collections.singletonList;
 
@@ -194,7 +195,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testSaveInheritance() throws Exception {
-    Pair<EditorColorsScheme,TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.STATIC_METHOD, new TextAttributes());
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.STATIC_METHOD, USE_INHERITED_MARKER);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.STATIC_METHOD.getFallbackAttributeKey());
     assertSame(result.second, fallbackAttrs);
   }
@@ -205,20 +206,14 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, declarationAttrs);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
     assertThat(result.second).isEqualTo(fallbackAttrs);
-    assertThat(result.second).isNotSameAs(fallbackAttrs);
   }
 
   public void testSaveInheritanceForEmptyAttrs() throws Exception {
-    TextAttributes abstractMethodAttrs = new TextAttributes();
-    assertTrue(abstractMethodAttrs.isFallbackEnabled());
-    Pair<EditorColorsScheme, TextAttributes> result =
-      doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, abstractMethodAttrs);
-    TextAttributes fallbackAttrs = result.first.getAttributes(
-      DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey()
-    );
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, USE_INHERITED_MARKER);
+    TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey());
     TextAttributes directlyDefined =
       ((AbstractColorsScheme)result.first).getDirectlyDefinedAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD);
-    assertTrue(directlyDefined != null && directlyDefined.isFallbackEnabled());
+    assertTrue(directlyDefined != null && directlyDefined == USE_INHERITED_MARKER);
     assertSame(fallbackAttrs, result.second);
   }
 
@@ -284,12 +279,9 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     EditorColorsScheme editorColorsScheme = new EditorColorsSchemeImpl(parentScheme);
     editorColorsScheme.setName("test");
     TextAttributes defaultAttributes = new TextAttributes(null, null, Color.BLACK, EffectType.LINE_UNDERSCORE, Font.PLAIN);
-    TextAttributes attributes = new TextAttributes(null, null, null, EffectType.BOXED, Font.PLAIN);
-    attributes.setEnforceEmpty(false);
-    assertTrue(attributes.isFallbackEnabled());
     TextAttributesKey testKey = TextAttributesKey.createTextAttributesKey("TEST_KEY", DefaultLanguageHighlighterColors.PARAMETER);
     parentScheme.setAttributes(testKey, defaultAttributes);
-    editorColorsScheme.setAttributes(testKey, attributes);
+    editorColorsScheme.setAttributes(testKey, USE_INHERITED_MARKER);
     try {
       Element root = new Element("scheme");
       ((AbstractColorsScheme)editorColorsScheme).writeExternal(root);
@@ -300,7 +292,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
         }
       }
       TextAttributes targetAttributes = ((AbstractColorsScheme)targetScheme).getDirectlyDefinedAttributes(testKey);
-      assertTrue(targetAttributes != null && targetAttributes.isFallbackEnabled());
+      assertTrue(targetAttributes != null && targetAttributes == USE_INHERITED_MARKER);
     }
     finally {
       TextAttributesKey.removeTextAttributesKey(testKey.getExternalName());

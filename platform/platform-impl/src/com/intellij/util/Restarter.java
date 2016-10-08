@@ -15,8 +15,8 @@
  */
 package com.intellij.util;
 
+import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.jna.JnaLoader;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -34,15 +34,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 public class Restarter {
   private Restarter() { }
-
-  private static File getLauncherScript() {
-    String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
-    return new File(PathManager.getBinPath(), name + ".sh");
-  }
 
   public static boolean isSupported() {
     if (SystemInfo.isWindows) {
@@ -52,7 +46,7 @@ public class Restarter {
       return PathManager.getHomePath().contains(".app") && new File(PathManager.getBinPath(), "restarter").canExecute();
     }
     if (SystemInfo.isUnix) {
-      return getLauncherScript().canExecute() && new File(PathManager.getBinPath(), "restart.py").canExecute();
+      return CreateDesktopEntryAction.getLauncherScript() != null && new File(PathManager.getBinPath(), "restart.py").canExecute();
     }
 
     return false;
@@ -139,10 +133,10 @@ public class Restarter {
   }
 
   private static void restartOnUnix(String... beforeRestart) throws IOException {
-    File launcherScript = getLauncherScript();
-    if (!launcherScript.exists()) throw new IOException("Launcher script not found: " + launcherScript);
+    String launcherScript = CreateDesktopEntryAction.getLauncherScript();
+    if (launcherScript == null) throw new IOException("Launcher script not found in " + PathManager.getBinPath());
     doScheduleRestart(new File(PathManager.getBinPath(), "restart.py"), commands -> {
-      commands.add(launcherScript.getPath());
+      commands.add(launcherScript);
       Collections.addAll(commands, beforeRestart);
     });
   }

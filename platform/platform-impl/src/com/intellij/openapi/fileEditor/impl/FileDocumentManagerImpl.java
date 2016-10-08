@@ -668,7 +668,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
 
         FileType fileType = file.getFileType();
         String fsContent = LoadTextUtil.loadText(file).toString();
-        DocumentContent content1 = DiffContentFactory.getInstance().create(fsContent, fileType);
+        DocumentContent content1 = DiffContentFactory.getInstance().create(project, fsContent, fileType);
         DocumentContent content2 = DiffContentFactory.getInstance().create(project, document, file);
         String title = UIBundle.message("file.cache.conflict.for.file.dialog.title", file.getPresentableUrl());
         String title1 = UIBundle.message("file.cache.conflict.diff.content.file.system.content");

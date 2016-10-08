@@ -1309,13 +1309,25 @@ public class UIUtil {
   }
 
   public static Icon getTreeSelectedCollapsedIcon() {
-    return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF()
-           ? AllIcons.Mac.Tree_white_right_arrow : getTreeCollapsedIcon();
+    if (isUnderAquaBasedLookAndFeel() ||
+        isUnderNimbusLookAndFeel() ||
+        isUnderGTKLookAndFeel() ||
+        isUnderDarcula() ||
+        (isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))) {
+      return AllIcons.Mac.Tree_white_right_arrow;
+    }
+    return getTreeCollapsedIcon();
   }
 
   public static Icon getTreeSelectedExpandedIcon() {
-    return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF()
-           ? AllIcons.Mac.Tree_white_down_arrow : getTreeExpandedIcon();
+    if (isUnderAquaBasedLookAndFeel() ||
+        isUnderNimbusLookAndFeel() ||
+        isUnderGTKLookAndFeel() ||
+        isUnderDarcula() ||
+        (isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))) {
+      return AllIcons.Mac.Tree_white_down_arrow;
+    }
+    return getTreeExpandedIcon();
   }
 
   public static Border getTableHeaderCellBorder() {
@@ -2359,7 +2371,7 @@ public class UIUtil {
   public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     Font font = getLabelFont();
     @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : JBUI.scale(11);
+    final int size = font != null ? font.getSize() : JBUI.scale(11);
 
     String customCss = String.format("body, div, p { font-family: %s; font-size: %s; }", family, size);
     if (noGapsBetweenParagraphs) {

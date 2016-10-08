@@ -1,44 +1,13 @@
 <html>
 <body>
-Inspection detects usages of pre-Java 8 Collection API methods which can be simplified using new Java 8 API.
+Inspection detects usages of java's <b>Map</b> when they can be replaced with methods <b>putIfAbsent</b>.
 <!-- tooltip end -->
-The following cases are covered by this inspection:
-<ul>
-  <li><b>Map.putIfAbsent</b> method could be used to replace the code like this:
-    <pre>
-      if (!map.containsKey(aKey)) {
-        map.put(aKey, aValue);
-      }
-    </pre>
-  </li>
-  <li><b>Map.getOrDefault</b> method could be used to replace the code like this:
-    <pre>
-      aValue = map.get(aKey);
-      if (aValue == null) {
-        aValue = "none";
-      }
-    </pre>
-  </li>
-  <li><b>Map.computeIfAbsent</b> method could be used to replace the code like this:
-    <pre>
-      List&lt;String&gt; list = map.get(key);
-      if (list == null) {
-        list = new ArrayList&lt;&gt;();
-        map.put(key, list);
-      }
-    </pre>
-  </li>
-  <li><b>Collection.removeIf</b> method could be used to replace the code like this:
-    <pre>
-      for (Iterator&lt;String&gt; it = collection.iterator(); it.hasNext(); ) {
-        String aValue = it.next();
-        if(shouldBeRemoved(aValue)) {
-          it.remove();
-        }
-      }
-    </pre>
-  </li>
-  <li><b>List.sort</b> instance method could be used to replace <b>Collections.sort</b> static method</li>
-</ul>
+<p>For example:</p>
+<pre>
+  if (!map.containsKey(aKey)) {
+    map.put(aKey, aValue);
+  }
+</pre>
+<p>This conversion is available since Java 8 only.</p>
 </body>
 </html>

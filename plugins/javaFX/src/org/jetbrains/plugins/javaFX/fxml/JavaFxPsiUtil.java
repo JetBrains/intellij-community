@@ -767,21 +767,20 @@ public class JavaFxPsiUtil {
   public static Map<String, XmlAttributeValue> collectFileIds(@Nullable final XmlTag currentTag) {
     if (currentTag == null) return Collections.emptyMap();
     final PsiFile containingFile = currentTag.getContainingFile();
-    final XmlAttribute currentIdAttribute = currentTag.getAttribute(FxmlConstants.FX_ID);
-    return collectFileIds(containingFile, currentIdAttribute != null ? currentIdAttribute.getValue() : null);
+    return collectFileIds(containingFile, false);
   }
 
   @NotNull
-  public static Map<String, XmlAttributeValue> collectFileIds(@Nullable PsiFile psiFile, @Nullable String skipFxId) {
+  public static Map<String, XmlAttributeValue> collectFileIds(@Nullable PsiFile psiFile, boolean skipController) {
     if (!(psiFile instanceof XmlFile)) return Collections.emptyMap();
     final XmlTag rootTag = ((XmlFile)psiFile).getRootTag();
     if (rootTag == null) return Collections.emptyMap();
 
     final Map<String, XmlAttributeValue> cachedIds = CachedValuesManager
       .getCachedValue(rootTag, () -> new CachedValueProvider.Result<>(prepareFileIds(rootTag), PsiModificationTracker.MODIFICATION_COUNT));
-    if (skipFxId != null && cachedIds.containsKey(skipFxId)) {
+    if (skipController && cachedIds.containsKey(FxmlConstants.CONTROLLER)) {
       final Map<String, XmlAttributeValue> filteredIds = new THashMap<>(cachedIds);
-      filteredIds.remove(skipFxId);
+      filteredIds.remove(FxmlConstants.CONTROLLER);
       return filteredIds;
     }
     return cachedIds;

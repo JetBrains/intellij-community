@@ -48,6 +48,9 @@ public class EqualsReplaceableByObjectsCallFixTest extends IGQuickFixesTestCase 
   public void testQualifiedThisNotEqual() { doTest(); }
   public void testQualifiedSuperEqual() { doTest(); }
 
+  public void testStaticField() { doTest(); }
+  public void testStaticField2() { doTest(); }
+
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
     builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath())

@@ -1,35 +1,19 @@
 package com.intellij.diff.contents;
 
-import com.intellij.diff.tools.util.DiffNotifications;
-import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 
 public class FileAwareDocumentContent extends DocumentContentImpl {
@@ -40,8 +24,9 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
                                   @Nullable FileType fileType,
                                   @Nullable VirtualFile highlightFile,
                                   @Nullable LineSeparator separator,
-                                  @Nullable Charset charset) {
-    super(document, fileType, highlightFile, separator, charset);
+                                  @Nullable Charset charset,
+                                  @Nullable Boolean bom) {
+    super(document, fileType, highlightFile, separator, charset, bom);
     myProject = project;
   }
 
@@ -49,127 +34,6 @@ public class FileAwareDocumentContent extends DocumentContentImpl {
   public Navigatable getNavigatable(@NotNull LineCol position) {
     if (myProject == null || getHighlightFile() == null || !getHighlightFile().isValid()) return null;
     return new MyNavigatable(myProject, getHighlightFile(), getDocument(), position);
-  }
-
-  @NotNull
-  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull String content, @NotNull FilePath path) {
-    return new Builder(project).init(path).create(content).build();
-  }
-
-  @NotNull
-  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull String content, @NotNull VirtualFile highlightFile) {
-    return new Builder(project).init(highlightFile).create(content).build();
-  }
-
-  @NotNull
-  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull byte[] content, @NotNull FilePath path) {
-    return new Builder(project).init(path).create(content).build();
-  }
-
-  @NotNull
-  public static FileAwareDocumentContent create(@Nullable Project project, @NotNull byte[] content, @NotNull VirtualFile highlightFile) {
-    return new Builder(project).init(highlightFile).create(content).build();
-  }
-
-  private static class Builder {
-    private final Project myProject;
-    private Document myDocument;
-    private FileType myFileType;
-    private VirtualFile myHighlightFile;
-    private LineSeparator mySeparator;
-    private Charset myCharset;
-    private Charset mySuggestedCharset;
-    private boolean myMalformedContent;
-    private String myFileName;
-
-    public Builder(@Nullable Project project) {
-      myProject = project;
-    }
-
-    //
-    // Impl
-    //
-
-    @NotNull
-    private Builder init(@NotNull FilePath path) {
-      myHighlightFile = path.getVirtualFile();
-      myFileType = path.getFileType();
-      mySuggestedCharset = path.getCharset(myProject);
-      myFileName = path.getName();
-      return this;
-    }
-
-    @NotNull
-    private Builder init(@NotNull VirtualFile highlightFile) {
-      myHighlightFile = highlightFile;
-      myFileType = highlightFile.getFileType();
-      mySuggestedCharset = highlightFile.getCharset();
-      myFileName = highlightFile.getName();
-      return this;
-    }
-
-    @NotNull
-    private Builder create(@NotNull String content) {
-      mySeparator = StringUtil.detectSeparators(content);
-      String correctedContent = StringUtil.convertLineSeparators(content);
-
-      if (myProject != null && Registry.is("diff.enable.psi.highlighting")) {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          LightVirtualFile file = new LightVirtualFile(myFileName, DiffPsiFileType.INSTANCE, correctedContent);
-          file.setWritable(false);
-
-          file.putUserData(DiffPsiFileType.ORIGINAL_FILE_TYPE_KEY, myFileType);
-
-          myDocument = FileDocumentManager.getInstance().getDocument(file);
-          if (myDocument == null) {
-            myDocument = EditorFactory.getInstance().createDocument(correctedContent);
-          }
-
-          PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-        });
-      }
-      else {
-        myDocument = EditorFactory.getInstance().createDocument(correctedContent);
-      }
-
-      myDocument.setReadOnly(true);
-      return this;
-    }
-
-    @NotNull
-    private Builder create(@NotNull byte[] content) {
-      assert mySuggestedCharset != null;
-
-      myCharset = mySuggestedCharset;
-      try {
-        String text = CharsetToolkit.tryDecodeString(content, mySuggestedCharset);
-        return create(text);
-      }
-      catch (CharacterCodingException e) {
-        String text = CharsetToolkit.decodeString(content, mySuggestedCharset);
-        myMalformedContent = true;
-        return create(text);
-      }
-    }
-
-    @Nullable
-    private JComponent createNotification() {
-      if (!myMalformedContent) return null;
-      assert mySuggestedCharset != null;
-
-      String text = "Content was decoded with errors (using " + "'" + mySuggestedCharset.name() + "' charset)";
-      return DiffNotifications.createNotification(text, LightColors.RED);
-    }
-
-    @NotNull
-    public FileAwareDocumentContent build() {
-      if (FileTypes.UNKNOWN.equals(myFileType)) myFileType = PlainTextFileType.INSTANCE;
-      FileAwareDocumentContent content
-        = new FileAwareDocumentContent(myProject, myDocument, myFileType, myHighlightFile, mySeparator, myCharset);
-      DiffUtil.addNotification(createNotification(), content);
-      content.putUserData(DiffUserDataKeysEx.FILE_NAME, myFileName);
-      return content;
-    }
   }
 
   private static class MyNavigatable implements Navigatable {

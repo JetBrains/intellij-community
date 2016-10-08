@@ -45,7 +45,6 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
@@ -355,10 +354,6 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
   @Override
   public Object getData(@NonNls String dataId) {
     EditorEx editor = getCurrentEditor();
-    if (myProject != null && !myProject.isDisposed() && Registry.is("diff.enable.psi.highlighting")) {
-      final Object o = FileEditorManager.getInstance(myProject).getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
-      if (o != null) return o;
-    }
 
     if (DiffDataKeys.CURRENT_EDITOR.is(dataId)) {
       return editor;
@@ -368,9 +363,6 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     }
     else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return editor.getVirtualFile();
-    }
-    else if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-      return editor;
     }
     return super.getData(dataId);
   }

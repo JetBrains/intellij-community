@@ -33,5 +33,5 @@ public class ApiStatus {
   @Documented
   @Retention(RetentionPolicy.CLASS)
   @Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD})
-  @interface Experimental {}
+  public @interface Experimental {}
 }

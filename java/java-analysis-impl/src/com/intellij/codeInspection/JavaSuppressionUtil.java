@@ -330,14 +330,38 @@ public class JavaSuppressionUtil {
 
   @Nullable
   public static PsiElement getElementToAnnotate(PsiElement element, PsiElement container) {
-    if (container instanceof PsiDeclarationStatement && canHave15Suppressions(element)) {
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)container;
-      final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
-      for (PsiElement declaredElement : declaredElements) {
-        if (declaredElement instanceof PsiLocalVariable) {
-          final PsiModifierList modifierList = ((PsiLocalVariable)declaredElement).getModifierList();
-          if (modifierList != null) {
-            return declaredElement;
+    if (container instanceof PsiDeclarationStatement) {
+      if (canHave15Suppressions(element)) {
+        final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)container;
+        final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+        for (PsiElement declaredElement : declaredElements) {
+          if (declaredElement instanceof PsiLocalVariable) {
+            final PsiModifierList modifierList = ((PsiLocalVariable)declaredElement).getModifierList();
+            if (modifierList != null) {
+              return declaredElement;
+            }
+          }
+        }
+      }
+    }
+    else if (container instanceof PsiForeachStatement) {
+      if (canHave15Suppressions(element)) {
+        final PsiParameter parameter = ((PsiForeachStatement)container).getIterationParameter();
+        final PsiModifierList modifierList = element.getParent() == parameter ? parameter.getModifierList() : null;
+        if (modifierList != null) {
+          return parameter;
+        }
+      }
+    }
+    else if (container instanceof PsiTryStatement) {
+      final PsiResourceList resourceList = ((PsiTryStatement)container).getResourceList();
+      if (resourceList != null) {
+        for (PsiResourceListElement listElement : resourceList) {
+          if (listElement instanceof PsiResourceVariable && listElement == element.getParent()) {
+            final PsiModifierList modifierList = ((PsiResourceVariable)listElement).getModifierList();
+            if (modifierList != null) {
+              return listElement;
+            }
           }
         }
       }

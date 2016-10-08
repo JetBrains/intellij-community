@@ -17,7 +17,6 @@ package com.intellij.ide.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.ImageFilter;
@@ -29,90 +28,62 @@ import java.util.EnumMap;
  * <br/>
  * You can specify a custom implementation to support color-blindness in the {@code plugin.xml} file:<pre>
  * &lt;extensions defaultExtensionNs="com.intellij"&gt;
- * &nbsp;&nbsp;&nbsp;&nbsp;&lt;supportColorBlindness implementation="my.package.MyColorBlindnessSupport"/&gt;
+ * &nbsp;&nbsp;&nbsp;&nbsp;&lt;protanopiaSupport implementation="my.package.RedColorIssuesSupport"/&gt;
+ * &nbsp;&nbsp;&nbsp;&nbsp;&lt;deuteranopiaSupport implementation="my.package.GreenColorIssuesSupport"/&gt;
+ * &nbsp;&nbsp;&nbsp;&nbsp;&lt;tritanopiaSupport implementation="my.package.BlueColorIssuesSupport"/&gt;
+ * &nbsp;&nbsp;&nbsp;&nbsp;&lt;achromatopsiaSupport implementation="my.package.ColorVisionIssuesSupport"/&gt;
  * &lt;/extensions&gt;</pre>
  *
  * @author Sergey.Malenkov
  */
 public class ColorBlindnessSupport {
   /**
-   * @return an instance of extension to support color-blindness
+   * Returns an instance of extension to support the specified color-blindness.
    */
-  @NotNull
-  public static ColorBlindnessSupport get() {
-    return Lazy.VALUE;
+  @Nullable
+  public static ColorBlindnessSupport get(@Nullable ColorBlindness blindness) {
+    return blindness == null ? null : Lazy.MAP.get(blindness);
   }
 
   /**
-   * @param blindness available color-blindness to check if it is supported
-   * @return a display name of the specified color-blindness or {@null} if it is not supported
+   * Returns an image filter for the supported color-blindness.
    */
   @Nullable
-  public String getDisplayName(@NotNull ColorBlindness blindness) {
-    return ColorBlindness.deuteranopia.equals(blindness) ? blindness.name() : null;
-  }
-
-  /**
-   * @param blindness currently selected color-blindness or {@null} if it is not selected
-   * @return an image filter for the specified color-blindness or {@null} if it is not supported
-   */
-  @Nullable
-  public ImageFilter getFilter(@Nullable ColorBlindness blindness) {
+  public ImageFilter getFilter() {
     return null;
   }
 
-  private static final class Lazy extends ColorBlindnessSupport {
-    private static final ColorBlindnessSupport VALUE = create();
+  private static final class Lazy {
+    private static final EnumMap<ColorBlindness, ColorBlindnessSupport> MAP = create();
 
-    private static ColorBlindnessSupport create() {
-      ColorBlindnessSupport[] extensions = (ColorBlindnessSupport[])Extensions.getExtensions("com.intellij.supportColorBlindness");
-      if (extensions.length == 1) return extensions[0];
-      if (extensions.length > 0) {
+    private static EnumMap<ColorBlindness, ColorBlindnessSupport> create() {
+      EnumMap<ColorBlindness, ColorBlindnessSupport> map = new EnumMap<>(ColorBlindness.class);
+      init(map, ColorBlindness.protanopia, "com.intellij.protanopiaSupport");
+      init(map, ColorBlindness.deuteranopia, "com.intellij.deuteranopiaSupport");
+      init(map, ColorBlindness.tritanopia, "com.intellij.tritanopiaSupport");
+      init(map, ColorBlindness.achromatopsia, "com.intellij.achromatopsiaSupport");
+      if (map.isEmpty()) map.put(ColorBlindness.deuteranopia, new ColorBlindnessSupport());
+      return map;
+    }
+
+    private static void init(EnumMap<ColorBlindness, ColorBlindnessSupport> map, ColorBlindness blindness, String extensionName) {
+      ColorBlindnessSupport[] extensions = (ColorBlindnessSupport[])Extensions.getExtensions(extensionName);
+      ColorBlindnessSupport support = null;
+      for (ColorBlindnessSupport ext : extensions) {
+        if (support == null) support = ext;
+      }
+      if (support != null) {
+        map.put(blindness, support);
         Logger logger = Logger.getInstance(ColorBlindnessSupport.class);
-        EnumMap<ColorBlindness, ColorBlindnessSupport> map = new EnumMap<>(ColorBlindness.class);
-        for (ColorBlindness blindness : ColorBlindness.values()) {
-          ColorBlindnessSupport support = null;
-          for (ColorBlindnessSupport ext : extensions) {
-            if (support == null && ext.getDisplayName(blindness) != null) support = ext;
-          }
-          if (support != null) {
-            map.put(blindness, support);
-            if (logger.isDebugEnabled()) logger.debug(toString("use", blindness, support));
-            for (ColorBlindnessSupport ext : extensions) {
-              if (support != ext && ext.getDisplayName(blindness) != null) logger.warn(toString("ignore", blindness, ext));
-            }
-          }
-        }
-        if (!map.isEmpty()) {
-          return new Lazy(map);
+        if (logger.isDebugEnabled()) logger.debug(toString("use", blindness, support));
+        for (ColorBlindnessSupport ext : extensions) {
+          if (support != ext) logger.warn(toString("ignore", blindness, ext));
         }
       }
-      return new ColorBlindnessSupport();
     }
 
     private static String toString(String prefix, ColorBlindness blindness, ColorBlindnessSupport support) {
       return prefix + " " + blindness.name() + " from " + support.getClass();
-    }
-
-    private final EnumMap<ColorBlindness, ColorBlindnessSupport> myMap;
-
-    private Lazy(EnumMap<ColorBlindness, ColorBlindnessSupport> map) {
-      myMap = map;
-    }
-
-    @Nullable
-    @Override
-    public String getDisplayName(@NotNull ColorBlindness blindness) {
-      ColorBlindnessSupport support = myMap.get(blindness);
-      return support == null ? null : support.getDisplayName(blindness);
-    }
-
-    @Nullable
-    @Override
-    public ImageFilter getFilter(@Nullable ColorBlindness blindness) {
-      if (blindness == null) return null;
-      ColorBlindnessSupport support = myMap.get(blindness);
-      return support == null ? null : support.getFilter(blindness);
     }
   }
 }

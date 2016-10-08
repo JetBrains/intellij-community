@@ -35,7 +35,7 @@ public class FileDocumentContentImpl extends DocumentContentImpl implements File
   public FileDocumentContentImpl(@Nullable Project project,
                                  @NotNull Document document,
                                  @NotNull VirtualFile file) {
-    super(document, file.getFileType(), file, getSeparator(file), file.getCharset());
+    super(document, file.getFileType(), file, getSeparator(file), file.getCharset(), file.getBOM() != null);
     myProject = project;
     myFile = file;
   }

@@ -104,6 +104,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     tree.getProject().putUserData(DEBUG_VARIABLES, null);
     tree.getProject().putUserData(DEBUG_VARIABLES_TIMESTAMPS, null);
     tree.updateEditor();
+    clearInlays(tree);
   }
 
   protected void addEmptyMessage(XValueContainerNode root) {
@@ -155,12 +156,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     public void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node) {
       synchronized (myData) {
         Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
-        Set<Entry> entries = myData.get(key);
-        if (entries == null) {
-          entries = new TreeSet<>();
-          myData.put(key, entries);
-        }
-        entries.add(new Entry(position.getOffset(), node));
+        myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
       }
     }
 

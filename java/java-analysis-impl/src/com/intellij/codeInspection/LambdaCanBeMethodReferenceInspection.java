@@ -308,27 +308,18 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
   public static void replaceAllLambdasWithMethodReferences(PsiElement root) {
     Collection<PsiLambdaExpression> lambdas = PsiTreeUtil.findChildrenOfType(root, PsiLambdaExpression.class);
     if(!lambdas.isEmpty()) {
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(root.getProject());
       for(PsiLambdaExpression lambda : lambdas) {
-        replaceLambdaWithMethodReference(factory, lambda);
+        replaceLambdaWithMethodReference(lambda);
       }
     }
   }
 
-  public static PsiExpression replaceLambdaWithMethodReference(PsiElementFactory factory, PsiLambdaExpression lambda) {
-    PsiType type = lambda.getFunctionalInterfaceType();
-    if(type == null) return lambda;
-    String methodReference =
-      convertToMethodReference(lambda.getBody(), lambda.getParameterList().getParameters(), type, lambda);
-    if(methodReference == null) return lambda;
-    PsiTypeCastExpression replacement = (PsiTypeCastExpression)lambda.replace(
-      factory.createExpressionFromText("(" + lambda.getFunctionalInterfaceType().getCanonicalText() + ")" + methodReference, lambda));
-    if (RedundantCastUtil.isCastRedundant(replacement)) {
-      final PsiExpression operand = replacement.getOperand();
-      LOG.assertTrue(operand != null);
-      return (PsiExpression)replacement.replace(operand);
-    }
-    return replacement;
+  @NotNull
+  public static PsiExpression replaceLambdaWithMethodReference(@NotNull PsiLambdaExpression lambda) {
+    PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
+    final PsiExpression candidate = new LambdaCanBeMethodReferenceInspection()
+      .canBeMethodReferenceProblem(body, lambda.getParameterList().getParameters(), lambda.getFunctionalInterfaceType(), lambda);
+    return tryConvertToMethodReference(lambda, candidate);
   }
 
   private static boolean checkQualifier(PsiElement qualifier) {
@@ -599,34 +590,46 @@ public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInsp
       if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;
-      PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
-      if (functionalInterfaceType == null || !functionalInterfaceType.isValid()) return;
-      final PsiType denotableFunctionalInterfaceType = RefactoringChangeUtil.getTypeByExpression(lambdaExpression);
-      if (denotableFunctionalInterfaceType == null) return;
-
-      Collection<PsiComment> comments = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(lambdaExpression, PsiComment.class),
-                                                          (comment) -> (PsiComment)comment.copy());
-
-      final String methodRefText = createMethodReferenceText(element, functionalInterfaceType,
-                                                             lambdaExpression.getParameterList().getParameters());
-
-      if (methodRefText != null) {
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        final PsiExpression psiExpression = factory.createExpressionFromText(methodRefText, lambdaExpression);
-        final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(denotableFunctionalInterfaceType);
-        PsiElement replace = lambdaExpression.replace(psiExpression);
-        final PsiType functionalTypeAfterReplacement = GenericsUtil.getVariableTypeByExpressionType(((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType());
-        functionalInterfaceType = typePointer.getType();
-        if (functionalTypeAfterReplacement == null || functionalInterfaceType != null && !functionalTypeAfterReplacement.equals(functionalInterfaceType)) { //ambiguity
-          final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(A)a", replace);
-          cast.getCastType().replace(factory.createTypeElement(functionalInterfaceType));
-          cast.getOperand().replace(replace);
-          replace = replace.replace(cast);
-        }
-
-        AnonymousCanBeLambdaInspection.restoreComments(comments, replace);
-        JavaCodeStyleManager.getInstance(project).shortenClassReferences(replace);
-      }
+      tryConvertToMethodReference(lambdaExpression, element);
     }
+  }
+
+  @NotNull
+  static PsiExpression tryConvertToMethodReference(@NotNull PsiLambdaExpression lambda, PsiElement body) {
+    Project project = lambda.getProject();
+    PsiType functionalInterfaceType = lambda.getFunctionalInterfaceType();
+    if (functionalInterfaceType == null || !functionalInterfaceType.isValid()) return lambda;
+    final PsiType denotableFunctionalInterfaceType = RefactoringChangeUtil.getTypeByExpression(lambda);
+    if (denotableFunctionalInterfaceType == null) return lambda;
+
+    Collection<PsiComment> comments = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(lambda, PsiComment.class),
+                                                        (comment) -> (PsiComment)comment.copy());
+
+    final String methodRefText = createMethodReferenceText(body, functionalInterfaceType, lambda.getParameterList().getParameters());
+
+    if (methodRefText != null) {
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiExpression psiExpression = factory.createExpressionFromText(methodRefText, lambda);
+      final SmartTypePointer typePointer = SmartTypePointerManager.getInstance(project).createSmartTypePointer(denotableFunctionalInterfaceType);
+      PsiExpression replace = (PsiExpression)lambda.replace(psiExpression);
+      final PsiType functionalTypeAfterReplacement = GenericsUtil.getVariableTypeByExpressionType(((PsiMethodReferenceExpression)replace).getFunctionalInterfaceType());
+      functionalInterfaceType = typePointer.getType();
+      if (functionalInterfaceType != null && (functionalTypeAfterReplacement == null ||
+          !functionalTypeAfterReplacement.equals(functionalInterfaceType))) { //ambiguity
+        final PsiTypeCastExpression cast = (PsiTypeCastExpression)factory.createExpressionFromText("(A)a", replace);
+        PsiTypeElement castType = cast.getCastType();
+        LOG.assertTrue(castType != null);
+        castType.replace(factory.createTypeElement(functionalInterfaceType));
+        PsiExpression castOperand = cast.getOperand();
+        LOG.assertTrue(castOperand != null);
+        castOperand.replace(replace);
+        replace = (PsiExpression)replace.replace(cast);
+      }
+
+      AnonymousCanBeLambdaInspection.restoreComments(comments, replace);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(replace);
+      return replace;
+    }
+    return lambda;
   }
 }

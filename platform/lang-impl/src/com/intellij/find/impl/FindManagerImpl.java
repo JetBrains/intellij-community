@@ -30,10 +30,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -179,7 +176,22 @@ public class FindManagerImpl extends FindManager {
       myFindDialog.setOkHandler(handler);
       return;
     }
+    registerAction("ReplaceInPath");
+    registerAction("FindInPath");
+
     myFindDialog.show();
+  }
+
+  private void registerAction(String aciotnName) {
+    AnAction action = ActionManager.getInstance().getAction(aciotnName);
+    JRootPane findDialogRootComponent = ((JDialog)myFindDialog.getWindow()).getRootPane();
+    new AnAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        myFindDialog.dispose();
+        action.actionPerformed(AnActionEvent.createFromDataContext(e.getPlace(), null, e.getDataContext()));
+      }
+    }.registerCustomShortcutSet(action.getShortcutSet(), findDialogRootComponent);
   }
 
   void changeGlobalSettings(FindModel findModel) {

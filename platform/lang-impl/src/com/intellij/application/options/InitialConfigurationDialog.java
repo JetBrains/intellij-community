@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -93,7 +94,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
     final ArrayList<Keymap> keymaps = new ArrayList<>();
     for (Keymap keymap : ((KeymapManagerImpl)KeymapManager.getInstance()).getAllKeymaps()) {
-      if (matchesPlatform(keymap)) {
+      if (DefaultKeymap.matchesPlatform(keymap)) {
         keymaps.add(keymap);
       }
     }
@@ -383,20 +384,6 @@ public class InitialConfigurationDialog extends DialogWrapper {
         resizeTo(dialog.getSize().width, dialog.getSize().height - wrapperHeight + getPreviewPreferredHeight());
       }
     }
-  }
-
-  private static boolean matchesPlatform(Keymap keymap) {
-    final String name = keymap.getName();
-    if (KeymapManager.DEFAULT_IDEA_KEYMAP.equals(name)) {
-      return SystemInfo.isWindows;
-    }
-    else if (KeymapManager.MAC_OS_X_KEYMAP.equals(name) || KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP.equals(name)) {
-      return SystemInfo.isMac;
-    }
-    else if (KeymapManager.X_WINDOW_KEYMAP.equals(name) || "Default for GNOME".equals(name) || KeymapManager.KDE_KEYMAP.equals(name)) {
-      return SystemInfo.isXWindow;
-    }
-    return true;
   }
 
   @Override

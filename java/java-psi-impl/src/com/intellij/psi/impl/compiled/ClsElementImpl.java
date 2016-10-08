@@ -291,10 +291,6 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     setMirrors(Arrays.asList(stubs), Arrays.asList(mirrors));
   }
 
-  protected static <T extends  PsiElement> void setMirrors(@NotNull List<T> stubs, @NotNull T[] mirrors) throws InvalidMirrorException {
-    setMirrors(stubs, Arrays.asList(mirrors));
-  }
-
   protected static <T extends  PsiElement> void setMirrors(@NotNull List<T> stubs, @NotNull List<T> mirrors) throws InvalidMirrorException {
     if (stubs.size() != mirrors.size()) {
       throw new InvalidMirrorException(stubs, mirrors);
@@ -311,10 +307,6 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
 
     public InvalidMirrorException(@Nullable PsiElement stubElement, @Nullable PsiElement mirrorElement) {
       this("stub:" + stubElement + "; mirror:" + mirrorElement);
-    }
-
-    public InvalidMirrorException(@NotNull PsiElement[] stubElements, @NotNull PsiElement[] mirrorElements) {
-      this("stub:" + Arrays.toString(stubElements) + "; mirror:" + Arrays.toString(mirrorElements));
     }
 
     public InvalidMirrorException(@NotNull List<? extends PsiElement> stubElements, @NotNull List<? extends PsiElement> mirrorElements) {

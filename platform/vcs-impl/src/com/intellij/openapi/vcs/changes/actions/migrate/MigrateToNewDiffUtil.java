@@ -91,7 +91,7 @@ public class MigrateToNewDiffUtil {
     else {
       Document document = oldContent.getDocument();
       if (document == null) return null;
-      return new DocumentContentImpl(document, oldContent.getContentType(), oldContent.getFile(), oldContent.getLineSeparator(), null) {
+      return new DocumentContentImpl(document, oldContent.getContentType(), oldContent.getFile(), oldContent.getLineSeparator(), null, null) {
         @Nullable
         @Override
         public Navigatable getNavigatable(@NotNull LineCol position) {

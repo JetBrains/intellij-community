@@ -28,8 +28,8 @@ public abstract class ForkedSplitter extends ForkedByModuleSplitter {
 
   private Object myRootDescription;
 
-  public ForkedSplitter(String workingDirsPath, String forkMode, PrintStream out, PrintStream err, List newArgs) {
-    super(workingDirsPath, forkMode, out, err, newArgs);
+  public ForkedSplitter(String workingDirsPath, String forkMode, List newArgs) {
+    super(workingDirsPath, forkMode, newArgs);
   }
 
   protected int startSplitting(String[] args,

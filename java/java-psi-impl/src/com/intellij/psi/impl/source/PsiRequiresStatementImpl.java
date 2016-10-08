@@ -15,19 +15,24 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiJavaModuleReferenceElement;
 import com.intellij.psi.PsiRequiresStatement;
-import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiRequiresStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiRequiresStatementImpl extends CompositePsiElement implements PsiRequiresStatement {
-  public PsiRequiresStatementImpl() {
-    super(JavaElementType.REQUIRES_STATEMENT);
+public class PsiRequiresStatementImpl extends JavaStubPsiElement<PsiRequiresStatementStub> implements PsiRequiresStatement {
+  public PsiRequiresStatementImpl(@NotNull PsiRequiresStatementStub stub) {
+    super(stub, JavaStubElementTypes.REQUIRES_STATEMENT);
+  }
+
+  public PsiRequiresStatementImpl(@NotNull ASTNode node) {
+    super(node);
   }
 
   @Nullable

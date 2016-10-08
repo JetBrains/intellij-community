@@ -721,7 +721,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     final RequestResultProcessor wrapped = singleRequest.processor;
     return new BulkOccurrenceProcessor() {
       @Override
-      public boolean execute(@NotNull PsiElement scope, int[] offsetsInScope, @NotNull StringSearcher searcher) {
+      public boolean execute(@NotNull PsiElement scope, @NotNull int[] offsetsInScope, @NotNull StringSearcher searcher) {
         try {
           if (wrapped instanceof RequestResultProcessor.BulkResultProcessor) {
             return ((RequestResultProcessor.BulkResultProcessor)wrapped).processTextOccurrences(scope, offsetsInScope, consumer);

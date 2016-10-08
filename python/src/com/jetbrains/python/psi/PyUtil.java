@@ -28,7 +28,7 @@ import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -61,12 +61,13 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -861,26 +862,31 @@ public class PyUtil {
     return result;
   }
 
+  /**
+   * This method is allowed to be called from any thread, but in general you should not set {@code modal=true} if you're calling it
+   * from the write action, because in this case {@code function} will be executed right in the current thread (presumably EDT)
+   * without any progress whatsoever to avoid possible deadlock.
+   *
+   * @see ApplicationImpl#runProcessWithProgressSynchronously(Runnable, String, boolean, Project, JComponent, String)
+   */
   public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
                                      boolean modal, boolean canBeCancelled, @NotNull final Consumer<ProgressIndicator> function) {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (modal) {
-        ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            function.consume(indicator);
-          }
-        });
-      }
-      else {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            function.consume(indicator);
-          }
-        });
-      }
-    }, ModalityState.current());
+    if (modal) {
+      ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          function.consume(indicator);
+        }
+      });
+    }
+    else {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          function.consume(indicator);
+        }
+      });
+    }
   }
 
   /**
@@ -1964,28 +1970,28 @@ public class PyUtil {
      * @return true if given string node contains "u" or "U" prefix
      */
     public boolean isUnicode() {
-      return StringUtil.containsIgnoreCase(myPrefix, "u");
+      return PythonStringUtil.isUnicodePrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "r" or "R" prefix
      */
     public boolean isRaw() {
-      return StringUtil.containsIgnoreCase(myPrefix, "r");
+      return PythonStringUtil.isRawPrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "b" or "B" prefix
      */
     public boolean isBytes() {
-      return StringUtil.containsIgnoreCase(myPrefix, "b");
+      return PythonStringUtil.isBytesPrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "f" or "F" prefix
      */
     public boolean isFormatted() {
-      return StringUtil.containsIgnoreCase(myPrefix, "f");
+      return PythonStringUtil.isFormattedPrefix(myPrefix);
     }
 
     /**

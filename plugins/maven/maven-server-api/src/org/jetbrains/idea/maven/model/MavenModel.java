@@ -25,9 +25,15 @@ public class MavenModel extends MavenModelBase {
   private String myPackaging;
   private String myName;
 
-  private List<MavenProfile> myProfiles = Collections.emptyList();
+  private List<MavenProfile> myProfiles;
 
-  private final MavenBuild myBuild = new MavenBuild();
+  private final MavenBuild myBuild;
+
+  public MavenModel() {
+    myMavenId = new MavenId(MavenId.UNKNOWN_VALUE, MavenId.UNKNOWN_VALUE, MavenId.UNKNOWN_VALUE);
+    myProfiles = Collections.emptyList();
+    myBuild = new MavenBuild();
+  }
 
   public MavenId getMavenId() {
     return myMavenId;

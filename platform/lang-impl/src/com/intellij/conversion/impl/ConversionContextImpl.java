@@ -40,6 +40,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -484,6 +485,6 @@ public class ConversionContextImpl implements ConversionContext {
   @NotNull
   private File[] getSettingsXmlFiles(@NotNull String dirName) {
     final File librariesDir = new File(mySettingsBaseDir, dirName);
-    return librariesDir.exists() ? librariesDir.listFiles(FileFilters.filesWithExtension("xml")) : ArrayUtil.EMPTY_FILE_ARRAY;
+    return ObjectUtils.notNull(librariesDir.listFiles(FileFilters.filesWithExtension("xml")), ArrayUtil.EMPTY_FILE_ARRAY);
   }
 }

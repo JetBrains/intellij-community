@@ -25,4 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public interface ModuleBuildTask extends BuildTask {
   @NotNull
   Module getModule();
+
+  boolean isIncludeDependentModules();
+
+  boolean isIncludeRuntimeDependencies();
 }
