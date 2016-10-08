@@ -90,7 +90,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       public void paint(Graphics g) {
         g.setColor(getComboBackground());
         g.fillRect(0, 0, getWidth(), getHeight());
-        IconUtil.paintInCenterOf(this, g, MacIntelliJIconCache.getIcon("winCheckSign"));
+        IconUtil.paintInCenterOf(this, g, MacIntelliJIconCache.getIcon("checkSign"));
       }
     };
     button.setOpaque(false);
