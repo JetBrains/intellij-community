@@ -24,6 +24,7 @@ public class EduNames {
   public static final String TASK_MD = "task.md";
   public static final String HINTS = "hints";
   public static final String LESSON = "lesson";
+  public static final String SECTION = "section";
   public static final String LESSON_TITLED = StringUtil.toTitleCase(LESSON);
   public static final String TASK = "task";
   public static final String TASK_TITLED = StringUtil.toTitleCase(TASK);

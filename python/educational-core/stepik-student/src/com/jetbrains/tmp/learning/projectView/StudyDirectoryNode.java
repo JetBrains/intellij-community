@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,6 +68,12 @@ public class StudyDirectoryNode extends PsiDirectoryNode {
       Lesson lesson = course.getLessons().get(lessonIndex);
       setStudyAttributes(lesson, data, lesson.getName());
       data.setPresentableText(valueName);
+    }
+    else if (valueName.contains(EduNames.SECTION)) {
+      String sectionName = course.getSectionsNames().get(valueName);
+      data.clearText();
+      data.addText(sectionName, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.BLACK));
+      //data.setPresentableText(sectionName);
     }
     else if (valueName.contains(EduNames.SANDBOX_DIR)) {
       if (myValue.getParent() != null) {

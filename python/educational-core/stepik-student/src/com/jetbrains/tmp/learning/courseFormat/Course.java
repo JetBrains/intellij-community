@@ -10,7 +10,9 @@ import com.jetbrains.tmp.learning.stepik.StepikUser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Course {
   @Expose private List<Lesson> lessons = new ArrayList<Lesson>();
@@ -22,6 +24,8 @@ public class Course {
   private boolean myUpToDate;
   @Expose private boolean isAdaptive = false;
   @Expose @SerializedName("language") private String myLanguage = "Python";
+
+  @Expose private Map<String, String> sectionsNames = new HashMap();
 
   //this field is used to distinguish ordinary and CheckIO projects,
   //"PyCharm" is used here for historical reasons
@@ -47,6 +51,7 @@ public class Course {
   public void setLessons(List<Lesson> lessons) {
     this.lessons = lessons;
   }
+
   public void addLessons(List<Lesson> lessons) {
     this.lessons.addAll(lessons);
   }
@@ -82,8 +87,9 @@ public class Course {
     this.authors = new ArrayList<StepikUser>();
     for (String name : authors) {
       final List<String> pair = StringUtil.split(name, " ");
-      if (!pair.isEmpty())
+      if (!pair.isEmpty()) {
         this.authors.add(new StepikUser(pair.get(0), pair.size() > 1 ? pair.get(1) : ""));
+      }
     }
   }
 
@@ -166,5 +172,17 @@ public class Course {
 
   public void setCourseMode(String courseMode) {
     this.courseMode = courseMode;
+  }
+
+  public Map<String, String> getSectionsNames() {
+    return sectionsNames;
+  }
+
+  public void setSectionsNames(Map<String, String> sectionsNames) {
+    this.sectionsNames = sectionsNames;
+  }
+
+  public void addSectionName(String key, String value){
+    sectionsNames.put(key, value);
   }
 }
