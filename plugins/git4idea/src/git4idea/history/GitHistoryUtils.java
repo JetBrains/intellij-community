@@ -34,7 +34,10 @@ import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OpenTHashSet;
@@ -247,55 +250,53 @@ public class GitHistoryUtils {
     final AtomicReference<GitLineHandler> logHandler = new AtomicReference<>();
     final AtomicBoolean skipFurtherOutput = new AtomicBoolean();
 
-    final Consumer<GitLogRecord> resultAdapter = new Consumer<GitLogRecord>() {
-      public void consume(GitLogRecord record) {
-        if (skipFurtherOutput.get()) {
-          return;
-        }
-        if (record == null) {
-          exceptionConsumer.consume(new VcsException("revision details are null."));
-          return;
-        }
-        record.setUsedHandler(logHandler.get());
-        final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
-        firstCommit.set(record.getHash());
-        final String[] parentHashes = record.getParentsHashes();
-        if (parentHashes.length < 1) {
-          firstCommitParent.set(null);
+    final Consumer<GitLogRecord> resultAdapter = record -> {
+      if (skipFurtherOutput.get()) {
+        return;
+      }
+      if (record == null) {
+        exceptionConsumer.consume(new VcsException("revision details are null."));
+        return;
+      }
+      record.setUsedHandler(logHandler.get());
+      final GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
+      firstCommit.set(record.getHash());
+      final String[] parentHashes = record.getParentsHashes();
+      if (parentHashes.length < 1) {
+        firstCommitParent.set(null);
+      }
+      else {
+        firstCommitParent.set(parentHashes[0]);
+      }
+      final String message = record.getFullMessage();
+
+      FilePath revisionPath;
+      try {
+        final List<FilePath> paths = record.getFilePaths(finalRoot);
+        if (paths.size() > 0) {
+          revisionPath = paths.get(0);
         }
         else {
-          firstCommitParent.set(parentHashes[0]);
+          // no paths are shown for merge commits, so we're using the saved path we're inspecting now
+          revisionPath = currentPath.get();
         }
-        final String message = record.getFullMessage();
 
-        FilePath revisionPath;
-        try {
-          final List<FilePath> paths = record.getFilePaths(finalRoot);
-          if (paths.size() > 0) {
-            revisionPath = paths.get(0);
-          }
-          else {
-            // no paths are shown for merge commits, so we're using the saved path we're inspecting now
-            revisionPath = currentPath.get();
-          }
-
-          Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
-          Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
-          Collection<String> parents = Arrays.asList(parentHashes);
-          consumer.consume(new GitFileRevision(project, finalRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message,
-                                               null, new Date(record.getAuthorTimeStamp()), parents));
-          List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
-          if (statusInfos.isEmpty()) {
-            // can safely be empty, for example, for simple merge commits that don't change anything.
-            return;
-          }
-          if (statusInfos.get(0).getType() == GitChangeType.ADDED && !filePath.isDirectory()) {
-            skipFurtherOutput.set(true);
-          }
+        Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
+        Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
+        Collection<String> parents = Arrays.asList(parentHashes);
+        consumer.consume(new GitFileRevision(project, finalRoot, revisionPath, revision, Couple.of(authorPair, committerPair), message,
+                                             null, new Date(record.getAuthorTimeStamp()), parents));
+        List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
+        if (statusInfos.isEmpty()) {
+          // can safely be empty, for example, for simple merge commits that don't change anything.
+          return;
         }
-        catch (VcsException e) {
-          exceptionConsumer.consume(e);
+        if (statusInfos.get(0).getType() == GitChangeType.ADDED && !filePath.isDirectory()) {
+          skipFurtherOutput.set(true);
         }
+      }
+      catch (VcsException e) {
+        exceptionConsumer.consume(e);
       }
     };
 
@@ -456,18 +457,15 @@ public class GitHistoryUtils {
     String output = h.run();
     List<GitLogRecord> records = parser.parse(output);
 
-    return ContainerUtil.map(records, new Function<GitLogRecord, VcsShortCommitDetails>() {
-      @Override
-      public VcsShortCommitDetails fun(GitLogRecord record) {
-        List<Hash> parents = new SmartList<>();
-        for (String parent : record.getParentsHashes()) {
-          parents.add(HashImpl.build(parent));
-        }
-        return factory.createShortDetails(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
-                                          record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getCommitterName(),
-                                          record.getCommitterEmail(),
-                                          record.getAuthorTimeStamp());
+    return ContainerUtil.map(records, record -> {
+      List<Hash> parents = new SmartList<>();
+      for (String parent : record.getParentsHashes()) {
+        parents.add(HashImpl.build(parent));
       }
+      return factory.createShortDetails(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
+                                        record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getCommitterName(),
+                                        record.getCommitterEmail(),
+                                        record.getAuthorTimeStamp());
     });
   }
 
@@ -496,15 +494,14 @@ public class GitHistoryUtils {
     List<GitLogRecord> records = parser.parse(output);
     if (records.size() != refs.length) return null;
 
-    return ContainerUtil.map(records, new Function<GitLogRecord, VcsCommitMetadata>() {
-      @Override
-      public VcsCommitMetadata fun(GitLogRecord record) {
-        return factory.createCommitMetadata(factory.createHash(record.getHash()), getParentHashes(factory, record), record.getCommitTime(),
-                                            root, record.getSubject(), record.getAuthorName(), record.getAuthorEmail(),
-                                            record.getFullMessage(), record.getCommitterName(), record.getCommitterEmail(),
-                                            record.getAuthorTimeStamp());
-      }
-    });
+    return ContainerUtil.map(records,
+                             record -> factory.createCommitMetadata(factory.createHash(record.getHash()), getParentHashes(factory, record),
+                                                                    record.getCommitTime(),
+                                                                    root, record.getSubject(), record.getAuthorName(),
+                                                                    record.getAuthorEmail(),
+                                                                    record.getFullMessage(), record.getCommitterName(),
+                                                                    record.getCommitterEmail(),
+                                                                    record.getAuthorTimeStamp()));
   }
 
   private static void processHandlerOutputByLine(@NotNull GitLineHandler handler,
@@ -640,21 +637,18 @@ public class GitHistoryUtils {
                                                   @NotNull Consumer<VcsRef> refConsumer,
                                                   @NotNull VcsLogObjectsFactory factory,
                                                   @NotNull VirtualFile root) {
-    List<GitLogRecord> rec = parser.parse(record.toString());
-    return ContainerUtil.mapNotNull(rec, new Function<GitLogRecord, TimedVcsCommit>() {
-      @Override
-      public TimedVcsCommit fun(GitLogRecord record) {
-        if (record == null) {
-          return null;
-        }
-        Pair<TimedVcsCommit, Collection<VcsRef>> pair = convert(record, factory, root);
-        TimedVcsCommit commit = pair.first;
-        for (VcsRef ref : pair.second) {
-          refConsumer.consume(ref);
-        }
-        userRegistry.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
-        return commit;
+    List<GitLogRecord> gitLogRecords = parser.parse(record.toString());
+    return ContainerUtil.mapNotNull(gitLogRecords, gitLogRecord -> {
+      if (gitLogRecord == null) {
+        return null;
       }
+      Pair<TimedVcsCommit, Collection<VcsRef>> pair = convert(gitLogRecord, factory, root);
+      TimedVcsCommit commit = pair.first;
+      for (VcsRef ref : pair.second) {
+        refConsumer.consume(ref);
+      }
+      userRegistry.consume(factory.createUser(gitLogRecord.getAuthorName(), gitLogRecord.getAuthorEmail()));
+      return commit;
     });
   }
 
@@ -673,26 +667,20 @@ public class GitHistoryUtils {
                                               @NotNull Hash hash,
                                               @NotNull VcsLogObjectsFactory factory,
                                               @NotNull VirtualFile root) {
-    return ContainerUtil.mapNotNull(refs, new Function<String, VcsRef>() {
-      @Override
-      public VcsRef fun(String refName) {
-        VcsRefType type = GitRefManager.getRefType(refName);
-        refName = GitBranchUtil.stripRefsPrefix(refName);
-        return refName.equals(GitUtil.ORIGIN_HEAD) ? null : factory.createRef(hash, refName, type, root);
-      }
+    return ContainerUtil.mapNotNull(refs, refName -> {
+      VcsRefType type = GitRefManager.getRefType(refName);
+      refName = GitBranchUtil.stripRefsPrefix(refName);
+      return refName.equals(GitUtil.ORIGIN_HEAD) ? null : factory.createRef(hash, refName, type, root);
     });
   }
 
   @Nullable
   private static VcsLogObjectsFactory getObjectsFactoryWithDisposeCheck(@NotNull Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VcsLogObjectsFactory>() {
-      @Override
-      public VcsLogObjectsFactory compute() {
-        if (!project.isDisposed()) {
-          return ServiceManager.getService(project, VcsLogObjectsFactory.class);
-        }
-        return null;
+    return ApplicationManager.getApplication().runReadAction((Computable<VcsLogObjectsFactory>)() -> {
+      if (!project.isDisposed()) {
+        return ServiceManager.getService(project, VcsLogObjectsFactory.class);
       }
+      return null;
     });
   }
 
@@ -778,17 +766,7 @@ public class GitHistoryUtils {
     final List<VcsFileRevision> rc = new ArrayList<>();
     final List<VcsException> exceptions = new ArrayList<>();
 
-    history(project, path, root, startingFrom, new Consumer<GitFileRevision>() {
-      @Override
-      public void consume(GitFileRevision gitFileRevision) {
-        rc.add(gitFileRevision);
-      }
-    }, new Consumer<VcsException>() {
-      @Override
-      public void consume(VcsException e) {
-        exceptions.add(e);
-      }
-    }, parameters);
+    history(project, path, root, startingFrom, gitFileRevision -> rc.add(gitFileRevision), e -> exceptions.add(e), parameters);
     if (!exceptions.isEmpty()) {
       throw exceptions.get(0);
     }
@@ -847,21 +825,17 @@ public class GitHistoryUtils {
     }
     final Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
     final List<VcsCommitMetadata> commits =
-      loadDetails(project, root, withRefs, false, new NullableFunction<GitLogRecord, VcsCommitMetadata>() {
-        @Nullable
-        @Override
-        public VcsCommitMetadata fun(GitLogRecord record) {
-          GitCommit commit = createCommit(project, root, record, factory);
-          if (withRefs) {
-            Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
-            for (VcsRef ref : refsInRecord) {
-              if (!refs.add(ref)) {
-                LOG.error("Adding duplicate element to the set");
-              }
+      loadDetails(project, root, withRefs, false, record -> {
+        GitCommit commit = createCommit(project, root, record, factory);
+        if (withRefs) {
+          Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
+          for (VcsRef ref : refsInRecord) {
+            if (!refs.add(ref)) {
+              LOG.error("Adding duplicate element to the set");
             }
           }
-          return commit;
         }
+        return commit;
       }, params);
     return new LogDataImpl(refs, commits);
   }
@@ -879,13 +853,7 @@ public class GitHistoryUtils {
     if (factory == null) {
       return Collections.emptyList();
     }
-    return loadDetails(project, root, false, true, new NullableFunction<GitLogRecord, GitCommit>() {
-      @Override
-      @Nullable
-      public GitCommit fun(GitLogRecord record) {
-        return createCommit(project, root, record, factory);
-      }
-    }, parameters);
+    return loadDetails(project, root, false, true, record -> createCommit(project, root, record, factory), parameters);
   }
 
   @NotNull
@@ -954,12 +922,7 @@ public class GitHistoryUtils {
 
   @NotNull
   private static List<Hash> getParentHashes(@NotNull VcsLogObjectsFactory factory, @NotNull GitLogRecord record) {
-    return ContainerUtil.map(record.getParentsHashes(), new Function<String, Hash>() {
-      @Override
-      public Hash fun(String hash) {
-        return factory.createHash(hash);
-      }
-    });
+    return ContainerUtil.map(record.getParentsHashes(), hash -> factory.createHash(hash));
   }
 
   @NotNull
