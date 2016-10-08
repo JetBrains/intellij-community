@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Sergey Karashevich
- */
 public class CreateDialogFixture extends IdeaDialogFixture<CreateFileFromTemplateDialog> {
 
   @NotNull
