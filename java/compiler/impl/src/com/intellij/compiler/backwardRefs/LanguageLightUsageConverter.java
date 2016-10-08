@@ -16,16 +16,28 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerElement;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.tools.javac.util.Convert;
 import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator;
 import org.jetbrains.jps.backwardRefs.LightUsage;
+
+import java.util.Set;
 
 public interface LanguageLightUsageConverter {
   LanguageLightUsageConverter[] INSTANCES = new LanguageLightUsageConverter[]{new Java()};
 
   LightUsage asLightUsage(CompilerElement element, ByteArrayEnumerator names);
 
+  FileType getFileSourceType();
+
+  Set<Class<? extends LightUsage>> getLanguageLightUsageClasses();
+
   class Java implements LanguageLightUsageConverter {
+    private static final Set<Class<? extends LightUsage>> JAVA_LIGHT_USAGE_CLASSES =
+      ContainerUtil.set(LightUsage.LightClassUsage.class, LightUsage.LightMethodUsage.class, LightUsage.LightFieldUsage.class);
+
     @Override
     public LightUsage asLightUsage(CompilerElement element, ByteArrayEnumerator names) {
       if (element instanceof CompilerElement.CompilerClass) {
@@ -51,6 +63,16 @@ public interface LanguageLightUsageConverter {
 
       }
       return null;
+    }
+
+    @Override
+    public FileType getFileSourceType() {
+      return StdFileTypes.JAVA;
+    }
+
+    @Override
+    public Set<Class<? extends LightUsage>> getLanguageLightUsageClasses() {
+      return JAVA_LIGHT_USAGE_CLASSES;
     }
 
     private static int id(String name, ByteArrayEnumerator names) {

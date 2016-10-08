@@ -16,13 +16,17 @@
 package com.intellij.compiler;
 
 import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 public abstract class CompilerReferenceService extends AbstractProjectComponent {
   public static final RegistryValue IS_ENABLED_KEY = Registry.get("bytecode.ref.index");
@@ -38,7 +42,45 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
   @Nullable
   public abstract GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter);
 
+  @Nullable
+  public abstract <T extends PsiNamedElement> CompilerDirectInheritorInfo<T> getDirectInheritors(@NotNull PsiNamedElement aClass,
+                                                                                                 @NotNull GlobalSearchScope useScope,
+                                                                                                 @NotNull GlobalSearchScope searchScope,
+                                                                                                 @NotNull CompilerSearchAdapter compilerSearchAdapter,
+                                                                                                 @NotNull CompilerDirectInheritorSearchAdapter<T> inheritorSearchAdapter,
+                                                                                                 @NotNull FileType... searchFileTypes);
+
+
   public static boolean isEnabled() {
     return IS_ENABLED_KEY.asBoolean();
+  }
+
+  public static class CompilerDirectInheritorInfo<T extends PsiNamedElement> {
+    private final Collection<T> myDirectInheritors;
+    private final Collection<T> myDirectInheritorCandidates;
+    private final GlobalSearchScope myDirtyScope;
+
+    CompilerDirectInheritorInfo(Collection<T> directInheritors,
+                                Collection<T> directInheritorCandidates,
+                                GlobalSearchScope dirtyScope) {
+      myDirectInheritors = directInheritors;
+      myDirectInheritorCandidates = directInheritorCandidates;
+      myDirtyScope = dirtyScope;
+    }
+
+    @NotNull
+    public Collection<T> getDirectInheritors() {
+      return myDirectInheritors;
+    }
+
+    @NotNull
+    public Collection<T> getDirectInheritorCandidates() {
+      return myDirectInheritorCandidates;
+    }
+
+    @NotNull
+    public GlobalSearchScope getDirtyScope() {
+      return myDirtyScope;
+    }
   }
 }

@@ -15,8 +15,8 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.compiler.backwardRefs.LanguageLightUsageConverter;
 import com.intellij.compiler.server.BuildManagerListener;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -24,12 +24,16 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -42,9 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -65,8 +67,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     super(project);
 
     myDirtyModulesHolder = new DirtyModulesHolder();
-    myFileTypes = Collections.unmodifiableSet(ContainerUtil.set(JavaFileType.INSTANCE));
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    myFileTypes = Collections.unmodifiableSet(Stream.of(LanguageLightUsageConverter.INSTANCES)
+                                                    .map(LanguageLightUsageConverter::getFileSourceType)
+                                                    .collect(Collectors.toSet()));
   }
 
   @Override
@@ -177,7 +181,39 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                     return calculateScopeWithoutReferences(element, key);
                                                   }
                                               },
-                                              PsiModificationTracker.MODIFICATION_COUNT, this)).get(adapter);
+                                              PsiModificationTracker.MODIFICATION_COUNT)).get(adapter);
+  }
+
+  @Nullable
+  @Override
+  public <T extends PsiNamedElement> CompilerDirectInheritorInfo<T> getDirectInheritors(@NotNull PsiNamedElement aClass,
+                                                                                        @NotNull GlobalSearchScope useScope,
+                                                                                        @NotNull GlobalSearchScope searchScope,
+                                                                                        @NotNull CompilerSearchAdapter compilerSearchAdapter,
+                                                                                        @NotNull CompilerDirectInheritorSearchAdapter<T> inheritorSearchAdapter,
+                                                                                        @NotNull FileType... searchFileTypes) {
+    if (!isServiceEnabled()) return null;
+
+    //TODO should be available to search inheritors of lib classes
+    final VirtualFile file = aClass.getContainingFile().getVirtualFile();
+    if (!myProjectFileIndex.isInSourceContent(file)) return null;
+
+    final CompilerElement compilerElement = compilerSearchAdapter.asCompilerElement(aClass);
+    if (compilerElement == null) return null;
+
+    final GlobalSearchScope dirtyScope = myDirtyModulesHolder.getDirtyScope();
+    final Couple<Map<VirtualFile, T[]>> directInheritorsAndCandidates = myReader.getDirectInheritors(compilerElement,
+                                                                                                     aClass,
+                                                                                                     inheritorSearchAdapter,
+                                                                                                     useScope,
+                                                                                                     dirtyScope,
+                                                                                                     myProject,
+                                                                                                     searchFileTypes);
+
+
+    return new CompilerDirectInheritorInfo<>(selectClassesInScope(directInheritorsAndCandidates.getFirst(), searchScope),
+                                             selectClassesInScope(directInheritorsAndCandidates.getSecond(), searchScope),
+                                             dirtyScope);
   }
 
   private boolean isServiceEnabled() {
@@ -245,6 +281,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         myReader = CompilerReferenceReader.create(myProject);
       }
     }
+  }
+
+  private static <T extends PsiNamedElement> List<T> selectClassesInScope(Map<VirtualFile, T[]> classesPerFile, GlobalSearchScope searchScope) {
+    return classesPerFile
+      .entrySet()
+      .stream()
+      .filter(e -> searchScope.contains(e.getKey()))
+      .flatMap(e -> Stream.of(e.getValue()))
+      .collect(Collectors.toList());
   }
 
   @TestOnly

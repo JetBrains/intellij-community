@@ -18,11 +18,20 @@ package com.intellij.compiler;
 import com.intellij.compiler.backwardRefs.LanguageLightUsageConverter;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
+import com.sun.tools.javac.util.Convert;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -32,10 +41,12 @@ import org.jetbrains.jps.backwardRefs.LightUsage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
-public class CompilerReferenceReader {
+import static java.util.stream.Collectors.*;
+
+class CompilerReferenceReader {
   private final static Logger LOG = Logger.getInstance(CompilerReferenceReader.class);
 
   private final CompilerBackwardReferenceIndex myIndex;
@@ -45,7 +56,7 @@ public class CompilerReferenceReader {
   }
 
   @Nullable
-  public TIntHashSet findReferentFileIds(@NotNull CompilerElement element,
+  TIntHashSet findReferentFileIds(@NotNull CompilerElement element,
                                          @NotNull CompilerSearchAdapter adapter,
                                          boolean checkBaseClassAmbiguity) {
     LightUsage usage = asLightUsage(element);
@@ -64,23 +75,61 @@ public class CompilerReferenceReader {
     return set;
   }
 
-  public void addUsages(LightUsage usage, TIntHashSet sink) {
-    final Collection<Integer> usageFiles = myIndex.getBackwardReferenceMap().get(usage);
-    if (usageFiles != null) {
-      for (int fileId : usageFiles) {
-        final VirtualFile file = findFile(fileId);
-        if (file != null) {
-          sink.add(((VirtualFileWithId)file).getId());
-        }
+  @NotNull
+  <T extends PsiNamedElement> Couple<Map<VirtualFile, T[]>> getDirectInheritors(@NotNull CompilerElement element,
+                                                                                @NotNull PsiNamedElement psiElement,
+                                                                                @NotNull CompilerDirectInheritorSearchAdapter<T> adapter,
+                                                                                @NotNull GlobalSearchScope searchScope,
+                                                                                @NotNull GlobalSearchScope dirtyScope,
+                                                                                @NotNull Project project,
+                                                                                FileType... fileTypes) {
+    final LightUsage aClass = asLightUsage(element);
+    Collection<CompilerBackwardReferenceIndex.LightDefinition> candidates = myIndex.getBackwardHierarchyMap().get(aClass);
+    if (candidates == null) return Couple.of(Collections.emptyMap(), Collections.emptyMap());
+
+    final Set<FileType> fileTypeSet = ContainerUtil.set(fileTypes);
+
+    final Set<Class<? extends LightUsage>> suitableClasses = new THashSet<>();
+    for (LanguageLightUsageConverter converter : LanguageLightUsageConverter.INSTANCES) {
+      if (fileTypeSet.contains(converter.getFileSourceType())) {
+        suitableClasses.addAll(converter.getLanguageLightUsageClasses());
       }
     }
+
+    final GlobalSearchScope effectiveSearchScope = GlobalSearchScope.notScope(dirtyScope).intersectWith(searchScope);
+
+    Map<VirtualFile, SmartList<String>> perFileCandidates = candidates
+      .stream()
+      .filter(def -> suitableClasses.contains(def.getUsage().getClass()))
+      .map(definition -> {
+        final VirtualFile file = findFile(definition.getFileId());
+        return file != null && effectiveSearchScope.contains(file) ? new DecodedInheritorCandidate(getName(definition), file) : null;
+      })
+      .filter(Objects::nonNull)
+      .collect(groupingBy(DecodedInheritorCandidate::getDeclarationFile, mapping(DecodedInheritorCandidate::getQName, toCollection(SmartList::new))));
+
+    if (perFileCandidates.isEmpty()) return Couple.of(Collections.emptyMap(), Collections.emptyMap());
+
+    Map<VirtualFile, T[]> inheritors = new THashMap<>(perFileCandidates.size());
+    Map<VirtualFile, T[]> inheritorCandidates = new THashMap<>();
+
+    perFileCandidates.forEach((file, directInheritors) -> {
+      final T[] currInheritors = adapter.getCandidatesFromFile(directInheritors, psiElement, file, project);
+      if (currInheritors.length == directInheritors.size()) {
+        inheritors.put(file, currInheritors);
+      } else {
+        inheritorCandidates.put(file, currInheritors);
+      }
+    });
+
+    return Couple.of(inheritors, inheritorCandidates);
   }
 
-  public void close() {
+  void close() {
     myIndex.close();
   }
 
-  public static CompilerReferenceReader create(Project project) {
+  static CompilerReferenceReader create(Project project) {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
     if (buildDir == null || CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
       return null;
@@ -90,6 +139,18 @@ public class CompilerReferenceReader {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private void addUsages(LightUsage usage, TIntHashSet sink) {
+    final Collection<Integer> usageFiles = myIndex.getBackwardReferenceMap().get(usage);
+    if (usageFiles != null) {
+      for (int fileId : usageFiles) {
+        final VirtualFile file = findFile(fileId);
+        if (file != null) {
+          sink.add(((VirtualFileWithId)file).getId());
+        }
+      }
     }
   }
 
@@ -140,5 +201,33 @@ public class CompilerReferenceReader {
       }
     }
     return result.toArray(new LightUsage[result.size()]);
+  }
+
+  @NotNull
+  private String getName(CompilerBackwardReferenceIndex.LightDefinition def) {
+    try {
+      return Convert.utf2string(ObjectUtils.notNull(myIndex.getByteSeqEum().valueOf(def.getUsage().getName())));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static class DecodedInheritorCandidate {
+    private final String qName;
+    private final VirtualFile declarationFile;
+
+    private DecodedInheritorCandidate(String name, VirtualFile file) {
+      qName = name;
+      declarationFile = file;
+    }
+
+    public VirtualFile getDeclarationFile() {
+      return declarationFile;
+    }
+
+    public String getQName() {
+      return qName;
+    }
   }
 }
