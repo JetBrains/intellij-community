@@ -53,19 +53,16 @@ public class MergeCalculatorTask extends BaseMergeTask {
 
   @Override
   public void run() throws VcsException {
-    if (myMergeContext.getWcInfo().getFormat().supportsMergeInfo()) {
-      myMergeChecker.prepare();
+    myMergeChecker.prepare();
 
-      List<Pair<SvnChangeList, LogHierarchyNode>> afterCopyPointChangeLists =
-        getChangeListsAfter(myCopyPoint.getTrue().getTargetRevision());
-      List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(afterCopyPointChangeLists);
+    List<Pair<SvnChangeList, LogHierarchyNode>> afterCopyPointChangeLists = getChangeListsAfter(myCopyPoint.getTrue().getTargetRevision());
+    List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(afterCopyPointChangeLists);
 
-      if (!notMergedChangeLists.isEmpty()) {
-        next(new ShowRevisionSelector(myMergeProcess, notMergedChangeLists, myMergeChecker));
-      }
-      else {
-        end("Everything is up-to-date", false);
-      }
+    if (!notMergedChangeLists.isEmpty()) {
+      next(new ShowRevisionSelector(myMergeProcess, notMergedChangeLists, myMergeChecker));
+    }
+    else {
+      end("Everything is up-to-date", false);
     }
   }
 
