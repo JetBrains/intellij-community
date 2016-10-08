@@ -65,6 +65,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.util.ObjectUtils.notNull;
 import static git4idea.history.GitLogParser.GitLogOption.*;
 
 /**
@@ -425,10 +426,10 @@ public class GitHistoryUtils {
     GitLogRecord record = records.get(0);
     final List<Change> changes = record.parseChanges(project, root);
     for (Change change : changes) {
-      if ((change.isMoved() || change.isRenamed()) && filePath.equals(change.getAfterRevision().getFile())) {
+      if ((change.isMoved() || change.isRenamed()) && filePath.equals(notNull(change.getAfterRevision()).getFile())) {
         final String[] parents = record.getParentsHashes();
         String parent = parents.length > 0 ? parents[0] : null;
-        return Pair.create(parent, change.getBeforeRevision().getFile());
+        return Pair.create(parent, notNull(change.getBeforeRevision()).getFile());
       }
     }
     return null;
@@ -1005,6 +1006,7 @@ public class GitHistoryUtils {
 
     String output = h.run();
     GitLogRecord logRecord = parser.parseOneRecord(output);
+    if (logRecord == null) throw new VcsException("Can not parse log output \"" + output + "\"");
     return logRecord.getAuthorTimeStamp();
   }
 
