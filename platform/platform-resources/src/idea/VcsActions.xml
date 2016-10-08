@@ -65,7 +65,7 @@
         <action id="ChangesView.CreatePatch" class="com.intellij.openapi.vcs.changes.actions.CreatePatchAction"/>
         <action id="ChangesView.ApplyPatch" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchAction"/>
         <action id="ChangesView.ApplyPatchFromClipboard" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchFromClipboardAction"/>
-        <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction"/>
+        <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction" icon="AllIcons.Vcs.Shelve"/>
       </group>
 
       <separator/>
@@ -93,19 +93,13 @@
               icon="AllIcons.Actions.Submit1"/>
       <action id="ChangesView.Move" class="com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction"
               icon="AllIcons.Actions.MoveToAnotherChangelist"/>
+      <action id="ChangesView.ShelveSilently" class="com.intellij.openapi.vcs.changes.actions.ShelveSilentlyAction"
+              text="Shelve Silently" description="Shelve changes to appropriate shelved changelists" icon="AllIcons.Vcs.SilentShelve">
+        <keyboard-shortcut first-keystroke="control alt H" keymap="$default"/>
+      </action>
       <action id="ChangesView.Diff" class="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction"
               icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
     </group>
-
-    <action id="ChangesView.ShelveSilently" class="com.intellij.openapi.vcs.changes.actions.ShelveSilentlyAction"
-            text="Shelve Silently" description="Shelve changes to appropriate shelved changelists">
-      <keyboard-shortcut first-keystroke="control alt H" keymap="$default"/>
-    </action>
-    <action id="ChangesView.UnshelveSilently" class="com.intellij.openapi.vcs.changes.actions.UnshelveSilentlyAction"
-            text="Unshelve Silently" description="Unshelve changes to appropriate changelists">
-      <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
-    </action>
-
 
     <group id="AlienCommitChangesDialog.AdditionalActions"/>
 
@@ -132,7 +126,6 @@
       <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"/>
       <reference ref="ChangesView.CreatePatch"/>
       <reference ref="ChangesView.Shelve"/>
-      <reference ref="ChangesView.ShelveSilently"/>
       <separator/>
       <reference ref="ChangesView.Refresh"/>
       <separator/>
@@ -150,8 +143,7 @@
 
     <group id="ShelvedChangesPopupMenu" popup="true">
       <action id="ShelveChanges.UnshelveWithDialog" class="com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction"
-              text="Unshelve..." description="Correct paths where to apply patches and unshelve"/>
-      <reference id="ChangesView.UnshelveSilently"/>
+              text="Unshelve..." description="Correct paths where to apply patches and unshelve" icon="AllIcons.Vcs.Unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
       <action id="ShelvedChanges.Diff" class="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesAction"
           icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
@@ -171,6 +163,10 @@
 
     <group id="ShelvedChangesToolbar">
       <reference ref="ShelvedChanges.Diff"/>
+      <action id="ChangesView.UnshelveSilently" class="com.intellij.openapi.vcs.changes.actions.UnshelveSilentlyAction"
+              text="Unshelve Silently" description="Unshelve changes to appropriate changelists" icon="AllIcons.Vcs.SilentUnshelve">
+        <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
+      </action>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <reference ref="ShelvedChanges.ShowHideDeleted" />
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
@@ -178,7 +174,6 @@
 
     <group id="ShelvedChangesToolbarGear" popup="true" icon="AllIcons.General.SecondaryGroup">
       <reference ref="ShelveChanges.UnshelveWithDialog"/>
-      <reference ref="ChangesView.UnshelveSilently"/>
       <reference ref="ShelvedChanges.Restore"/>
       <reference ref="ShelvedChanges.ImportPatches"/>
       <separator/>
