@@ -67,7 +67,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
       .filter((e) -> !e.trim().isEmpty())
       .collect(Collectors.toList());
     
-    ParameterNameHintsSettings.getInstance().setBlacklist(updatedBlackList);
+    ParameterNameHintsSettings.getInstance().setIgnorePatternList(updatedBlackList);
   }
 
   @Nullable
@@ -83,7 +83,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     EditorTextFieldProvider service = ServiceManager.getService(myProject, EditorTextFieldProvider.class);
     myEditorTextField = service.getEditorField(PlainTextLanguage.INSTANCE, myProject, ContainerUtil.emptyIterable());
     
-    List<String> blacklist = ParameterNameHintsSettings.getInstance().getBlacklist();
+    List<String> blacklist = ParameterNameHintsSettings.getInstance().getIgnorePatternList();
     String text = StringUtil.join(blacklist, "\n");
     
     myEditorTextField.setText(text);
