@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hints.filtering.Matcher;
-import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -26,38 +25,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ParameterNameHintsManager {
-
-  private static List<Matcher> MATCHERS = Stream.of(
-    "(begin*, end*)",
-    "(start*, end*)",
-    "(first*, last*)",
-    "(first*, second*)",
-    "(from*, to*)",
-    "(min*, max*)",
-    "(key, value)",
-    "(format, arg*)",
-    "*.set(*,*)",
-    "*.print(*)",
-    "*.println(*)",
-    "*.get(*)",
-    "*.append(*)",
-    "*.charAt(*)",
-    "*.contains(*)",
-    "*.startsWith(*)",
-    "*.endsWith(*)",
-    "(message)",
-    "(message, error)"
-  ).map((s) -> MatcherConstructor.INSTANCE.createMatcher(s))
-    .collect(Collectors.toList());
   
   @NotNull
   private final List<InlayInfo> myDescriptors;
+  private final List<Matcher> myBlackListMatchers;
 
-  public ParameterNameHintsManager(@NotNull PsiCallExpression callExpression) {
+  public ParameterNameHintsManager(@NotNull PsiCallExpression callExpression, List<Matcher> blackListMatchers) {
+    myBlackListMatchers = blackListMatchers;
+    
     PsiExpression[] callArguments = getArguments(callExpression);
     JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
     
@@ -74,7 +51,7 @@ public class ParameterNameHintsManager {
     myDescriptors = descriptors;
   }
 
-  private static boolean isMethodToShowParams(@NotNull PsiCallExpression callExpression, @NotNull JavaResolveResult resolveResult) {
+  private boolean isMethodToShowParams(@NotNull PsiCallExpression callExpression, @NotNull JavaResolveResult resolveResult) {
     PsiElement element = resolveResult.getElement();
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
@@ -103,7 +80,7 @@ public class ParameterNameHintsManager {
     return method.getParameterList().getParametersCount() == 1;
   }
 
-  private static boolean isBlackListed(PsiMethod method) {
+  private boolean isBlackListed(PsiMethod method) {
     PsiClass aClass = method.getContainingClass();
     String qualifier = aClass != null ? aClass.getQualifiedName() : "";
     String fullMethodName = qualifier + "." + method.getName();
@@ -111,7 +88,7 @@ public class ParameterNameHintsManager {
     PsiParameter[] params = method.getParameterList().getParameters();
     List<String> paramNames = ContainerUtil.map(params, (e) -> e.getName());
 
-    return MATCHERS.stream().anyMatch((e) -> e.isMatching(fullMethodName, paramNames));
+    return myBlackListMatchers.stream().anyMatch((e) -> e.isMatching(fullMethodName, paramNames));
   }
 
   private static boolean isSetter(PsiMethod method) {
