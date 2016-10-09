@@ -351,6 +351,11 @@ public class IdeEventQueue extends EventQueue {
     return loaded;
   }
 
+  //Use for GuiTests to stop IdeEventQueue when application is disposed already
+  public static void applicationClose(){
+    ourAppIsLoaded = false;
+  }
+
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
     if (!appIsLoaded()) {

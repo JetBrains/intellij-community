@@ -30,10 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -358,6 +355,15 @@ public class IdeaApplication {
       project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
     }
     return project;
+  }
+
+  /**
+   * Used for GUI tests to stop IdeEventQueue dispatching when Application is disposed already
+   */
+  public void shutdown(){
+    myLoaded = false;
+    IdeEventQueue.applicationClose();
+    ShutDownTracker.getInstance().run();
   }
 
   public String[] getCommandLineArguments() {

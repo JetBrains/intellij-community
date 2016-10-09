@@ -771,10 +771,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       saveSettings();
 
+
       boolean success = disposeSelf(!force);
-      if (!success || isUnitTestMode()) {
-        return;
+    if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
+      if (Boolean.getBoolean("idea.test.guimode")) {
+        IdeaApplication.getInstance().shutdown();
       }
+      return;
+    }
 
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
