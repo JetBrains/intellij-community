@@ -168,6 +168,7 @@ public class HgStatusCommand {
     if (myCleanStatus) {
       options.add("--clean");
     }
+    executor.setOutputAlwaysSuppressed(myCleanStatus || myIncludeUnknown || myIncludeIgnored);
     if (myBaseRevision != null && (!myBaseRevision.getRevision().isEmpty() || !myBaseRevision.getChangeset().isEmpty())) {
       options.add("--rev");
       options.add(StringUtil.isEmptyOrSpaces(myBaseRevision.getChangeset()) ? myBaseRevision.getRevision() : myBaseRevision.getChangeset());
@@ -202,7 +203,7 @@ public class HgStatusCommand {
       return changes;
     }
     List<String> errors = result.getErrorLines();
-    if (errors != null && !errors.isEmpty()) {
+    if (!errors.isEmpty()) {
       if (result.getExitValue() != 0 && !myProject.isDisposed()) {
         String title = "Could not execute hg status command ";
         LOG.warn(title + errors.toString());
