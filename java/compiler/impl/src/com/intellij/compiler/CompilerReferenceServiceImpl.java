@@ -17,6 +17,7 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.backwardRefs.LanguageLightUsageConverter;
 import com.intellij.compiler.server.BuildManagerListener;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -31,9 +32,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -185,7 +184,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   @Nullable
   @Override
   public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
-    if (!isServiceEnabled()) return null;
+    if (!isServiceEnabled() || InjectedLanguageManager.getInstance(myProject).isInjectedFragment(element.getContainingFile())) return null;
 
     return CachedValuesManager.getCachedValue(element,
                                               () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<CompilerSearchAdapter, GlobalSearchScope>() {
@@ -206,7 +205,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                                                         @NotNull CompilerSearchAdapter compilerSearchAdapter,
                                                                                         @NotNull CompilerDirectInheritorSearchAdapter<T> inheritorSearchAdapter,
                                                                                         @NotNull FileType... searchFileTypes) {
-    if (!isServiceEnabled()) return null;
+    if (!isServiceEnabled() || InjectedLanguageManager.getInstance(myProject).isInjectedFragment(aClass.getContainingFile())) return null;
 
     //TODO should be available to search inheritors of lib classes
     final VirtualFile file = aClass.getContainingFile().getVirtualFile();
