@@ -186,8 +186,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
           maxWidth = Math.max(getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(value), maxWidth);
           if (!value.isEmpty()) sizeCalculated = true;
         }
-        int min =
-          Math.min(maxWidth + UIUtil.DEFAULT_HGAP, MAX_DEFAULT_AUTHOR_COLUMN_WIDTH + myStringCellRenderer.getHorizontalTextPadding());
+        int min = Math.min(maxWidth + myStringCellRenderer.getHorizontalTextPadding(), MAX_DEFAULT_AUTHOR_COLUMN_WIDTH);
         column.setPreferredWidth(min);
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
