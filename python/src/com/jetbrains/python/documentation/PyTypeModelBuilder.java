@@ -202,7 +202,7 @@ public class PyTypeModelBuilder {
       final PyTupleType tupleType = (PyTupleType)type;
 
       final List<PyType> elementTypes = tupleType.isHomogeneous()
-                                        ? Collections.singletonList(tupleType.getElementType(0))
+                                        ? Collections.singletonList(tupleType.getIteratedItemType())
                                         : tupleType.getElementTypes(myContext);
 
       final List<TypeModel> elementModels = ContainerUtil.map(elementTypes, elementType -> build(elementType, true));

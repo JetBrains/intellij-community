@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
@@ -95,5 +96,12 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
       result += type != null ? type.hashCode() : 0;
     }
     return result;
+  }
+
+  @Nullable
+  @Override
+  public PyType getIteratedItemType() {
+    // TODO: Select the parameter type that matches T in Iterable[T]
+    return ContainerUtil.getFirstItem(myElementTypes);
   }
 }
