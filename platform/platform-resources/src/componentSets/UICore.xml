@@ -62,8 +62,5 @@
     <component>
       <implementation-class>com.intellij.ui.switcher.QuickActionManager</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.intellij.ide.bookmarks.BookmarkManager</implementation-class>
-    </component>
   </project-components>
 </idea-plugin>
