@@ -156,11 +156,6 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
     return new ConfigureAndroidProjectStepFixture(robot(), rootPane);
   }
 
-  @NotNull
-  public ConfigureFormFactorStepFixture getConfigureFormFactorStep() {
-    JRootPane rootPane = findStepWithTitle("Select the form factors your app will run on");
-    return new ConfigureFormFactorStepFixture(robot(), rootPane);
-  }
 
   @NotNull
   public ChooseOptionsForNewFileStepFixture getChooseOptionsForNewFileStep() {
