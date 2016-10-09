@@ -31,10 +31,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.HashMap;
-import com.jediterm.terminal.ProcessTtyConnector;
+import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
-import com.pty4j.WinSize;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,29 +139,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   protected TtyConnector createTtyConnector(PtyProcess process) {
     return new PtyProcessTtyConnector(process, myDefaultCharset);
-  }
-
-  public static class PtyProcessTtyConnector extends ProcessTtyConnector {
-    private PtyProcess myProcess;
-
-    public PtyProcessTtyConnector(PtyProcess process, Charset charset) {
-      super(process, charset);
-      this.myProcess = process;
-    }
-
-    protected void resizeImmediately() {
-      if(this.getPendingTermSize() != null && this.getPendingPixelSize() != null) {
-        this.myProcess.setWinSize(new WinSize(this.getPendingTermSize().width, this.getPendingTermSize().height, this.getPendingPixelSize().width, this.getPendingPixelSize().height));
-      }
-    }
-
-    public boolean isConnected() {
-      return this.myProcess.isRunning();
-    }
-
-    public String getName() {
-      return "Local";
-    }
   }
 
   @Override
