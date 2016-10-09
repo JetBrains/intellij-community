@@ -36,6 +36,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class JavaExportsStatementElementType extends JavaStubElementType<PsiExportsStatementStub, PsiExportsStatement> {
   public JavaExportsStatementElementType() {
     super("EXPORTS_STATEMENT");
@@ -68,7 +70,7 @@ public class JavaExportsStatementElementType extends JavaStubElementType<PsiExpo
       else if (type == JavaElementType.MODULE_REFERENCE) to.add(JavaSourceUtil.getReferenceText(tree, child));
     }
 
-    return new PsiExportsStatementStubImpl(parentStub, refText, to);
+    return new PsiExportsStatementStubImpl(parentStub, notNull(refText, ""), to);
   }
 
   @Override

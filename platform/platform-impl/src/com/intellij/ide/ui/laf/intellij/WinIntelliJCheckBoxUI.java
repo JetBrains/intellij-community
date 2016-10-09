@@ -36,27 +36,9 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
     final Color color = enabled ? b.getForeground() : getBorderColor1(false, false);
     g.setColor(color);
-
+    final Icon icon = MacIntelliJIconCache.getIcon("checkBox", selected, false, enabled);
     Rectangle r = new Rectangle(iconRect.x + JBUI.scale(2), iconRect.y + JBUI.scale(2), iconRect.width - JBUI.scale(4), iconRect.height - JBUI.scale(4));
-    g.drawRect(r.x, r.y, r.width, r.height);
-
-    if (selected) {
-      final int x1 = r.x + JBUI.scale(3);
-      final int y1 = r.y + r.height / 2 + JBUI.scale(1);
-      final int x2 = r.x + r.height / 2 - JBUI.scale(1);
-      final int y2 = r.y + r.height - JBUI.scale(4);
-
-      final Graphics2D iconGraphics = (Graphics2D)g.create(0, 0, c.getWidth(), c.getHeight());
-      iconGraphics.setColor(color);
-      iconGraphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-      iconGraphics.setStroke(new BasicStroke(JBUI.scale(1.5f), BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
-
-      if (enabled) {
-        iconGraphics.drawLine(x1, y1, x2, y2);
-        iconGraphics.drawLine(x2, y2, r.x + r.width - JBUI.scale(2), r.y + JBUI.scale(4));
-      }
-      iconGraphics.dispose();
-    }
+    icon.paintIcon(c, g, r.x, r.y);
   }
 
   @Override
