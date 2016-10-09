@@ -195,7 +195,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                     return calculateScopeWithoutReferences(element, key);
                                                   }
                                               },
-                                              PsiModificationTracker.MODIFICATION_COUNT)).get(adapter);
+                                              PsiModificationTracker.MODIFICATION_COUNT, this)).get(adapter);
   }
 
   @Nullable
@@ -216,14 +216,17 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     if (compilerElement == null) return null;
 
     final GlobalSearchScope dirtyScope = myDirtyModulesHolder.getDirtyScope();
-    final Couple<Map<VirtualFile, T[]>> directInheritorsAndCandidates = myReader.getDirectInheritors(compilerElement,
-                                                                                                     aClass,
-                                                                                                     inheritorSearchAdapter,
-                                                                                                     useScope,
-                                                                                                     dirtyScope,
-                                                                                                     myProject,
-                                                                                                     searchFileTypes);
 
+    Couple<Map<VirtualFile, T[]>> directInheritorsAndCandidates =
+      CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(myReader.getDirectInheritors(compilerElement,
+                                                                                                                      aClass,
+                                                                                                                      inheritorSearchAdapter,
+                                                                                                                      useScope,
+                                                                                                                      dirtyScope,
+                                                                                                                      myProject,
+                                                                                                                      searchFileTypes),
+                                                                                         PsiModificationTracker.MODIFICATION_COUNT,
+                                                                                         this));
 
     return new CompilerDirectInheritorInfo<>(selectClassesInScope(directInheritorsAndCandidates.getFirst(), searchScope),
                                              selectClassesInScope(directInheritorsAndCandidates.getSecond(), searchScope),
