@@ -74,6 +74,9 @@ import java.util.Date;
 import java.util.EventObject;
 import java.util.List;
 
+import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.BOLD;
+import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
+
 public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
@@ -183,7 +186,15 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         int maxWidth = 0;
         for (int row = 0; row < maxRowsToCheck; row++) {
           String value = getModel().getValueAt(row, i).toString();
-          maxWidth = Math.max(getFontMetrics(tableFont.deriveFont(Font.BOLD)).stringWidth(value), maxWidth);
+          Font font = tableFont;
+          VcsLogHighlighter.TextStyle style = getStyle(row, i, value, false, false).getTextStyle();
+          if (BOLD.equals(style)) {
+            font = tableFont.deriveFont(Font.BOLD);
+          }
+          else if (ITALIC.equals(style)) {
+            font = tableFont.deriveFont(Font.ITALIC);
+          }
+          maxWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxWidth);
           if (!value.isEmpty()) sizeCalculated = true;
         }
         int min = Math.min(maxWidth + myStringCellRenderer.getHorizontalTextPadding(), MAX_DEFAULT_AUTHOR_COLUMN_WIDTH);
