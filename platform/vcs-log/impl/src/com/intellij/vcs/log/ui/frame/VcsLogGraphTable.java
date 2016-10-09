@@ -97,12 +97,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Nullable private Selection mySelection = null;
 
   @NotNull private final Collection<VcsLogHighlighter> myHighlighters = ContainerUtil.newArrayList();
-  @NotNull private final GraphCellPainter myGraphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
-    @Override
-    protected int getRowHeight() {
-      return VcsLogGraphTable.this.getRowHeight();
-    }
-  };
 
   public VcsLogGraphTable(@NotNull VcsLogUiImpl ui, @NotNull VcsLogData logData, @NotNull VisiblePack initialDataPack) {
     super(new GraphTableModel(initialDataPack, logData, ui));
@@ -110,7 +104,13 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     myUi = ui;
     myLogData = logData;
-    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, myGraphCellPainter, this);
+    GraphCellPainter graphCellPainter = new SimpleGraphCellPainter(new DefaultColorGenerator()) {
+      @Override
+      protected int getRowHeight() {
+        return VcsLogGraphTable.this.getRowHeight();
+      }
+    };
+    myGraphCommitCellRenderer = new GraphCommitCellRenderer(logData, graphCellPainter, this);
     myStringCellRenderer = new StringCellRenderer();
 
     myLogData.getProgress().addProgressIndicatorListener(new MyProgressListener(), ui);
@@ -123,7 +123,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     setIntercellSpacing(JBUI.emptySize());
     setTableHeader(new InvisibleResizableHeader());
 
-    myController = new GraphTableController(this, ui, logData, myGraphCellPainter, myGraphCommitCellRenderer);
+    myController = new GraphTableController(this, ui, logData, graphCellPainter, myGraphCommitCellRenderer);
 
     getSelectionModel().addListSelectionListener(new MyListSelectionListener());
 
