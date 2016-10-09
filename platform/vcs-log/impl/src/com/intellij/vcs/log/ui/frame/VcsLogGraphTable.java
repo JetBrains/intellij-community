@@ -91,7 +91,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final TableCellRenderer myDummyRenderer = new DefaultTableCellRenderer();
   @NotNull private final GraphCommitCellRenderer myGraphCommitCellRenderer;
   @NotNull private final GraphTableController myController;
-  private final StringCellRenderer myStringCellRenderer;
+  @NotNull private final StringCellRenderer myStringCellRenderer;
   private boolean myColumnsSizeInitialized = false;
 
   @Nullable private Selection mySelection = null;
