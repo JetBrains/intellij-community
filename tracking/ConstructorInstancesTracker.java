@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.memory.component.CreationPositionTracker;
 import org.jetbrains.debugger.memory.component.InstancesTracker;
+import org.jetbrains.debugger.memory.event.InstancesTrackerListener;
 import org.jetbrains.debugger.memory.utils.StackFrameDescriptor;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
@@ -48,8 +49,8 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   @NotNull
   private HashSet<ObjectReference> myTrackedObjects = new HashSet<>();
 
-  private boolean myIsBackgroundMode;
-  private boolean myIsBackgroundTrackingEnabled;
+  private volatile boolean myIsBackgroundMode;
+  private volatile boolean myIsBackgroundTrackingEnabled;
 
   public ConstructorInstancesTracker(@NotNull ReferenceType ref,
                                      @NotNull XDebugSession debugSession) {
@@ -57,7 +58,28 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     myDebugSession = debugSession;
     myPositionTracker = CreationPositionTracker.getInstance(debugSession.getProject());
     Project project = debugSession.getProject();
-    myIsBackgroundTrackingEnabled = InstancesTracker.getInstance(myDebugSession.getProject()).isBackgroundTrackingEnabled();
+    myIsBackgroundTrackingEnabled = InstancesTracker.getInstance(myDebugSession.getProject())
+        .isBackgroundTrackingEnabled();
+
+    InstancesTracker.getInstance(myDebugSession.getProject()).addTrackerListener(new InstancesTrackerListener() {
+      @Override
+      public void backgroundTrackingValueChanged(boolean newState) {
+        if (myIsBackgroundTrackingEnabled != newState) {
+          myIsBackgroundTrackingEnabled = newState;
+          myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
+            @Override
+            protected void action() throws Exception {
+              if (newState) {
+                myBreakpoint.enable();
+              } else {
+                myBreakpoint.disable();
+              }
+            }
+          });
+        }
+      }
+    }, this);
+
     myDebugProcess = (DebugProcessImpl) DebuggerManager.getInstance(project)
         .getDebugProcess(debugSession.getDebugProcess().getProcessHandler());
     JavaLineBreakpointType breakPointType = new JavaLineBreakpointType();
@@ -99,6 +121,14 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     return myNewObjects == null ? 0 : myNewObjects.size();
   }
 
+  public void enable() {
+    myBreakpoint.enable();
+  }
+
+  public void disable() {
+    myBreakpoint.disable();
+  }
+
   @Override
   public boolean isReady() {
     return myNewObjects != null;
@@ -107,23 +137,6 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
   @Override
   public void dispose() {
     myBreakpoint.dispose();
-  }
-
-  @Override
-  public void backgroundTrackingValueChanged(boolean newValue) {
-    if (myIsBackgroundTrackingEnabled != newValue) {
-      myIsBackgroundTrackingEnabled = newValue;
-      myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
-        @Override
-        protected void action() throws Exception {
-          if (newValue) {
-            myBreakpoint.enable();
-          } else {
-            myBreakpoint.disable();
-          }
-        }
-      });
-    }
   }
 
   @Override
@@ -243,4 +256,3 @@ public class ConstructorInstancesTracker implements TrackerForNewInstances, Disp
     }
   }
 }
-

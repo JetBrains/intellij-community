@@ -69,6 +69,16 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
   private volatile SuspendContextImpl myLastSuspendContext;
 
+  /**
+   * Indicates that the debug session had been stopped at least once.
+   *
+   * State: false -> true
+   */
+  private volatile boolean myIsTrackersActivated = false;
+
+  /**
+   * Indicates that view is visible in tool window
+   */
   private boolean myIsActive;
 
   public ClassesFilteredView(@NotNull XDebugSession debugSession) {
@@ -88,7 +98,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
               .schedule(new LowestPriorityCommand(getSuspendContext()) {
                 @Override
                 public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-                  trackClass(ref, type);
+                  trackClass(ref, type, myIsTrackersActivated);
                 }
               });
         }
@@ -96,7 +106,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
       @Override
       public void classRemoved(@NotNull String name) {
-        myTable.getRowSorter().allRowsChanged();
+        ReferenceType ref = myTable.getClassByName(name);
+        if (ref != null && myConstructorTrackedClasses.containsKey(ref)) {
+          ConstructorInstancesTracker removed = myConstructorTrackedClasses.remove(ref);
+          removed.dispose();
+          myTable.getRowSorter().allRowsChanged();
+        }
       }
     };
 
@@ -116,12 +131,12 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
             new ClassPreparedListener(className, myDebugSession) {
               @Override
               public void onClassPrepared(@NotNull ReferenceType referenceType) {
-                trackClass(referenceType, type);
+                trackClass(referenceType, type, myIsTrackersActivated);
               }
             };
           } else {
             for (ReferenceType ref : classes) {
-              trackClass(ref, type);
+              trackClass(ref, type, myIsTrackersActivated);
             }
           }
         }
@@ -215,6 +230,10 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         SwingUtilities.invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
         commitAllTrackers();
         updateClassesAndCounts();
+        if(!myIsTrackersActivated) {
+          myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::enable);
+          myIsTrackersActivated = true;
+        }
       }
     };
 
@@ -250,7 +269,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   }
 
   private void trackClass(@NotNull ReferenceType ref,
-                          @NotNull TrackingType type) {
+                          @NotNull TrackingType type,
+                          boolean isTrackerEnabled) {
     LOG.assertTrue(DebuggerManager.getInstance(myProject).isDebuggerManagerThread());
     if (type == TrackingType.CREATION) {
       ConstructorInstancesTracker old = myConstructorTrackedClasses.getOrDefault(ref, null);
@@ -260,6 +280,11 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
       ConstructorInstancesTracker tracker = new ConstructorInstancesTracker(ref, myDebugSession);
       tracker.setBackgroundMode(!myIsActive);
+      if (isTrackerEnabled) {
+        tracker.enable();
+      } else {
+        tracker.disable();
+      }
 
       Disposer.register(ClassesFilteredView.this, tracker);
       myConstructorTrackedClasses.put(ref, tracker);
