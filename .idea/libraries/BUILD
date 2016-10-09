@@ -5,6 +5,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/protobuf-2.5.0"],
     exports = ["//tools:idea/lib/protobuf-2.5.0"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -12,6 +13,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/guava-18.0"],
     exports = ["//tools:idea/lib/guava-18.0"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -25,6 +27,7 @@ java_library(
         "//tools:idea/lib/junit-4.12",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -32,6 +35,7 @@ java_library(
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.28:jar"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/truth/truth/0.28:jar"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -39,6 +43,7 @@ java_library(
     runtime_deps = ["//prebuilts/tools/common/easymock-tools:easymock-3.1"],
     exports = ["//prebuilts/tools/common/easymock-tools:easymock-3.1"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -46,6 +51,7 @@ java_library(
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/mockito/mockito-all/1.9.5:jar"],
     exports = ["//prebuilts/tools/common/m2/repository/org/mockito/mockito-all/1.9.5:jar"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -53,6 +59,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/gson-2.5"],
     exports = ["//tools:idea/lib/gson-2.5"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -60,6 +67,7 @@ java_library(
     runtime_deps = ["//prebuilts/tools/common/kxml2-tools:kxml2-2.3.0"],
     exports = ["//prebuilts/tools/common/kxml2-tools:kxml2-2.3.0"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -67,6 +75,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/trove4j"],
     exports = ["//tools:idea/lib/trove4j"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -82,6 +91,7 @@ java_library(
         "//tools/adt/idea:android/lib/jsr305-1.3.9",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -89,6 +99,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/junit"],
     exports = ["//tools:idea/lib/junit"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -96,6 +107,7 @@ java_library(
     runtime_deps = ["//tools/adt/idea:android/lib/commons-compress-1.8.1"],
     exports = ["//tools/adt/idea:android/lib/commons-compress-1.8.1"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -103,6 +115,7 @@ java_library(
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/google/jimfs/jimfs/1.1:jar"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/jimfs/jimfs/1.1:jar"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -120,6 +133,7 @@ java_library(
         "//tools:idea/lib/fluent-hc-4.4.1",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -127,6 +141,7 @@ java_library(
     runtime_deps = ["//prebuilts/tools/common/builder-model:builder-model-2.3.0-dev"],
     exports = ["//prebuilts/tools/common/builder-model:builder-model-2.3.0-dev"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -140,6 +155,7 @@ java_library(
         "//prebuilts/tools/common/m2/repository/org/bouncycastle/bcprov-jdk15on/1.48:jar",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -147,6 +163,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/xmlrpc-2.0"],
     exports = ["//tools:idea/lib/xmlrpc-2.0"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -194,6 +211,7 @@ java_library(
         "//tools:idea/lib/ant/lib/ant-javamail",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -201,6 +219,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/guava-18.0"],
     exports = ["//tools:idea/lib/guava-18.0"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -208,6 +227,7 @@ java_library(
     runtime_deps = ["//tools/adt/idea:android/lib/commons-io-2.4"],
     exports = ["//tools/adt/idea:android/lib/commons-io-2.4"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -215,6 +235,7 @@ java_library(
     runtime_deps = ["//tools/adt/idea:android/lib/juniversalchardet-1.0.3"],
     exports = ["//tools/adt/idea:android/lib/juniversalchardet-1.0.3"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -222,11 +243,13 @@ java_library(
     runtime_deps = ["//tools/adt/idea:android/lib/antlr4-runtime-4.5.3"],
     exports = ["//tools/adt/idea:android/lib/antlr4-runtime-4.5.3"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
     name = "KotlinJavaRuntime",
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -234,6 +257,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/asm-all"],
     exports = ["//tools:idea/lib/asm-all"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -241,6 +265,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/jdom"],
     exports = ["//tools:idea/lib/jdom"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -248,6 +273,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/jgoodies-forms"],
     exports = ["//tools:idea/lib/jgoodies-forms"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -261,6 +287,7 @@ java_library(
         "//tools:idea/lib/hamcrest-core-1.3",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -274,6 +301,7 @@ java_library(
         "//tools:idea/plugins/testng/lib/jcommander",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -289,6 +317,7 @@ java_library(
         "//tools:idea/lib/coverage-util",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -296,6 +325,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/eawtstub"],
     exports = ["//tools:idea/lib/eawtstub"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -303,6 +333,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/log4j"],
     exports = ["//tools:idea/lib/log4j"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -310,6 +341,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/picocontainer"],
     exports = ["//tools:idea/lib/picocontainer"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -323,6 +355,7 @@ java_library(
         "//tools:idea/lib/jna-platform",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -330,6 +363,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/oromatcher"],
     exports = ["//tools:idea/lib/oromatcher"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -337,6 +371,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/jsr166e"],
     exports = ["//tools:idea/lib/jsr166e"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -344,6 +379,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/snappy-in-java-0.3.1"],
     exports = ["//tools:idea/lib/snappy-in-java-0.3.1"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -351,6 +387,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/imgscalr-lib-4.2"],
     exports = ["//tools:idea/lib/imgscalr-lib-4.2"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -358,6 +395,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/batik-all"],
     exports = ["//tools:idea/lib/batik-all"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -365,6 +403,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/xmlgraphics-commons-1.5"],
     exports = ["//tools:idea/lib/xmlgraphics-commons-1.5"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -372,6 +411,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/xml-apis-ext"],
     exports = ["//tools:idea/lib/xml-apis-ext"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -379,6 +419,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/xstream-1.4.8"],
     exports = ["//tools:idea/lib/xstream-1.4.8"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -392,6 +433,7 @@ java_library(
         "//tools:idea/lib/xml-apis",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -405,6 +447,7 @@ java_library(
         "//tools:idea/lib/asm-commons",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -412,6 +455,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/cglib-2.2.2"],
     exports = ["//tools:idea/lib/cglib-2.2.2"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -419,6 +463,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/nanoxml-2.2.3"],
     exports = ["//tools:idea/lib/nanoxml-2.2.3"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -426,6 +471,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/commons-codec-1.9"],
     exports = ["//tools:idea/lib/commons-codec-1.9"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -433,6 +479,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/netty-all-4.1.0.CR7"],
     exports = ["//tools:idea/lib/netty-all-4.1.0.CR7"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -440,6 +487,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/proxy-vole_20131209"],
     exports = ["//tools:idea/lib/proxy-vole_20131209"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -447,6 +495,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/pty4j-0.6"],
     exports = ["//tools:idea/lib/pty4j-0.6"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -468,6 +517,7 @@ java_library(
         "//tools:idea/lib/dev/objenesis-1.0",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -475,6 +525,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/microba"],
     exports = ["//tools:idea/lib/microba"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -490,6 +541,7 @@ java_library(
         "//tools/adt/idea:android/lib/asm-tree-5.0.3",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -497,6 +549,7 @@ java_library(
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/android/tools/external/lombok/lombok-ast/0.2.3:jar"],
     exports = ["//prebuilts/tools/common/m2/repository/com/android/tools/external/lombok/lombok-ast/0.2.3:jar"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -504,6 +557,7 @@ java_library(
     runtime_deps = ["//tools/adt/idea:android/lib/jarutils"],
     exports = ["//tools/adt/idea:android/lib/jarutils"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -511,6 +565,7 @@ java_library(
     runtime_deps = ["//prebuilts/studio/layoutlib:data/layoutlib"],
     exports = ["//prebuilts/studio/layoutlib:data/layoutlib"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -518,6 +573,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/groovy-all-2.4.6"],
     exports = ["//tools:idea/lib/groovy-all-2.4.6"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -525,6 +581,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/dev/assertj-core-3.2.0"],
     exports = ["//tools:idea/lib/dev/assertj-core-3.2.0"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -532,6 +589,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/jaxen-1.1.3"],
     exports = ["//tools:idea/lib/jaxen-1.1.3"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -547,6 +605,7 @@ java_library(
         "//tools:idea/lib/resolver",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -554,6 +613,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/jcip-annotations"],
     exports = ["//tools:idea/lib/jcip-annotations"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -561,6 +621,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/swingx-core-1.6.2"],
     exports = ["//tools:idea/lib/swingx-core-1.6.2"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -568,6 +629,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/sanselan-0.98-snapshot"],
     exports = ["//tools:idea/lib/sanselan-0.98-snapshot"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -575,6 +637,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/velocity"],
     exports = ["//tools:idea/lib/velocity"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -582,6 +645,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/xpp3-1.1.4-min"],
     exports = ["//tools:idea/lib/xpp3-1.1.4-min"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -589,6 +653,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/cli-parser-1.1"],
     exports = ["//tools:idea/lib/cli-parser-1.1"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -596,6 +661,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/commons-logging-1.2"],
     exports = ["//tools:idea/lib/commons-logging-1.2"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -603,6 +669,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/jh"],
     exports = ["//tools:idea/lib/jh"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -610,6 +677,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/winp-1.23"],
     exports = ["//tools:idea/lib/winp-1.23"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -617,6 +685,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/miglayout-swing"],
     exports = ["//tools:idea/lib/miglayout-swing"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -624,6 +693,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/jayatana-1.2.4"],
     exports = ["//tools:idea/lib/jayatana-1.2.4"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -637,11 +707,13 @@ java_library(
         "//tools:idea/lib/slf4j-log4j12-1.7.10",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
     name = "KotlinTest",
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -659,6 +731,7 @@ java_library(
         "//tools:idea/lib/objenesis-1.2",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -666,6 +739,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/serviceMessages"],
     exports = ["//tools:idea/lib/serviceMessages"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -673,6 +747,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/ecj-4.5.2"],
     exports = ["//tools:idea/lib/ecj-4.5.2"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -710,6 +785,7 @@ java_library(
         "//tools:idea/plugins/gradle/lib/gradle-cli-3.1",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -717,6 +793,7 @@ java_library(
     runtime_deps = ["//tools:idea/plugins/groovy/lib/groovy-eclipse-batch-2.3.4-01"],
     exports = ["//tools:idea/plugins/groovy/lib/groovy-eclipse-batch-2.3.4-01"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -730,6 +807,7 @@ java_library(
         "//tools:idea/plugins/groovy/testdata/griffon/griffon-cli-1.1.0",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -737,6 +815,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/nekohtml-1.9.14"],
     exports = ["//tools:idea/lib/nekohtml-1.9.14"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -744,6 +823,7 @@ java_library(
     runtime_deps = ["//tools:idea/plugins/gradle/lib/guava-jdk5-17.0"],
     exports = ["//tools:idea/plugins/gradle/lib/guava-jdk5-17.0"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -779,6 +859,7 @@ java_library(
         "//tools:idea/plugins/gradle/tooling-extension-impl/lib/gradle-ear-3.1",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -798,11 +879,13 @@ java_library(
         "//tools:idea/plugins/maven/maven2-server-impl/lib/maven2/boot/classworlds-1.1",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
     name = "JAXB",
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -810,6 +893,7 @@ java_library(
     runtime_deps = ["//tools:idea/plugins/gradle/lib/commons-io-2.2"],
     exports = ["//tools:idea/plugins/gradle/lib/commons-io-2.2"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -823,6 +907,7 @@ java_library(
         "//tools:idea/plugins/gradle/lib/native-platform-0.11",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -830,6 +915,7 @@ java_library(
     runtime_deps = ["//prebuilts/tools/common/m2/repository/org/freemarker/freemarker/2.3.20:jar"],
     exports = ["//prebuilts/tools/common/m2/repository/org/freemarker/freemarker/2.3.20:jar"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -837,6 +923,7 @@ java_library(
     runtime_deps = ["//tools:idea/lib/asm4-all"],
     exports = ["//tools:idea/lib/asm4-all"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -844,6 +931,7 @@ java_library(
     runtime_deps = ["//tools/adt/idea:android/lib/jgraphx-3.4.0.1"],
     exports = ["//tools/adt/idea:android/lib/jgraphx-3.4.0.1"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -865,6 +953,7 @@ java_library(
         "//tools/adt/idea:android/lib/jogl-all-natives-windows-i586",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -886,6 +975,7 @@ java_library(
         "//tools/adt/idea:android/lib/gluegen-rt-natives-windows-i586",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -899,6 +989,7 @@ java_library(
         "//tools/adt/idea:android/lib/dexlib2-util-2.0.8-dev",
     ],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
 
 java_library(
@@ -906,4 +997,5 @@ java_library(
     runtime_deps = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
     exports = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
     visibility = ["//visibility:public"],
+    tags = ["managed"],
 )
