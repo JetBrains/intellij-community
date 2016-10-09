@@ -31,7 +31,7 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
-import com.jediterm.pty.PtyProcessTtyConnector;
+import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
@@ -139,7 +139,7 @@ public class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvi
 
   @Override
   public String tabName(TtyConnector ttyConnector, String sessionName) { //for local terminal use name from settings
-    if (ttyConnector instanceof PtyProcessTtyConnector) {
+    if (ttyConnector instanceof ProcessTtyConnector) {
       return TerminalOptionsProvider.getInstance().getTabName();
     }
     else {
