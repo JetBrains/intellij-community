@@ -51,7 +51,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.AppContext;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
