@@ -292,8 +292,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       return Ref.create(argumentType);
     }
     else if (argumentType instanceof PyCollectionType) {
-      final PyType iteratedValueType = ContainerUtil.getFirstItem(((PyCollectionType)argumentType).getElementTypes(context));
-      return Ref.create(PyTupleType.createHomogeneous(call, iteratedValueType));
+      final PyType iteratedItemType = ((PyCollectionType)argumentType).getIteratedItemType();
+      return Ref.create(PyTupleType.createHomogeneous(call, iteratedItemType));
     }
 
     return null;

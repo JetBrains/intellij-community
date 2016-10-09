@@ -134,7 +134,7 @@ public class PyTypeChecker {
           }
         }
         else if (superTupleType.isHomogeneous() && !subTupleType.isHomogeneous()) {
-          final PyType expectedElementType = superTupleType.getElementType(0);
+          final PyType expectedElementType = superTupleType.getIteratedItemType();
           for (int i = 0; i < subTupleType.getElementCount(); i++) {
             if (!match(expectedElementType, subTupleType.getElementType(i), context)) {
               return false;
@@ -146,7 +146,7 @@ public class PyTypeChecker {
           return false;
         }
         else {
-          return match(superTupleType.getElementType(0), subTupleType.getElementType(0), context);
+          return match(superTupleType.getIteratedItemType(), subTupleType.getIteratedItemType(), context);
         }
       }
       else if (expected instanceof PyCollectionType && actual instanceof PyTupleType) {
@@ -154,11 +154,8 @@ public class PyTypeChecker {
           return false;
         }
 
-        final PyTupleType actualTupleType = (PyTupleType)actual;
-        final PyType superElementType = ContainerUtil.getFirstItem(((PyCollectionType)expected).getElementTypes(context));
-        final PyType subElementType = actualTupleType.isHomogeneous()
-                                      ? actualTupleType.getElementType(0)
-                                      : PyUnionType.union(actualTupleType.getElementTypes(context));
+        final PyType superElementType = ((PyCollectionType)expected).getIteratedItemType();
+        final PyType subElementType = ((PyTupleType)actual).getIteratedItemType();
 
         if (!match(superElementType, subElementType, context, substitutions, recursive)) {
           return false;
@@ -371,7 +368,7 @@ public class PyTypeChecker {
         final PyClass tupleClass = tupleType.getPyClass();
 
         final List<PyType> oldElementTypes = tupleType.isHomogeneous()
-                                             ? Collections.singletonList(tupleType.getElementType(0))
+                                             ? Collections.singletonList(tupleType.getIteratedItemType())
                                              : tupleType.getElementTypes(context);
 
         final List<PyType> newElementTypes =

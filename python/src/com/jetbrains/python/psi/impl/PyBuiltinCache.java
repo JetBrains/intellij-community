@@ -217,7 +217,7 @@ public class PyBuiltinCache {
             final List<PyType> tupleElementTypes = tupleType.getElementTypes(context);
 
             if (tupleType.isHomogeneous()) {
-              final PyType keyAndValueType = tupleElementTypes.get(0);
+              final PyType keyAndValueType = tupleType.getIteratedItemType();
 
               keyTypes.add(keyAndValueType);
               valueTypes.add(keyAndValueType);

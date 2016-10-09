@@ -110,7 +110,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyType returnType = myTypeEvalContext.getReturnType(function);
 
       if (returnType instanceof PyCollectionType && PyNames.FAKE_COROUTINE.equals(returnType.getName())) {
-        return ((PyCollectionType)returnType).getElementTypes(myTypeEvalContext).get(0);
+        return ((PyCollectionType)returnType).getIteratedItemType();
       }
 
       return returnType;

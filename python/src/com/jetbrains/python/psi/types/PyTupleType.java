@@ -62,7 +62,7 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   @NotNull
   public String getName() {
     if (myHomogeneous) {
-      return "(" + (getTypeName(myElementTypes.get(0))) + ", ...)";
+      return "(" + (getTypeName(getIteratedItemType())) + ", ...)";
     }
     return "(" + StringUtil.join(myElementTypes, PyTupleType::getTypeName, ", ") + ")";
   }
@@ -86,7 +86,7 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   @Nullable
   public PyType getElementType(int index) {
     if (myHomogeneous) {
-      return myElementTypes.get(0);
+      return getIteratedItemType();
     }
     if (index >= 0 && index < myElementTypes.size()) {
       return myElementTypes.get(index);
@@ -126,5 +126,11 @@ public class PyTupleType extends PyClassTypeImpl implements PyCollectionType {
   @Override
   public List<PyType> getElementTypes(@NotNull TypeEvalContext context) {
     return myElementTypes;
+  }
+
+  @Nullable
+  @Override
+  public PyType getIteratedItemType() {
+    return PyUnionType.union(myElementTypes);
   }
 }

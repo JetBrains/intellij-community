@@ -187,7 +187,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyType type = getReturnType(context);
-    return isAsync() && isAsyncAllowed() ? createCoroutineType(type, context) : type;
+    return isAsync() && isAsyncAllowed() ? createCoroutineType(type) : type;
   }
 
   @Nullable
@@ -326,14 +326,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         final PyType type = expr != null ? context.getType(expr) : null;
 
         if (node.isDelegating()) {
-          if (type instanceof PyTupleType) {
-            types.addAll(((PyTupleType)type).getElementTypes(context));
-          }
-          else if (type instanceof PyCollectionType) {
-            final PyCollectionType collectionType = (PyCollectionType)type;
-            // TODO: Select the parameter types that matches T in Iterable[T]
-            final List<PyType> elementTypes = collectionType.getElementTypes(context);
-            types.add(elementTypes.isEmpty() ? null : elementTypes.get(0));
+          if (type instanceof PyCollectionType) {
+            types.add(((PyCollectionType)type).getIteratedItemType());
           }
           else if (ArrayUtil.contains(type, cache.getListType(), cache.getDictType(), cache.getSetType(), cache.getTupleType())) {
             types.add(null);
@@ -387,18 +381,17 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   }
 
   @Nullable
-  private PyType createCoroutineType(@Nullable PyType returnType, @NotNull TypeEvalContext context) {
+  private PyType createCoroutineType(@Nullable PyType returnType) {
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
 
     if (returnType instanceof PyCollectionType && PyNames.FAKE_GENERATOR.equals(returnType.getName())) {
       final PyClass asyncGenerator = cache.getClass(PyNames.FAKE_ASYNC_GENERATOR);
-      final List<PyType> generatorElementTypes = ((PyCollectionType)returnType).getElementTypes(context);
 
-      if (asyncGenerator == null || generatorElementTypes.isEmpty()) {
+      if (asyncGenerator == null) {
         return null;
       }
 
-      return new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(generatorElementTypes.get(0), null));
+      return new PyCollectionTypeImpl(asyncGenerator, false, Arrays.asList(((PyCollectionType)returnType).getIteratedItemType(), null));
     }
 
     final PyClass coroutine = cache.getClass(PyNames.FAKE_COROUTINE);
