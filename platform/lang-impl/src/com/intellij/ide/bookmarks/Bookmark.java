@@ -124,7 +124,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
           EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BOOKMARKS_ATTRIBUTES);
 
         Color stripeColor = textAttributes.getErrorStripeColor();
-        highlighter.setErrorStripeMarkColor(stripeColor != null ? stripeColor : Color.black);
+        highlighter.setErrorStripeMarkColor(stripeColor != null ? stripeColor : JBColor.black);
         highlighter.setErrorStripeTooltip(getBookmarkTooltip());
 
         TextAttributes attributes = highlighter.getTextAttributes();
