@@ -99,20 +99,34 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
         private void compilationFinished(int errors, CompileContext context) {
           final Module[] compilationModules = context.getCompileScope().getAffectedModules();
-          final Set<Module> modulesWithErrors;
           if (errors != 0) {
-            modulesWithErrors = Stream
-              .of(context.getMessages(CompilerMessageCategory.ERROR))
-              .map(CompilerMessage::getVirtualFile)
-              .distinct()
-              .map(myProjectFileIndex::getModuleForFile)
-              .collect(Collectors.toSet());
+            final Set<Module> modulesWithErrors = new THashSet<>();
+            boolean unknownErrorLocation = false;
+            for (CompilerMessage message : context.getMessages(CompilerMessageCategory.ERROR)) {
+              VirtualFile file = message.getVirtualFile();
+              if (file == null) {
+                unknownErrorLocation = true;
+                break;
+              }
+              Module module = myProjectFileIndex.getModuleForFile(file);
+              if (module == null) {
+                unknownErrorLocation = true;
+                break;
+              }
+              modulesWithErrors.add(module);
+            }
+            if (unknownErrorLocation) {
+              myDirtyModulesHolder.compilationPhaseFinishedWithUnknownErrorLocation(compilationModules);
+            }
+            else {
+              myDirtyModulesHolder.compilationPhaseFinished(compilationModules, modulesWithErrors.toArray(Module.EMPTY_ARRAY));
+            }
           }
           else {
-            modulesWithErrors = Collections.emptySet();
+            myDirtyModulesHolder.compilationPhaseFinished(compilationModules, Module.EMPTY_ARRAY);
           }
+
           myCompilationCount.increment();
-          myDirtyModulesHolder.compilationPhaseFinished(compilationModules, modulesWithErrors);
           openReaderIfNeed();
         }
       });
@@ -363,13 +377,17 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       }
     }
 
-    private void compilationPhaseFinished(Module[] compilationModules, Set<Module> modulesWithErrors) {
+    private void compilationPhaseFinishedWithUnknownErrorLocation(Module[] compilationModules) {
+      compilationPhaseFinished(Module.EMPTY_ARRAY, compilationModules);
+    }
+
+    private void compilationPhaseFinished(Module[] compilationModules, Module[] modulesWithErrors) {
       synchronized (myLock) {
         myCompilationPhase = false;
 
         ContainerUtil.removeAll(myChangedModules, compilationModules);
-        myChangedModules.addAll(modulesWithErrors);
-        myChangedModules.addAll(ContainerUtil.newHashSet(myChangedModulesDuringCompilation));
+        Collections.addAll(myChangedModules, modulesWithErrors);
+        myChangedModules.addAll(myChangedModulesDuringCompilation);
         myChangedModulesDuringCompilation.clear();
       }
     }
