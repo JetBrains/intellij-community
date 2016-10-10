@@ -58,7 +58,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private LogicalPosition myLogicalCaret;
   private VerticalInfo myCaretInfo;
   private VisualPosition myVisibleCaret;
-  private PositionMarker myPositionMarker;
+  private volatile PositionMarker myPositionMarker;
   private boolean myLeansTowardsLargerOffsets;
   private int myVirtualSpaceOffset;
   private int myVisualLineStart;
@@ -521,8 +521,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
   private void updateOffsetsFromLogicalPosition() {
     int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
-    myPositionMarker.dispose();
+    PositionMarker oldMarker = myPositionMarker;
     myPositionMarker = new PositionMarker(offset);
+    oldMarker.dispose();
     myLeansTowardsLargerOffsets = myLogicalCaret.leansForward;
     myVirtualSpaceOffset = myLogicalCaret.column - myEditor.offsetToLogicalPosition(offset).column;
   }
@@ -659,8 +660,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   @Override
   public void dispose() {
     if (myPositionMarker != null) {
-      myPositionMarker.dispose();
+      PositionMarker marker = myPositionMarker;
       myPositionMarker = null;
+      marker.dispose();
     }
     if (mySelectionMarker != null) {
       mySelectionMarker.dispose();
@@ -693,8 +695,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   @Override
   public int getOffset() {
     validateCallContext();
-    assert myPositionMarker != null && myPositionMarker.isValid();
-    return myPositionMarker.getStartOffset();
+    validateContext(false);
+    PositionMarker marker = myPositionMarker;
+    if (marker == null) return 0; // caret was disposed
+    assert marker.isValid();
+    return marker.getStartOffset();
   }
 
   @Override
