@@ -54,8 +54,9 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   private static final int CHECKBOX_ICON_SIZE = 15;
   public static final FileByNameComparator FILE_BY_NAME_COMPARATOR = new FileByNameComparator();
   public static final FilePathByPathComparator FILE_PATH_BY_PATH_COMPARATOR = new FilePathByPathComparator();
+
   @NotNull private final VcsLogColorManager myColorManager;
-  private final FixedSizeQueue<VcsLogStructureFilter> myHistory = new FixedSizeQueue<>(5);
+  @NotNull private final FixedSizeQueue<VcsLogStructureFilter> myHistory = new FixedSizeQueue<>(5);
 
   public StructureFilterPopupComponent(@NotNull FilterModel<VcsLogFileFilter> filterModel, @NotNull VcsLogColorManager colorManager) {
     super("Paths", filterModel);
@@ -79,11 +80,13 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
   }
 
+  @NotNull
   private static String getTextFromRoots(@NotNull Collection<VirtualFile> files,
                                          boolean full) {
     return getText(files, "roots", FILE_BY_NAME_COMPARATOR, VirtualFile::getName, full);
   }
 
+  @NotNull
   private static String getTextFromFilePaths(@NotNull Collection<FilePath> files,
                                              @NotNull String category,
                                              boolean full) {
@@ -91,6 +94,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
                    file -> StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH), full);
   }
 
+  @NotNull
   private static <F> String getText(@NotNull Collection<F> files,
                                     @NotNull String category,
                                     @NotNull Comparator<F> comparator,
@@ -137,14 +141,17 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     return tooltip;
   }
 
-  private static String getTooltipTextForRoots(Collection<VirtualFile> files) {
+  @NotNull
+  private static String getTooltipTextForRoots(@NotNull Collection<VirtualFile> files) {
     return getTooltipTextForFiles(files, FILE_BY_NAME_COMPARATOR, VirtualFile::getName);
   }
 
-  private static String getTooltipTextForFilePaths(Collection<FilePath> files) {
+  @NotNull
+  private static String getTooltipTextForFilePaths(@NotNull Collection<FilePath> files) {
     return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, FilePath::getPresentableUrl);
   }
 
+  @NotNull
   private static <F> String getTooltipTextForFiles(@NotNull Collection<F> files,
                                                    @NotNull Comparator<F> comparator,
                                                    @NotNull NotNullFunction<F, String> getText) {
@@ -230,6 +237,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     myFilterModel.setFilter(new VcsLogFileFilter(null, new VcsLogRootFilterImpl(Collections.singleton(root))));
   }
 
+  @NotNull
   private static String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
     return getTextFromFilePaths(filter.getFiles(), "items", filter.getFiles().isEmpty());
   }
@@ -417,7 +425,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   }
 
   private static class FixedSizeQueue<T> implements Iterable<T> {
-    private final LinkedList<T> myQueue = new LinkedList<>();
+    @NotNull private final LinkedList<T> myQueue = new LinkedList<>();
     private final int maxSize;
 
     public FixedSizeQueue(int maxSize) {
