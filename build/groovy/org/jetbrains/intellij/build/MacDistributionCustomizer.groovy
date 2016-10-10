@@ -29,6 +29,11 @@ abstract class MacDistributionCustomizer {
   String icnsPath
 
   /**
+   * Path to icns file for EAP builds (if {@code null} {@link #icnsPath} will be used)
+   */
+  String icnsPathForEAP = null
+
+  /**
    * The minimum version of Mac OS where the product is allowed to be installed
    */
   String minOSXVersion = "10.8"

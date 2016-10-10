@@ -324,6 +324,7 @@ idea.fatal.error.notification=disabled
 
     def macCustomizer = buildContext.macDistributionCustomizer
     checkPaths([macCustomizer?.icnsPath], "productProperties.macCustomizer.icnsPath")
+    checkPaths([macCustomizer?.icnsPathForEAP], "productProperties.macCustomizer.icnsPathForEAP")
     checkPaths([macCustomizer?.dmgImagePath], "productProperties.macCustomizer.dmgImagePath")
     checkPaths([macCustomizer?.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
   }
