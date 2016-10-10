@@ -105,10 +105,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     String[] command = getCommand();
 
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
-      command = customizer.customizeCommandAndEnvironment(myProject, command, envs);
+      try {
+        command = customizer.customizeCommandAndEnvironment(myProject, command, envs);
 
-      if (directory == null) {
-        directory = customizer.getDefaultFolder();
+        if (directory == null) {
+          directory = customizer.getDefaultFolder();
+        }
+      }
+      catch (Exception e) {
+        LOG.error("Exception during customization of the terminal session", e);
       }
     }
 
