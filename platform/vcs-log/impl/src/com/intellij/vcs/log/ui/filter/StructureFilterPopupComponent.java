@@ -30,6 +30,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogRootFilterImpl;
@@ -263,8 +264,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     private SelectVisibleRootAction(@NotNull VirtualFile root) {
       super(root.getName(), root.getPresentableUrl(), null);
       myRoot = root;
-      myIcon = new CheckboxColorIcon(CHECKBOX_ICON_SIZE, VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager));
-      getTemplatePresentation().setIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE)); // see PopupFactoryImpl.calcMaxIconSize
+      myIcon = new CheckboxColorIcon(JBUI.scale(CHECKBOX_ICON_SIZE), VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager));
+      getTemplatePresentation().setIcon(EmptyIcon.create(JBUI.scale(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
     }
 
     @Override
