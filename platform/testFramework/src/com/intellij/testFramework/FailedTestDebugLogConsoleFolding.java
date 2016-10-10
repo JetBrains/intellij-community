@@ -27,6 +27,6 @@ public class FailedTestDebugLogConsoleFolding extends ConsoleFolding {
 
   @Override
   public String getPlaceholderText(List<String> lines) {
-    return " <Failed tests DEBUG log>";
+    return " <DEBUG log>";
   }
 }
