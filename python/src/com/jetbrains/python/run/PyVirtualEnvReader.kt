@@ -33,12 +33,16 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
   val activate = findActivateScript(virtualEnvSdkPath, shell)
 
   override fun getShell(): String? {
-    val defaultShell = "/bin/sh"
-    if (File(defaultShell).exists()) {
-      return defaultShell;
-    } else {
-      return super.getShell();
+    if (File("/bin/bash").exists()) {
+      return "/bin/bash";
     }
+    else
+      if (File("/bin/sh").exists()) {
+        return "/bin/sh";
+      }
+      else {
+        return super.getShell();
+      }
   }
 
   override fun readShellEnv(): MutableMap<String, String> {
@@ -81,10 +85,11 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
     }
 
     return if (activate != null)
-      if (File(shellPath).name == "sh") {
-        mutableListOf(shellPath, "-i", "-c", "source '$activate'")
-      } else {
+      if (File(shellPath).name == "bash") {
         mutableListOf(shellPath, "--rcfile", activate, "-i")
+      }
+      else {
+        mutableListOf(shellPath, "-i", "-c", "source '$activate'")
       }
     else super.getShellProcessCommand()
   }
