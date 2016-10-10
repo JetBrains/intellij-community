@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,8 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("use.of.obsolete.assert.problem.descriptor");
+    String name = (String)infos[0];
+    return InspectionGadgetsBundle.message("use.of.obsolete.assert.problem.descriptor", name);
   }
 
   @Override
@@ -75,8 +76,12 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = psiMethod.getContainingClass();
-      if (containingClass != null && Comparing.strEqual(containingClass.getQualifiedName(), "junit.framework.Assert")) {
-        registerMethodCallError(expression);
+      if (containingClass == null) {
+        return;
+      }
+      final String name = containingClass.getQualifiedName();
+      if ("junit.framework.Assert".equals(name) || "junit.framework.TestCase".equals(name)) {
+        registerMethodCallError(expression, name);
       }
     }
   }
