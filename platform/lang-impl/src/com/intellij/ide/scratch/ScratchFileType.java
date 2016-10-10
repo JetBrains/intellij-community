@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.scratch;
 
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.PeripheralFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
@@ -29,7 +29,7 @@ import javax.swing.*;
 /**
  * @author gregsh
  */
-public class ScratchFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, PeripheralFileType {
+public class ScratchFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
 
   public static final LanguageFileType INSTANCE = new ScratchFileType();
 
