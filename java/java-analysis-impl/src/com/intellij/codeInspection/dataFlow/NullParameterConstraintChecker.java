@@ -54,7 +54,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
   }
 
   @NotNull
-  static PsiParameter[] checkMethodParameters(PsiMethod method, boolean isOnTheFly) {
+  static PsiParameter[] checkMethodParameters(PsiMethod method) {
     if (method.getBody() == null) return PsiParameter.EMPTY_ARRAY;
 
     final Collection<PsiParameter> nullableParameters = new SmartList<>();
@@ -70,7 +70,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     }
     if (nullableParameters.isEmpty()) return PsiParameter.EMPTY_ARRAY;
 
-    final NullParameterConstraintChecker checker = new NullParameterConstraintChecker(nullableParameters, isOnTheFly);
+    final NullParameterConstraintChecker checker = new NullParameterConstraintChecker(nullableParameters, true);
     checker.analyzeMethod(method.getBody(), new StandardInstructionVisitor());
 
     return checker.myPossiblyViolatedParameters.toArray(new PsiParameter[checker.myPossiblyViolatedParameters.size()]);
@@ -79,10 +79,6 @@ class NullParameterConstraintChecker extends DataFlowRunner {
   @NotNull
   @Override
   protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
-    DfaMemoryState memState = instructionState.getMemoryState();
-    if (memState.isEphemeral()) {
-      return DfaInstructionState.EMPTY_ARRAY;
-    }
     Instruction instruction = instructionState.getInstruction();
 
     if (instruction instanceof AssignInstruction) {
@@ -96,6 +92,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     }
 
     if (instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
+      DfaMemoryState memState = instructionState.getMemoryState();
       for (PsiParameter parameter : myPossiblyViolatedParameters.toArray(new PsiParameter[myPossiblyViolatedParameters.size()])) {
         final DfaVariableValue dfaVar = getFactory().getVarFactory().createVariableValue(parameter, false);
         if (!memState.isNotNull(dfaVar)) {

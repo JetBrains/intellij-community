@@ -101,6 +101,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     myDecodedFragments = null;
   }
 
+  @NotNull
   public List<TextRange> getStringValueTextRanges() {
     if (valueTextRanges == null) {
       int elStart = getTextRange().getStartOffset();
@@ -242,6 +243,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return matcher.group(group.ordinal());
   }
 
+  @NotNull
   public List<ASTNode> getStringNodes() {
     return Arrays.asList(getNode().getChildren(PyTokenTypes.STRING_NODES));
   }

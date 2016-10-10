@@ -35,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class JavaRequiresStatementElementType extends JavaStubElementType<PsiRequiresStatementStub, PsiRequiresStatement> {
   public JavaRequiresStatementElementType() {
     super("REQUIRES_STATEMENT");
@@ -68,7 +70,7 @@ public class JavaRequiresStatementElementType extends JavaStubElementType<PsiReq
       else if (type == JavaTokenType.STATIC_KEYWORD) isStatic = true;
     }
 
-    return new PsiRequiresStatementStubImpl(parentStub, refText, isPublic, isStatic);
+    return new PsiRequiresStatementStubImpl(parentStub, notNull(refText, ""), isPublic, isStatic);
   }
 
   @Override

@@ -493,7 +493,7 @@ public class PathManager {
     System.err.println(x);
   }
 
-  private static String getAbsolutePath(String path) {
+  public static String getAbsolutePath(String path) {
     path = FileUtil.expandUserHome(path);
     return FileUtil.toCanonicalPath(new File(path).getAbsolutePath());
   }

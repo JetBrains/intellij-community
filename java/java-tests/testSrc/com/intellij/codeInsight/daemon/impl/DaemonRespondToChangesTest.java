@@ -1375,7 +1375,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     String text = "<xml> \n" + StringUtil.repeatSymbol('\n', 1000) + "</xml>\nxxxxx<caret>";
     configureByText(StdFileTypes.XML, text);
 
-    ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 1000));
+    ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 1000), myEditor);
     assertTrue(visibleRange.getStartOffset() > 0);
 
     List<HighlightInfo> warns = highlightErrors();
@@ -1388,15 +1388,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Top level element is not completed", info.getDescription());
   }
 
-  private ProperTextRange makeEditorWindowVisible(Point viewPosition) {
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setSize(1000, 1000);
+  public static ProperTextRange makeEditorWindowVisible(Point viewPosition, Editor editor) {
+    ((EditorImpl)editor).getScrollPane().getViewport().setSize(1000, 1000);
     DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);
 
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setViewPosition(viewPosition);
-    ((EditorImpl)myEditor).getScrollPane().getViewport().setExtentSize(new Dimension(100, ((EditorImpl)myEditor).getPreferredHeight() - 
-                                                                                          viewPosition.y));
-    return VisibleHighlightingPassFactory.calculateVisibleRange(getEditor());
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    ((EditorImpl)editor).getScrollPane().getViewport().setViewPosition(viewPosition);
+    ((EditorImpl)editor).getScrollPane().getViewport().setExtentSize(new Dimension(100, ((EditorImpl)editor).getPreferredHeight() -
+                                                                                        viewPosition.y));
+    return VisibleHighlightingPassFactory.calculateVisibleRange(editor);
   }
 
 
@@ -1887,7 +1887,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                   "    }\n" +
                   "}";
     configureByText(JavaFileType.INSTANCE, body);
-    makeEditorWindowVisible(new Point());
+    makeEditorWindowVisible(new Point(), myEditor);
 
     List<HighlightInfo> errors = highlightErrors();
     assertFalse(errors.isEmpty());
@@ -2220,7 +2220,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     IntentionManager.getInstance().addAction(longLongUpdate);
     Disposer.register(getTestRootDisposable(), () -> IntentionManager.getInstance().unregisterIntention(longLongUpdate));
     configureByText(JavaFileType.INSTANCE, "class X { <caret>  }");
-    makeEditorWindowVisible(new Point(0, 0));
+    makeEditorWindowVisible(new Point(0, 0), myEditor);
     doHighlighting();
     myDaemonCodeAnalyzer.restart();
     DaemonCodeAnalyzerSettings mySettings = DaemonCodeAnalyzerSettings.getInstance();
@@ -2332,7 +2332,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(fragment);
     myEditor = EditorFactory.getInstance().createEditor(document, getProject(), StdFileTypes.JAVA, false);
 
-    ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 0));
+    ProperTextRange visibleRange = makeEditorWindowVisible(new Point(0, 0), myEditor);
     assertEquals(document.getTextLength(), visibleRange.getLength());
 
     try {

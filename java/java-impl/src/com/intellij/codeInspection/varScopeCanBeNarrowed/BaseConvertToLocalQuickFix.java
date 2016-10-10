@@ -239,6 +239,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     PsiElement firstElement = null;
     for (PsiReference reference : refs) {
       final PsiElement element = reference.getElement();
+      if (!(element instanceof PsiReferenceExpression)) continue;
       if (firstElement == null || firstElement.getTextRange().getStartOffset() > element.getTextRange().getStartOffset()) {
         firstElement = element;
       }

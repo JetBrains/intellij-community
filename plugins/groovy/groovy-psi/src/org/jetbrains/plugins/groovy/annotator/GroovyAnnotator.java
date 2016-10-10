@@ -1906,6 +1906,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (typeDefinition.isInterface()) {
       checkModifierIsNotAllowed(modifiersList, PsiModifier.FINAL, GroovyBundle.message("intarface.cannot.have.modifier.final"), holder);
     }
+
+    if (GroovyConfigUtils.getInstance().isVersionAtLeast(typeDefinition, GroovyConfigUtils.GROOVY1_8)) {
+      if (typeDefinition.getContainingClass() == null && !(typeDefinition instanceof GrTraitTypeDefinition)) {
+        checkModifierIsNotAllowed(modifiersList, PsiModifier.STATIC, holder);
+      }
+    }
   }
 
   private static void checkDuplicateModifiers(AnnotationHolder holder, @NotNull GrModifierList list, PsiMember member) {

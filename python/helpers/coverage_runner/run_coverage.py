@@ -24,7 +24,7 @@ if os.getenv('CREATE_TEMP_COVERAGE_FILE'):
     print(line%(coverage_file + ".coverage", new_cov_file + ".coverage"))
     print(line%(coverage_file + '.syspath.txt', new_cov_file + '.syspath.txt'))
     print(line%(coverage_file + '.xml', new_cov_file + '.xml'))
-    coverage_file = new_cov_file + ".cov"
+    coverage_file = new_cov_file
 
 if coverage_file:
     os.environ['COVERAGE_FILE'] = coverage_file + ".coverage"

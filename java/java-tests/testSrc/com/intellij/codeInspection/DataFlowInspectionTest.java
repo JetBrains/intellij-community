@@ -400,4 +400,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     doTest();
     myFixture.findSingleIntention("Remove 'if' statement");
   }
+
+  //https://youtrack.jetbrains.com/issue/IDEA-162184
+  public void testNullLiteralAndInferredMethodContract() {
+    doTest();
+  }
 }

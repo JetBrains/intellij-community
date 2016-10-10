@@ -39,10 +39,10 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   private static final Key<Boolean> MEDIATOR_KEY = Key.create("KillableColoredProcessHandler.Mediator.Process");
 
   private boolean myShouldKillProcessSoftly = true;
-  private boolean myMediatedProcess = false;
+  private final boolean myMediatedProcess;
 
   public KillableColoredProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    super(commandLine);
+    this(commandLine, false);
   }
 
   /**
@@ -58,6 +58,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
    */
   public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine) {
     super(process, commandLine);
+    myMediatedProcess = false;
   }
 
   /**
@@ -65,9 +66,11 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
    */
   public KillableColoredProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
+    myMediatedProcess = false;
   }
 
-  private static GeneralCommandLine mediate(GeneralCommandLine commandLine, boolean withMediator) {
+  @NotNull
+  private static GeneralCommandLine mediate(@NotNull GeneralCommandLine commandLine, boolean withMediator) {
     if (withMediator && SystemInfo.isWindows) {
       boolean mediatorInjected = RunnerMediator.injectRunnerCommand(commandLine);
       MEDIATOR_KEY.set(commandLine, mediatorInjected);

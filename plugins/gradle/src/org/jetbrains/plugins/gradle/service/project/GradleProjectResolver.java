@@ -55,6 +55,7 @@ import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
+import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -152,6 +153,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       commandLineArgs.add("-Didea.resolveSourceSetDependencies=true");
     }
 
+    GradleExecutionSettings executionSettings = resolverCtx.getSettings();
+    if (!isBuildSrcProject && executionSettings != null) {
+      for (GradleBuildParticipant buildParticipant : executionSettings.getExecutionWorkspace().getBuildParticipants()) {
+        ContainerUtil.addAll(commandLineArgs, GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
+      }
+    }
+
     final GradleImportCustomizer importCustomizer = GradleImportCustomizer.get();
     for (GradleProjectResolverExtension resolverExtension = projectResolverChain;
          resolverExtension != null;
@@ -196,7 +204,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     GradleExecutionHelper.prepare(
       buildActionExecutor, resolverCtx.getExternalSystemTaskId(),
-      resolverCtx.getSettings(), resolverCtx.getListener(),
+      executionSettings, resolverCtx.getListener(),
       parametersList.getParameters(), commandLineArgs, resolverCtx.getConnection());
 
     resolverCtx.checkCancelled();
@@ -227,7 +235,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(
         aClass,
         resolverCtx.getExternalSystemTaskId(),
-        resolverCtx.getSettings(),
+        executionSettings,
         resolverCtx.getConnection(),
         resolverCtx.getListener(),
         parametersList.getParameters());

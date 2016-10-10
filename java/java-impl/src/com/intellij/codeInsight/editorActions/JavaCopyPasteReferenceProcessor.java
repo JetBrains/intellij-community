@@ -123,15 +123,10 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
 
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiMethodCallExpression) {
-      return CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY &&
-             new StaticImportMethodFix((PsiMethodCallExpression)parent).getMembersToImport().size() <= 1;
+      return false;
     }
 
-    int constCount = new StaticImportConstantFix(ref).getMembersToImport().size();
-    int classCount = new ImportClassFix(ref).getClassesToImport().size();
-    if (constCount + classCount > 1) return false;
-    if (constCount + classCount == 0) return true;
-    return constCount == 0 || CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY;
+    return new ImportClassFix(ref).getClassesToImport().size() <= 1;
   }
 
   @Override

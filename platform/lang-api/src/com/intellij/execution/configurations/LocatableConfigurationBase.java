@@ -42,7 +42,7 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
   @Override
   @Attribute("nameIsGenerated")
   public boolean isGeneratedName() {
-    return suggestedName() != null && myNameIsGenerated;
+    return myNameIsGenerated && suggestedName() != null;
   }
 
   /**

@@ -1993,6 +1993,11 @@
           <option name="ERROR_STRIPE_COLOR" value="266109" />
         </value>
       </option>
+      <option name="BOOKMARKS_ATTRIBUTES">
+        <value>
+          <option name="ERROR_STRIPE_COLOR" value="DBDBDB" />
+        </value>
+      </option>
       <option name="UNMATCHED_BRACE_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="d1243b" deuteranopia="bd693c" protanopia="bd693c"/>

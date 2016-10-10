@@ -370,7 +370,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   private static void appendPackageElement(final Element element, final String packageName) {
     final Element packageElement = new Element("package");
-    packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.export.results.default") : packageName);
+    packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.reference.default.package") : packageName);
     element.addContent(packageElement);
   }
 

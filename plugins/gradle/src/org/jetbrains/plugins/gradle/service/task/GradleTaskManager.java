@@ -40,6 +40,7 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
+import org.jetbrains.plugins.gradle.settings.GradleBuildParticipant;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -128,6 +129,13 @@ public class GradleTaskManager extends AbstractExternalSystemTaskManager<GradleE
         listener.onStatusChange(new ExternalSystemTaskExecutionEvent(
           id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
       }
+
+      if (settings != null) {
+        for (GradleBuildParticipant buildParticipant : settings.getExecutionWorkspace().getBuildParticipants()) {
+          ContainerUtil.addAll(scriptParameters, GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
+        }
+      }
+
       BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener, vmOptions, scriptParameters);
       launcher.forTasks(ArrayUtil.toStringArray(taskNames));
 

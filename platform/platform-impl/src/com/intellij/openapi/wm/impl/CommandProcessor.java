@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -76,10 +77,14 @@ public final class CommandProcessor implements Runnable {
   private boolean runNext() {
     final CommandGroup commandGroup = getNextCommandGroup();
     if (commandGroup == null || commandGroup.isEmpty()) return false;
+    final Condition conditionForGroup = commandGroup.getExpireCondition();
 
     final FinalizableCommand command = commandGroup.takeNextCommand();
     myCommandCount--;
 
+    Condition expire = command.getExpireCondition() != null ? command.getExpireCondition() : conditionForGroup;
+    if (expire == null) expire = ApplicationManager.getApplication().getDisposed();
+    if (expire.value(null)) return true;
     if (LOG.isDebugEnabled()) {
       LOG.debug("CommandProcessor.run " + command);
     }
