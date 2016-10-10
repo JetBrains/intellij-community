@@ -299,6 +299,7 @@ idea.fatal.error.notification=disabled
         fileset(file: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar")
         fileset(dir: "$buildContext.paths.communityHome/lib") {
           include(name: "junit-4*.jar")
+          include(name: "hamcrest-core-*.jar")
         }
         zipfileset(src: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar") {
           include(name: "*.xml")
