@@ -50,12 +50,13 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import git4idea.commands.Git
 import git4idea.commands.GitCommandResult
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
+import java.awt.Dimension
 import java.util.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
@@ -76,7 +77,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
   init {
     init()
     title = "Git Remotes"
-    updateColumnSize()
+    updateTableWidth()
   }
 
   override fun createActions() = arrayOf(okAction)
@@ -151,7 +152,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     return result!! // at least one of two has changed
   }
 
-  private fun updateColumnSize() {
+  private fun updateTableWidth() {
     var maxNameWidth = 0
     var maxUrlWidth = 0
     for (node in nodes) {
@@ -162,10 +163,13 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
       if (maxNameWidth < nameWidth) maxNameWidth = nameWidth
       if (maxUrlWidth < urlWidth) maxUrlWidth = urlWidth
     }
-    maxNameWidth += REMOTE_PADDING + UIUtil.DEFAULT_HGAP
+    maxNameWidth += REMOTE_PADDING + DEFAULT_HGAP
 
     table.columnModel.getColumn(NAME_COLUMN).preferredWidth = maxNameWidth
     table.columnModel.getColumn(URL_COLUMN).preferredWidth = maxUrlWidth
+
+    val defaultPreferredHeight = table.preferredScrollableViewportSize.height
+    table.preferredScrollableViewportSize = Dimension(maxNameWidth + maxUrlWidth + DEFAULT_HGAP, defaultPreferredHeight)
   }
 
   private fun buildNodes(repositories: Collection<GitRepository>): List<Node> {
