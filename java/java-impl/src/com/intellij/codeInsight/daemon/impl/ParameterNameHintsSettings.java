@@ -24,11 +24,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 @State(name = "ParameterNameHintsSettings", storages = @Storage("parameter.name.hints.xml"))
 public class ParameterNameHintsSettings implements PersistentStateComponent<ParameterNameHintsSettings.State> {
-  
-  public static final String[] defaultPatterns = {
+  private static final int VERSION = 1;
+  private static final Set<String> DEFAULT = ContainerUtil.newHashSet(
     "(begin*, end*)",
     "(start*, end*)",
     "(first*, last*)",
@@ -50,18 +51,9 @@ public class ParameterNameHintsSettings implements PersistentStateComponent<Para
     "*.contains(*)",
     "*.startsWith(*)",
     "*.endsWith(*)"
-  };
+  );
 
-  public void addIgnorePattern(@NotNull String pattern) {
-    myState.ignorePatterns.add(pattern);
-  }
-
-  public static class State {
-    public int version = 1;
-    public List<String> ignorePatterns = ContainerUtil.newArrayList(defaultPatterns);
-  }
-
-  private ParameterNameHintsSettings.State myState = new State();
+  private ParameterNameHintsSettings.State state = new State();
 
   public static ParameterNameHintsSettings getInstance() {
     return ServiceManager.getService(ParameterNameHintsSettings.class);
@@ -70,29 +62,56 @@ public class ParameterNameHintsSettings implements PersistentStateComponent<Para
   @Nullable
   @Override
   public ParameterNameHintsSettings.State getState() {
-    return myState;
+    return state;
   }
 
   @Override
   public void loadState(ParameterNameHintsSettings.State state) {
-    myState = state;
-  }
-  
-  
-  public int getVersion() {
-    return myState.version;
+    this.state = state;
   }
 
-  public List<String> getIgnorePatternList() {
-    return myState.ignorePatterns;
+  public void addIgnorePattern(@NotNull String pattern) {
+    state.diff.add('+' + pattern);
+  }
+  
+  public int getVersion() {
+    return state.version;
+  }
+
+  public Set<String> getIgnorePatternSet() {
+    Set<String> ignoreSet = ContainerUtil.newHashSet(DEFAULT);
+    state.diff.forEach((item) -> {
+      if (item.startsWith("+")) {
+        ignoreSet.add(item.substring(1));
+      }
+      else if (item.startsWith("-")) {
+        ignoreSet.remove(item.substring(1));
+      }
+    });
+    return ignoreSet;
   }
 
   public void setVersion(int newVersion) {
-    myState.version = newVersion;
+    state.version = newVersion;
   }
 
-  public void setIgnorePatternList(@NotNull List<String> newBlacklist) {
-    myState.ignorePatterns = newBlacklist;
+  public void setIgnorePatternSet(@NotNull Set<String> updatedBlackList) {
+    Set<String> addedItems = ContainerUtil.newHashSet(updatedBlackList);
+    DEFAULT.forEach((pattern) -> addedItems.remove(pattern));
+
+    Set<String> removedItems = ContainerUtil.newHashSet(DEFAULT);
+    updatedBlackList.forEach((pattern) -> removedItems.remove(pattern));
+
+    List<String> diff = ContainerUtil.newArrayList();
+    addedItems.forEach((item) -> diff.add('+' + item));
+    removedItems.forEach((item) -> diff.remove('-' + item));
+
+    state.diff = diff;
+  }
+
+  public static class State {
+    public int version = VERSION;
+    public List<String> diff = ContainerUtil.newArrayList();
   }
   
 }

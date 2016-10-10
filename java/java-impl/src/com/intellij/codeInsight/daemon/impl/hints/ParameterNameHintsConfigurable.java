@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ParameterNameHintsConfigurable extends DialogWrapper {
@@ -61,13 +62,13 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
 
-    List<String> updatedBlackList = StringUtil
+    Set<String> updatedBlackList = StringUtil
       .split(myEditorTextField.getText(), "\n")
       .stream()
       .filter((e) -> !e.trim().isEmpty())
-      .collect(Collectors.toList());
+      .collect(Collectors.toSet());
     
-    ParameterNameHintsSettings.getInstance().setIgnorePatternList(updatedBlackList);
+    ParameterNameHintsSettings.getInstance().setIgnorePatternSet(updatedBlackList);
   }
 
   @Nullable
@@ -83,7 +84,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     EditorTextFieldProvider service = ServiceManager.getService(myProject, EditorTextFieldProvider.class);
     myEditorTextField = service.getEditorField(PlainTextLanguage.INSTANCE, myProject, ContainerUtil.emptyIterable());
     
-    List<String> blacklist = ParameterNameHintsSettings.getInstance().getIgnorePatternList();
+    Set<String> blacklist = ParameterNameHintsSettings.getInstance().getIgnorePatternSet();
     String text = StringUtil.join(blacklist, "\n");
     
     myEditorTextField.setText(text);
