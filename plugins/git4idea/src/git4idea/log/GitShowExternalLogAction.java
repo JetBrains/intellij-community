@@ -259,6 +259,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
           .setProject(myProject)
           .setTitle("Git Log")
           .setPreferredFocusedComponent(content)
+          .setDimensionServiceKey(GitShowExternalLogAction.class.getName())
           .build();
         Disposer.register(window, content.myDisposable);
         window.show();
