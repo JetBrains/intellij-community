@@ -26,4 +26,7 @@ public interface PsiRequiresStatement extends PsiElement {
   PsiRequiresStatement[] EMPTY_ARRAY = new PsiRequiresStatement[0];
 
   @Nullable PsiJavaModuleReferenceElement getReferenceElement();
+  @Nullable String getModuleName();
+
+  boolean isPublic();
 }

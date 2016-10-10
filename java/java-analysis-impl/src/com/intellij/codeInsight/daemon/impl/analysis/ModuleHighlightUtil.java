@@ -118,12 +118,12 @@ public class ModuleHighlightUtil {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
     checkDuplicateRefs(
-      psiTraverser().children(module).filter(PsiRequiresStatement.class),
+      module.getRequires(),
       st -> Optional.ofNullable(st.getReferenceElement()).map(PsiJavaModuleReferenceElement::getReferenceText),
       "module.duplicate.requires", results);
 
     checkDuplicateRefs(
-      psiTraverser().children(module).filter(PsiExportsStatement.class),
+      module.getExports(),
       st -> Optional.ofNullable(st.getPackageReference()).map(ModuleHighlightUtil::refText),
       "module.duplicate.export", results);
 
@@ -267,7 +267,7 @@ public class ModuleHighlightUtil {
     List<HighlightInfo> results = ContainerUtil.newSmartList();
 
     Set<String> targets = ContainerUtil.newTroveSet();
-    for (PsiJavaModuleReferenceElement refElement : psiTraverser().children(statement).filter(PsiJavaModuleReferenceElement.class)) {
+    for (PsiJavaModuleReferenceElement refElement : statement.getModuleReferences()) {
       String refText = refElement.getReferenceText();
       PsiPolyVariantReference ref = refElement.getReference();
       assert ref != null : statement;
@@ -376,7 +376,7 @@ public class ModuleHighlightUtil {
 
     String refModuleName = refModule.getModuleName();
     String requiredName = targetModule.getModuleName();
-    if (!(targetModule instanceof PsiCompiledElement) && !isExported(targetModule, packageName)) {
+    if (!(targetModule instanceof PsiCompiledElement) && !JavaModuleGraphUtil.exports(targetModule, packageName, refModule)) {
       String message = JavaErrorMessages.message("module.package.not.exported", requiredName, packageName, refModuleName);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
     }
@@ -387,16 +387,6 @@ public class ModuleHighlightUtil {
     }
 
     return null;
-  }
-
-  private static boolean isExported(PsiJavaModule module, String packageName) {
-    for (PsiExportsStatement statement : psiTraverser().children(module).filter(PsiExportsStatement.class)) {
-      String exportedName = Optional.ofNullable(statement.getPackageReference()).map(ModuleHighlightUtil::refText).orElse("");
-      if (packageName.equals(exportedName)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static HighlightInfo moduleResolveError(PsiJavaModuleReferenceElement refElement, PsiPolyVariantReference ref) {
