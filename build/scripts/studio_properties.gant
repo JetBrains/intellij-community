@@ -30,6 +30,7 @@ def getProperties(String home, String buildNumber) {
   def gradleOut = "${home}/../../out/studio"
 
   def enableUITests = System.getProperty("studio.ui.tests") ? !System.getProperty("studio.ui.tests").isEmpty() : false
+  def bundleGradlePlugin = System.getProperty("bundle.gradle.plugin") ?: false
 
   return new org.jetbrains.intellij.build.ProductProperties() {
     {
@@ -315,6 +316,16 @@ def getProperties(String home, String buildNumber) {
           }
         }
       }
+
+      if (bundleGradlePlugin) {
+        // Update the builder-model copy in our plugin's lib folder with the one we just built at head.
+        ant.copy(todir: "$targetDirectory/plugins/android/lib", flatten: true, overwrite: true) {
+          fileset(dir: "${gradleOut}/repo/com/android/tools/build/builder-model") {
+            include(name: "**/*-dev.jar")
+          }
+        }
+      }
+
       ant.copy(file: "${home}/../../prebuilts/tools/common/m2/repository/tightvnc/NOTICE",
                tofile: "$targetDirectory/plugins/firebase-testing/lib/licenses/tightvnc.jar-NOTICE")
       ant.unzip(src: "${home}/../external/gradle/gradle-$gradleVersion-bin.zip", dest: "${targetDirectory}/gradle")
