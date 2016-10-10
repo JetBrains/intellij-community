@@ -249,20 +249,6 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
   }
 
-  private static class FileByPathComparator implements Comparator<VirtualFile> {
-    @Override
-    public int compare(VirtualFile o1, VirtualFile o2) {
-      return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-    }
-  }
-
-  private static class FilePathByNameComparator implements Comparator<FilePath> {
-    @Override
-    public int compare(FilePath o1, FilePath o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  }
-
   private static class FilePathByPathComparator implements Comparator<FilePath> {
     @Override
     public int compare(FilePath o1, FilePath o2) {
