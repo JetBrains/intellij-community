@@ -320,7 +320,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     final PyComprehensionElement comprh = PsiTreeUtil.getParentOfType(this, PyComprehensionElement.class);
     if (comprh != null) {
-      for (ComprhForComponent c : comprh.getForComponents()) {
+      for (PyComprehensionForComponent c : comprh.getForComponents()) {
         final PyExpression expr = c.getIteratorVariable();
         if (PsiTreeUtil.isAncestor(expr, this, false)) {
           target = expr;

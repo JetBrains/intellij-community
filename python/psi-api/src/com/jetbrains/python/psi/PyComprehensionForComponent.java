@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,13 @@
  */
 package com.jetbrains.python.psi;
 
-import org.jetbrains.annotations.Nullable;
-
 /**
- * The "if" part of list comprehensions and generators.
+ * The "for" part of list comprehensions and generators.
  * User: dcheryasov
  * Date: Jul 31, 2008
  */
-public interface ComprhIfComponent extends ComprehensionComponent {
-  @Nullable  
-  PyExpression getTest();
+public interface PyComprehensionForComponent extends PyComprehensionComponent {
+  PyExpression getIteratorVariable();
+  PyExpression getIteratedList();
+  boolean isAsync();
 }
