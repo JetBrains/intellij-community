@@ -102,6 +102,9 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     else if (element instanceof BeanPropertyElement) {
       return generateMethodInfo(((BeanPropertyElement)element).getMethod(), PsiSubstitutor.EMPTY);
     }
+    else if (element instanceof PsiJavaModule) {
+      return generateModuleInfo((PsiJavaModule)element);
+    }
     return null;
   }
 
@@ -149,9 +152,9 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     return aPackage.getQualifiedName();
   }
 
-  private static void generatePackageInfo(StringBuilder buffer, @NotNull PsiClass aClass) {
-    PsiFile file = aClass.getContainingFile();
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(aClass.getProject()).getFileIndex();
+  private static void generateOrderEntryAndPackageInfo(StringBuilder buffer, @NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null && (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile))) {
       final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
@@ -182,7 +185,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
     if (aClass instanceof PsiAnonymousClass) return LangBundle.message("java.terms.anonymous.class");
 
-    generatePackageInfo(buffer, aClass);
+    generateOrderEntryAndPackageInfo(buffer, aClass);
     generateModifiers(buffer, aClass);
 
     final String classString = aClass.isAnnotationType() ? "java.terms.annotation.interface"
@@ -278,7 +281,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
     if (parentClass != null && !(parentClass instanceof PsiAnonymousClass)) {
       if (method.isConstructor()) {
-        generatePackageInfo(buffer, parentClass);
+        generateOrderEntryAndPackageInfo(buffer, parentClass);
       }
 
       buffer.append(JavaDocUtil.getShortestClassName(parentClass, method));
@@ -369,6 +372,13 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     generateInitializer(buffer, variable);
 
     return buffer.toString();
+  }
+
+  private static String generateModuleInfo(PsiJavaModule module) {
+    StringBuilder sb = new StringBuilder();
+    generateOrderEntryAndPackageInfo(sb, module);
+    sb.append(LangBundle.message("java.terms.module")).append(' ').append(module.getModuleName());
+    return sb.toString();
   }
 
   @Override
