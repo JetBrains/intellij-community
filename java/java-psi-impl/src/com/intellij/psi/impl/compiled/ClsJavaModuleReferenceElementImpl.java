@@ -26,7 +26,7 @@ class ClsJavaModuleReferenceElementImpl extends ClsElementImpl implements PsiJav
   private final String myText;
   private final PsiJavaModuleReference myReference;
 
-  public ClsJavaModuleReferenceElementImpl(PsiElement parent, String text) {
+  ClsJavaModuleReferenceElementImpl(PsiElement parent, String text) {
     myParent = parent;
     myText = text;
     myReference = myParent instanceof PsiJavaModule ? null : new PsiJavaModuleReference(this);
