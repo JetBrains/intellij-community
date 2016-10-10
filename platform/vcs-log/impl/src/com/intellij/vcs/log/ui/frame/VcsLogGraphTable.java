@@ -197,7 +197,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
           maxWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxWidth);
           if (!value.isEmpty()) sizeCalculated = true;
         }
-        int min = Math.min(maxWidth + myStringCellRenderer.getHorizontalTextPadding(), MAX_DEFAULT_AUTHOR_COLUMN_WIDTH);
+        int min = Math.min(maxWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
         column.setPreferredWidth(min);
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
@@ -233,7 +233,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       rootWidth = ROOT_INDICATOR_WIDTH;
     }
     else {
-      rootWidth = Math.min(calculateMaxRootWidth(), ROOT_NAME_MAX_WIDTH);
+      rootWidth = Math.min(calculateMaxRootWidth(), JBUI.scale(ROOT_NAME_MAX_WIDTH));
     }
 
     // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
