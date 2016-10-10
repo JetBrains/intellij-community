@@ -20,6 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
@@ -45,32 +46,39 @@ public class MacGestureSupportForEditor {
       @Override
       public void pressure(PressureEvent e) {
         if (IdeMouseEventDispatcher.isForceTouchAllowed() && e.getStage() == 2) {
-          MouseShortcut shortcut = new PressureShortcut(e.getStage());
-          fillActionsList(shortcut, IdeKeyEventDispatcher.isModalContext(component));
-          ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-          if (actionManager != null) {
-            AnAction[] actions = myActions.toArray(new AnAction[myActions.size()]);
-            for (AnAction action : actions) {
-              DataContext dataContext = DataManager.getInstance().getDataContext(component);
-              Presentation presentation = myPresentationFactory.getPresentation(action);
-              AnActionEvent actionEvent = new AnActionEvent(null, dataContext, ActionPlaces.MAIN_MENU, presentation,
-                                                            ActionManager.getInstance(),
-                                                            0);
-              action.beforeActionPerformedUpdate(actionEvent);
+          ApplicationManager.
+            getApplication().
+            invokeLater(
+              () -> {
+                MouseShortcut shortcut = new PressureShortcut(e.getStage());
+                fillActionsList(shortcut, IdeKeyEventDispatcher.isModalContext(component));
+                ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
+                if (actionManager != null) {
+                  AnAction[] actions = myActions.toArray(new AnAction[myActions.size()]);
+                  for (AnAction action : actions) {
+                    DataContext dataContext = DataManager.getInstance().getDataContext(component);
+                    Presentation presentation = myPresentationFactory.getPresentation(action);
+                    AnActionEvent actionEvent =
+                      new AnActionEvent(null, dataContext, ActionPlaces.MAIN_MENU, presentation,
+                                        ActionManager.getInstance(),
+                                        0);
+                    action.beforeActionPerformedUpdate(actionEvent);
 
-              if (presentation.isEnabled()) {
-                actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
-                final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+                    if (presentation.isEnabled()) {
+                      actionManager.fireBeforeActionPerformed(action, dataContext, actionEvent);
+                      final Component context = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
 
-                if (context != null && !context.isShowing()) continue;
+                      if (context != null && !context.isShowing()) continue;
 
-                action.actionPerformed(actionEvent);
-
-              }
-            }
-          }
-          e.consume();
-          IdeMouseEventDispatcher.forbidForceTouch();
+                      action.actionPerformed(actionEvent);
+                    }
+                  }
+                }
+                e.consume();
+                IdeMouseEventDispatcher.forbidForceTouch();
+              },
+              ModalityState.current()
+            );
         }
       }
     });
