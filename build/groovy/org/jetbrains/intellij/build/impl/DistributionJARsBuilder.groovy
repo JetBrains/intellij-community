@@ -295,8 +295,12 @@ class DistributionJARsBuilder {
           def modules = it.value
           def jarPath = it.key
           jar(jarPath, true) {
-            modulePatches(modules)
             modules.each { moduleName ->
+              modulePatches([moduleName]) {
+                if (layout.packLocalizableResourcesInCommonJar(moduleName)) {
+                  ant.patternset(refid: resourceExcluded)
+                }
+              }
               module(moduleName) {
                 if (layout.packLocalizableResourcesInCommonJar(moduleName)) {
                   ant.patternset(refid: resourceExcluded)
