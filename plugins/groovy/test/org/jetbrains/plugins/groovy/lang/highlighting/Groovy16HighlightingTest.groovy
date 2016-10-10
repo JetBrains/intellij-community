@@ -67,8 +67,9 @@ class Groovy16HighlightingTest extends LightCodeInsightFixtureTestCase {
     myFixture.with {
       configureByText '_.groovy', '''\
 static class A {}
-static interface A {} 
+static interface I {} 
 '''
+      checkHighlighting()
     }
   }
 }
