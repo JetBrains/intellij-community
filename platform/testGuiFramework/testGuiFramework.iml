@@ -20,19 +20,9 @@
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="external-system-rt" />
     <orderEntry type="module" module-name="external-system-impl" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../plugins/gradle/lib/jsr305-1.3.9.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/../../plugins/gradle/lib/jsr305-1.3.9.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="git4idea" />
     <orderEntry type="module" module-name="vcs-tests" />
     <orderEntry type="module" module-name="platform-main" />
+    <orderEntry type="library" name="jsr305" level="project" />
   </component>
 </module>
