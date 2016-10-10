@@ -295,6 +295,12 @@ idea.fatal.error.notification=disabled
       else {
         buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
       }
+      buildContext.ant.zip(destfile: "$buildContext.paths.artifacts/internalUtilities.zip") {
+        fileset(file: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar")
+        fileset(dir: "$buildContext.paths.communityHome/lib") {
+          include(name: "junit-4*.jar")
+        }
+      }
     }
     buildDistributions()
   }

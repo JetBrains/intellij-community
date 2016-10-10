@@ -179,7 +179,7 @@ class DistributionJARsBuilder {
     }
 
     if (productProperties.scrambleMainJar) {
-      createLayoutBuilder().layout(buildContext.paths.artifacts) {
+      createLayoutBuilder().layout("$buildContext.paths.buildOutputRoot/internal") {
         jar("internalUtilities.jar") {
           module("internalUtilities")
         }
