@@ -76,7 +76,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
       try {
 
-        URL resource = LocalTerminalDirectRunner.class.getClassLoader().getResource("jediterm-" + shellName + ".in");
+        String rcfile = "jediterm-" + shellName + ".in";
+        if ("zsh".equals(shellName)) {
+          rcfile = ".zshrc";
+        }
+        URL resource = LocalTerminalDirectRunner.class.getClassLoader().getResource(rcfile);
         if (resource != null) {
           URI uri = resource.toURI();
           return uri.getPath();
@@ -186,17 +190,12 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
 
         if (rcFilePath != null &&
-            shellIntegration &&
-            (shellName.equals("bash") || shellName.equals("sh"))) {
-          result.add("--rcfile");
-          result.add(rcFilePath);
-          int idx = command.indexOf("--rcfile");
-          if (idx >= 0) {
-            command.remove(idx);
-            if (idx < command.size()) {
-              envs.put("JEDITERM_SOURCE", command.get(idx));
-              command.remove(idx);
-            }
+            shellIntegration) {
+          if (shellName.equals("bash") || shellName.equals("sh")) {
+            addRcFileArgument(envs, command, result, rcFilePath, "--rcfile");
+          }
+          else if (shellName.equals("zsh")) {
+            envs.put("ZDOTDIR", new File(rcFilePath).getParent());
           }
         }
 
@@ -216,6 +215,22 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     else {
       return new String[]{shellPath};
+    }
+  }
+
+  private static void addRcFileArgument(Map<String, String> envs,
+                                        List<String> command,
+                                        List<String> result,
+                                        String rcFilePath, String rcfileOption) {
+    result.add(rcfileOption);
+    result.add(rcFilePath);
+    int idx = command.indexOf(rcfileOption);
+    if (idx >= 0) {
+      command.remove(idx);
+      if (idx < command.size()) {
+        envs.put("JEDITERM_SOURCE", command.get(idx));
+        command.remove(idx);
+      }
     }
   }
 
