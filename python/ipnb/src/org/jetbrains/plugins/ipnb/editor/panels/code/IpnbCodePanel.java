@@ -96,7 +96,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     final Map<String, Object> metadata = myCell.getMetadata();
     if (metadata != null && metadata.containsKey(COLLAPSED_METADATA)) {
       final Boolean isCollapsed = (Boolean)metadata.get(COLLAPSED_METADATA);
-      if (isCollapsed) {
+      if (isCollapsed && !myCell.getCellOutputs().isEmpty()) {
         splitter.setFirstComponent(toggleBar);
         return splitter;
       }
@@ -291,7 +291,9 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         }
       }
 
-      myViewPanel = createViewPanel();
+      final JComponent panel = createViewPanel();
+      myViewPanel.add(panel);
+
       final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
       setEditing(false);
       filePanel.revalidateAndRepaint();
