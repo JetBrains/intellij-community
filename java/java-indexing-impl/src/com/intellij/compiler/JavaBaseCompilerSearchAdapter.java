@@ -15,19 +15,28 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class JavaBaseCompilerSearchAdapter implements CompilerSearchAdapter {
+public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSearchAdapter<PsiClass> {
   public static final JavaBaseCompilerSearchAdapter INSTANCE = new JavaBaseCompilerSearchAdapter();
 
   @Override
@@ -109,6 +118,16 @@ public class JavaBaseCompilerSearchAdapter implements CompilerSearchAdapter {
     return CompilerElement.EMPTY_ARRAY;
   }
 
+  @NotNull
+  @Override
+  public PsiClass[] getCandidatesFromFile(@NotNull Collection<String> classInternalNames,
+                                          @NotNull PsiNamedElement superClass,
+                                          @NotNull VirtualFile containingFile,
+                                          @NotNull Project project) {
+    Collection<InternalClassMatcher> matchers = createClassMatcher(classInternalNames, superClass);
+    return retrieveMatchedClasses(containingFile, project, matchers).toArray(PsiClass.EMPTY_ARRAY);
+  }
+
   private static boolean mayBeVisibleOutsideOwnerFile(@NotNull PsiElement element) {
     if (!(element instanceof PsiModifierListOwner)) return true;
     if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)) return false;
@@ -120,6 +139,129 @@ public class JavaBaseCompilerSearchAdapter implements CompilerSearchAdapter {
       processor.process(aClass);
       ClassInheritorsSearch.search(aClass, LibraryScopeCache.getInstance(aClass.getProject()).getLibrariesOnlyScope(), true)
         .forEach(processor);
+    }
+  }
+
+  private static Collection<PsiClass> retrieveMatchedClasses(VirtualFile file, Project project, Collection<InternalClassMatcher> matchers) {
+    final List<PsiClass> result = new ArrayList<>(matchers.size());
+    PsiFileWithStubSupport psiFile = ObjectUtils.notNull((PsiFileWithStubSupport)PsiManager.getInstance(project).findFile(file));
+    StubTree tree = psiFile.getStubTree();
+    if (tree != null) {
+      for (StubElement<?> element : tree.getPlainListFromAllRoots()) {
+        if (element instanceof PsiClassStub && match((m, e) -> m.matches(e), (PsiClassStub)element, matchers)) {
+          result.add((PsiClass)element.getPsi());
+        }
+      }
+    } else {
+      PsiTreeUtil.processElements(psiFile, e -> {
+        if (e instanceof PsiClass && match((m, c) -> m.matches((PsiClass)c), e, matchers)) {
+          result.add((PsiClass)e);
+        }
+        return true;
+      });
+    }
+    return result;
+  }
+
+  private static <T> boolean match(BiFunction<InternalClassMatcher, T, Boolean> matchingRule, T classObj, Collection<InternalClassMatcher> matchers) {
+    for (InternalClassMatcher matcher : matchers) {
+      if (matchingRule.apply(matcher, classObj)) {
+        //qualified name is unique among file's classes
+        if (matcher instanceof InternalClassMatcher.ByQualifiedName) {
+          matchers.remove(matcher);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Collection<InternalClassMatcher> createClassMatcher(@NotNull Collection<String> internalNames, @NotNull PsiNamedElement baseClass) {
+    boolean matcherBySuperNameAdded = false;
+    final List<InternalClassMatcher> matchers = new ArrayList<>(internalNames.size());
+    for (String internalName : internalNames) {
+      int curLast = internalName.length() - 1;
+      while (true) {
+        int lastIndex = internalName.lastIndexOf('$', curLast);
+        if (lastIndex > -1 && lastIndex < internalName.length() - 1) {
+          final boolean anonymousSign = Character.isDigit(internalName.charAt(lastIndex + 1));
+          if (anonymousSign) {
+            if (curLast == internalName.length() - 1) {
+              if (matcherBySuperNameAdded) {
+                break;
+              }
+              matcherBySuperNameAdded = true;
+              matchers.add(new InternalClassMatcher.BySuperName(baseClass.getName()));
+              break;
+            }
+            else {
+              matchers.add(new InternalClassMatcher.ByName(StringUtil.getShortName(internalName, '$')));
+              break;
+            }
+          }
+        }
+        else {
+          matchers.add(new InternalClassMatcher.ByQualifiedName(StringUtil.replace(internalName, "$", ".")));
+          break;
+        }
+        curLast = lastIndex - 1;
+      }
+    }
+    return matchers;
+  }
+
+  private interface InternalClassMatcher {
+    boolean matches(PsiClass psiClass);
+
+    boolean matches(PsiClassStub stub);
+
+    class BySuperName implements InternalClassMatcher {
+      private final String mySuperName;
+
+      public BySuperName(String name) {mySuperName = name;}
+
+      @Override
+      public boolean matches(PsiClass psiClass) {
+        return psiClass instanceof PsiAnonymousClass &&
+               mySuperName.equals(StringUtil.getShortName(((PsiAnonymousClass)psiClass).getBaseClassReference().getText()));
+      }
+
+      @Override
+      public boolean matches(PsiClassStub stub) {
+        return stub.isAnonymous() && mySuperName.equals(PsiNameHelper.getShortClassName(stub.getBaseClassReferenceText()));
+      }
+    }
+
+    class ByName implements InternalClassMatcher {
+      private final String myName;
+
+      public ByName(String name) {myName = name;}
+
+      @Override
+      public boolean matches(PsiClass psiClass) {
+        return myName.equals(psiClass.getName());
+      }
+
+      @Override
+      public boolean matches(PsiClassStub stub) {
+        return myName.equals(stub.getName());
+      }
+    }
+
+    class ByQualifiedName implements InternalClassMatcher {
+      private final String myQName;
+
+      public ByQualifiedName(String name) {myQName = name;}
+
+      @Override
+      public boolean matches(PsiClass psiClass) {
+        return myQName.equals(psiClass.getQualifiedName());
+      }
+
+      @Override
+      public boolean matches(PsiClassStub stub) {
+        return myQName.equals(stub.getQualifiedName());
+      }
     }
   }
 }

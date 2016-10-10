@@ -18,12 +18,11 @@ package com.intellij.compiler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public interface CompilerDirectInheritorSearchAdapter<T extends PsiNamedElement> {
+public interface ClassResolvingCompilerSearchAdapter<T extends PsiNamedElement> extends CompilerSearchAdapter {
 
   /**
    * @param classInternalNames - collection compiler internal name of classes (e.g. org.some.Main$1 for java anonymous class)

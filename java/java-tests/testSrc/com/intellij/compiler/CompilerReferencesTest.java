@@ -83,21 +83,21 @@ public class CompilerReferencesTest extends AbstractCompilerAwareTest {
   }
 
   public void testHierarchy() {
-    myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/FooImpl.java", getName() + "/Bar.java");
+    myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/FooImpl.java", getName() + "/Bar.java", getName() + "/Baz.java");
     rebuildProject();
     CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> directInheritorInfo = getHierarchyUnderForElementCaret();
 
-    Collection<PsiClass> inheritors = directInheritorInfo.getDirectInheritors();
+    Collection<PsiClass> inheritors = directInheritorInfo.getDirectInheritors().collect(Collectors.toList());
     assertSize(4, inheritors);
     for (PsiClass inheritor : inheritors) {
       if (inheritor instanceof PsiAnonymousClass) {
         assertOneOf(inheritor.getTextOffset(), 58, 42, 94);
       } else {
-        assertEquals("FooImpl", inheritor.getQualifiedName());
+        assertOneOf(inheritor.getQualifiedName(), "FooImpl", "FooImpl2");
       }
     }
 
-    Collection<PsiClass> candidates = directInheritorInfo.getDirectInheritorCandidates();
+    Collection<PsiClass> candidates = directInheritorInfo.getDirectInheritorCandidates().collect(Collectors.toList());
     assertEmpty(candidates);
   }
 
@@ -110,7 +110,6 @@ public class CompilerReferencesTest extends AbstractCompilerAwareTest {
                                                                                             assertInstanceOf(classAtCaret.getUseScope(), GlobalSearchScope.class),
                                                                                             assertInstanceOf(classAtCaret.getUseScope(), GlobalSearchScope.class),
                                                                                             JavaBaseCompilerSearchAdapter.INSTANCE,
-                                                                                            JavaCompilerDirectInheritorSearchAdapter.INSTANCE,
                                                                                             StdFileTypes.JAVA);
 
   }

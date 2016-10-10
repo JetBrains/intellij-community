@@ -26,7 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.stream.Stream;
 
 public abstract class CompilerReferenceService extends AbstractProjectComponent {
   public static final RegistryValue IS_ENABLED_KEY = Registry.get("bytecode.ref.index");
@@ -46,41 +46,22 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
   public abstract <T extends PsiNamedElement> CompilerDirectInheritorInfo<T> getDirectInheritors(@NotNull PsiNamedElement aClass,
                                                                                                  @NotNull GlobalSearchScope useScope,
                                                                                                  @NotNull GlobalSearchScope searchScope,
-                                                                                                 @NotNull CompilerSearchAdapter compilerSearchAdapter,
-                                                                                                 @NotNull CompilerDirectInheritorSearchAdapter<T> inheritorSearchAdapter,
-                                                                                                 @NotNull FileType... searchFileTypes);
+                                                                                                 @NotNull ClassResolvingCompilerSearchAdapter<T> inheritorSearchAdapter,
+                                                                                                 @NotNull FileType searchFileType);
 
 
   public static boolean isEnabled() {
     return IS_ENABLED_KEY.asBoolean();
   }
 
-  public static class CompilerDirectInheritorInfo<T extends PsiNamedElement> {
-    private final Collection<T> myDirectInheritors;
-    private final Collection<T> myDirectInheritorCandidates;
-    private final GlobalSearchScope myDirtyScope;
-
-    CompilerDirectInheritorInfo(Collection<T> directInheritors,
-                                Collection<T> directInheritorCandidates,
-                                GlobalSearchScope dirtyScope) {
-      myDirectInheritors = directInheritors;
-      myDirectInheritorCandidates = directInheritorCandidates;
-      myDirtyScope = dirtyScope;
-    }
+  public interface CompilerDirectInheritorInfo<T extends PsiNamedElement> {
+    @NotNull
+    Stream<T> getDirectInheritors();
 
     @NotNull
-    public Collection<T> getDirectInheritors() {
-      return myDirectInheritors;
-    }
+    Stream<T> getDirectInheritorCandidates();
 
     @NotNull
-    public Collection<T> getDirectInheritorCandidates() {
-      return myDirectInheritorCandidates;
-    }
-
-    @NotNull
-    public GlobalSearchScope getDirtyScope() {
-      return myDirtyScope;
-    }
+    GlobalSearchScope getDirtyScope();
   }
 }

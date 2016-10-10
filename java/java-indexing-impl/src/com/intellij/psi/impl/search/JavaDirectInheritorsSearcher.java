@@ -17,7 +17,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.JavaBaseCompilerSearchAdapter;
-import com.intellij.compiler.JavaCompilerDirectInheritorSearchAdapter;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,6 +48,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Stream;
 
 /**
  * @author max
@@ -73,7 +73,6 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
       });
     }
 
-    Collection<PsiClass> anonymousCandidatesFromCompilerSearchIndex = Collections.emptyList();
     SearchScope scope = parameters.getScope();
     if (useScope instanceof GlobalSearchScope && scope instanceof GlobalSearchScope) {
       PsiClass searchClass = baseClass;
@@ -87,20 +86,28 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
                                                      (GlobalSearchScope)useScope,
                                                      (GlobalSearchScope)scope,
                                                      JavaBaseCompilerSearchAdapter.INSTANCE,
-                                                     JavaCompilerDirectInheritorSearchAdapter.INSTANCE,
                                                      JavaFileType.INSTANCE);
       if (compilerDirectInheritorInfo != null) {
-        for (PsiClass aClass : compilerDirectInheritorInfo.getDirectInheritors()) {
-          consumer.process(aClass);
+        Iterator<PsiClass> inheritors = filterOutAnonymousIfNeed(compilerDirectInheritorInfo.getDirectInheritorCandidates(), parameters).iterator();
+        while (inheritors.hasNext()) {
+          ProgressManager.checkCanceled();
+          PsiClass next = inheritors.next();
+          if (!consumer.process(next)) return false;
         }
-        // here candidates is only anonymous classes whose containing file has more than one anonymous inheritor of baseClass
-        anonymousCandidatesFromCompilerSearchIndex = compilerDirectInheritorInfo.getDirectInheritorCandidates();
+
+        Iterator<PsiClass> candidates = filterOutAnonymousIfNeed(compilerDirectInheritorInfo.getDirectInheritorCandidates(), parameters).iterator();
+        while (candidates.hasNext()) {
+          ProgressManager.checkCanceled();
+          PsiClass next = candidates.next();
+          if (next.isInheritor(baseClass, false) && !consumer.process(next)) return false;
+        }
+
         scope = ((GlobalSearchScope)scope).intersectWith(compilerDirectInheritorInfo.getDirtyScope());
         useScope = ((GlobalSearchScope)useScope).intersectWith(compilerDirectInheritorInfo.getDirtyScope());
       }
     }
 
-    PsiClass[] cache = getOrCalculateDirectSubClasses(project, baseClass, useScope, anonymousCandidatesFromCompilerSearchIndex);
+    PsiClass[] cache = getOrCalculateDirectSubClasses(project, baseClass, useScope);
 
     if (cache.length == 0) {
       return true;
@@ -166,10 +173,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   // The list starts with non-anonymous classes, ends with anonymous sub classes
   // Classes grouped by their FQN. (Because among the same-named subclasses we should return only the same-jar ones, or all of them if there were none)
   @NotNull
-  private static PsiClass[] getOrCalculateDirectSubClasses(@NotNull Project project,
-                                                           @NotNull PsiClass baseClass,
-                                                           @NotNull SearchScope useScope,
-                                                           Collection<PsiClass> anonymousCandidates) {
+  private static PsiClass[] getOrCalculateDirectSubClasses(@NotNull Project project, @NotNull PsiClass baseClass, @NotNull SearchScope useScope) {
     ConcurrentMap<PsiClass, PsiClass[]> map = HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES;
     PsiClass[] cache = map.get(baseClass);
     if (cache != null) {
@@ -180,7 +184,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     if (StringUtil.isEmpty(baseClassName)) {
       return PsiClass.EMPTY_ARRAY;
     }
-    cache = calculateDirectSubClasses(project, baseClass, baseClassName, useScope, anonymousCandidates);
+    cache = calculateDirectSubClasses(project, baseClass, baseClassName, useScope);
     // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
     if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)baseClass::isPhysical)) {
       cache = ConcurrencyUtil.cacheOrGet(map, baseClass, cache);
@@ -203,8 +207,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
   private static PsiClass[] calculateDirectSubClasses(@NotNull Project project,
                                                       @NotNull PsiClass baseClass,
                                                       @NotNull String baseClassName,
-                                                      @NotNull SearchScope useScope,
-                                                      @NotNull Collection<PsiClass> anonymousCandidatesFromCompilerIndicesSearch) {
+                                                      @NotNull SearchScope useScope) {
     DumbService dumbService = DumbService.getInstance(project);
     GlobalSearchScope globalUseScope = dumbService.runReadActionInSmartMode(
       () -> StubHierarchyInheritorSearcher.restrictScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project)));
@@ -259,9 +262,6 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     Collection<PsiAnonymousClass> anonymousCandidates =
       dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
-    for (PsiClass candidate : anonymousCandidatesFromCompilerIndicesSearch) {
-      anonymousCandidates.add((PsiAnonymousClass)candidate);
-    }
 
     processConcurrentlyIfTooMany(anonymousCandidates,
        candidate-> {
@@ -295,5 +295,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
   private static VirtualFile getJarFile(@NotNull PsiClass aClass) {
     return ApplicationManager.getApplication().runReadAction((Computable<VirtualFile>)() -> PsiUtil.getJarFile(aClass));
+  }
+
+  private static Stream<PsiClass> filterOutAnonymousIfNeed(Stream<PsiClass> classStream,
+                                                           DirectClassInheritorsSearch.SearchParameters parameters) {
+    return parameters.includeAnonymous() ? classStream : classStream.filter(c -> !(c instanceof PsiAnonymousClass));
   }
 }

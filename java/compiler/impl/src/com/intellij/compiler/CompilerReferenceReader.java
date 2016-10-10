@@ -42,7 +42,7 @@ import org.jetbrains.jps.backwardRefs.LightUsage;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
 
@@ -75,31 +75,37 @@ class CompilerReferenceReader {
     return set;
   }
 
-  @NotNull
-  <T extends PsiNamedElement> Couple<Map<VirtualFile, T[]>> getDirectInheritors(@NotNull CompilerElement element,
-                                                                                @NotNull PsiNamedElement psiElement,
-                                                                                @NotNull CompilerDirectInheritorSearchAdapter<T> adapter,
+  @Nullable
+  <T extends PsiNamedElement> Couple<Map<VirtualFile, T[]>> getDirectInheritors(@NotNull PsiNamedElement psiElement,
+                                                                                @Nullable CompilerReferenceServiceImpl.CompilerElementInfo searchElementInfo,
+                                                                                @NotNull ClassResolvingCompilerSearchAdapter<T> inheritorSearchAdapter,
                                                                                 @NotNull GlobalSearchScope searchScope,
                                                                                 @NotNull GlobalSearchScope dirtyScope,
                                                                                 @NotNull Project project,
-                                                                                FileType... fileTypes) {
-    final LightUsage aClass = asLightUsage(element);
-    Collection<CompilerBackwardReferenceIndex.LightDefinition> candidates = myIndex.getBackwardHierarchyMap().get(aClass);
+                                                                                FileType fileType) {
+    if (searchElementInfo == null) return null;
+
+    CompilerBackwardReferenceIndex.LightDefinition[] candidates =
+      Stream.of(searchElementInfo.searchElements)
+      .map(this::asLightUsage)
+      .map(myIndex.getBackwardHierarchyMap()::get)
+      .filter(Objects::nonNull)
+      .flatMap(Collection::stream)
+      .toArray(CompilerBackwardReferenceIndex.LightDefinition[]::new);
+
     if (candidates == null) return Couple.of(Collections.emptyMap(), Collections.emptyMap());
 
-    final Set<FileType> fileTypeSet = ContainerUtil.set(fileTypes);
-
-    final Set<Class<? extends LightUsage>> suitableClasses = new THashSet<>();
+    Set<Class<? extends LightUsage>> suitableClasses = new THashSet<>();
     for (LanguageLightUsageConverter converter : LanguageLightUsageConverter.INSTANCES) {
-      if (fileTypeSet.contains(converter.getFileSourceType())) {
+      if (fileType == converter.getFileSourceType()) {
         suitableClasses.addAll(converter.getLanguageLightUsageClasses());
+        break;
       }
     }
 
     final GlobalSearchScope effectiveSearchScope = GlobalSearchScope.notScope(dirtyScope).intersectWith(searchScope);
 
-    Map<VirtualFile, SmartList<String>> perFileCandidates = candidates
-      .stream()
+    Map<VirtualFile, SmartList<String>> candidatesPerFile = Stream.of(candidates)
       .filter(def -> suitableClasses.contains(def.getUsage().getClass()))
       .map(definition -> {
         final VirtualFile file = findFile(definition.getFileId());
@@ -108,13 +114,13 @@ class CompilerReferenceReader {
       .filter(Objects::nonNull)
       .collect(groupingBy(DecodedInheritorCandidate::getDeclarationFile, mapping(DecodedInheritorCandidate::getQName, toCollection(SmartList::new))));
 
-    if (perFileCandidates.isEmpty()) return Couple.of(Collections.emptyMap(), Collections.emptyMap());
+    if (candidatesPerFile.isEmpty()) return Couple.of(Collections.emptyMap(), Collections.emptyMap());
 
-    Map<VirtualFile, T[]> inheritors = new THashMap<>(perFileCandidates.size());
+    Map<VirtualFile, T[]> inheritors = new THashMap<>(candidatesPerFile.size());
     Map<VirtualFile, T[]> inheritorCandidates = new THashMap<>();
 
-    perFileCandidates.forEach((file, directInheritors) -> {
-      final T[] currInheritors = adapter.getCandidatesFromFile(directInheritors, psiElement, file, project);
+    candidatesPerFile.forEach((file, directInheritors) -> {
+      final T[] currInheritors = inheritorSearchAdapter.getCandidatesFromFile(directInheritors, psiElement, file, project);
       if (currInheritors.length == directInheritors.size()) {
         inheritors.put(file, currInheritors);
       } else {
