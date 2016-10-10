@@ -80,7 +80,12 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
       throw Exception("shell:" + shellPath)
     }
 
-    return if (activate != null) mutableListOf(shellPath, "--rcfile", activate, "-i")
+    return if (activate != null)
+      if (File(shellPath).name == "sh") {
+        mutableListOf(shellPath, "-i", "-c", "source '$activate'")
+      } else {
+        mutableListOf(shellPath, "--rcfile", activate, "-i")
+      }
     else super.getShellProcessCommand()
   }
 
