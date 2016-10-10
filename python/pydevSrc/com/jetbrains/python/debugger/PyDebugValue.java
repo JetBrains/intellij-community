@@ -88,7 +88,7 @@ public class PyDebugValue extends XNamedValue {
   public boolean isErrorOnEval() {
     return myErrorOnEval;
   }
-  
+
   public PyDebugValue setParent(@Nullable PyDebugValue parent) {
     return new PyDebugValue(myName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myIsIPythonHidden, myErrorOnEval,
                             parent, myFrameAccessor);
@@ -197,13 +197,31 @@ public class PyDebugValue extends XNamedValue {
   @Override
   public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
     String value = PyTypeHandler.format(this);
-
+    setFullValueEvaluator(node, value);
     if (value.length() >= MAX_VALUE) {
-      node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, getFullTreeName()));
       value = value.substring(0, MAX_VALUE);
     }
-
     node.setPresentation(getValueIcon(), myType, value, myContainer);
+  }
+
+  private boolean isDataFrame() {
+    return "DataFrame".equals(myType);
+  }
+
+  private boolean isNdarray() {
+    return "ndarray".equals(myType);
+  }
+
+  private void setFullValueEvaluator(XValueNode node, String value) {
+    String treeName = getFullTreeName();
+    if (!isDataFrame() && !isNdarray()) {
+      if (value.length() >= MAX_VALUE) {
+        node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, treeName));
+      }
+      return;
+    }
+    String linkText = "...View as " + (isDataFrame() ? "DataFrame" : "Array");
+    node.setFullValueEvaluator(new PyNumericContainerValueEvaluator(linkText, myFrameAccessor, treeName));
   }
 
   @Override
@@ -243,7 +261,7 @@ public class PyDebugValue extends XNamedValue {
       return AllIcons.Debugger.Value;
     }
   }
-  
+
   public PyDebugValue setName(String newName) {
     PyDebugValue value = new PyDebugValue(newName, myType, myTypeQualifier, myValue, myContainer, myIsReturnedVal, myIsIPythonHidden,
                                           myErrorOnEval, myParent, myFrameAccessor);
