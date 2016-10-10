@@ -730,12 +730,6 @@ class Foo {
     assertNotNull(resolve('a.groovy'))
   }
 
-  void testAutoClone() {
-    def element = resolve('a.groovy', PsiMethod)
-    assertTrue element.containingClass.name == 'Foo'
-    assertSize 1, element.throwsList.referencedTypes
-  }
-
   void testDontUseQualifierScopeInDGM() {
     assertNull resolve('a.groovy')
   }
