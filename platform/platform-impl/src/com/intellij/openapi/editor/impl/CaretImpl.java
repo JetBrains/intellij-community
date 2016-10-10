@@ -38,6 +38,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.EmptyClipboardOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1471,7 +1472,17 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     protected void changedUpdateImpl(@NotNull DocumentEvent e) {
       int oldOffset = intervalStart();
       super.changedUpdateImpl(e);
-      if (!isValid()) {
+      if (isValid()) {
+        // Under certain conditions, when text is inserted at caret position, we position caret at the end of inserted text.
+        // Ideally, client code should be responsible for positioning caret after document modification, but in case of
+        // postponed formatting (after PSI modifications), this is hard to implement, so a heuristic below is used.
+        if (e.getOldLength() == 0 && oldOffset == e.getOffset() && needToShiftWhiteSpaces(e)) {
+          int afterInserted = e.getOffset() + e.getNewLength();
+          setIntervalStart(afterInserted);
+          setIntervalEnd(afterInserted);
+        }
+      }
+      else {
         setValid(true);
         int newOffset = Math.min(intervalStart(), e.getOffset() + e.getNewLength());
         if (!((DocumentEx)e.getDocument()).isInBulkUpdate() && e.isWholeTextReplaced()) {
@@ -1493,6 +1504,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       else if (oldOffset == e.getOffset()) {
         myLeansTowardsLargerOffsets = false;
       }
+    }
+
+    private boolean needToShiftWhiteSpaces(final DocumentEvent e) {
+      return e.getOffset() > 0 && Character.isWhitespace(e.getDocument().getImmutableCharSequence().charAt(e.getOffset() - 1)) &&
+             CharArrayUtil.containsOnlyWhiteSpaces(e.getNewFragment()) && !CharArrayUtil.containLineBreaks(e.getNewFragment());
     }
   }
 
