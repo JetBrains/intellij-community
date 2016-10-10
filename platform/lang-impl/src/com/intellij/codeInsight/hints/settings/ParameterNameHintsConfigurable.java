@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl.hints;
+package com.intellij.codeInsight.hints.settings;
 
-import com.intellij.codeInsight.daemon.impl.ParameterNameHintsSettings;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;

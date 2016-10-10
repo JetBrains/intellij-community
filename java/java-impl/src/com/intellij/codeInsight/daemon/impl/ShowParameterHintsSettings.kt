@@ -15,7 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.codeInsight.daemon.impl.hints.ParameterNameHintsConfigurable
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys

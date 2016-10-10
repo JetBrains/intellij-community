@@ -21,6 +21,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.hints.filtering.Matcher;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
+import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
