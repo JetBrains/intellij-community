@@ -67,6 +67,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
   private val LOG = logger<GitConfigureRemotesDialog>()
 
   private val NAME_COLUMN = 0
+  private val URL_COLUMN = 1
   private val REMOTE_PADDING = 30
   private val table = JBTable(RemotesTableModel())
 
@@ -151,17 +152,20 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
   }
 
   private fun updateColumnSize() {
-    var maxWidth = 0
+    var maxNameWidth = 0
+    var maxUrlWidth = 0
     for (node in nodes) {
-      val tableFont = JBFont.create(UIManager.getFont("Table.font")).asBold()
-      val width = table.getFontMetrics(tableFont).stringWidth(node.getPresentableString())
-      if (maxWidth < width) maxWidth = width
+      val fontMetrics = table.getFontMetrics(JBFont.create(UIManager.getFont("Table.font")).asBold())
+      val nameWidth = fontMetrics.stringWidth(node.getPresentableString())
+      val remote = (node as? RemoteNode)?.remote
+      val urlWidth = if (remote == null) 0 else fontMetrics.stringWidth(getUrl(remote))
+      if (maxNameWidth < nameWidth) maxNameWidth = nameWidth
+      if (maxUrlWidth < urlWidth) maxUrlWidth = urlWidth
     }
-    maxWidth += REMOTE_PADDING + UIUtil.DEFAULT_HGAP
+    maxNameWidth += REMOTE_PADDING + UIUtil.DEFAULT_HGAP
 
-    val column = table.columnModel.getColumn(NAME_COLUMN)
-    column.preferredWidth = maxWidth
-    column.maxWidth = maxWidth
+    table.columnModel.getColumn(NAME_COLUMN).preferredWidth = maxNameWidth
+    table.columnModel.getColumn(URL_COLUMN).preferredWidth = maxUrlWidth
   }
 
   private fun buildNodes(repositories: Collection<GitRepository>): List<Node> {
