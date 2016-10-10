@@ -266,7 +266,7 @@ idea.fatal.error.notification=disabled
       @Override
       String run(BuildContext context) {
         def builder = factory.apply(context)
-        if (context.shouldBuildDistributionForOS(builder.osTargetId)) {
+        if (builder != null && context.shouldBuildDistributionForOS(builder.osTargetId)) {
           return context.messages.block("Build $builder.osName Distribution") {
             def distDirectory = builder.copyFilesForOsDistribution()
             builder.buildArtifacts(distDirectory)
