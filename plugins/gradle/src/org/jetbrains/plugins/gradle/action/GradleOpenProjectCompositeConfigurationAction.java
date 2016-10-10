@@ -41,7 +41,7 @@ public class GradleOpenProjectCompositeConfigurationAction extends ExternalSyste
   protected boolean isVisible(AnActionEvent e) {
     final Project project = getProject(e);
     if (project == null) return false;
-    return !GradleSettings.getInstance(project).getLinkedProjectsSettings().isEmpty();
+    return GradleSettings.getInstance(project).getLinkedProjectsSettings().size() > 1;
   }
 
   @Override
