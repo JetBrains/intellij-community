@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
@@ -268,6 +267,14 @@ class A {
 '''
       checkHighlighting()
     }
+  }
+
+  void 'test static modifier on toplevel definition (not trait) is not allowed'() {
+    testHighlighting '''\
+<error descr="Modifier 'static' not allowed here">static</error> class A {}
+<error descr="Modifier 'static' not allowed here">static</error> interface I {}
+static trait T {}
+'''
   }
 
   final InspectionProfileEntry[] customInspections = [new GroovyAssignabilityCheckInspection(), new GrUnresolvedAccessInspection()]
