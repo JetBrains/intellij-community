@@ -59,6 +59,7 @@ public class ConfigurationContext {
   private final Location<PsiElement> myLocation;
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized = false;
+  private boolean myMultipleSelection = false;
   private Ref<RunnerAndConfigurationSettings> myExistingConfiguration;
   private final Module myModule;
   private final RunConfiguration myRuntimeConfiguration;
@@ -104,6 +105,14 @@ public class ConfigurationContext {
       return;
     }
     myLocation = new PsiLocation<>(project, myModule, element);
+    final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    if (elements != null) {
+      myMultipleSelection = elements.length > 1;
+    }
+    else {
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      myMultipleSelection = files != null && files.length > 1;
+    }
   }
 
   public ConfigurationContext(PsiElement element) {
@@ -111,6 +120,10 @@ public class ConfigurationContext {
     myLocation = new PsiLocation<>(element.getProject(), myModule, element);
     myRuntimeConfiguration = null;
     myContextComponent = null;
+  }
+
+  public boolean containsMultipleSelection() {
+    return myMultipleSelection;
   }
 
   /**
