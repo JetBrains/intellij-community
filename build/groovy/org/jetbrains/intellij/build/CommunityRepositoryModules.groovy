@@ -250,6 +250,7 @@ class CommunityRepositoryModules {
       withModule("sdklib", "sdklib.jar")
       withModule("sdk-common", "sdk-common.jar")
       withModule("layoutlib-api", "layoutlib-api.jar")
+      withModule("layoutlib", "layoutlib-loader.jar")
       withModule("manifest-merger")
       withModule("repository")
       withModule("sherpa-ui", "constraint-layout.jar")
