@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.hints;
 
-import com.intellij.codeInsight.hints.filtering.Matcher;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -26,15 +25,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class ParameterNameHintsManager {
+public class JavaParameterHintManager {
   
   @NotNull
   private final List<InlayInfo> myDescriptors;
-  private final List<Matcher> myBlackListMatchers;
 
-  public ParameterNameHintsManager(@NotNull PsiCallExpression callExpression, List<Matcher> blackListMatchers) {
-    myBlackListMatchers = blackListMatchers;
-    
+  public JavaParameterHintManager(@NotNull PsiCallExpression callExpression) {
     PsiExpression[] callArguments = getArguments(callExpression);
     JavaResolveResult resolveResult = callExpression.resolveMethodGenerics();
     
@@ -51,14 +47,11 @@ public class ParameterNameHintsManager {
     myDescriptors = descriptors;
   }
 
-  private boolean isMethodToShowParams(@NotNull PsiCallExpression callExpression, @NotNull JavaResolveResult resolveResult) {
+  private static boolean isMethodToShowParams(@NotNull PsiCallExpression callExpression, @NotNull JavaResolveResult resolveResult) {
     PsiElement element = resolveResult.getElement();
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
-      if (isSetter(method) || isBuilder(callExpression, method)) {
-        return false;
-      }
-      return !isBlackListed(method);
+      return !isSetter(method) && !isBuilder(callExpression, method);
     }
     return false;
   }
@@ -80,21 +73,6 @@ public class ParameterNameHintsManager {
     return method.getParameterList().getParametersCount() == 1;
   }
 
-  public static MethodInfo getMethodInfo(PsiMethod method) {
-    PsiClass aClass = method.getContainingClass();
-    String qualifier = aClass != null ? aClass.getQualifiedName() : "";
-    String fullMethodName = qualifier + "." + method.getName();
-
-    PsiParameter[] params = method.getParameterList().getParameters();
-    List<String> paramNames = ContainerUtil.map(params, (e) -> e.getName());
-    
-    return new MethodInfo(fullMethodName, paramNames);
-  }
-  
-  private boolean isBlackListed(PsiMethod method) {
-    MethodInfo info = getMethodInfo(method);
-    return myBlackListMatchers.stream().anyMatch((e) -> e.isMatching(info.getFullyQualifiedName(), info.getParamNames()));
-  }
 
   private static boolean isSetter(PsiMethod method) {
     String methodName = method.getName();
@@ -156,7 +134,7 @@ public class ParameterNameHintsManager {
   @NotNull
   private static InlayInfo createInlayInfo(@NotNull PsiExpression callArgument, @NotNull PsiParameter methodParam) {
     String paramName = ((methodParam.getType() instanceof PsiEllipsisType) ? "..." : "") + methodParam.getName();
-    return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset(), callArgument);
+    return new InlayInfo(paramName, callArgument.getTextRange().getStartOffset());
   }
   
   private static boolean shouldInlineParameterName(@NotNull PsiExpression argument,

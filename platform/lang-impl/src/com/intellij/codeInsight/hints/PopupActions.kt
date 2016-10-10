@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl
+package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.psi.PsiCallExpression
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 
 class ShowParameterHintsSettings : AnAction() {
@@ -31,7 +29,7 @@ class ShowParameterHintsSettings : AnAction() {
     presentation.text = "Show Settings"
     presentation.description = "Show Parameter Name Hints Settings"
   }
-  
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
     val dialog = ParameterNameHintsConfigurable(project)
@@ -55,14 +53,13 @@ class BlacklistCurrentMethodAction : AnAction() {
     val offset = editor.caretModel.offset
 
     val element = file.findElementAt(offset)
-    val callExpression = PsiTreeUtil.getParentOfType(element, PsiCallExpression::class.java)
+    val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
 
-    val result = callExpression?.resolveMethodGenerics()?.element ?: return
-    if (result is PsiMethod) {
-      val info = ParameterNameHintsManager.getMethodInfo(result)
-      val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
-      ParameterNameHintsSettings.getInstance().addIgnorePattern(pattern)
-    }
+    val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getMethodInfo(e) != null }) ?: return
+    val info = hintsProvider.getMethodInfo(method) ?: return
+
+    val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
+    ParameterNameHintsSettings.getInstance().addIgnorePattern(pattern)
   }
-  
+
 }

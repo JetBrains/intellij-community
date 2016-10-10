@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl
+package com.intellij.codeInsight.hints
 
-import com.intellij.psi.PsiExpression
-
-class InlayInfo(val text: String, val offset: Int, val argument: PsiExpression)
+class InlayInfo(val text: String, val offset: Int)
 
 class MethodInfo(val fullyQualifiedName: String, val paramNames: List<String>)

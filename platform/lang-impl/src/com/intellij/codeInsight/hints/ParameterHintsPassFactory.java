@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hints.filtering.Matcher;
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor;
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
@@ -31,7 +32,9 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -65,8 +68,10 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     public void doCollectInformation(@NotNull ProgressIndicator progress) {
       assert myDocument != null;
       myAnnotations.clear();
-      if (!isEnabled() || !(myFile instanceof PsiJavaFile)) return;
-      PsiJavaFile file = (PsiJavaFile) myFile;
+      if (!isEnabled()) return;
+
+      InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(myFile.getLanguage());
+      if (provider == null) return;
 
       List<Matcher> matchers = ParameterNameHintsSettings
         .getInstance()
@@ -75,20 +80,21 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
         .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
         .collect(Collectors.toList());
 
-      SyntaxTraverser.psiTraverser(file).forEach(element -> process(element, matchers));
+      SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
     }
 
     private static boolean isEnabled() {
       return EditorSettingsExternalizable.getInstance().isShowParameterNameHints();
     }
 
-    private void process(PsiElement child, List<Matcher> matchers) {
-      if (child instanceof PsiCallExpression) {
-        PsiCallExpression callExpression = (PsiCallExpression)child;
-        ParameterNameHintsManager manager = new ParameterNameHintsManager(callExpression, matchers);
-        for (InlayInfo info : manager.getDescriptors()) {
-          myAnnotations.put(info.getOffset(), info.getText());
-        }
+    private static boolean isMatchedByAny(MethodInfo info, List<Matcher> matchers) {
+      return matchers.stream().anyMatch((e) -> e.isMatching(info.getFullyQualifiedName(), info.getParamNames()));
+    }
+
+    private void process(PsiElement element, InlayParameterHintsProvider provider, List<Matcher> blackListMatchers) {
+      MethodInfo info = provider.getMethodInfo(element);
+      if (info != null && !isMatchedByAny(info, blackListMatchers)) {
+        provider.getParameterHints(element).forEach((h) -> myAnnotations.put(h.getOffset(), h.getText()));  
       }
     }
 
