@@ -32,7 +32,7 @@ public class CheckRepositorySupportsMergeInfoTask extends BaseMergeTask {
 
   @Override
   public void run() {
-    next(supportsMergeInfo() ? getChooseMergeTypeTasks() : getMergeAllTasks());
+    next(supportsMergeInfo() ? getChooseMergeTypeTasks() : getMergeAllTasks(false));
   }
 
   private boolean supportsMergeInfo() {

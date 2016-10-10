@@ -20,6 +20,7 @@ public interface MergeClient extends SvnClient {
   void merge(@NotNull SvnTarget source,
              @NotNull File destination,
              boolean dryRun,
+             boolean reintegrate,
              @Nullable DiffOptions diffOptions,
              @Nullable ProgressTracker handler) throws VcsException;
 

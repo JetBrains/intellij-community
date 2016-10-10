@@ -21,10 +21,14 @@ import org.jetbrains.annotations.NotNull;
 public class MergeAllWithBranchCopyPointTask extends BaseMergeTask {
 
   @NotNull private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
+  private final boolean mySupportsMergeInfo;
 
-  public MergeAllWithBranchCopyPointTask(@NotNull QuickMerge mergeProcess, @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint) {
+  public MergeAllWithBranchCopyPointTask(@NotNull QuickMerge mergeProcess,
+                                         @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
+                                         boolean supportsMergeInfo) {
     super(mergeProcess, "merge all", Where.AWT);
     myCopyPoint = copyPoint;
+    mySupportsMergeInfo = supportsMergeInfo;
   }
 
   @Override
@@ -44,8 +48,11 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask {
 
   @NotNull
   private MergerFactory createBranchMergerFactory(boolean reintegrate) {
-    return (vcs, target, handler, currentBranchUrl, branchName) ->
-      new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getPath(), handler, reintegrate, myMergeContext.getBranchName(),
-                       reintegrate ? myCopyPoint.getWrapped().getTargetRevision() : myCopyPoint.getWrapped().getSourceRevision());
+    return (vcs, target, handler, currentBranchUrl, branchName) -> {
+      long revision = reintegrate ? myCopyPoint.getWrapped().getTargetRevision() : myCopyPoint.getWrapped().getSourceRevision();
+
+      return new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getPath(), handler, reintegrate,
+                              myMergeContext.getBranchName(), revision, mySupportsMergeInfo);
+    };
   }
 }

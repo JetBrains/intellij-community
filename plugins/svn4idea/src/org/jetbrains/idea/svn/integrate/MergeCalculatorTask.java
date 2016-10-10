@@ -148,7 +148,7 @@ public class MergeCalculatorTask extends BaseMergeTask {
           end();
           break;
         case all:
-          next(getMergeAllTasks());
+          next(getMergeAllTasks(true));
           break;
         default:
           List<CommittedChangeList> lists = result.getSelectedLists();

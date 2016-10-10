@@ -85,11 +85,13 @@ public abstract class BaseMergeTask extends TaskDescriptor {
   }
 
   @NotNull
-  protected List<TaskDescriptor> getMergeAllTasks() {
+  protected List<TaskDescriptor> getMergeAllTasks(boolean supportsMergeInfo) {
+    // merge info is not supported - branch copy point is used to make first sync merge successful (without unnecessary tree conflicts)
+    // merge info is supported - branch copy point is used to determine if sync or reintegrate merge should be performed
     return newArrayList(
       new LocalChangesPromptTask(myMergeProcess),
       new LookForBranchOriginTask(myMergeProcess, true, copyPoint ->
-        next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint)))
+        next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint, supportsMergeInfo)))
     );
   }
 

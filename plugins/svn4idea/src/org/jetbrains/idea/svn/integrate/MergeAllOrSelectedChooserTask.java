@@ -29,7 +29,7 @@ public class MergeAllOrSelectedChooserTask extends BaseMergeTask {
     //noinspection EnumSwitchStatementWhichMissesCases
     switch (myInteraction.selectMergeVariant()) {
       case all:
-        next(getMergeAllTasks());
+        next(getMergeAllTasks(true));
         break;
       case showLatest:
         LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeProcess, -1);
