@@ -21,81 +21,16 @@ import com.intellij.codeInsight.daemon.impl.IntentionActionFilter;
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.icons.AllIcons;
-import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.LanguageSubstitutor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-public class DiffPsiFileType extends LanguageFileType implements FileTypeIdentifiableByVirtualFile, PeripheralFileType {
-  public static final Key<FileType> ORIGINAL_FILE_TYPE_KEY = Key.create("Diff.DiffPsiFileType.OriginalFileTypeKey");
-  public static final LanguageFileType INSTANCE = new DiffPsiFileType();
-
-  DiffPsiFileType() {
-    super(PlainTextLanguage.INSTANCE);
-  }
-
-  @Override
-  public boolean isMyFileType(@NotNull VirtualFile file) {
-    return isDiffFile(file);
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return "Diff";
-  }
-
-  @NotNull
-  @Override
-  public String getDescription() {
-    return "Diff";
-  }
-
-  @NotNull
-  @Override
-  public String getDefaultExtension() {
-    return "";
-  }
-
-  @Nullable
-  @Override
-  public Icon getIcon() {
-    return AllIcons.Diff.Diff;
-  }
-
-  @Override
-  public boolean isReadOnly() {
-    return true;
-  }
-
-  @Nullable
-  @Override
-  public String getCharset(@NotNull VirtualFile file, @NotNull byte[] content) {
-    return null;
-  }
-
-
-  public static class Substitutor extends LanguageSubstitutor {
-    @Nullable
-    @Override
-    public Language getLanguage(@NotNull VirtualFile file, @NotNull Project project) {
-      FileType originalType = getOriginalFileType(file);
-      if (originalType instanceof LanguageFileType) {
-        return ((LanguageFileType)originalType).getLanguage();
-      }
-      return null;
-    }
-  }
+public class DiffPsiFileSupport {
+  public static final Key<Boolean> KEY = Key.create("Diff.DiffPsiFileSupport");
 
   public static class HighlightFilter implements HighlightInfoFilter {
     @Override
@@ -128,12 +63,6 @@ public class DiffPsiFileType extends LanguageFileType implements FileTypeIdentif
   }
 
   private static boolean isDiffFile(@Nullable VirtualFile file) {
-    return file != null && getOriginalFileType(file) != null;
-  }
-
-  @Nullable
-  private static FileType getOriginalFileType(@NotNull VirtualFile file) {
-    FileType fileType = file.getUserData(ORIGINAL_FILE_TYPE_KEY);
-    return fileType instanceof DiffPsiFileType ? null : fileType;
+    return file != null && file.getUserData(KEY) == Boolean.TRUE;
   }
 }
