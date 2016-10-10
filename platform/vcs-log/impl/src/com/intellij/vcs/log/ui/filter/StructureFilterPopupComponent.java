@@ -74,29 +74,23 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       VcsLogUtil.getAllVisibleRoots(getAllRoots(), filter.getRootFilter(), filter.getStructureFilter());
 
     if (files.isEmpty()) {
-      return getTextFromRoots(roots, "roots", true, visibleRoots.size() == getAllRoots().size());
+      return getTextFromRoots(roots, visibleRoots.size() == getAllRoots().size());
     }
     else {
-      return getTextFromFilePaths(files, "folders", false, files.isEmpty());
+      return getTextFromFilePaths(files, "folders", files.isEmpty());
     }
   }
 
   private static String getTextFromRoots(@NotNull Collection<VirtualFile> files,
-                                         @NotNull String category,
-                                         final boolean shorten,
                                          boolean full) {
-    return getText(files, category, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR,
-                   file -> shorten ? file.getName() : StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH),
-                   full);
+    return getText(files, "roots", FILE_BY_NAME_COMPARATOR, VirtualFile::getName, full);
   }
 
   private static String getTextFromFilePaths(@NotNull Collection<FilePath> files,
                                              @NotNull String category,
-                                             final boolean shorten,
                                              boolean full) {
-    return getText(files, category, shorten ? FILE_PATH_BY_NAME_COMPARATOR : FILE_PATH_BY_PATH_COMPARATOR,
-                   file -> shorten ? file.getName() : StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH),
-                   full);
+    return getText(files, category, FILE_PATH_BY_PATH_COMPARATOR,
+                   file -> StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), FILTER_LABEL_LENGTH), full);
   }
 
   private static <F> String getText(@NotNull Collection<F> files,
@@ -136,23 +130,21 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       tooltip += "No Roots Selected";
     }
     else if (roots.size() != getAllRoots().size()) {
-      tooltip += "Roots:\n" + getTooltipTextForRoots(roots, true);
+      tooltip += "Roots:\n" + getTooltipTextForRoots(roots);
     }
     if (!files.isEmpty()) {
       if (!tooltip.isEmpty()) tooltip += "\n";
-      tooltip += "Folders:\n" + getTooltipTextForFilePaths(files, false);
+      tooltip += "Folders:\n" + getTooltipTextForFilePaths(files);
     }
     return tooltip;
   }
 
-  private static String getTooltipTextForRoots(Collection<VirtualFile> files, final boolean shorten) {
-    return getTooltipTextForFiles(files, shorten ? FILE_BY_NAME_COMPARATOR : FILE_BY_PATH_COMPARATOR,
-                                  file -> shorten ? file.getName() : file.getPresentableUrl());
+  private static String getTooltipTextForRoots(Collection<VirtualFile> files) {
+    return getTooltipTextForFiles(files, FILE_BY_NAME_COMPARATOR, VirtualFile::getName);
   }
 
-  private static String getTooltipTextForFilePaths(Collection<FilePath> files, final boolean shorten) {
-    return getTooltipTextForFiles(files, shorten ? FILE_PATH_BY_NAME_COMPARATOR : FILE_PATH_BY_PATH_COMPARATOR,
-                                  file -> shorten ? file.getName() : file.getPresentableUrl());
+  private static String getTooltipTextForFilePaths(Collection<FilePath> files) {
+    return getTooltipTextForFiles(files, FILE_PATH_BY_PATH_COMPARATOR, FilePath::getPresentableUrl);
   }
 
   private static <F> String getTooltipTextForFiles(@NotNull Collection<F> files,
@@ -241,7 +233,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   }
 
   private static String getStructureActionText(@NotNull VcsLogStructureFilter filter) {
-    return getTextFromFilePaths(filter.getFiles(), "items", false, filter.getFiles().isEmpty());
+    return getTextFromFilePaths(filter.getFiles(), "items", filter.getFiles().isEmpty());
   }
 
   private static class FileByNameComparator implements Comparator<VirtualFile> {
@@ -398,7 +390,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     @NotNull private final Icon myEmptyIcon;
 
     private SelectFromHistoryAction(@NotNull VcsLogStructureFilter filter) {
-      super(getStructureActionText(filter), getTooltipTextForFilePaths(filter.getFiles(), false).replace("\n", " "), null);
+      super(getStructureActionText(filter), getTooltipTextForFilePaths(filter.getFiles()).replace("\n", " "), null);
       myFilter = filter;
       myIcon = new SizedIcon(PlatformIcons.CHECK_ICON_SMALL, CHECKBOX_ICON_SIZE, CHECKBOX_ICON_SIZE);
       myEmptyIcon = EmptyIcon.create(CHECKBOX_ICON_SIZE);
