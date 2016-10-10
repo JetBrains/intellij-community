@@ -15,11 +15,16 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 
 class ShowParameterHintsSettings : AnAction() {
@@ -60,6 +65,37 @@ class BlacklistCurrentMethodAction : AnAction() {
 
     val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
     ParameterNameHintsSettings.getInstance().addIgnorePattern(pattern)
+    
+    refreshAllOpenEditors()
+  }
+}
+
+class ToggleInlineHintsAction : AnAction() {
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = true
+
+    val isShow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
+    e.presentation.text = if (isShow) "Hide Parameter Name Hints" else "Show Parameter Name Hints"
   }
 
+  override fun actionPerformed(e: AnActionEvent) {
+    val settings = EditorSettingsExternalizable.getInstance()
+    val before = settings.isShowParameterNameHints
+    settings.isShowParameterNameHints = !before
+
+    refreshAllOpenEditors()
+  }
+}
+
+private fun refreshAllOpenEditors() {
+  ProjectManager.getInstance().openProjects.forEach {
+    val psiManager = PsiManager.getInstance(it)
+    val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(it)
+    val fileEditorManager = FileEditorManager.getInstance(it)
+
+    fileEditorManager.selectedFiles.forEach {
+      psiManager.findFile(it)?.let { daemonCodeAnalyzer.restart(it) }
+    }
+  }
 }
