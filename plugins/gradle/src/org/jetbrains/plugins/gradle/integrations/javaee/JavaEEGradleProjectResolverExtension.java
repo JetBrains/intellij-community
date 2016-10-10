@@ -96,10 +96,10 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
         }
       });
 
-      final Collection<DependencyData> deployDependencies =
-        GradleProjectResolverUtil.getIdeDependencies(findTargetModuleNode.getValue(), earConfiguration.getDeployDependencies());
-      final Collection<DependencyData> earlibDependencies =
-        GradleProjectResolverUtil.getIdeDependencies(findTargetModuleNode.getValue(), earConfiguration.getEarlibDependencies());
+      final Collection<DependencyData> deployDependencies = GradleProjectResolverUtil.getIdeDependencies(
+        resolverCtx, findTargetModuleNode.getValue(), earConfiguration.getDeployDependencies());
+      final Collection<DependencyData> earlibDependencies = GradleProjectResolverUtil.getIdeDependencies(
+        resolverCtx, findTargetModuleNode.getValue(), earConfiguration.getEarlibDependencies());
 
       findTargetModuleNode.getValue().createChild(
         EarConfigurationModelData.KEY,
