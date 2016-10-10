@@ -188,10 +188,12 @@ public class GradleManager
   /**
    * Add composite participants
    */
-  private static void configureExecutionWorkspace(GradleProjectSettings compositeRootSettings,
+  private static void configureExecutionWorkspace(@Nullable GradleProjectSettings compositeRootSettings,
                                                   GradleSettings settings,
                                                   GradleExecutionSettings result,
                                                   Project project) {
+    if(compositeRootSettings == null) return;
+
     for (GradleProjectSettings projectSettings : settings.getLinkedProjectsSettings()) {
       if (projectSettings == compositeRootSettings) continue;
       if (!compositeRootSettings.getCompositeParticipants().contains(projectSettings.getExternalProjectPath())) continue;
