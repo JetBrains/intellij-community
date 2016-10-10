@@ -15,10 +15,8 @@
  */
 package com.intellij.codeInsight.daemon
 
-import com.intellij.psi.PsiJavaModule
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.assertj.core.api.Assertions.assertThat
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
@@ -54,7 +52,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           <error descr="Duplicate uses: pkg.main.C">uses pkg. main . /*...*/ C;</error>
           provides pkg .main .C with pkg.main.Impl;
           <error descr="Duplicate provides: pkg.main.C / pkg.main.Impl">provides pkg.main.C with pkg. main. Impl;</error>
-        }""".trimIndent(), true)
+        }""".trimIndent())
   }
 
   fun testUnusedStatements() {
@@ -63,7 +61,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""
         module M {
           provides pkg.main.<warning descr="Service interface provided but not exported or used">C</warning> with pkg.main.Impl;
-        }""".trimIndent(), true)
+        }""".trimIndent())
   }
 
   fun testRequires() {
@@ -74,7 +72,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
           requires <error descr="Cyclic dependence: M1">M1</error>;
           requires <error descr="Cyclic dependence: M1, M2">M2</error>;
           requires <error descr="Module is not in dependencies: M3">M3</error>;
-        }""".trimIndent(), true)
+        }""".trimIndent())
   }
 
   fun testExports() {
@@ -137,7 +135,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testPackageAccessibility() {
     addFile("module-info.java", "module M { requires M2; requires M6; }")
-    addFile("module-info.java", "module M2 { exports pkg.m2; }", M2)
+    addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
     addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
     addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
     addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
@@ -159,17 +157,14 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         import static <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make;
 
         class C { }
-        """.trimIndent(), true)
+        """.trimIndent())
   }
 
   //<editor-fold desc="Helpers.">
-  private fun highlight(text: String, filter: Boolean = false) = highlight("module-info.java", text, filter)
+  private fun highlight(text: String) = highlight("module-info.java", text)
 
-  private fun highlight(path: String, text: String, filter: Boolean = false) {
+  private fun highlight(path: String, text: String) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
-    if (filter) {
-      (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter { it.name != PsiJavaModule.MODULE_INFO_FILE }
-    }
     myFixture.checkHighlighting()
   }
 

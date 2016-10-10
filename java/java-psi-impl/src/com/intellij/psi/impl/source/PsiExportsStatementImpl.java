@@ -16,15 +16,18 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.JavaElementVisitor;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiExportsStatement;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiExportsStatementStub;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
 public class PsiExportsStatementImpl extends JavaStubPsiElement<PsiExportsStatementStub> implements PsiExportsStatement {
   public PsiExportsStatementImpl(@NotNull PsiExportsStatementStub stub) {
@@ -39,6 +42,39 @@ public class PsiExportsStatementImpl extends JavaStubPsiElement<PsiExportsStatem
   @Override
   public PsiJavaCodeReferenceElement getPackageReference() {
     return PsiTreeUtil.getChildOfType(this, PsiJavaCodeReferenceElement.class);
+  }
+
+  @Nullable
+  @Override
+  public String getPackageName() {
+    PsiExportsStatementStub stub = getGreenStub();
+    if (stub != null) {
+      return StringUtil.nullize(stub.getPackageName());
+    }
+    else {
+      PsiJavaCodeReferenceElement ref = getPackageReference();
+      return ref != null ? PsiNameHelper.getQualifiedClassName(ref.getText(), true) : null;
+    }
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiJavaModuleReferenceElement> getModuleReferences() {
+    return psiTraverser().children(this).filter(PsiJavaModuleReferenceElement.class);
+  }
+
+  @NotNull
+  @Override
+  public List<String> getModuleNames() {
+    PsiExportsStatementStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.getTargets();
+    }
+    else {
+      List<String> targets = ContainerUtil.newSmartList();
+      for (PsiJavaModuleReferenceElement refElement : getModuleReferences()) targets.add(refElement.getReferenceText());
+      return targets;
+    }
   }
 
   @Override

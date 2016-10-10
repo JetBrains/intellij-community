@@ -20,10 +20,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
@@ -36,7 +36,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE;
-import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 public class JavaModuleGraphUtil {
@@ -48,6 +47,13 @@ public class JavaModuleGraphUtil {
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
       Result.create(findCycles(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
     return ContainerUtil.find(cycles, set -> set.contains(module));
+  }
+
+  public static boolean exports(@NotNull PsiJavaModule source, @NotNull String packageName, @NotNull PsiJavaModule target) {
+    Map<String, Set<String>> exports = CachedValuesManager.getCachedValue(source, () ->
+      Result.create(exportsMap(source), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+    Set<String> targets = exports.get(packageName);
+    return targets != null && (targets.isEmpty() || targets.contains(target.getModuleName()));
   }
 
   public static boolean reads(@NotNull PsiJavaModule source, @NotNull PsiJavaModule destination) {
@@ -74,14 +80,11 @@ public class JavaModuleGraphUtil {
     if (!projectModules.isEmpty()) {
       MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
       for (PsiJavaModule module : projectModules) {
-        for (PsiRequiresStatement statement : psiTraverser().children(module).filter(PsiRequiresStatement.class)) {
-          Optional.ofNullable(statement.getReferenceElement())
-            .map(PsiJavaModuleReferenceElement::getReference)
-            .map(ref -> ref.multiResolve(true))
-            .map(a -> a.length == 1 ? a[0].getElement() : null)
-            .map(e -> e instanceof PsiJavaModule ? (PsiJavaModule)e : null)
-            .filter(projectModules::contains)
-            .ifPresent(dependency -> relations.putValue(module, dependency));
+        for (PsiRequiresStatement statement : module.getRequires()) {
+          PsiJavaModule dependency = PsiJavaModuleReference.resolve(statement, statement.getModuleName(), true);
+          if (dependency != null && projectModules.contains(dependency)) {
+            relations.putValue(module, dependency);
+          }
         }
       }
 
@@ -96,6 +99,16 @@ public class JavaModuleGraphUtil {
     }
 
     return Collections.emptyList();
+  }
+
+  private static Map<String, Set<String>> exportsMap(@NotNull PsiJavaModule source) {
+    Map<String, Set<String>> map = ContainerUtil.newHashMap();
+    for (PsiExportsStatement statement : source.getExports()) {
+      String pkg = statement.getPackageName();
+      List<String> targets = statement.getModuleNames();
+      map.put(pkg, targets.isEmpty() ? Collections.emptySet() : ContainerUtil.newTroveSet(targets));
+    }
+    return map;
   }
 
   // Starting from source modules, collects all module dependencies in the project.
@@ -118,26 +131,15 @@ public class JavaModuleGraphUtil {
   private static void visit(PsiJavaModule module, MultiMap<PsiJavaModule, PsiJavaModule> relations, Set<String> publicEdges) {
     if (!relations.containsKey(module)) {
       relations.putValues(module, Collections.emptyList());
-      for (PsiRequiresStatement statement : psiTraverser().children(module).filter(PsiRequiresStatement.class)) {
-        Optional.ofNullable(statement.getReferenceElement())
-          .map(PsiJavaModuleReferenceElement::getReference)
-          .map(PsiReference::resolve)
-          .map(e -> e instanceof PsiJavaModule ? (PsiJavaModule)e : null)
-          .ifPresent(dependency -> {
-            relations.putValue(module, dependency);
-            if (isPublic(statement)) publicEdges.add(RequiresGraph.key(dependency, module));
-            visit(dependency, relations, publicEdges);
-          });
+      for (PsiRequiresStatement statement : module.getRequires()) {
+        PsiJavaModule dependency = PsiJavaModuleReference.resolve(statement, statement.getModuleName(), false);
+        if (dependency != null) {
+          relations.putValue(module, dependency);
+          if (statement.isPublic()) publicEdges.add(RequiresGraph.key(dependency, module));
+          visit(dependency, relations, publicEdges);
+        }
       }
     }
-  }
-
-  private static boolean isPublic(PsiRequiresStatement statement) {
-    for (PsiElement child = statement.getFirstChild(); child != null; child = child.getNextSibling()) {
-      if (PsiUtil.isJavaToken(child, JavaTokenType.PUBLIC_KEYWORD)) return true;
-      if (child instanceof PsiJavaModuleReferenceElement) break;
-    }
-    return false;
   }
 
   private static class RequiresGraph {

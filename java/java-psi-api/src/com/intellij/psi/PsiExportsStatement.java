@@ -15,7 +15,10 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Represents an {@code exports} statement of a Java module declaration.
@@ -26,4 +29,8 @@ public interface PsiExportsStatement extends PsiElement {
   PsiExportsStatement[] EMPTY_ARRAY = new PsiExportsStatement[0];
 
   @Nullable PsiJavaCodeReferenceElement getPackageReference();
+  @Nullable String getPackageName();
+
+  @NotNull Iterable<PsiJavaModuleReferenceElement> getModuleReferences();
+  @NotNull List<String> getModuleNames();
 }

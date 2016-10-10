@@ -15,26 +15,70 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExportsStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiJavaModuleReferenceElement;
 import com.intellij.psi.impl.java.stubs.PsiExportsStatementStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class ClsExportsStatementImpl extends ClsRepositoryPsiElement<PsiExportsStatementStub> implements PsiExportsStatement {
+  private final NotNullLazyValue<PsiJavaCodeReferenceElement> myPackageReference;
+  private final NotNullLazyValue<Iterable<PsiJavaModuleReferenceElement>> myModuleReferences;
+
   public ClsExportsStatementImpl(PsiExportsStatementStub stub) {
     super(stub);
+    myPackageReference = new AtomicNotNullLazyValue<PsiJavaCodeReferenceElement>() {
+      @NotNull
+      @Override
+      protected PsiJavaCodeReferenceElement compute() {
+        return new ClsJavaCodeReferenceElementImpl(ClsExportsStatementImpl.this, getStub().getPackageName());
+      }
+    };
+    myModuleReferences = new AtomicNotNullLazyValue<Iterable<PsiJavaModuleReferenceElement>>() {
+      @NotNull
+      @Override
+      protected Iterable<PsiJavaModuleReferenceElement> compute() {
+        return ContainerUtil.map(getStub().getTargets(), new Function<String, PsiJavaModuleReferenceElement>() {
+          @Override
+          public PsiJavaModuleReferenceElement fun(String target) {
+            return new ClsJavaModuleReferenceElementImpl(ClsExportsStatementImpl.this, target);
+          }
+        });
+      }
+    };
+  }
+
+  @Override
+  public PsiJavaCodeReferenceElement getPackageReference() {
+    return myPackageReference.getValue();
   }
 
   @Nullable
   @Override
-  public PsiJavaCodeReferenceElement getPackageReference() {
-    return null;
+  public String getPackageName() {
+    return StringUtil.nullize(getStub().getPackageName());
+  }
+
+  @NotNull
+  @Override
+  public Iterable<PsiJavaModuleReferenceElement> getModuleReferences() {
+    return myModuleReferences.getValue();
+  }
+
+  @NotNull
+  @Override
+  public List<String> getModuleNames() {
+    return getStub().getTargets();
   }
 
   @Override

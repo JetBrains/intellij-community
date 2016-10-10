@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.impl.compiled;
 
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiJavaModuleReferenceElement;
 import com.intellij.psi.PsiRequiresStatement;
@@ -25,14 +27,34 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClsRequiresStatementImpl extends ClsRepositoryPsiElement<PsiRequiresStatementStub> implements PsiRequiresStatement {
+  private final NotNullLazyValue<PsiJavaModuleReferenceElement> myModuleReference;
+
   public ClsRequiresStatementImpl(PsiRequiresStatementStub stub) {
     super(stub);
+    myModuleReference = new AtomicNotNullLazyValue<PsiJavaModuleReferenceElement>() {
+      @NotNull
+      @Override
+      protected PsiJavaModuleReferenceElement compute() {
+        return new ClsJavaModuleReferenceElementImpl(ClsRequiresStatementImpl.this, getStub().getModuleName());
+      }
+    };
   }
 
   @Nullable
   @Override
   public PsiJavaModuleReferenceElement getReferenceElement() {
-    return null;
+    return myModuleReference.getValue();
+  }
+
+  @Nullable
+  @Override
+  public String getModuleName() {
+    return getStub().getModuleName();
+  }
+
+  @Override
+  public boolean isPublic() {
+    return getStub().isPublic();
   }
 
   @Override
