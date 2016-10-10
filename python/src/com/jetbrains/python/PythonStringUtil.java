@@ -15,18 +15,15 @@
  */
 package com.jetbrains.python;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,49 +31,15 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.openapi.util.text.StringUtil.endsWith;
-import static com.intellij.openapi.util.text.StringUtil.startsWith;
-
 /**
  * @author Alexei Orischenko
  * @author vlan
  */
 public class PythonStringUtil {
-  private static final ImmutableList<String> QUOTES = ImmutableList.of("'''", "\"\"\"", "'", "\"");
-  /**
-   * Valid string prefix characters (lowercased) as defined in Python lexer.
-   */
-  public static final String PREFIX_CHARACTERS = "ubcrf";
-  
-  /**
-   * Maximum length of a string prefix as defined in Python lexer.
-   */
-  public static final int MAX_PREFIX_LENGTH = 3;
 
   private PythonStringUtil() {
   }
 
-  /**
-   * 'text' => text
-   * "text" => text
-   * text => text
-   * "text => "text
-   *
-   * @return string without heading and trailing pair of ' or "
-   */
-  @NotNull
-  public static String getStringValue(@NotNull String s) {
-    return getStringValueTextRange(s).substring(s);
-  }
-
-
-  public static TextRange getStringValueTextRange(@NotNull String s) {
-    final Pair<String, String> quotes = getQuotes(s);
-    if (quotes != null) {
-      return TextRange.create(quotes.getFirst().length(), s.length() - quotes.getSecond().length());
-    }
-    return TextRange.allOf(s);
-  }
 
   @NotNull
   public static String removeFirstPrefix(@Nullable String s, String separator) {
@@ -159,9 +122,9 @@ public class PythonStringUtil {
   public static String replaceLastSuffix(String s, String separator, String newElementName) {
 
     Pair<String, String> quotes = null;
-    if (isQuoted(s)) {
-      quotes = getQuotes(s);
-      s = stripQuotesAroundValue(s);
+    if (PyStringLiteralUtil.isQuoted(s)) {
+      quotes = PyStringLiteralUtil.getQuotes(s);
+      s = PyStringLiteralUtil.stripQuotesAroundValue(s);
     }
 
     s = removeLastSuffix(s, separator);
@@ -183,112 +146,6 @@ public class PythonStringUtil {
     return TextRange.from(offset + 1, length);
   }
 
-
-  /**
-   * Handles unicode and raw strings
-   *
-   * @param text
-   * @return false if no quotes found, true otherwise
-   *         sdfs -> false
-   *         ur'x' -> true
-   *         "string" -> true
-   */
-
-  public static boolean isQuoted(@Nullable String text) {
-    return text != null && getQuotes(text) != null;
-  }
-
-  /**
-   * Handles unicode and raw strings
-   *
-   * @param text
-   * @return open and close quote (including raw/unicode prefixes), null if no quotes present in string
-   *         'string' -> (', ')
-   *         UR"unicode raw string" -> (UR", ")
-   */
-  @Nullable
-  public static Pair<String, String> getQuotes(@NotNull final String text) {
-    final String prefix = getPrefix(text);
-    final String mainText = text.substring(prefix.length());
-    for (String quote : QUOTES) {
-      final Pair<String, String> quotes = getQuotes(mainText, prefix, quote);
-      if (quotes != null) {
-        return quotes;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Finds the end offset of the string prefix starting from {@code startOffset} in the given char sequence. 
-   * String prefix may contain only up to {@link #MAX_PREFIX_LENGTH} characters from {@link #PREFIX_CHARACTERS}
-   * (case insensitively).  
-   * 
-   * @return end offset of found string prefix
-   */
-  public static int getPrefixEndOffset(@NotNull CharSequence text, int startOffset) {
-    int offset;
-    for (offset = startOffset; offset < Math.min(startOffset + MAX_PREFIX_LENGTH, text.length()); offset++) {
-      if (PREFIX_CHARACTERS.indexOf(Character.toLowerCase(text.charAt(offset))) < 0) {
-        break;
-      }
-    }
-    return offset;
-  }
-
-  @NotNull
-  public static String getPrefix(@NotNull CharSequence text) {
-    return getPrefix(text, 0);
-  }
-
-  /**
-   * Extracts string prefix from the given char sequence using {@link #getPrefixEndOffset(CharSequence, int)}.
-   *
-   * @return extracted string prefix
-   * @see #getPrefixEndOffset(CharSequence, int)
-   */
-  @NotNull
-  public static String getPrefix(@NotNull CharSequence text, int startOffset) {
-    return text.subSequence(startOffset, getPrefixEndOffset(text, startOffset)).toString();
-  }
-
-  /**
-   * @return whether the given prefix contains either 'u' or 'U' character
-   */
-  public static boolean isUnicodePrefix(@NotNull String prefix) {
-    return StringUtil.indexOfIgnoreCase(prefix, 'u', 0) >= 0;
-  }
-
-  /**
-   * @return whether the given prefix contains either 'b' or 'B' character
-   */
-  public static boolean isBytesPrefix(@NotNull String prefix) {
-    return StringUtil.indexOfIgnoreCase(prefix, 'b', 0) >= 0;
-  }
-
-  /**
-   * @return whether the given prefix contains either 'r' or 'R' character
-   */
-  public static boolean isRawPrefix(@NotNull String prefix) {
-    return StringUtil.indexOfIgnoreCase(prefix, 'r', 0) >= 0;
-  }
-
-  /**
-   * @return whether the given prefix contains either 'f' or 'F' character
-   */
-  public static boolean isFormattedPrefix(@NotNull String prefix) {
-    return StringUtil.indexOfIgnoreCase(prefix, 'f', 0) >= 0;
-  }
-
-  @Nullable
-  private static Pair<String, String> getQuotes(@NotNull String text, @NotNull String prefix, @NotNull String quote) {
-    final int length = text.length();
-    final int n = quote.length();
-    if (length >= 2 * n && text.startsWith(quote) && text.endsWith(quote)) {
-      return Pair.create(prefix + text.substring(0, n), text.substring(length - n));
-    }
-    return null;
-  }
 
   @Nullable
   public static String intersect(String fullName, String elementStringValue) {
@@ -322,59 +179,5 @@ public class PythonStringUtil {
     }
 
     return null;
-  }
-
-  public static TextRange getTextRange(PsiElement element) {
-    if (element instanceof PyStringLiteralExpression) {
-      final List<TextRange> ranges = ((PyStringLiteralExpression)element).getStringValueTextRanges();
-      return ranges.get(0);
-    }
-    else {
-      return new TextRange(0, element.getTextLength());
-    }
-  }
-
-  @Nullable
-  public static String getText(@Nullable PyExpression ex) {
-    if (ex == null) {
-      return null;
-    }
-    else {
-      return ex.getText();
-    }
-  }
-
-  @Nullable
-  public static String getStringValue(@Nullable PsiElement o) {
-    if (o == null) {
-      return null;
-    }
-    if (o instanceof PyStringLiteralExpression) {
-      PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)o;
-      return literalExpression.getStringValue();
-    }
-    else {
-      return o.getText();
-    }
-  }
-
-  public static String stripQuotesAroundValue(String text) {
-    Pair<String, String> quotes = getQuotes(text);
-    if (quotes == null) {
-      return text;
-    }
-
-    return text.substring(quotes.first.length(), text.length() - quotes.second.length());
-  }
-
-  public static boolean isRawString(String text) {
-    text = text.toLowerCase();
-    text = StringUtil.trimStart(text, "u");
-    return isStringPrefixedBy(text.toLowerCase(), "r");
-  }
-
-
-  private static boolean isStringPrefixedBy(String text, String prefix) {
-    return (startsWith(text, prefix + "\"") && endsWith(text, "\"")) || (startsWith(text, prefix + "\'") && endsWith(text, "\'"));
   }
 }

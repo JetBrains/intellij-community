@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonStringUtil;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -70,10 +70,10 @@ public class PyStringLiteralLexer extends LexerBase {
     myBufferEnd = endOffset;
 
     // the following could be parsing steps if we wanted this info as tokens
-    final String prefix = PythonStringUtil.getPrefix(buffer, myStart);
+    final String prefix = PyStringLiteralUtil.getPrefix(buffer, myStart);
 
-    myIsFormatted = PythonStringUtil.isFormattedPrefix(prefix);
-    myIsRaw = PythonStringUtil.isRawPrefix(prefix);
+    myIsFormatted = PyStringLiteralUtil.isFormattedPrefix(prefix);
+    myIsRaw = PyStringLiteralUtil.isRawPrefix(prefix);
 
     final int quoteOffset = myStart + prefix.length();
     // which quote char?
