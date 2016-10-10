@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
 import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +86,7 @@ class MultilinePopupBuilder {
       .setMayBeParent(true);
 
     final JBPopup popup = builder.createPopup();
-    popup.setMinimumSize(new Dimension(200, 90));
+    popup.setMinimumSize(new JBDimension(200, 90));
     AnAction okAction = new DumbAwareAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {

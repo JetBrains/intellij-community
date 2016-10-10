@@ -577,7 +577,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
   }
 
   private static boolean containsDeclaration(@NotNull PyComprehensionElement comprehensionElement, @NotNull String variableName) {
-    for (ComprhForComponent forComponent : comprehensionElement.getForComponents()) {
+    for (PyComprehensionForComponent forComponent : comprehensionElement.getForComponents()) {
       final PyExpression iteratorVariable = forComponent.getIteratorVariable();
 
       if (iteratorVariable instanceof PyTupleExpression) {

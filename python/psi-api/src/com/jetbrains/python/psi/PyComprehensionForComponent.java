@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.templateLanguages.psi;
-
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.StringLiteralExpression;
+package com.jetbrains.python.psi;
 
 /**
- * A string literal in a template file.
- *
- * @author yole
+ * The "for" part of list comprehensions and generators.
+ * User: dcheryasov
+ * Date: Jul 31, 2008
  */
-public interface TemplateStringLiteral extends PsiElement, StringLiteralExpression {
-  TextRange getStringValueTextRange();
+public interface PyComprehensionForComponent extends PyComprehensionComponent {
+  PyExpression getIteratorVariable();
+  PyExpression getIteratedList();
+  boolean isAsync();
 }
