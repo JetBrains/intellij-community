@@ -59,8 +59,7 @@
     <orderEntry type="module-library">
       <library name="GradleJnaPosix">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jna-3.2.7.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-0.10.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/native-platform-0.11.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
