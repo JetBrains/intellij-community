@@ -131,7 +131,7 @@ class DistributionJARsBuilder {
   List<String> getPlatformModules() {
     (platform.moduleJars.values() as List<String>) +
     ["java-runtime", "platform-main", /*required to build searchable options index*/
-     "updater", buildContext.productProperties.productLayout.mainModule]
+     "updater"] + buildContext.productProperties.productLayout.mainModules
 
   }
 
@@ -200,7 +200,7 @@ class DistributionJARsBuilder {
 
     //todo[nik] move buildSearchableOptions and patchedApplicationInfo methods to this class
     def buildTasks = new BuildTasksImpl(buildContext)
-    buildTasks.buildSearchableOptions(searchableOptionsDir, [productLayout.mainModule], productLayout.licenseFilesToBuildSearchableOptions)
+    buildTasks.buildSearchableOptions(searchableOptionsDir, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
