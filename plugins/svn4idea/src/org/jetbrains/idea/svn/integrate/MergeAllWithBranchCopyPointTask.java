@@ -17,11 +17,18 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MergeAllWithBranchCopyPointTask extends BaseMergeTask {
 
-  @NotNull private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
+  @Nullable private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
   private final boolean mySupportsMergeInfo;
+
+  public MergeAllWithBranchCopyPointTask(@NotNull QuickMerge mergeProcess) {
+    super(mergeProcess, "merge all", Where.AWT);
+    myCopyPoint = null;
+    mySupportsMergeInfo = true;
+  }
 
   public MergeAllWithBranchCopyPointTask(@NotNull QuickMerge mergeProcess,
                                          @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
@@ -33,7 +40,7 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask {
 
   @Override
   public void run() {
-    boolean reintegrate = myCopyPoint.isInvertedSense();
+    boolean reintegrate = myCopyPoint != null && myCopyPoint.isInvertedSense();
 
     if (reintegrate && !myInteraction.shouldReintegrate(myCopyPoint.inverted().getTarget())) {
       end();
@@ -49,7 +56,9 @@ public class MergeAllWithBranchCopyPointTask extends BaseMergeTask {
   @NotNull
   private MergerFactory createBranchMergerFactory(boolean reintegrate) {
     return (vcs, target, handler, currentBranchUrl, branchName) -> {
-      long revision = reintegrate ? myCopyPoint.getWrapped().getTargetRevision() : myCopyPoint.getWrapped().getSourceRevision();
+      long revision = myCopyPoint != null
+                      ? reintegrate ? myCopyPoint.getWrapped().getTargetRevision() : myCopyPoint.getWrapped().getSourceRevision()
+                      : -1;
 
       return new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getPath(), handler, reintegrate,
                               myMergeContext.getBranchName(), revision, mySupportsMergeInfo);

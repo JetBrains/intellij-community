@@ -34,6 +34,7 @@ import java.util.List;
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static java.util.Collections.singletonList;
+import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
 
 public abstract class BaseMergeTask extends TaskDescriptor {
 
@@ -51,6 +52,10 @@ public abstract class BaseMergeTask extends TaskDescriptor {
     myMergeContext = mergeProcess.getMergeContext();
     myInteraction = mergeProcess.getInteraction();
     myRunner = mergeProcess.getRunner();
+  }
+
+  protected boolean is18() {
+    return myMergeContext.getWcInfo().getFormat().isOrGreater(ONE_DOT_EIGHT);
   }
 
   @Override
@@ -87,12 +92,15 @@ public abstract class BaseMergeTask extends TaskDescriptor {
   @NotNull
   protected List<TaskDescriptor> getMergeAllTasks(boolean supportsMergeInfo) {
     // merge info is not supported - branch copy point is used to make first sync merge successful (without unnecessary tree conflicts)
-    // merge info is supported - branch copy point is used to determine if sync or reintegrate merge should be performed
-    return newArrayList(
-      new LocalChangesPromptTask(myMergeProcess),
-      new LookForBranchOriginTask(myMergeProcess, true, copyPoint ->
-        next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint, supportsMergeInfo)))
-    );
+    // merge info is supported and svn client < 1.8 - branch copy point is used to determine if sync or reintegrate merge should be performed
+    // merge info is supported and svn client >= 1.8 - branch copy point is not used - svn automatically detects if reintegrate is necessary
+    BaseMergeTask mergeAllTask =
+      supportsMergeInfo && is18()
+      ? new MergeAllWithBranchCopyPointTask(myMergeProcess)
+      : new LookForBranchOriginTask(myMergeProcess, true, copyPoint ->
+        next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint, supportsMergeInfo)));
+
+    return newArrayList(new LocalChangesPromptTask(myMergeProcess), mergeAllTask);
   }
 
   protected void runChangeListsMerge(@NotNull List<CommittedChangeList> lists, @NotNull String title) {
