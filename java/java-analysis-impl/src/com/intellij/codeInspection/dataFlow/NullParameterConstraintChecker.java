@@ -54,7 +54,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
   }
 
   @NotNull
-  static PsiParameter[] checkMethodParameters(PsiMethod method, boolean isOnTheFly) {
+  static PsiParameter[] checkMethodParameters(PsiMethod method) {
     if (method.getBody() == null) return PsiParameter.EMPTY_ARRAY;
 
     final Collection<PsiParameter> nullableParameters = new SmartList<>();
@@ -70,7 +70,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     }
     if (nullableParameters.isEmpty()) return PsiParameter.EMPTY_ARRAY;
 
-    final NullParameterConstraintChecker checker = new NullParameterConstraintChecker(nullableParameters, isOnTheFly);
+    final NullParameterConstraintChecker checker = new NullParameterConstraintChecker(nullableParameters, true);
     checker.analyzeMethod(method.getBody(), new StandardInstructionVisitor());
 
     return checker.myPossiblyViolatedParameters.toArray(new PsiParameter[checker.myPossiblyViolatedParameters.size()]);
