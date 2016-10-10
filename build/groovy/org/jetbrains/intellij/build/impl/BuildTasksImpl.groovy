@@ -300,6 +300,9 @@ idea.fatal.error.notification=disabled
         fileset(dir: "$buildContext.paths.communityHome/lib") {
           include(name: "junit-4*.jar")
         }
+        zipfileset(src: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar") {
+          include(name: "*.xml")
+        }
       }
     }
     buildDistributions()
