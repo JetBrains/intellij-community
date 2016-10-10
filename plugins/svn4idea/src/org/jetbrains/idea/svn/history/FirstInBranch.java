@@ -25,12 +25,12 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.getRelativePath;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
 
 // TODO: This one seem to determine revision in which branch was created - copied from trunk.
@@ -41,18 +41,18 @@ public class FirstInBranch {
   @NotNull private final SvnVcs myVcs;
   @NotNull private final String myRepositoryRelativeBranchUrl;
   @NotNull private final String myRepositoryRelativeTrunkUrl;
-  @NotNull private final String myRepositoryRoot;
+  @NotNull private final SVNURL myRepositoryRoot;
 
-  public FirstInBranch(@NotNull SvnVcs vcs, @NotNull String repositoryRoot, @NotNull String branchUrl, @NotNull String trunkUrl) {
+  public FirstInBranch(@NotNull SvnVcs vcs, @NotNull SVNURL repositoryRoot, @NotNull String branchUrl, @NotNull String trunkUrl) {
     myVcs = vcs;
     myRepositoryRoot = repositoryRoot;
-    myRepositoryRelativeBranchUrl = ensureStartSlash(getRelativePath(repositoryRoot, branchUrl));
-    myRepositoryRelativeTrunkUrl = ensureStartSlash(getRelativePath(repositoryRoot, trunkUrl));
+    myRepositoryRelativeBranchUrl = ensureStartSlash(getRelativeUrl(repositoryRoot.toDecodedString(), branchUrl));
+    myRepositoryRelativeTrunkUrl = ensureStartSlash(getRelativeUrl(repositoryRoot.toDecodedString(), trunkUrl));
   }
 
   @Nullable
   public CopyData run() throws VcsException {
-    SvnTarget target = SvnTarget.fromURL(createUrl(myRepositoryRoot));
+    SvnTarget target = SvnTarget.fromURL(myRepositoryRoot);
     HistoryClient client = ApplicationManager.getApplication().runReadAction((Computable<HistoryClient>)() -> {
       if (myVcs.getProject().isDisposed()) return null;
       return myVcs.getFactory(target).createHistoryClient();

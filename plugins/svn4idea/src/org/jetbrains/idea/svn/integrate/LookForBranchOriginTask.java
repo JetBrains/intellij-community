@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Consumer;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
+import org.tmatesoft.svn.core.SVNURL;
 
 public class LookForBranchOriginTask extends BaseMergeTask {
 
@@ -35,7 +36,7 @@ public class LookForBranchOriginTask extends BaseMergeTask {
 
   @Override
   public void run() {
-    String repoUrl = myMergeContext.getWcInfo().getRepoUrl();
+    SVNURL repoUrl = myMergeContext.getWcInfo().getRootInfo().getRepositoryUrlUrl();
     String sourceUrl = myFromSource ? myMergeContext.getSourceUrl() : myMergeContext.getWcInfo().getRootUrl();
     String targetUrl = myFromSource ? myMergeContext.getWcInfo().getRootUrl() : myMergeContext.getSourceUrl();
 

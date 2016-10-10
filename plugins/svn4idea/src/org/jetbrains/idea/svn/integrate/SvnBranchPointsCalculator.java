@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -175,9 +176,9 @@ public class SvnBranchPointsCalculator {
   }
 
   @Nullable
-  public WrapperInvertor calculateCopyPoint(@NotNull String repoUrl, @NotNull String sourceUrl, @NotNull String targetUrl)
+  public WrapperInvertor calculateCopyPoint(@NotNull SVNURL repoUrl, @NotNull String sourceUrl, @NotNull String targetUrl)
     throws VcsException {
-    WrapperInvertor result = getBestHit(repoUrl, sourceUrl, targetUrl);
+    WrapperInvertor result = getBestHit(repoUrl.toDecodedString(), sourceUrl, targetUrl);
 
     if (result == null) {
       CopyData copyData = new FirstInBranch(myVcs, repoUrl, targetUrl, sourceUrl).run();
@@ -188,12 +189,12 @@ public class SvnBranchPointsCalculator {
           ? new BranchCopyData(sourceUrl, copyData.getCopySourceRevision(), targetUrl, copyData.getCopyTargetRevision())
           : new BranchCopyData(targetUrl, copyData.getCopySourceRevision(), sourceUrl, copyData.getCopyTargetRevision());
 
-        persist(repoUrl, branchCopyData);
+        persist(repoUrl.toDecodedString(), branchCopyData);
         result = new WrapperInvertor(!copyData.isTrunkSupposedCorrect(), branchCopyData);
       }
     }
 
-    logCopyData(repoUrl, sourceUrl, targetUrl, result);
+    logCopyData(repoUrl.toDecodedString(), sourceUrl, targetUrl, result);
 
     return result;
   }

@@ -35,6 +35,7 @@ import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.Map;
 
@@ -123,7 +124,7 @@ public class SvnMergeInfoCache {
     private final String myPath;
     private volatile long myRevision;
 
-    CopyRevison(final SvnVcs vcs, final String path, final String repositoryRoot, final String branchUrl, final String trunkUrl) {
+    CopyRevison(final SvnVcs vcs, final String path, @NotNull SVNURL repositoryRoot, final String branchUrl, final String trunkUrl) {
       myPath = path;
       myRevision = -1;
 
