@@ -86,28 +86,20 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     }
 
     final ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-    final Runnable showContent = new Runnable() {
-      @Override
-      public void run() {
-        ContentManager cm = window.getContentManager();
-        if (checkIfProjectLogMatches(project, vcs, cm, roots) || checkIfAlreadyOpened(cm, roots)) {
-          return;
-        }
-
-        String tabName = calcTabName(cm, roots);
-        MyContentComponent component = createManagerAndContent(project, vcs, roots, tabName);
-        Content content = ContentFactory.SERVICE.getInstance().createContent(component, tabName, false);
-        content.setDisposer(component.myDisposable);
-        content.setDescription("Log for " + StringUtil.join(roots, new Function<VirtualFile, String>() {
-          @Override
-          public String fun(VirtualFile file) {
-            return file.getPath();
-          }
-        }, "\n"));
-        content.setCloseable(true);
-        cm.addContent(content);
-        cm.setSelectedContent(content);
+    final Runnable showContent = () -> {
+      ContentManager cm = window.getContentManager();
+      if (checkIfProjectLogMatches(project, vcs, cm, roots) || checkIfAlreadyOpened(cm, roots)) {
+        return;
       }
+
+      String tabName = calcTabName(cm, roots);
+      MyContentComponent component = createManagerAndContent(project, vcs, roots, tabName);
+      Content content = ContentFactory.SERVICE.getInstance().createContent(component, tabName, false);
+      content.setDisposer(component.myDisposable);
+      content.setDescription("Log for " + StringUtil.join(roots, VirtualFile::getPath, "\n"));
+      content.setCloseable(true);
+      cm.addContent(content);
+      cm.setSelectedContent(content);
     };
 
     if (!window.isVisible()) {
@@ -128,18 +120,10 @@ public class GitShowExternalLogAction extends DumbAwareAction {
       repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, true));
     }
     VcsLogManager manager = new VcsLogManager(project, ServiceManager.getService(project, VcsLogTabsProperties.class),
-                                              ContainerUtil.map(roots, new Function<VirtualFile, VcsRoot>() {
-                                                @Override
-                                                public VcsRoot fun(VirtualFile root) {
-                                                  return new VcsRoot(vcs, root);
-                                                }
-                                              }));
-    return new MyContentComponent(manager.createLogPanel(tabName), roots, new Disposable() {
-      @Override
-      public void dispose() {
-        for (VirtualFile root : roots) {
-          repositoryManager.removeExternalRepository(root);
-        }
+                                              ContainerUtil.map(roots, root -> new VcsRoot(vcs, root)));
+    return new MyContentComponent(manager.createLogPanel(tabName), roots, () -> {
+      for (VirtualFile root : roots) {
+        repositoryManager.removeExternalRepository(root);
       }
     });
   }
@@ -162,12 +146,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
   }
 
   private static boolean hasContentsWithName(@NotNull ContentManager cm, @NotNull final String candidate) {
-    return ContainerUtil.exists(cm.getContents(), new Condition<Content>() {
-      @Override
-      public boolean value(Content content) {
-        return content.getDisplayName().equals(candidate);
-      }
-    });
+    return ContainerUtil.exists(cm.getContents(), content -> content.getDisplayName().equals(candidate));
   }
 
   @NotNull
