@@ -104,7 +104,7 @@ public class ParameterNameHintsSettings implements PersistentStateComponent<Para
 
     List<String> diff = ContainerUtil.newArrayList();
     addedItems.forEach((item) -> diff.add('+' + item));
-    removedItems.forEach((item) -> diff.remove('-' + item));
+    removedItems.forEach((item) -> diff.add('-' + item));
 
     state.diff = diff;
   }
