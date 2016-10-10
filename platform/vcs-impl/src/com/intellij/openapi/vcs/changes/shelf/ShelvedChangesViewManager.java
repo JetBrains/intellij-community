@@ -35,6 +35,7 @@ import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -174,7 +175,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       LOG.error("Couldn't start loading shelved changes");
       return;
     }
-    startupManager.registerPostStartupActivity(this::updateChangesContent);
+    startupManager.registerPostStartupActivity((DumbAwareRunnable)() -> updateChangesContent());
   }
 
   public void projectClosed() {
