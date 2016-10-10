@@ -27,11 +27,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 import static java.util.Arrays.asList;
 
@@ -92,13 +89,11 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
     setMirrorCheckingType(element, JavaElementType.MODULE);
     setMirror(getNameElement(), mirror.getNameElement());
 
-    List<PsiRequiresStatement> requires =
-      asList(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY));
-    setMirrors(requires, PsiTreeUtil.getChildrenOfTypeAsList(mirror, PsiRequiresStatement.class));
+    setMirrors(asList(getStub().getChildrenByType(JavaElementType.REQUIRES_STATEMENT, PsiRequiresStatement.EMPTY_ARRAY)),
+               PsiTreeUtil.getChildrenOfTypeAsList(mirror, PsiRequiresStatement.class));
 
-    List<PsiExportsStatement> exports =
-      asList(getStub().getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiExportsStatement.EMPTY_ARRAY));
-    setMirrors(exports, PsiTreeUtil.getChildrenOfTypeAsList(mirror, PsiExportsStatement.class));
+    setMirrors(asList(getStub().getChildrenByType(JavaElementType.EXPORTS_STATEMENT, PsiExportsStatement.EMPTY_ARRAY)),
+               PsiTreeUtil.getChildrenOfTypeAsList(mirror, PsiExportsStatement.class));
   }
 
   @Override
@@ -107,7 +102,7 @@ public class ClsJavaModuleImpl extends ClsRepositoryPsiElement<PsiJavaModuleStub
   }
 
   @Override
-  public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
+  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     throw cannotModifyException(this);
   }
 
