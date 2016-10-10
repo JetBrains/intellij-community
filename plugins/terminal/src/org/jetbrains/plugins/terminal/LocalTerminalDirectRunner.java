@@ -102,7 +102,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
 
-    String[] command = getCommand();
+    String[] command = getCommand(envs);
 
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       try {
@@ -138,7 +138,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected ProcessHandler createProcessHandler(final PtyProcess process) {
-    return new PtyProcessHandler(process, getCommand()[0]);
+    return new PtyProcessHandler(process, getShellPath());
   }
 
   @Override
@@ -157,15 +157,19 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
 
-  public String[] getCommand() {
+  public String[] getCommand(Map<String, String> envs) {
 
-    String shellPath = TerminalOptionsProvider.getInstance().getShellPath();
+    String shellPath = getShellPath();
 
-    return getCommand(shellPath);
+    return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
+  }
+
+  private String getShellPath() {
+    return TerminalOptionsProvider.getInstance().getShellPath();
   }
 
   @NotNull
-  public static String[] getCommand(String shellPath) {
+  public static String[] getCommand(String shellPath, Map<String, String> envs, boolean shellIntegration) {
     if (SystemInfo.isUnix) {
       List<String> command = Lists.newArrayList(shellPath.split(" "));
 
@@ -182,10 +186,18 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
 
         if (rcFilePath != null &&
-            TerminalOptionsProvider.getInstance().shellIntegration() &&
+            shellIntegration &&
             (shellName.equals("bash") || shellName.equals("sh"))) {
           result.add("--rcfile");
           result.add(rcFilePath);
+          int idx = command.indexOf("--rcfile");
+          if (idx >= 0) {
+            command.remove(idx);
+            if (idx < command.size()) {
+              envs.put("JEDITERM_SOURCE", command.get(idx));
+              command.remove(idx);
+            }
+          }
         }
 
         if (!loginOrInteractive(command)) {
