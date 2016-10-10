@@ -120,7 +120,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   @Override
   protected String getToolTip(@NotNull VcsLogFileFilter filter) {
     return getToolTip(filter.getRootFilter() == null ? getAllRoots() : filter.getRootFilter().getRoots(),
-                      filter.getStructureFilter() == null ? Collections.<FilePath>emptySet() : filter.getStructureFilter().getFiles());
+                      filter.getStructureFilter() == null ? Collections.emptySet() : filter.getStructureFilter().getFiles());
   }
 
   @NotNull
