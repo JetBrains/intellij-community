@@ -48,6 +48,7 @@ import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.JBTable
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.commands.Git
@@ -152,7 +153,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
   private fun updateColumnSize() {
     var maxWidth = 0
     for (node in nodes) {
-      val tableFont = UIManager.getFont("Table.font")
+      val tableFont = JBFont.create(UIManager.getFont("Table.font")).asBold()
       val width = table.getFontMetrics(tableFont).stringWidth(node.getPresentableString())
       if (maxWidth < width) maxWidth = width
     }
