@@ -32,6 +32,15 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
 
   val activate = findActivateScript(virtualEnvSdkPath, shell)
 
+  override fun getShell(): String? {
+    val defaultShell = "/bin/sh"
+    if (File(defaultShell).exists()) {
+      return defaultShell;
+    } else {
+      return super.getShell();
+    }
+  }
+
   override fun readShellEnv(): MutableMap<String, String> {
     if (SystemInfo.isUnix) {
       return super.readShellEnv()
