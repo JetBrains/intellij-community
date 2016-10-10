@@ -53,8 +53,6 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   private static final int FILTER_LABEL_LENGTH = 30;
   private static final int CHECKBOX_ICON_SIZE = 15;
   public static final FileByNameComparator FILE_BY_NAME_COMPARATOR = new FileByNameComparator();
-  public static final FileByPathComparator FILE_BY_PATH_COMPARATOR = new FileByPathComparator();
-  public static final FilePathByNameComparator FILE_PATH_BY_NAME_COMPARATOR = new FilePathByNameComparator();
   public static final FilePathByPathComparator FILE_PATH_BY_PATH_COMPARATOR = new FilePathByPathComparator();
   @NotNull private final VcsLogColorManager myColorManager;
   private final FixedSizeQueue<VcsLogStructureFilter> myHistory = new FixedSizeQueue<>(5);
