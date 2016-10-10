@@ -46,7 +46,6 @@ public final class GroovyCommonClassNames {
   public static final String GROOVY_LANG_REFERENCE = "groovy.lang.Reference";
   public static final String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
   public static final String GROOVY_TRANSFORM_AUTO_EXTERNALIZE = "groovy.transform.AutoExternalize";
-  public static final String GROOVY_TRANSFORM_AUTO_CLONE = "groovy.transform.AutoClone";
   public static final String GROOVY_LANG_CATEGORY = "groovy.lang.Category";
   public static final String GROOVY_LANG_MIXIN = "groovy.lang.Mixin";
   public static final String GROOVY_UTIL_TEST_CASE = "groovy.util.GroovyTestCase";

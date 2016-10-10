@@ -118,7 +118,7 @@
     <closureMissingMethodContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.PluginXmlClosureMemberContributor"/>
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
-    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoCloneContributor"/>
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.autoClone.AutoCloneTransformationSupport"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport"/>
