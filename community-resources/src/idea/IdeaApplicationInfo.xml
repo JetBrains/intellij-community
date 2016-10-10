@@ -16,7 +16,7 @@
                patches="http://download.jetbrains.com/idea/"/>
 
   <help file="ideahelp.jar" root="idea"/>
-  <documentation url="https://www.jetbrains.com/idea/documentation"/>
+  <documentation url="https://www.jetbrains.com/help/idea"/>
   <support url="https://www.jetbrains.com/support/idea/index.html"/>
   <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=IDEA&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
             release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=IDEA&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>

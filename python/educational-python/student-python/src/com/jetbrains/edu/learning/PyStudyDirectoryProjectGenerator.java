@@ -183,7 +183,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       if (course.isAdaptive() && !enrolledCoursesIds.contains(course.getId())) {
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId()));
+          return StudyUtils.execCancelable(() -> EduStepicConnector.enrollToCourse(course.getId(), myGenerator.myUser));
         }, "Creating Course", true, ProjectManager.getInstance().getDefaultProject());
 
       }

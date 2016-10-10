@@ -76,7 +76,7 @@ class ContractInferenceInterpreter {
       contracts = boxReturnValues(contracts);
     }
     List<MethodContract> compatible = ContainerUtil.filter(contracts, contract -> {
-      if (contract.returnValue == NOT_NULL_VALUE &&
+      if ((contract.returnValue == NOT_NULL_VALUE || contract.returnValue == NULL_VALUE) &&
           NullableNotNullManager.getInstance(myMethod.getProject()).isNotNull(myMethod, false)) {
         return false;
       }
@@ -338,6 +338,10 @@ class ContractInferenceInterpreter {
           states = falseStates;
           continue;
         }
+      }
+      else if (statement instanceof PsiWhileStatement) {
+        states = antecedentsReturning(visitExpression(states, ((PsiWhileStatement)statement).getCondition()), FALSE_VALUE);
+        continue;
       }
       else if (statement instanceof PsiThrowStatement) {
         result.addAll(asPreContracts(toContracts(states, THROW_EXCEPTION)));

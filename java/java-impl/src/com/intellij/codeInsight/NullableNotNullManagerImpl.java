@@ -18,9 +18,22 @@ package com.intellij.codeInsight;
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.openapi.components.State;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerNotNullableSerializer;
+
+import java.util.List;
 
 @State(name = "NullableNotNullManager")
 public class NullableNotNullManagerImpl extends NullableNotNullManager {
+
+  public NullableNotNullManagerImpl() {
+    myNotNulls.addAll(getPredefinedNotNulls());
+  }
+
+  @Override
+  public List<String> getPredefinedNotNulls() {
+    return JpsJavaCompilerNotNullableSerializer.DEFAULT_NOT_NULLS;
+  }
+
   protected boolean hasHardcodedContracts(PsiElement element) {
     return HardcodedContracts.hasHardcodedContracts(element);
   }

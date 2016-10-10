@@ -34,7 +34,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +45,6 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
@@ -326,9 +324,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
     if (classes.length == 1 &&
         (canImportHere = canImportHere(allowCaretNearRef, editor, psiFile, classes[0].getName())) &&
-        (FileTypeUtils.isInServerPageFile(psiFile) ?
-         CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
-         CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY) &&
+        isAddUnambiguousImportsOnTheFlyEnabled(psiFile) &&
         (ApplicationManager.getApplication().isUnitTestMode() || DaemonListeners.canChangeFileSilently(psiFile)) &&
         isInModlessContext &&
         !autoImportWillInsertUnexpectedCharacters(classes[0])
@@ -346,6 +342,12 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       return Result.POPUP_SHOWN;
     }
     return Result.POPUP_NOT_SHOWN;
+  }
+
+  public static boolean isAddUnambiguousImportsOnTheFlyEnabled(@NotNull PsiFile psiFile) {
+    return FileTypeUtils.isInServerPageFile(psiFile) ?
+           CodeInsightSettings.getInstance().JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY :
+           CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   }
 
   protected int getStartOffset(T element, R ref) {

@@ -71,15 +71,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
   }
 
   private static class UnnecessaryBoxingFix extends InspectionGadgetsFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix");
     }
 

@@ -31,7 +31,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
@@ -296,10 +295,9 @@ public class SeverityEditorDialog extends DialogWrapper {
     if (info == null) {
       return;
     }
-    final MyTextAttributesDescription description =
-      new MyTextAttributesDescription(info.getType().toString(), null, new TextAttributes(), info.getType().getAttributesKey());
+    MyTextAttributesDescription description = new MyTextAttributesDescription(info.getType().toString(), null, new TextAttributes(), info.getType().getAttributesKey());
     myOptionsPanel.apply(description, null);
-    @NonNls Element textAttributes = new Element("temp");
+    Element textAttributes = new Element("temp");
     try {
       description.getTextAttributes().writeExternal(textAttributes);
       info.getAttributes().readExternal(textAttributes);
@@ -381,11 +379,6 @@ public class SeverityEditorDialog extends DialogWrapper {
                                        final TextAttributes attributes,
                                        final TextAttributesKey type) {
       super(name, group, attributes, type, null, null, null);
-    }
-
-    @Override
-    public void apply(EditorColorsScheme scheme) {
-
     }
 
     @Override

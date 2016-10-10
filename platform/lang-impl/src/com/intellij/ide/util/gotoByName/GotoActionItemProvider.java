@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -49,11 +50,12 @@ import static com.intellij.ide.util.gotoByName.GotoActionModel.*;
 @SuppressWarnings("TestOnlyProblems")
 public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private final ActionManager myActionManager = ActionManager.getInstance();
-  protected final SearchableOptionsRegistrar myIndex = SearchableOptionsRegistrar.getInstance();
   private final GotoActionModel myModel;
+  private final NotNullLazyValue<Map<String, ApplyIntentionAction>> myIntentions;
 
   public GotoActionItemProvider(GotoActionModel model) {
     myModel = model;
+    myIntentions = NotNullLazyValue.createValue(() -> myModel.getAvailableIntentions());
   }
 
   @NotNull
@@ -118,12 +120,15 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   }
 
   private boolean processOptions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
+    myModel.initConfigurables();
+    SearchableOptionsRegistrarImpl registrar = (SearchableOptionsRegistrarImpl)SearchableOptionsRegistrar.getInstance();
+
     List<Comparable> options = ContainerUtil.newArrayList();
-    final Set<String> words = myIndex.getProcessedWords(pattern);
+    final Set<String> words = registrar.getProcessedWords(pattern);
     Set<OptionDescription> optionDescriptions = null;
     final String actionManagerName = myActionManager.getComponentName();
     for (String word : words) {
-      final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)myIndex).getAcceptableDescriptions(word);
+      final Set<OptionDescription> descriptions = registrar.getAcceptableDescriptions(word);
       if (descriptions != null) {
         for (Iterator<OptionDescription> iterator = descriptions.iterator(); iterator.hasNext(); ) {
           OptionDescription description = iterator.next();
@@ -184,9 +189,10 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   private boolean processIntentions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
-    JBIterable<ActionWrapper> intentions = JBIterable.from(myModel.myIntentions.keySet())
+    Map<String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
+    JBIterable<ActionWrapper> intentions = JBIterable.from(intentionMap.keySet())
       .transform(intentionText -> {
-        ApplyIntentionAction intentionAction = myModel.myIntentions.get(intentionText);
+        ApplyIntentionAction intentionAction = intentionMap.get(intentionText);
         if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) return null;
         return new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext);
       })

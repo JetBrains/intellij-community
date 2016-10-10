@@ -55,7 +55,7 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   }
 
   @Override
-  public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
+  public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
     myDelegate.setAttributes(key, attributes);
   }
 

@@ -31,6 +31,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +99,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     final String promptKey = isDelete() ? "prompt.delete.elements" : "search.for.usages.and.delete.elements";
     final String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message(promptKey), myElements);
 
-    gbc.insets = new Insets(4, 8, 4, 8);
+    gbc.insets = JBUI.insets(4, 8);
     gbc.weighty = 1;
     gbc.weightx = 1;
     gbc.gridx = 0;
@@ -113,7 +114,7 @@ public class SafeDeleteDialog extends DialogWrapper {
       gbc.gridx = 0;
       gbc.weightx = 0.0;
       gbc.gridwidth = 1;
-      gbc.insets = new Insets(4, 8, 0, 8);
+      gbc.insets = JBUI.insets(4, 8, 0, 8);
       myCbSafeDelete = new JCheckBox(IdeBundle.message("checkbox.safe.delete.with.usage.search"));
       panel.add(myCbSafeDelete, gbc);
       myCbSafeDelete.addActionListener(new ActionListener() {
@@ -201,16 +202,14 @@ public class SafeDeleteDialog extends DialogWrapper {
       return;
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> {
-      NonProjectFileWritingAccessProvider.disableChecksDuring(() -> {
-        if (myCallback != null && isSafeDelete()) {
-          myCallback.run(this);
-        }
-        else {
-          super.doOKAction();
-        }
-      });
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> NonProjectFileWritingAccessProvider.disableChecksDuring(() -> {
+      if (myCallback != null && isSafeDelete()) {
+        myCallback.run(this);
+      }
+      else {
+        super.doOKAction();
+      }
+    }));
 
     final RefactoringSettings refactoringSettings = RefactoringSettings.getInstance();
     if (myCbSafeDelete != null) {

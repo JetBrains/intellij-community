@@ -49,6 +49,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.PythonLanguage;
@@ -274,6 +275,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       }
 
       if (problemElement != null) {
+        // TODO Remove: a workaround until the bundled pycodestyle.py supports Python 3.6 variable annotations by itself
+        if (problem.myCode.equals("E701") &&
+            problemElement.getNode().getElementType() == PyTokenTypes.COLON &&
+            problemElement.getParent() instanceof PyAnnotation) {
+          continue;
+        }
+        
         TextRange problemRange = problemElement.getTextRange();
         // Multi-line warnings are shown only in the gutter and it's not the desired behavior from the usability point of view.
         // So we register it only on that line where pycodestyle.py found the problem originally.

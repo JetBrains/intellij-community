@@ -15,6 +15,8 @@
  */
 package com.intellij.refactoring.rename.inplace;
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,7 +48,6 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -158,6 +159,17 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   @Override
   protected void restoreSelection() {
     if (mySelectedRange != null) {
+      TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+      if (state != null) {
+        for (int i = 0; i < state.getSegmentsCount(); i++) {
+          final TextRange segmentRange = state.getSegmentRange(i);
+          TextRange intersection = segmentRange.intersection(mySelectedRange);
+          if (intersection != null) {
+            myEditor.getSelectionModel().setSelection(intersection.getStartOffset(), intersection.getEndOffset());
+            return;
+          }
+        }
+      }
       myEditor.getSelectionModel().setSelection(mySelectedRange.getStartOffset(), mySelectedRange.getEndOffset());
     }
     else if (!shouldSelectAll()) {

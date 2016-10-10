@@ -102,7 +102,8 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
         }
         if (methodName != null) {
           holder
-            .registerProblem(lambda, "Can be replaced with Comparator." + methodName, new ReplaceWithComparatorFix(methodName));
+            .registerProblem(lambda, "Can be replaced with Comparator." + methodName,
+                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(methodName));
         }
       }
     };
@@ -231,7 +232,7 @@ public class ComparatorCombinatorsInspection extends BaseJavaBatchLocalInspectio
       PsiParameter[] parameters = lambda.getParameterList().getParameters();
       PsiElement body = lambda.getBody();
       if (body == null) return;
-      if (LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(factory, lambda) == lambda) {
+      if (LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(lambda) == lambda) {
         PsiParameter parameter = parameters[0];
         String name = parameter.getName();
         SuggestedNameInfo nameCandidate = null;

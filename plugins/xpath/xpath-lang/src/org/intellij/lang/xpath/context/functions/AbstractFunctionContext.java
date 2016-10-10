@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,12 +72,7 @@ public abstract class AbstractFunctionContext implements FunctionContext {
   }
 
   protected static synchronized FunctionContext getInstance(ContextType contextType, Factory<FunctionContext> factory) {
-    FunctionContext context = ourInstances.get(contextType);
-    if (context == null) {
-      context = factory.create();
-      ourInstances.put(contextType, context);
-    }
-    return context;
+    return ourInstances.computeIfAbsent(contextType, k -> factory.create());
   }
 
   public Map<Pair<QName, Integer>, Function> getFunctions() {

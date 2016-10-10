@@ -135,6 +135,10 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     }
     if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
+      final PsiExpression qualifier = referenceExpression.getQualifierExpression();
+      if (!isMoveable(qualifier)) {
+        return false;
+      }
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiClass) {
         return true;
@@ -231,6 +235,8 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
   }
 
   private class TooBroadScopeVisitor extends BaseInspectionVisitor {
+
+    TooBroadScopeVisitor() {}
 
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {

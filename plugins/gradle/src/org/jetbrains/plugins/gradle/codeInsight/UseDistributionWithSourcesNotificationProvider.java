@@ -111,7 +111,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
           updateDefaultWrapperConfiguration(rootProjectPath);
           EditorNotifications.getInstance(module.getProject()).updateAllNotifications();
           ExternalSystemUtil.refreshProject(
-            module.getProject(), GradleConstants.SYSTEM_ID, settings.getExternalProjectPath(), true,
+            module.getProject(), GradleConstants.SYSTEM_ID, settings.getExternalProjectPath(), false,
             ProgressExecutionMode.START_IN_FOREGROUND_ASYNC);
         });
         return panel;

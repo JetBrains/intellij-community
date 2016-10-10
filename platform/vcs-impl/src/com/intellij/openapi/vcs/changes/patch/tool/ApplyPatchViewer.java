@@ -664,7 +664,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     @Override
     public void actionPerformed(AnActionEvent e) {
       DocumentContent resultContent = myPatchRequest.getResultContent();
-      DocumentContent localContent = DiffContentFactory.getInstance().create(myPatchRequest.getLocalContent(), resultContent);
+      DocumentContent localContent = DiffContentFactory.getInstance().create(myProject, myPatchRequest.getLocalContent(), resultContent);
 
       SimpleDiffRequest request = new SimpleDiffRequest(myPatchRequest.getTitle(),
                                                         localContent, resultContent,

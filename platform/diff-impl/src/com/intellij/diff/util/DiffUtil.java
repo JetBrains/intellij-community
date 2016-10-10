@@ -41,10 +41,7 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -224,7 +221,11 @@ public class DiffUtil {
   public static void configureEditor(@NotNull EditorEx editor, @NotNull DocumentContent content, @Nullable Project project) {
     setEditorHighlighter(project, editor, content);
     setEditorCodeStyle(project, editor, content.getContentType());
-    editor.reinitSettings();
+
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(content.getDocument());
+    if (virtualFile != null && Registry.is("diff.enable.psi.highlighting")) {
+      editor.setFile(virtualFile);
+    }
   }
 
   public static boolean isMirrored(@NotNull Editor editor) {
@@ -337,7 +338,8 @@ public class DiffUtil {
 
     AnAction[] children = group.getChildren(null);
     for (AnAction action : actions) {
-      if (!ArrayUtil.contains(action, children)) {
+      if (action instanceof Separator ||
+          !ArrayUtil.contains(action, children)) {
         group.add(action);
       }
     }
@@ -465,23 +467,26 @@ public class DiffUtil {
                                         boolean equalSeparators,
                                         @Nullable Editor editor) {
     if (content instanceof EmptyContent) return null;
+    DocumentContent documentContent = (DocumentContent)content;
 
-    Charset charset = equalCharsets ? null : ((DocumentContent)content).getCharset();
-    LineSeparator separator = equalSeparators ? null : ((DocumentContent)content).getLineSeparator();
+    Charset charset = equalCharsets ? null : documentContent.getCharset();
+    Boolean bom = equalCharsets ? null : documentContent.getBOM();
+    LineSeparator separator = equalSeparators ? null : documentContent.getLineSeparator();
     boolean isReadOnly = editor == null || editor.isViewer() || !canMakeWritable(editor.getDocument());
 
-    return createTitle(title, charset, separator, isReadOnly);
+    return createTitle(title, separator, charset, bom, isReadOnly);
   }
 
   @NotNull
   public static JComponent createTitle(@NotNull String title) {
-    return createTitle(title, null, null, false);
+    return createTitle(title, null, null, null, false);
   }
 
   @NotNull
   public static JComponent createTitle(@NotNull String title,
-                                       @Nullable Charset charset,
                                        @Nullable LineSeparator separator,
+                                       @Nullable Charset charset,
+                                       @Nullable Boolean bom,
                                        boolean readOnly) {
     if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
 
@@ -491,13 +496,13 @@ public class DiffUtil {
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
-      panel2.add(createCharsetPanel(charset));
+      panel2.add(createCharsetPanel(charset, bom));
       panel2.add(Box.createRigidArea(new Dimension(4, 0)));
       panel2.add(createSeparatorPanel(separator));
       panel.add(panel2, BorderLayout.EAST);
     }
     else if (charset != null) {
-      panel.add(createCharsetPanel(charset), BorderLayout.EAST);
+      panel.add(createCharsetPanel(charset, bom), BorderLayout.EAST);
     }
     else if (separator != null) {
       panel.add(createSeparatorPanel(separator), BorderLayout.EAST);
@@ -506,8 +511,13 @@ public class DiffUtil {
   }
 
   @NotNull
-  private static JComponent createCharsetPanel(@NotNull Charset charset) {
-    JLabel label = new JLabel(charset.displayName());
+  private static JComponent createCharsetPanel(@NotNull Charset charset, @Nullable Boolean bom) {
+    String text = charset.displayName();
+    if (bom != null && bom) {
+      text += " BOM";
+    }
+
+    JLabel label = new JLabel(text);
     // TODO: specific colors for other charsets
     if (charset.equals(Charset.forName("UTF-8"))) {
       label.setForeground(JBColor.BLUE);
@@ -692,8 +702,8 @@ public class DiffUtil {
     }
 
     ContainerUtil.sort(indexes, (i1, i2) -> {
-      T val1 = values.get(indexes.get(i1));
-      T val2 = values.get(indexes.get(i2));
+      T val1 = values.get(i1);
+      T val2 = values.get(i2);
       return comparator.compare(val1, val2);
     });
 

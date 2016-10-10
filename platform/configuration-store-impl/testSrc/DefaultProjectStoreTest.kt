@@ -9,9 +9,9 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
 import com.intellij.util.io.delete
-import com.intellij.util.io.refreshVfs
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
 import com.intellij.util.loadElement

@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
@@ -418,5 +419,19 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   @Override
   public boolean isBorderOpaque() {
     return false;
+  }
+
+  @Override
+  protected void configureEditor() {
+    super.configureEditor();
+    if (Registry.is("ide.ui.composite.editor.for.combobox")) {
+      // BasicComboboxUI sets focusability depending on the combobox focusability.
+      // JPanel usually is unfocusable and uneditable.
+      // It could be set as an editor when people want to have a composite component as an editor.
+      // In such cases we should restore unfocusable state for panels.
+      if (editor instanceof JPanel) {
+        editor.setFocusable(false);
+      }
+    }
   }
 }

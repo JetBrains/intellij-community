@@ -60,6 +60,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testExceptionFromFinallyNesting() throws Throwable { doTest(); }
   public void testNestedFinally() { doTest(); }
   public void testTryFinallyInsideFinally() { doTest(); }
+  public void testBreakContinueViaFinally() { doTest(); }
   public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
 
   public void testGeneratedEquals() throws Throwable { doTest(); }
@@ -237,6 +238,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testContractPreservesUnknownMethodNullability() { doTest(); }
   public void testContractSeveralClauses() { doTest(); }
   public void testContractVarargs() { doTest(); }
+  public void testContractConstructor() { doTest(); }
 
   public void testBoxingImpliesNotNull() { doTest(); }
   public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }
@@ -397,5 +399,10 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testLiteralIfCondition() {
     doTest();
     myFixture.findSingleIntention("Remove 'if' statement");
+  }
+
+  //https://youtrack.jetbrains.com/issue/IDEA-162184
+  public void testNullLiteralAndInferredMethodContract() {
+    doTest();
   }
 }

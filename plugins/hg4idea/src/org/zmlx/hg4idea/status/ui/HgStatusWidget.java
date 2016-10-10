@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
@@ -52,6 +53,7 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
 
   @Nullable
   @Override
+  @CalledInAwt
   protected HgRepository guessCurrentRepository(@NotNull Project project) {
     return DvcsUtil.guessCurrentRepositoryQuick(project, HgUtil.getRepositoryManager(project),
                                                 HgProjectSettings.getInstance(project).getRecentRootPath());

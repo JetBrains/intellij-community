@@ -25,7 +25,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <java.elementFinder implementation="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomClassFinder"/>
     <weigher key="completion" implementationClass="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionWeigher"
              id="myWeigher" order="first"/>
 

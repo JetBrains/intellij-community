@@ -1,8 +1,7 @@
 package com.jetbrains.edu.coursecreator.actions;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,7 +11,6 @@ import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import org.jetbrains.annotations.Nullable;
 
 public class CCAddAsTaskFile extends CCTaskFileActionBase {
   public static final String ACTION_NAME = "Make Visible to Student";
@@ -30,7 +28,7 @@ public class CCAddAsTaskFile extends CCTaskFileActionBase {
     return StudyUtils.getTaskFile(project, file) == null && !CCUtils.isTestsFile(project, file);
   }
 
-  private static class AddTaskFile implements UndoableAction {
+  private static class AddTaskFile extends BasicUndoableAction {
     private final VirtualFile myFile;
     private TaskFile myTaskFile;
     private final Course myCourse;
@@ -38,6 +36,7 @@ public class CCAddAsTaskFile extends CCTaskFileActionBase {
     private final Task myTask;
 
     public AddTaskFile(VirtualFile file, TaskFile taskFile, Course course, Project project, Task task) {
+      super(file);
       myFile = file;
       myTaskFile = taskFile;
       myCourse = course;
@@ -61,12 +60,6 @@ public class CCAddAsTaskFile extends CCTaskFileActionBase {
       }
       CCUtils.createResourceFile(myFile, myCourse, StudyUtils.getTaskDir(myFile));
       ProjectView.getInstance(myProject).refresh();
-    }
-
-    @Nullable
-    @Override
-    public DocumentReference[] getAffectedDocuments() {
-      return new DocumentReference[0];
     }
 
     @Override

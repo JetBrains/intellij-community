@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.server.embedder.Maven2ServerEmbedderImpl;
@@ -57,6 +58,7 @@ public class Maven2ServerImpl extends MavenRemoteObject implements MavenServer {
     }
   }
 
+  @NotNull
   public MavenModel interpolateAndAlignModel(MavenModel model, File basedir) {
     try {
       return Maven2ServerEmbedderImpl.interpolateAndAlignModel(model, basedir);

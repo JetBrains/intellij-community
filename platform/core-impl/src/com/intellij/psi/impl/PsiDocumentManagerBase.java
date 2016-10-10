@@ -557,7 +557,11 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public void performLaterWhenAllCommitted(@NotNull final Runnable runnable) {
-    final ModalityState modalityState = ModalityState.defaultModalityState();
+    performLaterWhenAllCommitted(runnable, ModalityState.defaultModalityState());
+  }
+
+  @Override
+  public void performLaterWhenAllCommitted(@NotNull final Runnable runnable, final ModalityState modalityState) {
     final Runnable whenAllCommitted = new Runnable() {
       @Override
       public void run() {

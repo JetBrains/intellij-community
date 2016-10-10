@@ -169,9 +169,9 @@ public class InferenceSession {
     return elementFactory.createType(parameter);
   }
 
-  public void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent, PsiMethod method) {
+  public void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent) {
     final MethodCandidateInfo.CurrentCandidateProperties currentProperties = getCurrentProperties(parent);
-    initExpressionConstraints(parameters, args, parent, method, currentProperties != null && currentProperties.isVarargs());
+    initExpressionConstraints(parameters, args, parent, null, currentProperties != null && currentProperties.isVarargs());
   }
 
   public void initExpressionConstraints(PsiParameter[] parameters,
@@ -382,7 +382,6 @@ public class InferenceSession {
           final Ref<String> errorMessage = new Ref<String>();
           final PsiType targetType = getTargetTypeFromParent(parent, errorMessage, false);
           if (targetType == null && errorMessage.get() != null) {
-            registerIncompatibleErrorMessage(errorMessage.get());
             return;
           }
 
@@ -393,6 +392,7 @@ public class InferenceSession {
       }
 
       if (!repeatInferencePhases()) {
+        resolveBounds(getInputInferenceVariablesFromTopLevelFunctionalExpressions(args, properties), initialSubstitutor);
         return;
       }
 
@@ -405,34 +405,37 @@ public class InferenceSession {
         }
 
         if (!additionalConstraints.isEmpty() && !proceedWithAdditionalConstraints(additionalConstraints, ignoredConstraints)) {
+          resolveBounds(getInputInferenceVariablesFromTopLevelFunctionalExpressions(args, properties), initialSubstitutor);
           return;
         }
       }
     }
 
-    final PsiSubstitutor substitutor = resolveBounds(myInferenceVariables, initialSubstitutor);
-    if (substitutor != null) {
-      if (myContext != null) {
-        myContext.putUserData(ERASED, myErased);
-      }
-      final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
-      for (PsiTypeParameter parameter : map.keySet()) {
-        final PsiType mapping = map.get(parameter);
-        PsiTypeParameter param;
-        if (parameter instanceof InferenceVariable) {
-          ((InferenceVariable)parameter).setInstantiation(mapping);
-          if (((InferenceVariable)parameter).getCallContext() != myContext) {
-            //don't include in result substitutor foreign inference variables
-            continue;
+    resolveBounds(myInferenceVariables, initialSubstitutor);
+  }
+
+  private Collection<InferenceVariable> getInputInferenceVariablesFromTopLevelFunctionalExpressions(PsiExpression[] args, MethodCandidateInfo.CurrentCandidateProperties properties) {
+    if (args == null) return Collections.emptyList();
+    final PsiMethod method = properties.getMethod();
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+    for (int i = 0; i < args.length; i++) {
+      PsiExpression arg = args[i];
+      if (arg instanceof PsiLambdaExpression && !((PsiLambdaExpression)arg).hasFormalParameterTypes() ||
+          arg instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)arg).isExact()) {
+        final PsiSubstitutor nestedSubstitutor = myInferenceSessionContainer.findNestedSubstitutor(arg, myInferenceSubstitution);
+        final PsiType parameterType = nestedSubstitutor.substitute(getParameterType(parameters, i, mySiteSubstitutor, properties.isVarargs()));
+        final PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(parameterType);
+        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(result);
+        if (interfaceMethod != null) {
+          final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, result);
+          for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
+            collectDependencies(substitutor.substitute(parameter.getType()), dependencies);
           }
-          param = ((InferenceVariable)parameter).getParameter();
         }
-        else {
-          param = parameter;
-        }
-        mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
       }
     }
+    return dependencies;
   }
 
   private boolean isOverloadCheck() {
@@ -1106,8 +1109,8 @@ public class InferenceSession {
     return false;
   }
 
-  private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables,
-                                       PsiSubstitutor substitutor) {
+  private void resolveBounds(final Collection<InferenceVariable> inferenceVariables,
+                             @NotNull PsiSubstitutor substitutor) {
     final Collection<InferenceVariable> allVars = new ArrayList<InferenceVariable>(inferenceVariables);
     while (!allVars.isEmpty()) {
       final List<InferenceVariable> vars = InferenceVariablesOrder.resolveOrder(allVars, this);
@@ -1132,15 +1135,36 @@ public class InferenceSession {
       }
 
       if (!initFreshVariables(substitutor, unresolved)) {
-        return null;
+        return;
       }
 
       myIncorporationPhase.forgetCaptures(vars);
       if (!repeatInferencePhases()) {
-        return null;
+        return;
       }
     }
-    return substitutor;
+
+    if (myContext != null) {
+      myContext.putUserData(ERASED, myErased);
+    }
+
+    final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
+    for (PsiTypeParameter parameter : map.keySet()) {
+      final PsiType mapping = map.get(parameter);
+      PsiTypeParameter param;
+      if (parameter instanceof InferenceVariable) {
+        ((InferenceVariable)parameter).setInstantiation(mapping);
+        if (((InferenceVariable)parameter).getCallContext() != myContext) {
+          //don't include in result substitutor foreign inference variables
+          continue;
+        }
+        param = ((InferenceVariable)parameter).getParameter();
+      }
+      else {
+        param = parameter;
+      }
+      mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
+    }
   }
 
   private boolean initFreshVariables(PsiSubstitutor substitutor, List<InferenceVariable> vars) {

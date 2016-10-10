@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jdom.Element;
 import org.jdom.input.DOMBuilder;
@@ -56,8 +55,7 @@ public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
   }
 
   @NotNull
-  protected Pair<EditorColorsScheme, TextAttributes> doTestWriteRead(TextAttributesKey key, TextAttributes attributes)
-    throws WriteExternalException {
+  protected Pair<EditorColorsScheme, TextAttributes> doTestWriteRead(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes) {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
 
     EditorColorsScheme sourceScheme = (EditorColorsScheme)defaultScheme.clone();

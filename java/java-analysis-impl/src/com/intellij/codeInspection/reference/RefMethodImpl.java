@@ -57,24 +57,20 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   private RefParameter[] myParameters;
   private String myReturnValueTemplate;
-  protected final RefClass myOwnerClass;
 
   RefMethodImpl(@NotNull RefClass ownerClass, PsiMethod method, RefManager manager) {
     super(method, manager);
 
     ((RefClassImpl)ownerClass).add(this);
-
-    myOwnerClass = ownerClass;
   }
 
   // To be used only from RefImplicitConstructor.
   protected RefMethodImpl(@NotNull String name, @NotNull RefClass ownerClass) {
     super(name, ownerClass);
-    myOwnerClass = ownerClass;
     ((RefClassImpl)ownerClass).add(this);
 
-    addOutReference(getOwnerClass());
-    ((RefClassImpl)getOwnerClass()).addInReference(this);
+    addOutReference(ownerClass);
+    ((RefClassImpl)ownerClass).addInReference(this);
 
     setConstructor(true);
   }

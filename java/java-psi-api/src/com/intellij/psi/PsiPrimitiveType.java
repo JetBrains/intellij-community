@@ -126,7 +126,7 @@ public class PsiPrimitiveType extends PsiType.Stub {
   public static PsiPrimitiveType getUnboxedType(PsiType type) {
     if (!(type instanceof PsiClassType)) return null;
 
-    assert type.isValid() : type;
+    PsiUtil.ensureValidType(type);
     LanguageLevel languageLevel = ((PsiClassType)type).getLanguageLevel();
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
 

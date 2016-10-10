@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -155,6 +156,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       if (file == null) return null;
     }
     OpenFileDescriptor descriptor = new OpenFileDescriptor(project, file, textOffset);
+    descriptor.setScrollType(ScrollType.MAKE_VISIBLE); // avoid centering caret in editor if it's already visible
     return FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 

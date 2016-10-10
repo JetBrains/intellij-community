@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.JBProtocolCommand;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -96,8 +97,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       @Override
       public void addNotify() {
         super.addNotify();
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> JBProtocolCommand.handleCurrentCommand());
+        TransactionGuard.submitTransaction(FlatWelcomeFrame.this, () -> JBProtocolCommand.handleCurrentCommand());
       }
     };
 
@@ -775,10 +775,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     JPanel actionsListPanel = new JPanel(new BorderLayout());
     actionsListPanel.setBackground(getProjectsBackground());
     final List<AnAction> groups = flattenActionGroups(action);
-    final JBList list = new JBList(groups);
+    final JBList<AnAction> list = new JBList<>(groups);
 
     list.setBackground(getProjectsBackground());
-    list.setCellRenderer(new GroupedItemsListRenderer(new ListItemDescriptorAdapter<AnAction>() {
+    list.setCellRenderer(new GroupedItemsListRenderer<AnAction>(new ListItemDescriptorAdapter<AnAction>() {
        @Nullable
        @Override
        public String getTextFor(AnAction value) {
@@ -820,10 +820,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
        }
 
        @Override
-       protected void customizeComponent(JList list, Object value, boolean isSelected) {
+       protected void customizeComponent(JList<? extends AnAction> list, AnAction value, boolean isSelected) {
          if (myTextLabel != null) {
-           myTextLabel.setText(getActionText(((AnAction)value)));
-           myTextLabel.setIcon(((AnAction)value).getTemplatePresentation().getIcon());
+           myTextLabel.setText(getActionText(value));
+           myTextLabel.setIcon(value.getTemplatePresentation().getIcon());
          }
        }
      }

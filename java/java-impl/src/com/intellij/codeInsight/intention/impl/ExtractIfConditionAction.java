@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -81,6 +82,8 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
     if (newIfStatement == null) {
       return;
     }
+
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     ifStatement.replace(codeStyleManager.reformat(newIfStatement));
   }

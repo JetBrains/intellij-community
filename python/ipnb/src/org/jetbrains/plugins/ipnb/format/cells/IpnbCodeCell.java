@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -17,7 +18,7 @@ public class IpnbCodeCell extends IpnbEditableCell {
                       @NotNull final List<String> input,
                       @Nullable final Integer number,
                       @NotNull final List<IpnbOutputCell> cellOutputs,
-                      @Nullable Map<String, Object> metadata) {
+                      @NotNull Map<String, Object> metadata) {
     super(input, metadata);
     myLanguage = language;
     myPromptNumber = number;
@@ -56,5 +57,11 @@ public class IpnbCodeCell extends IpnbEditableCell {
   public Object clone() {
     return new IpnbCodeCell(myLanguage, new ArrayList<>(getSource()), myPromptNumber, new ArrayList<>(myCellOutputs),
                             myMetadata);
+  }
+  
+  @NotNull
+  public static IpnbCodeCell createEmptyCodeCell() {
+    return new IpnbCodeCell("python", Collections.emptyList(), null, new ArrayList<>(),
+                            Collections.emptyMap());
   }
 }

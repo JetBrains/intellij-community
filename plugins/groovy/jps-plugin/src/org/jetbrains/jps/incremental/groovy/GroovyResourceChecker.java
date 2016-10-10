@@ -26,6 +26,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -82,6 +83,14 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
     @Override
     protected Map<CheckResourcesTarget, String> getCanonicalOutputs(CompileContext context, ModuleChunk chunk, Builder builder) {
       return Collections.singletonMap(myTarget, myTarget.getOutputRoot(context).getPath());
+    }
+
+    @Override
+    protected boolean shouldProcessSourceFile(File file,
+                                              GroovyResourceRootDescriptor sourceRoot,
+                                              String path,
+                                              JpsJavaCompilerConfiguration configuration) {
+      return GroovyBuilder.isGroovyFile(path) && !configuration.getValidationExcludes().isExcluded(file);
     }
 
     @Override

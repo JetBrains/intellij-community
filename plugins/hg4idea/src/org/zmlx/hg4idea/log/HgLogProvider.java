@@ -36,10 +36,13 @@ import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.repo.HgConfig;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
+import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgVersion;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -82,6 +85,23 @@ public class HgLogProvider implements VcsLogProvider {
       commitConsumer.consume(commit);
     }
     return new LogDataImpl(readAllRefs(root), userRegistry);
+  }
+
+  @Override
+  public void readAllFullDetails(@NotNull final VirtualFile root, @NotNull Consumer<VcsFullCommitDetails> commitConsumer)
+    throws VcsException {
+    // this method currently is very slow and time consuming
+    // so indexing is not to be used for mercurial for now
+    HgVcs hgvcs = HgVcs.getInstance(myProject);
+    assert hgvcs != null;
+    final HgVersion version = hgvcs.getVersion();
+    final String[] templates = HgBaseLogParser.constructFullTemplateArgument(true, version);
+
+    HgCommandResult logResult =
+      HgHistoryUtil.getLogResult(myProject, root, version, -1, ContainerUtil.newArrayList(), HgChangesetUtil.makeTemplate(templates));
+    if (logResult == null) return;
+    if (!logResult.getErrorLines().isEmpty()) throw new VcsException(logResult.getRawError());
+    HgHistoryUtil.createFullCommitsFromResult(myProject, root, logResult, version, false).forEach(commitConsumer::consume);
   }
 
   @NotNull

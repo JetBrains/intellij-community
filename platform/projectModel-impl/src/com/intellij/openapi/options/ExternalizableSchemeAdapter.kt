@@ -31,10 +31,7 @@ abstract class ExternalizableSchemeAdapter : ExternalizableScheme {
   override fun toString() = name
 }
 
-abstract class BaseSchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : NonLazySchemeProcessor<SCHEME, MUTABLE_SCHEME>(), SchemeExtensionProvider {
-  override val isUpgradeNeeded = false
-
-  override val schemeExtension = ".xml"
+abstract class BaseSchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : NonLazySchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
 }
 
 abstract class NonLazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME> : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {

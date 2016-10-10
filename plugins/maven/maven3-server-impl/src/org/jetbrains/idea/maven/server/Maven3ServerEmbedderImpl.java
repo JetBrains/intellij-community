@@ -330,6 +330,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     return (List<Exception>)((List)list);
   }
 
+  @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
     Model result = MavenModelConverter.toNativeModel(model);
     result = doInterpolate(result, basedir);
@@ -418,7 +419,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     );
   }
 
-  private static Model doInterpolate(Model result, File basedir) throws RemoteException {
+  @NotNull
+  private static Model doInterpolate(@NotNull Model result, File basedir) throws RemoteException {
     try {
       AbstractStringBasedModelInterpolator interpolator = new CustomMaven3ModelInterpolator(new DefaultPathTranslator());
       interpolator.initialize();
@@ -683,31 +685,15 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
               final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
               final List<Dependency> dependencies = dependencyResolutionResult.getDependencies();
 
-              final Map<Dependency, Artifact> winnerDependencyMap = new HashMap<Dependency, Artifact>();
+              final Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<Dependency, Artifact>();
               Set<Artifact> artifacts = new LinkedHashSet<Artifact>(dependencies.size());
               dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
                 @Override
                 public boolean visitEnter(org.eclipse.aether.graph.DependencyNode node) {
-                  Artifact winnerArtifact = null;
-                  final Map<?, ?> data = node.getData();
-                  final Object winner = data.get(ConflictResolver.NODE_DATA_WINNER);
-                  if(winner instanceof org.eclipse.aether.graph.DependencyNode) {
-                    org.eclipse.aether.graph.DependencyNode winnerNode = (org.eclipse.aether.graph.DependencyNode)winner;
-                    if(!StringUtil.equals(node.getVersion().toString(), winnerNode.getVersion().toString())) {
-                      Dependency winnerNodeDependency = winnerNode.getDependency();
-                      winnerArtifact = RepositoryUtils.toArtifact(winnerNodeDependency.getArtifact());
-                      winnerArtifact.setScope(winnerNodeDependency.getScope());
-                      winnerArtifact.setOptional(winnerNodeDependency.isOptional());
-                    }
-                  }
-
+                  final Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
                   final Dependency dependency = node.getDependency();
-                  if(dependency != null) {
-                    if(winnerArtifact == null) {
-                      winnerArtifact = RepositoryUtils.toArtifact(node.getArtifact());
-                      winnerArtifact.setScope(dependency.getScope());
-                      winnerArtifact.setOptional(dependency.isOptional());
-                    }
+                  if (dependency != null && winner == null) {
+                    Artifact winnerArtifact = Maven3AetherModelConverter.toArtifact(dependency);
                     winnerDependencyMap.put(dependency, winnerArtifact);
                   }
                   return true;
@@ -929,7 +915,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, unresolvedArtifacts);
 
-    MavenModel model = null;
+    MavenModel model = new MavenModel();
     try {
       if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
         //noinspection unchecked

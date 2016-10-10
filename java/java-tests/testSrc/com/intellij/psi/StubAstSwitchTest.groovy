@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.reference.SoftReference
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.GCUtil
-import com.intellij.util.TimeoutUtil
 
 import java.util.concurrent.CountDownLatch
 /**
@@ -124,6 +123,7 @@ class A {
       class MyInner extends Inner {}
     };
     Runnable r = () -> { new B() {}; };
+    Runnable r2 = (new B(){})::hashCode();
 }
 
 class B {
@@ -133,7 +133,7 @@ class B {
 """)
     assert !file.contentsLoaded
     PsiClass bClass = ((PsiJavaFile) file).classes[1]
-    assert DirectClassInheritorsSearch.search(bClass).findAll().size() == 2
+    assert DirectClassInheritorsSearch.search(bClass).findAll().size() == 3
     assert !file.contentsLoaded
 
     def fooMethod = bClass.methods[0]

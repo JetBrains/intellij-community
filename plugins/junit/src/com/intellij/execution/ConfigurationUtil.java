@@ -46,13 +46,16 @@ public class ConfigurationUtil {
     GlobalSearchScope projectScopeWithoutLibraries = GlobalSearchScope.projectScope(project);
     final GlobalSearchScope scope = projectScopeWithoutLibraries.intersectWith(testClassFilter.getScope());
 
-    ClassInheritorsSearch.search(testClassFilter.getBase(), scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
-      @Override
-      public boolean processInReadAction(PsiClass aClass) {
-        if (testClassFilter.isAccepted(aClass)) found.add(aClass);
-        return true;
-      }
-    });
+    final PsiClass base = testClassFilter.getBase();
+    if (base != null) {
+      ClassInheritorsSearch.search(base, scope, true, true, false).forEach(new ReadActionProcessor<PsiClass>() {
+        @Override
+        public boolean processInReadAction(PsiClass aClass) {
+          if (testClassFilter.isAccepted(aClass)) found.add(aClass);
+          return true;
+        }
+      });
+    }
 
     // classes having suite() method
     final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(

@@ -18,7 +18,6 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
@@ -151,17 +150,11 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
     if (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcluded(file) && !fileIndex.isUnderIgnored(file)) return true;
     
     if (project instanceof ProjectEx && !project.isDefault()) {
-      if (ProjectKt.isDirectoryBased(project)) {
-        VirtualFile baseDir = project.getBaseDir();
-        VirtualFile dotIdea = baseDir == null ? null : baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-        if (dotIdea != null && VfsUtilCore.isAncestor(dotIdea, file, false)) return true;
-      }
-
-      IProjectStore store = (IProjectStore)ServiceKt.getStateStore(project);
-      String filePath = file.getPath();
-      if (FileUtil.namesEqual(filePath, store.getWorkspaceFilePath()) || FileUtil.namesEqual(filePath, store.getProjectFilePath())) {
+      if (ProjectKt.getStateStore(project).isProjectFile(file)) {
         return true;
       }
+
+      String filePath = file.getPath();
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         if (FileUtil.namesEqual(filePath, module.getModuleFilePath())) {
           return true;

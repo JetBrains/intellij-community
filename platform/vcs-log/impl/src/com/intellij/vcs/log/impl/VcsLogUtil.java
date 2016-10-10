@@ -19,6 +19,7 @@ import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
@@ -222,5 +225,19 @@ public class VcsLogUtil {
 
   public static void triggerUsage(@NotNull String text) {
     UsageTrigger.trigger("vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
+  }
+
+  public static boolean isRegexp(@NotNull String text) {
+    if (!StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|")) {
+      return false;
+    }
+    try {
+      //noinspection ResultOfMethodCallIgnored
+      Pattern.compile(text);
+      return true;
+    }
+    catch (PatternSyntaxException ignored) {
+    }
+    return false;
   }
 }

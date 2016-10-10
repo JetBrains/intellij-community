@@ -61,6 +61,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataService;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.builder.ModelBuildScriptClasspathBuilderImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -454,7 +455,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         processSourceSets(externalProject, ideModule, new SourceSetsProcessor() {
           @Override
           public void process(@NotNull DataNode<? extends ModuleData> dataNode, @NotNull ExternalSourceSet sourceSet) {
-            buildDependencies(sourceSetMap, artifactsMap, dataNode, sourceSet.getDependencies(), ideProject);
+            buildDependencies(resolverCtx, sourceSetMap, artifactsMap, dataNode, sourceSet.getDependencies(), ideProject);
           }
         });
 
@@ -473,7 +474,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       DependencyScope scope = parseScope(dependency.getScope());
 
       if (dependency instanceof IdeaModuleDependency) {
-        ModuleDependencyData d = buildDependency(ideModule, (IdeaModuleDependency)dependency, ideProject);
+        ModuleDependencyData d = buildDependency(resolverCtx.getSettings(), ideModule, (IdeaModuleDependency)dependency, ideProject);
         d.setExported(dependency.getExported());
         if (scope != null) {
           d.setScope(scope);
@@ -780,12 +781,20 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   }
 
   @NotNull
-  private static ModuleDependencyData buildDependency(@NotNull DataNode<ModuleData> ownerModule,
+  private static ModuleDependencyData buildDependency(@Nullable GradleExecutionSettings executionSettings,
+                                                      @NotNull DataNode<ModuleData> ownerModule,
                                                       @NotNull IdeaModuleDependency dependency,
                                                       @NotNull DataNode<ProjectData> ideProject)
     throws IllegalStateException {
     IdeaModule module = dependency.getDependencyModule();
     if (module == null) {
+      if (executionSettings != null) {
+        String moduleName = dependency.getTargetModuleName();
+        ModuleData moduleData = executionSettings.getExecutionWorkspace().findModuleDataByName(moduleName);
+        if (moduleData != null) {
+          return new ModuleDependencyData(ownerModule.getData(), moduleData);
+        }
+      }
       throw new IllegalStateException(
         String.format("Can't parse gradle module dependency '%s'. Reason: referenced module is null", dependency)
       );

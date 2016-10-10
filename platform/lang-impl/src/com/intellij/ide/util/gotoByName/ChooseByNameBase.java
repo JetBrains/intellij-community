@@ -25,7 +25,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
-import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
@@ -927,12 +926,6 @@ public abstract class ChooseByNameBase {
       }
     });
     myTextPopup.show(layeredPane);
-    if (myTextPopup instanceof AbstractPopup) {
-      Window window = ((AbstractPopup)myTextPopup).getPopupWindow();
-      if (window instanceof JDialog) {
-        ((JDialog)window).getRootPane().putClientProperty(WindowAction.NO_WINDOW_ACTIONS, Boolean.TRUE);
-      }
-    }
   }
 
   private JLayeredPane getLayeredPane() {
@@ -1522,8 +1515,7 @@ public abstract class ChooseByNameBase {
       }
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
-      final boolean edt = myModel instanceof EdtSortingModel;
-      final Set<Object> filtered = !edt ? filter(elements) : Collections.emptySet();
+      Set<Object> filtered = filter(elements);
       return new Continuation(() -> {
         if (!checkDisposed() && !myProgress.isCanceled()) {
           CalcElementsThread currentBgProcess = myCalcElementsThread;
@@ -1531,7 +1523,7 @@ public abstract class ChooseByNameBase {
 
           showCard(cardToShow, 0);
 
-          myCallback.consume(edt ? filter(elements) : filtered);
+          myCallback.consume(filtered);
         }
       }, myModalityState);
     }

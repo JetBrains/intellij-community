@@ -15,16 +15,18 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.io.LocalFileFinder;
 
-import java.io.File;
 import java.util.List;
 
 public abstract class AbstractFileHyperlinkFilter implements Filter {
@@ -32,12 +34,24 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
 
   private final Project myProject;
   private final ProjectFileIndex myFileIndex;
-  private final String myBaseDir;
+  private final VirtualFile myBaseDir;
 
   public AbstractFileHyperlinkFilter(@NotNull Project project, @Nullable String baseDir) {
     myProject = project;
     myFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
-    myBaseDir = baseDir;
+    myBaseDir = findDir(baseDir);
+  }
+
+  @Nullable
+  private static VirtualFile findDir(@Nullable String baseDir) {
+    if (baseDir == null) {
+      return null;
+    }
+    return ReadAction.compute(() -> {
+      String path = FileUtil.toSystemIndependentName(baseDir);
+      VirtualFile dir = LocalFileFinder.findFile(path);
+      return dir != null && dir.isValid() && dir.isDirectory() ? dir : null;
+    });
   }
 
   @Nullable
@@ -48,19 +62,24 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
       links = parse(line);
     }
     catch (RuntimeException e) {
-      LOG.error("Failed to process '" + line + "'", e);
+      LOG.error("Failed to parse '" + line + "' with " + getClass(), e);
       return null;
     }
     List<Filter.ResultItem> items = ContainerUtil.newArrayList();
     for (FileHyperlinkRawData link : links) {
-      VirtualFile file = findFile(link.getFilePath());
+      String filePath = FileUtil.toSystemIndependentName(link.getFilePath());
+      VirtualFile file = StringUtil.isEmptyOrSpaces(filePath) ? null : findFile(filePath);
       if (file != null) {
         OpenFileHyperlinkInfo info = new OpenFileHyperlinkInfo(myProject,
                                                                file,
                                                                link.getDocumentLine(),
                                                                link.getDocumentColumn());
         boolean grayedHyperLink = isGrayedHyperlink(file);
-        items.add(new Filter.ResultItem(link.getHyperlinkStartInd(), link.getHyperlinkEndInd(), info, grayedHyperLink));
+        int offset = entireLength - line.length();
+        items.add(new Filter.ResultItem(offset + link.getHyperlinkStartInd(),
+                                        offset + link.getHyperlinkEndInd(),
+                                        info,
+                                        grayedHyperLink));
       }
     }
     return items.isEmpty() ? null : new Result(items);
@@ -75,25 +94,10 @@ public abstract class AbstractFileHyperlinkFilter implements Filter {
 
   @Nullable
   public VirtualFile findFile(@NotNull String filePath) {
-    File file = findIoFile(filePath);
-    if (file != null) {
-      return LocalFileSystem.getInstance().findFileByIoFile(file);
+    VirtualFile file = LocalFileFinder.findFile(filePath);
+    if (file == null && myBaseDir != null) {
+      file = myBaseDir.findFileByRelativePath(filePath);
     }
-    return null;
-  }
-
-  @Nullable
-  private File findIoFile(@NotNull String filePath) {
-    File file = new File(filePath);
-    if (file.isFile() && file.isAbsolute()) {
-      return file;
-    }
-    if (myBaseDir != null) {
-      file = new File(myBaseDir, filePath);
-      if (file.isFile()) {
-        return file;
-      }
-    }
-    return null;
+    return file;
   }
 }

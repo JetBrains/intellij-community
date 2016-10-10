@@ -285,8 +285,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     if (myCbCollapseToLambda.isVisible() && myCbCollapseToLambda.isSelected() && parameterInitializer != null) {
       PsiExpression lambda = AnonymousCanBeLambdaInspection.replaceAnonymousWithLambda(parameterInitializer, selectedType);
       if (lambda != null) {
-        lambda = LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(JavaPsiFacade.getElementFactory(getProject()),
-                                                                                       (PsiLambdaExpression)lambda);
+        lambda = LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference((PsiLambdaExpression)lambda);
         processor.setParameterInitializer(lambda);
       }
     }

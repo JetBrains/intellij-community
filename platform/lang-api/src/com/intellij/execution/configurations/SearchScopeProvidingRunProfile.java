@@ -31,5 +31,5 @@ public interface SearchScopeProvidingRunProfile extends RunProfile {
    * @return scope where to search sources for this configuration
    */
   @Nullable
-  GlobalSearchScope getScope();
+  GlobalSearchScope getSearchScope();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -103,7 +102,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
           doPushRecursively(file, pushers, ProjectRootManager.getInstance(myProject).getFileIndex());
           pushedSomething = true;
         }
-        else if (!ProjectCoreUtil.isProjectOrWorkspaceFile(file)) {
+        else if (!ProjectUtil.isProjectOrWorkspaceFile(file)) {
           ContainerUtil.addIfNotNull(delayedTasks, createRecursivePushTask(file, pushers));
         }
       } else if (event instanceof VFileMoveEvent) {

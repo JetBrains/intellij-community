@@ -44,7 +44,7 @@ public class JCiPUtil {
   }
 
   @Nullable
-  static String findGuardForMember(@NotNull PsiMember member) {
+  public static String findGuardForMember(@NotNull PsiMember member) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(member, ConcurrencyAnnotationsManager.getInstance(member.getProject()).getGuardedByAnnotations());
     if (annotation != null) {
       return getGuardValue(annotation);

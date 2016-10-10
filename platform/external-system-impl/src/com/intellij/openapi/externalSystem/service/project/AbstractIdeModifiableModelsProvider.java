@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
@@ -181,23 +182,13 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   @NotNull
   private ModuleRootModel getRootModel(Module module) {
-    ModifiableRootModel result = myModifiableRootModels.get(module);
-    if (result == null) {
-      result = doGetModifiableRootModel(module);
-      myModifiableRootModels.put(module, result);
-    }
-    return result;
+    return myModifiableRootModels.computeIfAbsent(module, k -> doGetModifiableRootModel(module));
   }
 
   @Override
   @NotNull
   public ModifiableFacetModel getModifiableFacetModel(Module module) {
-    ModifiableFacetModel result = myModifiableFacetModels.get(module);
-    if (result == null) {
-      result = doGetModifiableFacetModel(module);
-      myModifiableFacetModels.put(module, result);
-    }
-    return result;
+    return myModifiableFacetModels.computeIfAbsent(module, k -> doGetModifiableFacetModel(module));
   }
 
   @Override
@@ -233,12 +224,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   @Override
   public Library.ModifiableModel getModifiableLibraryModel(Library library) {
-    Library.ModifiableModel result = myModifiableLibraryModels.get(library);
-    if (result == null) {
-      result = doGetModifiableLibraryModel(library);
-      myModifiableLibraryModels.put(library, result);
-    }
-    return result;
+    return myModifiableLibraryModels.computeIfAbsent(library, k -> doGetModifiableLibraryModel(library));
   }
 
   @NotNull
@@ -408,6 +394,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     Disposer.dispose(getModifiableProjectLibrariesModel());
 
     for (Library.ModifiableModel each : myModifiableLibraryModels.values()) {
+      if (each instanceof LibraryEx && ((LibraryEx)each).isDisposed()) continue;
       Disposer.dispose(each);
     }
 

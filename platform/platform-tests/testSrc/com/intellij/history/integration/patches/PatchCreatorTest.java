@@ -29,7 +29,7 @@ import java.util.List;
 
 public class PatchCreatorTest extends PatchingTestCase {
 
-  @Bombed(user = "Nadya Zabrodina", day = 1, month = Calendar.OCTOBER,
+  @Bombed(user = "Nadya Zabrodina", day = 15, month = Calendar.DECEMBER,
     description = "Now we are not able to apply empty file creation patch; git special tag needed or smth like that")
   public void testCreationEmptyPatch() throws Exception {
     createChildData(myRoot, "f.txt");

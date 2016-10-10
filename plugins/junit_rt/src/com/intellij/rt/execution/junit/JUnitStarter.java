@@ -230,13 +230,11 @@ public class JUnitStarter {
           final List newArgs = new ArrayList();
           newArgs.add(agentName);
           newArgs.addAll(listeners);
-          PrintStream printOutputStream = System.out;
-          PrintStream printErrStream = System.err;
-          return new JUnitForkedSplitter(ourWorkingDirs, ourForkMode, printOutputStream, printErrStream, newArgs)
+          return new JUnitForkedSplitter(ourWorkingDirs, ourForkMode, newArgs)
             .startSplitting(args, name, ourCommandFileName, ourRepeatCount);
         }
       }
-      return testRunner.startRunnerWithArgs(args, listeners, name, ourCount, true);
+      return IdeaTestRunner.Repeater.startRunnerWithArgs(testRunner, args, listeners, name, ourCount, true);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);

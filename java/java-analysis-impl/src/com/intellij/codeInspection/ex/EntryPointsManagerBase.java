@@ -185,16 +185,19 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static void writeExternal(final Element element,
-                            final Map<String, SmartRefElementPointer> persistentEntryPoints,
-                            final JDOMExternalizableStringList additional_annotations) {
-    Element entryPointsElement = new Element("entry_points");
-    entryPointsElement.setAttribute(VERSION_ATTR, VERSION);
-    for (SmartRefElementPointer entryPoint : persistentEntryPoints.values()) {
-      assert entryPoint.isPersistent();
-      entryPoint.writeExternal(entryPointsElement);
+                                   final Map<String, SmartRefElementPointer> persistentEntryPoints,
+                                   final JDOMExternalizableStringList additional_annotations) {
+    Collection<SmartRefElementPointer> elementPointers = persistentEntryPoints.values();
+    if (!elementPointers.isEmpty()) {
+      Element entryPointsElement = new Element("entry_points");
+      entryPointsElement.setAttribute(VERSION_ATTR, VERSION);
+      for (SmartRefElementPointer entryPoint : elementPointers) {
+        assert entryPoint.isPersistent();
+        entryPoint.writeExternal(entryPointsElement);
+      }
+      element.addContent(entryPointsElement);
     }
 
-    element.addContent(entryPointsElement);
     if (!additional_annotations.isEmpty()) {
       additional_annotations.writeExternal(element);
     }
@@ -350,20 +353,22 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
     if (anEntryPoint instanceof RefMethod || anEntryPoint instanceof RefClass) {
       final RefClass aClass = anEntryPoint instanceof RefClass ? (RefClass)anEntryPoint : ((RefMethod)anEntryPoint).getOwnerClass();
-      final String qualifiedName = aClass.getQualifiedName();
-      for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
-        ClassPattern classPattern = iterator.next();
-        if (Comparing.equal(classPattern.pattern, qualifiedName)) {
-          if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
-            if (classPattern.method.isEmpty()) {
-              //todo if inheritance or pattern?
-              iterator.remove();
+      if (aClass != null) {
+        final String qualifiedName = aClass.getQualifiedName();
+        for (Iterator<ClassPattern> iterator = getPatterns().iterator(); iterator.hasNext(); ) {
+          ClassPattern classPattern = iterator.next();
+          if (Comparing.equal(classPattern.pattern, qualifiedName)) {
+            if (anEntryPoint instanceof RefMethod && ((RefMethod)anEntryPoint).isConstructor() || anEntryPoint instanceof RefClass) {
+              if (classPattern.method.isEmpty()) {
+                //todo if inheritance or pattern?
+                iterator.remove();
+              }
             }
-          }
-          else {
-            String methodName = getMethodName(anEntryPoint);
-            if (methodName.equals(classPattern.method)) {
-              iterator.remove();
+            else {
+              String methodName = getMethodName(anEntryPoint);
+              if (methodName.equals(classPattern.method)) {
+                iterator.remove();
+              }
             }
           }
         }

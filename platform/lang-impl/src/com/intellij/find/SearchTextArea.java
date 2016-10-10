@@ -161,8 +161,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     @Override
     public void actionPerformed(AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed("find.recent.search");
-      String[] recent = myShowSearchHistory ? FindSettings.getInstance().getRecentFindStrings()
-                                            : FindSettings.getInstance().getRecentReplaceStrings();
+      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(e.getProject());
+      String[] recent = myShowSearchHistory ? findInProjectSettings.getRecentFindStrings()
+                                            : findInProjectSettings.getRecentReplaceStrings();
       String title = "Recent " + (myShowSearchHistory ? "Searches" : "Replaces");
       JBList historyList = new JBList((Object[])ArrayUtil.reverseArray(recent));
       Utils.showCompletionPopup(myTextArea, historyList, title, myTextArea, null);

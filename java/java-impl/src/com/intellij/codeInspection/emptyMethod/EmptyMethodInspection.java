@@ -309,12 +309,6 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return QUICK_FIX_NAME;
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
       return QUICK_FIX_NAME;
     }
@@ -352,19 +346,13 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return QUICK_FIX_NAME;
     }
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
        applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<>(), null);
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     private void deleteHierarchy(RefMethod refMethod, List<PsiElement> result) {

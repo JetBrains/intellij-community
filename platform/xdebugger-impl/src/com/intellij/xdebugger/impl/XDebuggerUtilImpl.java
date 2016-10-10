@@ -39,7 +39,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -138,7 +137,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                      final boolean temporary) {
     XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
     if (position != null) {
-      toggleAndReturnLineBreakpoint(project, type, position, temporary, null);
+      toggleAndReturnLineBreakpoint(project, type, position, temporary, null, true);
     }
   }
 
@@ -147,7 +146,8 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                                          @NotNull final XLineBreakpointType<P> type,
                                                                                                          @NotNull final XSourcePosition position,
                                                                                                          final boolean temporary,
-                                                                                                         @Nullable final Editor editor) {
+                                                                                                         @Nullable final Editor editor,
+                                                                                                         boolean canRemove) {
     return new WriteAction<Promise<XLineBreakpoint>>() {
       @Override
       protected void run(@NotNull Result<Promise<XLineBreakpoint>> result) throws Throwable {
@@ -156,10 +156,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
         XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
         if (breakpoint != null) {
-          if (Registry.is("debugger.click.disable.breakpoints")) {
-            breakpoint.setEnabled(!breakpoint.isEnabled());
-          }
-          else {
+          if (!temporary && canRemove) {
             breakpointManager.removeBreakpoint(breakpoint);
           }
         }
@@ -175,24 +172,33 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                 @Override
                 public void valueChanged(ListSelectionEvent e) {
                   if (!e.getValueIsAdjusting()) {
-                    clearHighlighter();
-                    Object value = ((JList)e.getSource()).getSelectedValue();
-                    if (value instanceof XLineBreakpointType.XLineBreakpointVariant) {
-                      TextRange range = ((XLineBreakpointType.XLineBreakpointVariant)value).getHighlightRange();
-                      TextRange lineRange = DocumentUtil.getLineTextRange(editor.getDocument(), line);
-                      if (range != null) {
-                        range = range.intersection(lineRange);
-                      }
-                      else {
-                        range = lineRange;
-                      }
-                      if (range != null && !range.isEmpty()) {
-                        EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-                        TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
-                        myHighlighter = editor.getMarkupModel().addRangeHighlighter(
-                          range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
-                          HighlighterTargetArea.EXACT_RANGE);
-                      }
+                    updateHighlighter(((JList)e.getSource()).getSelectedValue());
+                  }
+                }
+
+                public void initialSet(Object value) {
+                  if (myHighlighter == null) {
+                    updateHighlighter(value);
+                  }
+                }
+
+                void updateHighlighter(Object value) {
+                  clearHighlighter();
+                  if (value instanceof XLineBreakpointType.XLineBreakpointVariant) {
+                    TextRange range = ((XLineBreakpointType.XLineBreakpointVariant)value).getHighlightRange();
+                    TextRange lineRange = DocumentUtil.getLineTextRange(editor.getDocument(), line);
+                    if (range != null) {
+                      range = range.intersection(lineRange);
+                    }
+                    else {
+                      range = lineRange;
+                    }
+                    if (range != null && !range.isEmpty()) {
+                      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+                      TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
+                      myHighlighter = editor.getMarkupModel().addRangeHighlighter(
+                        range.getStartOffset(), range.getEndOffset(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                        HighlighterTargetArea.EXACT_RANGE);
                     }
                   }
                 }
@@ -220,7 +226,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
               final MySelectionListener selectionListener = new MySelectionListener();
               ListPopupImpl popup = new ListPopupImpl(
-                new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Create breakpoint for", variants) {
+                new BaseListPopupStep<XLineBreakpointType.XLineBreakpointVariant>("Set Breakpoint", variants) {
                   @NotNull
                   @Override
                   public String getTextFor(XLineBreakpointType.XLineBreakpointVariant value) {
@@ -251,7 +257,13 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                   public int getDefaultOptionIndex() {
                     return defaultIndex;
                   }
-                });
+                }) {
+                @Override
+                protected void afterShow() {
+                  super.afterShow();
+                  selectionListener.initialSet(getList().getSelectedValue());
+                }
+              };
               DebuggerUIUtil.registerExtraHandleShortcuts(popup, IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
               popup.setAdText(DebuggerUIUtil.getSelectionShortcutsAdText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT));
 

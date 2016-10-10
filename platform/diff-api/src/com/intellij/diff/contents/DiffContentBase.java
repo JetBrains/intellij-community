@@ -16,19 +16,6 @@
 package com.intellij.diff.contents;
 
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class DiffContentBase extends UserDataHolderBase implements DiffContent {
-  @Nullable
-  @Override
-  public Navigatable getNavigatable() {
-    return null;
-  }
-
-  @Override
-  @CalledInAwt
-  public void onAssigned(boolean isAssigned) {
-  }
 }

@@ -82,6 +82,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     "ClasspathEntry",
     "Classpath",
     "ColumnNumber",
+    "ContentRoot",
     "FileClass",
     "FileDir",
     "FileParentDir",

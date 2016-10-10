@@ -580,6 +580,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   public void setEnabled(boolean enabled) {
     if (isEnabled() != enabled) {
       super.setEnabled(enabled);
+      setFocusTraversalPolicyProvider(enabled);
       setViewerEnabled(enabled);
       EditorEx editor = myEditor;
       if (editor != null) {

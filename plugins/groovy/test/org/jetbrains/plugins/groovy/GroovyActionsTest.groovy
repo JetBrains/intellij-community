@@ -84,7 +84,7 @@ asdf $b sfsasdf
 
   void testSWInGStringEnd() { doTestSelectWordUpTo 2 }
 
-  void testSWInParameterList() { doTestForSelectWord(3); }
+  void testSWInParameterList() { doTestForSelectWord(3) }
 
   void testSWInArgLabel1() { doTestForSelectWord(2) }
 

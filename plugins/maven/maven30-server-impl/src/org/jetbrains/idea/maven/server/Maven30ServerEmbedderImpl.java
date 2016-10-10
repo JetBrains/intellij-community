@@ -294,6 +294,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return (List<Exception>)((List)list);
   }
 
+  @NotNull
   public static MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException {
     Model result = MavenModelConverter.toNativeModel(model);
     result = doInterpolate(result, basedir);
@@ -836,7 +837,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     MavenProject mavenProject = result.getMavenProject();
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, unresolvedArtifacts);
 
-    MavenModel model = null;
+    MavenModel model = new MavenModel();
     try {
       if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
         //noinspection unchecked

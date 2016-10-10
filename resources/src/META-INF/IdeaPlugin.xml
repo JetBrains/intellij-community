@@ -104,6 +104,8 @@
 
     <extensionPoint name="deadCode"
                     interface="com.intellij.codeInspection.reference.EntryPoint"/>
+    <extensionPoint name="predefinedMigrationMapProvider"
+                    interface="com.intellij.refactoring.migration.PredefinedMigrationProvider"/>
     <extensionPoint name="unusedDeclarationFixProvider"
                     interface="com.intellij.codeInspection.reference.UnusedDeclarationFixProvider"/>
 
@@ -196,6 +198,8 @@
     <extensionPoint name="customPropertyScopeProvider" interface="com.intellij.psi.impl.search.CustomPropertyScopeProvider"/>
 
     <extensionPoint name="testFramework" interface="com.intellij.testIntegration.TestFramework"/>
+
+    <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
 
     <extensionPoint name="unscrambleSupport" interface="com.intellij.unscramble.UnscrambleSupport"/>
 
@@ -447,8 +451,6 @@
 
     <applicationService serviceInterface="com.intellij.codeInsight.TestFrameworks"
                         serviceImplementation="com.intellij.codeInsight.TestFrameworksImpl"/>
-
-    <applicationService serviceImplementation="com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager"/>
 
     <projectService serviceInterface="com.intellij.execution.testDiscovery.JavaAutoRunManager"
                     serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
@@ -756,7 +758,7 @@
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="Convert2streamapi" displayName="foreach loop can be collapsed with Stream API"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.StreamApiMigrationInspection"/>
+                     implementationClass="com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="Anonymous2MethodRef" displayName="Anonymous type can be replaced with method reference"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection" />
@@ -810,11 +812,29 @@
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
                      displayName="Collection.addAll() can be replaced with parametrized constructor"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="AnonymousHasLambdaAlternative" displayName="Anonymous type can be replaced with lambda using factory method or special constructor"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.AnonymousHasLambdaAlternativeInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="Java8CollectionsApi"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionsApiInspection"
-                     displayName="Collection usages can be replaced with single method"/>
+                     displayName="Map.putIfAbsent() can be used"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Java8ListSort"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java18api.Java8ListSortInspection"
+                     displayName="Collections.sort() can be replaced with List.sort()"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Java8CollectionRemoveIf"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java18api.Java8CollectionRemoveIfInspection"
+                     displayName="Loop can be replaced with Collection.removeIf()"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Java8ReplaceMapGet"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java18api.Java8ReplaceMapGetInspection"
+                     displayName="Simplifiable conditional usage of Map.get()"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
@@ -835,6 +855,11 @@
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection"
                      displayName="Remove redundant lambda parameter types"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="OptionalIsPresent"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.OptionalIsPresentInspection"
+                     displayName="Replace Optional.isPresent() checks with functional-style expressions"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitIfAction</className>
@@ -1222,6 +1247,7 @@
     <stacktrace.fold substring="at sun.rmi."/>
     <stacktrace.fold substring="at com.sun.proxy.$Proxy"/>
     <stacktrace.fold substring="at com.intellij.rt.execution."/>
+    <console.folding implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
 
     <debuggerEditorTextProvider language="JAVA" implementationClass="com.intellij.debugger.impl.JavaEditorTextProviderImpl"/>
 
@@ -1805,9 +1831,6 @@
     </action>
     <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
-    </action>
-    <action id="ReportMissingOrExcessiveInlineHint" class="com.intellij.reporting.ReportMissingOrExcessiveInlineHint">
-      <add-to-group group-id="EditorPopupMenu"/>
     </action>
     <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" internal="true" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
       <add-to-group group-id="Internal" anchor="last"/>

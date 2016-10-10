@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -30,7 +29,6 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -170,11 +168,4 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  public static class Skipper extends CompletionPreselectSkipper {
-
-    @Override
-    public boolean skipElement(LookupElement element, CompletionLocation location) {
-      return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden && !Registry.is("ide.completion.autopopup.select.live.templates");
-    }
-  }
 }

@@ -579,7 +579,7 @@
                         serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
 
     <!-- f-strings -->
-    <multiHostInjector implementation="com.jetbrains.python.codeInsight.PyFStringsInjector"/>
+    <multiHostInjector implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringsInjector"/>
     
     <!-- postfix templates!-->
     <codeInsight.template.postfixTemplateProvider language="Python"
@@ -644,6 +644,7 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.GeneratorInArgumentListAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.StarAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
+    <dumbAnnotator implementation="com.jetbrains.python.validation.FStringsAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.DumbAwareHighlightingAnnotator"/>
 
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>

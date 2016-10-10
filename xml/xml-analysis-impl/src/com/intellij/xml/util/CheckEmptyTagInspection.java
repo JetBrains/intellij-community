@@ -109,7 +109,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   private static class MyLocalQuickFix implements LocalQuickFix {
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return XmlBundle.message("html.inspections.check.empty.script.tag.fix.message");
     }
 
@@ -128,13 +128,6 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-    }
-
-    //to appear in "Apply Fix" statement when multiple Quick Fixes exist
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
   }
 }

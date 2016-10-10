@@ -189,3 +189,20 @@ class TryIdenticalCatches {
     }
   }
 }
+class TestInspection {
+  public void foo() throws MyException {
+    try {
+      toString();
+    } catch (IllegalArgumentException e) {
+      throw new MyException(e);
+    } catch (IllegalStateException e) {
+      throw new MyException(e);
+    }
+  }
+
+  private static class MyException extends Exception {
+    public MyException(IllegalArgumentException e) {}
+
+    public MyException(IllegalStateException e) {}
+  }
+}

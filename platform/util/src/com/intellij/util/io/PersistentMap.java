@@ -9,13 +9,12 @@ import java.io.IOException;
  *         Date: 8/10/11
  */
 public interface PersistentMap<K, V> {
-  
+
   V get(K key) throws IOException;
 
   void put(K key, V value) throws IOException;
 
   boolean processKeys(Processor<K> processor) throws IOException;
-
 
   boolean isClosed();
 

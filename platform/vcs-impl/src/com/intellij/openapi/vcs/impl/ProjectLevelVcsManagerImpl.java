@@ -913,11 +913,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   private boolean isInDirectoryBasedRoot(@Nullable VirtualFile file) {
     if (file != null && ProjectKt.isDirectoryBased(myProject)) {
-      VirtualFile baseDir = myProject.getBaseDir();
-      if (baseDir != null) {
-        VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-        return ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtilCore.isAncestor(ideaDir, file, false);
-      }
+      return ProjectKt.getStateStore(myProject).isProjectFile(file);
     }
     return false;
   }

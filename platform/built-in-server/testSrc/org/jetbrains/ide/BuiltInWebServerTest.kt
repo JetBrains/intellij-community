@@ -9,8 +9,12 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
-import com.intellij.util.io.*
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.write
+import com.intellij.util.io.writeChild
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule

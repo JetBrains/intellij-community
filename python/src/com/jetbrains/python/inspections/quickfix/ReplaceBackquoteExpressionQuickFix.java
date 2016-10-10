@@ -33,13 +33,8 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceBackquoteExpressionQuickFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return PyBundle.message("INTN.replace.backquote.expression");
-  }
-
-  @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("INTN.replace.backquote.expression");
   }
 
   @Override

@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -26,6 +25,7 @@ import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -51,6 +51,14 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
   @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     return ResolveCache.getInstance(getProject()).resolveWithCaching(this, Resolver.INSTANCE, false, incompleteCode);
+  }
+
+  @Override
+  public PsiElement handleElementRename(@NotNull String newName) throws IncorrectOperationException {
+    PsiJavaModuleReferenceElement element = getElement();
+    PsiElementFactory factory = PsiElementFactory.SERVICE.getInstance(element.getProject());
+    PsiJavaModuleReferenceElement newElement = factory.createModuleFromText("module " + newName + " {}").getNameElement();
+    return element.replace(newElement);
   }
 
   private Project getProject() {
@@ -80,7 +88,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
       }
 
       if (scope != null) {
-        JavaFileManager service = ServiceManager.getService(project, JavaFileManager.class);
+        JavaFileManager service = JavaFileManager.SERVICE.getInstance(project);
         Collection<PsiJavaModule> modules = service.findModules(reference.getCanonicalText(), scope);
         if (!modules.isEmpty()) {
           ResolveResult[] result = new ResolveResult[modules.size()];

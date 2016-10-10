@@ -868,6 +868,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testNormalExitIf() throws Exception {
+    doTest();
+  }
+
+  public void testNormalExitTry() throws Exception {
+    doTest();
+  }
+
   public void testMethodAnnotations() throws Exception {
     doTest();
   }

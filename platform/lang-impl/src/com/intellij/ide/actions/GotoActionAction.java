@@ -152,7 +152,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       @NotNull
       @Override
       protected Set<Object> filter(@NotNull Set<Object> elements) {
-        return super.filter(model.sort(elements));
+        return super.filter(model.sortItems(elements));
       }
 
       @Override

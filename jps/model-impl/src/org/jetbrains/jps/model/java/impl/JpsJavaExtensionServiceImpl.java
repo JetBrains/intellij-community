@@ -237,9 +237,9 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
 
   @NotNull
   @Override
-  public JavaModuleIndex getJavaModuleIndex(@NotNull File indexDir) {
+  public JavaModuleIndex getJavaModuleIndex(@NotNull File storageRoot) {
     if (myModuleIndex == null) {
-      myModuleIndex = JavaModuleIndexImpl.load(indexDir);
+      myModuleIndex = JavaModuleIndexImpl.load(storageRoot);
     }
     return myModuleIndex;
   }

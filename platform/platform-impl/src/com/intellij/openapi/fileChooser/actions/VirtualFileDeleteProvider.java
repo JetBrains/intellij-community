@@ -77,7 +77,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
               protected void run(@NotNull Result result) throws Throwable {
                 file.delete(this);
               }
-            }.execute();
+            }.executeSilently();
 
             if (result.hasException()) {
               LOG.info("Error when deleting " + file, result.getThrowable());

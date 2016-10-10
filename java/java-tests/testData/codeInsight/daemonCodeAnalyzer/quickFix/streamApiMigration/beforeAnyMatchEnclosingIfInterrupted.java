@@ -1,4 +1,4 @@
-// "Replace with anyMatch()" "false"
+// "Replace with anyMatch()" "true"
 
 public class Main {
   boolean contains(String[][] haystack, String needle) {

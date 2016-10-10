@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -53,6 +54,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +73,6 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
   private String myDescription;
   private char myMnemonic = 0;
-  public static final Font MNEMONIC_FONT = new Font("Monospaced", Font.PLAIN, 11);
 
   public Bookmark(@NotNull Project project, @NotNull VirtualFile file, int line, @NotNull String description) {
     myFile = file;
@@ -81,6 +82,11 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     myTarget = new OpenFileDescriptor(project, file, line, -1, true);
 
     addHighlighter();
+  }
+
+  @NotNull
+  public static Font getBookmarkFont() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
   }
 
   @Override
@@ -118,7 +124,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
           EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BOOKMARKS_ATTRIBUTES);
 
         Color stripeColor = textAttributes.getErrorStripeColor();
-        highlighter.setErrorStripeMarkColor(stripeColor != null ? stripeColor : Color.black);
+        highlighter.setErrorStripeMarkColor(stripeColor != null ? stripeColor : JBColor.black);
         highlighter.setErrorStripeTooltip(getBookmarkTooltip());
 
         TextAttributes attributes = highlighter.getTextAttributes();
@@ -341,20 +347,23 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
+      int width = getIconWidth();
+      int height = getIconHeight();
+
       g.setColor(new JBColor(() -> {
         //noinspection UseJBColor
         return !darkBackground() ? new Color(0xffffcc) : new Color(0x675133);
       }));
-      g.fillRect(x, y, getIconWidth(), getIconHeight());
+      g.fillRect(x, y, width, height);
 
       g.setColor(JBColor.GRAY);
-      g.drawRect(x, y, getIconWidth(), getIconHeight());
+      g.drawRect(x, y, width, height);
 
       g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground());
       final Font oldFont = g.getFont();
-      g.setFont(MNEMONIC_FONT);
+      g.setFont(getBookmarkFont());
 
-      ((Graphics2D)g).drawString(Character.toString(myMnemonic), x + 3, y + getIconHeight() - 1.5F);
+      UIUtil.drawCenteredString((Graphics2D)g, new Rectangle(x, y, width, height), Character.toString(myMnemonic));
       g.setFont(oldFont);
     }
 

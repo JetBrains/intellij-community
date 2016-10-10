@@ -49,10 +49,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.propertyInspector.properties.*;
 import com.intellij.uiDesigner.radComponents.*;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IndentedIcon;
-import com.intellij.util.ui.Table;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -149,13 +146,20 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e){
         final int row = rowAtPoint(e.getPoint());
+        final int column = columnAtPoint(e.getPoint());
         if (row == -1){
           return;
         }
         final Property property = myProperties.get(row);
-        int indent = getPropertyIndent(property) * 11;
+        int indent = getPropertyIndentDepth(property) * getPropertyIndentWidth();
         final Rectangle rect = getCellRect(row, convertColumnIndexToView(0), false);
-        if (e.getX() < rect.x + indent || e.getX() > rect.x + 9 + indent || e.getY() < rect.y || e.getY() > rect.y + rect.height) {
+
+        Component rendererComponent = myCellRenderer.getTableCellRendererComponent(PropertyInspectorTable.this,
+                                                                                   property, false, false, row, column);
+        if (!rect.contains(e.getX(), e.getY()) ||
+            !(rendererComponent instanceof ColoredTableCellRenderer) ||
+            ((ColoredTableCellRenderer)rendererComponent).findFragmentAt(e.getX()) != SimpleColoredComponent.FRAGMENT_ICON ||
+            e.getX() < rect.x + indent) {
           return;
         }
 
@@ -588,12 +592,16 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     return property.getName();
   }
 
-  private static int getPropertyIndent(final Property property) {
+  private static int getPropertyIndentDepth(final Property property) {
     final Property parent = property.getParent();
     if (parent != null) {
       return parent.getParent() != null ? 2 : 1;
     }
     return 0;
+  }
+
+  private static int getPropertyIndentWidth() {
+    return JBUI.scale(11);
   }
 
   private Property[] getPropChildren(final Property property) {
@@ -999,13 +1007,13 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }
       };
 
-      myExpandIcon= UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
-      myCollapseIcon=UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
-      for(int i=0; i<myIndentIcons.length; i++) {
-        myIndentIcons [i] = new EmptyIcon(myExpandIcon.getIconWidth() + 11 * i, myExpandIcon.getIconHeight());
+      myExpandIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_right_arrow : UIDesignerIcons.ExpandNode;
+      myCollapseIcon = UIUtil.isUnderDarcula() ? AllIcons.Mac.Tree_white_down_arrow : UIDesignerIcons.CollapseNode;
+      for (int i = 0; i < myIndentIcons.length; i++) {
+        myIndentIcons[i] = new EmptyIcon(myExpandIcon.getIconWidth() + getPropertyIndentWidth() * i, myExpandIcon.getIconHeight());
       }
-      myIndentedExpandIcon = new IndentedIcon(myExpandIcon, 11);
-      myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, 11);
+      myIndentedExpandIcon = new IndentedIcon(myExpandIcon, getPropertyIndentWidth());
+      myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, getPropertyIndentWidth());
     }
 
     public Component getTableCellRendererComponent(
@@ -1059,7 +1067,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         }else{
           // If property doesn't have children then we have shift its text
           // to the right
-          myPropertyNameRenderer.setIcon(myIndentIcons [getPropertyIndent(property)]);
+          myPropertyNameRenderer.setIcon(myIndentIcons [getPropertyIndentDepth(property)]);
         }
       }
       else if(column==1){ // painter for second column

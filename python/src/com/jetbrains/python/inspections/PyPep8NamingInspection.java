@@ -25,6 +25,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Pair;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -115,18 +116,24 @@ public class PyPep8NamingInspection extends PyInspection {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, true, PyClass.class);
       if (function == null) return;
       final Scope scope = ControlFlowCache.getScope(function);
-      for (PyExpression expression : node.getTargets()) {
-        final String name = expression.getName();
+      for (Pair<PyExpression, PyExpression> pair : node.getTargetsToValuesMapping()) {
+        final String name = pair.getFirst().getName();
         if (name == null || scope.isGlobal(name)) continue;
-        if (expression instanceof PyTargetExpression) {
-          final PyExpression qualifier = ((PyTargetExpression)expression).getQualifier();
+        if (pair.getFirst() instanceof PyTargetExpression) {
+          final PyExpression qualifier = ((PyTargetExpression)pair.getFirst()).getQualifier();
           if (qualifier != null) {
             return;
           }
         }
+        
+        final PyCallExpression assignedValue = PyUtil.as(pair.getSecond(), PyCallExpression.class);
+        if (assignedValue != null
+            && assignedValue.getCallee() != null && PyNames.NAMEDTUPLE.equals(assignedValue.getCallee().getName())) {
+          return;
+        }
         final String errorCode = "N806";
         if (!LOWERCASE_REGEX.matcher(name).matches() && !name.startsWith("_") && !ignoredErrors.contains(errorCode)) {
-          registerAndAddRenameAndIgnoreErrorQuickFixes(expression, errorCode);
+          registerAndAddRenameAndIgnoreErrorQuickFixes(pair.getFirst(), errorCode);
         }
       }
     }
@@ -269,14 +276,8 @@ public class PyPep8NamingInspection extends PyInspection {
 
     @NotNull
     @Override
-    public String getName() {
-      return "Ignore method names for descendants of class";
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return "Ignore method names for descendants of class";
     }
 
     @Override
@@ -314,13 +315,6 @@ public class PyPep8NamingInspection extends PyInspection {
 
     public IgnoreErrorFix(String code) {
       myCode = code;
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return  myText;
     }
 
     @Nls

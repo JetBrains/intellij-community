@@ -53,6 +53,9 @@ public class PatternBasedFileHyperlinkRawDataFinder implements FileHyperlinkRawD
     boolean hyperlinkFreezed = false;
     for (int i = 1; i <= groupCount; i++) {
       String value = matcher.group(i);
+      if (value == null) {
+        continue;
+      }
       PatternHyperlinkPart part = linkParts[i - 1];
       if (part == PatternHyperlinkPart.HYPERLINK) {
         hyperlinkStartInd = matcher.start(i);
@@ -74,10 +77,12 @@ public class PatternBasedFileHyperlinkRawDataFinder implements FileHyperlinkRawD
       else if (part == PatternHyperlinkPart.COLUMN) {
         value = StringUtil.trimStart(value, ":");
         columnNumber = StringUtil.parseInt(value, UNKNOWN);
-        hyperlinkEndInd = tryExtendHyperlinkEnd(hyperlinkFreezed, hyperlinkEndInd, matcher.start(i), matcher.end(i));
+        if (columnNumber != UNKNOWN) {
+          hyperlinkEndInd = tryExtendHyperlinkEnd(hyperlinkFreezed, hyperlinkEndInd, matcher.start(i), matcher.end(i));
+        }
       }
     }
-    if (path == null || lineNumber == UNKNOWN || hyperlinkStartInd == -1) {
+    if (path == null || lineNumber == UNKNOWN || columnNumber == UNKNOWN ||  hyperlinkStartInd == -1) {
       return Collections.emptyList();
     }
     if (!format.isZeroBasedLineNumbering()) {
@@ -105,7 +110,7 @@ public class PatternBasedFileHyperlinkRawDataFinder implements FileHyperlinkRawD
   private Pair<Matcher, PatternHyperlinkFormat> findMatcher(@NotNull String line) {
     for (PatternHyperlinkFormat linkFormat : myLinkFormats) {
       Matcher matcher = linkFormat.getPattern().matcher(line);
-      if (matcher.matches()) {
+      if (matcher.find()) {
         return Pair.create(matcher, linkFormat);
       }
     }

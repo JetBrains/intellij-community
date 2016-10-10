@@ -147,8 +147,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
         if (myIsInSchemeChange || !SwingUtilities.isEventDispatchThread()) return;
         String selectedFont = myPrimaryCombo.getFontName();
         if (selectedFont != null) {
-          FontPreferences fontPreferences = getFontPreferences();
-          fontPreferences.register(selectedFont, getFontSizeFromField());
+          setFontSize(getFontSizeFromField());
         }
         updateDescription(true);
       }
@@ -294,6 +293,10 @@ public class FontOptions extends JPanel implements OptionsPanel{
   @NotNull
   protected FontPreferences getFontPreferences() {
     return getCurrentScheme().getFontPreferences();
+  }
+
+  protected void setFontSize(int fontSize) {
+    getCurrentScheme().setEditorFontSize(fontSize);
   }
 
   protected float getLineSpacing() {

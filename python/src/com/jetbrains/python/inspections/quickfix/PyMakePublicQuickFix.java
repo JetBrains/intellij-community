@@ -29,11 +29,6 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
 public class PyMakePublicQuickFix implements LocalQuickFix {
-  @NotNull
-  @Override
-  public String getName() {
-    return PyBundle.message("QFIX.make.public");
-  }
 
   @NotNull
   @Override

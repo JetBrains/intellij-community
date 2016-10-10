@@ -96,7 +96,17 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
   private static PsiClass findTargetClass(@NotNull Editor editor, @NotNull PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
-    return PsiTreeUtil.getParentOfType(element, PsiClass.class, false) == null ? null : TestIntegrationUtils.findOuterClass(element);
+    PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class, false);
+    if (containingClass == null) {
+      return null;
+    }
+    final List<TestFramework> frameworks = TestIntegrationUtils.findSuitableFrameworks(containingClass);
+    for (TestFramework framework : frameworks) {
+      if (framework instanceof JavaTestFramework && ((JavaTestFramework)framework).acceptNestedClasses()) {
+        return containingClass;
+      }
+    }
+    return TestIntegrationUtils.findOuterClass(element);
   }
 
   @Override
@@ -155,10 +165,10 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       .createPopup().showInBestPositionFor(editor);
   }
 
-  private static class MyHandler implements CodeInsightActionHandler {
+  public static class MyHandler implements CodeInsightActionHandler {
     private final TestIntegrationUtils.MethodKind myMethodKind;
 
-    private MyHandler(TestIntegrationUtils.MethodKind methodKind) {
+    public MyHandler(TestIntegrationUtils.MethodKind methodKind) {
       myMethodKind = methodKind;
     }
 
@@ -206,7 +216,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       WriteCommandAction.runWriteCommandAction(file.getProject(), () -> {
         try {
           PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
-          PsiMethod method = generateDummyMethod(editor, file);
+          PsiMethod method = generateDummyMethod(file, editor, targetClass);
           if (method == null) return;
 
           TestIntegrationUtils.runTestMethodTemplate(myMethodKind, framework, editor, targetClass, method, "name", false, null);
@@ -219,21 +229,24 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     }
 
     @Nullable
-    private static PsiMethod generateDummyMethod(Editor editor, PsiFile file) throws IncorrectOperationException {
+    private static PsiMethod generateDummyMethod(PsiFile file, Editor editor, PsiClass targetClass) throws IncorrectOperationException {
       final PsiMethod method = TestIntegrationUtils.createDummyMethod(file);
       final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo(method);
 
-      int offset = findOffsetToInsertMethodTo(editor, file);
+      int offset = findOffsetToInsertMethodTo(editor, file, targetClass);
       GenerateMembersUtil.insertMembersAtOffset(file, offset, Collections.singletonList(info));
 
       final PsiMethod member = info.getPsiMember();
       return member != null ? CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(member) : null;
     }
 
-    private static int findOffsetToInsertMethodTo(Editor editor, PsiFile file) {
+    private static int findOffsetToInsertMethodTo(Editor editor, PsiFile file, PsiClass targetClass) {
       int result = editor.getCaretModel().getOffset();
 
       PsiClass classAtCursor = PsiTreeUtil.getParentOfType(file.findElementAt(result), PsiClass.class, false);
+      if (classAtCursor == targetClass) {
+        return result;
+      }
 
       while (classAtCursor != null && !(classAtCursor.getParent() instanceof PsiFile)) {
         result = classAtCursor.getTextRange().getEndOffset();

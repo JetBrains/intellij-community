@@ -19,49 +19,25 @@ import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.junit.JUnit5Framework;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.TestRunnerUtil;
-import com.intellij.testFramework.fixtures.*;
-import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testIntegration.TestFramework;
 import one.util.streamex.StreamEx;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-class JUnit5AcceptanceTest {
-
-  private JavaCodeInsightTestFixture myFixture;
-
-  @BeforeEach
-  void setUp() throws Exception {
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
-    final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
-    myFixture.setUp();
-  }
-
-  @AfterEach
-  void tearDown() throws Exception {
-    myFixture.tearDown();
-  }
+class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
 
   @Test
   void testFactoryMethods() {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(() -> {
+    doTest(() -> {
       PsiClass aClass = myFixture.addClass("class MyTest {@org.junit.jupiter.api.TestFactory java.util.List<org.junit.jupiter.api.DynamicTest> tests() {return null;}}");
       PsiMethod factoryMethod = aClass.getMethods()[0];
       assertNotNull(factoryMethod);
@@ -71,17 +47,26 @@ class JUnit5AcceptanceTest {
 
   @Test
   void testDefaultMethodInInterface() {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(() -> {
+    doTest(() -> {
       PsiClass aClass = myFixture.addClass("interface MyTest {@org.junit.jupiter.api.Test default void method() {}}");
       assertTrue(JUnitUtil.isTestClass(aClass, false, false));
     });
   }
 
   @Test
+  void recognizedInnerClassesWithTestMethods() {
+    doTest(() -> {
+      PsiClass aClass = myFixture.addClass("import org.junit.jupiter.api.*; class MyTest {@Nested class NTest { @Test void method() {}}}");
+      assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+      PsiClass innerClass = aClass.getInnerClasses()[0];
+      assertTrue(JUnitUtil.isTestClass(innerClass));
+      assertTrue(JUnitUtil.isTestMethod(MethodLocation.elementInClass(innerClass.getMethods()[0], innerClass)));
+    });
+  }
+
+  @Test
   void testFrameworkDetection() {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(() -> {
+    doTest(() -> {
       PsiClass aClass = myFixture.addClass("class MyTest {@org.junit.jupiter.api.Test void method() {}}");
       assertNotNull(aClass);
       TestFramework framework = TestFrameworks.detectFramework(aClass);
@@ -91,8 +76,7 @@ class JUnit5AcceptanceTest {
 
   @Test
   void methodPresentations() {
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    EdtTestUtil.runInEdtAndWait(() -> {
+    doTest(() -> {
       PsiClass aClass = myFixture.addClass("class MyTest {" +
                                            "  @org.junit.jupiter.api.Test void method() {}" +
                                            "  @org.junit.jupiter.api.Test void method(a.TestInfo info) {}" +
@@ -106,5 +90,47 @@ class JUnit5AcceptanceTest {
         .zipWith(expectedData)
         .forEach(e -> assertEquals(e.getValue(), JUnitConfiguration.Data.getMethodPresentation(e.getKey())));
     });
+  }
+
+  @Test
+  void junit5LibraryAdjustments() {
+    doTest(() -> {
+      myFixture.configureByText("MyTest.java", "class MyTest {@org.junit.jupiter.api.<error descr=\"Cannot resolve symbol 'BeforeEach'\">Before<caret>Each</error> void method() {}}");
+      myFixture.testHighlighting(false, false, false);
+      final Set<String> frameworks = myFixture.getAllQuickFixes().stream()
+        .map(action -> action.getText())
+        .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
+      assertAll("Detected frameworks: " + frameworks.toString(),
+                () -> assertTrue(frameworks.contains("Add 'JUnit5' to classpath")));
+
+      myFixture.configureByText("MyTest.java", "class MyTest {@<error descr=\"Cannot resolve symbol 'DisplayName'\">DisplayName</error> void method() {}}");
+      myFixture.testHighlighting(false, false, false);
+
+      Set<String> displayNameFrameworks = myFixture.getAllQuickFixes().stream()
+        .map(action -> action.getText())
+        .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
+      assertAll("Detected frameworks: " + displayNameFrameworks.toString(),
+                () -> assertTrue (displayNameFrameworks.contains("Add 'JUnit5' to classpath")));
+
+    });
+  }
+
+  @Test
+  void metaAnnotations() {
+    doTest(() -> {
+      myFixture.addClass("package a;\n" +
+                         "import java.lang.annotation.Retention;\n" +
+                         "import java.lang.annotation.RetentionPolicy;\n" +
+                         "@Retention(RetentionPolicy.RUNTIME)\n" +
+                         "@org.junit.jupiter.api.Test\n" +
+                         "@interface MyTest {}");
+      PsiClass aClass = myFixture.addClass("class ATest {\n" +
+                                           "    @a.MyTest\n" +
+                                           "    void foo() {}\n" +
+                                           "}\n");
+      assertTrue(JUnitUtil.isTestClass(aClass, false, false));
+      assertTrue(JUnitUtil.isTestMethod(MethodLocation.elementInClass(aClass.getMethods()[0], aClass)));
+    });
+
   }
 }

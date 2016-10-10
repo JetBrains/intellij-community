@@ -20,17 +20,13 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +42,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -69,14 +64,12 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   public void initComponent() {
     checkJvm();
     checkIBus();
+    checkLauncherScript();
     startDiskSpaceMonitoring();
   }
 
   private void checkJvm() {
-    if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJavaVersionAtLeast("1.7")) {
-      showNotification("unsupported.jvm.openjdk.message");
-    }
-    else if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
+    if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
       showNotification("unsupported.jvm.ea.message");
     }
   }
@@ -96,6 +89,12 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           }
         }
       }
+    }
+  }
+
+  private void checkLauncherScript() {
+    if (SystemInfo.isXWindow && System.getProperty("jb.restart.code") != null) {
+      showNotification("ide.launcher.script.outdated");
     }
   }
 
@@ -185,7 +184,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             ourFreeSpaceCalculation.set(null);
 
             if (fileUsableSpace < LOW_DISK_SPACE_THRESHOLD) {
-              if (!notificationsComponentIsLoaded()) {
+              if (ReadAction.compute(() -> NotificationsConfiguration.getNotificationsConfiguration()) == null) {
                 ourFreeSpaceCalculation.set(future);
                 JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
                 return;
@@ -218,15 +217,6 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             LOG.error(ex);
           }
         }
-      }
-
-      private boolean notificationsComponentIsLoaded() {
-        return ApplicationManager.getApplication().runReadAction(new Computable<NotificationsConfiguration>() {
-          @Override
-          public NotificationsConfiguration compute() {
-            return NotificationsConfiguration.getNotificationsConfiguration();
-          }
-        }) != null;
       }
 
       private void restart(long timeout) {

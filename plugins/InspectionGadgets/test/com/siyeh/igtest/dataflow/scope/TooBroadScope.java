@@ -207,3 +207,19 @@ public class TooBroadScope
         }
     }
 }
+class T {
+
+    private Object[] array = {};
+
+    public void foo(boolean value) {
+        final int size = array.length;
+
+        reinitArray();
+
+        System.out.println(size);
+    }
+
+    private void reinitArray() {
+        array = new String[5];
+    }
+}

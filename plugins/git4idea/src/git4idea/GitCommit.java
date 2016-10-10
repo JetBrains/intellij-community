@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a Git commit with its meta information (hash, author, message, etc.), its parents and the {@link Change changes}.
@@ -45,7 +47,50 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
                    long authorTime, @NotNull List<GitLogStatusInfo> reportedChanges) {
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime,
           new MyChangesComputable(new Data(project, root, reportedChanges, hash, commitTime, parents)));
+  }
 
+  @NotNull
+  @Override
+  public Collection<String> getModifiedPaths() {
+    Data data = ((MyChangesComputable)myChangesGetter).getData();
+    if (data != null) {
+      Set<String> changes = ContainerUtil.newHashSet();
+      for (GitLogStatusInfo status : data.changesOutput) {
+        changes.add(absolutePath(status.getFirstPath()));
+        String secondPath = status.getSecondPath();
+        if (secondPath != null) {
+          changes.add(absolutePath(secondPath));
+        }
+      }
+      return changes;
+    }
+    return super.getModifiedPaths();
+  }
+
+  @NotNull
+  @Override
+  public Collection<Couple<String>> getRenamedPaths() {
+    Data data = ((MyChangesComputable)myChangesGetter).getData();
+    if (data != null) {
+      Set<Couple<String>> changes = ContainerUtil.newHashSet();
+      for (GitLogStatusInfo status : data.changesOutput) {
+        if (status.getSecondPath() != null) {
+          changes.add(Couple.of(absolutePath(status.getFirstPath()), absolutePath(status.getSecondPath())));
+        }
+      }
+      return changes;
+    }
+    return super.getRenamedPaths();
+  }
+
+  @NotNull
+  private String absolutePath(@NotNull String path) {
+    try {
+      return getRoot().getPath() + "/" + GitUtil.unescapePath(path);
+    }
+    catch (VcsException e) {
+      return getRoot().getPath() + "/" + path;
+    }
   }
 
   private static class MyChangesComputable implements ThrowableComputable<Collection<Change>, VcsException> {
@@ -72,6 +117,9 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
       return myChanges;
     }
 
+    public Data getData() {
+      return myData;
+    }
   }
 
   private static class Data {
@@ -91,5 +139,4 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
       this.parents = parents;
     }
   }
-
 }

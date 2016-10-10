@@ -21,7 +21,7 @@ import com.intellij.openapi.util.SystemInfo
 internal const val PROJECTS_DIR_NAME: String = "_projects/"
 private val osPrefixes = arrayOf("_mac/", "_windows/", "_linux/", "_freebsd/", "_unix/")
 
-private fun getOsFolderName() = when {
+internal fun getOsFolderName() = when {
   SystemInfo.isMac -> "_mac"
   SystemInfo.isWindows -> "_windows"
   SystemInfo.isLinux -> "_linux"

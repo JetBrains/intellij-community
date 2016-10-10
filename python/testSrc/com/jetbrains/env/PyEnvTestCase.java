@@ -188,7 +188,9 @@ public abstract class PyEnvTestCase {
       return;
     }
 
-    checkStaging();
+    if (UsefulTestCase.IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
+      checkStaging();
+    }
 
     List<String> roots = getPythonRoots();
 

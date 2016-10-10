@@ -83,14 +83,8 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("equals.replaceable.by.objects.call.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("equals.replaceable.by.objects.call.quickfix");
     }
 
     @Override
@@ -123,6 +117,10 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
         return;
       }
+      final PsiExpression qualifierExpression = getQualifierExpression(expression);
+      if (qualifierExpression instanceof PsiThisExpression || qualifierExpression instanceof PsiSuperExpression) {
+        return;
+      }
       final PsiElement maybeBinary = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class, PsiPrefixExpression.class);
       if (maybeBinary instanceof PsiBinaryExpression) {
         if (processNotNullCheck((PsiBinaryExpression)maybeBinary)) {
@@ -130,7 +128,6 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
         }
       }
       if (!checkNotNull) {
-        final PsiExpression qualifierExpression = getQualifierExpression(expression);
         if (qualifierExpression == null) {
           return;
         }
@@ -170,7 +167,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
      *
      * @return true if the pattern is matched
      */
-    private boolean registerProblem(PsiBinaryExpression expression, PsiExpression rightOperand, boolean equal) {
+    private boolean registerProblem(@NotNull PsiBinaryExpression expression, PsiExpression rightOperand, boolean equal) {
       if ((rightOperand instanceof PsiMethodCallExpression)) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)rightOperand;
         final PsiReferenceExpression nullCheckedExpression =
@@ -181,11 +178,13 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
           final String qualifierName = getQualifiedVariableName(qualifierExpression);
           if (qualifierName != null && qualifierName.equals(nullCheckedName)) {
             final PsiExpression argumentExpression = getArgumentExpression(methodCallExpression);
-            final String argumentName = getQualifiedVariableName(argumentExpression);
-            final PsiExpression expressionToReplace =
-              argumentName != null ? checkEqualityBefore(expression, equal, qualifierName, argumentName) : expression;
-            registerError(expressionToReplace, nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
-            return true;
+            if (argumentExpression != null) {
+              final String argumentName = getQualifiedVariableName(argumentExpression);
+              final PsiExpression expressionToReplace =
+                argumentName != null ? checkEqualityBefore(expression, equal, qualifierName, argumentName) : expression;
+              registerError(expressionToReplace, nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
+              return true;
+            }
           }
         }
       }
@@ -200,8 +199,8 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
      *
      * @return the expression matching the pattern, or the original expression if there's no match
      */
-    @Nullable
-    private PsiExpression checkEqualityBefore(PsiExpression expression, boolean equal, String qualifiedName1, String qualifiedName2) {
+    @NotNull
+    private PsiExpression checkEqualityBefore(@NotNull PsiExpression expression, boolean equal, String qualifiedName1, String qualifiedName2) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
       if (parent instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
@@ -244,7 +243,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     }
   }
 
-  private PsiExpression getArgumentExpression(PsiMethodCallExpression callExpression) {
+  private static PsiExpression getArgumentExpression(PsiMethodCallExpression callExpression) {
     final PsiExpression[] expressions = callExpression.getArgumentList().getExpressions();
     return expressions.length == 1 ? ParenthesesUtils.stripParentheses(expressions[0]) : null;
   }
@@ -254,23 +253,36 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
    *
    * @return the text representation of the variable chain (with parenthesis stripped), or {@code null} if it's not a variable chain
    */
+  @Contract("null->null")
   @Nullable
   private static String getQualifiedVariableName(@Nullable PsiExpression expression) {
     if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final String referenceName = referenceExpression.getReferenceName();
-      if (referenceName != null && referenceExpression.resolve() instanceof PsiVariable) {
-        final PsiExpression qualifierExpression = ParenthesesUtils.stripParentheses(referenceExpression.getQualifierExpression());
-        if (qualifierExpression == null) {
-          return referenceName;
+      if (referenceName != null) {
+        final PsiElement resolved = referenceExpression.resolve();
+        if (resolved instanceof PsiVariable || resolved instanceof PsiClass) {
+          final PsiExpression qualifierExpression = ParenthesesUtils.stripParentheses(referenceExpression.getQualifierExpression());
+          if (qualifierExpression == null) {
+            return referenceName;
+          }
+          final String qualifierName = getQualifiedVariableName(qualifierExpression);
+          return qualifierName != null ? qualifierName + "." + referenceName : null;
         }
-        final String qualifierName = getQualifiedVariableName(qualifierExpression);
-        return qualifierName != null ? qualifierName + "." + referenceName : null;
       }
     }
     else if (expression instanceof PsiQualifiedExpression) {
       final PsiJavaCodeReferenceElement qualifier = ((PsiQualifiedExpression)expression).getQualifier();
-      final String name = expression instanceof PsiThisExpression ? "this" : "super";
+      final String name;
+      if (expression instanceof PsiThisExpression) {
+        name = "this";
+      }
+      else if (expression instanceof PsiSuperExpression) {
+        name = "super";
+      }
+      else {
+        return null;
+      }
       return qualifier != null ? qualifier.getQualifiedName() + "." + name : name;
     }
     return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,11 +77,8 @@ public class LocalVariableHidingMemberVariableInspectionBase extends BaseInspect
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-      if (m_ignoreStaticMethods) {
-        final PsiMember member = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiClassInitializer.class);
-        if (member != null && member.hasModifierProperty(PsiModifier.STATIC)) {
-          return;
-        }
+      if (m_ignoreStaticMethods && isContainedInStaticMethod(variable)) {
+        return;
       }
       final PsiClass aClass = checkFieldNames(variable);
       if (aClass == null) {
@@ -97,11 +94,8 @@ public class LocalVariableHidingMemberVariableInspectionBase extends BaseInspect
       if (!(declarationScope instanceof PsiCatchSection) && !(declarationScope instanceof PsiForeachStatement)) {
         return;
       }
-      if (m_ignoreStaticMethods) {
-        final PsiMember member = PsiTreeUtil.getParentOfType(variable, PsiMethod.class, PsiClassInitializer.class);
-        if (member != null && member.hasModifierProperty(PsiModifier.STATIC)) {
-          return;
-        }
+      if (m_ignoreStaticMethods && isContainedInStaticMethod(variable)) {
+        return;
       }
       final PsiClass aClass = checkFieldNames(variable);
       if (aClass == null) {
@@ -128,9 +122,22 @@ public class LocalVariableHidingMemberVariableInspectionBase extends BaseInspect
             return aClass;
           }
         }
+        if (m_ignoreStaticMethods) {
+          if (aClass.hasModifierProperty(PsiModifier.STATIC) || isContainedInStaticMethod(aClass)) {
+            return null;
+          }
+        }
         aClass = ClassUtils.getContainingClass(aClass);
       }
       return null;
+    }
+
+    private boolean isContainedInStaticMethod(PsiElement element) {
+      final PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiClassInitializer.class, PsiClass.class);
+      if (member instanceof PsiClass) {
+        return false;
+      }
+      return member != null && member.hasModifierProperty(PsiModifier.STATIC);
     }
   }
 }

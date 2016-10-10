@@ -50,7 +50,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
 
   @Override
   @NotNull
-  public final String getName() {
+  public final String getFamilyName() {
     return InspectionsBundle.message("inspection.convert.to.local.quickfix");
   }
 
@@ -225,12 +225,6 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     }
   }
 
-  @Override
-  @NotNull
-  public String getFamilyName() {
-    return getName();
-  }
-
   @Nullable
   private static PsiElement getAnchorElement(PsiCodeBlock anchorBlock, @NotNull PsiElement firstElement) {
     PsiElement element = firstElement;
@@ -245,6 +239,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     PsiElement firstElement = null;
     for (PsiReference reference : refs) {
       final PsiElement element = reference.getElement();
+      if (!(element instanceof PsiReferenceExpression)) continue;
       if (firstElement == null || firstElement.getTextRange().getStartOffset() > element.getTextRange().getStartOffset()) {
         firstElement = element;
       }

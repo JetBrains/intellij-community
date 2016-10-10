@@ -46,16 +46,6 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     ContainerUtil.add(listener, profileListeners, parentDisposable)
   }
 
-  @Suppress("OverridingDeprecatedMember")
-  override final fun addProfileChangeListener(listener: ProfileChangeAdapter) {
-    profileListeners.add(listener)
-  }
-
-  @Suppress("OverridingDeprecatedMember")
-  override final fun removeProfileChangeListener(listener: ProfileChangeAdapter) {
-    profileListeners.remove(listener)
-  }
-
   internal fun cleanupSchemes(project: Project) {
     for (profile in schemeManager.allSchemes) {
       profile.cleanup(project)

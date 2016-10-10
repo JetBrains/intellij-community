@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
@@ -133,6 +134,7 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
   private void doInvoke(final PsiClass aClass, final String superClassName) throws IncorrectOperationException {
     PsiJavaCodeReferenceElement ref = getRefElement();
     assert ref != null;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(aClass)) return;
     String refName = ref.getReferenceName();
     LOG.assertTrue(refName != null);
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();

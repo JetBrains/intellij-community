@@ -165,10 +165,7 @@ class ReloadClassesWorker {
       processException(e);
     }
 
-    CompoundPositionManager positionManager = debugProcess.getPositionManager();
-    if (positionManager != null) {
-      positionManager.clearCache();
-    }
+    debugProcess.getPositionManager().clearCache();
 
     DebuggerContextImpl context = myDebuggerSession.getContextManager().getContext();
     SuspendContextImpl suspendContext = context.getSuspendContext();

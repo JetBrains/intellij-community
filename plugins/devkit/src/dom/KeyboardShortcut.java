@@ -31,45 +31,41 @@ public interface KeyboardShortcut extends DomElement {
 
 	/**
 	 * Returns the value of the first-keystroke child.
-	 * Attribute first-keystroke
+	 * Attribute {@code first-keystroke}
 	 * @return the value of the first-keystroke child.
 	 */
 	@NotNull
 	@Required
 	GenericAttributeValue<String> getFirstKeystroke();
 
-
 	/**
 	 * Returns the value of the keymap child.
-	 * Attribute keymap
+	 * Attribute {@code keymap}
 	 * @return the value of the keymap child.
 	 */
 	@NotNull
 	@Required
 	GenericAttributeValue<String> getKeymap();
 
-
 	/**
 	 * Returns the value of the use-shortcut-of child.
-	 * Attribute use-shortcut-of
+	 * Attribute {@code use-shortcut-of}
 	 * @return the value of the use-shortcut-of child.
 	 */
 	@NotNull
 	GenericAttributeValue<String> getUseShortcutOf();
 
-
 	/**
 	 * Returns the value of the second-keystroke child.
-	 * Attribute second-keystroke
+	 * Attribute {@code second-keystroke}
 	 * @return the value of the second-keystroke child.
 	 */
 	@NotNull
 	GenericAttributeValue<String> getSecondKeystroke();
 
-
         /**
          * Returns the value of the should current shortcut be removed or not.
-         * Attribute remove option
+         * Attribute {@code remove}
          * @return the value of the should current shortcut be removed or not.
          */
         @NotNull
@@ -77,10 +73,9 @@ public interface KeyboardShortcut extends DomElement {
 
         /**
          * Returns the value of the should all previous shortcuts be removed by that one or not.
-         * Attribute remove option
+         * Attribute {@code replace-all}
          * @return the value of the should all previous shortcuts be removed by that one or not.
          */
         @NotNull
         GenericAttributeValue<String> getReplaceAll();
-
 }

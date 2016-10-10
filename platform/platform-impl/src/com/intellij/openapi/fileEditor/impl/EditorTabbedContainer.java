@@ -166,12 +166,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       }
     });
 
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+    project.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
+      public void uiSettingsChanged(UISettings uiSettings) {
         updateTabBorder();
       }
-    }, this);
+    });
 
     Disposer.register(project, this);
   }
@@ -360,7 +360,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   public void setPaintBlocked(boolean blocked) {
-    ((JBTabsImpl)myTabs).setPaintBlocked(blocked, true);
+    myTabs.setPaintBlocked(blocked, true);
   }
 
   private static class MyQueryable implements Queryable {
@@ -503,13 +503,10 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
 
     AsyncResult<EditorWindow> window = mgr.getActiveWindow();
-    window.doWhenDone(new Consumer<EditorWindow>() {
-      @Override
-      public void consume(EditorWindow wnd) {
-        if (wnd != null) {
-          if (wnd.findFileComposite(file) != null) {
-            mgr.closeFile(file, wnd);
-          }
+    window.doWhenDone((Consumer<EditorWindow>)wnd -> {
+      if (wnd != null) {
+        if (wnd.findFileComposite(file) != null) {
+          mgr.closeFile(file, wnd);
         }
       }
     });

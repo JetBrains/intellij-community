@@ -288,14 +288,8 @@ public class PatternValidator extends LocalInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
-      return "Introduce variable";
-    }
-
-    @Override
-    @NotNull
     public String getFamilyName() {
-      return getName();
+      return "Introduce variable";
     }
 
     @Override

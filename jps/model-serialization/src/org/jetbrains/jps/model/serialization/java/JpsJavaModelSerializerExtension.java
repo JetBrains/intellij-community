@@ -92,6 +92,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     return Arrays.asList(new JavaProjectExtensionSerializer(),
                          new JpsJavaCompilerConfigurationSerializer(),
                          new JpsJavaCompilerNotNullableSerializer(),
+                         new JpsCompilerValidationExcludeSerializer(),
                          new JpsJavaCompilerWorkspaceConfigurationSerializer(),
                          new JpsJavaCompilerOptionsSerializer("JavacSettings", "Javac"),
                          new JpsEclipseCompilerOptionsSerializer("EclipseCompilerSettings", "Eclipse"),

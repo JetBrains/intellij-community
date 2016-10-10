@@ -23,21 +23,21 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 class SurroundExpressionTest extends SurroundTestCase {
 
-  void testBrackets1() throws Exception { doTest(new ParenthesisExprSurrounder()); }
+  void testBrackets1() throws Exception { doTest(new ParenthesisExprSurrounder()) }
 
-  void testIf1() throws Exception { doTest(new IfExprSurrounder()); }
+  void testIf1() throws Exception { doTest(new IfExprSurrounder()) }
 
-  void testIf_else1() throws Exception { doTest(new IfElseExprSurrounder()); }
+  void testIf_else1() throws Exception { doTest(new IfElseExprSurrounder()) }
 
-  void testType_cast1() throws Exception { doTest(new TypeCastSurrounder()); }
+  void testType_cast1() throws Exception { doTest(new TypeCastSurrounder()) }
 
-  void testType_cast2() throws Exception { doTest(new TypeCastSurrounder()); }
+  void testType_cast2() throws Exception { doTest(new TypeCastSurrounder()) }
 
-  void testWhile1() throws Exception { doTest(new WhileExprSurrounder()); }
+  void testWhile1() throws Exception { doTest(new WhileExprSurrounder()) }
 
-  void testWith2() throws Exception { doTest(new WithExprSurrounder()); }
+  void testWith2() throws Exception { doTest(new WithExprSurrounder()) }
 
-  void testBinaryWithCast() throws Exception { doTest(new TypeCastSurrounder()); }
+  void testBinaryWithCast() throws Exception { doTest(new TypeCastSurrounder()) }
 
   void testCommandArgList() { doTest(new TypeCastSurrounder()) }
 

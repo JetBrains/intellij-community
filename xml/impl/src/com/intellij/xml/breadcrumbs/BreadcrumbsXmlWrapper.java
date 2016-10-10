@@ -114,12 +114,12 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       }
     }, this);
 
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+    project.getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
+      public void uiSettingsChanged(UISettings uiSettings) {
         queueUpdate();
       }
-    }, this);
+    });
 
 
     myInfoProvider = findInfoProvider(findViewProvider(myFile, myProject));

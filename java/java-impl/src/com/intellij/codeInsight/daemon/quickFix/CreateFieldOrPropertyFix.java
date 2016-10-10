@@ -72,12 +72,6 @@ public class CreateFieldOrPropertyFix implements IntentionAction, LocalQuickFix 
 
   @Override
   @NotNull
-  public String getName() {
-    return getText();
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
     return getText();
   }

@@ -200,12 +200,17 @@ idea.fatal.error.notification=disabled
   void layoutShared() {
     buildContext.messages.block("Copy files shared among all distributions") {
       new File(buildContext.paths.distAll, "build.txt").text = buildContext.fullBuildNumber
+
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/bin") {
         fileset(dir: "$buildContext.paths.communityHome/bin") {
           include(name: "*.*")
           exclude(name: "idea.properties")
+          exclude(name: "log.xml")
         }
       }
+
+      copyLogXml()
+
       buildContext.ant.copy(todir: "$buildContext.paths.distAll/license") {
         fileset(dir: "$buildContext.paths.communityHome/license")
         buildContext.productProperties.additionalDirectoriesWithLicenses.each {
@@ -215,6 +220,13 @@ idea.fatal.error.notification=disabled
 
       buildContext.productProperties.copyAdditionalFiles(buildContext, buildContext.paths.distAll)
     }
+  }
+
+  private void copyLogXml() {
+    def src = new File("$buildContext.paths.communityHome/bin/log.xml")
+    def dst = new File("$buildContext.paths.distAll/bin/log.xml")
+    dst.parentFile.mkdirs()
+    src.filterLine { String it -> !it.contains('appender-ref ref="CONSOLE-WARN"') }.writeTo(dst.newWriter()).close()
   }
 
   @Override
@@ -254,7 +266,7 @@ idea.fatal.error.notification=disabled
       @Override
       String run(BuildContext context) {
         def builder = factory.apply(context)
-        if (context.shouldBuildDistributionForOS(builder.osTargetId)) {
+        if (builder != null && context.shouldBuildDistributionForOS(builder.osTargetId)) {
           return context.messages.block("Build $builder.osName Distribution") {
             def distDirectory = builder.copyFilesForOsDistribution()
             builder.buildArtifacts(distDirectory)
@@ -270,7 +282,8 @@ idea.fatal.error.notification=disabled
   void compileModulesAndBuildDistributions() {
     checkProductProperties()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
-    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules)
+    compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
+                   buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
     buildContext.messages.block("Build platform and plugin JARs") {
       distributionJARsBuilder.buildJARs()
       distributionJARsBuilder.buildAdditionalArtifacts()
@@ -281,6 +294,15 @@ idea.fatal.error.notification=disabled
       }
       else {
         buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
+      }
+      buildContext.ant.zip(destfile: "$buildContext.paths.artifacts/internalUtilities.zip") {
+        fileset(file: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar")
+        fileset(dir: "$buildContext.paths.communityHome/lib") {
+          include(name: "junit-4*.jar")
+        }
+        zipfileset(src: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar") {
+          include(name: "*.xml")
+        }
       }
     }
     buildDistributions()
@@ -302,6 +324,7 @@ idea.fatal.error.notification=disabled
 
     def macCustomizer = buildContext.macDistributionCustomizer
     checkPaths([macCustomizer?.icnsPath], "productProperties.macCustomizer.icnsPath")
+    checkPaths([macCustomizer?.icnsPathForEAP], "productProperties.macCustomizer.icnsPathForEAP")
     checkPaths([macCustomizer?.dmgImagePath], "productProperties.macCustomizer.dmgImagePath")
     checkPaths([macCustomizer?.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
   }
@@ -317,7 +340,7 @@ idea.fatal.error.notification=disabled
     checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
     checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
-    checkModules([layout.mainModule], "productProperties.productLayout.mainModule")
+    checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     nonTrivialPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
       checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")
@@ -457,6 +480,11 @@ idea.fatal.error.notification=disabled
     def jarsBuilder = new DistributionJARsBuilder(buildContext)
     jarsBuilder.buildJARs()
     layoutShared()
+
+    //todo[nik]
+    buildContext.ant.copy(todir: "$targetDirectory/lib/libpty/") {
+      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/")
+    }
 /*
     //todo[nik] uncomment this to update os-specific files (e.g. in 'bin' directory) as well
     def propertiesFile = patchIdeaPropertiesFile()

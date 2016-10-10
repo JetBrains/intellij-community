@@ -161,7 +161,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
                             || infoRange.getStartOffset() > elementRange.getLength() 
                             || infoRange.getEndOffset() > elementRange.getLength() ? null 
                                                                                    : elementRange.cutOut(infoRange);
-      if (textRange == null || !highlightOnlyNameElements) textRange = elementRange;
+      if (textRange == null) textRange = elementRange;
       // hack to determine element range to highlight
       if (highlightOnlyNameElements && psiElement instanceof PsiNamedElement && !(psiElement instanceof PsiFile)) {
         PsiFile psiFile = psiElement.getContainingFile();

@@ -54,8 +54,6 @@ public class PluginConflictDialog extends DialogWrapper {
 
   private JPanel myConflictingPluginsListPanel;
 
-  private JBLabel myBottomMessageLabel;
-
   public PluginConflictDialog(@NotNull List<PluginId> conflictingPlugins,
                               boolean isConflictWithPlatform) {
     super(false);
@@ -75,8 +73,8 @@ public class PluginConflictDialog extends DialogWrapper {
     init();
     setCrossClosesWindow(false);
 
+    getOKAction().updateText();
     myTopMessageLabel.setText(getTopMessageText(conflictingPlugins, isConflictWithPlatform));
-    myBottomMessageLabel.setText(DiagnosticBundle.message("error.dialog.conflict.plugin.footer"));
 
     myTopMessageLabel.setPreferredSize(new Dimension(WIDTH, (int)myTopMessageLabel.getPreferredSize().getHeight()));
     myContentPane.setPreferredSize(new Dimension(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
@@ -116,7 +114,7 @@ public class PluginConflictDialog extends DialogWrapper {
       .collect(Collectors.toList());
 
     if (!myIsConflictWithPlatform) {
-      pluginDescriptions.add(0, getChooserPanelForPlugin(buttonGroup, null));
+      pluginDescriptions.add(getChooserPanelForPlugin(buttonGroup, null));
     }
 
     for (JPanel panel : pluginDescriptions) {
@@ -136,6 +134,7 @@ public class PluginConflictDialog extends DialogWrapper {
       myRadioButtons.add(radioButton);
       buttonGroup.add(radioButton);
 
+      radioButton.addChangeListener(e -> getOKAction().updateText());
       panel.add(radioButton, BorderLayout.WEST);
       panel.addMouseListener(new MouseAdapter() {
         @Override
@@ -222,16 +221,42 @@ public class PluginConflictDialog extends DialogWrapper {
     return new Action[]{getOKAction()};
   }
 
+  @Override
+  protected void createDefaultActions() {
+    super.createDefaultActions();
+    myOKAction = new DisableAction();
+  }
+
   @NotNull
   @Override
-  protected Action getOKAction() {
-    return new DisableAction();
+  protected DisableAction getOKAction() {
+    return ((DisableAction)myOKAction);
   }
 
   private class DisableAction extends DialogWrapperAction {
     protected DisableAction() {
-      super(DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart"));
+      super("Disable");
       putValue(DEFAULT_ACTION, Boolean.TRUE);
+    }
+
+    public void updateText() {
+      putValue(NAME, getButtonText());
+      repaint();
+    }
+
+    @NotNull
+    private String getButtonText() {
+      if (myIsConflictWithPlatform) {
+        return DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart");
+      }
+
+      assert myRadioButtons != null;
+      for (int i = 0; i < myConflictingPlugins.size(); ++i) {
+        if (myRadioButtons.get(i).isSelected()) {
+          return DiagnosticBundle.message("error.dialog.conflict.plugin.button.enable.and.restart");
+        }
+      }
+      return DiagnosticBundle.message("error.dialog.conflict.plugin.button.disable.all");
     }
 
     @Override

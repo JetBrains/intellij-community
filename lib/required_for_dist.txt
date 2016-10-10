@@ -63,7 +63,7 @@ rhino-js-1_7R4.jar
 sanselan-0.98-snapshot.jar
 SceneBuilderKit-8.1.1.jar
 serviceMessages.jar
-snappy-in-java-0.3.1.jar
+snappy-in-java-0.5.1.jar
 sqlite-jdbc-3.6.20.1.jar
 swingx-core-1.6.2.jar
 slf4j-api-1.7.10.jar

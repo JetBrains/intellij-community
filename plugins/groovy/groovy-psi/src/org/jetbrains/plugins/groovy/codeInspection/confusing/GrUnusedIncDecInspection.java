@@ -150,12 +150,6 @@ public class GrUnusedIncDecInspection extends BaseInspection {
 
       @NotNull
       @Override
-      public String getName() {
-        return myMessage;
-      }
-
-      @NotNull
-      @Override
       public String getFamilyName() {
         return myMessage;
       }
@@ -174,12 +168,6 @@ public class GrUnusedIncDecInspection extends BaseInspection {
 
       public ReplacePostfixIncWithPrefixFix(GrUnaryExpression expression) {
         myMessage = GroovyInspectionBundle.message("replace.postfix.0.with.prefix.0", expression.getOperationToken().getText());
-      }
-
-      @NotNull
-      @Override
-      public String getName() {
-        return myMessage;
       }
 
       @NotNull
@@ -206,12 +194,6 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       public ReplaceIncDecWithBinary(GrUnaryExpression expression) {
         String opToken = expression.getOperationToken().getText();
         myMessage = GroovyInspectionBundle.message("replace.0.with.1", opToken, opToken.substring(0, 1));
-      }
-
-      @NotNull
-      @Override
-      public String getName() {
-        return myMessage;
       }
 
       @NotNull

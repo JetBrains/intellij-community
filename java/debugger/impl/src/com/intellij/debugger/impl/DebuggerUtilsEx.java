@@ -949,7 +949,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR =
-    (m1, m2) -> LambdaMethodFilter.getLambdaOrdinal(m1.name()) - LambdaMethodFilter.getLambdaOrdinal(m2.name());
+    Comparator.comparingInt(m -> LambdaMethodFilter.getLambdaOrdinal(m.name()));
 
   public static void disableCollection(ObjectReference reference) {
     try {

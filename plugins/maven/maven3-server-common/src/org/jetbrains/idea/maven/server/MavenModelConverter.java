@@ -25,6 +25,7 @@ import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.jdom.Element;
 import org.jdom.IllegalNameException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3Artifact;
 import org.sonatype.nexus.index.ArtifactInfo;
@@ -35,6 +36,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 public class MavenModelConverter {
+  @NotNull
   public static MavenModel convertModel(Model model, File localRepository) throws RemoteException {
     if(model.getBuild() == null) {
       model.setBuild(new Build());
@@ -53,6 +55,7 @@ public class MavenModelConverter {
     return directory == null ? Collections.<String>emptyList() : Collections.singletonList(directory);
   }
 
+  @NotNull
   public static MavenModel convertModel(Model model,
                                         List<String> sources,
                                         List<String> testSources,
@@ -384,6 +387,7 @@ public class MavenModelConverter {
            || Xpp3Dom.class.isAssignableFrom(clazz);
   }
 
+  @NotNull
   public static Model toNativeModel(MavenModel model) {
     Model result = new Model();
     result.setArtifactId(model.getMavenId().getArtifactId());

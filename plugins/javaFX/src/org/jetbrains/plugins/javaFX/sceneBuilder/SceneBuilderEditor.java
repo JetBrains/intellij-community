@@ -2,7 +2,9 @@ package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -168,11 +170,17 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   }
 
   private void addSceneBuilder() {
-    removeSceneBuilder();
+    ApplicationManager.getApplication().invokeLater(this::addSceneBuilderImpl, ModalityState.defaultModalityState());
+  }
 
+  private void addSceneBuilderImpl() {
     try {
-      FileDocumentManager.getInstance().saveDocument(myDocument);
+      ApplicationManager.getApplication().runWriteAction(() -> FileDocumentManager.getInstance().saveDocument(myDocument));
 
+      if (mySceneBuilder != null && mySceneBuilder.reload()) {
+        return;
+      }
+      removeSceneBuilder();
       mySceneBuilder = SceneBuilder.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
 
       myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);

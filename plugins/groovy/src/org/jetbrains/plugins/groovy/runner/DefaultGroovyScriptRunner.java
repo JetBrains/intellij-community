@@ -67,7 +67,7 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
 
   @Override
   public void configureCommandLine(JavaParameters params, @Nullable Module module, boolean tests, VirtualFile script, GroovyScriptRunConfiguration configuration) throws CantRunException {
-    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests);
+    configureGenericGroovyRunner(params, module, "groovy.ui.GroovyMain", false, tests, configuration.isAddClasspathToTheRunner());
 
     //addClasspathFromRootModel(module, tests, params, true);
 
@@ -89,6 +89,15 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
                                                   @NotNull String mainClass,
                                                   boolean useBundled,
                                                   boolean tests) throws CantRunException {
+    configureGenericGroovyRunner(params, module, mainClass, useBundled, tests, true);
+  }
+
+  public static void configureGenericGroovyRunner(@NotNull JavaParameters params,
+                                                  @NotNull Module module,
+                                                  @NotNull String mainClass,
+                                                  boolean useBundled,
+                                                  boolean tests,
+                                                  boolean addClasspathToRunner) throws CantRunException {
     final VirtualFile groovyJar = findGroovyJar(module);
     if (useBundled) {
       params.getClassPath().add(GroovyFacetUtil.getBundledGroovyJar());
@@ -97,7 +106,9 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
       params.getClassPath().add(groovyJar);
     }
 
-    getClassPathFromRootModel(module, tests, params, true, params.getClassPath());
+    if (addClasspathToRunner) {
+      getClassPathFromRootModel(module, tests, params, true, params.getClassPath());
+    }
 
     setToolsJar(params);
 

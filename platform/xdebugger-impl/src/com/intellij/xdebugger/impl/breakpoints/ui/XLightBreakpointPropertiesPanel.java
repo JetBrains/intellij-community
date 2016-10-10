@@ -143,12 +143,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       JComponent conditionComponent = myConditionComboBox.getComponent();
       conditionComponent.setBorder(JBUI.Borders.emptyRight(3));
       myConditionExpressionPanel.add(conditionComponent, BorderLayout.CENTER);
-      myConditionEnabledCheckbox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          onCheckboxChanged();
-        }
-      });
+      myConditionEnabledCheckbox.addActionListener(e -> onCheckboxChanged());
       DebuggerUIUtil.focusEditorOnCheck(myConditionEnabledCheckbox, myConditionComboBox.getEditorComponent());
     } else {
       myConditionPanel.setVisible(false);
@@ -214,12 +209,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       }
     });
 
-    myEnabledCheckbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        myBreakpoint.setEnabled(myEnabledCheckbox.isSelected());
-      }
-    });
+    myEnabledCheckbox.addActionListener(e -> myBreakpoint.setEnabled(myEnabledCheckbox.isSelected()));
   }
 
   private void onCheckboxChanged() {

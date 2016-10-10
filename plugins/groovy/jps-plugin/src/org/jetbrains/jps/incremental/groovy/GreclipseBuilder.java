@@ -66,7 +66,12 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
    * All Groovy-Eclipse stuff is contained in a separate classLoader to avoid clashes with ecj.jar being in the classpath of the builder process
    */
   private ClassLoader myGreclipseLoader;
-  private final CompilingGroovycRunner myHelper = new CompilingGroovycRunner(true);
+  private final CompilingGroovycRunner myHelper = new CompilingGroovycRunner(true) {
+    @Override
+    protected boolean acceptsFileType(String path) {
+      return super.acceptsFileType(path) || path.endsWith(".java");
+    }
+  };
 
   protected GreclipseBuilder() {
     super(BuilderCategory.TRANSLATOR);

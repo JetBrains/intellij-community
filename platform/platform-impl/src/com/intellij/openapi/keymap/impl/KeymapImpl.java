@@ -516,7 +516,7 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
   }
 
   @Nullable
-  private Shortcut[] getOwnShortcuts(String actionId) {
+  public Shortcut[] getOwnShortcuts(String actionId) {
     OrderedSet<Shortcut> own = myActionId2ListOfShortcuts.get(actionId);
     if (own == null) return null;
     return own.isEmpty() ? ourEmptyShortcutsArray : own.toArray(new Shortcut[own.size()]);
@@ -564,7 +564,8 @@ public class KeymapImpl extends ExternalizableSchemeAdapter implements Keymap {
     setName(keymapElement.getAttributeValue(NAME_ATTRIBUTE));
 
     Map<String, ArrayList<Shortcut>> id2shortcuts = new HashMap<>();
-    final boolean skipInserts = SystemInfo.isMac && !ApplicationManager.getApplication().isUnitTestMode();
+    final boolean skipInserts = SystemInfo.isMac
+                                && (ApplicationManager.getApplication() == null || !ApplicationManager.getApplication().isUnitTestMode());
     for (final Object o : keymapElement.getChildren()) {
       Element actionElement = (Element)o;
       if (ACTION.equals(actionElement.getName())) {

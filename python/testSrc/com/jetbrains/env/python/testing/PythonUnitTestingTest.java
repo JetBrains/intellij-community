@@ -228,6 +228,27 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+  /**
+   * Ensure "[" in test does not break output
+   */
+  @Test
+  public void testEscaping() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_escaping.py") {
+
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(1, runner.getAllTestsCount());
+        assertEquals(0, runner.getPassedTestsCount());
+        assertEquals(1, runner.getFailedTestsCount());
+      }
+    });
+
+  }
+
   @Test
   public void testClass() {
     runPythonTest(new PyUnitTestProcessWithConsoleTestTask("/testRunner/env/unit", "test_file.py::GoodTest") {

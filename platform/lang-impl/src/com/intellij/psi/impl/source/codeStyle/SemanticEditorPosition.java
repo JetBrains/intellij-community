@@ -194,5 +194,10 @@ public abstract class SemanticEditorPosition {
     boolean check(SemanticEditorPosition position);
   }
   
-  public abstract SyntaxElement map(@NotNull IElementType elementType); 
+  public abstract SyntaxElement map(@NotNull IElementType elementType);
+
+  @Override
+  public String toString() {
+    return myIterator.getTokenType().toString();
+  }
 }

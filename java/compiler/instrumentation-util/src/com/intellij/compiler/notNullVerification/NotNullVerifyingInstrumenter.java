@@ -21,14 +21,15 @@ import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author ven
  */
 public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcodes {
-  private static final String NOT_NULL_CLASS_NAME = "org/jetbrains/annotations/NotNull";
   private static final String SYNTHETIC_CLASS_NAME = "java/lang/Synthetic";
   private static final String SYNTHETIC_TYPE = "L" + SYNTHETIC_CLASS_NAME + ";";
   private static final String IAE_CLASS_NAME = "java/lang/IllegalArgumentException";
@@ -36,9 +37,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   private static final String ANNOTATION_DEFAULT_METHOD = "value";
 
-  private final String myNullArgMessageIndexed;
-  private final String myNullArgMessageNamed;
-  private final String myNullResultMessage;
   @SuppressWarnings("SSBasedInspection") private static final String[] EMPTY_STRING_ARRAY = new String[0];
   private final Map<String, Map<Integer, String>> myMethodParamNames;
 
@@ -46,22 +44,19 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private boolean myIsModification = false;
   private RuntimeException myPostponedError;
   private final AuxiliaryMethodGenerator myAuxGenerator;
-  private final String myNotNullAnno;
+  private final Set<String> myNotNullAnnos = new HashSet<String>();
 
-  private NotNullVerifyingInstrumenter(final ClassVisitor classVisitor, ClassReader reader, String notNullAnnotation) {
+  private NotNullVerifyingInstrumenter(final ClassVisitor classVisitor, ClassReader reader, String[] notNullAnnotations) {
     super(Opcodes.API_VERSION, classVisitor);
-    final String fullName = notNullAnnotation != null ? notNullAnnotation.replace('.', '/') : NOT_NULL_CLASS_NAME;
-    final String shortName = fullName.substring(fullName.lastIndexOf('/') + 1);
-    myNotNullAnno = "L" + fullName + ";";
-    myNullArgMessageIndexed = "Argument %s for @" + shortName + " parameter of %s.%s must not be null";
-    myNullArgMessageNamed = "Argument for @" + shortName + " parameter '%s' of %s.%s must not be null";
-    myNullResultMessage = "@" + shortName + " method %s.%s must not return null";
+    for (String annotation : notNullAnnotations) {
+      myNotNullAnnos.add("L" + annotation.replace('.', '/') + ";");
+    }
     myMethodParamNames = getAllParameterNames(reader);
     myAuxGenerator = new AuxiliaryMethodGenerator(reader);
   }
 
-  public static boolean processClassFile(final FailSafeClassReader reader, final ClassVisitor writer, String notNullAnnotation) {
-    NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer, reader, notNullAnnotation);
+  public static boolean processClassFile(final FailSafeClassReader reader, final ClassVisitor writer, String[] notNullAnnotations) {
+    NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer, reader, notNullAnnotations);
     reader.accept(instrumenter, 0);
     instrumenter.myAuxGenerator.generateReportingMethod(writer);
     return instrumenter.isModification();
@@ -121,9 +116,31 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
   private static class NotNullState {
     String message;
     String exceptionType;
+    final String notNullAnno;
 
-    NotNullState(String exceptionType) {
+    NotNullState(String notNullAnno, String exceptionType) {
+      this.notNullAnno = notNullAnno;
       this.exceptionType = exceptionType;
+    }
+
+    String getNullParamMessage(String paramName) {
+      if (message != null) return message;
+
+      final String shortName = getAnnoShortName();
+      if (paramName != null) return "Argument for @" + shortName + " parameter '%s' of %s.%s must not be null";
+      return "Argument %s for @" + shortName + " parameter of %s.%s must not be null";
+    }
+
+    String getNullResultMessage() {
+      if (message != null) return message;
+
+      final String shortName = getAnnoShortName();
+      return "@" + shortName + " method %s.%s must not return null";
+    }
+
+    private String getAnnoShortName() {
+      String fullName = notNullAnno.substring(1, notNullAnno.length() - 1); // "Lpk/name;" -> "pk/name"
+      return fullName.substring(fullName.lastIndexOf('/') + 1);
     }
   }
 
@@ -160,8 +177,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
       public AnnotationVisitor visitParameterAnnotation(final int parameter, final String anno, final boolean visible) {
         AnnotationVisitor av = mv.visitParameterAnnotation(parameter, anno, visible);
-        if (isReferenceType(args[parameter]) && anno.equals(myNotNullAnno)) {
-          NotNullState state = new NotNullState(IAE_CLASS_NAME);
+        if (isReferenceType(args[parameter]) && myNotNullAnnos.contains(anno)) {
+          NotNullState state = new NotNullState(anno, IAE_CLASS_NAME);
           myNotNullParams.put(new Integer(parameter), state);
           av = collectNotNullArgs(av, state);
         }
@@ -176,8 +193,8 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       @Override
       public AnnotationVisitor visitAnnotation(String anno, boolean isRuntime) {
         AnnotationVisitor av = mv.visitAnnotation(anno, isRuntime);
-        if (isReferenceType(returnType) && anno.equals(myNotNullAnno)) {
-          myMethodNotNull = new NotNullState(ISE_CLASS_NAME);
+        if (isReferenceType(returnType) && myNotNullAnnos.contains(anno)) {
+          myMethodNotNull = new NotNullState(anno, ISE_CLASS_NAME);
           av = collectNotNullArgs(av, myMethodNotNull);
         }
 
@@ -203,9 +220,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
           NotNullState state = entry.getValue();
           String paramName = paramNames == null ? null : paramNames.get(param);
-          String descrPattern = state.message != null
-                                ? state.message
-                                : paramName != null ? myNullArgMessageNamed : myNullArgMessageIndexed;
+          String descrPattern = state.getNullParamMessage(paramName);
           String[] args = state.message != null
                           ? EMPTY_STRING_ARRAY 
                           : new String[]{paramName != null ? paramName : String.valueOf(param - mySyntheticCount), myClassName, name};
@@ -228,7 +243,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
             mv.visitInsn(DUP);
             final Label skipLabel = new Label();
             mv.visitJumpInsn(IFNONNULL, skipLabel);
-            String descrPattern = myMethodNotNull.message != null ? myMethodNotNull.message : myNullResultMessage;
+            String descrPattern = myMethodNotNull.getNullResultMessage();
             String[] args = myMethodNotNull.message != null ? EMPTY_STRING_ARRAY : new String[]{myClassName, name};
             reportError(myMethodNotNull.exceptionType, skipLabel, descrPattern, args);
           }

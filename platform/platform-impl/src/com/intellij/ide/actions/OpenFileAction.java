@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -90,10 +91,23 @@ public class OpenFileAction extends AnAction implements DumbAware {
 
       // try to open as a project - unless the file is an .ipr of the current one
       if ((project == null || !file.equals(project.getProjectFile())) && OpenProjectFileChooserDescriptor.isProjectFile(file)) {
-        Project openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
-        if (openedProject != null) {
-          FileChooserUtil.setLastOpenedFile(openedProject, file);
-          return;
+        int answer = file.getFileType() instanceof ProjectFileType
+                     ? Messages.YES
+                     : Messages.showYesNoCancelDialog(project,
+                                                IdeBundle.message("message.open.file.is.project", file.getName()),
+                                                IdeBundle.message("title.open.project"),
+                                                IdeBundle.message("message.open.file.is.project.open.as.project"),
+                                                IdeBundle.message("message.open.file.is.project.open.as.file"),
+                                                IdeBundle.message("button.cancel"),
+                                                Messages.getQuestionIcon());
+        if (answer == Messages.CANCEL)  return;
+        
+        if (answer == Messages.YES) {
+          Project openedProject = ProjectUtil.openOrImport(file.getPath(), project, false);
+          if (openedProject != null) {
+            FileChooserUtil.setLastOpenedFile(openedProject, file);
+            return;
+          }
         }
       }
 

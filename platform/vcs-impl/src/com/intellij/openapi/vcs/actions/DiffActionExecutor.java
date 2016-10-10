@@ -16,11 +16,11 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
-import com.intellij.diff.contents.FileAwareDocumentContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
@@ -71,6 +71,7 @@ public abstract class DiffActionExecutor {
   protected DiffContent createRemote(final VcsRevisionNumber revisionNumber) throws IOException, VcsException {
     final ContentRevision fileRevision = myDiffProvider.createFileContent(revisionNumber, mySelectedFile);
     if (fileRevision == null) return null;
+    DiffContentFactoryEx contentFactory = DiffContentFactoryEx.getInstanceEx();
 
     DiffContent diffContent;
     if (fileRevision instanceof BinaryContentRevision) {
@@ -78,17 +79,17 @@ public abstract class DiffActionExecutor {
       final byte[] content = ((BinaryContentRevision)fileRevision).getBinaryContent();
       if (content == null) return null;
 
-      diffContent = DiffContentFactory.getInstance().createBinary(myProject, filePath.getName(), filePath.getFileType(), content);
+      diffContent = contentFactory.createBinary(myProject, content, filePath.getFileType(), filePath.getName());
     }
     else if (fileRevision instanceof ByteBackedContentRevision) {
       byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
       if (content == null) throw new VcsException("Failed to load content");
-      diffContent = FileAwareDocumentContent.create(myProject, content, fileRevision.getFile());
+      diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());
     }
     else {
       String content = fileRevision.getContent();
       if (content == null) throw new VcsException("Failed to load content");
-      diffContent = FileAwareDocumentContent.create(myProject, content, fileRevision.getFile());
+      diffContent = contentFactory.create(myProject, content, fileRevision.getFile());
     }
 
     diffContent.putUserData(DiffUserDataKeysEx.REVISION_INFO, Pair.create(fileRevision.getFile(), fileRevision.getRevisionNumber()));

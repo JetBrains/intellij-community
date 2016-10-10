@@ -74,6 +74,7 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
           war.setWebResources(mapWebResources(model.getWebResources()));
           war.setClasspath(model.getClasspath());
           war.setManifestContent(model.getManifestContent());
+          war.setArchivePath(model.getArchivePath());
           return war;
         }
       });
@@ -90,14 +91,15 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
           ear.setManifestContent(model.getManifestContent());
           ear.setDeploymentDescriptor(model.getDeploymentDescriptor());
           ear.setResources(mapEarResources(model.getResources()));
+          ear.setArchivePath(model.getArchivePath());
           return ear;
         }
       });
 
-      final Collection<DependencyData> deployDependencies =
-        GradleProjectResolverUtil.getIdeDependencies(findTargetModuleNode.getValue(), earConfiguration.getDeployDependencies());
-      final Collection<DependencyData> earlibDependencies =
-        GradleProjectResolverUtil.getIdeDependencies(findTargetModuleNode.getValue(), earConfiguration.getEarlibDependencies());
+      final Collection<DependencyData> deployDependencies = GradleProjectResolverUtil.getIdeDependencies(
+        resolverCtx, findTargetModuleNode.getValue(), earConfiguration.getDeployDependencies());
+      final Collection<DependencyData> earlibDependencies = GradleProjectResolverUtil.getIdeDependencies(
+        resolverCtx, findTargetModuleNode.getValue(), earConfiguration.getEarlibDependencies());
 
       findTargetModuleNode.getValue().createChild(
         EarConfigurationModelData.KEY,

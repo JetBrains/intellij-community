@@ -31,14 +31,8 @@ public class ExtractMethodFix extends InspectionGadgetsFix {
 
   @Override
   @NotNull
-  public String getName() {
-    return InspectionGadgetsBundle.message("extract.method.quickfix");
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return InspectionGadgetsBundle.message("extract.method.quickfix");
   }
 
   @Override

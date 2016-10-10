@@ -48,14 +48,8 @@ public class PublicConstructorInspection extends PublicConstructorInspectionBase
 
     @NotNull
     @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("public.constructor.quickfix");
-    }
-
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("public.constructor.quickfix");
     }
 
     @Override

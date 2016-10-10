@@ -39,15 +39,10 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
   }
 
   private static class WhileCanBeForeachFix extends InspectionGadgetsFix {
-     @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
-    }
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionGadgetsBundle.message("foreach.replace.quickfix");
     }
 

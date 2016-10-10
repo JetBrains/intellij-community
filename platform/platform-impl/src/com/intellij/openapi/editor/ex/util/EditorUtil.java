@@ -18,12 +18,17 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.event.EditorFactoryAdapter;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -33,10 +38,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
@@ -798,6 +800,7 @@ public final class EditorUtil {
   }
 
   public static boolean isChangeFontSize(@NotNull MouseWheelEvent e) {
+    if (e.getWheelRotation() == 0) return false;
     return SystemInfo.isMac
            ? !e.isControlDown() && e.isMetaDown() && !e.isAltDown() && !e.isShiftDown()
            : e.isControlDown() && !e.isMetaDown() && !e.isAltDown() && !e.isShiftDown();
@@ -899,6 +902,26 @@ public final class EditorUtil {
 
   public static boolean isCurrentCaretPrimary(@NotNull Editor editor) {
     return editor.getCaretModel().getCurrentCaret() == editor.getCaretModel().getPrimaryCaret();
+  }
+
+  public static void disposeWithEditor(@NotNull Editor editor, @NotNull Disposable disposable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (Disposer.isDisposed(disposable)) return;
+    if (editor.isDisposed()) {
+      Disposer.dispose(disposable);
+      return;
+    }
+    // for injected editors disposal will happen only when host editor is disposed,
+    // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
+    Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
+      @Override
+      public void editorReleased(@NotNull EditorFactoryEvent event) {
+        if (event.getEditor() == hostEditor) {
+          Disposer.dispose(disposable);
+        }
+      }
+    }, disposable);
   }
 }
 

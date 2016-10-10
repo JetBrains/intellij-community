@@ -140,6 +140,11 @@ public class FindFunctionalInterfaceTest extends LightCodeInsightFixtureTestCase
     assertSize(1, FunctionalExpressionSearch.search(findClass("I")).findAll());
   }
 
+  public void testChainStartingWithConstructor() {
+    configure();
+    assertSize(1, FunctionalExpressionSearch.search(findClass("IterHelper.MapIterCallback")).findAll());
+  }
+
   public void testDontVisitInapplicableFiles() {
     PsiClass sam = myFixture.addClass("interface I { void foo(); }");
     myFixture.addClass("class Some { " +

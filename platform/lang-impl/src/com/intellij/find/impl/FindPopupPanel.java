@@ -621,7 +621,7 @@ public class FindPopupPanel extends JBPanel {
     }
     mySelectedScope = getScope(myModel);
     final String dirName = myModel.getDirectoryName();
-    setDirectories(FindSettings.getInstance().getRecentDirectories(), dirName);
+    setDirectories(FindInProjectSettings.getInstance(myProject).getRecentDirectories(), dirName);
 
     if (!StringUtil.isEmptyOrSpaces(dirName)) {
       VirtualFile dir = LocalFileSystem.getInstance().findFileByPath(dirName);
@@ -646,14 +646,18 @@ public class FindPopupPanel extends JBPanel {
     myFileMaskField.setEnabled(isThereFileFilter);
     updateScopeDetailsPanel();
     String toSearch = myModel.getStringToFind();
+    FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
+
     if (StringUtil.isEmpty(toSearch)) {
-      String[] history = FindSettings.getInstance().getRecentFindStrings();
+      String[] history = findInProjectSettings.getRecentFindStrings();
       toSearch = history.length > 0 ? history[history.length - 1] : "";
     }
+
     mySearchComponent.setText(toSearch);
     String toReplace = myModel.getStringToReplace();
+
     if (StringUtil.isEmpty(toReplace)) {
-      String[] history = FindSettings.getInstance().getRecentReplaceStrings();
+      String[] history = findInProjectSettings.getRecentReplaceStrings();
       toReplace = history.length > 0 ? history[history.length - 1] : "";
     }
     myReplaceComponent.setText(toReplace);

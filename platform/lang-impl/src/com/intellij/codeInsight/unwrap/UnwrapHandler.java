@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
@@ -216,10 +217,11 @@ public class UnwrapHandler implements CodeInsightActionHandler {
 
     private void highlightExtractedElements(final List<PsiElement> extractedElements) {
       for (PsiElement each : extractedElements) {
+        final TextRange textRange = each.getTextRange();
         HighlightManager.getInstance(myProject).addRangeHighlight(
             myEditor,
-            each.getTextOffset(),
-            each.getTextOffset() + each.getTextLength(),
+            textRange.getStartOffset(),
+            textRange.getEndOffset(),
             getTestAttributesForExtract(),
             false,
             true,

@@ -121,6 +121,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
         final ConfigFileMetaData metaData = myMetaDataProvider.findMetaData(id);
         if (metaData != null) {
           final String url = child.getAttributeValue(URL_ATTRIBUTE);
+          if (url == null) throw new InvalidDataException(URL_ATTRIBUTE + " attribute not specified for " + id + " descriptor");
           myConfigFiles.put(metaData, new ConfigFileInfo(metaData, url));
         }
       }

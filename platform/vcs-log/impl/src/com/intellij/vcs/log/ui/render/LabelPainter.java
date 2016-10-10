@@ -52,7 +52,6 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class LabelPainter implements ReferencePainter {
   public static final int TOP_TEXT_PADDING = JBUI.scale(2);
@@ -135,7 +134,13 @@ public class LabelPainter implements ReferencePainter {
       colors = multiple ? new Color[]{color, color} : new Color[]{color};
     }
     else {
-      List<Color> colorsList = referencesByType.keySet().stream().map(VcsRefType::getBackgroundColor).collect(Collectors.toList());
+      List<Color> colorsList = ContainerUtil.newArrayList();
+      for (VcsRefType type : referencesByType.keySet()) {
+        if (referencesByType.get(type).size() > 1) {
+          colorsList.add(type.getBackgroundColor());
+        }
+        colorsList.add(type.getBackgroundColor());
+      }
       colors = colorsList.toArray(new Color[colorsList.size()]);
     }
     return colors;
@@ -148,17 +153,9 @@ public class LabelPainter implements ReferencePainter {
     g2.setFont(getReferenceFont());
     g2.setStroke(new BasicStroke(1.5f));
 
+    x = paintFadeOut(g2, x, y, myWidth, height);
+
     FontMetrics fontMetrics = g2.getFontMetrics();
-
-    g2.setPaint(
-      new GradientPaint(x, y, new Color(myBackground.getRed(), myBackground.getGreen(), myBackground.getBlue(), 0), x + GRADIENT_WIDTH, y,
-                        myBackground));
-    g2.fill(new Rectangle(x, y, GRADIENT_WIDTH, height));
-    x += GRADIENT_WIDTH;
-
-    g2.setColor(myBackground);
-    g2.fillRect(x, y, myWidth - GRADIENT_WIDTH, height);
-
     for (Pair<String, LabelIcon> label : myLabels) {
       LabelIcon icon = label.second;
       String text = label.first;
@@ -172,6 +169,18 @@ public class LabelPainter implements ReferencePainter {
     }
 
     config.restore();
+  }
+
+  public int paintFadeOut(@NotNull Graphics2D g2, int x, int y, int width, int height) {
+    g2.setPaint(
+      new GradientPaint(x, y, new Color(myBackground.getRed(), myBackground.getGreen(), myBackground.getBlue(), 0), x + GRADIENT_WIDTH, y,
+                        myBackground));
+    g2.fill(new Rectangle(x, y, GRADIENT_WIDTH, height));
+    x += GRADIENT_WIDTH;
+
+    g2.setColor(myBackground);
+    g2.fillRect(x, y, width - GRADIENT_WIDTH, height);
+    return x;
   }
 
   public Dimension getSize() {

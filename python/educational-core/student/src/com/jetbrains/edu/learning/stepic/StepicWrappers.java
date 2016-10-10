@@ -119,12 +119,12 @@ public class StepicWrappers {
     String python27;
 
     @Nullable
-    public String getTemplateForLanguage(@NotNull final String langauge) {
-      if (langauge.equals(EduAdaptiveStepicConnector.PYTHON2)) {
+    public String getTemplateForLanguage(@NotNull final String language) {
+      if (language.equals(EduAdaptiveStepicConnector.PYTHON2)) {
         return python27;
       }
 
-      if (langauge.equals(EduAdaptiveStepicConnector.PYTHON3)) {
+      if (language.equals(EduAdaptiveStepicConnector.PYTHON3)) {
         return python3;
       }
 
@@ -433,6 +433,27 @@ public class StepicWrappers {
 
     public EnrollmentWrapper(@NotNull final String courseId) {
       enrollment = new Enrollment(courseId);
+    }
+  }
+
+  static class TokenInfo {
+    @Expose String accessToken;
+    @Expose String refreshToken;
+    @Expose String tokenType;
+    @Expose String scope;
+    @Expose int expiresIn;
+
+    public TokenInfo() {
+      accessToken = "";
+      refreshToken = "";
+    }
+
+    public String getAccessToken() {
+      return accessToken;
+    }
+
+    public String getRefreshToken() {
+      return refreshToken;
     }
   }
 }

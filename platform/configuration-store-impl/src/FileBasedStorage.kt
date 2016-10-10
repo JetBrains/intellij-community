@@ -119,7 +119,6 @@ open class FileBasedStorage(file: Path,
       attributes = Files.readAttributes(file, BasicFileAttributes::class.java)
     }
     catch (e: NoSuchFileException) {
-      LOG.debug(e) { "Document was not loaded for $fileSpec, doesn't exists" }
       return null
     }
     catch (e: IOException) {

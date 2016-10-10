@@ -41,22 +41,31 @@ import java.util.List;
  */
 public class FrozenDocument implements DocumentEx {
   private final ImmutableCharSequence myText;
-  private final LineSet myLineSet;
+  @Nullable private volatile LineSet myLineSet;
   private final long myStamp;
   private volatile SoftReference<String> myTextString;
 
-  FrozenDocument(@NotNull ImmutableCharSequence text, @NotNull LineSet lineSet, long stamp, @Nullable String textString) {
+  FrozenDocument(@NotNull ImmutableCharSequence text, @Nullable LineSet lineSet, long stamp, @Nullable String textString) {
     myText = text;
     myLineSet = lineSet;
     myStamp = stamp;
     myTextString = textString == null ? null : new SoftReference<String>(textString);
   }
 
+  @NotNull
+  private LineSet getLineSet() {
+    LineSet lineSet = myLineSet;
+    if (lineSet == null) {
+      myLineSet = lineSet = LineSet.createLineSet(myText);
+    }
+    return lineSet;
+  }
+
   public FrozenDocument applyEvent(DocumentEvent event, int newStamp) {
     final int offset = event.getOffset();
     final int oldEnd = offset + event.getOldLength();
     ImmutableCharSequence newText = myText.delete(offset, oldEnd).insert(offset, event.getNewFragment());
-    LineSet newLineSet = myLineSet.update(myText, offset, oldEnd, event.getNewFragment(), event.isWholeTextReplaced());
+    LineSet newLineSet = getLineSet().update(myText, offset, oldEnd, event.getNewFragment(), event.isWholeTextReplaced());
     return new FrozenDocument(newText, newLineSet, newStamp, null);
   }
 
@@ -68,7 +77,7 @@ public class FrozenDocument implements DocumentEx {
   @NotNull
   @Override
   public LineIterator createLineIterator() {
-    return myLineSet.createIterator();
+    return getLineSet().createIterator();
   }
 
   @Override
@@ -203,24 +212,24 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public int getLineCount() {
-    return myLineSet.getLineCount();
+    return getLineSet().getLineCount();
   }
 
   @Override
   public int getLineNumber(int offset) {
-    return myLineSet.findLineIndex(offset);
+    return getLineSet().findLineIndex(offset);
   }
 
   @Override
   public int getLineStartOffset(int line) {
     if (line == 0) return 0; // otherwise it crashed for zero-length document
-    return myLineSet.getLineStart(line);
+    return getLineSet().getLineStart(line);
   }
 
   @Override
   public int getLineEndOffset(int line) {
     if (getTextLength() == 0 && line == 0) return 0;
-    int result = myLineSet.getLineEnd(line) - getLineSeparatorLength(line);
+    int result = getLineSet().getLineEnd(line) - getLineSeparatorLength(line);
     assert result >= 0;
     return result;
   }
@@ -348,7 +357,7 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public int getLineSeparatorLength(int line) {
-    return myLineSet.getSeparatorLength(line);
+    return getLineSet().getSeparatorLength(line);
   }
 
   @Nullable

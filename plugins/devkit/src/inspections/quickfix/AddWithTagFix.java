@@ -42,14 +42,8 @@ import java.util.List;
 public class AddWithTagFix implements LocalQuickFix {
   @NotNull
   @Override
-  public String getName() {
-    return "Add <with> tag";
-  }
-
-  @NotNull
-  @Override
   public String getFamilyName() {
-    return getName();
+    return "Add <with> tag";
   }
 
   @Override

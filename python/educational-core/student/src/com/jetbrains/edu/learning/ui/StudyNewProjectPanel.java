@@ -29,10 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.CourseInfo;
-import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.LoginDialog;
-import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.stepic.*;
 import icons.InteractiveLearningIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -344,14 +341,13 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
 
-        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicConnector.login(myLoginPanel.getLogin(),
-                                                                                               myLoginPanel.getPassword()));
+        final StepicUser stepicUser = StudyUtils.execCancelable(() -> EduStepicAuthorizedClient.login(myLoginPanel.getLogin(),
+                                                                                                      myLoginPanel.getPassword()));
         if (stepicUser != null) {
           stepicUser.setEmail(myLoginPanel.getLogin());
           stepicUser.setPassword(myLoginPanel.getPassword());
           myGenerator.myUser = stepicUser;
-          myGenerator.setEnrolledCoursesIds(EduStepicConnector.getEnrolledCoursesIds());
-
+          myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(stepicUser));
           final List<CourseInfo> courses = myGenerator.getCourses(true);
           if (courses != null && myRefreshCourseList) {
             ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));

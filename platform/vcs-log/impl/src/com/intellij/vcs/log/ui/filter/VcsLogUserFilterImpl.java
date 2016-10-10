@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -60,6 +61,15 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
   }
 
   @NotNull
+  public Collection<VcsUser> getUsers(@NotNull VirtualFile root) {
+    Set<VcsUser> result = ContainerUtil.newHashSet();
+    for (String user : myUsers) {
+      result.addAll(getUsers(root, user));
+    }
+    return result;
+  }
+
+  @NotNull
   private Set<VcsUser> getUsers(@NotNull VirtualFile root, @NotNull String name) {
     Set<VcsUser> users = ContainerUtil.newHashSet();
     if (ME.equals(name)) {
@@ -110,5 +120,10 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     result.addAll(myAllUsersByEmails.get(VcsUserUtil.getNameInStandardForm(name)));
 
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return "author: " + StringUtil.join(myUsers, ", ");
   }
 }

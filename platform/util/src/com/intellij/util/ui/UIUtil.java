@@ -199,6 +199,28 @@ public class UIUtil {
     return isRetina() && SystemInfo.isAppleJvm;
   }
 
+  public static Couple<Color> getCellColors(JTable table, boolean isSel, int row, int column) {
+    return Couple.of(isSel ? table.getSelectionForeground() : table.getForeground(),
+                                 isSel
+                                 ? table.getSelectionBackground()
+                                 : isUnderNimbusLookAndFeel() && row % 2 == 1 ? TRANSPARENT_COLOR : table.getBackground());
+  }
+
+  public static void fixOSXEditorBackground(@NotNull JTable table) {
+    if (!SystemInfo.isMac) return;
+
+    if (table.isEditing()) {
+      int column = table.getEditingColumn();
+      int row = table.getEditingRow();
+      Component renderer = column>=0 && row >= 0 ? table.getCellRenderer(row, column)
+        .getTableCellRendererComponent(table, table.getValueAt(row, column), true, table.hasFocus(), row, column) : null;
+      Component component = table.getEditorComponent();
+      if (component != null && renderer != null) {
+        changeBackGround(component, renderer.getBackground());
+      }
+    }
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
 
   public enum ComponentStyle {LARGE, REGULAR, SMALL, MINI}
@@ -1287,13 +1309,25 @@ public class UIUtil {
   }
 
   public static Icon getTreeSelectedCollapsedIcon() {
-    return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF()
-           ? AllIcons.Mac.Tree_white_right_arrow : getTreeCollapsedIcon();
+    if (isUnderAquaBasedLookAndFeel() ||
+        isUnderNimbusLookAndFeel() ||
+        isUnderGTKLookAndFeel() ||
+        isUnderDarcula() ||
+        (isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))) {
+      return AllIcons.Mac.Tree_white_right_arrow;
+    }
+    return getTreeCollapsedIcon();
   }
 
   public static Icon getTreeSelectedExpandedIcon() {
-    return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF()
-           ? AllIcons.Mac.Tree_white_down_arrow : getTreeExpandedIcon();
+    if (isUnderAquaBasedLookAndFeel() ||
+        isUnderNimbusLookAndFeel() ||
+        isUnderGTKLookAndFeel() ||
+        isUnderDarcula() ||
+        (isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))) {
+      return AllIcons.Mac.Tree_white_down_arrow;
+    }
+    return getTreeExpandedIcon();
   }
 
   public static Border getTableHeaderCellBorder() {
@@ -1355,6 +1389,10 @@ public class UIUtil {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderDarcula() {
     return UIManager.getLookAndFeel().getName().contains("Darcula");
+  }
+
+  public static boolean isUnderWin10LookAndFeel() {
+    return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -2031,6 +2069,35 @@ public class UIUtil {
     g.drawString(s, x, y);
   }
 
+  /**
+   * Draws a centered string in the passed rectangle.
+   * @param g the {@link Graphics} instance to draw to
+   * @param rect the {@link Rectangle} to use as bounding box
+   * @param str the string to draw
+   * @param horzCentered if true, the string will be centered horizontally
+   * @param vertCentered if true, the string will be centered vertically
+   */
+  public static void drawCenteredString(Graphics2D g, Rectangle rect, String str, boolean horzCentered, boolean vertCentered) {
+    FontMetrics fm = g.getFontMetrics(g.getFont());
+    int textWidth = fm.stringWidth(str);
+    int x = horzCentered ? Math.max(rect.x, rect.x + (rect.width - textWidth) / 2) : rect.x;
+    int y = vertCentered ? Math.max(rect.y, rect.y + rect.height / 2 + fm.getAscent() * 2 / 5) : rect.y;
+    Shape oldClip = g.getClip();
+    g.clip(rect);
+    g.drawString(str, x, y);
+    g.setClip(oldClip);
+  }
+
+  /**
+   * Draws a centered string in the passed rectangle.
+   * @param g the {@link Graphics} instance to draw to
+   * @param rect the {@link Rectangle} to use as bounding box
+   * @param str the string to draw
+   */
+  public static void drawCenteredString(Graphics2D g, Rectangle rect, String str) {
+    drawCenteredString(g, rect, str, true, true);
+  }
+
   public static boolean isFocusAncestor(@NotNull final JComponent component) {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (owner == null) return false;
@@ -2078,7 +2145,7 @@ public class UIUtil {
   }
 
   @Nullable
-  public static Component findParentByCondition(@NotNull Component c, Condition<Component> condition) {
+  public static Component findParentByCondition(@Nullable Component c, @NotNull Condition<Component> condition) {
     Component eachParent = c;
     while (eachParent != null) {
       if (condition.value(eachParent)) return eachParent;
@@ -2308,7 +2375,7 @@ public class UIUtil {
   public static HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     Font font = getLabelFont();
     @NonNls String family = !SystemInfo.isWindows && font != null ? font.getFamily() : "Tahoma";
-    int size = font != null ? font.getSize() : JBUI.scale(11);
+    final int size = font != null ? font.getSize() : JBUI.scale(11);
 
     String customCss = String.format("body, div, p { font-family: %s; font-size: %s; }", family, size);
     if (noGapsBetweenParagraphs) {

@@ -48,15 +48,8 @@ public class SillyAssignmentInspection extends SillyAssignmentInspectionBase {
     @Nls
     @NotNull
     @Override
-    public String getName() {
-      return InspectionsBundle.message("assignment.to.itself.quickfix.name");
-    }
-
-    @Nls
-    @NotNull
-    @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionsBundle.message("assignment.to.itself.quickfix.name");
     }
 
     @Override

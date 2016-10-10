@@ -155,7 +155,6 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     VirtualFile root = GitUtil.getGitRoot(repositoryFilePath);
     GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.BLAME);
     h.setStdoutSuppressed(true);
-    h.setCharset(file.getCharset());
     h.addParameters("--porcelain", "-l", "-t", "-w");
     if (revision == null) {
       h.addParameters("HEAD");
@@ -200,7 +199,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
           GitFileAnnotation newFileAnnotation = new GitFileAnnotation(fileAnnotation);
           newFileAnnotation.setRevisions(revisions);
           fileAnnotation.reload(newFileAnnotation);
-        });
+        }, myProject.getDisposed());
       },
       ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
     );

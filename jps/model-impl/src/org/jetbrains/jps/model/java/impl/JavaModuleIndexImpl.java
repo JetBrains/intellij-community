@@ -32,20 +32,27 @@ import java.util.Properties;
 import java.util.Set;
 
 public class JavaModuleIndexImpl extends JavaModuleIndex {
-  private static final String INDEX_NAME = "jigsaw.map";
+  private static final String INDEX_PATH = "jigsaw/module-info.map";
   private static final String NULL_PATH = "-";
   private static final String MODULE_INFO_FILE = "module-info.java";
 
   private final Map<String, File> myMapping;
+  private final boolean myComplete;
+
+  private JavaModuleIndexImpl() {
+    myMapping = ContainerUtil.newHashMap();
+    myComplete = false;
+  }
 
   private JavaModuleIndexImpl(Map<String, File> mapping) {
-    myMapping = mapping;
+    myMapping = Collections.unmodifiableMap(mapping);
+    myComplete = true;
   }
 
   @Override
   public @Nullable File getModuleInfoFile(@NotNull JpsModule module) {
     String key = module.getName();
-    if (myMapping.containsKey(key)) {
+    if (myComplete || myMapping.containsKey(key)) {
       return myMapping.get(key);
     }
 
@@ -76,15 +83,15 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
     return null;
   }
 
-  public static void store(@NotNull File indexDir, @NotNull Map<String, String> mapping) throws IOException {
+  public static void store(@NotNull File storageRoot, @NotNull Map<String, String> mapping) throws IOException {
     Properties p = new Properties();
     for (String key : mapping.keySet()) {
       String path = mapping.get(key);
       p.setProperty(key, path != null ? FileUtil.toSystemDependentName(path) : NULL_PATH);
     }
 
-    FileUtil.ensureExists(indexDir);
-    File index = new File(indexDir, INDEX_NAME);
+    File index = new File(storageRoot, INDEX_PATH);
+    FileUtil.createParentDirs(index);
 
     Writer writer = new OutputStreamWriter(new FileOutputStream(index), CharsetToolkit.UTF8_CHARSET);
     try {
@@ -95,11 +102,10 @@ public class JavaModuleIndexImpl extends JavaModuleIndex {
     }
   }
 
-  public static JavaModuleIndex load(@NotNull File indexDir) {
-    File index = new File(indexDir, INDEX_NAME);
+  public static JavaModuleIndex load(@NotNull File storageRoot) {
+    File index = new File(storageRoot, INDEX_PATH);
     if (!index.exists()) {
-      Map<String, File> mapping = ContainerUtil.newHashMap();
-      return new JavaModuleIndexImpl(mapping);
+      return new JavaModuleIndexImpl();
     }
 
     Properties p = new Properties();

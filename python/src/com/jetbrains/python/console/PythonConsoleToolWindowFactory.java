@@ -16,6 +16,7 @@
 package com.jetbrains.python.console;
 
 import com.intellij.execution.console.LanguageConsoleView;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -37,6 +38,6 @@ public class PythonConsoleToolWindowFactory implements ToolWindowFactory, DumbAw
         PythonConsoleToolWindow.getInstance(project).initialized();
       }
     });
-    runner.run();
+    TransactionGuard.submitTransaction(project, () -> runner.run());
   }
 }

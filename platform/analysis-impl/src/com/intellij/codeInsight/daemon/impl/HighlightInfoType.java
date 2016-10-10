@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.DeprecationUtil;
 import com.intellij.codeInspection.InspectionProfile;
@@ -341,8 +340,8 @@ public interface HighlightInfoType {
     @NotNull
     public HighlightSeverity getSeverity(final PsiElement psiElement) {
       InspectionProfile profile = psiElement == null
-                                  ? (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()
-                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getInspectionProfile();
+                                  ? InspectionProfileManager.getInstance().getCurrentProfile()
+                                  : InspectionProjectProfileManager.getInstance(psiElement.getProject()).getCurrentProfile();
       return profile.getErrorLevel(myToolKey, psiElement).getSeverity();
     }
 

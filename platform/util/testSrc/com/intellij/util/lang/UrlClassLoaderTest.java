@@ -53,6 +53,17 @@ public class UrlClassLoaderTest {
   }
 
   @Test
+  public void testNonCanonicalPaths() throws IOException {
+    File root = FileUtil.createTempDirectory("testNonCanonicalPaths", "");
+    File subDir = createTestDir(root, "dir");
+    createTestFile(subDir, "a.txt");
+
+    UrlClassLoader loader = UrlClassLoader.build().urls(root.toURI().toURL()).get();
+    assertNotNull(loader.getResourceAsStream("/dir/a.txt"));
+    assertNotNull(loader.getResourceAsStream("/dir/a.txt/../a.txt"));
+  }
+
+  @Test
   public void testConcurrentResourceLoading() throws Exception {
     List<String> resourceNames = ContainerUtil.newArrayList();
     List<URL> urls = ContainerUtil.newArrayList();

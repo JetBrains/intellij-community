@@ -16,19 +16,23 @@ public class SameParameterValueTest extends InspectionTestCase {
     return "sameParameterValue/" + getTestName(true);
   }
 
-  public void testEntryPoint() throws Exception {
+  public void testEntryPoint() {
     doTest(getTestDir(), myTool, false, true);
   }
 
-  public void testWithoutDeadCode() throws Exception {
+  public void testWithoutDeadCode() {
     doTest(getTestDir(), myTool, false, false);
   }
 
-  public void testVarargs() throws Exception {
+  public void testVarargs() {
     doTest(getTestDir(), myTool, false, true);
   }
 
-  public void testSimpleVararg() throws Exception {
+  public void testSimpleVararg() {
+    doTest(getTestDir(), myTool, false, true);
+  }
+  
+  public void testMethodWithSuper() {
     doTest(getTestDir(), myTool, false, true);
   }
 }

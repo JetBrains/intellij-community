@@ -16,6 +16,8 @@
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.markup.GutterDraggableObject;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -102,6 +104,8 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
     }
     else if (myAttachedObject instanceof DnDNativeTarget.EventInfo) {
       return ((DnDNativeTarget.EventInfo)myAttachedObject).getFlavors();
+    } else if (myAttachedObject instanceof GutterIconRenderer) {
+      return GutterDraggableObject.getFlavors();
     }
     return new DataFlavor[]{ourDataFlavor};
   }

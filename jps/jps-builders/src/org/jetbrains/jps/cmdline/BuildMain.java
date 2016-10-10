@@ -67,128 +67,134 @@ public class BuildMain {
   @Nullable 
   private static PreloadedData ourPreloadedData;
 
-  public static void main(String[] args){
-    final long processStart = System.currentTimeMillis();
-    final String startMessage = "Build process started. Classpath: " + System.getProperty("java.class.path");
-    System.out.println(startMessage);
-    LOG.info(startMessage);
-    
-    final String host = args[HOST_ARG];
-    final int port = Integer.parseInt(args[PORT_ARG]);
-    final UUID sessionId = UUID.fromString(args[SESSION_ID_ARG]);
-    @SuppressWarnings("ConstantConditions")
-    final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
-    Utils.setSystemRoot(systemDir);
+  public static void main(String[] args) throws Throwable{
+    try {
+      final long processStart = System.currentTimeMillis();
+      final String startMessage = "Build process started. Classpath: " + System.getProperty("java.class.path");
+      System.out.println(startMessage);
+      LOG.info(startMessage);
 
-    final long connectStart = System.currentTimeMillis();
-    // IDEA-123132, let's try again
-    for (int attempt = 0; attempt < 3; attempt++) {
-      try {
-        ourEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());
-        break;
-      }
-      catch (IllegalStateException e) {
-        if (attempt == 2) {
-          printErrorAndExit(host, port, e);
-          return;
-        }
-        else {
-          LOG.warn("Cannot create event loop, attempt #" + attempt, e);
-          try {
-            //noinspection BusyWait
-            Thread.sleep(10 * (attempt + 1));
-          }
-          catch (InterruptedException ignored) {
-          }
-        }
-      }
-    }
+      final String host = args[HOST_ARG];
+      final int port = Integer.parseInt(args[PORT_ARG]);
+      final UUID sessionId = UUID.fromString(args[SESSION_ID_ARG]);
+      @SuppressWarnings("ConstantConditions")
+      final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
+      Utils.setSystemRoot(systemDir);
 
-    final Bootstrap bootstrap = new Bootstrap().group(ourEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer() {
-      @Override
-      protected void initChannel(Channel channel) throws Exception {
-        channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
-                                   new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
-                                   new ProtobufVarint32LengthFieldPrepender(),
-                                   new ProtobufEncoder(),
-                                   new MyMessageHandler(sessionId));
-      }
-    }).option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
-
-    final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port)).awaitUninterruptibly();
-
-    
-    final boolean success = future.isSuccess();
-    if (success) {
-      LOG.info("Connection to IDE established in " + (System.currentTimeMillis() - connectStart) + " ms");
-
-      final String projectPathToPreload = System.getProperty(PRELOAD_PROJECT_PATH, null);
-      final String globalsPathToPreload = System.getProperty(PRELOAD_CONFIG_PATH, null); 
-      if (projectPathToPreload != null && globalsPathToPreload != null) {
-        final PreloadedData data = new PreloadedData();
-        ourPreloadedData = data;
+      final long connectStart = System.currentTimeMillis();
+      // IDEA-123132, let's try again
+      for (int attempt = 0; attempt < 3; attempt++) {
         try {
-          FileSystemUtil.getAttributes(projectPathToPreload); // this will pre-load all FS optimizations
-
-          final BuildRunner runner = new BuildRunner(new JpsModelLoaderImpl(projectPathToPreload, globalsPathToPreload, null));
-          data.setRunner(runner);
-
-          final File dataStorageRoot = Utils.getDataStorageRoot(projectPathToPreload);
-          final BuildFSState fsState = new BuildFSState(false);
-          final ProjectDescriptor pd = runner.load(new MessageHandler() {
-            @Override
-            public void processMessage(BuildMessage msg) {
-              data.addMessage(msg);
-            }
-          }, dataStorageRoot, fsState);
-          data.setProjectDescriptor(pd);
-          
-          try {
-            final File fsStateFile = new File(dataStorageRoot, BuildSession.FS_STATE_FILE);
-            final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(fsStateFile)));
+          ourEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());
+          break;
+        }
+        catch (IllegalStateException e) {
+          if (attempt == 2) {
+            printErrorAndExit(host, port, e);
+            return;
+          }
+          else {
+            LOG.warn("Cannot create event loop, attempt #" + attempt, e);
             try {
-              final int version = in.readInt();
-              if (version == BuildFSState.VERSION) {
-                final long savedOrdinal = in.readLong();
-                final boolean hasWorkToDo = in.readBoolean();// must skip "has-work-to-do" flag
-                fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
-                data.setFsEventOrdinal(savedOrdinal);
-                data.setHasHasWorkToDo(hasWorkToDo);
+              //noinspection BusyWait
+              Thread.sleep(10 * (attempt + 1));
+            }
+            catch (InterruptedException ignored) {
+            }
+          }
+        }
+      }
+
+      final Bootstrap bootstrap = new Bootstrap().group(ourEventLoopGroup).channel(NioSocketChannel.class).handler(new ChannelInitializer() {
+        @Override
+        protected void initChannel(Channel channel) throws Exception {
+          channel.pipeline().addLast(new ProtobufVarint32FrameDecoder(),
+                                     new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
+                                     new ProtobufVarint32LengthFieldPrepender(),
+                                     new ProtobufEncoder(),
+                                     new MyMessageHandler(sessionId));
+        }
+      }).option(ChannelOption.TCP_NODELAY, true).option(ChannelOption.SO_KEEPALIVE, true);
+
+      final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port)).awaitUninterruptibly();
+
+
+      final boolean success = future.isSuccess();
+      if (success) {
+        LOG.info("Connection to IDE established in " + (System.currentTimeMillis() - connectStart) + " ms");
+
+        final String projectPathToPreload = System.getProperty(PRELOAD_PROJECT_PATH, null);
+        final String globalsPathToPreload = System.getProperty(PRELOAD_CONFIG_PATH, null);
+        if (projectPathToPreload != null && globalsPathToPreload != null) {
+          final PreloadedData data = new PreloadedData();
+          ourPreloadedData = data;
+          try {
+            FileSystemUtil.getAttributes(projectPathToPreload); // this will pre-load all FS optimizations
+
+            final BuildRunner runner = new BuildRunner(new JpsModelLoaderImpl(projectPathToPreload, globalsPathToPreload, null));
+            data.setRunner(runner);
+
+            final File dataStorageRoot = Utils.getDataStorageRoot(projectPathToPreload);
+            final BuildFSState fsState = new BuildFSState(false);
+            final ProjectDescriptor pd = runner.load(new MessageHandler() {
+              @Override
+              public void processMessage(BuildMessage msg) {
+                data.addMessage(msg);
+              }
+            }, dataStorageRoot, fsState);
+            data.setProjectDescriptor(pd);
+
+            try {
+              final File fsStateFile = new File(dataStorageRoot, BuildSession.FS_STATE_FILE);
+              final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(fsStateFile)));
+              try {
+                final int version = in.readInt();
+                if (version == BuildFSState.VERSION) {
+                  final long savedOrdinal = in.readLong();
+                  final boolean hasWorkToDo = in.readBoolean();// must skip "has-work-to-do" flag
+                  fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
+                  data.setFsEventOrdinal(savedOrdinal);
+                  data.setHasHasWorkToDo(hasWorkToDo);
+                }
+              }
+              finally {
+                in.close();
               }
             }
-            finally {
-              in.close();
+            catch (FileNotFoundException ignored) {
             }
-          }
-          catch (FileNotFoundException ignored) {
-          }
-          catch (IOException e) {
-            LOG.info("Error pre-loading FS state", e);
-            fsState.clearAll();
-          }
+            catch (IOException e) {
+              LOG.info("Error pre-loading FS state", e);
+              fsState.clearAll();
+            }
 
-          // preloading target configurations
-          final BuildTargetsState targetsState = pd.getTargetsState();
-          for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
-            targetsState.getTargetConfiguration(target);
+            // preloading target configurations
+            final BuildTargetsState targetsState = pd.getTargetsState();
+            for (BuildTarget<?> target : pd.getBuildTargetIndex().getAllTargets()) {
+              targetsState.getTargetConfiguration(target);
+            }
+
+            BuilderRegistry.getInstance();
+
+            LOG.info("Pre-loaded process ready in " + (System.currentTimeMillis() - processStart) + " ms");
           }
-
-          BuilderRegistry.getInstance();
-
-          LOG.info("Pre-loaded process ready in " + (System.currentTimeMillis() - processStart) + " ms");
+          catch (Throwable e) {
+            LOG.info("Failed to pre-load project " + projectPathToPreload, e);
+            // just failed to preload the project, the situation will be handled later, when real build starts
+          }
         }
-        catch (Throwable e) {
-          LOG.info("Failed to pre-load project " + projectPathToPreload, e);
-          // just failed to preload the project, the situation will be handled later, when real build starts
+        else if (projectPathToPreload != null || globalsPathToPreload != null){
+          LOG.info("Skipping project pre-loading step: both paths to project configuration files and path to global settings must be specified");
         }
+        future.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createParamRequest()));
       }
-      else if (projectPathToPreload != null || globalsPathToPreload != null){
-        LOG.info("Skipping project pre-loading step: both paths to project configuration files and path to global settings must be specified");
+      else {
+        printErrorAndExit(host, port, future.cause());
       }
-      future.channel().writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createParamRequest()));
     }
-    else {
-      printErrorAndExit(host, port, future.cause());
+    catch (Throwable e) {
+      LOG.error(e);
+      throw e;
     }
   }
 

@@ -16,6 +16,7 @@
 package com.intellij.ide.customize;
 
 import com.intellij.ide.WelcomeWizardUtil;
+import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 
 public class PluginGroups {
@@ -84,12 +86,36 @@ public class PluginGroups {
     PluginManagerCore.loadDisabledPlugins(new File(PathManager.getConfigPath()).getPath(), myDisabledPluginIds);
 
     initGroups(myTree, myFeaturedPlugins);
+    initCloudPlugins();
   }
 
   public void setLoadingCallback(Runnable loadingCallback) {
     myLoadingCallback = loadingCallback;
     if (!myPluginsFromRepository.isEmpty()) {
       myLoadingCallback.run();
+    }
+  }
+
+  private void initCloudPlugins() {
+    CloudConfigProvider provider = CloudConfigProvider.getProvider();
+    if (provider == null) {
+      return;
+    }
+
+    List<String> plugins = provider.getInstalledPlugins();
+    if (plugins.isEmpty()) {
+      return;
+    }
+
+    for (Iterator<Entry<String, String>> I = myFeaturedPlugins.entrySet().iterator(); I.hasNext(); ) {
+      String value = I.next().getValue();
+      if (ContainerUtil.find(plugins, plugin -> value.endsWith(":" + plugin)) != null) {
+        I.remove();
+      }
+    }
+
+    for (String plugin : plugins) {
+      myFeaturedPlugins.put(plugin, "#Cloud:#Cloud:" + plugin);
     }
   }
 
@@ -263,7 +289,7 @@ public class PluginGroups {
   private void initIfNeed() {
     if (myInitialized) return;
     myInitialized = true;
-    for (Map.Entry<String, Pair<Icon, List<String>>> entry : myTree.entrySet()) {
+    for (Entry<String, Pair<Icon, List<String>>> entry : myTree.entrySet()) {
       final String group = entry.getKey();
       if (CORE.equals(group)) continue;
 

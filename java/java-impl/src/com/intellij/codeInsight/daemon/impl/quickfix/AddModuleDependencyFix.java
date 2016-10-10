@@ -44,20 +44,19 @@ import java.util.*;
  * @author anna
  * @since 20.11.2012
  */
-class AddModuleDependencyFix extends OrderEntryFix {
+class AddModuleDependencyFix extends AddOrderEntryFix {
   private static final Logger LOG = Logger.getInstance(AddModuleDependencyFix.class);
 
   private final Module myCurrentModule;
   private final VirtualFile myRefVFile;
   private final List<PsiClass> myClasses;
-  private final PsiReference myReference;
   private final Set<Module> myModules;
 
   public AddModuleDependencyFix(Module currentModule, VirtualFile refVFile, List<PsiClass> classes, PsiReference reference) {
+    super(reference);
     myCurrentModule = currentModule;
     myRefVFile = refVFile;
     myClasses = classes;
-    myReference = reference;
     myModules = new LinkedHashSet<>();
 
     final PsiElement psiElement = reference.getElement();
@@ -79,10 +78,10 @@ class AddModuleDependencyFix extends OrderEntryFix {
   }
 
   public AddModuleDependencyFix(Module currentModule, VirtualFile refVFile, Set<Module> modules, PsiReference reference) {
+    super(reference);
     myCurrentModule = currentModule;
     myRefVFile = refVFile;
     myClasses = Collections.emptyList();
-    myReference = reference;
     myModules = modules;
   }
 

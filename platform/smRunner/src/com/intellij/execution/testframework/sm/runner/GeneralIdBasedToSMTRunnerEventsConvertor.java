@@ -374,6 +374,18 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     return myRunningTestNodes.iterator().next();
   }
 
+  @Override
+  public void onRootPresentationAdded(final String rootName, final String comment, final String rootLocation) {
+    addToInvokeLater(() -> {
+      myTestsRootProxy.setPresentation(rootName);
+      myTestsRootProxy.setComment(comment);
+      myTestsRootProxy.setRootLocationUrl(rootLocation);
+      if (myLocator != null) {
+        myTestsRootProxy.setLocator(myLocator);
+      }
+    });
+  }
+
   private enum State {
     NOT_RUNNING, RUNNING, FINISHED, FAILED, IGNORED
   }

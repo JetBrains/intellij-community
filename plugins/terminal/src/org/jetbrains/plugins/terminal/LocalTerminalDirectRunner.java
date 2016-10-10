@@ -164,13 +164,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     if (SystemInfo.isUnix) {
       List<String> command = Lists.newArrayList(shellPath.split(" "));
 
-      String shellName = command.size() > 0 ? getShellName(command.get(0)) : null;
+      String shellCommand = command.get(0);
+      String shellName = command.size() > 0 ? getShellName(shellCommand) : null;
 
 
       if (shellName != null) {
         command.remove(0);
 
-        List<String> result = Lists.newArrayList(shellName);
+        List<String> result = Lists.newArrayList(shellCommand);
 
         String rcFilePath = findRCFile(shellName);
 

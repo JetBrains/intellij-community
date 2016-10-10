@@ -37,6 +37,7 @@ import com.intellij.openapi.project.impl.ProjectStoreClassProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VfsUtil
@@ -47,6 +48,7 @@ import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.text.nullize
 import org.jdom.Element
 import java.io.File
 import java.io.IOException
@@ -104,8 +106,16 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   }
 
   override final fun getProjectBasePath(): String {
-    val path = PathUtilRt.getParentPath(projectFilePath)
-    return if (scheme == StorageScheme.DEFAULT) path else PathUtilRt.getParentPath(path)
+    if (isDirectoryBased) {
+      val path = PathUtilRt.getParentPath(storageManager.expandMacro(PROJECT_CONFIG_DIR))
+      if (Registry.`is`("store.basedir.parent.detection", true) && path.startsWith("${Project.DIRECTORY_STORE_FOLDER}.")) {
+        return PathUtilRt.getParentPath(path)
+      }
+      return path
+    }
+    else {
+      return PathUtilRt.getParentPath(projectFilePath)
+    }
   }
 
   // used in upsource
@@ -134,9 +144,8 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     else {
       scheme = StorageScheme.DIRECTORY_BASED
 
-      val file = File(filePath)
       // if useOldWorkspaceContentIfExists false, so, file path is expected to be correct (we must avoid file io operations)
-      val isDir = !useOldWorkspaceContentIfExists || file.isDirectory
+      val isDir = !useOldWorkspaceContentIfExists || Paths.get(filePath).isDirectory()
       val configDir = "${(if (isDir) filePath else PathUtilRt.getParentPath(filePath))}/${Project.DIRECTORY_STORE_FOLDER}"
       storageManager.addMacro(PROJECT_CONFIG_DIR, configDir)
       storageManager.addMacro(PROJECT_FILE, "$configDir/misc.xml")
@@ -151,7 +160,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !file.exists()
+        isOptimiseTestLoadSpeed = !Paths.get(filePath).exists()
       }
 
       if (refreshVfs) {
@@ -217,6 +226,24 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       }
     }
   }
+
+  override fun isProjectFile(file: VirtualFile): Boolean {
+    if (!file.isInLocalFileSystem) {
+      return false
+    }
+
+    val filePath = file.path
+    if (!isDirectoryBased) {
+      return filePath == projectFilePath || filePath == workspaceFilePath
+    }
+    return FileUtil.isAncestor(PathUtilRt.getParentPath(projectFilePath), filePath, false)
+  }
+
+  override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = if (!ignoreProjectStorageScheme && !isDirectoryBased) null else PathUtilRt.getParentPath(projectFilePath).nullize()
+
+  override fun getDirectoryStoreFile() = directoryStorePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+
+  override fun getDirectoryStorePathOrBase() = PathUtilRt.getParentPath(projectFilePath)
 }
 
 private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {

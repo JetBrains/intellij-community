@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenModel;
 
@@ -30,6 +31,7 @@ public interface MavenServer extends Remote {
 
   MavenServerIndexer createIndexer() throws RemoteException;
 
+  @NotNull
   MavenModel interpolateAndAlignModel(MavenModel model, File basedir) throws RemoteException;
 
   MavenModel assembleInheritance(MavenModel model, MavenModel parentModel) throws RemoteException;

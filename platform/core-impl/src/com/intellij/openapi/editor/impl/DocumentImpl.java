@@ -18,7 +18,11 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
@@ -85,6 +89,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private boolean myEventsHandling;
   private final boolean myAssertThreading;
   private volatile boolean myDoingBulkUpdate;
+  private volatile Throwable myBulkUpdateEnteringTrace;
   private boolean myUpdatingBulkModeStatus;
   private volatile boolean myAcceptSlashR;
   private boolean myChangeInProgress;
@@ -185,7 +190,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   @TestOnly
   public boolean stripTrailingSpaces(Project project, boolean inChangedLinesOnly) {
-    return stripTrailingSpaces(project, inChangedLinesOnly, false, new int[0]);
+    return stripTrailingSpaces(project, inChangedLinesOnly, true, new int[0]);
   }
 
   /**
@@ -193,7 +198,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
    */
   boolean stripTrailingSpaces(@Nullable final Project project,
                               boolean inChangedLinesOnly,
-                              boolean virtualSpaceEnabled,
+                              boolean skipCaretLines,
                               @NotNull int[] caretOffsets) {
     if (!isStripTrailingSpacesEnabled) {
       return true;
@@ -216,7 +221,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     CharSequence text = myText;
     TIntObjectHashMap<List<RangeMarker>> caretMarkers = new TIntObjectHashMap<List<RangeMarker>>(caretOffsets.length);
     try {
-      if (!virtualSpaceEnabled) {
+      if (skipCaretLines) {
         for (int caretOffset : caretOffsets) {
           if (caretOffset < 0 || caretOffset > getTextLength()) {
             continue;
@@ -246,7 +251,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
           whiteSpaceStart = offset;
         }
         if (whiteSpaceStart == -1) continue;
-        if (!virtualSpaceEnabled) {
+        if (skipCaretLines) {
           List<RangeMarker> markers = caretMarkers.get(line);
           if (markers != null) {
             for (RangeMarker marker : markers) {
@@ -609,6 +614,10 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       final Application application = ApplicationManager.getApplication();
       if (application != null) {
         application.assertWriteAccessAllowed();
+        VirtualFile file = FileDocumentManager.getInstance().getFile(this);
+        if (file != null && file.isInLocalFileSystem()) {
+          ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
+        }
       }
     }
   }
@@ -1038,10 +1047,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       if (value) {
         getPublisher().updateStarted(this);
         notifyInternalListenersOnBulkModeStarted();
+        myBulkUpdateEnteringTrace = new Throwable();
         myDoingBulkUpdate = true;
       }
       else {
         myDoingBulkUpdate = false;
+        myBulkUpdateEnteringTrace = null;
         notifyInternalListenersOnBulkModeFinished();
         getPublisher().updateFinished(this);
       }
@@ -1146,10 +1157,29 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       synchronized (myLineSetLock) {
         frozen = myFrozen;
         if (frozen == null) {
-          frozen = new FrozenDocument(myText, getLineSet(), myModificationStamp, SoftReference.dereference(myTextString));
+          frozen = new FrozenDocument(myText, myLineSet, myModificationStamp, SoftReference.dereference(myTextString));
         }
       }
     }
     return frozen;
+  }
+
+  public void assertNotInBulkUpdate() {
+    if (myDoingBulkUpdate) throw new UnexpectedBulkUpdateStateException(myBulkUpdateEnteringTrace);
+  }
+
+  private static class UnexpectedBulkUpdateStateException extends RuntimeException implements ExceptionWithAttachments {
+    private final Attachment[] myAttachments;
+
+    private UnexpectedBulkUpdateStateException(Throwable enteringTrace) {
+      myAttachments = enteringTrace == null ? Attachment.EMPTY_ARRAY
+                                            : new Attachment[] {new Attachment("enteringTrace.txt", enteringTrace)};
+    }
+
+    @NotNull
+    @Override
+    public Attachment[] getAttachments() {
+      return myAttachments;
+    }
   }
 }

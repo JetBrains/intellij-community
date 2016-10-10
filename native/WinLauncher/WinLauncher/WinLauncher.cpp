@@ -900,7 +900,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
     return 0;
   }
 
-  if (!CheckSingleInstance()) return 1;
+  //it's OK to return 0 here, because the control is transferred to the first instance
+  if (!CheckSingleInstance()) return 0;
 
   if (nativesplash = wcsstr(lpCmdLine, _T("/nativesplash")) != NULL) StartSplashProcess();
 

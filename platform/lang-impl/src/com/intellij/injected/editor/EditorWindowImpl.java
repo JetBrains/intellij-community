@@ -78,6 +78,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   private final MarkupModelWindow myDocumentMarkupModelDelegate;
   private final FoldingModelWindow myFoldingModelWindow;
   private final SoftWrapModelWindow mySoftWrapModel;
+  private final InlayModelWindow myInlayModel;
 
   public static Editor create(@NotNull final DocumentWindowImpl documentRange, @NotNull final EditorImpl editor, @NotNull final PsiFile injectedFile) {
     assert documentRange.isValid();
@@ -116,6 +117,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     myDocumentMarkupModelDelegate = new MarkupModelWindow(myDelegate.getFilteredDocumentMarkupModel(), myDocumentWindow);
     myFoldingModelWindow = new FoldingModelWindow(delegate.getFoldingModel(), documentWindow, this);
     mySoftWrapModel = new SoftWrapModelWindow(this);
+    myInlayModel = new InlayModelWindow();
   }
 
   public static void disposeInvalidEditors() {
@@ -304,7 +306,7 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
   @NotNull
   @Override
   public InlayModel getInlayModel() {
-    throw new UnsupportedOperationException();
+    return myInlayModel;
   }
 
   @Override

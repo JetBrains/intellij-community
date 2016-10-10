@@ -213,12 +213,15 @@ public class PluginDownloader {
   }
 
   public void install() throws IOException {
-    LOG.assertTrue(myFile != null);
+    LOG.assertTrue(myFile != null, "Cannot install plugin '" + getPluginName()+"'");
+
+    if (myFile == null) throw new IOException("Cannot find file for plugin '" + getPluginName()+"'");
+
     if (myOldFile != null) {
       StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(myOldFile);
       StartupActionScriptManager.addActionCommand(deleteOld);
     }
-    PluginInstaller.install(myFile, getPluginName(), true);
+    PluginInstaller.install(myFile, getPluginName(), true, myDescriptor);
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
       state.onPluginInstall(myDescriptor);

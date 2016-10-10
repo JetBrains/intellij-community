@@ -33,6 +33,9 @@ public class OwnerOptional {
   @NotNull
   private static Window findOwnerByComponent(Component component) {
     if (component == null) component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    if (component == null) {
+      component = Window.getWindows()[0];
+    }
     return (component instanceof Window) ? (Window) component : SwingUtilities.getWindowAncestor(component);
   }
 

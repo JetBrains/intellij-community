@@ -152,22 +152,23 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
         }
       }
       if (argument instanceof PsiReferenceExpression) {
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)argument;
-        final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiModifierListOwner) || !NullableNotNullManager.isNotNull((PsiModifierListOwner)target)) {
-          // don't warn because unwrapping when null would change semantics
+        if (couldChangeSemantics((PsiReferenceExpression)argument)) {
           return;
         }
       }
-      else if (argument instanceof PsiMethodCallExpression){
+      else if (argument instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)argument;
-        final PsiMethod method1 = methodCallExpression.resolveMethod();
-        if (method1 == null || !NullableNotNullManager.isNotNull(method1)) {
-          // don't warn because unwrapping when null would change semantics
+        if (couldChangeSemantics(methodCallExpression.getMethodExpression())) {
           return;
         }
       }
       registerError(expression, calculateReplacementText(argument));
+    }
+
+    private static boolean couldChangeSemantics(PsiReferenceExpression referenceExpression) {
+      final PsiElement target = referenceExpression.resolve();
+      // unwrapping when null will change semantics
+      return !(target instanceof PsiModifierListOwner && NullableNotNullManager.isNotNull((PsiModifierListOwner)target));
     }
   }
 }

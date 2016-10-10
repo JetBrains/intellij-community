@@ -67,6 +67,12 @@ abstract class ProductProperties {
   String additionalIdeJvmArguments = ""
 
   /**
+   * If not null the specified options will be used instead the default memory options in JVM command line (for 64-bit JVM) in IDE launchers
+   * for all operating systems.
+   */
+  String customJvmMemoryOptionsX64 = null
+
+  /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
@@ -155,6 +161,27 @@ abstract class ProductProperties {
   boolean enableYourkitAgentInEAP = false
 
   List<String> excludedPlugins = []
+
+  /**
+   * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
+   * todo[nik] get rid of this
+   */
+  List<String> additionalModulesToCompile = []
+
+  /**
+   * Specified modules which tests need to be compiled when product is built.
+   * todo[nik] get rid of this
+   */
+  List<String> modulesToCompileTests = []
+
+  /**
+   * Specify list of modules on which some modules packaged into the main jar depend, but which aren't included into the main jar. These
+   * modules will be added to the classpath to properly scramble the main jar.
+   * <strong>This is a temporary hack added specifically for AppCode. It's strongly recommended to either include these modules into the
+   * main jar or get rid of such dependencies.</strong> <br>
+   * todo[nik] get rid of this
+   */
+  List<String> additionalModulesRequiredForScrambling = []
 
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK

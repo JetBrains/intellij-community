@@ -60,6 +60,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -85,7 +86,6 @@ import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -357,7 +357,6 @@ public class ExternalSystemUtil {
    * @param callback              callback to be notified on refresh result
    * @param isPreviewMode         flag that identifies whether gradle libraries should be resolved during the refresh
    * @param reportRefreshError    prevent to show annoying error notification, e.g. if auto-import mode used
-   * @return the most up-to-date gradle project (if any)
    */
   public static void refreshProject(@NotNull final Project project,
                                     @NotNull final ProjectSystemId externalSystemId,
@@ -474,37 +473,38 @@ public class ExternalSystemUtil {
       }
     };
 
-    ExternalSystemApiUtil.executeOnEdt(true, () -> {
-      final String title;
-      switch (progressExecutionMode) {
-        case MODAL_SYNC:
-          title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
-          new Task.Modal(project, title, true) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              refreshProjectStructureTask.execute(indicator);
-            }
-          }.queue();
-          break;
-        case IN_BACKGROUND_ASYNC:
-          title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
-          new Task.Backgroundable(project, title) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              refreshProjectStructureTask.execute(indicator);
-            }
-          }.queue();
-          break;
-        case START_IN_FOREGROUND_ASYNC:
-          title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
-          new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              refreshProjectStructureTask.execute(indicator);
-            }
-          }.queue();
-      }
-    });
+    final String title;
+    switch (progressExecutionMode) {
+      case NO_PROGRESS_SYNC:
+      case NO_PROGRESS_ASYNC:
+        throw new ExternalSystemException("Please, use progress for the project import!");
+      case MODAL_SYNC:
+        title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
+        new Task.Modal(project, title, true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            refreshProjectStructureTask.execute(indicator);
+          }
+        }.queue();
+        break;
+      case IN_BACKGROUND_ASYNC:
+        title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+        new Task.Backgroundable(project, title) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            refreshProjectStructureTask.execute(indicator);
+          }
+        }.queue();
+        break;
+      case START_IN_FOREGROUND_ASYNC:
+        title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+        new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            refreshProjectStructureTask.execute(indicator);
+          }
+        }.queue();
+    }
   }
 
   public static void runTask(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
@@ -520,15 +520,28 @@ public class ExternalSystemUtil {
                              @NotNull final ProjectSystemId externalSystemId,
                              @Nullable final TaskCallback callback,
                              @NotNull final ProgressExecutionMode progressExecutionMode) {
-    final Pair<ProgramRunner, ExecutionEnvironment> pair = createRunner(taskSettings, executorId, project, externalSystemId);
-    if (pair == null) return;
+    runTask(taskSettings, executorId, project, externalSystemId, callback, progressExecutionMode, true);
+  }
 
-    final ProgramRunner runner = pair.first;
-    final ExecutionEnvironment environment = pair.second;
+  public static void runTask(@NotNull final ExternalSystemTaskExecutionSettings taskSettings,
+                             @NotNull final String executorId,
+                             @NotNull final Project project,
+                             @NotNull final ProjectSystemId externalSystemId,
+                             @Nullable final TaskCallback callback,
+                             @NotNull final ProgressExecutionMode progressExecutionMode,
+                             boolean activateToolWindowBeforeRun) {
+
+    ExecutionEnvironment environment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
+    if (environment == null) return;
+
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
+    assert runnerAndConfigurationSettings != null;
+    runnerAndConfigurationSettings.setActivateToolWindowBeforeRun(activateToolWindowBeforeRun);
 
     final TaskUnderProgress task = new TaskUnderProgress() {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
         final Semaphore targetDone = new Semaphore();
         final Ref<Boolean> result = new Ref<>(false);
         final Disposable disposable = Disposer.newDisposable();
@@ -563,13 +576,13 @@ public class ExternalSystemUtil {
         try {
           ApplicationManager.getApplication().invokeAndWait(() -> {
             try {
-              runner.execute(environment);
+              environment.getRunner().execute(environment);
             }
             catch (ExecutionException e) {
               targetDone.up();
               LOG.error(e);
             }
-          }, ModalityState.NON_MODAL);
+          }, ModalityState.defaultModalityState());
         }
         catch (Exception e) {
           LOG.error(e);
@@ -591,44 +604,45 @@ public class ExternalSystemUtil {
       }
     };
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        final String title = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
-        switch (progressExecutionMode) {
-          case MODAL_SYNC:
-            new Task.Modal(project, title, true) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                task.execute(indicator);
-              }
-            }.queue();
-            break;
-          case IN_BACKGROUND_ASYNC:
-            new Task.Backgroundable(project, title) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                task.execute(indicator);
-              }
-            }.queue();
-            break;
-          case START_IN_FOREGROUND_ASYNC:
-            new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                task.execute(indicator);
-              }
-            }.queue();
-        }
-      }
-    });
+    final String title = AbstractExternalSystemTaskConfigurationType.generateName(project, taskSettings);
+    switch (progressExecutionMode) {
+      case NO_PROGRESS_SYNC:
+        task.execute(new EmptyProgressIndicator());
+        break;
+      case MODAL_SYNC:
+        new Task.Modal(project, title, true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            task.execute(indicator);
+          }
+        }.queue();
+        break;
+      case NO_PROGRESS_ASYNC:
+        ApplicationManager.getApplication().executeOnPooledThread(() -> task.execute(new EmptyProgressIndicator()));
+        break;
+      case IN_BACKGROUND_ASYNC:
+        new Task.Backgroundable(project, title) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            task.execute(indicator);
+          }
+        }.queue();
+        break;
+      case START_IN_FOREGROUND_ASYNC:
+        new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            task.execute(indicator);
+          }
+        }.queue();
+    }
   }
 
   @Nullable
-  public static Pair<ProgramRunner, ExecutionEnvironment> createRunner(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
-                                                                       @NotNull String executorId,
-                                                                       @NotNull Project project,
-                                                                       @NotNull ProjectSystemId externalSystemId) {
+  public static ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                                @NotNull ProjectSystemId externalSystemId,
+                                                                @NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                                                                @NotNull String executorId) {
     Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
     if (executor == null) return null;
 
@@ -641,7 +655,19 @@ public class ExternalSystemUtil {
     RunnerAndConfigurationSettings settings = createExternalSystemRunnerAndConfigurationSettings(taskSettings, project, externalSystemId);
     if (settings == null) return null;
 
-    return Pair.create(runner, new ExecutionEnvironment(executor, runner, settings, project));
+    return new ExecutionEnvironment(executor, runner, settings, project);
+  }
+
+  /**
+   * @deprecated to be removed in IDEA 2017, use {@link #createExecutionEnvironment}
+   */
+  @Nullable
+  public static Pair<ProgramRunner, ExecutionEnvironment> createRunner(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
+                                                                       @NotNull String executorId,
+                                                                       @NotNull Project project,
+                                                                       @NotNull ProjectSystemId externalSystemId) {
+    ExecutionEnvironment executionEnvironment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
+    return executionEnvironment == null ? null : Pair.create(executionEnvironment.getRunner(), executionEnvironment);
   }
 
   @Nullable

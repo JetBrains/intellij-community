@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.spellchecker;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -24,13 +25,17 @@ import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static com.jetbrains.python.psi.PyUtil.StringNodeInfo;
 
 /**
  * @author yole
@@ -40,17 +45,17 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
     @Override
     public void tokenize(@NotNull PyStringLiteralExpression element, TokenConsumer consumer) {
       final Splitter splitter = PlainTextSplitter.getInstance();
-      final String text = element.getText();
-      if (text.indexOf('\\') >= 0 && !StringUtil.startsWithIgnoreCase(text, "r")) {
+      final List<ASTNode> strNodes = element.getStringNodes();
+      final List<String> prefixes = ContainerUtil.mapNotNull(strNodes, n -> StringUtil.nullize(new StringNodeInfo(n).getPrefix()));
+      
+      if (element.textContains('\\') && !prefixes.stream().anyMatch(PythonStringUtil::isRawPrefix)) {
         for (Pair<TextRange, String> fragment : element.getDecodedFragments()) {
           final String value = fragment.getSecond();
           final int startOffset = fragment.getFirst().getStartOffset();
           consumer.consumeToken(element, value, false, startOffset, TextRange.allOf(value), splitter);
         }
       }
-      else if (StringUtil.startsWithIgnoreCase(text, "u") || 
-               StringUtil.startsWithIgnoreCase(text, "r") ||
-               StringUtil.startsWithIgnoreCase(text, "b")) {
+      else if (!prefixes.isEmpty()) {
         for (TextRange valueTextRange : element.getStringValueTextRanges()) {
           final String value = valueTextRange.substring(element.getText());
           final int startOffset = valueTextRange.getStartOffset();

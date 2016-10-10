@@ -21,11 +21,15 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -39,6 +43,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author peter
@@ -243,10 +249,48 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState == null) return;
 
+    setupNonFilledArgumentRemoving(editor, templateState);
+
     editor.putUserData(ARGUMENT_TEMPLATE_ACTIVE, this);
     Disposer.register(templateState, () -> {
       if (editor.getUserData(ARGUMENT_TEMPLATE_ACTIVE) == this) {
         editor.putUserData(ARGUMENT_TEMPLATE_ACTIVE, null);
+      }
+    });
+  }
+
+  private static void setupNonFilledArgumentRemoving(final Editor editor, final TemplateState templateState) {
+    AtomicInteger maxEditedVariable = new AtomicInteger(-1);
+    editor.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        maxEditedVariable.set(Math.max(maxEditedVariable.get(), templateState.getCurrentVariableNumber()));
+      }
+    }, templateState);
+
+    templateState.addTemplateStateListener(new TemplateEditingAdapter() {
+      @Override
+      public void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex) {
+        maxEditedVariable.set(Math.max(maxEditedVariable.get(), oldIndex));
+      }
+
+      @Override
+      public void beforeTemplateFinished(TemplateState state, Template template, boolean brokenOff) {
+        if (brokenOff) {
+          removeUntouchedArguments((TemplateImpl)template);
+        }
+      }
+
+      private void removeUntouchedArguments(TemplateImpl template) {
+        int firstUnchangedVar = maxEditedVariable.get() + 1;
+        if (firstUnchangedVar >= template.getVariableCount()) return;
+
+        TextRange startRange = templateState.getVariableRange(template.getVariableNameAt(firstUnchangedVar));
+        TextRange endRange = templateState.getVariableRange(template.getVariableNameAt(template.getVariableCount() - 1));
+        if (startRange == null || endRange == null) return;
+
+        WriteCommandAction.runWriteCommandAction(editor.getProject(), () ->
+          editor.getDocument().deleteString(startRange.getStartOffset(), endRange.getEndOffset()));
       }
     });
   }

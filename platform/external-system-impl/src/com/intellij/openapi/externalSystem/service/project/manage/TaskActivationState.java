@@ -28,6 +28,10 @@ import java.util.List;
 */
 @Tag("activation")
 public class TaskActivationState {
+  @Tag("before_run")
+  @AbstractCollection(surroundWithTag = false, elementTag = "task", elementValueAttribute = "name")
+  public List<String> beforeRunTasks = new ArrayList<>();
+
   @Tag("before_sync")
   @AbstractCollection(surroundWithTag = false, elementTag = "task", elementValueAttribute = "name")
   public List<String> beforeSyncTasks = new ArrayList<>();
@@ -68,6 +72,8 @@ public class TaskActivationState {
         return beforeCompileTasks;
       case AFTER_SYNC:
         return afterSyncTasks;
+      case BEFORE_RUN:
+        return beforeRunTasks;
       case BEFORE_SYNC:
         return beforeSyncTasks;
       case AFTER_REBUILD:

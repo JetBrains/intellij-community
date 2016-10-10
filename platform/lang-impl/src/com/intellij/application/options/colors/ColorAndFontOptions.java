@@ -27,7 +27,6 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -74,8 +73,6 @@ import java.util.List;
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract implements EditorOptionsProvider {
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
   
-  private static Logger LOG = Logger.getInstance("#" + ColorAndFontOptions.class.getName());
-
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
 
@@ -208,7 +205,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     EditorColorsScheme clone = (EditorColorsScheme)scheme.getOriginalScheme().clone();
 
-    scheme.apply(clone);
+    scheme.apply(clone, false);
 
     clone.setName(name);
     MyColorScheme newScheme = new MyColorScheme(clone);
@@ -279,12 +276,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       boolean activeSchemeModified = false;
       EditorColorsScheme activeOriginalScheme = mySelectedScheme.getOriginalScheme();
       for (MyColorScheme scheme : mySchemes.values()) {
-        if (!activeSchemeModified && activeOriginalScheme == scheme.getOriginalScheme()) {
-          activeSchemeModified = scheme.isModified();
-        }
-
-        if (!scheme.isDefault()) {
-          scheme.apply();
+        boolean isModified = scheme.apply();
+        if (isModified && !activeSchemeModified && activeOriginalScheme == scheme.getOriginalScheme()) {
+          activeSchemeModified = true;
         }
         result.add(scheme.getOriginalScheme());
       }
@@ -842,8 +836,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
 
     @Override
     public void apply(EditorColorsScheme scheme) {
-      if (scheme == null) scheme = getScheme();
-      scheme.setAttributes(key, isInherited() ? new TextAttributes() : getTextAttributes());
+      if (scheme == null) {
+        scheme = getScheme();
+      }
+      scheme.setAttributes(key, isInherited() ? USE_INHERITED_MARKER : getTextAttributes());
     }
 
     @Override
@@ -869,11 +865,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     @Override
     public Pair<ColorSettingsPage,AttributesDescriptor> getBaseAttributeDescriptor() {
       return myBaseAttributeDescriptor;
-    }
-
-    @Override
-    public void setInherited(boolean isInherited) {
-      super.setInherited(isInherited);
     }
   }
 
@@ -1086,10 +1077,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return myDescriptors;
     }
 
-    public boolean isDefault() {
-      return myParentScheme instanceof DefaultColorsScheme;
-    }
-
     @Override
     public boolean isReadOnly() {
       return myParentScheme instanceof ReadOnlyColorsScheme;
@@ -1123,13 +1110,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return getConsoleLineSpacing() != myParentScheme.getConsoleLineSpacing();
     }
 
-    public void apply() {
+    private boolean apply() {
       if (!(myParentScheme instanceof ReadOnlyColorsScheme)) {
-        apply(myParentScheme);
+        return apply(myParentScheme, true);
       }
+      return false;
     }
 
-    public void apply(@NotNull EditorColorsScheme scheme) {
+    private boolean apply(@NotNull EditorColorsScheme scheme, boolean onlyIfModified) {
+      boolean isModified = isFontModified() || isConsoleFontModified();
+
       scheme.setFontPreferences(getFontPreferences());
       scheme.setLineSpacing(myLineSpacing);
       scheme.setQuickDocFontSize(getQuickDocFontSize());
@@ -1137,12 +1127,16 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       scheme.setConsoleLineSpacing(getConsoleLineSpacing());
 
       for (EditorSchemeAttributeDescriptor descriptor : myDescriptors) {
-        descriptor.apply(scheme);
+        if (!onlyIfModified || descriptor.isModified()) {
+          isModified = true;
+          descriptor.apply(scheme);
+        }
       }
 
-      if (scheme instanceof AbstractColorsScheme) {
+      if (isModified && scheme instanceof AbstractColorsScheme) {
         ((AbstractColorsScheme)scheme).setSaveNeeded(true);
       }
+      return isModified;
     }
 
     @Override
@@ -1175,7 +1169,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
         if (myParentScheme instanceof AbstractColorsScheme) {
           TextAttributes ownAttrs = ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key);
           if (ownAttrs != null) {
-            return ownAttrs.isFallbackEnabled();
+            return ownAttrs == TextAttributes.USE_INHERITED_MARKER;
           }
         }
         TextAttributes attributes = getAttributes(key);

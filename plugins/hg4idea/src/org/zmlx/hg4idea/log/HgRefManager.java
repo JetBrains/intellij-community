@@ -36,14 +36,14 @@ public class HgRefManager implements VcsLogRefManager {
   private static final Color LOCAL_TAG_COLOR = new JBColor(new Color(0x009090), new Color(0x00f3f3));
   private static final Color MQ_TAG_COLOR = new JBColor(new Color(0x002f90), new Color(0x0055ff));
 
-  public static final VcsRefType TIP = new SimpleRefType(true, VcsLogStandardColors.Refs.TIP);
-  public static final VcsRefType HEAD = new SimpleRefType(true, VcsLogStandardColors.Refs.LEAF);
-  public static final VcsRefType BRANCH = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH);
-  public static final VcsRefType CLOSED_BRANCH = new SimpleRefType(false, CLOSED_BRANCH_COLOR);
-  public static final VcsRefType BOOKMARK = new SimpleRefType(true, VcsLogStandardColors.Refs.BRANCH_REF);
-  public static final VcsRefType TAG = new SimpleRefType(false, VcsLogStandardColors.Refs.TAG);
-  public static final VcsRefType LOCAL_TAG = new SimpleRefType(false, LOCAL_TAG_COLOR);
-  public static final VcsRefType MQ_APPLIED_TAG = new SimpleRefType(false, MQ_TAG_COLOR);
+  public static final VcsRefType TIP = new SimpleRefType("TIP", true, VcsLogStandardColors.Refs.TIP);
+  public static final VcsRefType HEAD = new SimpleRefType("HEAD", true, VcsLogStandardColors.Refs.LEAF);
+  public static final VcsRefType BRANCH = new SimpleRefType("BRANCH", true, VcsLogStandardColors.Refs.BRANCH);
+  public static final VcsRefType CLOSED_BRANCH = new SimpleRefType("CLOSED_BRANCH", false, CLOSED_BRANCH_COLOR);
+  public static final VcsRefType BOOKMARK = new SimpleRefType("BOOKMARK", true, VcsLogStandardColors.Refs.BRANCH_REF);
+  public static final VcsRefType TAG = new SimpleRefType("TAG", false, VcsLogStandardColors.Refs.TAG);
+  public static final VcsRefType LOCAL_TAG = new SimpleRefType("LOCAL_TAG", false, LOCAL_TAG_COLOR);
+  public static final VcsRefType MQ_APPLIED_TAG = new SimpleRefType("MQ_TAG", false, MQ_TAG_COLOR);
 
   // first has the highest priority
   private static final List<VcsRefType> REF_TYPE_PRIORITIES = Arrays.asList(TIP, HEAD, BRANCH, BOOKMARK, TAG);
@@ -159,10 +159,12 @@ public class HgRefManager implements VcsLogRefManager {
   }
 
   private static class SimpleRefType implements VcsRefType {
+    @NotNull private final String myName;
     private final boolean myIsBranch;
     @NotNull private final Color myColor;
 
-    public SimpleRefType(boolean isBranch, @NotNull Color color) {
+    public SimpleRefType(@NotNull String name, boolean isBranch, @NotNull Color color) {
+      myName = name;
       myIsBranch = isBranch;
       myColor = color;
     }
@@ -176,6 +178,19 @@ public class HgRefManager implements VcsLogRefManager {
     @Override
     public Color getBackgroundColor() {
       return myColor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      SimpleRefType type = (SimpleRefType)o;
+      return myIsBranch == type.myIsBranch && Objects.equals(myName, type.myName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myName, myIsBranch);
     }
   }
 

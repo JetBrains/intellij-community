@@ -33,6 +33,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MessageCategory;
@@ -45,6 +46,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +57,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
   private final ProgressWindow myProgressWindow;
   private String myTitle = DebuggerBundle.message("progress.hot.swap.title");
   private final MergingUpdateQueue myUpdateQueue;
-  private XDebugSession mySession;
+  private WeakReference<XDebugSession> mySessionRef = null;
 
   public HotSwapProgressImpl(Project project) {
     super(project);
@@ -101,29 +103,34 @@ public class HotSwapProgressImpl extends HotSwapProgress{
 
   private void notifyUser(String title, String message, NotificationType type) {
     NotificationListener notificationListener = null;
-    if (mySession != null) {
+    if (SoftReference.dereference(mySessionRef) != null) {
       notificationListener = (notification, event) -> {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && mySession != null) {
-          notification.expire();
-          switch (event.getDescription()) {
-            case "stop":
-              mySession.stop();
-              break;
-            case "restart":
-              ExecutionEnvironment environment = ((XDebugSessionImpl)mySession).getExecutionEnvironment();
-              if (environment != null) {
-                ExecutionUtil.restart(environment);
-              }
-              break;
-          }
+        if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
+          return;
+        }
+        XDebugSession session = SoftReference.dereference(mySessionRef);
+        if (session == null) {
+          return;
+        }
+        notification.expire();
+        switch (event.getDescription()) {
+          case "stop":
+            session.stop();
+            break;
+          case "restart":
+            ExecutionEnvironment environment = ((XDebugSessionImpl)session).getExecutionEnvironment();
+            if (environment != null) {
+              ExecutionUtil.restart(environment);
+            }
+            break;
         }
       };
     }
     NOTIFICATION_GROUP.createNotification(title, message, type, notificationListener).setImportant(false).notify(getProject());
   }
 
-  public void setSession(@NotNull DebuggerSession session) {
-    mySession = session.getXDebugSession();
+  public void setSessionForActions(@NotNull DebuggerSession session) {
+    mySessionRef = new WeakReference<>(session.getXDebugSession());
   }
 
   private List<String> getMessages(int category) {
@@ -132,7 +139,7 @@ public class HotSwapProgressImpl extends HotSwapProgress{
 
   private String buildMessage(List<String> messages, boolean withRestart) {
     StringBuilder res = new StringBuilder(StreamEx.of(messages).map(m -> StringUtil.trimEnd(m, ';')).joining("\n"));
-    if (mySession != null) {
+    if (SoftReference.dereference(mySessionRef) != null) {
       res.append("\n").append(DebuggerBundle.message("status.hot.swap.completed.stop"));
       if (withRestart) {
         res.append("&nbsp;&nbsp;&nbsp;&nbsp;").append(DebuggerBundle.message("status.hot.swap.completed.restart"));

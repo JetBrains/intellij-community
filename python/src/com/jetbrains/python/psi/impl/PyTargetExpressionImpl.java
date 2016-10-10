@@ -386,6 +386,16 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         }
       }
     }
+    else if (iterableType != null && PyABCUtil.isSubtype(iterableType, PyNames.ASYNC_ITERABLE, context)) {
+      final PyFunction iterateMethod = findMethodByName(iterableType, PyNames.AITER, context);
+      if (iterateMethod != null) {
+        final PyType iterateReturnType = getContextSensitiveType(iterateMethod, context, source);
+        final PyType type = getCollectionElementType(iterateReturnType, context);
+        if (!isTrivialType(type)) {
+          return type;
+        }
+      }
+    }
     return null;
   }
 

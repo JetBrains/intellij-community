@@ -23,16 +23,19 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
-import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 public abstract class ServersToolWindowManager extends AbstractProjectComponent {
 
   private final String myWindowId;
+  private final Icon myIcon;
 
-  public ServersToolWindowManager(final Project project, String windowId) {
+  public ServersToolWindowManager(final Project project, String windowId, Icon icon) {
     super(project);
     myWindowId = windowId;
+    myIcon = icon;
   }
 
   public void projectOpened() {
@@ -82,7 +85,7 @@ public abstract class ServersToolWindowManager extends AbstractProjectComponent 
 
   private ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(myWindowId, false, ToolWindowAnchor.BOTTOM);
-    toolWindow.setIcon(RemoteServersIcons.ServersToolWindow);
+    toolWindow.setIcon(myIcon);
     getFactory().createToolWindowContent(project, toolWindow);
     return toolWindow;
   }

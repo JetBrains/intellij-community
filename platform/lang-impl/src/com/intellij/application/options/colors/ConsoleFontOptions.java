@@ -33,6 +33,11 @@ public class ConsoleFontOptions extends FontOptions {
   }
 
   @Override
+  protected void setFontSize(int fontSize) {
+    getCurrentScheme().setConsoleFontSize(fontSize);
+  }
+
+  @Override
   protected float getLineSpacing() {
     return getCurrentScheme().getConsoleLineSpacing();
   }

@@ -83,7 +83,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
     if (doStrip) {
       final boolean inChangedLinesOnly = !stripTrailingSpaces.equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-      boolean success = stripIfNotCurrentLine(document, inChangedLinesOnly);
+      boolean success = strip(document, inChangedLinesOnly, true);
       if (!success) {
         myDocumentsToStripLater.add(document);
       }
@@ -161,7 +161,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     return activeEditor;
   }
 
-  public static boolean stripIfNotCurrentLine(@NotNull Document document, boolean inChangedLinesOnly) {
+  public static boolean strip(@NotNull Document document, boolean inChangedLinesOnly, boolean skipCaretLines) {
     if (document instanceof DocumentWindow) {
       document = ((DocumentWindow)document).getDelegate();
     }
@@ -184,7 +184,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
 
     boolean markAsNeedsStrippingLater =
       ((DocumentImpl)document).stripTrailingSpaces(getProject(document, activeEditor),
-                                                   inChangedLinesOnly, isVirtualSpaceEnabled, caretOffsets);
+                                                   inChangedLinesOnly, !isVirtualSpaceEnabled && skipCaretLines, caretOffsets);
 
     if (activeEditor != null && !ShutDownTracker.isShutdownHookRunning()) {
       activeEditor.getCaretModel().runBatchCaretOperation(() -> {

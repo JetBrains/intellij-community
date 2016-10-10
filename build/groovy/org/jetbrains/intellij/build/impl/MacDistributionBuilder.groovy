@@ -29,12 +29,13 @@ import java.time.LocalDate
 class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
   private final File ideaProperties
+  private final String customIcnsPath
 
   MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, File ideaProperties) {
     super(BuildOptions.OS_MAC, "Mac OS", buildContext)
     this.ideaProperties = ideaProperties
     this.customizer = customizer
-
+    customIcnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
   }
 
   @Override
@@ -48,7 +49,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           <string>ipr</string>
         </array>
         <key>CFBundleTypeIconFile</key>
-        <string>${PathUtilRt.getFileName(customizer.icnsPath ?: "idea.icns")}</string>
+        <string>${PathUtilRt.getFileName(customIcnsPath ?: "idea.icns")}</string>
         <key>CFBundleTypeName</key>
         <string>${buildContext.applicationInfo.productName} Project File</string>
         <key>CFBundleTypeRole</key>
@@ -114,12 +115,11 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String icns = "idea.icns" //todo[nik] rename to more generic name?
     String helpId = macCustomizer.helpId
     String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
-    String customIcns = customizer.icnsPath
-    if (customIcns != null) {
+    if (customIcnsPath != null) {
       buildContext.ant.delete(file: "$target/Resources/idea.icns")
-      buildContext.ant.copy(file: customIcns, todir: "$target/Resources")
-      buildContext.ant.copy(file: customIcns, tofile: helpIcns)
-      icns = new File(customIcns).name
+      buildContext.ant.copy(file: customIcnsPath, todir: "$target/Resources")
+      buildContext.ant.copy(file: customIcnsPath, tofile: helpIcns)
+      icns = new File(customIcnsPath).name
     }
     else {
       buildContext.ant.copy(file: "$target/Resources/idea.icns", tofile: helpIcns)
@@ -151,7 +151,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
-    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64)} -XX:+UseCompressedOops"
+    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64, buildContext.productProperties)} -XX:+UseCompressedOops"
     if (buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP && macCustomizer.enableYourkitAgentInEAP) {
       ideaVmOptions += " " + VmOptionsGenerator.yourkitOptions(buildContext.systemSelector, "")
     }

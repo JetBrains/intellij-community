@@ -17,7 +17,9 @@ package com.intellij.execution.junit;
 
 import com.intellij.junit4.JUnit4TestListener;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.DebugUtil;
 import junit.framework.Assert;
+import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
@@ -29,6 +31,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class JUnitTreeByDescriptionHierarchyTest {
   @Test
@@ -463,6 +468,24 @@ public class JUnitTreeByDescriptionHierarchyTest {
                                           "##teamcity[testFinished name='TestA.testName']\n" +
                                           "\n" +
                                           "##teamcity[testSuiteFinished name='TestA']\n", StringUtil.convertLineSeparators(buf.toString()));
+  }
+
+  @Test
+  public void testLongOutputPreservesTestName() throws Exception {
+    StringBuffer buf = new StringBuffer();
+    for (int i = 0; i < 1000; i++) {
+      buf.append(DebugUtil.currentStackTrace());
+    }
+
+    final StringBuffer output = new StringBuffer();
+    final JUnit4TestListener sender = createListener(output);
+
+    final Description description = Description.createTestDescription("A", "a");
+    sender.testFailure(new Failure(description, new ComparisonFailure(buf.toString(), buf.toString(), "diff" + buf.toString())));
+
+    final String startMessage = "##teamcity[enteredTheMatrix]\n\n" +
+                                "##teamcity[testFailed name='A.a' ";
+    assertEquals(startMessage, StringUtil.convertLineSeparators(output.toString()).substring(0, startMessage.length()));
   }
 
   @Test

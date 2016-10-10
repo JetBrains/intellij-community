@@ -77,9 +77,9 @@ class AsyncPromiseTest {
   fun blockingGet2() {
     val promise = AsyncPromise<String>()
     assertConcurrent(
-        { assertThatThrownBy { promise.blockingGet(50) }.isInstanceOf(TimeoutException::class.java) },
+        { assertThatThrownBy { promise.blockingGet(100) }.isInstanceOf(TimeoutException::class.java) },
         {
-          Thread.sleep(80)
+          Thread.sleep(200)
           promise.setResult("test")
         })
   }

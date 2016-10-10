@@ -100,9 +100,6 @@ public final class IconLoader {
   }
 
   public static void setFilter(ImageFilter filter) {
-    if (!Registry.is("color.blindness.icon.filter")) {
-      filter = null;
-    }
     if (IMAGE_FILTER != filter) {
       IMAGE_FILTER = filter;
       clearCache();
@@ -576,6 +573,19 @@ public final class IconLoader {
     }
 
     protected abstract Icon compute();
+
+    public Icon inNormalScale(boolean isRetina) {
+      Icon icon = getOrComputeIcon();
+      if (icon != null) {
+        if (icon instanceof CachedImageIcon) {
+          Image img = ((CachedImageIcon)icon).myScaledIconsCache.getOrigImage(isRetina);
+          if (img != null) {
+            icon = new ImageIcon(img);
+          }
+        }
+      }
+      return icon;
+    }
   }
 
   private static class LabelHolder {

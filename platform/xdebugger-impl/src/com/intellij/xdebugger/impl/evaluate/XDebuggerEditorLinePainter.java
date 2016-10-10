@@ -120,11 +120,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
         res.add(new LineExtensionInfo("  " + name + ": ", attributes));
 
         Variable var = new Variable(name, lineNumber);
-        VariableValue variableValue = oldValues.get(var);
-        if (variableValue == null) {
-          variableValue = new VariableValue(text.toString(), null, value.hashCode());
-          oldValues.put(var, variableValue);
-        }
+        VariableValue variableValue = oldValues.computeIfAbsent(var, k -> new VariableValue(text.toString(), null, value.hashCode()));
         if (variableValue.valueNodeHashCode != value.hashCode()) {
           variableValue.old = variableValue.actual;
           variableValue.actual = text.toString();

@@ -44,7 +44,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.util.Alarm;
-import com.intellij.util.PairFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +81,6 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
     return UISettings.getInstance().NAVIGATE_TO_PREVIEW;
   }
 
-
   public PreviewManagerImpl(Project project) {
     myProject = project;
     myEmptyStatePanel = new EmptyStatePanel();
@@ -93,12 +91,12 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
       Disposer.register(project, provider);
     }
 
-    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+    project.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
       @Override
-      public void uiSettingsChanged(UISettings source) {
+      public void uiSettingsChanged(UISettings uiSettings) {
         checkGlobalState();
       }
-    }, myProject);
+    });
     checkGlobalState();
     checkEmptyState();
   }

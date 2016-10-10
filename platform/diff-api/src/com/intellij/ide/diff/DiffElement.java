@@ -107,7 +107,7 @@ public abstract class DiffElement<T> {
       byte[] content = getContent();
       if (content == null) throw new DiffRequestProducerException("Can't get content");
 
-      return DiffContentFactory.getInstance().create(new String(content, getCharset()), getFileType());
+      return DiffContentFactory.getInstance().create(project, new String(content, getCharset()), getFileType());
     }
     catch (IOException e) {
       throw new DiffRequestProducerException(e);

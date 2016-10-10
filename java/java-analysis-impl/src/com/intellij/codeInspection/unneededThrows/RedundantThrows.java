@@ -201,7 +201,7 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
 
     @Override
     @NotNull
-    public String getName() {
+    public String getFamilyName() {
       return InspectionsBundle.message("inspection.redundant.throws.remove.quickfix");
     }
 
@@ -223,12 +223,6 @@ public class RedundantThrows extends GlobalJavaBatchInspectionTool {
           removeExcessiveThrows(null, psiMethod, new CommonProblemDescriptor[]{descriptor});
         }
       }
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getName();
     }
 
     private void removeExcessiveThrows(@Nullable RefMethod refMethod, @Nullable final PsiModifierListOwner element, final CommonProblemDescriptor[] problems) {

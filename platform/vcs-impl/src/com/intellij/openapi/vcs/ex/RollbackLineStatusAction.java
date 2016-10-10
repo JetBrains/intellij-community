@@ -16,7 +16,6 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -84,45 +83,15 @@ public class RollbackLineStatusAction extends DumbAwareAction {
       return;
     }
 
-    Document document = editor.getDocument();
-    List<Caret> carets = editor.getCaretModel().getAllCarets();
-
-    if (carets.size() == 1) {
-      Caret caret = carets.get(0);
-      if (caret.getSelectionStart() == 0 && caret.getSelectionEnd() == document.getTextLength()) {
-        doRollback(tracker);
-        return;
-      }
-    }
-
     doRollback(tracker, DiffUtil.getSelectedLines(editor));
   }
 
   private static void doRollback(@NotNull final LineStatusTracker tracker, @NotNull final Range range) {
-    execute(tracker, new Runnable() {
-      @Override
-      public void run() {
-        tracker.rollbackChanges(range);
-      }
-    });
+    execute(tracker, () -> tracker.rollbackChanges(range));
   }
 
   private static void doRollback(@NotNull final LineStatusTracker tracker, @NotNull final BitSet lines) {
-    execute(tracker, new Runnable() {
-      @Override
-      public void run() {
-        tracker.rollbackChanges(lines);
-      }
-    });
-  }
-
-  private static void doRollback(@NotNull final LineStatusTracker tracker) {
-    execute(tracker, new Runnable() {
-      @Override
-      public void run() {
-        tracker.rollbackAllChanges();
-      }
-    });
+    execute(tracker, () -> tracker.rollbackChanges(lines));
   }
 
   private static void execute(@NotNull final LineStatusTracker tracker, @NotNull final Runnable task) {

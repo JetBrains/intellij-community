@@ -36,11 +36,11 @@ val Promise<*>.isPending: Boolean
 val Promise<*>.isFulfilled: Boolean
   get() = state == Promise.State.FULFILLED
 
-internal val OBSOLETE_ERROR = createError("Obsolete")
+internal val OBSOLETE_ERROR by lazy { createError("Obsolete") }
 
-private val REJECTED: Promise<*> = RejectedPromise<Any?>(createError("rejected"))
-private val DONE: Promise<*> = DonePromise(null)
-private val CANCELLED_PROMISE = RejectedPromise<Any?>(OBSOLETE_ERROR)
+private val REJECTED: Promise<*> by lazy { RejectedPromise<Any?>(createError("rejected")) }
+private val DONE: Promise<*> by lazy(LazyThreadSafetyMode.NONE) { Promise.DONE }
+private val CANCELLED_PROMISE: Promise<*> by lazy { RejectedPromise<Any?>(OBSOLETE_ERROR) }
 
 @Suppress("UNCHECKED_CAST")
 fun <T> resolvedPromise(): Promise<T> = DONE as Promise<T>
@@ -128,6 +128,7 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   return all(promises, results)
 }
 
+@JvmOverloads
 fun createError(error: String, log: Boolean = false): RuntimeException = MessageError(error, log)
 
 inline fun <T> AsyncPromise<T>.compute(runnable: () -> T) {

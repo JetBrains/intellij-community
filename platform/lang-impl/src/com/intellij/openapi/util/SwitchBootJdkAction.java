@@ -306,7 +306,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
   private static final Version JDK8_VERSION = new Version(1, 8, 0);
 
   @NotNull
-  private static JdkBundleList findJdkPaths() {
+  public static JdkBundleList findJdkPaths() {
     JdkBundle bootJdk = JdkBundle.createBoot();
 
     JdkBundleList jdkBundleList = new JdkBundleList();

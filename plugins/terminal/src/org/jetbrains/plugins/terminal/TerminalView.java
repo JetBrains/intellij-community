@@ -356,7 +356,7 @@ class TerminalToolWindowPanel extends SimpleToolWindowPanel implements UISetting
   }
 
   @Override
-  public void uiSettingsChanged(UISettings source) {
+  public void uiSettingsChanged(UISettings uiSettings) {
     updateDFState();
   }
 

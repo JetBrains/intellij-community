@@ -69,8 +69,8 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
       }
     }
     if (ProjectKt.isDirectoryBased(myProject) && myBaseDir != null) {
-      final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
+      final VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
+      if (ideaDir != null) {
         final AbstractVcs vcsFor = vcsManager.getVcsFor(ideaDir);
         if (vcsFor != null && vcsName.equals(vcsFor.getName())) {
           result.add(ideaDir);
@@ -123,12 +123,10 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     if (contentRoot != null) {
       return contentRoot;
     }
-    if (ProjectKt.isDirectoryBased(myProject) && (myBaseDir != null)) {
-      final VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      if (ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory()) {
-        if (VfsUtilCore.isAncestor(ideaDir, file, false)) {
-          return ideaDir;
-        }
+    if (ProjectKt.isDirectoryBased(myProject)) {
+      final VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
+      if (ideaDir != null && VfsUtilCore.isAncestor(ideaDir, file, false)) {
+        return ideaDir;
       }
     }
     return null;
@@ -139,8 +137,8 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   public Collection<VirtualFile> getDirtyRoots() {
     Collection<VirtualFile> dirtyRoots = ContainerUtil.newHashSet();
 
-    if (ProjectKt.isDirectoryBased(myProject) && myBaseDir != null) {
-      VirtualFile ideaDir = myBaseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
+    if (ProjectKt.isDirectoryBased(myProject)) {
+      VirtualFile ideaDir = ProjectKt.getStateStore(myProject).getDirectoryStoreFile();
       if (ideaDir != null) {
         dirtyRoots.add(ideaDir);
       }

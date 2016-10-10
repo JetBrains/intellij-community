@@ -53,7 +53,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
@@ -226,7 +225,7 @@ public class MavenUtil {
     return new File(PathManager.getSystemPath(), "Maven" + "/" + folder).getAbsoluteFile();
   }
 
-  public static File getBaseDir(VirtualFile file) {
+  public static File getBaseDir(@NotNull VirtualFile file) {
     File baseDir = VfsUtilCore.virtualToIoFile(file.isDirectory() || file.getParent() == null ? file : file.getParent());
     File dir = baseDir;
     do {
@@ -239,12 +238,20 @@ public class MavenUtil {
     return baseDir;
   }
 
+  @Nullable
   public static VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
-    return pomFile.getParent().findChild(MavenConstants.PROFILES_XML);
+    if (pomFile == null) return null;
+    VirtualFile parent = pomFile.getParent();
+    if (parent == null) return null;
+    return parent.findChild(MavenConstants.PROFILES_XML);
   }
 
+  @Nullable
   public static File getProfilesXmlIoFile(VirtualFile pomFile) {
-    return new File(pomFile.getParent().getPath(), MavenConstants.PROFILES_XML);
+    if (pomFile == null) return null;
+    VirtualFile parent = pomFile.getParent();
+    if (parent == null) return null;
+    return new File(parent.getPath(), MavenConstants.PROFILES_XML);
   }
 
   public static <T, U> List<T> collectFirsts(List<Pair<T, U>> pairs) {
@@ -298,7 +305,7 @@ public class MavenUtil {
                                                         VirtualFile file,
                                                         @NotNull MavenId projectId,
                                                         MavenId parentId,
-                                                        VirtualFile parentFile,
+                                                        @Nullable VirtualFile parentFile,
                                                         boolean interactive) throws IOException {
     Properties properties = new Properties();
     Properties conditions = new Properties();

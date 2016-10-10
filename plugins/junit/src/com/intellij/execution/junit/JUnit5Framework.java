@@ -134,6 +134,11 @@ public class JUnit5Framework extends JavaTestFramework {
     return JUnitUtil.isTestMethod(MethodLocation.elementInClass(method, myClass));
   }
 
+  @Override
+  public boolean acceptNestedClasses() {
+    return true;
+  }
+
   public FileTemplateDescriptor getSetUpMethodFileTemplateDescriptor() {
     return new FileTemplateDescriptor("JUnit5 SetUp Method.java");
   }

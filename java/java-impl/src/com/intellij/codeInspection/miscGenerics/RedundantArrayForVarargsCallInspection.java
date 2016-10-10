@@ -54,12 +54,6 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
       return InspectionsBundle.message("inspection.redundant.array.creation.quickfix");
     }
   }

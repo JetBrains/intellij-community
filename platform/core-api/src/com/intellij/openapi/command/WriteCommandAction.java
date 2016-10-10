@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +32,7 @@ import java.util.Collection;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.WriteCommandAction");
+
   private final String myCommandName;
   private final String myGroupID;
   private final Project myProject;
@@ -42,17 +42,15 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     this(project, "Undefined", files);
   }
 
-  protected WriteCommandAction(@Nullable Project project, @Nullable @NonNls String commandName, /*@NotNull*/ PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, /*@NotNull*/ PsiFile... files) {
     this(project, commandName, null, files);
   }
 
-  protected WriteCommandAction(@Nullable final Project project, @Nullable final String commandName, @Nullable final String groupID, /*@NotNull*/ PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @Nullable String groupID, /*@NotNull*/ PsiFile... files) {
     myCommandName = commandName;
     myGroupID = groupID;
     myProject = project;
-    if (files == null) {
-      LOG.warn("'files' parameter must not be null", new Throwable());
-    }
+    if (files == null) LOG.warn("'files' parameter must not be null", new Throwable());
     myPsiFiles = files == null || files.length == 0 ? PsiFile.EMPTY_ARRAY : files;
   }
 
@@ -72,16 +70,18 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   @Override
   public RunResult<T> execute() {
     Application application = ApplicationManager.getApplication();
-    final boolean dispatchThread = application.isDispatchThread();
+    boolean dispatchThread = application.isDispatchThread();
+
     if (!dispatchThread && application.isReadAccessAllowed()) {
       LOG.error("Must not start write action from within read action in the other thread - deadlock is coming");
       throw new IllegalStateException();
     }
-    final RunResult<T> result = new RunResult<T>(this);
 
+    final RunResult<T> result = new RunResult<T>(this);
     if (dispatchThread) {
       performWriteCommandAction(result);
-    } else {
+    }
+    else {
       try {
         TransactionGuard.getInstance().submitTransactionAndWait(new Runnable() {
           @Override
@@ -95,10 +95,6 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return result;
   }
 
-  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<PsiFile> psiFiles) {
-    return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
-  }
-
   private void performWriteCommandAction(@NotNull RunResult<T> result) {
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(myPsiFiles))) return;
 
@@ -108,7 +104,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     doExecuteCommand(new Runnable() {
       @Override
       public void run() {
-        AccessToken token = getApplication().acquireWriteActionLock(WriteCommandAction.this.getClass());
+        AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(WriteCommandAction.this.getClass());
         try {
           results[0].run();
           results[0] = null;
@@ -129,8 +125,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   }
 
   /**
-   * See {@link CommandProcessor#executeCommand(com.intellij.openapi.project.Project, java.lang.Runnable, java.lang.String, java.lang.Object, com.intellij.openapi.command.UndoConfirmationPolicy, boolean)} for details.
-   * 
+   * See {@link CommandProcessor#executeCommand(Project, Runnable, String, Object, UndoConfirmationPolicy, boolean)} for details.
    */
   protected boolean shouldRecordActionForActiveDocument() {
     return true;
@@ -162,7 +157,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         runnable.run();
       }
     };
-    CommandProcessor.getInstance().executeCommand(getProject(), wrappedRunnable, getCommandName(), getGroupID(), 
+    CommandProcessor.getInstance().executeCommand(getProject(), wrappedRunnable, getCommandName(), getGroupID(),
                                                   getUndoConfirmationPolicy(), shouldRecordActionForActiveDocument());
   }
 
@@ -170,26 +165,27 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * WriteCommandAction without result
    */
   public abstract static class Simple<T> extends WriteCommandAction<T> {
-    protected Simple(final Project project, /*@NotNull*/ PsiFile... files) {
+    protected Simple(Project project, /*@NotNull*/ PsiFile... files) {
       super(project, files);
     }
-    protected Simple(final Project project, final String commandName, /*@NotNull*/ PsiFile... files) {
+
+    protected Simple(Project project, String commandName, /*@NotNull*/ PsiFile... files) {
       super(project, commandName, files);
     }
 
-    protected Simple(final Project project, final String name, final String groupID, /*@NotNull*/ PsiFile... files) {
+    protected Simple(Project project, String name, String groupID, /*@NotNull*/ PsiFile... files) {
       super(project, name, groupID, files);
     }
 
     @Override
-    protected void run(@NotNull final Result<T> result) throws Throwable {
+    protected void run(@NotNull Result<T> result) throws Throwable {
       run();
     }
 
     protected abstract void run() throws Throwable;
   }
 
-  public static void runWriteCommandAction(Project project, @NotNull final Runnable runnable) {
+  public static void runWriteCommandAction(Project project, @NotNull Runnable runnable) {
     runWriteCommandAction(project, "Undefined", null, runnable);
   }
 
@@ -206,6 +202,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }.execute();
   }
 
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public static <T> T runWriteCommandAction(Project project, @NotNull final Computable<T> computable) {
     return new WriteCommandAction<T>(project) {
       @Override
@@ -215,15 +212,24 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }.execute().getResultObject();
   }
 
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull final ThrowableComputable<T, E> computable) throws E {
-    RunResult<T> result = new WriteCommandAction<T>(project,"") {
+    RunResult<T> result = new WriteCommandAction<T>(project, "") {
       @Override
       protected void run(@NotNull Result<T> result) throws Throwable {
         result.setResult(computable.compute());
       }
     }.execute();
-    if (result.getThrowable() != null) throw (E)result.getThrowable();
+    Throwable t = result.getThrowable();
+    if (t != null) { @SuppressWarnings("unchecked") E e = (E)t; throw e; }
     return result.throwException().getResultObject();
   }
-}
 
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link FileModificationService#preparePsiElementsForWrite(Collection)} (to be removed in IDEA 2018) */
+  @SuppressWarnings("unused")
+  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<PsiFile> psiFiles) {
+    return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
+  }
+  //</editor-fold>
+}

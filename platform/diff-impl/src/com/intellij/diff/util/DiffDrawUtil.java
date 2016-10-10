@@ -43,10 +43,11 @@ import java.util.List;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public class DiffDrawUtil {
-  private static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;
-  private static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 3;
-  private static final int INLINE_LAYER = HighlighterLayer.SELECTION - 2;
-  private static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
+  public static final int STRIPE_LAYER = HighlighterLayer.ERROR - 1;
+  public static final int DEFAULT_LAYER = HighlighterLayer.SELECTION - 3;
+  public static final int INLINE_LAYER = HighlighterLayer.SELECTION - 2;
+  public static final int LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
+  public static final int LST_LINE_MARKER_LAYER = HighlighterLayer.SELECTION - 1;
 
   private static final double CTRL_PROXIMITY_X = 0.3;
 

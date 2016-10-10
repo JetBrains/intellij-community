@@ -60,11 +60,7 @@ public class ContextUtil {
     if (location == null) {
       return null;
     }
-    CompoundPositionManager positionManager = debugProcess.getPositionManager();
-    if (positionManager == null) { // process already closed
-      return null;
-    }
-    return positionManager.getSourcePosition(location);
+    return debugProcess.getPositionManager().getSourcePosition(location);
   }
 
   @Nullable

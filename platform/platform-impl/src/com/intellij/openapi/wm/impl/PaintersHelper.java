@@ -370,7 +370,8 @@ final class PaintersHelper implements Painter.Listener {
         return;
       }
 
-      GraphicsConfig gc = new GraphicsConfig(g).setAlpha(alpha);
+      float adjustedAlpha = Boolean.TRUE.equals(g.getRenderingHint(IdeBackgroundUtil.ADJUST_ALPHA)) ? alpha / 2 : alpha;
+      GraphicsConfig gc = new GraphicsConfig(g).setAlpha(adjustedAlpha);
       UIUtil.drawImage(g, scaled, x, y, w, h, null);
 
       gc.restore();

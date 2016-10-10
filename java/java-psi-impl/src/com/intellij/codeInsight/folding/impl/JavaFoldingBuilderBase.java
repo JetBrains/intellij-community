@@ -16,9 +16,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
-import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -30,7 +28,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
@@ -46,10 +43,7 @@ import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -335,7 +329,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       if (anonymousClass != null) {
         classReference = anonymousClass.getBaseClassReference();
 
-        if (quick || seemsLikeLambda(anonymousClass.getSuperClass())) {
+        if (quick || ClosureFolding.seemsLikeLambda(anonymousClass.getSuperClass(), anonymousClass)) {
           return;
         }
       }
@@ -386,76 +380,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
   }
 
-  private static boolean hasOnlyOneLambdaMethod(@NotNull PsiAnonymousClass anonymousClass, boolean checkResolve) {
-    PsiField[] fields = anonymousClass.getFields();
-    if (fields.length != 0) {
-      if (fields.length == 1 && HighlightUtilBase.SERIAL_VERSION_UID_FIELD_NAME.equals(fields[0].getName()) &&
-          fields[0].hasModifierProperty(PsiModifier.STATIC)) {
-        //ok
-      } else {
-        return false;
-      }
-    }
-    if (anonymousClass.getInitializers().length != 0) {
-      return false;
-    }
-    if (anonymousClass.getInnerClasses().length != 0) {
-      return false;
-    }
-
-    if (anonymousClass.getMethods().length != 1) {
-      return false;
-    }
-
-    PsiMethod method = anonymousClass.getMethods()[0];
-    if (method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
-      return false;
-    }
-
-    if (checkResolve) {
-      PsiReferenceList throwsList = method.getThrowsList();
-      for (PsiClassType type : throwsList.getReferencedTypes()) {
-        if (type.resolve() == null) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
-
-  private String getOptionalLambdaType(@NotNull PsiAnonymousClass anonymousClass, @NotNull PsiNewExpression expression) {
-    if (shouldShowExplicitLambdaType(anonymousClass, expression)) {
-      final String baseClassName = ObjectUtils.assertNotNull(anonymousClass.getBaseClassType().resolve()).getName();
-      if (baseClassName != null) {
-        return "(" + baseClassName + ") ";
-      }
-    }
-    return "";
-  }
-
   protected abstract boolean shouldShowExplicitLambdaType(@NotNull PsiAnonymousClass anonymousClass, @NotNull PsiNewExpression expression);
-
-  private static boolean seemsLikeLambda(@Nullable final PsiClass baseClass) {
-    return baseClass != null && PsiUtil.hasDefaultConstructor(baseClass, true);
-  }
-
-  private static boolean isImplementingLambdaMethod(@NotNull PsiClass baseClass) {
-    if (!baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-
-    for (final PsiMethod method : baseClass.getMethods()) {
-      if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return true;
-      }
-    }
-
-    try {
-      return !OverrideImplementExploreUtil.getMethodSignaturesToImplement(baseClass).isEmpty();
-    }
-    catch (IndexNotReadyException e) {
-      return false;
-    }
-  }
 
   private static boolean addToFold(@NotNull List<FoldingDescriptor> list,
                                    @NotNull PsiElement elementToFold,
@@ -806,88 +731,17 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return false;
     }
 
-    boolean isClosure = false;
     if (aClass instanceof PsiAnonymousClass) {
       final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
-      final PsiElement element = anonymousClass.getParent();
-      if (element instanceof PsiNewExpression) {
-        final PsiNewExpression expression = (PsiNewExpression)element;
-        final PsiExpressionList argumentList = expression.getArgumentList();
-        if (argumentList != null && argumentList.getExpressions().length == 0) {
-          final PsiMethod[] methods = anonymousClass.getMethods();
-          PsiClass baseClass = quick ? null : anonymousClass.getBaseClassType().resolve();
-          if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && (quick || seemsLikeLambda(baseClass))) {
-            final PsiMethod method = methods[0];
-            final PsiCodeBlock body = method.getBody();
-            if (body != null) {
-              isClosure = true;
-              int rangeStart = body.getTextRange().getStartOffset();
-              int rangeEnd = body.getTextRange().getEndOffset();
-              final PsiJavaToken lbrace = body.getLBrace();
-              if (lbrace != null) rangeStart = lbrace.getTextRange().getEndOffset();
-              final PsiJavaToken rbrace = body.getRBrace();
-              if (rbrace != null) rangeEnd = rbrace.getTextRange().getStartOffset();
-
-              final CharSequence seq = document.getCharsSequence();
-              final PsiElement classRBrace = anonymousClass.getRBrace();
-              if (classRBrace != null && rbrace != null) {
-                final int methodEndLine = document.getLineNumber(rangeEnd);
-                final int methodEndLineStart = document.getLineStartOffset(methodEndLine);
-                if ("}".equals(seq.subSequence(methodEndLineStart, document.getLineEndOffset(methodEndLine)).toString().trim())) {
-                  int classEndStart = classRBrace.getTextRange().getStartOffset();
-                  int classEndCol = classEndStart - document.getLineStartOffset(document.getLineNumber(classEndStart));
-                  rangeEnd = classEndCol + methodEndLineStart;
-                }
-              }
-
-              int firstLineStart = CharArrayUtil.shiftForward(seq, rangeStart, " \t");
-              if (firstLineStart < seq.length() - 1 && seq.charAt(firstLineStart) == '\n') firstLineStart++;
-
-              int lastLineEnd = CharArrayUtil.shiftBackward(seq, rangeEnd - 1, " \t");
-              if (lastLineEnd > 0 && seq.charAt(lastLineEnd) == '\n') lastLineEnd--;
-              if (lastLineEnd < firstLineStart) return false;
-
-              String type = quick ? "" : getOptionalLambdaType(anonymousClass, expression);
-              String methodName = quick || !isImplementingLambdaMethod(baseClass) ? method.getName() : "";
-
-              if (StringUtil.isEmpty(methodName) && PsiUtil.isLanguageLevel8OrHigher(anonymousClass)) return false;
-
-              final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-                @Override
-                public String fun(final PsiParameter psiParameter) {
-                  return psiParameter.getName();
-                }
-              }, ", ");
-              String arrow = rightArrow();
-              @NonNls final String lambdas = type + methodName + "(" + params + ") " + arrow + " {";
-
-              final int closureStart = expression.getTextRange().getStartOffset();
-              final int closureEnd = expression.getTextRange().getEndOffset();
-              boolean oneLine = false;
-              String contents = seq.subSequence(firstLineStart, lastLineEnd).toString();
-              if (contents.indexOf('\n') < 0 &&
-                  fitsRightMargin(aClass, document, closureStart, closureEnd, lambdas.length() + contents.length() + 5)) {
-                rangeStart = CharArrayUtil.shiftForward(seq, rangeStart, " \n\t");
-                rangeEnd = CharArrayUtil.shiftBackward(seq, rangeEnd - 1, " \n\t") + 1;
-                oneLine = true;
-              }
-
-              if (rangeStart >= rangeEnd) return false;
-
-              FoldingGroup group = FoldingGroup.newGroup("lambda");
-              final String prettySpace = oneLine ? " " : "";
-              foldElements.add(new NamedFoldingDescriptor(expression, closureStart, rangeStart, group, lambdas + prettySpace));
-              if (classRBrace != null && rangeEnd + 1 < closureEnd) {
-                foldElements.add(new NamedFoldingDescriptor(classRBrace, rangeEnd, closureEnd, group, prettySpace + "}"));
-              }
-
-              addCodeBlockFolds(body, foldElements, processedComments, document, quick);
-            }
-          }
-        }
+      ClosureFolding closureFolding = ClosureFolding.prepare(anonymousClass, quick, this);
+      List<NamedFoldingDescriptor> descriptors = closureFolding == null ? null : closureFolding.process(document);
+      if (descriptors != null) {
+        foldElements.addAll(descriptors);
+        addCodeBlockFolds(closureFolding.methodBody, foldElements, processedComments, document, quick);
+        return true;
       }
     }
-    return isClosure;
+    return false;
   }
 
   @NotNull
@@ -895,7 +749,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     return "->";
   }
 
-  private boolean fitsRightMargin(@NotNull PsiElement element, @NotNull Document document, int foldingStart, int foldingEnd, int collapsedLength) {
+  boolean fitsRightMargin(@NotNull PsiElement element, @NotNull Document document, int foldingStart, int foldingEnd, int collapsedLength) {
     final int beforeLength = foldingStart - document.getLineStartOffset(document.getLineNumber(foldingStart));
     final int afterLength = document.getLineEndOffset(document.getLineNumber(foldingEnd)) - foldingEnd;
     return isBelowRightMargin(element.getProject(), beforeLength + collapsedLength + afterLength);

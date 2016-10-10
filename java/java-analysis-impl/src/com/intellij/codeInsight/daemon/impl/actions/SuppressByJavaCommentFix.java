@@ -57,7 +57,7 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
       suppressWithComment(project, element, container);
     }
     else {
-      JavaSuppressionUtil.addSuppressAnnotation(project, container, (PsiLocalVariable)declaredElement, myID);
+      JavaSuppressionUtil.addSuppressAnnotation(project, container, (PsiVariable)declaredElement, myID);
     }
   }
 

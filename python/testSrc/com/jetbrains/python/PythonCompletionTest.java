@@ -939,6 +939,28 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20768
+  public void testInitSubclassBuiltinMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36,
+                         () -> {
+                           doTestByText("class Cl(object):\n" +
+                                        "  def __init_su<caret>");
+                           myFixture.checkResult("class Cl(object):\n" +
+                                                 "  def __init_subclass__(cls, **kwargs):");
+                         });
+  }
+
+  // PY-20768
+  public void testSetNameBuiltinMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36,
+                         () -> {
+                           doTestByText("class Cl(object):\n" +
+                                        "  def __set_n<caret>");
+                           myFixture.checkResult("class Cl(object):\n" +
+                                                 "  def __set_name__(self, owner, name):");
+                         });
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/completion";

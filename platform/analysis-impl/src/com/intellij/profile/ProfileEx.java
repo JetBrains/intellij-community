@@ -35,10 +35,6 @@ public abstract class ProfileEx implements Profile {
   @NotNull
   protected String myName;
 
-  @OptionTag("myLocal")
-  // exists only to preserve compatibility
-  private boolean myLocal;
-
   protected ProfileManager myProfileManager;
 
   private boolean myIsProjectLevel;

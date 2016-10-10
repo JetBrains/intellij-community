@@ -231,7 +231,7 @@ public final class FontInfo {
     public int compare(FontInfo one, FontInfo two) {
       if (one.isMonospaced() && !two.isMonospaced()) return -1;
       if (!one.isMonospaced() && two.isMonospaced()) return 1;
-      return one.toString().compareTo(two.toString());
+      return one.toString().compareToIgnoreCase(two.toString());
     }
   }
 }

@@ -2299,7 +2299,7 @@ public class AbstractTreeUi {
   }
 
   public long getClearOnHideDelay() {
-    return myClearOnHideDelay > 0 ? myClearOnHideDelay : Registry.intValue("ide.tree.clearOnHideTime");
+    return myClearOnHideDelay;
   }
 
   @NotNull
@@ -4694,12 +4694,7 @@ public class AbstractTreeUi {
 
   private void _addNodeAction(Object element, NodeAction action, @NotNull Map<Object, List<NodeAction>> map) {
     maybeSetBusyAndScheduleWaiterForReady(true, element);
-    List<NodeAction> list = map.get(element);
-    if (list == null) {
-      list = new ArrayList<>();
-      map.put(element, list);
-    }
-    list.add(action);
+    map.computeIfAbsent(element, k -> new ArrayList<>()).add(action);
 
     addActivity();
   }
