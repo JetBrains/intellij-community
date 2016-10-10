@@ -65,6 +65,16 @@ class ClsJavaModuleReferenceElementImpl extends ClsElementImpl implements PsiJav
   }
 
   @Override
+  public String getText() {
+    return myText;
+  }
+
+  @Override
+  public int getTextLength() {
+    return myText.length();
+  }
+
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitModuleReferenceElement(this);

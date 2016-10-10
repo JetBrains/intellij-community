@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -56,6 +57,9 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
   @Override
   public PsiElement handleElementRename(@NotNull String newName) throws IncorrectOperationException {
     PsiJavaModuleReferenceElement element = getElement();
+    if (element instanceof PsiCompiledElement) {
+      throw new IncorrectOperationException(JavaCoreBundle.message("psi.error.attempt.to.edit.class.file", element.getContainingFile()));
+    }
     PsiElementFactory factory = PsiElementFactory.SERVICE.getInstance(element.getProject());
     PsiJavaModuleReferenceElement newElement = factory.createModuleFromText("module " + newName + " {}").getNameElement();
     return element.replace(newElement);
@@ -74,17 +78,18 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
       Project project = reference.getProject();
 
       GlobalSearchScope scope = null;
-      if (!incompleteCode) {
-        VirtualFile file = reference.getElement().getContainingFile().getVirtualFile();
-        if (file != null) {
-          Module module = FileIndexFacade.getInstance(project).getModuleForFile(file);
+      PsiFile file = reference.getElement().getContainingFile();
+      if (incompleteCode || file.getOriginalFile() instanceof PsiCompiledFile) {
+        scope = GlobalSearchScope.allScope(project);
+      }
+      else {
+        VirtualFile vFile = file.getVirtualFile();
+        if (vFile != null) {
+          Module module = FileIndexFacade.getInstance(project).getModuleForFile(vFile);
           if (module != null) {
             scope = module.getModuleWithDependenciesAndLibrariesScope(false);
           }
         }
-      }
-      else {
-        scope = GlobalSearchScope.allScope(project);
       }
 
       if (scope != null) {
