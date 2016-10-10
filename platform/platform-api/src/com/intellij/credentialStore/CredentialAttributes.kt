@@ -19,8 +19,8 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.toByteArray
-import com.intellij.util.text.nullize
 import com.intellij.util.text.CharArrayCharSequence
+import com.intellij.util.text.nullize
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
@@ -29,8 +29,10 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * requestor is deprecated. Never use it in new code.
  */
-data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null) {
+data class CredentialAttributes @JvmOverloads constructor(val serviceName: String, val userName: String? = null, val requestor: Class<*>? = null, val isPasswordMemoryOnly: Boolean = false) {
 }
+
+fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this
 
 // user cannot be empty, but password can be
 class Credentials(user: String?, val password: OneTimeString? = null) {
@@ -52,6 +54,9 @@ class Credentials(user: String?, val password: OneTimeString? = null) {
   override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 }
 
+/**
+ * DEPRECATED. Never use it in a new code.
+ */
 fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
 
 fun Credentials?.isFulfilled() = this != null && userName != null && !password.isNullOrEmpty()

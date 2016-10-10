@@ -99,7 +99,8 @@ private fun parseString(data: String, delimiter: Char): List<String> {
 }
 
 // check isEmpty before
-fun Credentials.serialize() = joinData(userName, password)!!
+@JvmOverloads
+fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
 
 fun SecureString(value: CharSequence) = SecureString(Charsets.UTF_8.encode(CharBuffer.wrap(value)).toByteArray())
 
