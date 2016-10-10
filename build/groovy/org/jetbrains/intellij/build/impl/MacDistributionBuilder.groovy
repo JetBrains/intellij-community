@@ -151,7 +151,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     new File("$target/bin/idea.properties").text = effectiveProperties.toString()
-    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64)} -XX:+UseCompressedOops"
+    String ideaVmOptions = "${VmOptionsGenerator.vmOptionsForArch(JvmArchitecture.x64, buildContext.productProperties)} -XX:+UseCompressedOops"
     if (buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP && macCustomizer.enableYourkitAgentInEAP) {
       ideaVmOptions += " " + VmOptionsGenerator.yourkitOptions(buildContext.systemSelector, "")
     }

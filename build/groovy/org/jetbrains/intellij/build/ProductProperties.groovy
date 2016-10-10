@@ -67,6 +67,12 @@ abstract class ProductProperties {
   String additionalIdeJvmArguments = ""
 
   /**
+   * If not null the specified options will be used instead the default memory options in JVM command line (for 64-bit JVM) in IDE launchers
+   * for all operating systems.
+   */
+  String customJvmMemoryOptionsX64 = null
+
+  /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
