@@ -27,10 +27,10 @@ import com.intellij.spellchecker.tokenizer.TokenConsumer;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -48,7 +48,7 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
       final List<ASTNode> strNodes = element.getStringNodes();
       final List<String> prefixes = ContainerUtil.mapNotNull(strNodes, n -> StringUtil.nullize(new StringNodeInfo(n).getPrefix()));
       
-      if (element.textContains('\\') && !prefixes.stream().anyMatch(PythonStringUtil::isRawPrefix)) {
+      if (element.textContains('\\') && !prefixes.stream().anyMatch(PyStringLiteralUtil::isRawPrefix)) {
         for (Pair<TextRange, String> fragment : element.getDecodedFragments()) {
           final String value = fragment.getSecond();
           final int startOffset = fragment.getFirst().getStartOffset();

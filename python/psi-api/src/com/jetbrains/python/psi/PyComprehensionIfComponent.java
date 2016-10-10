@@ -13,29 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.templateLanguages;
+package com.jetbrains.python.psi;
 
-import com.jetbrains.python.newProject.PyNewProjectSettings;
 import org.jetbrains.annotations.Nullable;
 
-public class TemplateSettingsHolder extends PyNewProjectSettings {
-  private String myTemplatesFolder;
-  private String myTemplateLanguage;
-
-  public String getTemplatesFolder() {
-    return myTemplatesFolder;
-  }
-
-  public void setTemplatesFolder(String templatesFolder) {
-    myTemplatesFolder = templatesFolder;
-  }
-
-  @Nullable
-  public String getTemplateLanguage() {
-    return myTemplateLanguage;
-  }
-
-  public void setTemplateLanguage(@Nullable String templateLanguage) {
-    myTemplateLanguage = templateLanguage;
-  }
+/**
+ * The "if" part of list comprehensions and generators.
+ * User: dcheryasov
+ * Date: Jul 31, 2008
+ */
+public interface PyComprehensionIfComponent extends PyComprehensionComponent {
+  @Nullable  
+  PyExpression getTest();
 }

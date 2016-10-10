@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,9 @@ public class SimplifiableJUnitAssertionInspectionTest extends LightInspectionTes
       "public abstract class TestCase extends Assert {" +
       "    protected void setUp() throws Exception {}" +
       "    protected void tearDown() throws Exception {}" +
+      "    public static void assertTrue(boolean condition) {" +
+      "        Assert.assertTrue(condition);" +
+      "    }" +
       "}",
 
       "package junit.framework;" +

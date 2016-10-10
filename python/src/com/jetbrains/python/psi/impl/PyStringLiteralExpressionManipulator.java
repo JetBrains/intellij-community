@@ -18,8 +18,8 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,7 +29,7 @@ public class PyStringLiteralExpressionManipulator extends AbstractElementManipul
 
   @Override
   public PyStringLiteralExpressionImpl handleContentChange(@NotNull PyStringLiteralExpressionImpl element, @NotNull TextRange range, String newContent) {
-    Pair<String, String> quotes = PythonStringUtil.getQuotes(range.substring(element.getText()));
+    Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(range.substring(element.getText()));
 
     if (quotes != null) {
       range = TextRange.create(range.getStartOffset() + quotes.first.length(), range.getEndOffset() - quotes.second.length());
@@ -44,7 +44,7 @@ public class PyStringLiteralExpressionManipulator extends AbstractElementManipul
   @NotNull
   @Override
   public TextRange getRangeInElement(@NotNull PyStringLiteralExpressionImpl element) {
-    Pair<String, String> pair = PythonStringUtil.getQuotes(element.getText());
+    Pair<String, String> pair = PyStringLiteralUtil.getQuotes(element.getText());
     if (pair != null) {
       return TextRange.from(pair.first.length(), element.getTextLength() - pair.first.length() - pair.second.length());
     }

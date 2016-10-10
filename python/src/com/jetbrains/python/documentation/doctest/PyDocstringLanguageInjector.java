@@ -24,10 +24,10 @@ import com.intellij.psi.InjectedLanguagePlaces;
 import com.intellij.psi.LanguageInjector;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -51,7 +51,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       int end = host.getTextLength() - 1;
       final String text = host.getText();
 
-      final Pair<String,String> quotes = PythonStringUtil.getQuotes(text);
+      final Pair<String,String> quotes = PyStringLiteralUtil.getQuotes(text);
       final List<String> strings = StringUtil.split(text, "\n", false);
 
       boolean gotExample = false;

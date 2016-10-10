@@ -93,19 +93,19 @@ public class ReplaceListComprehensionWithForIntention implements IntentionAction
 
   private static PyForStatement createForLoop(final PyListCompExpression expression, final PyElementGenerator elementGenerator,
                                               final String result) {
-    final List<ComprehensionComponent> components = expression.getComponents();
+    final List<PyComprehensionComponent> components = expression.getComponents();
     final StringBuilder stringBuilder = new StringBuilder();
     int slashNum = 1;
-    for (ComprehensionComponent component : components) {
-      if (component instanceof ComprhForComponent) {
+    for (PyComprehensionComponent component : components) {
+      if (component instanceof PyComprehensionForComponent) {
         stringBuilder.append("for ");
-        stringBuilder.append(((ComprhForComponent)component).getIteratorVariable().getText());
+        stringBuilder.append(((PyComprehensionForComponent)component).getIteratorVariable().getText());
         stringBuilder.append(" in ");
-        stringBuilder.append(((ComprhForComponent)component).getIteratedList().getText());
+        stringBuilder.append(((PyComprehensionForComponent)component).getIteratedList().getText());
         stringBuilder.append(":\n");
       }
-      if (component instanceof ComprhIfComponent) {
-        final PyExpression test = ((ComprhIfComponent)component).getTest();
+      if (component instanceof PyComprehensionIfComponent) {
+        final PyExpression test = ((PyComprehensionIfComponent)component).getTest();
         if (test != null) {
           stringBuilder.append("if ");
           stringBuilder.append(test.getText());

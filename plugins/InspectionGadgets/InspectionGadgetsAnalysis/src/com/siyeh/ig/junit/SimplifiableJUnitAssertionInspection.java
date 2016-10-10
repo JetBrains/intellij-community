@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -407,32 +407,26 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression firstArgument = arguments[0];
-      if (firstArgument instanceof PsiLiteralExpression) {
-        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)firstArgument;
-        final Object value = literalExpression.getValue();
-        if (value == Boolean.TRUE) {
-          return "assertTrue()";
-        }
-        else if (value == Boolean.FALSE) {
-          return "assertFalse()";
-        }
-        else if (value == null) {
-          return "assertNull()";
-        }
-      }
       final PsiExpression secondArgument = arguments[1];
-      if (secondArgument instanceof PsiLiteralExpression) {
-        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)secondArgument;
-        final Object value = literalExpression.getValue();
-        if (value == Boolean.TRUE) {
-          return "assertTrue()";
-        }
-        else if (value == Boolean.FALSE) {
-          return "assertFalse()";
-        }
-        else if (value == null) {
-          return "assertNull()";
-        }
+      final PsiLiteralExpression literalExpression;
+      if (firstArgument instanceof PsiLiteralExpression) {
+        literalExpression = (PsiLiteralExpression)firstArgument;
+      }
+      else if (secondArgument instanceof PsiLiteralExpression) {
+        literalExpression = (PsiLiteralExpression)secondArgument;
+      }
+      else {
+        return "";
+      }
+      final Object value = literalExpression.getValue();
+      if (value == Boolean.TRUE) {
+        return "assertTrue()";
+      }
+      else if (value == Boolean.FALSE) {
+        return "assertFalse()";
+      }
+      else if (value == null) {
+        return "assertNull()";
       }
       return "";
     }
@@ -727,6 +721,7 @@ public class SimplifiableJUnitAssertionInspection extends BaseInspection {
       return false;
     }
     final String qualifiedName = targetClass.getQualifiedName();
-    return "junit.framework.Assert".equals(qualifiedName) || "org.junit.Assert".equals(qualifiedName);
+    return "junit.framework.Assert".equals(qualifiedName) || "junit.framework.TestCase".equals(qualifiedName) ||
+           "org.junit.Assert".equals(qualifiedName);
   }
 }

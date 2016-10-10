@@ -741,6 +741,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
     public ShortcutSet getShortcut() {
       return myAction.getShortcutSet();
     }
+
+    @Override
+    public String toString() {
+      return myText;
+    }
   }
 
   private static class ActionPopupStep implements ListPopupStepEx<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {

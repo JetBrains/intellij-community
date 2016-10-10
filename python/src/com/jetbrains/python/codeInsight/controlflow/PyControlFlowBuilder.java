@@ -680,9 +680,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
     List<Instruction> iterators = new ArrayList<>();
 
-    for (ComprehensionComponent component : node.getComponents()) {
-      if (component instanceof ComprhForComponent) {
-        final ComprhForComponent c = (ComprhForComponent) component;
+    for (PyComprehensionComponent component : node.getComponents()) {
+      if (component instanceof PyComprehensionForComponent) {
+        final PyComprehensionForComponent c = (PyComprehensionForComponent) component;
         final PyExpression iteratedList = c.getIteratedList();
         final PyExpression iteratorVariable = c.getIteratorVariable();
         if (prevCondition != null) {
@@ -706,8 +706,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         // Inner "for" and "if" constructs will be linked to all outer iterators
         iterators.add(iterator);
       }
-      else if (component instanceof ComprhIfComponent) {
-        final ComprhIfComponent c = (ComprhIfComponent) component;
+      else if (component instanceof PyComprehensionIfComponent) {
+        final PyComprehensionIfComponent c = (PyComprehensionIfComponent) component;
         final PyExpression condition = c.getTest();
         if (condition == null) {
           continue;

@@ -27,7 +27,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
@@ -148,7 +147,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
           isUnicode = true;
         }
         if (!quotesDetected) {
-          quotes = PythonStringUtil.getQuotes(expression.getText());
+          quotes = PyStringLiteralUtil.getQuotes(expression.getText());
           quotesDetected = true;
         }
         String value = ((PyStringLiteralExpression)expression).getStringValue();
