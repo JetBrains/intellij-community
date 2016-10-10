@@ -516,7 +516,8 @@ public class GitHistoryUtils {
           recordConsumer.consume(record);
         }
       }
-      catch (ProcessCanceledException ignored) {
+      catch (ProcessCanceledException pce) {
+        throw pce;
       }
       catch (Throwable t) {
         if (parseError.isNull()) {
