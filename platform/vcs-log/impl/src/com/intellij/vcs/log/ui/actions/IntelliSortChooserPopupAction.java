@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
@@ -33,7 +34,7 @@ import java.awt.*;
 
 public class IntelliSortChooserPopupAction extends DumbAwareAction {
   public IntelliSortChooserPopupAction() {
-    super("IntelliSort", "Change IntelliSort Type", VcsLogIcons.IntelliSort);
+    super("IntelliSort", "Change IntelliSort Type", IconUtil.flip(VcsLogIcons.Branch, false));
   }
 
   @Override
