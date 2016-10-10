@@ -363,10 +363,8 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
         files = Collections.emptySet();
       }
       else {
-        files = ContainerUtil.mapNotNull(filter.getStructureFilter().getFiles(), filePath -> {
-          // for now, ignoring non-existing paths
-          return filePath.getVirtualFile();
-        });
+        // for now, ignoring non-existing paths
+        files = ContainerUtil.mapNotNull(filter.getStructureFilter().getFiles(), FilePath::getVirtualFile);
       }
 
       VcsStructureChooser chooser = new VcsStructureChooser(project, "Select Files or Folders to Filter by", files,
