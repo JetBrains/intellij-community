@@ -55,6 +55,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(FocusManagerImpl.class);
@@ -486,6 +487,25 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
         }
       }
     });
+  }
+
+  @Override
+  public void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        AtomicBoolean immediate = new AtomicBoolean(true);
+        doWhenFocusSettlesDown(() -> {
+          if (immediate.get()) {
+            runnable.run();
+            return;
+          }
+
+          ApplicationManager.getApplication().invokeLater(this, modality);
+        });
+        immediate.set(false);
+      }
+    }, modality);
   }
 
   private void restartIdleAlarm() {
