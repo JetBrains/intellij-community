@@ -169,6 +169,15 @@ abstract class ProductProperties {
   List<String> modulesToCompileTests = []
 
   /**
+   * Specify list of modules on which some modules packaged into the main jar depend, but which aren't included into the main jar. These
+   * modules will be added to the classpath to properly scramble the main jar.
+   * <strong>This is a temporary hack added specifically for AppCode. It's strongly recommended to either include these modules into the
+   * main jar or get rid of such dependencies.</strong> <br>
+   * todo[nik] get rid of this
+   */
+  List<String> additionalModulesRequiredForScrambling = []
+
+  /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK
    * (&lt;PRODUCT&gt;_JDK variable), *.vmoptions file (&lt;PRODUCT&gt;_VM_OPTIONS variable), idea.properties file (&lt;PRODUCT&gt;_PROPERTIES variable)
    */
