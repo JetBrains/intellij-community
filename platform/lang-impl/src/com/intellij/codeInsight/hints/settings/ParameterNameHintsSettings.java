@@ -22,6 +22,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Set;
@@ -54,6 +55,12 @@ public class ParameterNameHintsSettings implements PersistentStateComponent<Para
   );
 
   private ParameterNameHintsSettings.State state = new State();
+  private Set<String> defaultIgnoreSet = DEFAULT;
+  
+  @TestOnly
+  protected void setDefaultSet(@NotNull Set<String> ignoreSet) {
+    defaultIgnoreSet = ignoreSet;
+  }
 
   public static ParameterNameHintsSettings getInstance() {
     return ServiceManager.getService(ParameterNameHintsSettings.class);
@@ -79,7 +86,7 @@ public class ParameterNameHintsSettings implements PersistentStateComponent<Para
   }
 
   public Set<String> getIgnorePatternSet() {
-    Set<String> ignoreSet = ContainerUtil.newHashSet(DEFAULT);
+    Set<String> ignoreSet = ContainerUtil.newHashSet(defaultIgnoreSet);
     state.diff.forEach((item) -> {
       if (item.startsWith("+")) {
         ignoreSet.add(item.substring(1));
@@ -97,9 +104,9 @@ public class ParameterNameHintsSettings implements PersistentStateComponent<Para
 
   public void setIgnorePatternSet(@NotNull Set<String> updatedBlackList) {
     Set<String> addedItems = ContainerUtil.newHashSet(updatedBlackList);
-    DEFAULT.forEach((pattern) -> addedItems.remove(pattern));
+    defaultIgnoreSet.forEach((pattern) -> addedItems.remove(pattern));
 
-    Set<String> removedItems = ContainerUtil.newHashSet(DEFAULT);
+    Set<String> removedItems = ContainerUtil.newHashSet(defaultIgnoreSet);
     updatedBlackList.forEach((pattern) -> removedItems.remove(pattern));
 
     List<String> diff = ContainerUtil.newArrayList();
