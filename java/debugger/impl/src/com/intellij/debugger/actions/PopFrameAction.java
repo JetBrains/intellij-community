@@ -42,10 +42,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -116,7 +113,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
                                 JavaStackFrame stackFrame,
                                 XDebuggerEvaluator.XEvaluationCallback callback) {
     if (!DebuggerSettings.EVALUATE_FINALLY_NEVER.equals(DebuggerSettings.getInstance().EVALUATE_FINALLY_ON_POP_FRAME)) {
-      List<PsiStatement> statements = getFinallyStatements(stackFrame.getDescriptor().getSourcePosition());
+      List<PsiStatement> statements = getFinallyStatements(project, stackFrame.getDescriptor().getSourcePosition());
       if (!statements.isEmpty()) {
         StringBuilder sb = new StringBuilder();
         for (PsiStatement statement : statements) {
@@ -209,7 +206,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
     }
   }
 
-  private static List<PsiStatement> getFinallyStatements(@Nullable SourcePosition position) {
+  private static List<PsiStatement> getFinallyStatements(Project project, @Nullable SourcePosition position) {
     if (position == null) {
       return Collections.emptyList();
     }
@@ -217,6 +214,15 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
     PsiElement element = position.getFile().findElementAt(position.getOffset());
     PsiTryStatement tryStatement = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class);
     while (tryStatement != null) {
+      PsiResourceList resourceList = tryStatement.getResourceList();
+      if (resourceList != null) {
+        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+        for (PsiResourceListElement listElement : resourceList) {
+          if (listElement instanceof PsiResourceVariable) {
+            res.add(factory.createStatementFromText(((PsiResourceVariable)listElement).getName() + ".close();", tryStatement));
+          }
+        }
+      }
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
       if (finallyBlock != null) {
         ContainerUtil.addAll(res, finallyBlock.getStatements());
