@@ -105,13 +105,14 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
     IntentionAction action = actionHint.findAndCheck(quickFix.getAvailableActions(),
                                                      () -> "Test: "+testFullPath+"\nInfos: "+quickFix.doHighlighting());
     if (action != null) {
+      String text = action.getText();
       quickFix.invoke(action);
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
       if (!quickFix.shouldBeAvailableAfterExecution()) {
-        final IntentionAction afterAction = quickFix.findActionWithText(action.getText());
+        final IntentionAction afterAction = quickFix.findActionWithText(text);
         if (afterAction != null) {
-          fail("Action '" + action.getText() + "' is still available after its invocation in test " + testFullPath);
+          fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
         }
       }
       String expectedFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + AFTER_PREFIX + testName;

@@ -81,12 +81,13 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     final IntentionAction action = findActionAndCheck(actionHint, infosBefore);
 
     if(action != null) {
+      String text = action.getText();
       WriteCommandAction.runWriteCommandAction(null, () -> action.invoke(getProject(), getEditor(), getFile()));
 
       Collection<HighlightInfo> infosAfter = highlightErrors();
-      final IntentionAction afterAction = findActionWithText(action.getText());
+      final IntentionAction afterAction = findActionWithText(text);
       if (afterAction != null) {
-        fail("Action '" + action.getText() + "' is still available after its invocation in test " + testFullPath);
+        fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
       }
       assertEquals(infosBefore.size() - 1, infosAfter.size());
     }
