@@ -76,7 +76,7 @@ class ToggleInlineHintsAction : AnAction() {
     e.presentation.isEnabled = true
 
     val isShow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
-    e.presentation.text = if (isShow) "Hide Parameter Name Hints" else "Show Parameter Name Hints"
+    e.presentation.text = if (isShow) "Disable Parameter Name Hints" else "Enable Parameter Name Hints"
   }
 
   override fun actionPerformed(e: AnActionEvent) {
