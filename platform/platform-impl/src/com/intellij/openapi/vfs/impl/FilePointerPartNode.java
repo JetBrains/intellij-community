@@ -35,7 +35,7 @@ import java.util.List;
 // all file pointers we store in the tree with nodes corresponding to the file structure on disk
 class FilePointerPartNode {
   private static final FilePointerPartNode[] EMPTY_ARRAY = new FilePointerPartNode[0];
-  @NotNull private String part; // common prefix of all file pointers beneath
+  @NotNull String part; // common prefix of all file pointers beneath
   @NotNull FilePointerPartNode[] children;
   FilePointerPartNode parent;
   // file pointers for this exact path (e.g. concatenation of all "part" fields down from the root).
@@ -151,6 +151,15 @@ class FilePointerPartNode {
     childSum += leavesNumber();
     assert (useCount == 0) == (leaves == null) : useCount + " - " + (leaves instanceof VirtualFilePointerImpl ? leaves : Arrays.toString((VirtualFilePointerImpl[])leaves));
     assert pointersUnder == childSum : "expected: "+pointersUnder+"; actual: "+childSum;
+    Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
+    if (fileAndUrl != null && fileAndUrl.second != null) {
+      String url = fileAndUrl.second;
+      assert url.endsWith(part) : "part is: '"+part +"' but url is: '"+url+"'";
+    }
+    if (children.length == 0 || fileAndUrl != null && fileAndUrl.first != null) {
+      // when the node contains real file its path should be canonical
+      assert !part.contains("..") : part;
+    }
   }
 
   @NotNull
