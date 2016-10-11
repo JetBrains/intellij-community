@@ -29,8 +29,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.speedSearch.ListWithFilter;
-import com.intellij.util.Function;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,6 +89,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
 
   @Override
   protected void onPopupCancel() {
+    myPanel.resetSelection(); // select last item if popup cancelled
     final JComponent component = getComponent();
     if (component != null) {
       Object o = component.getClientProperty(JBLIST_KEY);
