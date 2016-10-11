@@ -127,6 +127,7 @@ public class ProblemPreviewEditorPresentation {
   }
 
   private boolean appendFoldings(Segment toShowRange) {
+    if (toShowRange == null) return false;
     boolean isUpdated = false;
     final int startLine = Math.max(0, myDocument.getLineNumber(toShowRange.getStartOffset()) - 1);
     final int endLine = Math.min(myDocument.getLineCount(), myDocument.getLineNumber(toShowRange.getEndOffset()) + 2);
