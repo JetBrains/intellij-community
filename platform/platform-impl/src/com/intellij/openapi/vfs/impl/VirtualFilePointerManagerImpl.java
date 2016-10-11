@@ -199,14 +199,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         url = VirtualFileManager.constructUrl(protocol, cleanPath);
         path = cleanPath;
       }
-      if (url.contains("..")) {
-        // the url of the form "/x/../y" should resolve to "/y" (or something else in the case of symlinks)
-        file = VirtualFileManager.getInstance().findFileByUrl(url);
-        if (file != null) {
-          url = file.getUrl();
-          path = file.getPath();
-        }
-      }
     }
     // else url has come from VirtualFile.getPath() and is good enough
 
@@ -218,7 +210,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = new THashMap<>();
   @NotNull
   private IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url, @Nullable VirtualFile found) {
-    return myUrlToIdentity.computeIfAbsent(url, __ -> new IdentityVirtualFilePointer(found, url));
+    IdentityVirtualFilePointer pointer = myUrlToIdentity.get(url);
+    if (pointer == null) {
+      pointer = new IdentityVirtualFilePointer(found, url);
+      myUrlToIdentity.put(url, pointer);
+    }
+    return pointer;
   }
 
   @NotNull
@@ -466,14 +463,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
     myNodesToFire = toFireEvents;
     myNodesToUpdateUrl = toUpdateUrl;
-
-    assertConsistency();
-  }
-
-  void assertConsistency() {
-    for (FilePointerPartNode root : myPointers.values()) {
-      root.checkConsistency();
-    }
   }
 
   @Override
@@ -485,7 +474,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         String urlBefore = node.myFileAndUrl.second;
         Pair<VirtualFile,String> after = node.update();
         String urlAfter = after.second;
-        if (URL_COMPARATOR.compare(urlBefore, urlAfter) != 0 || !urlAfter.endsWith(node.part)) {
+        if (URL_COMPARATOR.compare(urlBefore, urlAfter) != 0) {
           List<VirtualFilePointerImpl> myPointers = new SmartList<>();
           node.addAllPointersTo(myPointers);
 
@@ -525,7 +514,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     myNodesToUpdateUrl = Collections.emptyList();
     myEvents = Collections.emptyList();
     myNodesToFire = Collections.emptyList();
-    assertConsistency();
+    for (FilePointerPartNode root : myPointers.values()) {
+      root.checkConsistency();
+    }
   }
 
   void removeNode(@NotNull FilePointerPartNode node, VirtualFilePointerListener listener) {
@@ -534,7 +525,9 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     if (rootNodeEmpty) {
       myPointers.remove(listener);
     }
-    assertConsistency();
+    else {
+      myPointers.get(listener).checkConsistency();
+    }
   }
 
   @Override
@@ -545,7 +538,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   private static class DelegatingDisposable implements Disposable {
-    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ContainerUtil.newConcurrentMap(ContainerUtil.<Disposable>identityStrategy());
+    private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances =
+      ContainerUtil.newConcurrentMap(ContainerUtil.<Disposable>identityStrategy());
     private final TObjectIntHashMap<VirtualFilePointerImpl> myCounts = new TObjectIntHashMap<>();
     private final Disposable myParent;
 
