@@ -491,21 +491,16 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
 
   @Override
   public void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        AtomicBoolean immediate = new AtomicBoolean(true);
-        doWhenFocusSettlesDown(() -> {
-          if (immediate.get()) {
-            runnable.run();
-            return;
-          }
-
-          ApplicationManager.getApplication().invokeLater(this, modality);
-        });
-        immediate.set(false);
+    AtomicBoolean immediate = new AtomicBoolean(true);
+    doWhenFocusSettlesDown(() -> {
+      if (immediate.get()) {
+        runnable.run();
+        return;
       }
-    }, modality);
+
+      ApplicationManager.getApplication().invokeLater(() -> doWhenFocusSettlesDown(runnable, modality), modality);
+    });
+    immediate.set(false);
   }
 
   private void restartIdleAlarm() {
