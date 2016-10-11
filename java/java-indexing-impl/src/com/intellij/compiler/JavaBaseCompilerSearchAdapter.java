@@ -26,18 +26,15 @@ import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 
 public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSearchAdapter<PsiClass> {
   public static final JavaBaseCompilerSearchAdapter INSTANCE = new JavaBaseCompilerSearchAdapter();
@@ -82,43 +79,18 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
 
   @NotNull
   @Override
-  public CompilerElement[] libraryElementAsCompilerElements(@NotNull PsiElement element) {
-    if (mayBeVisibleOutsideOwnerFile(element)) {
-      if (element instanceof PsiField || element instanceof PsiMethod) {
-        final String name = ((PsiMember)element).getName();
-
-        final Function<String, CompilerElement> builder;
-        if (element instanceof PsiField) {
-          builder = (ownerJvmName) -> new CompilerElement.CompilerField(ownerJvmName, name);
-        }
-        else {
-          final int parametersCount = ((PsiMethod)element).getParameterList().getParametersCount();
-          builder = (ownerJvmName) -> new CompilerElement.CompilerMethod(ownerJvmName, name, parametersCount);
-        }
-
-        final List<CompilerElement> result = new ArrayList<>();
-        inLibrariesHierarchy(((PsiMember)element).getContainingClass(), aClass -> {
-          final String jvmClassName = ClassUtil.getJVMClassName(aClass);
-          if (jvmClassName != null) {
-            result.add(builder.apply(jvmClassName));
-          }
-          return true;
-        });
-        return result.toArray(new CompilerElement[result.size()]);
-      }
-      else if (element instanceof PsiClass) {
-        final List<CompilerElement> result = new ArrayList<>();
-        inLibrariesHierarchy((PsiClass)element, aClass -> {
-          final String jvmClassName = ClassUtil.getJVMClassName(aClass);
-          if (jvmClassName != null) {
-            result.add(new CompilerElement.CompilerClass(jvmClassName));
-          }
-          return true;
-        });
-        return result.toArray(new CompilerElement[result.size()]);
-      }
-    }
-    return CompilerElement.EMPTY_ARRAY;
+  public CompilerElement[] getHierarchyRestrictedToLibrariesScope(@NotNull CompilerElement baseLibraryElement, @NotNull PsiElement baseLibraryPsi) {
+    final PsiClass baseClass = ObjectUtils.notNull(baseLibraryPsi instanceof PsiClass ? (PsiClass)baseLibraryPsi : ((PsiMember)baseLibraryPsi).getContainingClass());
+    final List<CompilerElement> overridden = new ArrayList<>();
+    Processor<PsiClass> processor = c -> {
+      if (c.hasModifierProperty(PsiModifier.PRIVATE)) return true;
+      String qName = c.getQualifiedName();
+      if (qName == null) return true;
+      overridden.add(baseLibraryElement.override(qName));
+      return true;
+    };
+    ClassInheritorsSearch.search(baseClass, LibraryScopeCache.getInstance(baseClass.getProject()).getLibrariesOnlyScope(), true).forEach(processor);
+    return overridden.toArray(new CompilerElement[overridden.size()]);
   }
 
   @NotNull
@@ -135,14 +107,6 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
     if (!(element instanceof PsiModifierListOwner)) return true;
     if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.PRIVATE)) return false;
     return true;
-  }
-
-  private static void inLibrariesHierarchy(PsiClass aClass, Processor<PsiClass> processor) {
-    if (aClass != null) {
-      processor.process(aClass);
-      ClassInheritorsSearch.search(aClass, LibraryScopeCache.getInstance(aClass.getProject()).getLibrariesOnlyScope(), true)
-        .forEach(processor);
-    }
   }
 
   private static List<PsiClass> retrieveMatchedClasses(VirtualFile file, Project project, Collection<InternalClassMatcher> matchers) {

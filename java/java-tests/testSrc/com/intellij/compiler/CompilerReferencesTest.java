@@ -20,10 +20,7 @@ import com.intellij.codeInsight.completion.AbstractCompilerAwareTest;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -101,17 +98,28 @@ public class CompilerReferencesTest extends AbstractCompilerAwareTest {
     assertEmpty(candidates);
   }
 
+  public void testHierarchyOfLibClass() {
+    myFixture.configureByFiles(getName() + "/Foo.java");
+    rebuildProject();
+    CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> directInheritorInfo = getHierarchyFor(myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_LIST));
+    PsiClass inheritor = assertOneElement(directInheritorInfo.getDirectInheritors().collect(Collectors.toList()));
+    assertEquals("Foo.ListImpl", inheritor.getQualifiedName());
+  }
+
   private CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> getHierarchyUnderForElementCaret() {
     final PsiElement atCaret = myFixture.getElementAtCaret();
     assertNotNull(atCaret);
     final PsiClass classAtCaret = PsiTreeUtil.getParentOfType(atCaret, PsiClass.class, false);
     assertNotNull(classAtCaret);
+    return getHierarchyFor(classAtCaret);
+  }
+
+  private CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> getHierarchyFor(PsiClass classAtCaret) {
     return CompilerReferenceService.getInstance(myFixture.getProject()).getDirectInheritors(classAtCaret,
                                                                                             assertInstanceOf(classAtCaret.getUseScope(), GlobalSearchScope.class),
                                                                                             assertInstanceOf(classAtCaret.getUseScope(), GlobalSearchScope.class),
                                                                                             JavaBaseCompilerSearchAdapter.INSTANCE,
                                                                                             StdFileTypes.JAVA);
-
   }
 
   private Set<VirtualFile> getReferentFilesForElementUnderCaret(CompilerSearchAdapter adapter) {

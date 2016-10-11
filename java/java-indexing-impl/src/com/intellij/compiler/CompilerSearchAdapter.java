@@ -27,5 +27,5 @@ public interface CompilerSearchAdapter {
   CompilerElement asCompilerElement(@NotNull PsiElement psi);
 
   @NotNull
-  CompilerElement[] libraryElementAsCompilerElements(@NotNull PsiElement psi);
+  CompilerElement[] getHierarchyRestrictedToLibrariesScope(@NotNull CompilerElement baseLibraryElement, @NotNull PsiElement baseLibraryPsi);
 }

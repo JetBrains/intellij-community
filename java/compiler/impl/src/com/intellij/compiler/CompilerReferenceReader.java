@@ -88,17 +88,11 @@ class CompilerReferenceReader {
                                                                                 @NotNull GlobalSearchScope searchScope,
                                                                                 @NotNull GlobalSearchScope dirtyScope,
                                                                                 @NotNull Project project,
-                                                                                FileType fileType) {
+                                                                                @NotNull FileType fileType) {
     if (classSearchElementInfo == null) return null;
+    LOG.assertTrue(classSearchElementInfo.searchElements.length == 1);
 
-    CompilerBackwardReferenceIndex.LightDefinition[] candidates =
-      Stream.of(classSearchElementInfo.searchElements)
-      .map(this::asLightUsage)
-      .map(myIndex.getBackwardHierarchyMap()::get)
-      .filter(Objects::nonNull)
-      .flatMap(Collection::stream)
-      .toArray(CompilerBackwardReferenceIndex.LightDefinition[]::new);
-
+    Collection<CompilerBackwardReferenceIndex.LightDefinition> candidates = myIndex.getBackwardHierarchyMap().get(asLightUsage(classSearchElementInfo.searchElements[0]));
     if (candidates == null) return Couple.of(Collections.emptyMap(), Collections.emptyMap());
 
     Set<Class<? extends LightUsage>> suitableClasses = new THashSet<>();
@@ -111,7 +105,8 @@ class CompilerReferenceReader {
 
     final GlobalSearchScope effectiveSearchScope = GlobalSearchScope.notScope(dirtyScope).intersectWith(searchScope);
 
-    Map<VirtualFile, SmartList<String>> candidatesPerFile = Stream.of(candidates)
+    Map<VirtualFile, SmartList<String>> candidatesPerFile = candidates
+      .stream()
       .filter(def -> suitableClasses.contains(def.getUsage().getClass()))
       .map(definition -> {
         final VirtualFile file = findFile(definition.getFileId());

@@ -25,17 +25,15 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -204,9 +202,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                                                          @NotNull GlobalSearchScope searchScope,
                                                                                          @NotNull ClassResolvingCompilerSearchAdapter<T> inheritorSearchAdapter,
                                                                                          @NotNull FileType searchFileType) {
-    if (!isServiceEnabled() ||
-        InjectedLanguageManager.getInstance(myProject).isInjectedFragment(aClass.getContainingFile()) ||
-        !myProjectFileIndex.isInSourceContent(aClass.getContainingFile().getVirtualFile())) return null;
+    if (!isServiceEnabled() || InjectedLanguageManager.getInstance(myProject).isInjectedFragment(aClass.getContainingFile())) return null;
 
     Couple<Map<VirtualFile, T[]>> directInheritorsAndCandidates =
       CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(calculateDirectInheritors(aClass,
@@ -217,7 +213,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                                                        this));
 
     if (directInheritorsAndCandidates == null) return null;
-    return new CompilerDirectInheritorInfoImpl<>(directInheritorsAndCandidates, myDirtyModulesHolder.getDirtyScope(), searchScope);
+    GlobalSearchScope dirtyScope = myDirtyModulesHolder.getDirtyScope();
+    if (ElementPlace.LIB == ElementPlace.get(aClass.getContainingFile().getVirtualFile(), myProjectFileIndex)) {
+      dirtyScope = dirtyScope.union(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope());
+    }
+    return new CompilerDirectInheritorInfoImpl<>(directInheritorsAndCandidates, dirtyScope, searchScope);
   }
 
   private boolean isServiceEnabled() {
@@ -227,8 +227,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   private <T extends PsiNamedElement> Couple<Map<VirtualFile, T[]>> calculateDirectInheritors(@NotNull PsiNamedElement aClass,
                                                                                               @NotNull ClassResolvingCompilerSearchAdapter<T> searchAdapter,
                                                                                               @NotNull GlobalSearchScope useScope,
-                                                                                              FileType searchFileType) {
-    final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, searchAdapter);
+                                                                                              @NotNull FileType searchFileType) {
+    final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, searchAdapter, false);
     synchronized (myLock) {
       if (myReader == null) return null;
       return myReader.getDirectInheritors(aClass,
@@ -252,7 +252,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
   @Nullable
   private TIntHashSet getReferentFileIds(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
-    final CompilerElementInfo compilerElementInfo = asCompilerElements(element, adapter);
+    final CompilerElementInfo compilerElementInfo = asCompilerElements(element, adapter, true);
     if (compilerElementInfo == null) return null;
 
     synchronized (myLock) {
@@ -268,27 +268,24 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   @Nullable
-  private CompilerElementInfo asCompilerElements(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
-    final PsiFile file = element.getContainingFile();
-    if (file == null) return null;
-    final VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null) return null;
-
-    ElementPlace place = ElementPlace.get(vFile, myProjectFileIndex);
-    if (place == null) {
+  private CompilerElementInfo asCompilerElements(@NotNull PsiElement psiElement, @NotNull CompilerSearchAdapter adapter, boolean buildHierarchyForLibraryElements) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+    ElementPlace place = ElementPlace.get(file, myProjectFileIndex);
+    if (place == null || (place == ElementPlace.SRC && myDirtyModulesHolder.contains(file))) {
       return null;
     }
 
-    if (myDirtyModulesHolder.contains(vFile)) {
-      return null;
-    }
-    if (place == ElementPlace.SRC) {
-      final CompilerElement compilerElement = adapter.asCompilerElement(element);
-      return compilerElement == null ? null : new CompilerElementInfo(place, compilerElement);
+    final CompilerElement compilerElement = adapter.asCompilerElement(psiElement);
+    if (compilerElement == null) return null;
+    if (place == ElementPlace.LIB && buildHierarchyForLibraryElements) {
+      final CompilerElement[] elements = adapter.getHierarchyRestrictedToLibrariesScope(compilerElement, psiElement);
+      final CompilerElement[] fullHierarchy = new CompilerElement[elements.length + 1];
+      fullHierarchy[0] = compilerElement;
+      System.arraycopy(elements, 0, fullHierarchy, 1, elements.length);
+      return new CompilerElementInfo(place, fullHierarchy);
     }
     else {
-      final CompilerElement[] elements = adapter.libraryElementAsCompilerElements(element);
-      return elements.length == 0 ? null : new CompilerElementInfo(place, elements);
+      return new CompilerElementInfo(place, compilerElement);
     }
   }
 
@@ -329,8 +326,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     SRC, LIB;
 
     private static ElementPlace get(VirtualFile file, ProjectFileIndex index) {
-      return index.isInSourceContent(file) ? SRC :
-             ((index.isInLibrarySource(file) || index.isInLibraryClasses(file)) ? LIB : null);
+      if (file == null) return null;
+      return index.isInSourceContent(file) ? SRC : ((index.isInLibrarySource(file) || index.isInLibraryClasses(file)) ? LIB : null);
     }
   }
 

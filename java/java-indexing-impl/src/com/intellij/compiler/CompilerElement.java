@@ -18,6 +18,8 @@ package com.intellij.compiler;
 public abstract class CompilerElement {
   public static final CompilerElement[] EMPTY_ARRAY = new CompilerElement[0];
 
+  public abstract CompilerElement override(String overriderName);
+
   public static class CompilerMethod extends CompilerElement {
     private final String myJavacClassName;
     private final String myJavacMethodName;
@@ -40,6 +42,11 @@ public abstract class CompilerElement {
     public int getJavacParameterCount() {
       return myJavacParameterCount;
     }
+
+    @Override
+    public CompilerElement override(String overriderName) {
+      return new CompilerMethod(overriderName, myJavacMethodName, myJavacParameterCount);
+    }
   }
 
   public static class CompilerClass extends CompilerElement {
@@ -51,6 +58,11 @@ public abstract class CompilerElement {
 
     public String getJavacName() {
       return myJavacName;
+    }
+
+    @Override
+    public CompilerElement override(String overriderName) {
+      return new CompilerClass(myJavacName);
     }
   }
 
@@ -70,6 +82,11 @@ public abstract class CompilerElement {
     public String getJavacName() {
       return myJavacName;
     }
+
+    @Override
+    public CompilerElement override(String overriderName) {
+      return new CompilerField(overriderName, myJavacName);
+    }
   }
 
   public static class CompilerFunExpr extends CompilerElement {
@@ -81,6 +98,11 @@ public abstract class CompilerElement {
 
     public String getJavacClassName() {
       return myJavacClassName;
+    }
+
+    @Override
+    public CompilerElement override(String overriderName) {
+      throw new UnsupportedOperationException();
     }
   }
 }
