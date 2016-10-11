@@ -1121,6 +1121,10 @@ public class InferenceSession {
           unresolved.add(var);
         }
       }
+      if (!unresolved.isEmpty() && vars.size() > unresolved.size()) {
+        vars.removeAll(unresolved);
+        vars.addAll(unresolved);
+      }
       if (!myIncorporationPhase.hasCaptureConstraints(unresolved)) {
         PsiSubstitutor firstSubstitutor = resolveSubset(vars, substitutor);
         if (hasBoundProblems(vars, firstSubstitutor)) {
