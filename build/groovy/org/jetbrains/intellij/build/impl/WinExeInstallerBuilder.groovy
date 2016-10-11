@@ -119,6 +119,9 @@ class WinExeInstallerBuilder {
 
   private void prepareConfigurationFiles(String box, String winDistPath) {
     def productProperties = buildContext.productProperties
+    def x64LauncherName = "${productProperties.baseFileName}64.exe"
+    def mainExeLauncherName = customizer.include32BitLauncher ? "${productProperties.baseFileName}.exe" : x64LauncherName
+
     new File(box, "nsiconf/paths.nsi").text = """
 !define IMAGES_LOCATION "${toSystemDependentName(customizer.installerImagesPath)}"
 !define PRODUCT_PROPERTIES_FILE "${toSystemDependentName("$winDistPath/bin/idea.properties")}"
@@ -132,8 +135,8 @@ class WinExeInstallerBuilder {
 !define MANUFACTURER "${buildContext.applicationInfo.shortCompanyName}"
 !define MUI_PRODUCT  "${customizer.fullNameIncludingEdition(buildContext.applicationInfo)}"
 !define PRODUCT_FULL_NAME "${customizer.fullNameIncludingEditionAndVendor(buildContext.applicationInfo)}"
-!define PRODUCT_EXE_FILE "${productProperties.baseFileName}.exe"
-!define PRODUCT_EXE_FILE_64 "${productProperties.baseFileName}64.exe"
+!define PRODUCT_EXE_FILE "$mainExeLauncherName"
+!define PRODUCT_EXE_FILE_64 "$x64LauncherName"
 !define PRODUCT_ICON_FILE "install.ico"
 !define PRODUCT_UNINST_ICON_FILE "uninstall.ico"
 !define PRODUCT_LOGO_FILE "logo.bmp"

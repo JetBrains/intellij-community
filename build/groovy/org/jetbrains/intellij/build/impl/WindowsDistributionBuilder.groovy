@@ -64,9 +64,11 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     if (customizer.includeBatchLaunchers) {
       generateScripts(winDistPath)
     }
-    generateVMOptions(winDistPath)
-    buildWinLauncher(JvmArchitecture.x32, winDistPath)
-    buildWinLauncher(JvmArchitecture.x64, winDistPath)
+    List<JvmArchitecture> architectures = customizer.include32BitLauncher ? JvmArchitecture.values() : [JvmArchitecture.x64]
+    generateVMOptions(winDistPath, architectures)
+    architectures.each {
+      buildWinLauncher(it, winDistPath)
+    }
     customizer.copyAdditionalFiles(buildContext, winDistPath)
     new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension("exe"))?.each {
       buildContext.signExeFile(it.absolutePath)
@@ -139,8 +141,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "$winDistPath/bin", includes: "*.bat", eol: "dos")
   }
 
-  private void generateVMOptions(String winDistPath) {
-    JvmArchitecture.values().each {
+  private void generateVMOptions(String winDistPath, Collection<JvmArchitecture> architectures) {
+    architectures.each {
       def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, yourkitSessionName)
@@ -159,7 +161,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       String vmOptions = "$buildContext.additionalJvmArguments -Didea.paths.selector=${buildContext.systemSelector}".trim()
       def productName = buildContext.applicationInfo.shortProductName
 
-      String jdkEnvVarSuffix = arch == JvmArchitecture.x64 ? "_64" : "";
+      String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : "";
       def envVarBaseName = buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo)
       new File(launcherPropertiesPath).text = """
 IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
