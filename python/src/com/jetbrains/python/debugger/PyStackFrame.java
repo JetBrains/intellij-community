@@ -37,10 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.IntStream;
 
 
 public class PyStackFrame extends XStackFrame {
@@ -49,7 +47,13 @@ public class PyStackFrame extends XStackFrame {
 
   private static final Object STACK_FRAME_EQUALITY_OBJECT = new Object();
   public static final String DOUBLE_UNDERSCORE = "__";
+  public static final String RETURN_VALUES_GROUP_NAME = "Return Values";
+  public static final String SPECIAL_VARIABLES_GROUP_NAME = "Special Variables";
   public static final HashSet<String> HIDE_TYPES = new HashSet<>(Arrays.asList("function", "type", "classobj", "module"));
+  public static final int DUNDER_VALUES_IND = 0;
+  public static final int SPECIAL_TYPES_IND = DUNDER_VALUES_IND + 1;
+  public static final int IPYTHON_VALUES_IND = SPECIAL_TYPES_IND + 1;
+  public static final int NUMBER_OF_GROUPS = IPYTHON_VALUES_IND + 1;
 
   private Project myProject;
   private final PyFrameAccessor myDebugProcess;
@@ -148,48 +152,56 @@ public class PyStackFrame extends XStackFrame {
       return;
     }
     final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
-    XValueChildrenList filteredChildren = new XValueChildrenList();
+    final XValueChildrenList filteredChildren = new XValueChildrenList();
     final HashMap<String, XValue> returnedValues = new HashMap<>();
-    final HashMap<String, XValue> specialValues = new HashMap<>();
-    final HashMap<String, XValue> ipythonHidden = new HashMap<>();
+    final ArrayList<Map<String, XValue>> specialValuesGroups = new ArrayList<>();
+    IntStream.range(0, NUMBER_OF_GROUPS).mapToObj(i -> new HashMap()).forEach(specialValuesGroups::add);
+    boolean isSpecialEmpty = true;
 
     for (int i = 0; i < children.size(); i++) {
       XValue value = children.getValue(i);
       String name = children.getName(i);
-      if (debuggerSettings.isSimplifiedView() && (value instanceof PyDebugValue) &&
-          (HIDE_TYPES.contains(((PyDebugValue)value).getType()))) {
-        continue;
-      }
-      if ((value instanceof PyDebugValue) && ((PyDebugValue)value).isReturnedVal()) {
-        if (debuggerSettings.isWatchReturnValues()) {
+      if (value instanceof PyDebugValue) {
+        PyDebugValue pyValue = (PyDebugValue)value;
+        if (pyValue.isReturnedVal() && debuggerSettings.isWatchReturnValues()) {
           returnedValues.put(name, value);
         }
-      }
-      else if ((value instanceof PyDebugValue) && ((PyDebugValue)value).isIPythonHidden()) {
-        ipythonHidden.put(name, value);
-      }
-      else if (name.startsWith(DOUBLE_UNDERSCORE) && (name.endsWith(DOUBLE_UNDERSCORE))) {
-        specialValues.put(name, value);
-      }
-      else {
-        filteredChildren.add(name, value);
+        else if (!debuggerSettings.isSimplifiedView()) {
+          filteredChildren.add(name, value);
+        }
+        else {
+          int groupIndex = -1;
+          if (name.startsWith(DOUBLE_UNDERSCORE) && (name.endsWith(DOUBLE_UNDERSCORE)) && name.length() > 4) {
+            groupIndex = DUNDER_VALUES_IND;
+          }
+          else if (pyValue.isIPythonHidden()) {
+            groupIndex = IPYTHON_VALUES_IND;
+          }
+          else if (HIDE_TYPES.contains(pyValue.getType())) {
+            groupIndex = SPECIAL_TYPES_IND;
+          }
+          if (groupIndex > -1) {
+            specialValuesGroups.get(groupIndex).put(name, value);
+            isSpecialEmpty = false;
+          }
+          else {
+            filteredChildren.add(name, value);
+          }
+        }
       }
     }
-    node.addChildren(filteredChildren, returnedValues.isEmpty() && specialValues.isEmpty() && ipythonHidden.isEmpty());
+    node.addChildren(filteredChildren, returnedValues.isEmpty() && isSpecialEmpty);
     if (!returnedValues.isEmpty()) {
       addReturnedValuesGroup(node, returnedValues);
     }
-    if (!specialValues.isEmpty()) {
-      addSpecialValuesGroup(node, specialValues);
-    }
-    if (!ipythonHidden.isEmpty()) {
-      addIPythonVariablesGroup(node, ipythonHidden);
+    if (!isSpecialEmpty) {
+      addSpecialValuesGroup(node, specialValuesGroups);
     }
   }
 
   private static void addReturnedValuesGroup(@NotNull final XCompositeNode node, Map<String, XValue> returnedValues) {
     final ArrayList<XValueGroup> group = Lists.newArrayList();
-    group.add(new XValueGroup("Return Values") {
+    group.add(new XValueGroup(RETURN_VALUES_GROUP_NAME) {
       @Override
       public void computeChildren(@NotNull XCompositeNode node) {
         XValueChildrenList list = new XValueChildrenList();
@@ -208,35 +220,16 @@ public class PyStackFrame extends XStackFrame {
     node.addChildren(XValueChildrenList.topGroups(group), true);
   }
 
-  private static void addSpecialValuesGroup(@NotNull final XCompositeNode node, Map<String, XValue> specialValues) {
+  private static void addSpecialValuesGroup(@NotNull final XCompositeNode node, List<Map<String, XValue>> specialValuesGroups) {
     final ArrayList<XValueGroup> group = Lists.newArrayList();
-    group.add(new XValueGroup("Special Variables") {
+    group.add(new XValueGroup(SPECIAL_VARIABLES_GROUP_NAME) {
       @Override
       public void computeChildren(@NotNull XCompositeNode node) {
         XValueChildrenList list = new XValueChildrenList();
-        for (Map.Entry<String, XValue> entry : specialValues.entrySet()) {
-          list.add(entry.getKey(), entry.getValue());
-        }
-        node.addChildren(list, true);
-      }
-
-      @Nullable
-      @Override
-      public Icon getIcon() {
-        return PythonIcons.Python.Debug.SpecialVar;
-      }
-    });
-    node.addChildren(XValueChildrenList.topGroups(group), true);
-  }
-
-  private static void addIPythonVariablesGroup(@NotNull final XCompositeNode node, Map<String, XValue> specialValues) {
-    final ArrayList<XValueGroup> group = Lists.newArrayList();
-    group.add(new XValueGroup("IPython Variables") {
-      @Override
-      public void computeChildren(@NotNull XCompositeNode node) {
-        XValueChildrenList list = new XValueChildrenList();
-        for (Map.Entry<String, XValue> entry : specialValues.entrySet()) {
-          list.add(entry.getKey(), entry.getValue());
+        for (Map<String, XValue> group : specialValuesGroups) {
+          for (Map.Entry<String, XValue> entry : group.entrySet()) {
+            list.add(entry.getKey(), entry.getValue());
+          }
         }
         node.addChildren(list, true);
       }
