@@ -15,6 +15,7 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.After;
@@ -28,6 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.CoreMatchers.startsWith;
 import static org.junit.Assert.*;
 
 public class VMOptionsTest {
@@ -144,6 +146,21 @@ public class VMOptionsTest {
   }
 
   @Test
+  public void testWriteDefaultUserOptions() {
+    System.setProperty("jb.vmOptionsFile", "");
+    File vmoptions = VMOptions.getCustomFile(false);
+    assertNotNull(vmoptions);
+    org.junit.Assert.assertThat(vmoptions.getPath(), startsWith(PathManager.getConfigPath()));
+  }
+
+  @Test
+  public void testWriteCustomUserOptions() {
+    System.setProperty("jb.vmOptionsFile", "/foo,/bar,/baz");
+    File vmoptions = VMOptions.getCustomFile(false);
+    assertNotNull(vmoptions);
+    assertEquals("/baz", vmoptions.getPath());
+  }
+
   public void testWritingNonExistingFile() throws IOException {
     File testFile = myTempDir.newFile("vmoptions.non.existing.txt");
     FileUtil.delete(testFile);

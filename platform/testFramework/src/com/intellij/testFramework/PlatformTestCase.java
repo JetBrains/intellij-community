@@ -89,10 +89,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -139,8 +136,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  // AndroidStudio: our classpath matches multiple prefixes (Idea, CidrCommon, etc.), but the default should be AndroidStudio.
   private static final String[] PREFIX_CANDIDATES = {
-    "AppCode", "CLion", "CidrCommon",
+    "AndroidStudio", "AppCode", "CLion", "CidrCommon",
     "Python", "PyCharmCore", "Ruby", "UltimateLangXml", "Idea", "PlatformLangXml" };
 
   /**
@@ -151,6 +149,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void doAutodetectPlatformPrefix() {
+    // Android Studio: allow -Didea.platform.prefix to override auto-detection mechanism
+    if (Arrays.asList(PREFIX_CANDIDATES).contains(System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY))) {
+      ourPlatformPrefixInitialized = true;
+    }
+
     if (ourPlatformPrefixInitialized) {
       return;
     }

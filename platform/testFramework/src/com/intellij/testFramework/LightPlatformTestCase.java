@@ -277,6 +277,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       InjectedLanguageManagerImpl.pushInjectors(getProject());
 
       storeSettings();
+      CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
 
       myThreadTracker = new ThreadTracker();
       ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
@@ -328,8 +329,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
                "; disposed:" + getProject().isDisposed() +
                "; startup passed:" + passed +
                "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
-
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
 
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     if (manager instanceof FileDocumentManagerImpl) {

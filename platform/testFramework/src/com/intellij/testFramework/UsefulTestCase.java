@@ -85,7 +85,6 @@ public abstract class UsefulTestCase extends TestCase {
 
   protected static boolean OVERWRITE_TESTDATA;
 
-  private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
 
   private static final Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<>();
@@ -107,6 +106,7 @@ public abstract class UsefulTestCase extends TestCase {
   private final List<String> myPathsToKeep = new ArrayList<>();
 
   private CodeStyleSettings myOldCodeStyleSettings;
+  private CodeInsightSettings myOldCodeInsightSettings;
   private String myTempDir;
 
   static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
@@ -114,16 +114,6 @@ public abstract class UsefulTestCase extends TestCase {
   static {
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
-
-    try {
-      CodeInsightSettings defaultSettings = new CodeInsightSettings();
-      Element oldS = new Element("temp");
-      defaultSettings.writeExternal(oldS);
-      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS, "\n");
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
   }
 
   private boolean oldDisposerDebug;
@@ -243,6 +233,17 @@ public abstract class UsefulTestCase extends TestCase {
       return;
     }
 
+    // AndroidStudio: we override the default CodeInsightSettings in AndroidInitialConfigurator, so we have the correct values by the time
+    // PlatformTestCase#storeSettings is called (instead of during the static initializer of this class.)
+    CodeInsightSettings oldCodeInsightSettings = myOldCodeInsightSettings;
+    if (oldCodeInsightSettings == null) {
+      return;
+    }
+
+    myOldCodeInsightSettings = null;
+
+    checkForInsightSettingsDamage(oldCodeInsightSettings, CodeInsightSettings.getInstance(), exceptions);
+
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
     if (oldCodeStyleSettings == null) {
       return;
@@ -250,30 +251,31 @@ public abstract class UsefulTestCase extends TestCase {
 
     myOldCodeStyleSettings = null;
 
-    doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings(), exceptions);
+    checkForStyleSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings(), exceptions);
   }
 
-  public static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
-                                              @NotNull CodeStyleSettings currentCodeStyleSettings,
-                                              @NotNull List<Throwable> exceptions) {
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+  public static void checkForInsightSettingsDamage(@NotNull CodeInsightSettings oldCodeInsightSettings, @NotNull CodeInsightSettings currentCodeInsightSettings, @NotNull List<Throwable> exceptions) {
     try {
-      Element newS = new Element("temp");
-      settings.writeExternal(newS);
-      Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
+      Assert.assertEquals("Code insight settings damaged",
+                          JDOMUtil.writeElement(oldCodeInsightSettings.getState(), "\n"),
+                          JDOMUtil.writeElement(currentCodeInsightSettings.getState(), "\n"));
     }
     catch (AssertionError error) {
-      CodeInsightSettings clean = new CodeInsightSettings();
-      for (Field field : clean.getClass().getFields()) {
+      exceptions.add(error);
+    } finally {
+      for (Field field : oldCodeInsightSettings.getClass().getFields()) {
         try {
-          ReflectionUtil.copyFieldValue(clean, settings, field);
+          ReflectionUtil.copyFieldValue(oldCodeInsightSettings, currentCodeInsightSettings, field);
         }
         catch (Exception ignored) {
         }
       }
-      exceptions.add(error);
     }
+  }
 
+  public static void checkForStyleSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
+                                                 @NotNull CodeStyleSettings currentCodeStyleSettings,
+                                                 @NotNull List<Throwable> exceptions) {
     currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
     try {
       checkSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings, "Code style settings damaged");
@@ -303,6 +305,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (!isPerformanceTest() && ApplicationManager.getApplication() != null) {
       myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();
       myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+      myOldCodeInsightSettings = CodeInsightSettings.getInstance().clone();
     }
   }
 

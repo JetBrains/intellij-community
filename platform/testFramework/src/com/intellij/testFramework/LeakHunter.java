@@ -46,6 +46,11 @@ import java.util.*;
  */
 public class LeakHunter {
 
+  // To avoid false positives, the leak checker won't inspect the internal state of mocking libraries.
+  private static final List<String> MOCKING_SUPPORT_CLASSES = Arrays.asList(
+    "org.easymock.internal.MocksBehavior",
+    "org.mockito.internal.stubbing.OngoingStubbingImpl");
+
   private static void walkObjects(@NotNull final Class<?> lookFor, @NotNull Collection<Object> startRoots, @NotNull final Processor<BackLink> leakProcessor) {
     TIntHashSet visited = new TIntHashSet();
     final Queue<BackLink> toVisit = new Queue<BackLink>(1000000);
@@ -57,6 +62,11 @@ public class LeakHunter {
       final BackLink backLink = toVisit.pullFirst();
       Object root = backLink.value;
       if (!visited.add(System.identityHashCode(root))) continue;
+      if (MOCKING_SUPPORT_CLASSES.contains(root.getClass().getName())) continue;
+
+      // Android Studio: ignore ProxyUtil and its proxy cache from the traversal.
+      if (root instanceof Class && "com.android.tools.idea.gradle.util.ProxyUtil".equals(((Class)root).getName())) continue;
+
       DebugReflectionUtil.processStronglyReferencedValues(root, (value, field) -> {
         Class<?> valueClass = value.getClass();
         if (lookFor.isAssignableFrom(valueClass) && isReallyLeak(value)) {
