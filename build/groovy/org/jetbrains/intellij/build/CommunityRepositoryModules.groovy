@@ -290,6 +290,7 @@ class CommunityRepositoryModules {
       withResource("lib/commons-compress-1.8.1.jar", "lib")
       withResource("lib/javawriter-2.2.1.jar", "lib")
       withResource("lib/juniversalchardet-1.0.3.jar", "lib")
+      withResource("lib/layoutlib.jar", "lib")
       withResource("lib/gluegen-rt.jar", "lib")
       withResource("lib/gluegen-rt-natives-linux-amd64.jar", "lib")
       withResource("lib/gluegen-rt-natives-linux-i586.jar", "lib")
