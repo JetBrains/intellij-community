@@ -209,8 +209,10 @@ class PostHighlightingVisitor {
 
   @Nullable
   private HighlightInfo processIdentifier(@NotNull PsiIdentifier identifier, @NotNull ProgressIndicator progress, @NotNull GlobalUsageHelper helper) {
-    if (SuppressionUtil.inspectionResultSuppressed(identifier, myUnusedSymbolInspection)) return null;
     PsiElement parent = identifier.getParent();
+    if (!(parent instanceof PsiVariable || parent instanceof PsiMember)) return null;
+
+    if (SuppressionUtil.inspectionResultSuppressed(identifier, myUnusedSymbolInspection)) return null;
 
     if (parent instanceof PsiLocalVariable && myUnusedSymbolInspection.LOCAL_VARIABLE) {
       return processLocalVariable((PsiLocalVariable)parent, identifier, progress);
