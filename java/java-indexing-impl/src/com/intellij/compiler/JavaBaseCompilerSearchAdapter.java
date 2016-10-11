@@ -15,14 +15,18 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
+import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.util.ClassUtil;
@@ -33,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSearchAdapter<PsiClass> {
@@ -142,30 +145,38 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
     }
   }
 
-  private static Collection<PsiClass> retrieveMatchedClasses(VirtualFile file, Project project, Collection<InternalClassMatcher> matchers) {
+  private static List<PsiClass> retrieveMatchedClasses(VirtualFile file, Project project, Collection<InternalClassMatcher> matchers) {
     final List<PsiClass> result = new ArrayList<>(matchers.size());
     PsiFileWithStubSupport psiFile = ObjectUtils.notNull((PsiFileWithStubSupport)PsiManager.getInstance(project).findFile(file));
     StubTree tree = psiFile.getStubTree();
-    if (tree != null) {
-      for (StubElement<?> element : tree.getPlainListFromAllRoots()) {
-        if (element instanceof PsiClassStub && match((m, e) -> m.matches(e), (PsiClassStub)element, matchers)) {
-          result.add((PsiClass)element.getPsi());
-        }
-      }
-    } else {
-      PsiTreeUtil.processElements(psiFile, e -> {
-        if (e instanceof PsiClass && match((m, c) -> m.matches((PsiClass)c), e, matchers)) {
-          result.add((PsiClass)e);
-        }
-        return true;
-      });
+    boolean foreign = tree == null;
+    if (foreign) {
+      tree = ((PsiFileImpl)psiFile).calcStubTree();
     }
+
+    for (StubElement<?> element : tree.getPlainList()) {
+      if (element instanceof PsiClassStub && match((PsiClassStub)element, matchers)) {
+        result.add(asPsi((PsiClassStub<?>)element, psiFile, tree, foreign));
+      }
+    }
+
     return result;
   }
 
-  private static <T> boolean match(BiFunction<InternalClassMatcher, T, Boolean> matchingRule, T classObj, Collection<InternalClassMatcher> matchers) {
+  private static PsiClass asPsi(PsiClassStub<?> stub, PsiFileWithStubSupport file, StubTree tree, boolean foreign) {
+    if (foreign) {
+      final PsiClass cachedPsi = ((PsiClassStubImpl<?>)stub).getCachedPsi();
+      if (cachedPsi != null) return cachedPsi;
+
+      final ASTNode ast = file.findTreeForStub(tree, stub);
+      return ast != null ? (PsiClass)ast.getPsi() : null;
+    }
+    return stub.getPsi();
+  }
+
+  private static boolean match(PsiClassStub stub, Collection<InternalClassMatcher> matchers) {
     for (InternalClassMatcher matcher : matchers) {
-      if (matchingRule.apply(matcher, classObj)) {
+      if (matcher.matches(stub)) {
         //qualified name is unique among file's classes
         if (matcher instanceof InternalClassMatcher.ByQualifiedName) {
           matchers.remove(matcher);
@@ -211,20 +222,12 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
   }
 
   private interface InternalClassMatcher {
-    boolean matches(PsiClass psiClass);
-
     boolean matches(PsiClassStub stub);
 
     class BySuperName implements InternalClassMatcher {
       private final String mySuperName;
 
       public BySuperName(String name) {mySuperName = name;}
-
-      @Override
-      public boolean matches(PsiClass psiClass) {
-        return psiClass instanceof PsiAnonymousClass &&
-               mySuperName.equals(StringUtil.getShortName(((PsiAnonymousClass)psiClass).getBaseClassReference().getText()));
-      }
 
       @Override
       public boolean matches(PsiClassStub stub) {
@@ -238,11 +241,6 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
       public ByName(String name) {myName = name;}
 
       @Override
-      public boolean matches(PsiClass psiClass) {
-        return myName.equals(psiClass.getName());
-      }
-
-      @Override
       public boolean matches(PsiClassStub stub) {
         return myName.equals(stub.getName());
       }
@@ -252,11 +250,6 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
       private final String myQName;
 
       public ByQualifiedName(String name) {myQName = name;}
-
-      @Override
-      public boolean matches(PsiClass psiClass) {
-        return myQName.equals(psiClass.getQualifiedName());
-      }
 
       @Override
       public boolean matches(PsiClassStub stub) {
