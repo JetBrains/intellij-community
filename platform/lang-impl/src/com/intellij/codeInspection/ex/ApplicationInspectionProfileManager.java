@@ -42,7 +42,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.profile.Profile;
-import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -103,12 +102,11 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
                                                 @NotNull String name,
                                                 @NotNull Function<String, String> attributeProvider,
                                                 boolean isBundled) {
+        InspectionProfileImpl profile = new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManager.this, dataHolder);
         if (isBundled) {
-          return new BundledInspectionProfile(name, myRegistrar, ApplicationInspectionProfileManager.this, dataHolder);
+          profile.lockProfile(true);
         }
-        else {
-          return new InspectionProfileImpl(name, myRegistrar, ApplicationInspectionProfileManager.this, dataHolder);
-        }
+        return profile;
       }
 
       @Override
@@ -197,15 +195,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     }
   }
 
-  private static class BundledInspectionProfile extends InspectionProfileImpl {
-    public BundledInspectionProfile(@NotNull String profileName,
-                                   @NotNull InspectionToolRegistrar registrar,
-                                   @NotNull ProfileManager profileManager,
-                                   @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
-      super(profileName, registrar, profileManager, dataHolder);
-    }
-  }
-
   private static boolean isUnitTestOrHeadlessMode() {
     return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
@@ -283,11 +272,18 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   @Override
   public InspectionProfile getCurrentProfile() {
     initProfiles();
+
     Profile current = mySchemeManager.getCurrentScheme();
-    if (current != null) return (InspectionProfile)current;
-    Collection<Profile> profiles = getProfiles();
-    if (profiles.isEmpty()) return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, null);
-    return (InspectionProfile)profiles.iterator().next();
+    if (current != null) {
+      return (InspectionProfile)current;
+    }
+
+    // use default as base, not random custom profile
+    InspectionProfileImpl result = mySchemeManager.findSchemeByName(InspectionProfileImpl.DEFAULT_PROFILE_NAME);
+    if (result == null) {
+      return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, null);
+    }
+    return result;
   }
 
   @NotNull
