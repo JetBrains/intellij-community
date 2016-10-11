@@ -48,7 +48,6 @@ import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.JBTable
-import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import git4idea.commands.Git
@@ -57,6 +56,7 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
 import java.awt.Dimension
+import java.awt.Font
 import java.util.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
@@ -156,7 +156,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
     var maxNameWidth = 0
     var maxUrlWidth = 0
     for (node in nodes) {
-      val fontMetrics = table.getFontMetrics(JBFont.create(UIManager.getFont("Table.font")).asBold())
+      val fontMetrics = table.getFontMetrics(UIManager.getFont("Table.font").deriveFont(Font.BOLD))
       val nameWidth = fontMetrics.stringWidth(node.getPresentableString())
       val remote = (node as? RemoteNode)?.remote
       val urlWidth = if (remote == null) 0 else fontMetrics.stringWidth(getUrl(remote))
