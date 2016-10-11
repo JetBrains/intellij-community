@@ -33,6 +33,7 @@ import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
+import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
@@ -51,9 +52,8 @@ import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
   private static final String NAME = "paths";
-  private static final int VALUE = 239;
 
-  @NotNull private final PersistentHashMap<Integer, Integer> myEmptyCommits;
+  @NotNull private final PersistentSet<Integer> myEmptyCommits;
   @NotNull private final PathsIndexer myPathsIndexer;
 
   public VcsLogPathsIndex(@NotNull String logId,
@@ -63,8 +63,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
     super(logId, NAME, VcsLogPersistentIndex.getVersion(), new PathsIndexer(createPathsEnumerator(logId), roots),
           new NullableIntKeyDescriptor(), disposableParent);
 
-    myEmptyCommits = PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + NAME, logId,
-                                                            VcsLogPersistentIndex.getVersion());
+    myEmptyCommits = PersistentUtil.createPersistentSet(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + NAME, logId,
+                                                        VcsLogPersistentIndex.getVersion());
     myPathsIndexer = (PathsIndexer)myIndexer;
     myPathsIndexer.setFatalErrorConsumer(e -> {
       fatalErrorHandler.consume(this, e);
@@ -93,7 +93,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   @Override
   protected void onNotIndexableCommit(int commit) throws StorageException {
     try {
-      myEmptyCommits.put(commit, VALUE);
+      myEmptyCommits.put(commit);
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -102,13 +102,13 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
 
   @Override
   public boolean isIndexed(int commit) throws IOException {
-    return super.isIndexed(commit) || myEmptyCommits.containsMapping(commit);
+    return super.isIndexed(commit) || myEmptyCommits.contains(commit);
   }
 
   @Override
   public void flush() throws StorageException {
     super.flush();
-    myEmptyCommits.force();
+    myEmptyCommits.flush();
     myPathsIndexer.getPathsEnumerator().force();
   }
 
@@ -170,7 +170,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
 
   @NotNull
   public String getPathInfo(int commit) throws IOException {
-    if (myEmptyCommits.containsMapping(commit)) {
+    if (myEmptyCommits.contains(commit)) {
       return "No paths";
     }
     Collection<Integer> keys = getKeysForCommit(commit);

@@ -24,6 +24,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsLogProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -74,6 +75,18 @@ public class PersistentUtil {
   }
 
   @NotNull
+  public static <T> PersistentSet<T> createPersistentSet(@NotNull KeyDescriptor<T> keyDescriptor,
+                                                         @NotNull String storageKind,
+                                                         @NotNull String logId,
+                                                         int version) throws IOException {
+    File storageFile = getStorageFile(storageKind, logId, version);
+
+    return IOUtil.openCleanOrResetBroken(() ->
+                                           new PersistentSetImpl<>(storageFile, keyDescriptor, Page.PAGE_SIZE, null, version),
+                                         storageFile);
+  }
+
+  @NotNull
   public static <V> PersistentHashMap<Integer, V> createPersistentHashMap(@NotNull DataExternalizer<V> externalizer,
                                                                           @NotNull String storageKind,
                                                                           @NotNull String logId,
@@ -88,5 +101,35 @@ public class PersistentUtil {
   @NotNull
   public static File getCorruptionMarkerFile() {
     return new File(LOG_CACHE, CORRUPTION_MARKER);
+  }
+
+  public static class PersistentSetImpl<T> extends PersistentBTreeEnumerator<T> implements PersistentSet<T> {
+
+    public PersistentSetImpl(@NotNull File file,
+                             @NotNull KeyDescriptor<T> dataDescriptor,
+                             int initialSize,
+                             @Nullable PagedFileStorage.StorageLockContext lockContext, int version) throws IOException {
+      super(file, dataDescriptor, initialSize, lockContext, version);
+    }
+
+    @Override
+    public boolean contains(@NotNull T element) throws IOException {
+      return tryEnumerate(element) != NULL_ID;
+    }
+
+    @Override
+    public void put(@NotNull T element) throws IOException {
+      enumerate(element);
+    }
+
+    @Override
+    public void flush() {
+      force();
+    }
+
+    @Override
+    public synchronized void markCorrupted() {
+      super.markCorrupted();
+    }
   }
 }

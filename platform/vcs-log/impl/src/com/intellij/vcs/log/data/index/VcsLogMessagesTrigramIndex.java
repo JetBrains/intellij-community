@@ -23,8 +23,8 @@ import com.intellij.util.indexing.ScalarIndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.PersistentHashMap;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -37,17 +37,16 @@ import java.util.Map;
 public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
   private static final Logger LOG = Logger.getInstance(VcsLogMessagesTrigramIndex.class);
   private static final String TRIGRAMS = "trigrams";
-  private static final int VALUE = 239;
 
-  @NotNull private final PersistentHashMap<Integer, Integer> myNoTrigramsCommits;
+  @NotNull private final PersistentSet<Integer> myNoTrigramsCommits;
 
   public VcsLogMessagesTrigramIndex(@NotNull String logId, @NotNull Disposable disposableParent) throws IOException {
     super(logId, TRIGRAMS, VcsLogPersistentIndex.getVersion(), new TrigramMessageIndexer(), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
           disposableParent);
 
     myNoTrigramsCommits =
-      PersistentUtil.createPersistentHashMap(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + TRIGRAMS, logId,
-                                             VcsLogPersistentIndex.getVersion());
+      PersistentUtil.createPersistentSet(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + TRIGRAMS, logId,
+                                         VcsLogPersistentIndex.getVersion());
   }
 
   @Nullable
@@ -63,7 +62,7 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
   @Override
   protected void onNotIndexableCommit(int commit) throws StorageException {
     try {
-      myNoTrigramsCommits.put(commit, VALUE);
+      myNoTrigramsCommits.put(commit);
     }
     catch (IOException e) {
       throw new StorageException(e);
@@ -72,13 +71,13 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
 
   @Override
   public boolean isIndexed(int commit) throws IOException {
-    return super.isIndexed(commit) || myNoTrigramsCommits.containsMapping(commit);
+    return super.isIndexed(commit) || myNoTrigramsCommits.contains(commit);
   }
 
   @Override
   public void flush() throws StorageException {
     super.flush();
-    myNoTrigramsCommits.force();
+    myNoTrigramsCommits.flush();
   }
 
   @Override
@@ -100,7 +99,7 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
 
   @NotNull
   public String getTrigramInfo(int commit) throws IOException {
-    if (myNoTrigramsCommits.containsMapping(commit)) {
+    if (myNoTrigramsCommits.contains(commit)) {
       return "No trigrams";
     }
 
