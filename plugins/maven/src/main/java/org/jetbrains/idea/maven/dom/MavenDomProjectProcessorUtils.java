@@ -531,7 +531,8 @@ public class MavenDomProjectProcessorUtils {
         parentDesc = new MavenParentDesc(parentId, parentRelativePath);
       }
 
-      return process(myManager.getGeneralSettings(), MavenDomUtil.getVirtualFile(projectDom), parentDesc);
+      VirtualFile projectFile = MavenDomUtil.getVirtualFile(projectDom);
+      return projectFile == null ? null : process(myManager.getGeneralSettings(), projectFile, parentDesc);
     }
   }
 
