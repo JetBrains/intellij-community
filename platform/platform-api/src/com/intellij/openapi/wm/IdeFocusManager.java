@@ -67,7 +67,7 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
 
   /**
-   * Executes given runnable after all focus activities are finished with the given modaliy state
+   * Executes given runnable after all focus activities are finished, immediately or later with the given modaliy state
    */
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable, @NotNull ModalityState modality);
 
