@@ -32,7 +32,7 @@ fun createLayoutBuilder() = LayoutBuilder(MigLayoutBuilder())
 // "When a protected member is accessed from an inline function, a public accessor method is created to provide an access to that protected member from the outside of the class where the function will be inlined to."
 // (https://youtrack.jetbrains.com/issue/KT-12215)
 interface LayoutBuilderImpl {
-  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null): Row
+  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false): Row
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 
