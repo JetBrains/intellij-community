@@ -22,6 +22,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
@@ -179,6 +181,8 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
           if (method.isConstructor()) return;
           PsiParameter[] parameters = method.getParameterList().getParameters();
           if (parameters.length == 0) return;
+          final VirtualFile file = method.getContainingFile().getVirtualFile();
+          if (!ProjectRootManager.getInstance(holder.getProject()).getFileIndex().isInSourceContent(file)) return;
 
           if (myDeadCodeTool.isEntryPoint(method)) return;
           if (!method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) return;
