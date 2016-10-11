@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.UIUtil;
@@ -301,6 +302,33 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         filePanel.selectNext(this, true);
       }
     }, ModalityState.stateForComponent(this));
+  }
+
+  @Override
+  public void updateCellView() {
+    myViewPanel.removeAll();
+    final JComponent panel = createViewPanel();
+    myViewPanel.add(panel);
+
+    final IpnbFilePanel filePanel = myParent.getIpnbFilePanel();
+    filePanel.revalidate();
+    filePanel.repaint();
+  }
+
+  @Override
+  public int getCaretPosition() {
+    return myCodeSourcePanel.getEditor().getCaretModel().getOffset();
+  }
+
+  @Nullable
+  @Override
+  public String getText(int from, int to) {
+    return myCodeSourcePanel.getEditor().getDocument().getText(new TextRange(from, to));
+  }
+
+  @Override
+  public String getText(int from) {
+    return getText(from, myCodeSourcePanel.getEditor().getDocument().getTextLength());
   }
 
   @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})

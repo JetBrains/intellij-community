@@ -41,7 +41,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IpnbFilePanel.class);
@@ -248,6 +252,99 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       setSelectedCell(selectedCell);
     }
     saveToFile(false);
+  }
+  
+  public void mergeCell(boolean below) {
+    final IpnbEditablePanel currentCellPanel = getSelectedCell();
+    if (currentCellPanel == null) return;
+    final boolean hasCellToMerge = below ? hasNextCell(currentCellPanel) : hasPrevCell(currentCellPanel);
+    if (!hasCellToMerge) return;
+    
+    final List<String> currentCellSource = getCellSource(currentCellPanel);
+
+    if (below) {
+      selectPrev(currentCellPanel);
+    }
+    else {
+      selectNext(currentCellPanel);
+    }
+    final IpnbEditablePanel prevCellPanel = getSelectedCell();
+    final IpnbCell prevCell = prevCellPanel.myCell;
+    if (prevCell instanceof IpnbEditableCell) {
+      final ArrayList<String> source = new ArrayList<>();
+      final List<String> prevCellSource = ((IpnbEditableCell)prevCell).getSource();
+      source.addAll(prevCellSource);
+      source.add("\n");
+      source.addAll(currentCellSource);
+      ((IpnbEditableCell)prevCell).setSource(source);
+      prevCellPanel.updateCellView();
+    }
+    
+    actualizeCellData(prevCell);
+    
+    currentCellPanel.repaint();
+    deleteCell(currentCellPanel);
+    saveToFile();
+  }
+
+  private static void actualizeCellData(IpnbCell cell) {
+    if (cell instanceof IpnbCodeCell) {
+      ((IpnbCodeCell)cell).removeCellOutputs();
+      ((IpnbCodeCell)cell).setPromptNumber(null);
+    }
+  }
+
+  public void splitCell() {
+    final IpnbEditablePanel cellPanel = getSelectedCell();
+    if (cellPanel == null) return;
+    final IpnbEditableCell cell = cellPanel.getCell();
+    final int position = cellPanel.getCaretPosition();
+    
+    final String oldCellText = cellPanel.getText(0, position);
+    final String newCellText = cellPanel.getText(position);
+    
+    if (oldCellText != null) {
+      cellPanel.getCell().setSource(createCellSourceFromText(oldCellText));
+      actualizeCellData(cell);
+      cellPanel.updateCellView();
+    }
+    
+    final ArrayList<String> newCellSource = createCellSourceFromText(newCellText);
+    if (cell instanceof IpnbCodeCell) {
+      final IpnbCodeCell codeCell = (IpnbCodeCell)cell;
+      final IpnbCodeCell ipnbCodeCell = new IpnbCodeCell(codeCell.getLanguage(), newCellSource, codeCell.getPromptNumber(), 
+                                                         codeCell.getCellOutputs(), codeCell.getMetadata());
+      addCell(new IpnbCodePanel(myProject,  myParent, ipnbCodeCell), true);
+    }
+    else if (cell instanceof IpnbMarkdownCell) {
+      final IpnbMarkdownCell markdownCell = new IpnbMarkdownCell(newCellSource, cell.getMetadata());
+      addCell(new IpnbMarkdownPanel(markdownCell, this), true);
+    }
+    else if (cell instanceof IpnbHeadingCell) {
+      final IpnbHeadingCell headingCell = new IpnbHeadingCell(newCellSource, ((IpnbHeadingCell)cell).getLevel(), cell.getMetadata());
+      addCell(new IpnbHeadingPanel(headingCell), true);
+    }
+    
+    saveToFile();
+  }
+
+  private static ArrayList<String> createCellSourceFromText(@NotNull String oldCellText) {
+    final ArrayList<String> source = new ArrayList<>();
+    source.addAll(Arrays.stream(oldCellText.split("\n")).map(s -> s + "\n").collect(Collectors.toList()));
+    return source;
+  }
+
+  @NotNull
+  private static List<String> getCellSource(@NotNull IpnbEditablePanel currentCellPanel) {
+    final IpnbCell cell = currentCellPanel.myCell;
+    List<String> source = new ArrayList<>();
+    if (cell instanceof IpnbEditableCell) {
+      source = ((IpnbEditableCell)cell).getSource();
+    }
+    else if (cell instanceof IpnbRawCell) {
+      source = ((IpnbRawCell)cell).getSource();
+    }
+    return source;
   }
 
   public void deleteSelectedCell() {
@@ -464,6 +561,16 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         getParent().dispatchEvent(e);
       }
     }
+  }
+  
+  public boolean hasNextCell(@NotNull IpnbEditablePanel cell) {
+    int index = myIpnbPanels.indexOf(cell);
+    return index < myIpnbPanels.size() - 1;
+  }
+  
+  public boolean hasPrevCell(@NotNull IpnbEditablePanel cell) {
+    int index = myIpnbPanels.indexOf(cell);
+    return index > 0;
   }
 
   public void selectPrev(@NotNull IpnbEditablePanel cell) {
