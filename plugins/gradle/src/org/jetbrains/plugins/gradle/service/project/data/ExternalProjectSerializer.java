@@ -23,6 +23,7 @@ import com.esotericsoftware.kryo.serializers.CollectionSerializer;
 import com.esotericsoftware.kryo.serializers.DefaultSerializers;
 import com.esotericsoftware.kryo.serializers.FieldSerializer;
 import com.esotericsoftware.kryo.serializers.MapSerializer;
+import com.esotericsoftware.kryo.util.Util;
 import com.esotericsoftware.minlog.Log;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,6 +63,7 @@ public class ExternalProjectSerializer {
         return super.newInstance(type);
       }
     };
+    Util.isAndroid = false;
     configureKryo();
   }
 

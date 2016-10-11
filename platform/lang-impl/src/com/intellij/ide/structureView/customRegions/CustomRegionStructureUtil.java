@@ -17,15 +17,16 @@ package com.intellij.ide.structureView.customRegions;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.folding.CustomFoldingProvider;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Rustam Vishnyakov
@@ -38,7 +39,11 @@ public class CustomRegionStructureUtil {
         ((StubBasedPsiElement)rootElement).getStub() != null) {
       return originalElements;
     }
-    Collection<CustomRegionTreeElement> customRegions = collectCustomRegions(rootElement);
+    Set<TextRange> childrenRanges = ContainerUtil.map2SetNotNull(originalElements, element -> {
+      Object value = element.getValue();
+      return value instanceof PsiElement ? ((PsiElement)value).getTextRange() : null;
+    });
+    Collection<CustomRegionTreeElement> customRegions = collectCustomRegions(rootElement, childrenRanges);
     if (customRegions.size() > 0) {
       List<StructureViewTreeElement> result = new ArrayList<>();
       result.addAll(customRegions);
@@ -58,31 +63,34 @@ public class CustomRegionStructureUtil {
     return originalElements;
   }
 
-  private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement) {
-    List<CustomRegionTreeElement> customRegions = new ArrayList<>();
-    PsiElement child = rootElement.getFirstChild();
+  private static Collection<CustomRegionTreeElement> collectCustomRegions(@NotNull PsiElement rootElement, @NotNull Set<TextRange> ranges) {
+    Iterator<PsiComment> iterator = SyntaxTraverser.psiTraverser(rootElement)
+      .regard(element -> !isInsideRanges(element, ranges))
+      .filter(PsiComment.class)
+      .filter(comment -> !comment.textContains('\n'))
+      .iterator();
+
+    List<CustomRegionTreeElement> customRegions = ContainerUtil.newSmartList();
     CustomRegionTreeElement currRegionElement = null;
     CustomFoldingProvider provider = null;
-    while (child != null) {
-      if (child instanceof PsiComment && !child.textContains('\n')) {
-        if (provider == null) provider = getProvider(child);
-        if (provider != null) {
-          String commentText = child.getText();
-          if (provider.isCustomRegionStart(commentText)) {
-            if (currRegionElement == null) {
-              currRegionElement = new CustomRegionTreeElement(child, provider);
-              customRegions.add(currRegionElement);
-            }
-            else {
-              currRegionElement = currRegionElement.createNestedRegion(child);
-            }
+    while (iterator.hasNext()) {
+      PsiComment child = iterator.next();
+      if (provider == null) provider = getProvider(child);
+      if (provider != null) {
+        String commentText = child.getText();
+        if (provider.isCustomRegionStart(commentText)) {
+          if (currRegionElement == null) {
+            currRegionElement = new CustomRegionTreeElement(child, provider);
+            customRegions.add(currRegionElement);
           }
-          else if (provider.isCustomRegionEnd(commentText) && currRegionElement != null) {
-            currRegionElement = currRegionElement.endRegion(child);
+          else {
+            currRegionElement = currRegionElement.createNestedRegion(child);
           }
         }
+        else if (provider.isCustomRegionEnd(commentText) && currRegionElement != null) {
+          currRegionElement = currRegionElement.endRegion(child);
+        }
       }
-      child = child.getNextSibling();
     }
     return customRegions;
   }
@@ -95,5 +103,14 @@ public class CustomRegionStructureUtil {
       }
     }
     return null;
+  }
+
+  private static boolean isInsideRanges(@NotNull PsiElement element, @NotNull Set<TextRange> ranges) {
+    for (TextRange range : ranges) {
+      if (range.contains(element.getTextRange().getStartOffset()) || range.contains(element.getTextRange().getEndOffset())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

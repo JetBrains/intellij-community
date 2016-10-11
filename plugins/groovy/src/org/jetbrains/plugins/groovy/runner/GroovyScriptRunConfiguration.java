@@ -164,7 +164,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.write(element, "params", scriptParams);
     JDOMExternalizer.write(element, "workDir", ExternalizablePath.urlValue(workDir));
     JDOMExternalizer.write(element, "debug", isDebugEnabled);
-    JDOMExternalizer.write(element, "addClasspath", isAddClasspathToTheRunner);
+    if (isAddClasspathToTheRunner) JDOMExternalizer.write(element, "addClasspath", true);
     JDOMExternalizer.writeMap(element, envs, null, "env");
   }
 

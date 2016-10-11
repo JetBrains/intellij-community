@@ -55,7 +55,7 @@ public class DistributionFactoryExt extends DistributionFactory {
    */
   public Distribution getWrappedDistribution(File propertiesFile) {
     //noinspection UseOfSystemOutOrSystemErr
-    WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
+    WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
     if (wrapper.getDistribution() != null) {
       return new ZippedDistribution(wrapper.getConfiguration(), myExecutorFactory);
     }
@@ -152,7 +152,7 @@ public class DistributionFactoryExt extends DistributionFactory {
       return String.format("Gradle distribution '%s'", wrapperConfiguration.getDistribution());
     }
 
-    public ClassPath getToolingImplementationClasspath(final ProgressLoggerFactory progressLoggerFactory, final File userHomeDir, BuildCancellationToken cancellationToken) {
+    public ClassPath getToolingImplementationClasspath(org.gradle.internal.logging.progress.ProgressLoggerFactory progressLoggerFactory, final File userHomeDir, BuildCancellationToken cancellationToken) {
       if (installedDistribution == null) {
         Callable<File> installDistroTask = () -> {
           File installDir;

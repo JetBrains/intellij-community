@@ -41,6 +41,7 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializationException;
 import gnu.trove.THashMap;
@@ -340,12 +341,24 @@ public class PluginManagerCore {
   @Nullable
   public static PluginId getPluginByClassName(@NotNull String className) {
     for (IdeaPluginDescriptor descriptor : getPlugins()) {
-      ClassLoader loader = descriptor.getPluginClassLoader();
-      if (loader instanceof PluginClassLoader && ((PluginClassLoader)loader).hasLoadedClass(className)) {
-        return descriptor.getPluginId();
+      if (hasLoadedClass(className, descriptor.getPluginClassLoader())) {
+        PluginId id = descriptor.getPluginId();
+        return CORE_PLUGIN_ID.equals(id.getIdString()) ? null : id;
       }
     }
     return null;
+  }
+
+  private static boolean hasLoadedClass(@NotNull String className, ClassLoader loader) {
+    if (loader instanceof UrlClassLoader) return ((UrlClassLoader)loader).hasLoadedClass(className);
+
+    // it can be an UrlClassLoader loaded by another class loader, so instanceof doesn't work
+    try {
+      return ((Boolean) loader.getClass().getMethod("hasLoadedClass", String.class).invoke(loader, className)).booleanValue();
+    }
+    catch (Exception e) {
+      return false;
+    }
   }
 
   public static void dumpPluginClassStatistics() {

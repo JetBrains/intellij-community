@@ -195,6 +195,19 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     return canBeConvertedToLambda(aClass, acceptParameterizedFunctionTypes, true, ignoredRuntimeAnnotations);
   }
 
+  public static boolean isClassAndMethodSuitableForConversion(PsiAnonymousClass aClass,
+                                                              PsiMethod method,
+                                                              Set<String> ignoredRuntimeAnnotations) {
+    return aClass.getFields().length == 0 &&
+           aClass.getInnerClasses().length == 0 &&
+           aClass.getInitializers().length == 0 &&
+           method.getBody() != null &&
+           method.getDocComment() == null &&
+           !hasRuntimeAnnotations(method, ignoredRuntimeAnnotations) &&
+           !method.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
+           !hasForbiddenRefsInsideBody(method, aClass);
+  }
+
   public static boolean canBeConvertedToLambda(PsiAnonymousClass aClass,
                                                boolean acceptParameterizedFunctionTypes,
                                                boolean reportNotAnnotatedInterfaces,
@@ -210,16 +223,9 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       if (interfaceMethod != null && (acceptParameterizedFunctionTypes || !interfaceMethod.hasTypeParameters())) {
         final PsiMethod[] methods = aClass.getMethods();
-        if (methods.length == 1 &&
-            aClass.getFields().length == 0 &&
-            aClass.getInnerClasses().length == 0 &&
-            aClass.getInitializers().length == 0) {
+        if (methods.length == 1) {
           final PsiMethod method = methods[0];
-          if (method.getBody() != null &&
-              method.getDocComment() == null &&
-              !hasRuntimeAnnotations(method, ignoredRuntimeAnnotations) &&
-              !method.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
-              !hasForbiddenRefsInsideBody(method, aClass)) {
+          if (isClassAndMethodSuitableForConversion(aClass, method, ignoredRuntimeAnnotations)) {
             final PsiType inferredType = getInferredType(aClass, method);
             if (inferredType == null) {
               return false;

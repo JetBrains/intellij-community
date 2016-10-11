@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2015 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,10 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -40,7 +43,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +59,7 @@ public class ConfigurationContext {
   private final Location<PsiElement> myLocation;
   private RunnerAndConfigurationSettings myConfiguration;
   private boolean myInitialized = false;
+  private boolean myMultipleSelection = false;
   private Ref<RunnerAndConfigurationSettings> myExistingConfiguration;
   private final Module myModule;
   private final RunConfiguration myRuntimeConfiguration;
@@ -102,6 +105,14 @@ public class ConfigurationContext {
       return;
     }
     myLocation = new PsiLocation<>(project, myModule, element);
+    final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    if (elements != null) {
+      myMultipleSelection = elements.length > 1;
+    }
+    else {
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      myMultipleSelection = files != null && files.length > 1;
+    }
   }
 
   public ConfigurationContext(PsiElement element) {
@@ -109,6 +120,10 @@ public class ConfigurationContext {
     myLocation = new PsiLocation<>(element.getProject(), myModule, element);
     myRuntimeConfiguration = null;
     myContextComponent = null;
+  }
+
+  public boolean containsMultipleSelection() {
+    return myMultipleSelection;
   }
 
   /**
@@ -257,14 +272,7 @@ public class ConfigurationContext {
   }
 
   public DataContext getDataContext() {
-    return new DataContextWrapper(DataManager.getInstance().getDataContext(myContextComponent)) {
-      @Nullable
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (CommonDataKeys.PSI_ELEMENT.is(dataId) && myLocation != null) return myLocation.getPsiElement();
-        return super.getData(dataId);
-      }
-    };
+    return DataManager.getInstance().getDataContext(myContextComponent);
   }
 
   /**
@@ -285,6 +293,20 @@ public class ConfigurationContext {
       return myRuntimeConfiguration;
     }
     return null;
+  }
+
+  /**
+   * Checks if the original run configuration matches the passed type.
+   * If the original run configuration is undefined, the check is passed too.
+   * An original run configuration is a run configuration associated with given context.
+   * For example, it could be a test framework run configuration that had been launched
+   * and that had brought a result test tree on which a right-click action was performed (and this context was created). In this case, other run configuration producers might want to not work on such elements.
+   *
+   * @param type {@link ConfigurationType} instance to match the original run configuration
+   * @return true if the original run configuration is of the same type or it's undefined; false otherwise
+   */
+  public boolean isCompatibleWithOriginalRunConfiguration(@NotNull ConfigurationType type) {
+    return myRuntimeConfiguration == null || ConfigurationTypeUtil.equals(myRuntimeConfiguration.getType(), type);
   }
 
   @Deprecated

@@ -80,9 +80,8 @@ import static com.intellij.vcs.log.VcsLogHighlighter.TextStyle.ITALIC;
 public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
-  public static final int ROOT_INDICATOR_COLORED_WIDTH = 8;
   public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
-  private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + ROOT_INDICATOR_COLORED_WIDTH;
+  private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + 8;
   private static final int ROOT_NAME_MAX_WIDTH = 200;
   private static final int MAX_DEFAULT_AUTHOR_COLUMN_WIDTH = 200;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
@@ -197,7 +196,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
           maxWidth = Math.max(getFontMetrics(font).stringWidth(value + "*"), maxWidth);
           if (!value.isEmpty()) sizeCalculated = true;
         }
-        int min = Math.min(maxWidth + myStringCellRenderer.getHorizontalTextPadding(), MAX_DEFAULT_AUTHOR_COLUMN_WIDTH);
+        int min = Math.min(maxWidth + myStringCellRenderer.getHorizontalTextPadding(), JBUI.scale(MAX_DEFAULT_AUTHOR_COLUMN_WIDTH));
         column.setPreferredWidth(min);
       }
       else if (i == GraphTableModel.DATE_COLUMN) { // all dates have nearly equal sizes
@@ -230,10 +229,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       rootWidth = 0;
     }
     else if (!myUi.isShowRootNames()) {
-      rootWidth = ROOT_INDICATOR_WIDTH;
+      rootWidth = JBUI.scale(ROOT_INDICATOR_WIDTH);
     }
     else {
-      rootWidth = Math.min(calculateMaxRootWidth(), ROOT_NAME_MAX_WIDTH);
+      rootWidth = Math.min(calculateMaxRootWidth(), JBUI.scale(ROOT_NAME_MAX_WIDTH));
     }
 
     // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
@@ -556,7 +555,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         g.setColor(getRootBackgroundColor(getModel().getRoot(lastRow), myUi.getColorManager()));
 
         int rootWidth = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN).getWidth();
-        if (!myUi.isShowRootNames()) rootWidth -= ROOT_INDICATOR_WHITE_WIDTH;
+        if (!myUi.isShowRootNames()) rootWidth -= JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH);
 
         g.fillRect(x, y, rootWidth, height);
       }
@@ -590,9 +589,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       int width = getWidth();
 
       if (isNarrow) {
-        g.fillRect(0, 0, width - ROOT_INDICATOR_WHITE_WIDTH, myUi.getTable().getRowHeight());
+        g.fillRect(0, 0, width - JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH), myUi.getTable().getRowHeight());
         g.setColor(myBorderColor);
-        g.fillRect(width - ROOT_INDICATOR_WHITE_WIDTH, 0, ROOT_INDICATOR_WHITE_WIDTH, myUi.getTable().getRowHeight());
+        g.fillRect(width - JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH), 0, JBUI.scale(ROOT_INDICATOR_WHITE_WIDTH),
+                   myUi.getTable().getRowHeight());
       }
       else {
         g.fillRect(0, 0, width, myUi.getTable().getRowHeight());

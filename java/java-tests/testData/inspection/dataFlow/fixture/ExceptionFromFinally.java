@@ -17,5 +17,13 @@ class Foo {
     }
   }
 
+  public void read2() throws Exception {
+    try {
+      final FileInputStream input = new FileInputStream(new File("foo"));
+    }
+    finally {
+      System.exit(0);
+    }
+  }
 
 }

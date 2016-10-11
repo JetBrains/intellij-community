@@ -57,15 +57,14 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
       row { rememberPasswordsUntilClosing() }
     }
 
-    if (!passwordSafe.isNativeCredentialStoreUsed)
-      row {
-        right {
-          button("Clear Passwords") { event ->
-            passwordSafe.clearPasswords()
-            Messages.showInfoMessage(event.source as Component, "Passwords were cleared", "Clear Passwords")
-          }
+    if (!passwordSafe.isNativeCredentialStoreUsed) {
+      row(separated = true) {
+        button("Clear Passwords") { event ->
+          passwordSafe.clearPasswords()
+          Messages.showInfoMessage(event.source as Component, "Passwords were cleared", "Clear Passwords")
         }
       }
+    }
   }
 
   private fun getProviderType(): ProviderType {

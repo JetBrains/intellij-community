@@ -15,11 +15,8 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
-import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportConstantFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
@@ -119,19 +116,8 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
   }
 
   private static boolean isUnambiguous(@Nullable PsiJavaCodeReferenceElement ref) {
-    if (ref == null) return false;
-
-    PsiElement parent = ref.getParent();
-    if (parent instanceof PsiMethodCallExpression) {
-      return CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY &&
-             new StaticImportMethodFix((PsiMethodCallExpression)parent).getMembersToImport().size() <= 1;
-    }
-
-    int constCount = new StaticImportConstantFix(ref).getMembersToImport().size();
-    int classCount = new ImportClassFix(ref).getClassesToImport().size();
-    if (constCount + classCount > 1) return false;
-    if (constCount + classCount == 0) return true;
-    return constCount == 0 || CodeInsightSettings.getInstance().ADD_MEMBER_IMPORTS_ON_THE_FLY;
+    return ref != null && !(ref.getParent() instanceof PsiMethodCallExpression) &&
+           new ImportClassFix(ref).getClassesToImport().size() == 1;
   }
 
   @Override

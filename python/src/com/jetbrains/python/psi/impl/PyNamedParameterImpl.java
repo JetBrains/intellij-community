@@ -172,9 +172,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     if (includeDefaultValue && defaultValue != null) {
       String representation = PyUtil.getReadableRepr(defaultValue, true);
       if (defaultValue instanceof PyStringLiteralExpression) {
-        final Pair<String, String> quotes = PythonStringUtil.getQuotes(defaultValue.getText());
+        final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue.getText());
         if (quotes != null) {
-          representation = quotes.getFirst() + PythonStringUtil.getStringValue(defaultValue) + quotes.getSecond();
+          representation = quotes.getFirst() + PyStringLiteralUtil.getStringValue(defaultValue) + quotes.getSecond();
         }
       }
       sb.append("=").append(representation);

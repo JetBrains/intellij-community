@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,13 +34,13 @@ public interface QuickFixTestCase {
   String getTestDataPath();
 
   @NotNull
-  Pair<String, Boolean> parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents);
+  ActionHint parseActionHintImpl(@NotNull PsiFile file, @NotNull String contents);
 
   void beforeActionStarted(String testName, String contents);
 
   void afterActionCompleted(String testName, String contents);
 
-  void doAction(String text, boolean actionShouldBeAvailable, String testFullPath, String testName) throws Exception;
+  void doAction(ActionHint actionHint, String testFullPath, String testName) throws Exception;
 
   void checkResultByFile(String s, @NotNull String expectedFilePath, boolean b) throws Exception;
 

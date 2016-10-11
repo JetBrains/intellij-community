@@ -622,7 +622,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
   
   @TestOnly
-  boolean isRunningOrPending() {
+  public boolean isRunningOrPending() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return isRunning() || !myUpdateRunnableFuture.isDone();
   }

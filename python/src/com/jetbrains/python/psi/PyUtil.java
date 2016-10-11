@@ -67,7 +67,6 @@ import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -1970,28 +1969,28 @@ public class PyUtil {
      * @return true if given string node contains "u" or "U" prefix
      */
     public boolean isUnicode() {
-      return PythonStringUtil.isUnicodePrefix(myPrefix);
+      return PyStringLiteralUtil.isUnicodePrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "r" or "R" prefix
      */
     public boolean isRaw() {
-      return PythonStringUtil.isRawPrefix(myPrefix);
+      return PyStringLiteralUtil.isRawPrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "b" or "B" prefix
      */
     public boolean isBytes() {
-      return PythonStringUtil.isBytesPrefix(myPrefix);
+      return PyStringLiteralUtil.isBytesPrefix(myPrefix);
     }
 
     /**
      * @return true if given string node contains "f" or "F" prefix
      */
     public boolean isFormatted() {
-      return PythonStringUtil.isFormattedPrefix(myPrefix);
+      return PyStringLiteralUtil.isFormattedPrefix(myPrefix);
     }
 
     /**

@@ -41,7 +41,7 @@ public class TextEditorHolder extends EditorHolder {
     myPanel = new Wrapper(myEditor.getComponent());
 
     DataManager.registerDataProvider(myPanel, (dataId) -> {
-      if (project != null && !project.isDisposed() && Registry.is("diff.enable.psi.highlighting")) {
+      if (project != null && !project.isDisposed() && Registry.is("diff.pass.rich.editor.context")) {
         final Object o = FileEditorManager.getInstance(project).getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
         if (o != null) return o;
       }

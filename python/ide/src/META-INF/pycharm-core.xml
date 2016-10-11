@@ -34,6 +34,9 @@
     </component>
   </project-components>
 
+
+
+
   <module value="com.intellij.modules.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -58,7 +61,8 @@
                         serviceImplementation="com.jetbrains.python.PythonModuleTypeManager"/>
 
     <fileStructureGroupRuleProvider implementation="com.intellij.usages.impl.rules.FileGroupingRuleProvider" order="first"/>
-    <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyClassGroupingRuleProvider" order="before py-function"/>
+    <fileStructureGroupRuleProvider implementation="com.jetbrains.python.findUsages.PyClassGroupingRuleProvider"
+                                    order="before py-function"/>
     <diffPreviewProvider implementation="com.jetbrains.python.configuration.PyDiffPreviewProvider"/>
 
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
@@ -80,10 +84,14 @@
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
 
     <!-- Console -->
+
     <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow"
                 factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
 
+
+
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>
+
   </extensions>
 
   <actions>
@@ -96,7 +104,7 @@
       <add-to-group group-id="PlatformOpenProjectGroup" anchor="after" relative-to-action="NewDirectoryProject"/>
     </action>
 
-    <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction" text="Save As.." >
+    <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction" text="Save As..">
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="OpenFile"/>
     </action>
 
@@ -104,7 +112,8 @@
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <group id="WelcomeScreen.Platform.NewProject">
-      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.actions.PyCharmNewProjectStep" icon="AllIcons.Welcome.CreateNewProject"/>
+      <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.actions.PyCharmNewProjectStep"
+              icon="AllIcons.Welcome.CreateNewProject"/>
       <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.General.OpenProject"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>

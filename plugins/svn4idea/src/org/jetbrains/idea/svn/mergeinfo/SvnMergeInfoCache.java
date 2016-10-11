@@ -16,13 +16,14 @@
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValue;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SoftHashMap;
@@ -34,6 +35,7 @@ import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.Map;
 
@@ -122,38 +124,41 @@ public class SvnMergeInfoCache {
     private final String myPath;
     private volatile long myRevision;
 
-    CopyRevison(final SvnVcs vcs, final String path, final String repositoryRoot, final String branchUrl, final String trunkUrl) {
+    CopyRevison(final SvnVcs vcs, final String path, @NotNull SVNURL repositoryRoot, final String branchUrl, final String trunkUrl) {
       myPath = path;
       myRevision = -1;
 
-      final TransparentlyFailedValueI<CopyData, VcsException> result = new TransparentlyFailedValue<CopyData, VcsException>() {
+      Task.Backgroundable task = new Task.Backgroundable(vcs.getProject(), "", false) {
+        private CopyData myData;
+
         @Override
-        public void set(CopyData copyData) {
-          if (copyData == null) return;
-          myRevision = copyData.getCopySourceRevision();
-          if (myRevision != -1) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              public void run() {
-                if (vcs.getProject().isDisposed()) return;
-                vcs.getProject().getMessageBus().syncPublisher(SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
-              }
-            });
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            myData = new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl).run();
+          }
+          catch (VcsException e) {
+            logAndShow(e);
           }
         }
 
         @Override
-        public void fail(VcsException e) {
-          LOG.info(e);
-          VcsBalloonProblemNotifier.showOverChangesView(vcs.getProject(), e.getMessage(), MessageType.ERROR);
+        public void onSuccess() {
+          if (!vcs.getProject().isDisposed() && myData != null && myData.getCopySourceRevision() != -1) {
+            vcs.getProject().getMessageBus().syncPublisher(SVN_MERGE_INFO_CACHE).copyRevisionUpdated();
+          }
         }
 
         @Override
-        public void failRuntime(RuntimeException e) {
-          LOG.info(e);
-          VcsBalloonProblemNotifier.showOverChangesView(vcs.getProject(), e.getMessage(), MessageType.ERROR);
+        public void onError(@NotNull Exception error) {
+          logAndShow(error);
+        }
+
+        private void logAndShow(@NotNull Exception error) {
+          LOG.info(error);
+          VcsBalloonProblemNotifier.showOverChangesView(vcs.getProject(), error.getMessage(), MessageType.ERROR);
         }
       };
-      ApplicationManager.getApplication().executeOnPooledThread(new FirstInBranch(vcs, repositoryRoot, branchUrl, trunkUrl, result));
+      ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, new EmptyProgressIndicator());
     }
 
     public String getPath() {

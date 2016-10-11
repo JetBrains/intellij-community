@@ -159,7 +159,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   @Override
-  protected final JComponent createCenterComponent() {
+  protected JComponent createCenterComponent() {
     initComponents();
     return myPanel;
   }

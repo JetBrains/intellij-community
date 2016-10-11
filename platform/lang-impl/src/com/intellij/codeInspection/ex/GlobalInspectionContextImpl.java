@@ -418,6 +418,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         if (!file.isValid()) {
           return;
         }
+        LOG.assertTrue(scope.contains(file.getVirtualFile()), file.getName());
         inspectFile(file, inspectionManager, localTools, globalSimpleTools, map);
       })) {
         throw new ProcessCanceledException();

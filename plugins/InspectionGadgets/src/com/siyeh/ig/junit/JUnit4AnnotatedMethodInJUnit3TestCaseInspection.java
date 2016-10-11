@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
@@ -38,7 +37,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList(3);
+    final List<InspectionGadgetsFix> fixes = new ArrayList<>(3);
     final PsiMethod method = (PsiMethod)infos[1];
     if (AnnotationUtil.isAnnotated(method, IGNORE, false)) {
       fixes.add(new RemoveIgnoreAndRename(method));
@@ -224,14 +223,15 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
         return;
       }
       final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
+      if (method == null || !method.hasModifierProperty(PsiModifier.STATIC)) {
         return;
       }
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) {
         return;
       }
-      if (!InheritanceUtil.isInheritor(aClass, "junit.framework.Assert")) {
+      final String name = aClass.getQualifiedName();
+      if (!"junit.framework.Assert".equals(name) && !"junit.framework.TestCase".equals(name)) {
         return;
       }
       @NonNls final String newExpressionText = "org.junit.Assert." + expression.getText();

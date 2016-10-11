@@ -29,6 +29,8 @@ public abstract class PythonConsoleRunnerFactory {
   public static PythonConsoleRunnerFactory getInstance() {
     return ServiceManager.getService(PythonConsoleRunnerFactory.class);
   }
+
+  @NotNull
   public abstract PydevConsoleRunner createConsoleRunner(@NotNull final Project project,
-                                         @Nullable Module contextModule);
+                                                         @Nullable Module contextModule);
 }

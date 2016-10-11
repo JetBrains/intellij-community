@@ -33,6 +33,7 @@ function load_interactive_configs {
 
 if [ `shopt -q login_shell` ]; then
   load_login_configs
+fi
 
 load_interactive_configs
 

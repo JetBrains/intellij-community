@@ -16,13 +16,13 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.CalledInAny;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.continuation.ContinuationContext;
+import com.intellij.util.continuation.SeparatePiecesRunner;
 import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -31,93 +31,119 @@ import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static java.util.Collections.singletonList;
+import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
+
 public abstract class BaseMergeTask extends TaskDescriptor {
 
   private static final Logger LOG = Logger.getInstance(BaseMergeTask.class);
 
+  @NotNull protected final QuickMerge myMergeProcess;
   @NotNull protected final MergeContext myMergeContext;
   @NotNull protected final QuickMergeInteraction myInteraction;
+  @NotNull private final SeparatePiecesRunner myRunner;
 
-  public BaseMergeTask(@NotNull MergeContext mergeContext,
-                       @NotNull QuickMergeInteraction interaction, String name,
-                       @NotNull Where where) {
+  public BaseMergeTask(@NotNull QuickMerge mergeProcess, @NotNull String name, @NotNull Where where) {
     super(name, where);
 
-    myMergeContext = mergeContext;
-    myInteraction = interaction;
+    myMergeProcess = mergeProcess;
+    myMergeContext = mergeProcess.getMergeContext();
+    myInteraction = mergeProcess.getInteraction();
+    myRunner = mergeProcess.getRunner();
+  }
+
+  protected boolean is18() {
+    return myMergeContext.getWcInfo().getFormat().isOrGreater(ONE_DOT_EIGHT);
+  }
+
+  @Override
+  public void run(@NotNull ContinuationContext context) {
+    try {
+      run();
+    }
+    catch (VcsException e) {
+      end(e);
+    }
+  }
+
+  public void run() throws VcsException {
+  }
+
+  @CalledInAny
+  protected void next(@NotNull TaskDescriptor... tasks) {
+    myRunner.next(tasks);
+  }
+
+  @CalledInAny
+  protected void next(@NotNull List<TaskDescriptor> tasks) {
+    myRunner.next(tasks);
+  }
+
+  protected void suspend() {
+    myRunner.suspend();
+  }
+
+  protected void ping() {
+    myRunner.ping();
   }
 
   @NotNull
-  protected List<TaskDescriptor> getMergeAllTasks() {
-    List<TaskDescriptor> result = ContainerUtil.newArrayList();
+  protected List<TaskDescriptor> getMergeAllTasks(boolean supportsMergeInfo) {
+    // merge info is not supported - branch copy point is used to make first sync merge successful (without unnecessary tree conflicts)
+    // merge info is supported and svn client < 1.8 - branch copy point is used to determine if sync or reintegrate merge should be performed
+    // merge info is supported and svn client >= 1.8 - branch copy point is not used - svn automatically detects if reintegrate is necessary
+    BaseMergeTask mergeAllTask =
+      supportsMergeInfo && is18()
+      ? new MergeAllWithBranchCopyPointTask(myMergeProcess)
+      : new LookForBranchOriginTask(myMergeProcess, true, copyPoint ->
+        next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint, supportsMergeInfo)));
 
-    result.add(new LocalChangesPromptTask(myMergeContext, myInteraction, true, null, null));
-    MergeAllWithBranchCopyPointTask mergeAllExecutor = new MergeAllWithBranchCopyPointTask(myMergeContext, myInteraction);
-    result.add(myMergeContext.getVcs().getSvnBranchPointsCalculator()
-                 .getFirstCopyPointTask(myMergeContext.getWcInfo().getRepositoryRoot(), myMergeContext.getSourceUrl(),
-                                        myMergeContext.getWcInfo().getRootUrl(), mergeAllExecutor));
-    result.add(mergeAllExecutor);
-
-    return result;
+    return newArrayList(new LocalChangesPromptTask(myMergeProcess), mergeAllTask);
   }
 
-  protected void runChangeListsMerge(@NotNull ContinuationContext context,
-                                     @NotNull final List<CommittedChangeList> lists,
-                                     @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
-                                     @NotNull String title) {
-    context.next(new LocalChangesPromptTask(myMergeContext, myInteraction, false, lists, copyPoint),
-                 new MergeTask(myMergeContext, myInteraction, new ChangeListsMergerFactory(lists, false, false, true), title));
+  protected void runChangeListsMerge(@NotNull List<CommittedChangeList> lists, @NotNull String title) {
+    next(new LocalChangesPromptTask(myMergeProcess, lists),
+         new MergeTask(myMergeProcess, new ChangeListsMergerFactory(lists, false, false, true), title));
   }
 
   @Nullable
-  protected SVNURL parseSourceUrl(@NotNull ContinuationContext context) {
+  protected SVNURL parseSourceUrl() {
     SVNURL result = null;
 
     try {
       result = SvnUtil.createUrl(myMergeContext.getSourceUrl());
     }
     catch (SvnBindException e) {
-      finishWithError(context, e.getMessage(), true);
+      end(e);
     }
 
     return result;
   }
 
+  protected void end() {
+    myRunner.cancelEverything();
+  }
+
   @CalledInAny
-  protected void finishWithError(@NotNull ContinuationContext context, @NotNull final String message, final boolean isError) {
+  protected void end(@NotNull String message, boolean isError) {
     LOG.info((isError ? "Error: " : "Info: ") + message);
-    context.next(new TaskDescriptor(message, Where.AWT) {
-      @Override
-      public void run(ContinuationContext context) {
-        myInteraction.showErrors(message, isError);
-        context.cancelEverything();
-      }
-    });
+
+    end();
+    getApplication().invokeLater(() -> myInteraction.showErrors(message, isError));
   }
 
   @CalledInAny
-  protected void finishWithError(@NotNull ContinuationContext context,
-                                 final String message,
-                                 @Nullable final List<VcsException> exceptions) {
-    log(message, exceptions);
-
-    context.cancelEverything();
-    context.next(new TaskDescriptor(message, Where.AWT) {
-      @Override
-      public void run(ContinuationContext context) {
-        myInteraction.showErrors(message, exceptions);
-      }
-    });
+  protected void end(@NotNull VcsException e) {
+    end(myMergeContext.getTitle(), e);
   }
 
-  private static void log(String message, @Nullable List<VcsException> exceptions) {
-    if (exceptions != null) {
-      for (VcsException exception : exceptions) {
-        LOG.info(message, exception);
-      }
-    }
+  @CalledInAny
+  protected void end(@NotNull String message, @NotNull VcsException e) {
+    LOG.info(message, e);
+
+    end();
+    getApplication().invokeLater(() -> myInteraction.showErrors(message, singletonList(e)));
   }
 }

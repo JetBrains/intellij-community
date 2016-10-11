@@ -24,7 +24,13 @@ import com.siyeh.ig.junit.JUnit4AnnotatedMethodInJUnit3TestCaseInspection;
  */
 public class ConvertToJUnit4FixTest extends IGQuickFixesTestCase {
 
-  public void testOtherMethods() { doTest(InspectionGadgetsBundle.message("convert.junit3.test.class.quickfix", getTestName(false))); }
+  public void testOtherMethods() { doTest(); }
+  public void testLocalMethod() { doTest(); }
+
+  @Override
+  protected void doTest() {
+    doTest(InspectionGadgetsBundle.message("convert.junit3.test.class.quickfix", getTestName(false)));
+  }
 
   @Override
   protected void setUp() throws Exception {

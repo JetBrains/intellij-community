@@ -141,7 +141,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
         entry = group.getOrCreateEntry(attributes.serviceName, userName)
       }
       entry.userName = userName
-      entry.password = credentials.password?.let(::SecureString)
+      entry.password = if (attributes.isPasswordMemoryOnly || credentials.password == null) null else SecureString(credentials.password!!)
     }
 
     if (db.isDirty) {

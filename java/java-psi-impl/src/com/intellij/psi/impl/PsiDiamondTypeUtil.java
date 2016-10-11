@@ -16,6 +16,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -183,6 +184,10 @@ public class PsiDiamondTypeUtil {
           copy = callCopy != null ? callCopy.findElementAt(offset - call.getTextRange().getStartOffset()) : null;
         }
         else  {
+          final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(expression.getProject());
+          if (injectedLanguageManager.getInjectionHost(expression) != null) {
+            return false;
+          }
           final PsiFile containingFile = expression.getContainingFile();
           final PsiFile fileCopy = (PsiFile)containingFile.copy();
           copy = fileCopy.findElementAt(offset);

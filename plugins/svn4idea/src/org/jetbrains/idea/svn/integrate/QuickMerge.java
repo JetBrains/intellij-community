@@ -16,62 +16,82 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import org.jetbrains.annotations.CalledInAwt;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Consumer;
-import com.intellij.util.continuation.Continuation;
+import com.intellij.util.continuation.SeparatePiecesRunner;
 import com.intellij.util.continuation.TaskDescriptor;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.tmatesoft.svn.core.SVNException;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import static com.intellij.util.Functions.identity;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+import static java.util.Collections.singletonList;
 
 public class QuickMerge {
 
   @NotNull private final MergeContext myMergeContext;
-  private final Continuation myContinuation;
-  private QuickMergeInteraction myInteraction;
+  @NotNull private final QuickMergeInteraction myInteraction;
+  @NotNull private final SeparatePiecesRunner myRunner;
 
-  public QuickMerge(@NotNull MergeContext mergeContext) {
+  public QuickMerge(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
     myMergeContext = mergeContext;
-    myContinuation = Continuation.createFragmented(mergeContext.getProject(), true);
+    myInteraction = interaction;
+    myRunner = createRunner();
+  }
+
+  @NotNull
+  public MergeContext getMergeContext() {
+    return myMergeContext;
+  }
+
+  @NotNull
+  public QuickMergeInteraction getInteraction() {
+    return myInteraction;
+  }
+
+  @NotNull
+  public SeparatePiecesRunner getRunner() {
+    return myRunner;
   }
 
   @CalledInAwt
-  public void execute(@NotNull final QuickMergeInteraction interaction, @NotNull final TaskDescriptor... finalTasks) {
-    myInteraction = interaction;
-    myInteraction.setTitle(myMergeContext.getTitle());
+  public void execute() {
+    runMergeTasks(null);
+  }
 
+  @TestOnly
+  @CalledInAwt
+  public void execute(@NotNull TaskDescriptor finalTask) {
+    runMergeTasks(finalTask);
+  }
+
+  @CalledInAwt
+  private void runMergeTasks(@Nullable TaskDescriptor finalTask) {
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    final List<TaskDescriptor> tasks = new LinkedList<>();
-    tasks.add(new MergeInitChecksTask(myMergeContext, myInteraction));
-    tasks.add(new CheckRepositorySupportsMergeInfoTask(myMergeContext, myInteraction));
-    if (finalTasks.length > 0) {
-      tasks.addAll(Arrays.asList(finalTasks));
-    }
+    TaskDescriptor[] tasks = {
+      new MergeInitChecksTask(this),
+      new CheckRepositorySupportsMergeInfoTask(this),
+      finalTask
+    };
 
-    myContinuation.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
-      @Override
-      public void consume(VcsException e) {
-        myInteraction.showErrors(myMergeContext.getTitle(), Collections.singletonList(e));
-      }
-    });
-    myContinuation.addExceptionHandler(SVNException.class, new Consumer<SVNException>() {
-      @Override
-      public void consume(SVNException e) {
-        myInteraction.showErrors(myMergeContext.getTitle(), Collections.singletonList(new VcsException(e)));
-      }
-    });
-    myContinuation.addExceptionHandler(RuntimeException.class, new Consumer<RuntimeException>() {
-      @Override
-      public void consume(RuntimeException e) {
-        myInteraction.showError(e);
-      }
-    });
-    myContinuation.run(tasks);
+    myRunner.next(mapNotNull(tasks, identity()));
+    myRunner.ping();
+  }
+
+  @NotNull
+  private SeparatePiecesRunner createRunner() {
+    SeparatePiecesRunner result = new SeparatePiecesRunner(myMergeContext.getProject(), true);
+
+    result.addExceptionHandler(VcsException.class, e -> myInteraction.showErrors(myMergeContext.getTitle(), singletonList(e)));
+    result.addExceptionHandler(SVNException.class,
+                               e -> myInteraction.showErrors(myMergeContext.getTitle(), singletonList(new VcsException(e))));
+    result.addExceptionHandler(RuntimeException.class, e -> myInteraction
+      .showErrors(notNull(e.getMessage(), e.getClass().getName()), singletonList(new VcsException(e))));
+
+    return result;
   }
 }

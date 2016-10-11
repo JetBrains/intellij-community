@@ -31,7 +31,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.hash.HashMap;
-import com.intellij.util.ui.FontInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
@@ -54,6 +53,8 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
+
+import static java.util.Locale.ENGLISH;
 
 /**
  * @author Konstantin Bulenkov
@@ -103,12 +104,9 @@ public class DarculaLaf extends BasicLookAndFeel {
     if (SystemInfo.isMacOSElCapitan) {
       // Text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
-      FontInfo fontInfo = FontInfo.get(".SF NS Text");
-      if (fontInfo != null) {
-        Font font = fontInfo.getFont();
-        if (font != null) {
-          return new FontUIResource(font.deriveFont(style, size));
-        }
+      Font font = new Font(".SF NS Text", style, size);
+      if (!Font.DIALOG.equals(font.getFamily(ENGLISH))) {
+        return new FontUIResource(font);
       }
     }
     return new FontUIResource(yosemite, style, size);

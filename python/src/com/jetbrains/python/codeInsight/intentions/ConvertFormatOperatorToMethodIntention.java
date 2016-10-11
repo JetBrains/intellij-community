@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -51,7 +50,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * <br/>
  * Author: Alexey.Ivanov, dcheryasov
  */
-public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction {
+public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionAction {
 
   private static final Pattern FORMAT_PATTERN =
     Pattern.compile("%(?:\\((\\w+)\\))?([-#0+ ]*)((?:\\*|\\d+)?(?:\\.(?:\\*|\\d+))?)?[hlL]?([diouxXeEfFgGcrs%])");
@@ -255,7 +254,8 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     return false;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  @Override
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
     final PyBinaryExpression element = PsiTreeUtil.getParentOfType(elementAt, PyBinaryExpression.class, false);
     if (element == null) return;

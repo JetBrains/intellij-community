@@ -15,51 +15,41 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.NestedCopyType;
-import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class MergeInitChecksTask extends BaseMergeTask {
 
-  public MergeInitChecksTask(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
-    super(mergeContext, interaction, "initial checks", Where.AWT);
+  public MergeInitChecksTask(@NotNull QuickMerge mergeProcess) {
+    super(mergeProcess, "initial checks", Where.AWT);
   }
 
   @Override
-  public void run(ContinuationContext context) {
-    SVNURL url = parseSourceUrl(context);
+  public void run() {
+    SVNURL url = parseSourceUrl();
 
     if (url != null) {
       if (areInSameHierarchy(url, myMergeContext.getWcInfo().getUrl())) {
-        finishWithError(context, "Cannot merge from self", true);
+        end("Cannot merge from self", true);
       }
       else if (hasSwitchedRoots() && !myInteraction.shouldContinueSwitchedRootFound()) {
-        context.cancelEverything();
+        end();
       }
     }
   }
 
   private boolean hasSwitchedRoots() {
-    final File currentRoot = myMergeContext.getWcInfo().getRootInfo().getIoFile();
+    File currentRoot = myMergeContext.getWcInfo().getRootInfo().getIoFile();
 
-    return ContainerUtil.or(myMergeContext.getVcs().getAllWcInfos(), new Condition<WCInfo>() {
-      @Override
-      public boolean value(WCInfo info) {
-        return NestedCopyType.switched.equals(info.getType()) && FileUtil.isAncestor(currentRoot, info.getRootInfo().getIoFile(), true);
-      }
-    });
+    return myMergeContext.getVcs().getAllWcInfos().stream()
+      .filter(info -> NestedCopyType.switched.equals(info.getType()))
+      .anyMatch(info -> FileUtil.isAncestor(currentRoot, info.getRootInfo().getIoFile(), true));
   }
 
   private static boolean areInSameHierarchy(@NotNull SVNURL url1, @NotNull SVNURL url2) {

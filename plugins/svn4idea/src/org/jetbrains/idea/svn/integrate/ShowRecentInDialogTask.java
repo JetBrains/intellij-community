@@ -15,98 +15,33 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.Consumer;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.continuation.Continuation;
-import com.intellij.util.continuation.ContinuationContext;
-import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.MergeDialogI;
 
-import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ShowRecentInDialogTask extends BaseMergeTask {
 
   @NotNull private final LoadRecentBranchRevisions myInitialChangeListsLoader;
 
-  public ShowRecentInDialogTask(@NotNull MergeContext mergeContext,
-                                @NotNull QuickMergeInteraction interaction,
-                                @NotNull LoadRecentBranchRevisions initialChangeListsLoader) {
-    super(mergeContext, interaction, "", Where.AWT);
+  public ShowRecentInDialogTask(@NotNull QuickMerge mergeProcess, @NotNull LoadRecentBranchRevisions initialChangeListsLoader) {
+    super(mergeProcess, "", Where.AWT);
 
     myInitialChangeListsLoader = initialChangeListsLoader;
   }
 
   @Override
-  public void run(ContinuationContext context) {
-    List<CommittedChangeList> lists = myInteraction.showRecentListsForSelection(myInitialChangeListsLoader.getCommittedChangeLists(),
-                                                                                myMergeContext.getTitle(),
-                                                                                myInitialChangeListsLoader.getHelper(),
-                                                                                createMoreChangeListsLoader(),
-                                                                                myInitialChangeListsLoader.isLastLoaded());
+  public void run() {
+    List<CommittedChangeList> lists = myInteraction
+      .showRecentListsForSelection(myInitialChangeListsLoader.getCommittedChangeLists(), myInitialChangeListsLoader.getHelper(),
+                                   myInitialChangeListsLoader.isLastLoaded());
 
-    if (lists != null && !lists.isEmpty()) {
-      runChangeListsMerge(context, lists, createBranchCopyPoint(), myMergeContext.getTitle());
+    if (!lists.isEmpty()) {
+      runChangeListsMerge(lists, myMergeContext.getTitle());
     }
     else {
-      context.cancelEverything();
+      end();
     }
-  }
-
-  @NotNull
-  private PairConsumer<Long, MergeDialogI> createMoreChangeListsLoader() {
-    return new PairConsumer<Long, MergeDialogI>() {
-
-      @Override
-      public void consume(@NotNull Long bunchSize, @NotNull MergeDialogI dialog) {
-        LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myMergeContext, dialog.getLastNumber(), bunchSize.intValue());
-        TaskDescriptor updater = createUpdateDialogTask(dialog, loader);
-
-        Continuation fragmented = Continuation.createFragmented(myMergeContext.getProject(), true);
-        fragmented.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
-          @Override
-          public void consume(VcsException e) {
-            PopupUtil.showBalloonForActiveComponent(e.getMessage() == null ? e.getClass().getName() : e.getMessage(), MessageType.ERROR);
-          }
-        });
-        fragmented.run(loader, updater);
-      }
-    };
-  }
-
-  @NotNull
-  private SvnBranchPointsCalculator.WrapperInvertor createBranchCopyPoint() {
-    return new SvnBranchPointsCalculator.WrapperInvertor(false, new SvnBranchPointsCalculator.BranchCopyData(
-      myMergeContext.getWcInfo().getUrl().toString(), -1, myMergeContext.getSourceUrl(), -1));
-  }
-
-  @NotNull
-  private static TaskDescriptor createUpdateDialogTask(@NotNull final MergeDialogI dialog,
-                                                       @NotNull final LoadRecentBranchRevisions loader) {
-    return new TaskDescriptor("", Where.AWT) {
-
-      @Override
-      public void run(ContinuationContext context) {
-        dialog.addMoreLists(loader.getCommittedChangeLists());
-        if (loader.isLastLoaded()) {
-          dialog.setEverythingLoaded(true);
-        }
-      }
-
-      @Override
-      public void canceled() {
-        dialog.addMoreLists(Collections.<CommittedChangeList>emptyList());
-        dialog.setEverythingLoaded(true);
-      }
-    };
   }
 }

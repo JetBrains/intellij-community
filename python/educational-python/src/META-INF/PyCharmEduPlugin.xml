@@ -19,7 +19,7 @@
     </component>
     <component>
       <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
-      <implementation-class>com.jetbrains.python.console.PythonToolWindowConsoleRunnerFactory</implementation-class>
+      <implementation-class>com.jetbrains.python.console.PydevConsoleRunnerFactory</implementation-class>
     </component>
   </application-components>
 

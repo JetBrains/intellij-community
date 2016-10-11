@@ -1506,13 +1506,7 @@ public abstract class ChooseByNameBase {
       if (myProject != null && myProject.isDisposed()) return null;
 
       final Set<Object> elements = new LinkedHashSet<>();
-
-      boolean scopeExpanded = fillWithScopeExpansion(elements, myPattern);
-
-      String lowerCased = patternToLowerCase(myPattern);
-      if (elements.isEmpty() && !lowerCased.equals(myPattern)) {
-        scopeExpanded = fillWithScopeExpansion(elements, lowerCased);
-      }
+      boolean scopeExpanded = populateElements(elements);
       final String cardToShow = elements.isEmpty() ? NOT_FOUND_CARD : scopeExpanded ? NOT_FOUND_IN_PROJECT_CARD : CHECK_BOX_CARD;
 
       Set<Object> filtered = filter(elements);
@@ -1526,6 +1520,25 @@ public abstract class ChooseByNameBase {
           myCallback.consume(filtered);
         }
       }, myModalityState);
+    }
+
+    private boolean populateElements(Set<Object> elements) {
+      boolean scopeExpanded = false;
+      try {
+        scopeExpanded = fillWithScopeExpansion(elements, myPattern);
+
+        String lowerCased = patternToLowerCase(myPattern);
+        if (elements.isEmpty() && !lowerCased.equals(myPattern)) {
+          scopeExpanded = fillWithScopeExpansion(elements, lowerCased);
+        }
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      return scopeExpanded;
     }
 
     private boolean fillWithScopeExpansion(Set<Object> elements, String pattern) {

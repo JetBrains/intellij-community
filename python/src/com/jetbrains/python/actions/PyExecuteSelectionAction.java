@@ -184,7 +184,7 @@ public class PyExecuteSelectionAction extends AnAction {
 
     if (toolWindow != null && toolWindow.getToolWindow().isVisible()) {
       RunContentDescriptor selectedContentDescriptor = toolWindow.getSelectedContentDescriptor();
-      return selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : Lists.<RunContentDescriptor>newArrayList();
+      return selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : Lists.newArrayList();
     }
 
     Collection<RunContentDescriptor> descriptors =

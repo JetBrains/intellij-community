@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 Bas Leijdekkers
+ * Copyright 2008-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,8 @@ public class AssertEqualsMayBeAssertSameInspection extends BaseInspection {
         return;
       }
       final String qualifiedName = aClass.getQualifiedName();
-      if (!"org.junit.Assert".equals(qualifiedName) && !"junit.framework.Assert".equals(qualifiedName)) {
+      if (!"org.junit.Assert".equals(qualifiedName) && !"junit.framework.Assert".equals(qualifiedName) &&
+          !"junit.framework.TestCase".equals(qualifiedName)) {
         return;
       }
       final PsiExpression argument1 = arguments[arguments.length - 2];

@@ -103,7 +103,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   }
 
   public static void copyAsFiles(PsiElement[] elements, @Nullable PsiDirectory defaultTargetDirectory, Project project) {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () ->
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () ->
       doCopyAsFiles(elements, defaultTargetDirectory, project));
   }
 

@@ -354,8 +354,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     FrameStateManager.getInstance().addListener(myFrameStateListener);
 
     myAuthNotifier.init();
-    mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(myProject);
-    mySvnBranchPointsCalculator.activate();
+    mySvnBranchPointsCalculator = new SvnBranchPointsCalculator(this);
 
     svnKitManager.activate();
 

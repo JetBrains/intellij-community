@@ -93,7 +93,10 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.*;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvaluator;
 import org.jetbrains.plugins.groovy.lang.resolve.*;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.*;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.ConstructorAnnotationsProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.LoggingContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.ExternalBuilderStrategySupport;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.InitializerBuilderStrategySupport;
@@ -108,6 +111,7 @@ import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNamedArgumentProvid
 import org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.impl.*;
+import org.jetbrains.plugins.groovy.transformations.impl.autoClone.AutoCloneTransformationSupport;
 
 /**
  * Upsource
@@ -143,7 +147,7 @@ public class GroovyCoreEnvironment {
       CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), AstTransformationSupport.EP_NAME, AstTransformationSupport.class);
 
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new AutoExternalizeContributor());
-      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new AutoCloneContributor());
+      appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new AutoCloneTransformationSupport());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new ConstructorAnnotationsProcessor());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new InheritConstructorContributor());
       appEnvironment.addExtension(AstTransformationSupport.EP_NAME, new DefaultBuilderStrategySupport());

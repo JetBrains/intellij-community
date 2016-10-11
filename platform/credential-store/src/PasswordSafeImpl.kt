@@ -67,7 +67,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
-    if (value == null && memoryHelperProvider.isInitialized()) {
+    if ((value == null || value.password == null || value.password!!.isEmpty()) && memoryHelperProvider.isInitialized()) {
       // if password was set as `memoryOnly`
       return memoryHelperProvider.value.get(attributes)
     }
@@ -76,18 +76,22 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     currentProvider.set(attributes, credentials)
-    if (memoryHelperProvider.isInitialized()) {
+    if (!credentials.isEmpty() && attributes.isPasswordMemoryOnly) {
+      // we must store because otherwise on get will be no password
+      memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
+    }
+    else if (memoryHelperProvider.isInitialized()) {
       val memoryHelper = memoryHelperProvider.value
       // update password in the memory helper, but only if it was previously set
       if (credentials == null || memoryHelper.get(attributes) != null) {
-        memoryHelper.set(attributes, credentials)
+        memoryHelper.set(attributes.toPasswordStoreable(), credentials)
       }
     }
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) {
     if (memoryOnly) {
-      memoryHelperProvider.value.set(attributes, credentials)
+      memoryHelperProvider.value.set(attributes.toPasswordStoreable(), credentials)
       // remove to ensure that on getPassword we will not return some value from default provider
       currentProvider.set(attributes, null)
     }
@@ -100,7 +104,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
   override fun getAsync(attributes: CredentialAttributes) = runAsync { get(attributes) }
 
   override fun save() {
-    (currentProvider as? KeePassCredentialStore)?.let { it.save() }
+    (currentProvider as? KeePassCredentialStore)?.save()
   }
 
   fun clearPasswords() {
@@ -111,7 +115,7 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
       }
     }
     finally {
-      (currentProvider as? KeePassCredentialStore)?.let { it.clear() }
+      (currentProvider as? KeePassCredentialStore)?.clear()
     }
 
     ApplicationManager.getApplication().messageBus.syncPublisher(PasswordSafeSettings.TOPIC).credentialStoreCleared()

@@ -229,7 +229,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return FSRecords.writeContent(getFileId(file), readOnly);
   }
 
-  private static void writeContent(@NotNull VirtualFile file, ByteSequence content, boolean readOnly) throws IOException {
+  private static void writeContent(@NotNull VirtualFile file, ByteSequence content, boolean readOnly) {
     FSRecords.writeContent(getFileId(file), content, readOnly);
   }
 
@@ -560,7 +560,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private InputStream createReplicator(@NotNull final VirtualFile file,
                                        final InputStream nativeStream,
                                        final long fileLength,
-                                       final boolean readOnly) throws IOException {
+                                       final boolean readOnly) {
     if (nativeStream instanceof BufferExposingByteArrayInputStream) {
       // optimization
       BufferExposingByteArrayInputStream  byteStream = (BufferExposingByteArrayInputStream )nativeStream;
@@ -581,8 +581,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private void storeContentToStorage(long fileLength,
                                      @NotNull VirtualFile file,
-                                     boolean readOnly, @NotNull byte[] bytes, int bytesLength)
-    throws IOException {
+                                     boolean readOnly, @NotNull byte[] bytes, int bytesLength) {
     synchronized (myInputLock) {
       if (bytesLength == fileLength) {
         writeContent(file, new ByteSequence(bytes, 0, bytesLength), readOnly);
@@ -680,7 +679,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
   }
 
-  @NotNull private static final Comparator<EventWrapper> DEPTH_COMPARATOR = (o1, o2) -> o1.event.getFileDepth() - o2.event.getFileDepth();
+  @NotNull private static final Comparator<EventWrapper> DEPTH_COMPARATOR = Comparator.comparingInt(o -> o.event.getFileDepth());
 
   @NotNull
   private static List<VFileEvent> validateEvents(@NotNull List<VFileEvent> events) {
@@ -849,20 +848,23 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     if (root != null) return root;
 
     String rootName;
+    String canonicalBasePath;
     if (fs instanceof ArchiveFileSystem) {
       VirtualFile localFile = ((ArchiveFileSystem)fs).findLocalByRootPath(basePath);
       if (localFile == null) return null;
       rootName = localFile.getName();
+      canonicalBasePath = localFile.getPath() + URLUtil.JAR_SEPARATOR; // make sure to not create FsRoot with ".." garbage in path
     }
     else {
       rootName = basePath;
+      canonicalBasePath = basePath;
     }
 
     FileAttributes attributes = fs.getAttributes(new StubVirtualFile() {
       @NotNull
       @Override
       public String getPath() {
-        return basePath;
+        return canonicalBasePath;
       }
 
       @Nullable
@@ -879,7 +881,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     VfsData.Segment segment = VfsData.getSegment(rootId, true);
     VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
-    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimEnd(basePath, "/"));
+    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimEnd(canonicalBasePath, '/'));
 
     boolean mark;
     synchronized (myRoots) {
@@ -1247,9 +1249,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     private final String myName;
     private final String myPathBeforeSlash;
 
-    private FsRoot(int id, VfsData.Segment segment, VfsData.DirectoryData data, NewVirtualFileSystem fs, String name, String pathBeforeSlash) {
+    private FsRoot(int id,
+                   @NotNull VfsData.Segment segment,
+                   @NotNull VfsData.DirectoryData data,
+                   @NotNull NewVirtualFileSystem fs,
+                   @NotNull String name,
+                   @NotNull String pathBeforeSlash) {
       super(id, segment, data, null, fs);
       myName = name;
+      if (pathBeforeSlash.contains("..") || pathBeforeSlash.endsWith("/")) {
+        throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
+      }
       myPathBeforeSlash = pathBeforeSlash;
     }
 

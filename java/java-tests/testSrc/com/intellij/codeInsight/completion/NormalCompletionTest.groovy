@@ -1728,4 +1728,6 @@ class Bar {
     myFixture.assertPreferredCompletionItems 0, "dx", "doo", "Doo", "double"
   }
 
+  void testCopyConstructor() { doTest('\n') }
+
 }

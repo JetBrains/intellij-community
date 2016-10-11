@@ -23,8 +23,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,39 +32,30 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static java.util.stream.Collectors.toList;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ShelveLocalChangesTask extends BaseMergeTask {
 
   @NotNull private final Intersection myIntersection;
 
-  public ShelveLocalChangesTask(@NotNull MergeContext mergeContext,
-                                @NotNull QuickMergeInteraction interaction,
-                                @NotNull Intersection intersection) {
-    super(mergeContext, interaction, "Shelving local changes before merge", Where.POOLED);
+  public ShelveLocalChangesTask(@NotNull QuickMerge mergeProcess, @NotNull Intersection intersection) {
+    super(mergeProcess, "Shelving local changes before merge", Where.POOLED);
 
     myIntersection = intersection;
   }
 
   @Override
-  public void run(final ContinuationContext context) {
-    List<VirtualFile> changedFiles = shelveChanges(context);
+  public void run() {
+    List<VirtualFile> changedFiles = shelveChanges();
 
-    context.suspend();
-    RefreshQueue.getInstance().refresh(true, false, new Runnable() {
-      @Override
-      public void run() {
-        context.ping();
-      }
-    }, changedFiles);
+    suspend();
+    RefreshQueue.getInstance().refresh(true, false, this::ping, changedFiles);
   }
 
   @NotNull
-  private List<VirtualFile> shelveChanges(@NotNull ContinuationContext context) {
-    List<VirtualFile> changedFiles = ContainerUtil.newArrayList();
+  private List<VirtualFile> shelveChanges() {
+    List<VirtualFile> changedFiles = newArrayList();
     ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
 
     for (Map.Entry<String, Collection<Change>> entry : myIntersection.getChangesSubset().entrySet()) {
@@ -81,10 +70,10 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
         changedFiles.addAll(getAfterRevisionsFiles(entry.getValue().stream(), true).collect(toList()));
       }
       catch (IOException e) {
-        finishWithError(context, e.getMessage(), true);
+        end(new VcsException(e));
       }
       catch (VcsException e) {
-        finishWithError(context, e.getMessage(), true);
+        end(e);
       }
     }
 
@@ -92,11 +81,6 @@ public class ShelveLocalChangesTask extends BaseMergeTask {
   }
 
   private static void saveAllDocuments() {
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    }, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments(), ModalityState.NON_MODAL);
   }
 }

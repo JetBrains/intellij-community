@@ -423,10 +423,10 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                             @NotNull String fileName,
                                             boolean readOnly) {
     return ReadAction.compute(() -> {
-      LightVirtualFile file = new LightVirtualFile(fileName, DiffPsiFileType.INSTANCE, content);
+      LightVirtualFile file = new LightVirtualFile(fileName, fileType, content);
       file.setWritable(!readOnly);
 
-      file.putUserData(DiffPsiFileType.ORIGINAL_FILE_TYPE_KEY, fileType);
+      file.putUserData(DiffPsiFileSupport.KEY, true);
 
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document == null) return null;

@@ -130,7 +130,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     public void visitPyComprehensionElement(PyComprehensionElement node) {
       super.visitPyComprehensionElement(node);
 
-      for (ComprhForComponent forComponent : node.getForComponents()) {
+      for (PyComprehensionForComponent forComponent : node.getForComponents()) {
         checkIteratedValue(forComponent.getIteratedList(), forComponent.isAsync());
       }
     }

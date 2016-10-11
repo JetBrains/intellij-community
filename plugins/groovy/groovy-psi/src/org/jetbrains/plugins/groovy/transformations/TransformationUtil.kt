@@ -60,4 +60,4 @@ fun isUnderTransformation(clazz: PsiClass?): Boolean {
   }
 }
 
-fun isUnderAnyTransformation() = ourTransformationContext.get().isNotEmpty()
+infix operator fun TransformationContext.plusAssign(method: PsiMethod) = addMethod(method)

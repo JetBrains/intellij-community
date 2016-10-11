@@ -92,6 +92,7 @@ public class StringTokenizerDelimiterInspection extends BaseJavaBatchLocalInspec
     @NotNull
     @Override
     public String getFamilyName() {
+      //noinspection DialogTitleCapitalization
       return "Replace StringTokenizer delimiters parameter with unique symbols";
     }
 
@@ -99,13 +100,15 @@ public class StringTokenizerDelimiterInspection extends BaseJavaBatchLocalInspec
     public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       final Set<Character> uniqueChars = new LinkedHashSet<>();
       final PsiLiteralExpression delimiterArgument = (PsiLiteralExpression)startElement;
-      for (char c : ((String)delimiterArgument.getValue()).toCharArray()) {
+      final Object literal = delimiterArgument.getValue();
+      if(!(literal instanceof String)) return;
+      for (char c : ((String)literal).toCharArray()) {
         uniqueChars.add(c);
       }
       final String newDelimiters = StringUtil.join(uniqueChars, "");
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
       if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
-      delimiterArgument.replace(elementFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(StringUtil.escaper(true, null).fun(
+      delimiterArgument.replace(elementFactory.createExpressionFromText(StringUtil.wrapWithDoubleQuote(StringUtil.escaper(true, "\"").fun(
         newDelimiters)), null));
     }
   }

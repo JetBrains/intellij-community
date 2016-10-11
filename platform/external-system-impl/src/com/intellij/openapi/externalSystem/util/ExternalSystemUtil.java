@@ -357,7 +357,6 @@ public class ExternalSystemUtil {
    * @param callback              callback to be notified on refresh result
    * @param isPreviewMode         flag that identifies whether gradle libraries should be resolved during the refresh
    * @param reportRefreshError    prevent to show annoying error notification, e.g. if auto-import mode used
-   * @return the most up-to-date gradle project (if any)
    */
   public static void refreshProject(@NotNull final Project project,
                                     @NotNull final ProjectSystemId externalSystemId,

@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -27,7 +26,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
@@ -43,7 +41,7 @@ import java.util.List;
 /**
  * @author Alexey.Ivanov
  */
-public class PyStringConcatenationToFormatIntention extends BaseIntentionAction {
+public class PyStringConcatenationToFormatIntention extends PyBaseIntentionAction {
 
   @NotNull
   public String getFamilyName() {
@@ -124,7 +122,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     return res;
   }
 
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement element = PsiTreeUtil.getTopmostParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class);
 
     if (element == null) return;
@@ -148,7 +146,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
           isUnicode = true;
         }
         if (!quotesDetected) {
-          quotes = PythonStringUtil.getQuotes(expression.getText());
+          quotes = PyStringLiteralUtil.getQuotes(expression.getText());
           quotesDetected = true;
         }
         String value = ((PyStringLiteralExpression)expression).getStringValue();

@@ -18,122 +18,99 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.integrate.LocalChangesAction;
-import org.jetbrains.idea.svn.dialogs.MergeDialogI;
 import org.jetbrains.idea.svn.integrate.QuickMergeContentsVariants;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteraction;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/27/13
- * Time: 6:56 PM
- */
+import static com.intellij.util.containers.ContainerUtil.isEmpty;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtilRt.emptyList;
+
 public class QuickMergeTestInteraction implements QuickMergeInteraction {
+
   private QuickMergeContentsVariants myMergeVariant = QuickMergeContentsVariants.all;
-  private boolean myReintegrateAnswer = false;
-  private LocalChangesAction myLocalChangesAction = LocalChangesAction.continueMerge;
-  private QuickMergeContentsVariants mySelectMergeAction2ndStep = QuickMergeContentsVariants.all;
+  private final boolean myReintegrateAnswer;
+  @NotNull private final List<Exception> myExceptions;
 
-  private final List<Exception> myExceptions;
-
-  public QuickMergeTestInteraction() {
-    myExceptions = new ArrayList<>();
+  public QuickMergeTestInteraction(boolean reintegrate) {
+    myReintegrateAnswer = reintegrate;
+    myExceptions = newArrayList();
   }
 
-  @Override
-  public void setTitle(@NotNull String title) {
-  }
-
+  @NotNull
   @Override
   public QuickMergeContentsVariants selectMergeVariant() {
     return myMergeVariant;
   }
 
-  public void setMergeVariant(QuickMergeContentsVariants mergeVariant) {
+  public void setMergeVariant(@NotNull QuickMergeContentsVariants mergeVariant) {
     myMergeVariant = mergeVariant;
   }
 
   @Override
   public boolean shouldContinueSwitchedRootFound() {
-    // not gonna test this at the moment
     return false;
   }
 
   @Override
-  public boolean shouldReintegrate(@NotNull String sourceUrl, @NotNull String targetUrl) {
+  public boolean shouldReintegrate(@NotNull String targetUrl) {
     return myReintegrateAnswer;
-  }
-
-  public void setReintegrateAnswer(boolean reintegrateAnswer) {
-    myReintegrateAnswer = reintegrateAnswer;
-  }
-
-  public void setSelectMergeAction2ndStep(QuickMergeContentsVariants selectMergeAction2ndStep) {
-    mySelectMergeAction2ndStep = selectMergeAction2ndStep;
   }
 
   @NotNull
   @Override
-  public SelectMergeItemsResult selectMergeItems(List<CommittedChangeList> lists, String mergeTitle, MergeChecker mergeChecker) {
+  public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
+                                                 @NotNull String mergeTitle,
+                                                 @NotNull MergeChecker mergeChecker) {
     return new SelectMergeItemsResult() {
+      @NotNull
       @Override
       public QuickMergeContentsVariants getResultCode() {
-        return mySelectMergeAction2ndStep;
+        return QuickMergeContentsVariants.all;
       }
 
+      @NotNull
       @Override
       public List<CommittedChangeList> getSelectedLists() {
-        return null;
+        return emptyList();
       }
     };
   }
 
+  @NotNull
   @Override
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                               @NotNull String mergeTitle,
                                                                @NotNull MergeChecker mergeChecker,
-                                                               @NotNull PairConsumer<Long, MergeDialogI> loader,
                                                                boolean everyThingLoaded) {
-    return null;
+    return emptyList();
   }
 
   @NotNull
   @Override
   public LocalChangesAction selectLocalChangesAction(boolean mergeAll) {
-    return myLocalChangesAction;
-  }
-
-  public void setLocalChangesAction(LocalChangesAction localChangesAction) {
-    myLocalChangesAction = localChangesAction;
+    return LocalChangesAction.continueMerge;
   }
 
   @Override
-  public void showIntersectedLocalPaths(List<FilePath> paths) {
+  public void showIntersectedLocalPaths(@NotNull List<FilePath> paths) {
   }
 
   @Override
-  public void showError(@NotNull Exception exception) {
-    myExceptions.add(exception);
-  }
-
-  @Override
-  public void showErrors(String message, List<VcsException> exceptions) {
-    if (exceptions != null && ! exceptions.isEmpty()) {
+  public void showErrors(@NotNull String message, @NotNull List<VcsException> exceptions) {
+    if (!isEmpty(exceptions)) {
       myExceptions.addAll(exceptions);
-      return;
     }
-    myExceptions.add(new RuntimeException(message));
+    else {
+      myExceptions.add(new RuntimeException(message));
+    }
   }
 
   @Override
-  public void showErrors(String message, boolean isError) {
+  public void showErrors(@NotNull String message, boolean isError) {
     if (isError) {
       myExceptions.add(new RuntimeException(message));
     } else {
@@ -142,8 +119,8 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   }
 
   public void throwIfExceptions() throws Exception {
-    for (Exception exception : myExceptions) {
-      throw exception;
+    if (!myExceptions.isEmpty()) {
+      throw myExceptions.get(0);
     }
   }
 }

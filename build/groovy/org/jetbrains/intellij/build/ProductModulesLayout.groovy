@@ -86,10 +86,12 @@ class ProductModulesLayout {
    * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
    */
   Consumer<PlatformLayout> platformLayoutCustomizer = {} as Consumer<PlatformLayout>
+
   /**
-   * Name of the module which classpath will be used to build searchable options index
+   * Names of the modules which classpath will be used to build searchable options index <br>
+   * //todo[nik] get rid of this property and automatically include all platform and plugin modules to the classpath when building searchable options index
    */
-  String mainModule
+  List<String> mainModules = []
 
   /**
    * Name of the module containing search/searchableOptions.xml file.

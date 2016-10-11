@@ -358,9 +358,9 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   /**
-   * Invoked in EDT, each inspection should be fast
+   * Can be invoked in EDT, each inspection should be fast
    */
-  private static void collectIntentionsFromDoNotShowLeveledInspections(final Project project,
+  private static void collectIntentionsFromDoNotShowLeveledInspections(@NotNull final Project project,
                                                                        @NotNull final PsiFile hostFile,
                                                                        PsiElement psiElement,
                                                                        final int offset,
@@ -374,6 +374,10 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
                   " in:" + psiElement.getContainingFile() + " host:" + hostFile + "(" + hostFile.getClass().getName() + ")",
                   new Attachment(virtualFile != null ? virtualFile.getPresentableUrl() : "null", text != null ? text : "null"));
       }
+      if (DumbService.isDumb(project)) {
+        return;
+      }
+
       final List<LocalInspectionToolWrapper> intentionTools = new ArrayList<>();
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
       final InspectionToolWrapper[] tools = profile.getInspectionTools(hostFile);

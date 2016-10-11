@@ -110,33 +110,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
   @NotNull
   public SearchTextField createTextFilter() {
-    final SearchTextFieldWithStoredHistory textFilter = new SearchTextFieldWithStoredHistory(VCS_LOG_TEXT_FILTER_HISTORY) {
-      @Override
-      protected void onFieldCleared() {
-        myTextFilterModel.setFilter(null);
-      }
-    };
-    textFilter.setText(myTextFilterModel.getText());
-    textFilter.getTextEditor().addActionListener(e -> {
-      myTextFilterModel.setFilter(new VcsLogTextFilterImpl(textFilter.getText()));
-      textFilter.addCurrentTextToHistory();
-    });
-    textFilter.addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        try {
-          myTextFilterModel.setUnsavedText(e.getDocument().getText(0, e.getDocument().getLength()));
-        }
-        catch (BadLocationException ex) {
-          LOG.error(ex);
-        }
-      }
-    });
-    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER);
-    if (!shortcutText.isEmpty()) {
-      textFilter.getTextEditor().setToolTipText("Use " + shortcutText + " to switch between text filter and commits list");
-    }
-    return textFilter;
+    return new TextFilterField(myTextFilterModel);
   }
 
   /**
@@ -452,6 +426,47 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     @Override
     protected List<String> getFilterValues(@NotNull VcsLogUserFilter filter) {
       return ContainerUtil.newArrayList(((VcsLogUserFilterImpl)filter).getUserNamesForPresentation());
+    }
+  }
+
+  private static class TextFilterField extends SearchTextFieldWithStoredHistory {
+    @NotNull private final TextFilterModel myTextFilterModel;
+
+    public TextFilterField(@NotNull TextFilterModel model) {
+      super(VCS_LOG_TEXT_FILTER_HISTORY);
+      myTextFilterModel = model;
+      setText(myTextFilterModel.getText());
+      getTextEditor().addActionListener(e -> applyFilter());
+      addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          try {
+            myTextFilterModel.setUnsavedText(e.getDocument().getText(0, e.getDocument().getLength()));
+          }
+          catch (BadLocationException ex) {
+            LOG.error(ex);
+          }
+        }
+      });
+      String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.VCS_LOG_FOCUS_TEXT_FILTER);
+      if (!shortcutText.isEmpty()) {
+        getTextEditor().setToolTipText("Use " + shortcutText + " to switch between text filter and commits list");
+      }
+    }
+
+    protected void applyFilter() {
+      myTextFilterModel.setFilter(new VcsLogTextFilterImpl(getText()));
+      addCurrentTextToHistory();
+    }
+
+    @Override
+    protected void onFieldCleared() {
+      myTextFilterModel.setFilter(null);
+    }
+
+    @Override
+    protected void onFocusLost() {
+      applyFilter();
     }
   }
 }

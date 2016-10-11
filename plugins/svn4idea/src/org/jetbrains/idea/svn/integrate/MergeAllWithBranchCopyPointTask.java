@@ -15,92 +15,53 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
-import com.intellij.util.Consumer;
-import com.intellij.util.continuation.ContinuationContext;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNURL;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicReference;
+public class MergeAllWithBranchCopyPointTask extends BaseMergeTask {
 
-/**
- * @author Konstantin Kolosovsky.
- */
-public class MergeAllWithBranchCopyPointTask extends BaseMergeTask
-  implements Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> {
+  @Nullable private final SvnBranchPointsCalculator.WrapperInvertor myCopyPoint;
+  private final boolean mySupportsMergeInfo;
 
-  @NotNull private final AtomicReference<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException>> myData;
+  public MergeAllWithBranchCopyPointTask(@NotNull QuickMerge mergeProcess) {
+    super(mergeProcess, "merge all", Where.AWT);
+    myCopyPoint = null;
+    mySupportsMergeInfo = true;
+  }
 
-  public MergeAllWithBranchCopyPointTask(@NotNull MergeContext mergeContext, @NotNull QuickMergeInteraction interaction) {
-    super(mergeContext, interaction, "merge all", Where.AWT);
-
-    myData = new AtomicReference<>();
+  public MergeAllWithBranchCopyPointTask(@NotNull QuickMerge mergeProcess,
+                                         @NotNull SvnBranchPointsCalculator.WrapperInvertor copyPoint,
+                                         boolean supportsMergeInfo) {
+    super(mergeProcess, "merge all", Where.AWT);
+    myCopyPoint = copyPoint;
+    mySupportsMergeInfo = supportsMergeInfo;
   }
 
   @Override
-  public void consume(TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> value) {
-    myData.set(value);
-  }
+  public void run() {
+    boolean reintegrate = myCopyPoint != null && myCopyPoint.isInvertedSense();
 
-  @Override
-  public void run(ContinuationContext context) {
-    TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> inverterValue = myData.get();
-
-    if (inverterValue != null) {
-      runMerge(context, inverterValue);
+    if (reintegrate && !myInteraction.shouldReintegrate(myCopyPoint.inverted().getTarget())) {
+      end();
     }
     else {
-      finishWithError(context, "Merge start wasn't found", true);
-    }
-  }
+      MergerFactory mergerFactory = createBranchMergerFactory(reintegrate);
+      String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
 
-  private void runMerge(@NotNull ContinuationContext context,
-                        @NotNull TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor, VcsException> inverterValue) {
-    try {
-      SvnBranchPointsCalculator.WrapperInvertor inverter = inverterValue.get();
-
-      if (inverter != null) {
-        runMerge(context, inverter);
-      }
-      else {
-        finishWithError(context, "Merge start wasn't found", true);
-      }
-    }
-    catch (VcsException e) {
-      finishWithError(context, "Merge start wasn't found", Collections.singletonList(e));
-    }
-  }
-
-  private void runMerge(@NotNull ContinuationContext context, @NotNull SvnBranchPointsCalculator.WrapperInvertor inverter) {
-    boolean reintegrate = inverter.isInvertedSense();
-
-    if (reintegrate && !myInteraction.shouldReintegrate(myMergeContext.getSourceUrl(), inverter.inverted().getTarget())) {
-      context.cancelEverything();
-    }
-    else {
-      final MergerFactory mergerFactory = createBranchMergerFactory(reintegrate, inverter);
-      final String title = "Merging all from " + myMergeContext.getBranchName() + (reintegrate ? " (reintegrate)" : "");
-
-      context.next(new MergeTask(myMergeContext, myInteraction, mergerFactory, title));
+      next(new MergeTask(myMergeProcess, mergerFactory, title));
     }
   }
 
   @NotNull
-  private MergerFactory createBranchMergerFactory(final boolean reintegrate,
-                                                  @NotNull final SvnBranchPointsCalculator.WrapperInvertor inverter) {
-    return new MergerFactory() {
-      @Override
-      public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
-        return new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getPath(), handler, reintegrate,
-                                myMergeContext.getBranchName(),
-                                reintegrate ? inverter.getWrapped().getTargetRevision() : inverter.getWrapped().getSourceRevision());
-      }
+  private MergerFactory createBranchMergerFactory(boolean reintegrate) {
+    return (vcs, target, handler, currentBranchUrl, branchName) -> {
+      long revision = myCopyPoint != null
+                      ? reintegrate ? myCopyPoint.getWrapped().getTargetRevision() : myCopyPoint.getWrapped().getSourceRevision()
+                      : -1;
+
+      return new BranchMerger(vcs, currentBranchUrl, myMergeContext.getWcInfo().getPath(), handler, reintegrate,
+                              myMergeContext.getBranchName(), revision, mySupportsMergeInfo);
     };
   }
 }

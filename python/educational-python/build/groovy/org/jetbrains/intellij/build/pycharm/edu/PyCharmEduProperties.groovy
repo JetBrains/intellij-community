@@ -18,7 +18,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     applicationInfoModule = "educational-python"
     brandingResourcePaths = ["$pythonCommunityPath/educational-python/resources"]
 
-    productLayout.mainModule = "main_pycharm_edu"
+    productLayout.mainModules = ["main_pycharm_edu"]
     productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
     productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
       "dom-impl", "python-community", "python-community-ide-resources",

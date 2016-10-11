@@ -266,7 +266,7 @@ idea.fatal.error.notification=disabled
       @Override
       String run(BuildContext context) {
         def builder = factory.apply(context)
-        if (context.shouldBuildDistributionForOS(builder.osTargetId)) {
+        if (builder != null && context.shouldBuildDistributionForOS(builder.osTargetId)) {
           return context.messages.block("Build $builder.osName Distribution") {
             def distDirectory = builder.copyFilesForOsDistribution()
             builder.buildArtifacts(distDirectory)
@@ -295,6 +295,16 @@ idea.fatal.error.notification=disabled
       else {
         buildContext.messages.warning("Scrambling skipped: 'scrambleTool' isn't defined")
       }
+      buildContext.ant.zip(destfile: "$buildContext.paths.artifacts/internalUtilities.zip") {
+        fileset(file: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar")
+        fileset(dir: "$buildContext.paths.communityHome/lib") {
+          include(name: "junit-4*.jar")
+          include(name: "hamcrest-core-*.jar")
+        }
+        zipfileset(src: "$buildContext.paths.buildOutputRoot/internal/internalUtilities.jar") {
+          include(name: "*.xml")
+        }
+      }
     }
     buildDistributions()
   }
@@ -315,6 +325,7 @@ idea.fatal.error.notification=disabled
 
     def macCustomizer = buildContext.macDistributionCustomizer
     checkPaths([macCustomizer?.icnsPath], "productProperties.macCustomizer.icnsPath")
+    checkPaths([macCustomizer?.icnsPathForEAP], "productProperties.macCustomizer.icnsPathForEAP")
     checkPaths([macCustomizer?.dmgImagePath], "productProperties.macCustomizer.dmgImagePath")
     checkPaths([macCustomizer?.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
   }
@@ -330,7 +341,7 @@ idea.fatal.error.notification=disabled
     checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
     checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
-    checkModules([layout.mainModule], "productProperties.productLayout.mainModule")
+    checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     nonTrivialPlugins.findAll {layout.enabledPluginModules.contains(it.mainModule)}.each { plugin ->
       checkModules(plugin.moduleJars.values(), "'$plugin.mainModule' plugin")

@@ -369,7 +369,7 @@ public class CopiesPanel {
         String workingCopyUrlInSelectedBranch = getCorrespondingUrlInOtherBranch(configuration, wcInfo.getUrl(), branchUrl);
         MergeContext mergeContext = new MergeContext(myVcs, workingCopyUrlInSelectedBranch, wcInfo, SVNPathUtil.tail(branchUrl), root);
 
-        new QuickMerge(mergeContext).execute(new QuickMergeInteractionImpl(myProject));
+        new QuickMerge(mergeContext, new QuickMergeInteractionImpl(mergeContext)).execute();
       }
     }, "Select branch", mergeLabel);
   }

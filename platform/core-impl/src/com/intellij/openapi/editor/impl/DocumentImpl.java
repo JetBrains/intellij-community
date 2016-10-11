@@ -614,7 +614,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       final Application application = ApplicationManager.getApplication();
       if (application != null) {
         application.assertWriteAccessAllowed();
-        if (FileDocumentManager.getInstance().getFile(this) != null) {
+        VirtualFile file = FileDocumentManager.getInstance().getFile(this);
+        if (file != null && file.isInLocalFileSystem()) {
           ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
         }
       }

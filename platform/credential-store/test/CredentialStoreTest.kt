@@ -34,30 +34,26 @@ internal class CredentialStoreTest {
 
   @Test
   fun `mac - testEmptyAccountName`() {
-    if (!SystemInfo.isMacIntel64 || UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return
+    if (isMacSupported()) {
+      testEmptyAccountName(KeyChainCredentialStore())
     }
-
-    testEmptyAccountName(KeyChainCredentialStore())
   }
 
   @Test
   fun `mac - changedAccountName`() {
-    if (!SystemInfo.isMacIntel64 || UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return
+    if (isMacSupported()) {
+      testChangedAccountName(KeyChainCredentialStore())
     }
-
-    testChangedAccountName(KeyChainCredentialStore())
   }
 
   @Test
   fun `linux - testEmptyAccountName`() {
-    if (!SystemInfo.isLinux || UsefulTestCase.IS_UNDER_TEAMCITY) {
-      return
+    if (isLinuxSupported()) {
+      testEmptyAccountName(SecretCredentialStore("com.intellij.test"))
     }
-
-    testEmptyAccountName(SecretCredentialStore("com.intellij.test"))
   }
+
+  private fun isLinuxSupported() = SystemInfo.isLinux && !UsefulTestCase.IS_UNDER_TEAMCITY
 
   @Test
   fun `KeePass - testEmptyAccountName`() {
@@ -67,6 +63,39 @@ internal class CredentialStoreTest {
   @Test
   fun `KeePass - changedAccountName`() {
     testChangedAccountName(KeePassCredentialStore())
+  }
+
+  @Test
+  fun `KeePass - memoryOnlyPassword`() {
+    memoryOnlyPassword(KeePassCredentialStore())
+  }
+
+  @Test
+  fun `Keychain - memoryOnlyPassword`() {
+    if (isMacSupported()) {
+      memoryOnlyPassword(KeyChainCredentialStore())
+    }
+  }
+
+  @Test
+  fun `linux - memoryOnlyPassword`() {
+    if (isLinuxSupported()) {
+      memoryOnlyPassword(SecretCredentialStore("com.intellij.test"))
+    }
+  }
+
+  private fun isMacSupported() = SystemInfo.isMacIntel64 && !UsefulTestCase.IS_UNDER_TEAMCITY
+
+  private fun memoryOnlyPassword(store: CredentialStore) {
+    val pass = randomString()
+    val userName = randomString()
+    val serviceName = randomString()
+    store.set(CredentialAttributes(serviceName, userName, isPasswordMemoryOnly = true), Credentials(userName, pass))
+
+    val credentials = store.get(CredentialAttributes(serviceName, userName))
+    assertThat(credentials).isNotNull()
+    assertThat(credentials!!.userName).isEqualTo(userName)
+    assertThat(credentials.password).isNullOrEmpty()
   }
 
   private fun doTest(store: CredentialStore) {

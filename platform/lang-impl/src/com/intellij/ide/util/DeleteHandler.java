@@ -30,7 +30,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
-import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -139,7 +138,7 @@ public class DeleteHandler {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
 
-          DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, processor);
+          processor.run();
         }
       }) {
         @Override
