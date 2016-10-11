@@ -17,6 +17,12 @@ class TypeAnnotations {
 
     void m2(@pkg.TypeAnnotations.TA("parameter") int i) { /* compiled code */ }
 
+    static enum E {
+        E1, E2;
+
+        private E(@pkg.TypeAnnotations.MixA("enum ctor") java.lang.String s) { /* compiled code */ }
+    }
+
     @java.lang.annotation.Target({java.lang.annotation.ElementType.FIELD, java.lang.annotation.ElementType.TYPE_USE})
     static @interface MixA {
         java.lang.String value();
