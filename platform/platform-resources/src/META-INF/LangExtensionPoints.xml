@@ -428,10 +428,6 @@
     <extensionPoint name="executor"
                     interface="com.intellij.execution.Executor"/>
 
-    <extensionPoint name="internal_executor"
-                    interface="com.intellij.execution.Executor"/>
-
-
     <extensionPoint name="executionTargetProvider"
                     interface="com.intellij.execution.ExecutionTargetProvider"/>
 

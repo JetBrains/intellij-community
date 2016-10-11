@@ -33,6 +33,7 @@ import com.intellij.util.Consumer;
 import com.jetbrains.python.console.PyCodeExecutor;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PythonConsoleRunnerFactory;
+import com.jetbrains.python.console.PythonConsoleToolWindow;
 import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -179,9 +180,22 @@ public class PyExecuteSelectionAction extends AnAction {
   }
 
   private static Collection<RunContentDescriptor> getConsoles(Project project) {
+    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
+    if (toolWindow != null && toolWindow.getToolWindow().isVisible()) {
+      RunContentDescriptor selectedContentDescriptor = toolWindow.getSelectedContentDescriptor();
+      return selectedContentDescriptor != null ? Lists.newArrayList(selectedContentDescriptor) : Lists.newArrayList();
+    }
 
-    return ExecutionHelper.findRunningConsole(project, dom -> dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom));
+    Collection<RunContentDescriptor> descriptors =
+      ExecutionHelper.findRunningConsole(project, dom -> dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom));
+
+    if (descriptors.isEmpty() && toolWindow != null) {
+      return toolWindow.getConsoleContentDescriptors();
+    }
+    else {
+      return descriptors;
+    }
   }
 
   private static boolean isAlive(RunContentDescriptor dom) {
@@ -203,20 +217,32 @@ public class PyExecuteSelectionAction extends AnAction {
   private static void startConsole(final Project project,
                                    final Consumer<PyCodeExecutor> consumer,
                                    Module context) {
+    final PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(project);
 
-    PythonConsoleRunnerFactory consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance();
-    PydevConsoleRunner runner = consoleRunnerFactory.createConsoleRunner(project, null);
-    runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
-      @Override
-      public void handleConsoleInitialized(LanguageConsoleView consoleView) {
-        if (consoleView instanceof PyCodeExecutor) {
-          consumer.consume((PyCodeExecutor)consoleView);
+    if (toolWindow != null) {
+      toolWindow.activate(() -> {
+        List<RunContentDescriptor> descs = toolWindow.getConsoleContentDescriptors();
+
+        RunContentDescriptor descriptor = descs.get(0);
+        if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
+          consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
         }
-      }
-    });
-    runner.run();
+      });
+    }
+    else {
+      PythonConsoleRunnerFactory consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance();
+      PydevConsoleRunner runner = consoleRunnerFactory.createConsoleRunner(project, null);
+      runner.addConsoleListener(new PydevConsoleRunner.ConsoleListener() {
+        @Override
+        public void handleConsoleInitialized(LanguageConsoleView consoleView) {
+          if (consoleView instanceof PyCodeExecutor) {
+            consumer.consume((PyCodeExecutor)consoleView);
+          }
+        }
+      });
+      runner.run();
+    }
   }
-
 
   private static boolean canFindConsole(AnActionEvent e) {
     Project project = e.getProject();

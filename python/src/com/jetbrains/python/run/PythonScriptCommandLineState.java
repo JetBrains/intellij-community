@@ -125,8 +125,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                          CommandLinePatcher[] patchers,
                                          PyConsoleOptions.PyConsoleSettings consoleSettings,
                                          String... statementsToExecute) {
-      super(project, sdk, consoleType, workingDir, environmentVariables, consoleSettings, () -> {
-      }, statementsToExecute);
+      super(project, sdk, consoleType, workingDir, environmentVariables, consoleSettings, (s) -> {}, statementsToExecute);
       myPatchers = patchers;
     }
 
@@ -135,7 +134,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       AnAction a = new ConsoleExecuteAction(super.getConsoleView(), myConsoleExecuteActionHandler,
                                             myConsoleExecuteActionHandler.getEmptyExecuteAction(), myConsoleExecuteActionHandler);
       registerActionShortcuts(Lists.newArrayList(a), getConsoleView().getConsoleEditor().getComponent());
-
     }
 
     @Override

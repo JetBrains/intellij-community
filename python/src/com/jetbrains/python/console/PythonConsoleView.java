@@ -43,6 +43,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -90,6 +91,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myFirstRun = true;
 
   private XStandaloneVariablesView mySplitView;
+  private ActionCallback myInitialized = new ActionCallback();
 
   public PythonConsoleView(final Project project, final String title, final Sdk sdk) {
     super(project, title, PythonLanguage.getInstance());
@@ -141,28 +143,30 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void executeCode(final @NotNull String code, @Nullable final Editor editor) {
-    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", false) {
-      @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        long time = System.currentTimeMillis();
-        while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
-          if (indicator.isCanceled()) {
-            break;
-          }
-          if (System.currentTimeMillis() - time > 1000) {
-            if (editor != null) {
-              UIUtil.invokeLaterIfNeeded(
-                () -> HintManager.getInstance().showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
-            }
-            return;
-          }
-          TimeoutUtil.sleep(300);
-        }
-        if (!indicator.isCanceled()) {
-          executeInConsole(code);
-        }
-      }
-    });
+    myInitialized.doWhenDone(() ->
+                               ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing Code in Console...", false) {
+                                 @Override
+                                 public void run(@NotNull final ProgressIndicator indicator) {
+                                   long time = System.currentTimeMillis();
+                                   while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
+                                     if (indicator.isCanceled()) {
+                                       break;
+                                     }
+                                     if (System.currentTimeMillis() - time > 1000) {
+                                       if (editor != null) {
+                                         UIUtil.invokeLaterIfNeeded(
+                                           () -> HintManager.getInstance()
+                                             .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
+                                       }
+                                       return;
+                                     }
+                                     TimeoutUtil.sleep(300);
+                                   }
+                                   if (!indicator.isCanceled()) {
+                                     executeInConsole(code);
+                                   }
+                                 }
+                               }));
   }
 
 
@@ -421,5 +425,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Override
   public void setPromptAttributes(@NotNull ConsoleViewContentType textAttributes) {
     myPromptView.setPromptAttributes(textAttributes);
+  }
+
+  public void initialized() {
+    myInitialized.setDone();
   }
 }

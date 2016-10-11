@@ -28,6 +28,14 @@
     </component>
   </project-components>
 
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.console.PythonConsoleToolWindow</implementation-class>
+    </component>
+  </project-components>
+
+
+
 
   <module value="com.intellij.modules.xml"/>
 
@@ -76,8 +84,10 @@
     <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
 
     <!-- Console -->
-    <internal_executor id="PyConsoleToolWindowExecutor" implementation="com.jetbrains.python.console.PyConsoleToolWindowExecutor"/>
-    <postStartupActivity implementation="com.jetbrains.python.console.PyConsoleStarter"/>
+
+    <toolWindow id="Python Console" anchor="bottom" icon="PythonIcons.Python.PythonConsoleToolWindow"
+                factoryClass="com.jetbrains.python.console.PythonConsoleToolWindowFactory" secondary="false"/>
+
 
 
     <directoryIndexExcludePolicy implementation="com.jetbrains.python.PyDirectoryIndexExcludePolicy"/>

@@ -16,6 +16,7 @@
 package com.jetbrains.python.console;
 
 import com.google.common.base.CharMatcher;
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
@@ -43,6 +44,7 @@ import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -72,10 +74,8 @@ import com.intellij.remote.Tunnelable;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PathMappingSettings;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.ui.content.Content;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.MessageCategory;
@@ -109,11 +109,12 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
 
 /**
- * @author oleg
+ * @author traff, oleg
  */
 public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public static final String WORKING_DIR_ENV = "WORKING_DIR_AND_PYTHON_PATHS";
@@ -127,8 +128,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private final Project myProject;
   private final String myTitle;
   private final String myWorkingDir;
-  private final Executor myExecutor;
-  private final Runnable myRunRunAction;
+  private final Consumer<String> myRerunAction;
   @NotNull
   private Sdk mySdk;
   private GeneralCommandLine myGeneralCommandLine;
@@ -157,7 +157,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                 @Nullable final String workingDir,
                                 Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                @NotNull Runnable rerunAction, String... statementsToExecute) {
+                                @NotNull Consumer<String> rerunAction, String... statementsToExecute) {
     myProject = project;
     mySdk = sdk;
     myTitle = consoleType.getTitle();
@@ -166,11 +166,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myEnvironmentVariables = environmentVariables;
     myConsoleSettings = settingsProvider;
     myStatementsToExecute = statementsToExecute;
-    myRunRunAction = rerunAction;
-    PyConsoleToolWindowExecutor toolWindowExecutor = PyConsoleToolWindowExecutor.findInstance();
-    myExecutor = toolWindowExecutor != null ? toolWindowExecutor : DefaultRunExecutor.getRunExecutorInstance();
+    myRerunAction = rerunAction;
   }
 
+  public void setConsoleTitle(String consoleTitle) {
+    myConsoleTitle = consoleTitle;
+  }
 
   private List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,
                                             final RunContentDescriptor contentDescriptor) {
@@ -215,6 +216,16 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   @Override
+  public void open() {
+    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
+    if (toolWindow != null) {
+      toolWindow.getToolWindow().activate(() -> {}, true);
+    } else {
+      runSync();
+    }
+  }
+
+  @Override
   public void runSync() {
     myPorts = findAvailablePorts(myProject, myConsoleType);
 
@@ -243,7 +254,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   @Override
   public void run() {
-    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments());
+    TransactionGuard.submitTransaction(myProject, () -> FileDocumentManager.getInstance().saveAllDocuments());
 
     myPorts = findAvailablePorts(myProject, myConsoleType);
 
@@ -301,8 +312,24 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     actionGroup.add(createCloseAction(contentDescriptor));
 
-    ExecutionManager.getInstance(myProject).getContentManager().showRunContent(myExecutor, contentDescriptor);
+    showContentDescriptor(contentDescriptor);
+  }
 
+
+  private void showContentDescriptor(RunContentDescriptor contentDescriptor) {
+    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
+    if (toolWindow != null) {
+      toolWindow
+        .init(PythonConsoleToolWindow.getToolWindow(myProject), contentDescriptor);
+    }
+    else {
+      ExecutionManager
+        .getInstance(myProject).getContentManager().showRunContent(getExecutor(), contentDescriptor);
+    }
+  }
+
+  private static Executor getExecutor() {
+    return DefaultRunExecutor.getRunExecutorInstance();
   }
 
   private static int[] findAvailablePorts(Project project, PyConsoleType consoleType) {
@@ -572,8 +599,26 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     actionToolbar.setTargetComponent(panel);
 
+    if (myConsoleTitle == null) {
+      myConsoleTitle = new ConsoleTitleGen(myProject, myTitle) {
+        @NotNull
+        @Override
+        protected List<String> getActiveConsoles(@NotNull String consoleTitle) {
+          PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
+          if (toolWindow != null && toolWindow.getToolWindow() != null) {
+            return Lists.newArrayList(toolWindow.getToolWindow().getContentManager().getContents()).stream().map(c -> c.getDisplayName())
+              .collect(
+                Collectors.toList());
+          }
+          else {
+            return super.getActiveConsoles(consoleTitle);
+          }
+        }
+      }.makeTitle();
+    }
+
     final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(myConsoleView, myProcessHandler, panel, new ConsoleTitleGen(myProject, myTitle).makeTitle(), null);
+      new RunContentDescriptor(myConsoleView, myProcessHandler, panel, myConsoleTitle, null);
 
     contentDescriptor.setFocusComputable(() -> myConsoleView.getConsoleEditor().getContentComponent());
     contentDescriptor.setAutoFocusContent(true);
@@ -584,7 +629,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     registerActionShortcuts(actions, myConsoleView.getConsoleEditor().getComponent());
     registerActionShortcuts(actions, panel);
 
-    ExecutionManager.getInstance(myProject).getContentManager().showRunContent(myExecutor, contentDescriptor);
+    showContentDescriptor(contentDescriptor);
   }
 
   private void connect(final String[] statements2execute) {
@@ -610,6 +655,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
 
         fireConsoleInitializedEvent(consoleView);
+        consoleView.initialized();
       });
     }
     else {
@@ -686,7 +732,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
 
-
   private boolean isIndentSubstring(String text) {
     int indentSize = myConsoleExecuteActionHandler.getPythonIndent();
     return text.length() >= indentSize && CharMatcher.WHITESPACE.matchesAllOf(text.substring(text.length() - indentSize));
@@ -744,7 +789,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private AnAction createCloseAction(final RunContentDescriptor descriptor) {
-    final AnAction generalCloseAction = new CloseAction(myExecutor, descriptor, myProject);
+    final AnAction generalCloseAction = new CloseAction(getExecutor(), descriptor, myProject);
 
     final AnAction stopAction = new DumbAwareAction() {
       @Override
@@ -766,6 +811,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   protected void clearContent(RunContentDescriptor descriptor) {
+    PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
+    if (toolWindow != null && toolWindow.getToolWindow() != null) {
+      Content content = toolWindow.getToolWindow().getContentManager().findContent(descriptor.getDisplayName());
+      assert content != null;
+      toolWindow.getToolWindow().getContentManager().removeContent(content, true);
+    }
   }
 
   private AnActionEvent stopConsole(AnActionEvent e) {
@@ -895,8 +946,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
 
         UIUtil.invokeLaterIfNeeded(() -> {
-
-          myRunRunAction.run();
+          myRerunAction.consume(myConsoleTitle);
         });
       }
     }.queue();

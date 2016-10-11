@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project
 import java.util.stream.Collectors
 
 /**
- * Created by Yuli Fiterman on 9/13/2016.
+ * @author traff
  */
 open class ConsoleTitleGen @JvmOverloads constructor(private val myProject: Project, private val consoleTitle: String, private val shouldAddNumberToTitle: Boolean = true) {
 

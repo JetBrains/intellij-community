@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathMapper;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -112,11 +113,11 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     Map<String, String> envs = Maps.newHashMap(settingsProvider.getEnvs());
     putIPythonEnvFlag(project, envs);
 
-    //The transaction is needed due the the FileDocumentManager.getInstance().saveAllDocuments() call in PydevConsoleRunnerImpl
-    Runnable rerunAction = () -> TransactionGuard.submitTransaction(project, () -> {
+    Consumer<String> rerunAction = title -> {
       PydevConsoleRunnerImpl runner = createConsoleRunner(project, module);
+      runner.setConsoleTitle(title);
       runner.run();
-    });
+    };
 
     return createConsoleRunner(project, sdk, workingDir, envs, PyConsoleType.PYTHON, settingsProvider, rerunAction, setupFragment);
   }
@@ -133,7 +134,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                                                        Map<String, String> envs,
                                                        PyConsoleType consoleType,
                                                        PyConsoleOptions.PyConsoleSettings settingsProvider,
-                                                       Runnable rerunAction, String... setupFragment) {
+                                                       Consumer<String> rerunAction, String... setupFragment) {
     return new PydevConsoleRunnerImpl(project, sdk, consoleType, workingDir, envs, settingsProvider, rerunAction, setupFragment);
   }
 }

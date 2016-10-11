@@ -33,9 +33,6 @@ import javax.swing.*;
  */
 public abstract class Executor {
   public static final ExtensionPointName<Executor> EXECUTOR_EXTENSION_NAME = ExtensionPointName.create("com.intellij.executor");
-  /* Extension point for non-user facing executors, in order to use RunContentManager with custom toolwindows */
-  public static final ExtensionPointName<Executor> INTERNAL_EXECUTOR_EXTENSION_NAME =
-    ExtensionPointName.create("com.intellij.internal_executor");
 
   /**
    * Returns the ID of the toolwindow in which the run tabs created by this executor will be displayed.

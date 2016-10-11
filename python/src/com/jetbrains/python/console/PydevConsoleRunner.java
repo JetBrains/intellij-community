@@ -60,7 +60,7 @@ public interface PydevConsoleRunner {
   Key<ConsoleCommunication> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");
   Key<Sdk> CONSOLE_SDK = new Key<>("PYDEV_CONSOLE_SDK_KEY");
 
-  public interface ConsoleListener {
+  interface ConsoleListener {
     void handleConsoleInitialized(LanguageConsoleView consoleView);
   }
 
@@ -218,6 +218,8 @@ public interface PydevConsoleRunner {
     final PsiFile containingFile = element.getContainingFile();
     return containingFile != null ? containingFile.getCopyableUserData(CONSOLE_SDK) : null;
   }
+
+  void open();
 
   void runSync();
 
