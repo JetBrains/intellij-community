@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
@@ -52,6 +53,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isIbmJvm = isIbmJvm();
   public static final boolean isJetbrainsJvm = isJetbrainsJvm();
   public static final boolean isStudioJvm = isStudioJvm();
+  public static final boolean bundles32BitJdk = bundles32BitJDK();
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
@@ -241,6 +243,10 @@ public class SystemInfo extends SystemInfoRt {
     final String vendor = SystemProperties.getJavaVendor();
     final String url = System.getProperty("java.vendor.url");
     return "Google Inc.".equals(vendor) && "http://developer.android.com/sdk/index.html".equals(url);
+  }
+
+  private static boolean bundles32BitJDK() {
+    return new File(PathManager.getHomePath(), "jre/jre/lib/i386").exists();
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 17) */

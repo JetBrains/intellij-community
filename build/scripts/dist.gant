@@ -218,7 +218,7 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   }
   requireProperty("jdk32.win", "false")
   if (p("jdk32.win") != "false") {
-    buildWinZip("$paths.artifacts/${archiveName}-x86.win.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk32.win"], winAppRoot)
+    buildWinZip("$paths.artifacts/${archiveName}.win32.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk32.win"], winAppRoot)
   }
 
   /*
