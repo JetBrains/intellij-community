@@ -18,4 +18,9 @@ class TypeAnnotations {
   }
 
   void m2(@TA("parameter") int i) { }
+
+  enum E {
+    E1("1"), E2("2");
+    E(@MixA("enum ctor") String s) { }
+  }
 }
