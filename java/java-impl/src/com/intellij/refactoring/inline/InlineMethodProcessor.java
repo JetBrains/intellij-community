@@ -466,7 +466,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             else if (element instanceof PsiEnumConstant) {
               inlineConstructorCall((PsiEnumConstant) element);
             }
-            else {
+            else if (!(element instanceof PsiDocMethodOrFieldRef)){
               GenericInlineHandler.inlineReference(usage, myMethod, myInliners);
             }
           }
