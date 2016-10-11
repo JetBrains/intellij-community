@@ -16,6 +16,7 @@
 
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -40,6 +41,7 @@ import java.util.List;
 public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
   private CodeStyleSettings myOldCodeStyleSettings;
+  private CodeInsightSettings myOldCodeInsightSettings;
 
   public LightIdeaTestFixtureImpl(LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
@@ -55,6 +57,7 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
 
     myOldCodeStyleSettings = getCurrentCodeStyleSettings().clone();
     myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
+    myOldCodeInsightSettings = CodeInsightSettings.getInstance().clone();
 
     application.setDataProvider(new TestDataProvider(getProject()));
   }
@@ -65,9 +68,12 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
     CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
     myOldCodeStyleSettings = null;
+    CodeInsightSettings oldCodeInsightSettings = myOldCodeInsightSettings;
+    myOldCodeInsightSettings = null;
     List<Throwable> exceptions = new SmartList<Throwable>();
     try {
-      UsefulTestCase.doCheckForSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings(), exceptions);
+      UsefulTestCase.checkForStyleSettingsDamage(oldCodeStyleSettings, getCurrentCodeStyleSettings(), exceptions);
+      UsefulTestCase.checkForInsightSettingsDamage(oldCodeInsightSettings, CodeInsightSettings.getInstance(), exceptions);
 
       LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication(), true, exceptions);
       super.tearDown();
