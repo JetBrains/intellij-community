@@ -1185,23 +1185,30 @@ public class DiffUtil {
 
     Component component = window;
     while (component != null) {
-      if (component instanceof Window) closeWindow((Window)component, modalOnly);
+      if (component instanceof Window) {
+        boolean isClosed = closeWindow((Window)component, modalOnly);
+        if (!isClosed) break;
+      }
 
       component = recursive ? component.getParent() : null;
     }
   }
 
-  public static void closeWindow(@NotNull Window window, boolean modalOnly) {
-    if (window instanceof IdeFrameImpl) return;
-    if (modalOnly && window instanceof Frame) return;
+  /**
+   * @return whether window was closed
+   */
+  private static boolean closeWindow(@NotNull Window window, boolean modalOnly) {
+    if (window instanceof IdeFrameImpl) return false;
+    if (modalOnly && window instanceof Frame) return false;
 
     if (window instanceof DialogWrapperDialog) {
       ((DialogWrapperDialog)window).getDialogWrapper().doCancelAction();
-      return;
+      return !window.isVisible();
     }
 
     window.setVisible(false);
     window.dispose();
+    return true;
   }
 
   //
