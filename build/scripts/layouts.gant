@@ -107,6 +107,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "cidr-lang",
     "cidr-lang-dfa",
     "cidr-util",
+    "doxygen",
     "compiler-impl",
     "debugger-impl",
     "dom-impl",
