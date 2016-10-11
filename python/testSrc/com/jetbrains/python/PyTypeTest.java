@@ -1235,6 +1235,22 @@ public class PyTypeTest extends PyTestCase {
            "    expr = b\n");
   }
 
+  // PY-20794
+  public void testIterateOverPureList() {
+    doTest("Any",
+           "l = None  # type: list\n" +
+           "for expr in l:\n" +
+           "    print(expr)\n");
+  }
+
+  // PY-20794
+  public void testIterateOverDictValueWithDefaultValue() {
+    doTest("Any",
+           "d = None  # type: dict\n" +
+           "for expr in d.get('field', []):\n" +
+           "    print(expr['id'])\n");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
