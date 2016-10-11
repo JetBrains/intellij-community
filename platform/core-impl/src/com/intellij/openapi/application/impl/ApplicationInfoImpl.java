@@ -944,20 +944,22 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   private static GregorianCalendar parseDate(final String dateString) {
-    @SuppressWarnings("MultipleVariablesInDeclaration")
-    int year = 0, month = 0, day = 0, hour = 0, minute = 0;
+    GregorianCalendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
     try {
-      year = Integer.parseInt(dateString.substring(0, 4));
-      month = Integer.parseInt(dateString.substring(4, 6));
-      day = Integer.parseInt(dateString.substring(6, 8));
+      calendar.set(Calendar.YEAR, Integer.parseInt(dateString.substring(0, 4)));
+      calendar.set(Calendar.MONTH, Integer.parseInt(dateString.substring(4, 6)) - 1);
+      calendar.set(Calendar.DAY_OF_MONTH, Integer.parseInt(dateString.substring(6, 8)));
       if (dateString.length() > 8) {
-        hour = Integer.parseInt(dateString.substring(8, 10));
-        minute = Integer.parseInt(dateString.substring(10, 12));
+        calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(dateString.substring(8, 10)));
+        calendar.set(Calendar.MINUTE, Integer.parseInt(dateString.substring(10, 12)));
+      }
+      else {
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
       }
     }
     catch (Exception ignore) { }
-    if (month > 0) month--;
-    return new GregorianCalendar(year, month, day, hour, minute);
+    return calendar;
   }
 
   @SuppressWarnings("UseJBColor")
