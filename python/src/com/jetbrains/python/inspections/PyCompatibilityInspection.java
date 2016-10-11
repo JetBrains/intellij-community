@@ -65,7 +65,7 @@ public class PyCompatibilityInspection extends PyInspection {
     .add("typing")
     .build();
 
-  public static final int LATEST_INSPECTION_VERSION = 1;
+  public static final int LATEST_INSPECTION_VERSION = 2;
 
   @NotNull
   public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
