@@ -518,13 +518,15 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
         counter.displayProgress();
       });
+
+      flush();
     }
 
     private boolean indexOneByOne(@NotNull VirtualFile root, @NotNull TIntHashSet commits) {
       VcsLogProvider provider = myProviders.get(root);
       try {
         storeDetails(provider.readFullDetails(root, TroveUtil.map(commits, value -> myHashMap.getCommitId(value).getHash().asString())),
-                     true);
+                     false);
       }
       catch (VcsException e) {
         LOG.error(e);
