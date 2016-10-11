@@ -162,23 +162,35 @@ public class TypedHandler extends TypedActionHandlerBase {
 
         final TypedHandlerDelegate[] delegates = Extensions.getExtensions(TypedHandlerDelegate.EP_NAME);
 
-        boolean handled = false;
-        for (TypedHandlerDelegate delegate : delegates) {
-          final TypedHandlerDelegate.Result result = delegate.checkAutoPopup(charTyped, project, editor, file);
-          handled = result == TypedHandlerDelegate.Result.STOP;
-          if (result != TypedHandlerDelegate.Result.CONTINUE) {
-            break;
+        if (caret == originalEditor.getCaretModel().getPrimaryCaret()) {
+          boolean handled = false;
+          for (TypedHandlerDelegate delegate : delegates) {
+            final TypedHandlerDelegate.Result result = delegate.checkAutoPopup(charTyped, project, editor, file);
+            handled = result == TypedHandlerDelegate.Result.STOP;
+            if (result != TypedHandlerDelegate.Result.CONTINUE) {
+              break;
+            }
           }
-        }
 
-        if (!handled) {
-          autoPopupCompletion(editor, charTyped, project, file);
-          autoPopupParameterInfo(editor, charTyped, project, file);
+          if (!handled) {
+            autoPopupCompletion(editor, charTyped, project, file);
+            autoPopupParameterInfo(editor, charTyped, project, file);
+          }
         }
 
         if (!editor.isInsertMode()) {
           type(originalEditor, charTyped);
           return;
+        }
+
+        for (TypedHandlerDelegate delegate : delegates) {
+          final TypedHandlerDelegate.Result result = delegate.beforeSelectionRemoved(charTyped, project, editor, file);
+          if (result == TypedHandlerDelegate.Result.STOP) {
+            return;
+          }
+          if (result == TypedHandlerDelegate.Result.DEFAULT) {
+            break;
+          }
         }
 
         EditorModificationUtil.deleteSelectedText(editor);
