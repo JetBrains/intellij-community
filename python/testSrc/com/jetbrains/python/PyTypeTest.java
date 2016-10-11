@@ -1258,6 +1258,24 @@ public class PyTypeTest extends PyTestCase {
            "expr = defaultdict(lambda: [])['x']\n");
   }
 
+  // PY-8473
+  public void testCopyDotCopy() {
+    doMultiFileTest("A",
+                    "import copy\n" +
+                    "class A(object):\n" +
+                    "    pass\n" +
+                    "expr = copy.copy(A())\n");
+  }
+
+  // PY-8473
+  public void testCopyDotDeepCopy() {
+    doMultiFileTest("A",
+                    "import copy\n" +
+                    "class A(object):\n" +
+                    "    pass\n" +
+                    "expr = copy.deepcopy(A())\n");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
