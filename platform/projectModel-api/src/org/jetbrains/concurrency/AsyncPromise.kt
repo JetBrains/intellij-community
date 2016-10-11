@@ -40,41 +40,12 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
   override fun getState() = stateRef.get()!!
 
   override fun done(done: Consumer<in T>): Promise<T> {
-    if (isObsolete(done)) {
-      return this
-    }
-
-    when (state) {
-      State.PENDING -> {
-        setHandler(doneRef, done, State.FULFILLED)
-      }
-      State.FULFILLED -> {
-        @Suppress("UNCHECKED_CAST")
-        done.consume(result as T?)
-      }
-      State.REJECTED -> {
-      }
-    }
-
+    setHandler(doneRef, done, State.FULFILLED)
     return this
   }
 
   override fun rejected(rejected: Consumer<Throwable>): Promise<T> {
-    if (isObsolete(rejected)) {
-      return this
-    }
-
-    when (state) {
-      State.PENDING -> {
-        setHandler(rejectedRef, rejected, State.REJECTED)
-      }
-      State.FULFILLED -> {
-      }
-      State.REJECTED -> {
-        rejected.consume(result as Throwable?)
-      }
-    }
-
+    setHandler(rejectedRef, rejected, State.REJECTED)
     return this
   }
 
@@ -86,8 +57,7 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
     when (state) {
       State.PENDING -> {
       }
-      State.FULFILLED -> return DonePromise<SUB_RESULT>(
-          handler.`fun`(result as T?))
+      State.FULFILLED -> return DonePromise<SUB_RESULT>(handler.`fun`(result as T?))
       State.REJECTED -> return rejectedPromise(result as Throwable)
     }
 
@@ -228,6 +198,18 @@ open class AsyncPromise<T> : Promise<T>, Getter<T> {
   }
 
   private fun <T> setHandler(ref: AtomicReference<Consumer<in T>?>, newConsumer: Consumer<in T>, targetState: State) {
+    if (isObsolete(newConsumer)) {
+      return
+    }
+
+    if (state != State.PENDING) {
+      if (state == targetState) {
+        @Suppress("UNCHECKED_CAST")
+        newConsumer.consume(result as T?)
+      }
+      return
+    }
+
     while (true) {
       val oldConsumer = ref.get()
       val newEffectiveConsumer = when (oldConsumer) {
