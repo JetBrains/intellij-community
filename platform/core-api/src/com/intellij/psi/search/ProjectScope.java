@@ -63,7 +63,7 @@ public class ProjectScope {
       }
     });
   private static final NotNullLazyKey<EverythingGlobalScope, Project> EVERYTHING_SCOPE_KEY = NotNullLazyKey.create(
-    "ALL_PLACES",
+    "EVERYTHING_SCOPE_KEY",
     new NotNullFunction<Project, EverythingGlobalScope>() {
       @NotNull
       @Override
@@ -98,7 +98,7 @@ public class ProjectScope {
 
   @NotNull
   public static GlobalSearchScope getContentScope(@NotNull Project project) {
-    return CONTENT_SCOPE_KEY.get(project);
+    return CONTENT_SCOPE_KEY.getValue(project);
   }
 
   @NotNull
