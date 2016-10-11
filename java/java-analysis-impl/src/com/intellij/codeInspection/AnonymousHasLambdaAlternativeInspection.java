@@ -67,19 +67,11 @@ public class AnonymousHasLambdaAlternativeInspection extends BaseJavaBatchLocalI
       public void visitAnonymousClass(final PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
         PsiMethod[] methods = aClass.getMethods();
-        if(methods.length == 1 &&
-          aClass.getFields().length == 0 &&
-          aClass.getInnerClasses().length == 0 &&
-          aClass.getInitializers().length == 0) {
-          PsiExpressionList argumentList = aClass.getArgumentList();
+        if(methods.length == 1) {
           PsiMethod method = methods[0];
-          if (argumentList != null &&
-              argumentList.getExpressions().length == 0 &&
-              method.getBody() != null &&
-              method.getDocComment() == null &&
-              !AnonymousCanBeLambdaInspection.hasRuntimeAnnotations(method, Collections.emptySet()) &&
-              !method.hasModifierProperty(PsiModifier.SYNCHRONIZED) &&
-              !AnonymousCanBeLambdaInspection.hasForbiddenRefsInsideBody(method, aClass)) {
+          PsiExpressionList argumentList = aClass.getArgumentList();
+          if (AnonymousCanBeLambdaInspection.isClassAndMethodSuitableForConversion(aClass, method, Collections.emptySet()) &&
+              argumentList != null && argumentList.getExpressions().length == 0) {
             PsiClassType type = aClass.getBaseClassType();
             AnonymousLambdaAlternative alternative = getAlternative(type.resolve(), method);
             if(alternative != null) {
