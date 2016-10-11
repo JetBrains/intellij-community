@@ -118,7 +118,7 @@ public class ActionHint {
     Matcher matcher = pattern.matcher(contents);
     TestCase.assertTrue("No comment found in " + file.getVirtualFile(), matcher.matches());
     final String text = matcher.group(1);
-    final Boolean actionShouldBeAvailable = Boolean.valueOf(matcher.group(2));
+    final boolean actionShouldBeAvailable = Boolean.parseBoolean(matcher.group(2));
     return new ActionHint(text, actionShouldBeAvailable);
   }
 }
