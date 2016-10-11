@@ -28,6 +28,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -78,12 +79,6 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Nullable
   protected static String getExternalName(@NotNull PsiModifierListOwner listOwner, boolean showParamName) {
     return PsiFormatUtil.getExternalName(listOwner, showParamName, Integer.MAX_VALUE);
-  }
-
-  @NotNull
-  static PsiModifierListOwner preferCompiledElement(@NotNull PsiModifierListOwner element) {
-    PsiElement original = element.getOriginalElement();
-    return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : element;
   }
 
   protected abstract boolean hasAnyAnnotationsRoots();
@@ -228,7 +223,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @Override
   @Nullable
   public List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
-    final PsiFile containingFile = preferCompiledElement(listOwner).getContainingFile();
+    final PsiFile containingFile = PsiUtil.preferCompiledElement(listOwner).getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) return null;
 
     final VirtualFile virtualFile = containingFile.getVirtualFile();
