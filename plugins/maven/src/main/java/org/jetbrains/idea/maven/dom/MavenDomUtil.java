@@ -39,6 +39,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
@@ -186,7 +187,7 @@ public class MavenDomUtil {
     psiFile = psiFile.getOriginalFile();
     VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile instanceof LightVirtualFile) {
-      virtualFile = psiFile.getUserData(MavenGroovyPomCompletionContributor.ORIGINAL_POM_FILE);
+      virtualFile = ObjectUtils.chooseNotNull(psiFile.getUserData(MavenGroovyPomCompletionContributor.ORIGINAL_POM_FILE), virtualFile);
     }
     return virtualFile;
   }
