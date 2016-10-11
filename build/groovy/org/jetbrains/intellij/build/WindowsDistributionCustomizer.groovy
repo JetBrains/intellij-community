@@ -38,6 +38,11 @@ abstract class WindowsDistributionCustomizer {
   JvmArchitecture bundledJreArchitecture = JvmArchitecture.x32
 
   /**
+   * If {@code false} only 64-bit *64.exe launcher and *64.exe.vmoptions files will be created.
+   */
+  boolean include32BitLauncher = true
+
+  /**
    * If {@code true} a Zip archive containing the installation with bundled Oracle JRE will be produced
    */
   boolean buildZipWithBundledOracleJre = false
