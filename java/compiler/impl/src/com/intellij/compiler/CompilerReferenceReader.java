@@ -75,18 +75,24 @@ class CompilerReferenceReader {
     return set;
   }
 
+  /**
+   * @return two maps of classes grouped per file
+   *
+   * 1st map: inheritors. Can be used without explicit inheritance verification
+   * 2nd map: candidates. One need to check that these classes are really direct inheritors
+   */
   @Nullable
-  <T extends PsiNamedElement> Couple<Map<VirtualFile, T[]>> getDirectInheritors(@NotNull PsiNamedElement psiElement,
-                                                                                @Nullable CompilerReferenceServiceImpl.CompilerElementInfo searchElementInfo,
+  <T extends PsiNamedElement> Couple<Map<VirtualFile, T[]>> getDirectInheritors(@NotNull PsiNamedElement baseClass,
+                                                                                @Nullable CompilerReferenceServiceImpl.CompilerElementInfo classSearchElementInfo,
                                                                                 @NotNull ClassResolvingCompilerSearchAdapter<T> inheritorSearchAdapter,
                                                                                 @NotNull GlobalSearchScope searchScope,
                                                                                 @NotNull GlobalSearchScope dirtyScope,
                                                                                 @NotNull Project project,
                                                                                 FileType fileType) {
-    if (searchElementInfo == null) return null;
+    if (classSearchElementInfo == null) return null;
 
     CompilerBackwardReferenceIndex.LightDefinition[] candidates =
-      Stream.of(searchElementInfo.searchElements)
+      Stream.of(classSearchElementInfo.searchElements)
       .map(this::asLightUsage)
       .map(myIndex.getBackwardHierarchyMap()::get)
       .filter(Objects::nonNull)
@@ -120,7 +126,7 @@ class CompilerReferenceReader {
     Map<VirtualFile, T[]> inheritorCandidates = new THashMap<>();
 
     candidatesPerFile.forEach((file, directInheritors) -> {
-      final T[] currInheritors = inheritorSearchAdapter.getCandidatesFromFile(directInheritors, psiElement, file, project);
+      final T[] currInheritors = inheritorSearchAdapter.getCandidatesFromFile(directInheritors, baseClass, file, project);
       if (currInheritors.length == directInheritors.size()) {
         inheritors.put(file, currInheritors);
       } else {

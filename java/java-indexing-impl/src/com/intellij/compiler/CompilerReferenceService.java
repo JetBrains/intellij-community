@@ -55,12 +55,21 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
   }
 
   public interface CompilerDirectInheritorInfo<T extends PsiNamedElement> {
+    /**
+     * Can be used as direct inheritors without explicit inheritance verification
+     */
     @NotNull
     Stream<T> getDirectInheritors();
 
+    /**
+     * Must be explicitly checked do they are really direct inheritors
+     */
     @NotNull
     Stream<T> getDirectInheritorCandidates();
 
+    /**
+     * A scope where compiler based index search was not performed
+     */
     @NotNull
     GlobalSearchScope getDirtyScope();
   }
