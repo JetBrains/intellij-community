@@ -1251,6 +1251,13 @@ public class PyTypeTest extends PyTestCase {
            "    print(expr['id'])\n");
   }
 
+  // PY-20797
+  public void testValueOfEmptyDefaultDict() {
+    doTest("list",
+           "from collections import defaultdict\n" +
+           "expr = defaultdict(lambda: [])['x']\n");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

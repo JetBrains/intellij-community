@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,7 @@ public class RemoveUnusedVariableUtil {
     CANCEL
   }
 
-  public static boolean checkSideEffects(PsiExpression element, PsiVariable variableToIgnore, List<PsiElement> sideEffects) {
+  public static boolean checkSideEffects(PsiExpression element, @Nullable PsiVariable variableToIgnore, List<PsiElement> sideEffects) {
     if (sideEffects == null || element == null) return false;
     List<PsiElement> writes = new ArrayList<>();
     SideEffectChecker.checkSideEffects(element, writes);

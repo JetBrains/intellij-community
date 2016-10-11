@@ -248,7 +248,13 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testRemoveVarargParameter() {
-    doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false);
+    try {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
+      doTest(null, null, null, new ParameterInfoImpl[]{new ParameterInfoImpl(0)}, new ThrownExceptionInfo[0], false);
+    }
+    finally {
+      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
+    }
   }
 
   public void testEnumConstructor() {

@@ -18,6 +18,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
@@ -1033,6 +1034,22 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         }
         else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(myChangeInfo)) {
           conflictDescriptions.putValue(element, RefactoringBundle.message("expand.method.reference.warning"));
+        }
+        else if (element instanceof PsiJavaCodeReferenceElement) {
+          final PsiElement parent = element.getParent();
+          if (parent instanceof PsiCallExpression) {
+            final PsiExpressionList argumentList = ((PsiCallExpression)parent).getArgumentList();
+            if (argumentList != null) {
+              final PsiExpression[] args = argumentList.getExpressions();
+              for (int i = 0; i < toRemove.length; i++) {
+                if (toRemove[i] && i < args.length) {
+                  if (RemoveUnusedVariableUtil.checkSideEffects(args[i], null, new ArrayList<>())) {
+                    conflictDescriptions.putValue(args[i], "Parameter '" + myChangeInfo.getOldParameterNames()[i] + "' has usage that is not safe to delete");
+                  }
+                }
+              }
+            }
+          }
         }
       }
 

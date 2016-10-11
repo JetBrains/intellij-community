@@ -644,7 +644,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
             new PsiAnnotationStubImpl(myModList, text);
           }
           else if (ref.getSort() == TypeReference.METHOD_FORMAL_PARAMETER && typePath == null) {
-            int idx = ref.getFormalParameterIndex() - myParamIgnoreCount;
+            int idx = ref.getFormalParameterIndex();
             if (!filtered(idx + 1, text)) {
               new PsiAnnotationStubImpl(myOwner.findParameter(idx).getModList(), text);
             }

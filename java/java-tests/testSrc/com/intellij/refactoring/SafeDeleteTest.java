@@ -245,6 +245,17 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
   }
 
+  public void testParameterSideEffect() throws Exception {
+    try {
+      doTest("Super");
+      fail("Side effect was ignored");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("parameter <b><code>i</code></b> has 1 usage that is not safe to delete.", message);
+    }
+  }
+
   public void testUsageInGenerated() throws Exception {
     doTest("A");
   }

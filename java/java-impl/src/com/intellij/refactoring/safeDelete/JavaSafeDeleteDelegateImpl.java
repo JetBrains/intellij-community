@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
@@ -58,11 +59,11 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
         final PsiExpression[] args = argList.getExpressions();
         if (index < args.length) {
           if (!parameter.isVarArgs()) {
-            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[index], parameter, true));
+            usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[index], parameter));
           }
           else {
             for (int i = index; i < args.length; i++) {
-              usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[i], parameter, true));
+              usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(args[i], parameter));
             }
           }
         }

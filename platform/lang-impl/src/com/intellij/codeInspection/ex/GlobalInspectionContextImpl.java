@@ -20,6 +20,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
@@ -604,6 +605,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
     if (SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile)) return null;
     if (localScopeFiles != null && !localScopeFiles.add(virtualFile)) return null;
+    if (!ProblemHighlightFilter.shouldProcessFileInBatch(file)) return null;
 
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }

@@ -213,7 +213,10 @@ class ProjectInspectionProfileManager(val project: Project,
     schemeManagerIprProvider?.writeState(result)
 
     val state = this.state
-    state.projectProfile = schemeManager.currentSchemeName
+    if (state.useProjectProfile) {
+      state.projectProfile = schemeManager.currentSchemeName
+    }
+
     XmlSerializer.serializeInto(state, result, skipDefaultsSerializationFilter)
     if (!result.children.isEmpty()) {
       result.addContent(Element("version").setAttribute("value", VERSION))
@@ -279,6 +282,14 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
+  @Synchronized fun useApplicationProfile(name: String) {
+    schemeManager.currentSchemeName = null
+    state.useProjectProfile = false
+    // yes, we reuse the same field - useProjectProfile field will be used to distinguish — is it app or project level
+    // to avoid data format change
+    state.projectProfile = name
+  }
+
   @Synchronized fun setCurrentProfile(profile: InspectionProfileImpl?) {
     schemeManager.setCurrent(profile)
     state.useProjectProfile = profile != null
@@ -286,7 +297,9 @@ class ProjectInspectionProfileManager(val project: Project,
 
   @Synchronized override fun getCurrentProfile(): InspectionProfileImpl {
     if (!state.useProjectProfile) {
-      return applicationProfileManager.currentProfile as InspectionProfileImpl
+      return (state.projectProfile?.let {
+        applicationProfileManager.getProfile(it, false)
+      } ?: applicationProfileManager.currentProfile) as InspectionProfileImpl
     }
 
     var currentScheme = schemeManager.currentScheme
