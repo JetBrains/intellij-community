@@ -43,7 +43,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -76,7 +75,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteProcess;
 import com.intellij.remote.Tunnelable;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PathMappingSettings;
@@ -1050,7 +1048,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           myProcessHandler.waitFor();
         }
 
-        GuiUtils.invokeLaterIfNeeded(() -> PydevConsoleRunner.this.run(), ModalityState.defaultModalityState());
+        UIUtil.invokeLaterIfNeeded(() -> PydevConsoleRunner.this.run());
       }
     }.queue();
   }
