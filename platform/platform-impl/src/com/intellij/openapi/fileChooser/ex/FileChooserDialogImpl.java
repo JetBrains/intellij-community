@@ -703,8 +703,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
           }
         }
 
-        myTreeIsUpdating = false;
-        setErrorText(null);
+        reportFileNotFound();
         updatePathFromTree(fileList, true);
         if (requestFocus) {
           //noinspection SSBasedInspection
@@ -713,8 +712,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       });
     }
     else {
-      myTreeIsUpdating = false;
-      setErrorText(null);
+      reportFileNotFound();
       updatePathFromTree(fileList, true);
     }
   }
@@ -722,16 +720,6 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private void reportFileNotFound() {
     myTreeIsUpdating = false;
     setErrorText(null);
-  }
-
-  private boolean allFilesSelected(VirtualFile[] files) {
-    VirtualFile[] selectedFiles = myFileSystemTree.getSelectedFiles();
-    for (VirtualFile file : files) {
-      if (!ArrayUtil.contains(file, selectedFiles)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @Override
