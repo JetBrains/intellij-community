@@ -122,6 +122,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     addCutButton(editorPanel);
     addCopyButton(editorPanel);
     addPasteButton(editorPanel);
+    addMergeButton(editorPanel);
+    addSplitButton(editorPanel);
     controlPanel.add(editorPanel);
 
     final JPanel runPanel = new JPanel(new GridBagLayout());
@@ -202,6 +204,24 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
         IpnbCutCellAction.cutCell(myIpnbFilePanel);
       }
     }, AllIcons.Actions.Menu_cut, "Cut Cell");
+  }
+  
+  private void addMergeButton(@NotNull final JPanel controlPanel) {
+    addButton(controlPanel, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        IpnbMergeCellAboveAction.mergeCell(myIpnbFilePanel);
+      }
+    }, AllIcons.Modules.Merge, "Merge Cell Above");
+  }
+  
+  private void addSplitButton(@NotNull final JPanel controlPanel) {
+    addButton(controlPanel, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        IpnbSplitCellAction.splitCell(myIpnbFilePanel);
+      }
+    }, AllIcons.Modules.Split, "Split Cellхо");
   }
 
   private void addCopyButton(@NotNull final JPanel controlPanel) {

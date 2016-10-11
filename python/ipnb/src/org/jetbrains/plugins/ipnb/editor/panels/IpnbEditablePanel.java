@@ -7,10 +7,13 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbEditableCell;
 
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -198,6 +201,37 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   public void updateCellView() { // TODO: make abstract
   }
+  
+  public int getCaretPosition() {
+    if (myEditing) {
+      if (myEditablePanel != null) {
+        return myEditablePanel.getCaretPosition();
+      }
+    }
+    return -1;
+  }
+  
+  @Nullable
+  public String getText(int from, int to) {
+    if (myEditing && myEditablePanel != null) {
+      try {
+        return myEditablePanel.getDocument().getText(from, to);
+      }
+      catch (BadLocationException e) {
+        LOG.warn(e.getMessage());
+      }
+    }
+    return null;
+  }
+
+  public String getText(int from) {
+    if (myEditing && myEditablePanel != null) {
+      final Document document = myEditablePanel.getDocument();
+      final int to = document.getLength();
+      return getText(from, to);
+    }
+    return null;
+  }
 
   public void updateCellSource() {
     final String text = myEditablePanel.getText();
@@ -220,4 +254,5 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     return myCell;
   }
 
+  
 }
