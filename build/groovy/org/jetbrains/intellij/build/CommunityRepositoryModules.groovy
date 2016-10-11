@@ -252,6 +252,7 @@ class CommunityRepositoryModules {
       withModule("layoutlib-api", "layoutlib-api.jar")
       withModule("layoutlib", "layoutlib-loader.jar")
       withModule("manifest-merger")
+      withModule("adt-ui", "adt-ui.jar")
       withModule("repository")
       withModule("sherpa-ui", "constraint-layout.jar")
       withModule("pixelprobe", "pixalprobe.jar")
