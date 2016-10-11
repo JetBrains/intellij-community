@@ -74,33 +74,13 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     SearchScope scope = parameters.getScope();
-    if (useScope instanceof GlobalSearchScope && scope instanceof GlobalSearchScope) {
-      PsiClass searchClass = (PsiClass)PsiUtil.preferCompiledElement(baseClass);
-      final CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
-      final CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> compilerDirectInheritorInfo =
-        compilerReferenceService.getDirectInheritors(searchClass,
-                                                     (GlobalSearchScope)useScope,
-                                                     (GlobalSearchScope)scope,
-                                                     JavaBaseCompilerSearchAdapter.INSTANCE,
-                                                     JavaFileType.INSTANCE);
-      if (compilerDirectInheritorInfo != null) {
-        Iterator<PsiClass> inheritors = filterOutAnonymousIfNeed(compilerDirectInheritorInfo.getDirectInheritorCandidates(), parameters).iterator();
-        while (inheritors.hasNext()) {
-          ProgressManager.checkCanceled();
-          PsiClass next = inheritors.next();
-          if (!consumer.process(next)) return false;
-        }
 
-        Iterator<PsiClass> candidates = filterOutAnonymousIfNeed(compilerDirectInheritorInfo.getDirectInheritorCandidates(), parameters).iterator();
-        while (candidates.hasNext()) {
-          ProgressManager.checkCanceled();
-          PsiClass next = candidates.next();
-          if (next.isInheritor(baseClass, false) && !consumer.process(next)) return false;
-        }
-
-        scope = ((GlobalSearchScope)scope).intersectWith(compilerDirectInheritorInfo.getDirtyScope());
-        useScope = ((GlobalSearchScope)useScope).intersectWith(compilerDirectInheritorInfo.getDirtyScope());
-      }
+    CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> info = performSearchUsingCompilerIndices(parameters, scope, project);
+    if (info != null) {
+      if (!processInheritorCandidates(info.getDirectInheritors(), consumer, parameters.includeAnonymous(), false, baseClass)) return false;
+      if (!processInheritorCandidates(info.getDirectInheritorCandidates(), consumer, parameters.includeAnonymous(), true, baseClass)) return false;
+      scope = scope.intersectWith(info.getDirtyScope());
+      useScope = useScope.intersectWith(info.getDirtyScope());
     }
 
     PsiClass[] cache = getOrCalculateDirectSubClasses(project, baseClass, useScope);
@@ -293,8 +273,38 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     return ApplicationManager.getApplication().runReadAction((Computable<VirtualFile>)() -> PsiUtil.getJarFile(aClass));
   }
 
-  private static Stream<PsiClass> filterOutAnonymousIfNeed(Stream<PsiClass> classStream,
-                                                           DirectClassInheritorsSearch.SearchParameters parameters) {
-    return parameters.includeAnonymous() ? classStream : classStream.filter(c -> !(c instanceof PsiAnonymousClass));
+  private static CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
+                                                                                                                  @NotNull SearchScope useScope,
+                                                                                                                  @NotNull Project project) {
+    if (!(useScope instanceof GlobalSearchScope)) return null;
+    SearchScope scope = parameters.getScope();
+    if (!(scope instanceof GlobalSearchScope)) return null;
+
+    PsiClass searchClass = (PsiClass)PsiUtil.preferCompiledElement(parameters.getClassToProcess());
+    final CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
+    return compilerReferenceService.getDirectInheritors(searchClass,
+                                                        (GlobalSearchScope)useScope,
+                                                        (GlobalSearchScope)scope,
+                                                        JavaBaseCompilerSearchAdapter.INSTANCE,
+                                                        JavaFileType.INSTANCE);
+  }
+
+  private static boolean processInheritorCandidates(@NotNull Stream<PsiClass> classStream,
+                                                    @NotNull Processor<PsiClass> consumer,
+                                                    boolean acceptAnonymous,
+                                                    boolean checkInheritance,
+                                                    PsiClass baseClass) {
+    if (!acceptAnonymous) {
+      classStream = classStream.filter(c -> !(c instanceof PsiAnonymousClass));
+    }
+
+    Iterator<PsiClass> it = classStream.iterator();
+    while (it.hasNext()) {
+      ProgressManager.checkCanceled();
+      PsiClass next = it.next();
+      if (checkInheritance && !next.isInheritor(baseClass, false)) continue;
+      if (!consumer.process(next)) return false;
+    }
+    return true;
   }
 }
