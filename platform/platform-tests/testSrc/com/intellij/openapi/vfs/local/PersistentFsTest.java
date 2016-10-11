@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestCase;
@@ -75,6 +76,17 @@ public class PersistentFsTest extends PlatformTestCase {
     VirtualFile root = jfs.getJarRootForLocalFile(vx);
     String path = vx.getPath() + "/../" + vx.getName() + JarFileSystem.JAR_SEPARATOR;
     assertSame(myFs.findRoot(path, jfs), root);
+  }
+
+  public void testFindRootMustCreateFileWithCanonicalPath() throws Exception {
+    File tmp = createTempDirectory();
+    File x = new File(tmp, "x.jar");
+    assertTrue(x.createNewFile());
+
+    JarFileSystem jfs = JarFileSystem.getInstance();
+    String path = x.getPath() + "/../" + x.getName() + JarFileSystem.JAR_SEPARATOR;
+    NewVirtualFile root = myFs.findRoot(path, jfs);
+    assertFalse(root.getPath().contains(".."));
   }
 
   public void testDeleteSubstRoots() throws Exception {
