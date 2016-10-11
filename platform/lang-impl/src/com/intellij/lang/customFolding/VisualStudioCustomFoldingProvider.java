@@ -36,7 +36,7 @@ public class VisualStudioCustomFoldingProvider extends CustomFoldingProvider {
   @Override
   public String getPlaceholderText(String elementText) {
     String result = elementText.replaceFirst("[/*#-]*\\s*region(.*)", "$1");
-    return elementText.startsWith("/*") ? StringUtil.trimEnd(result, "*/").trim() : result;
+    return elementText.startsWith("/*") ? StringUtil.trimEnd(result, "*/").trim() : result.trim();
   }
 
   @Override
