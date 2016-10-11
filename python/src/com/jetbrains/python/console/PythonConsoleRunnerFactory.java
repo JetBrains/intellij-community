@@ -30,5 +30,5 @@ public abstract class PythonConsoleRunnerFactory {
     return ServiceManager.getService(PythonConsoleRunnerFactory.class);
   }
   public abstract PydevConsoleRunner createConsoleRunner(@NotNull final Project project,
-                                         @Nullable Module contextModule);
+                                                         @Nullable Module contextModule);
 }

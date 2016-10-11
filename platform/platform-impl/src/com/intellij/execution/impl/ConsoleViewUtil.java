@@ -54,6 +54,8 @@ import static com.intellij.execution.ui.ConsoleViewContentType.registerNewConsol
 public class ConsoleViewUtil {
 
   public static final Key<Boolean> EDITOR_IS_CONSOLE_VIEW = Key.create("EDITOR_IS_CONSOLE_VIEW");
+  public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
+
   private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
 
   public static EditorEx setupConsoleEditor(Project project, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
@@ -196,12 +198,21 @@ public class ConsoleViewUtil {
   }
 
   public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text, @NotNull SyntaxHighlighter highlighter) {
+    printWithHighlighting(console, text, highlighter, null);
+  }
+
+  public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text,
+                                           @NotNull SyntaxHighlighter highlighter,
+                                           Runnable doOnNewLine) {
     Lexer lexer = highlighter.getHighlightingLexer();
     lexer.start(text, 0, text.length(), 0);
 
     IElementType tokenType;
     while ((tokenType = lexer.getTokenType()) != null) {
       console.print(lexer.getTokenText(), getContentTypeForToken(tokenType, highlighter));
+      if (doOnNewLine != null && "\n".equals(lexer.getTokenText())) {
+        doOnNewLine.run();
+      }
       lexer.advance();
     }
   }

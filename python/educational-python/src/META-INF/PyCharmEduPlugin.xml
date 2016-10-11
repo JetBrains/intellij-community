@@ -19,9 +19,15 @@
     </component>
     <component>
       <interface-class>com.jetbrains.python.console.PythonConsoleRunnerFactory</interface-class>
-      <implementation-class>com.jetbrains.python.console.PythonToolWindowConsoleRunnerFactory</implementation-class>
+      <implementation-class>com.jetbrains.python.console.PydevConsoleRunnerFactory</implementation-class>
     </component>
   </application-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <internal_executor id="PyConsoleToolWindowExecutor" implementation="com.jetbrains.python.console.PyConsoleToolWindowExecutor"/>
+    <postStartupActivity implementation="com.jetbrains.python.console.PyConsoleStarter"/>
+
+  </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
       <programRunner implementation="com.jetbrains.python.edu.debugger.PyEduDebugRunner"/>

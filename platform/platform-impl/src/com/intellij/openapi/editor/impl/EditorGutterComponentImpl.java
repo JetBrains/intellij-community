@@ -456,6 +456,20 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
           }
           visLinesIterator.advance();
         }
+        if (startVisualLine == 0 && endVisualLine == 0) { //allow paining gutters for empty documents
+          String s = gutterProvider.getLineText(0, myEditor);
+          final EditorFontType style = gutterProvider.getStyle(0, myEditor);
+          final Color bg = gutterProvider.getBgColor(0, myEditor);
+          if (bg != null) {
+            g.setColor(bg);
+            g.fillRect(x, 0, annotationSize, lineHeight);
+          }
+          g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(0, myEditor)));
+          g.setFont(myEditor.getColorsScheme().getFont(style));
+          if (!StringUtil.isEmpty(s)) {
+            g.drawString(s, GAP_BETWEEN_ANNOTATIONS / 2 + x, myEditor.getAscent());
+          }
+        }
 
         x += annotationSize;
       }
@@ -711,7 +725,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private void calcAnnotationsSize() {
     myTextAnnotationGuttersSize = 0;
     final FontMetrics fontMetrics = myEditor.getFontMetrics(Font.PLAIN);
-    final int lineCount = myEditor.getDocument().getLineCount();
+    final int lineCount = Math.max(myEditor.getDocument().getLineCount(), 1);
     for (int j = 0; j < myTextAnnotationGutters.size(); j++) {
       TextAnnotationGutterProvider gutterProvider = myTextAnnotationGutters.get(j);
       int gutterSize = 0;

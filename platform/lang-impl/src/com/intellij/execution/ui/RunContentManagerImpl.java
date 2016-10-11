@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -87,7 +88,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     for (Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
-      registerToolwindow(executor, toolWindowManager);
+      registerToolwindow(executor, toolWindowManager, true);
+    }
+
+    for (Executor executor : Extensions.getExtensions(Executor.INTERNAL_EXECUTOR_EXTENSION_NAME)) {
+      registerToolwindow(executor, toolWindowManager, false);
     }
 
     toolWindowManager.addToolWindowManagerListener(new ToolWindowManagerAdapter() {
@@ -116,7 +121,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   public void dispose() {
   }
 
-  private void registerToolwindow(@NotNull final Executor executor, @NotNull ToolWindowManagerEx toolWindowManager) {
+  private void registerToolwindow(@NotNull final Executor executor,
+                                  @NotNull ToolWindowManagerEx toolWindowManager,
+                                  boolean autoRemoveOnEmpty) {
     final String toolWindowId = executor.getToolWindowId();
     if (toolWindowManager.getToolWindow(toolWindowId) != null) {
       return;
@@ -146,7 +153,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
     toolWindow.setIcon(executor.getToolWindowIcon());
     myToolwindowIdToBaseIconMap.put(toolWindowId, executor.getToolWindowIcon());
-    new ContentManagerWatcher(toolWindow, contentManager);
+    if (autoRemoveOnEmpty) {
+      new ContentManagerWatcher(toolWindow, contentManager);
+    }
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
       public void selectionChanged(final ContentManagerEvent event) {
@@ -255,7 +264,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     final ContentManager contentManager = getContentManagerForRunner(executor);
-    RunContentDescriptor oldDescriptor = chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.getDisplayName());
+    RunContentDescriptor oldDescriptor =
+      chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.getDisplayName());
     final Content content;
     if (oldDescriptor == null) {
       content = createNewContent(contentManager, descriptor, executor);
@@ -363,7 +373,9 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Override
-  public void showRunContent(@NotNull Executor info, @NotNull RunContentDescriptor descriptor, @Nullable RunContentDescriptor contentToReuse) {
+  public void showRunContent(@NotNull Executor info,
+                             @NotNull RunContentDescriptor descriptor,
+                             @Nullable RunContentDescriptor contentToReuse) {
     copyContentAndBehavior(descriptor, contentToReuse);
     showRunContent(info, descriptor, descriptor.getExecutionId());
   }
@@ -409,7 +421,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return null;
     }
     final RunContentDescriptor oldDescriptor = getRunContentDescriptorByContent(content);
-    if (oldDescriptor != null && !oldDescriptor.isContentReuseProhibited() ) {
+    if (oldDescriptor != null && !oldDescriptor.isContentReuseProhibited()) {
       //content.setExecutionId(executionId);
       return oldDescriptor;
     }
@@ -608,7 +620,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
       final boolean destroyProcess;
       //noinspection deprecation
-      if (processHandler.isSilentlyDestroyOnClose() || Boolean.TRUE.equals(processHandler.getUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE))) {
+      if (processHandler.isSilentlyDestroyOnClose() ||
+          Boolean.TRUE.equals(processHandler.getUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE))) {
         destroyProcess = true;
       }
       else {
@@ -641,7 +654,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
       {
         if (killable) {
-          String cancelText= ExecutionBundle.message("terminating.process.progress.kill");
+          String cancelText = ExecutionBundle.message("terminating.process.progress.kill");
           setCancelText(cancelText);
           setCancelTooltipText(cancelText);
         }

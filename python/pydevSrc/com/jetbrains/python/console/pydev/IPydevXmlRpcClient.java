@@ -19,4 +19,7 @@ public interface IPydevXmlRpcClient {
      * @throws XmlRpcException
      */
     Object execute(String command, Object[] args) throws XmlRpcException;
+
+    Object execute(String command, Object[] args, long timeoutMillis) throws XmlRpcException;
+
 }
