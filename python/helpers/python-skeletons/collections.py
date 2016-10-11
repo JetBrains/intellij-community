@@ -38,3 +38,19 @@ class Iterator(collections.Iterable):
             :rtype: T
             """
             pass
+
+
+class defaultdict(dict):
+    def __init__(self, default_factory=None, **kwargs):
+        """
+        :type default_factory: () -> V
+        :rtype: defaultdict[T, V]
+        """
+        pass
+
+    def __missing__(self, key):
+        """
+        :type key: T
+        :rtype: V
+        """
+        pass
