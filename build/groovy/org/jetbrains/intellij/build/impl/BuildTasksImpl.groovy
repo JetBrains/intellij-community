@@ -25,13 +25,13 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 
-import java.time.LocalDate
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.function.Function
-
 /**
  * @author nik
  */
@@ -191,7 +191,7 @@ idea.fatal.error.notification=disabled
   File patchApplicationInfo() {
     def sourceFile = buildContext.findApplicationInfoInSources()
     def targetFile = new File(buildContext.paths.temp, sourceFile.name)
-    def date = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE)
+    def date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
     BuildUtils.copyAndPatchFile(sourceFile.path, targetFile.path,
                                 ["BUILD_NUMBER": buildContext.fullBuildNumber, "BUILD_DATE": date, "BUILD": buildContext.buildNumber])
     return targetFile
