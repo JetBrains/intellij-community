@@ -2096,15 +2096,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     if (!dim.equals(myPreferredSize) && !myDocument.isInBulkUpdate()) {
       dim = mySizeAdjustmentStrategy.adjust(dim, myPreferredSize, this);
-      myPreferredSize = dim;
+      if (!dim.equals(myPreferredSize)) {
+        myPreferredSize = dim;
 
-      updateGutterSize();
+        updateGutterSize();
 
-      myEditorComponent.setSize(dim);
-      myEditorComponent.fireResized();
+        myEditorComponent.setSize(dim);
+        myEditorComponent.fireResized();
 
-      myMarkupModel.recalcEditorDimensions();
-      myMarkupModel.repaint(-1, -1);
+        myMarkupModel.recalcEditorDimensions();
+        myMarkupModel.repaint(-1, -1);
+      }
     }
   }
 
