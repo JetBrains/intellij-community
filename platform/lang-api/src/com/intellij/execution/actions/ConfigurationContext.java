@@ -295,6 +295,20 @@ public class ConfigurationContext {
     return null;
   }
 
+  /**
+   * Checks if the original run configuration matches the passed type.
+   * If the original run configuration is undefined, the check is passed too.
+   * An original run configuration is a run configuration associated with given context.
+   * For example, it could be a test framework run configuration that had been launched
+   * and that had brought a result test tree on which a right-click action was performed (and this context was created). In this case, other run configuration producers might want to not work on such elements.
+   *
+   * @param type {@link ConfigurationType} instance to match the original run configuration
+   * @return true if the original run configuration is of the same type or it's undefined; false otherwise
+   */
+  public boolean isCompatibleWithOriginalRunConfiguration(@NotNull ConfigurationType type) {
+    return myRuntimeConfiguration == null || ConfigurationTypeUtil.equals(myRuntimeConfiguration.getType(), type);
+  }
+
   @Deprecated
   @Nullable
   public List<RuntimeConfigurationProducer> findPreferredProducers() {
