@@ -173,8 +173,8 @@ public final class IterationState {
     TextAttributes defaultAttributes = editor.getColorsScheme().getAttributes(HighlighterColors.TEXT);
     myDefaultFontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
 
-    myCaretRowStart = caretModel.getVisualLineStart();
-    myCaretRowEnd = caretModel.getVisualLineEnd();
+    myCaretRowStart = useCaretAndSelection ? caretModel.getVisualLineStart() : -1;
+    myCaretRowEnd = useCaretAndSelection ? caretModel.getVisualLineEnd() : -1;
 
     MarkupModelEx editorMarkup = editor.getMarkupModel();
     myView = new HighlighterSweep(editorMarkup, start, myEnd, useOnlyFullLineHighlighters);
