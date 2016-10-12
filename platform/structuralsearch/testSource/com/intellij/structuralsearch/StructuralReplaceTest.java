@@ -1614,21 +1614,48 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testDontRequireSpecialVarsForUnmatchedContent() {
-    String actualResult;
 
-    String s43 = "public @Deprecated class Foo implements Comparable<Foo> {\n  int x;\n  void m(){}\n }";
+    String s43 = "public @Deprecated class Foo implements Comparable<Foo> {\n" +
+                 "  int x;\n" +
+                 "  void m(){}\n" +
+                 " }";
     String s44 = "class 'Class implements '_Interface {}";
     String s45 = "@MyAnnotation\n" +
                  "class $Class$ implements $Interface$ {}";
     String expectedResult16 = "@MyAnnotation public @Deprecated\n" +
-                              "class Foo implements Comparable<Foo> {int x;\nvoid m(){}}";
+                              "class Foo implements Comparable<Foo> {\n" +
+                              "  int x;\n" +
+                              "  void m(){}\n" +
+                              " }";
 
-    actualResult = replacer.testReplace(s43,s44,s45,options, true);
     assertEquals(
       "Preserving class modifiers and generic information in type during replacement",
       expectedResult16,
-      actualResult
+      replacer.testReplace(s43, s44, s45, options, true)
     );
+
+    String in = "public class A {\n" +
+                "  int i,j, k;\n" +
+                "  void m1() {}\n" +
+                "\n" +
+                "  public void m2() {}\n" +
+                "  void m3() {}\n" +
+                "}";
+    String what = "class '_A {\n" +
+                  "  public void '_m();\n" +
+                  "}";
+    String by = "class $A$ {\n" +
+                "\tprivate void $m$() {}\n" +
+                "}";
+    assertEquals("Should keep member order when replacing",
+                 "public class A {\n" +
+                 "  int i ,j , k;\n" +
+                 "  void m1() {}\n" +
+                 "\n" +
+                 "  private void m2() {}\n" +
+                 "  void m3() {}\n" +
+                 "}",
+                 replacer.testReplace(in, what, by, options));
   }
 
   public void _testClassReplacement2() {
@@ -1661,7 +1688,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String expectedResult15 = "class A {\n" +
                               "  \n" +
                               "  /* special comment*/\n" +
-                              "  private  List<String> a = buildaMap();\n" +
+                              "  private List<String> a = buildaMap();\n" +
                               "  private static List<String> buildaMap() {\n" +
                               "    List<String> a = new ArrayList();\n" +
                               "    int a = 1;\n" +
@@ -2472,18 +2499,43 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
   }
 
   public void testReplaceInnerClass() {
-    String in = "public class A {" +
-                 "  public class B<T> extends A implements Serializable {}" +
+    String in = "public class A {\n" +
+                 "  public class B<T> extends A implements java.io.Serializable {}\n" +
                  "}";
     String what = "class '_A {" +
                    "  class '_B {}" +
                    "}";
-    String by = "class $A$ {" +
-                 "  private class $B$ {}" +
+    String by = "class $A$ {\n" +
+                 "  private class $B$ {\n" +
+                 "  }\n" +
                  "}";
-    assertEquals("public class A {" +
-                 "  private class B<T> extends A implements Serializable {}" +
+    assertEquals("public class A {\n" +
+                 "  private class B<T> extends A implements java.io.Serializable {\n" +
+                 "  }\n" +
                  "}",
                  replacer.testReplace(in, what, by, options));
+
+    String in2 = "public class A {\n" +
+                 "  void m1() {}\n" +
+                 "  public void m2() {}\n" +
+                 "  public class B<T> extends A implements java.io.Serializable {\n" +
+                 "    int zero() {\n" +
+                 "      return 0;\n" +
+                 "    }\n" +
+                 "  }\n" +
+                 "  void m3() {}\n" +
+                 "}";
+    assertEquals("should replace unmatched class content correctly",
+                 "public class A {\n" +
+                 "  void m1() {}\n" +
+                 "  public void m2() {}\n" +
+                 "  private class B<T> extends A implements java.io.Serializable {\n" +
+                 "    int zero() {\n" +
+                 "      return 0;\n" +
+                 "    }\n" +
+                 "  }\n" +
+                 "  void m3() {}\n" +
+                 "}",
+                 replacer.testReplace(in2, what, by, options));
   }
 }
