@@ -158,6 +158,15 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
       }
     }
   }
+
+  fun setMasterPassword(password: String) {
+    LOG.assertTrue(!memoryOnly)
+
+    val masterKey = password.toByteArray()
+    masterKeyStorage.set(masterKey)
+    dbFile.writeSafe { db.save(KdbxPassword(masterKey), it) }
+    dbFile.setOwnerPermissions()
+  }
 }
 
 internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: PasswordStorage) {

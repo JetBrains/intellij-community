@@ -121,6 +121,10 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
     ApplicationManager.getApplication().messageBus.syncPublisher(PasswordSafeSettings.TOPIC).credentialStoreCleared()
   }
 
+  fun setMasterPassword(password: String) {
+    (currentProvider as KeePassCredentialStore).setMasterPassword(password)
+  }
+
   // public - backward compatibility
   @Suppress("unused", "DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use it")
