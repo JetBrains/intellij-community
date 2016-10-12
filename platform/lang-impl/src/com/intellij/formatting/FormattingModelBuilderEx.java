@@ -49,11 +49,10 @@ public interface FormattingModelBuilderEx extends FormattingModelBuilder {
    * @param ranges    given file's ranges to reformat
    * @param settings  code style settings holder
    * @return          indent options to use for the target formatting operation (if any adjustment is required);
-   *                  <code>null</code> to trigger default algorithm usage
-   * @deprecated Use <code>FileIndentOptionsProvider</code> instead.
+   *                  {@code null} to trigger default algorithm usage
+   * @deprecated Use {@code com.intellij.psi.codeStyle.FileIndentOptionsProvider} instead.
    * @see com.intellij.psi.codeStyle.FileIndentOptionsProvider
    */
-  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   @Deprecated
   CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,

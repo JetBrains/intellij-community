@@ -33,11 +33,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionTool {
   // Fields are left for the compatibility
-  @Deprecated @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   public boolean CHECK_FILE_HEADER = true;
-  @Deprecated @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   public boolean CHECK_TRY_CATCH_SECTION = true;
-  @Deprecated @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   public boolean CHECK_METHOD_BODY = true;
 
   @Override

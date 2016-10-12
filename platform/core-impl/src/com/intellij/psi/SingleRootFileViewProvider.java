@@ -356,7 +356,6 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return new PsiPlainTextFileImpl(this);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public static boolean isTooLarge(@NotNull VirtualFile vFile) {
     return isTooLargeForIntelligence(vFile);
