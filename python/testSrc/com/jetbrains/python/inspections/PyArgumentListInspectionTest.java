@@ -211,4 +211,14 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   public void testStrFormat() {
     doTest();
   }
+
+  // PY-19522
+  public void testCsvRegisterDialect() {
+    final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
+
+    myFixture.copyDirectoryToProject(folderPath, "");
+    myFixture.configureFromTempProjectFile("csvRegisterDialect.py");
+    myFixture.enableInspections(PyArgumentListInspection.class);
+    myFixture.checkHighlighting(true, false, false);
+  }
 }
