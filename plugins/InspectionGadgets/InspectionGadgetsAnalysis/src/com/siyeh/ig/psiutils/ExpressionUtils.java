@@ -690,8 +690,9 @@ public class ExpressionUtils {
    * notable performance handicap. Examples of simple expressions are:
    * - literal (number, char, string, class literal, true, false, null)
    * - this
-   * - static field access
-   * - instance field access having 'this' as qualifier
+   * - variable/parameter read
+   * - static field read
+   * - instance field read having 'this' as qualifier
    *
    * @param expression an expression to test
    * @return true if the supplied expression is simple
