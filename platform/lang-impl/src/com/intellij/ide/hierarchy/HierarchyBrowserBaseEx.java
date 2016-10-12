@@ -47,6 +47,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -303,6 +304,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
     configureTree(tree);
     EditSourceOnDoubleClickHandler.install(tree);
+    EditSourceOnEnterKeyHandler.install(tree);
     myRefreshAction.registerShortcutOn(tree);
 
     return tree;
