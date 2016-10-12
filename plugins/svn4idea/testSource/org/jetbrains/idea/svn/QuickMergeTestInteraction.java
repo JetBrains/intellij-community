@@ -89,7 +89,7 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   @Override
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                @NotNull MergeChecker mergeChecker,
-                                                               boolean everyThingLoaded) {
+                                                               boolean allListsLoaded) {
     return mySelectedListsProvider != null ? mySelectedListsProvider.fun(list) : emptyList();
   }
 

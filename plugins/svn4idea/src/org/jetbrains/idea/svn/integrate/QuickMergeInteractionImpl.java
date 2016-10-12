@@ -143,7 +143,7 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   @Override
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                @NotNull MergeChecker mergeChecker,
-                                                               boolean everyThingLoaded) {
+                                                               boolean allListsLoaded) {
     ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, list, myMergeContext.getTitle(), mergeChecker, false);
 
     return dialog.showAndGet() ? dialog.getSelected() : emptyList();

@@ -91,8 +91,8 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   private final Set<Change> myAlreadyMerged;
   private final MergeChecker myMergeChecker;
-  private final boolean myAlreadyCalculatedState;
-  private volatile boolean myEverythingLoaded;
+  private final boolean myAllStatusesCalculated;
+  private volatile boolean myAllListsLoaded;
 
   private final Map<Long, ListMergeStatus> myStatusMap;
   private ToBeMergedDialog.MoreXAction myMore100Action;
@@ -102,13 +102,13 @@ public class ToBeMergedDialog extends DialogWrapper {
                           @NotNull List<CommittedChangeList> lists,
                           final String title,
                           @NotNull MergeChecker mergeChecker,
-                          boolean everythingLoaded) {
+                          boolean allListsLoaded) {
     super(mergeContext.getProject(), true);
     myMergeContext = mergeContext;
-    myEverythingLoaded = everythingLoaded;
+    myAllListsLoaded = allListsLoaded;
     myStatusMap = synchronizedMap(newHashMap());
     myMergeChecker = mergeChecker;
-    myAlreadyCalculatedState = everythingLoaded;
+    myAllStatusesCalculated = allListsLoaded;
     setTitle(title);
 
     // Paging is not used - "Load Xxx" buttons load corresponding new elements and add them to the end of the table. Single (first) page is
@@ -116,27 +116,27 @@ public class ToBeMergedDialog extends DialogWrapper {
     myListsEngine = new BasePageEngine<>(lists, lists.size());
 
     myPanel = new JPanel(new BorderLayout());
-    myWiseSelection = new QuantitySelection<>(myEverythingLoaded);
+    myWiseSelection = new QuantitySelection<>(myAllListsLoaded);
     myAlreadyMerged = newHashSet();
     setOKButtonText("Merge Selected");
     initUI();
     init();
     enableMore();
 
-    if (!myAlreadyCalculatedState) {
+    if (!myAllStatusesCalculated) {
       refreshListStatus(lists);
     }
   }
 
   private void enableMore() {
-    myMore100Action.setVisible(!myEverythingLoaded);
-    myMore500Action.setVisible(!myEverythingLoaded);
-    myMore100Action.setEnabled(!myEverythingLoaded);
-    myMore500Action.setEnabled(!myEverythingLoaded);
+    myMore100Action.setVisible(!myAllListsLoaded);
+    myMore500Action.setVisible(!myAllListsLoaded);
+    myMore100Action.setEnabled(!myAllListsLoaded);
+    myMore500Action.setEnabled(!myAllListsLoaded);
   }
 
-  public void setEverythingLoaded(boolean everythingLoaded) {
-    myEverythingLoaded = everythingLoaded;
+  public void setAllListsLoaded() {
+    myAllListsLoaded = true;
     myMore100Action.setVisible(false);
     myMore500Action.setVisible(false);
   }
@@ -210,7 +210,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   @NotNull
   @Override
   protected Action[] createActions() {
-    if (myAlreadyCalculatedState) {
+    if (myAllStatusesCalculated) {
       return new Action[]{getOKAction(), new DialogWrapperAction("Merge All") {
         @Override
         protected void doAction(ActionEvent e) {
@@ -525,7 +525,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     private void updateDialog() {
       addMoreLists(myLists);
       if (myIsLastListLoaded) {
-        setEverythingLoaded(true);
+        setAllListsLoaded();
       }
     }
   }
@@ -541,7 +541,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       myCheckBox.setEnabled(true);
       myCheckBox.setSelected(true);
       myRenderer = new CommittedChangeListRenderer(myMergeContext.getProject(), singletonList(list -> {
-        ListMergeStatus status = myAlreadyCalculatedState
+        ListMergeStatus status = myAllStatusesCalculated
                                  ? ListMergeStatus.NOT_MERGED
                                  : ObjectUtils.notNull(myStatusMap.get(list.getNumber()), ListMergeStatus.REFRESHING);
 

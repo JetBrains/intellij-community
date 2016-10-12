@@ -49,7 +49,7 @@ public interface QuickMergeInteraction {
   @NotNull
   List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                         @NotNull MergeChecker mergeChecker,
-                                                        boolean everyThingLoaded);
+                                                        boolean allListsLoaded);
 
   interface SelectMergeItemsResult {
     @NotNull
