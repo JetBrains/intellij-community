@@ -104,8 +104,8 @@ java_library(
 
 java_library(
     name = "commons-compress",
-    runtime_deps = ["//tools/adt/idea:android/lib/commons-compress-1.8.1"],
-    exports = ["//tools/adt/idea:android/lib/commons-compress-1.8.1"],
+    runtime_deps = ["//tools:idea/lib/commons-compress-1.10"],
+    exports = ["//tools:idea/lib/commons-compress-1.10"],
     visibility = ["//visibility:public"],
     tags = ["managed"],
 )
@@ -367,14 +367,6 @@ java_library(
 )
 
 java_library(
-    name = "ForkJoin",
-    runtime_deps = ["//tools:idea/lib/jsr166e"],
-    exports = ["//tools:idea/lib/jsr166e"],
-    visibility = ["//visibility:public"],
-    tags = ["managed"],
-)
-
-java_library(
     name = "Snappy-Java",
     runtime_deps = ["//tools:idea/lib/snappy-in-java-0.3.1"],
     exports = ["//tools:idea/lib/snappy-in-java-0.3.1"],
@@ -476,8 +468,8 @@ java_library(
 
 java_library(
     name = "Netty",
-    runtime_deps = ["//tools:idea/lib/netty-all-4.1.0.CR7"],
-    exports = ["//tools:idea/lib/netty-all-4.1.0.CR7"],
+    runtime_deps = ["//tools:idea/lib/netty-all-4.1.1.Final"],
+    exports = ["//tools:idea/lib/netty-all-4.1.1.Final"],
     visibility = ["//visibility:public"],
     tags = ["managed"],
 )
@@ -492,8 +484,8 @@ java_library(
 
 java_library(
     name = "pty4j",
-    runtime_deps = ["//tools:idea/lib/pty4j-0.6"],
-    exports = ["//tools:idea/lib/pty4j-0.6"],
+    runtime_deps = ["//tools:idea/lib/pty4j-0.7.1"],
+    exports = ["//tools:idea/lib/pty4j-0.7.1"],
     visibility = ["//visibility:public"],
     tags = ["managed"],
 )
@@ -578,8 +570,8 @@ java_library(
 
 java_library(
     name = "assertJ",
-    runtime_deps = ["//tools:idea/lib/dev/assertj-core-3.2.0"],
-    exports = ["//tools:idea/lib/dev/assertj-core-3.2.0"],
+    runtime_deps = ["//tools:idea/lib/dev/assertj-core-3.4.1"],
+    exports = ["//tools:idea/lib/dev/assertj-core-3.4.1"],
     visibility = ["//visibility:public"],
     tags = ["managed"],
 )
@@ -919,14 +911,6 @@ java_library(
 )
 
 java_library(
-    name = "asm4",
-    runtime_deps = ["//tools:idea/lib/asm4-all"],
-    exports = ["//tools:idea/lib/asm4-all"],
-    visibility = ["//visibility:public"],
-    tags = ["managed"],
-)
-
-java_library(
     name = "jgraphx-3.4.0.1",
     runtime_deps = ["//tools/adt/idea:android/lib/jgraphx-3.4.0.1"],
     exports = ["//tools/adt/idea:android/lib/jgraphx-3.4.0.1"],
@@ -996,6 +980,58 @@ java_library(
     name = "profiler-grpc-java",
     runtime_deps = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
     exports = ["//tools/base/profiler:studio-profiler-grpc-1.0-jarjar"],
+    visibility = ["//visibility:public"],
+    tags = ["managed"],
+)
+
+java_library(
+    name = "junit5_rt",
+    runtime_deps = [
+        "//tools:idea/plugins/junit5_rt/lib/junit-jupiter-engine-5.0.0-M1",
+        "//tools:idea/plugins/junit5_rt/lib/junit-platform-commons-1.0.0-M1",
+        "//tools:idea/plugins/junit5_rt/lib/junit-platform-engine-1.0.0-M1",
+        "//tools:idea/plugins/junit5_rt/lib/junit-platform-launcher-1.0.0-M1",
+        "//tools:idea/plugins/junit5_rt/lib/junit-platform-runner-1.0.0-M1",
+        "//tools:idea/plugins/junit5_rt/lib/junit-vintage-engine-4.12.0-M1",
+    ],
+    exports = [
+        "//tools:idea/plugins/junit5_rt/lib/junit-jupiter-engine-5.0.0-M1",
+        "//tools:idea/plugins/junit5_rt/lib/junit-platform-commons-1.0.0-M1",
+        "//tools:idea/plugins/junit5_rt/lib/junit-platform-engine-1.0.0-M1",
+        "//tools:idea/plugins/junit5_rt/lib/junit-platform-launcher-1.0.0-M1",
+        "//tools:idea/plugins/junit5_rt/lib/junit-platform-runner-1.0.0-M1",
+        "//tools:idea/plugins/junit5_rt/lib/junit-vintage-engine-4.12.0-M1",
+    ],
+    visibility = ["//visibility:public"],
+    tags = ["managed"],
+)
+
+java_library(
+    name = "opentest4j",
+    runtime_deps = ["//tools:idea/plugins/junit5_rt/lib/opentest4j-1.0.0-M1"],
+    exports = ["//tools:idea/plugins/junit5_rt/lib/opentest4j-1.0.0-M1"],
+    visibility = ["//visibility:public"],
+    tags = ["managed"],
+)
+
+java_library(
+    name = "com.twelvemonkeys.imageio_imageio-tiff_3.2.1",
+    runtime_deps = [
+        "//tools:idea/lib/imageio-tiff-3.2.1",
+        "//tools:idea/lib/imageio-core-3.2.1",
+        "//tools:idea/lib/common-lang-3.2.1",
+        "//tools:idea/lib/common-io-3.2.1",
+        "//tools:idea/lib/common-image-3.2.1",
+        "//tools:idea/lib/imageio-metadata-3.2.1",
+    ],
+    exports = [
+        "//tools:idea/lib/imageio-tiff-3.2.1",
+        "//tools:idea/lib/imageio-core-3.2.1",
+        "//tools:idea/lib/common-lang-3.2.1",
+        "//tools:idea/lib/common-io-3.2.1",
+        "//tools:idea/lib/common-image-3.2.1",
+        "//tools:idea/lib/imageio-metadata-3.2.1",
+    ],
     visibility = ["//visibility:public"],
     tags = ["managed"],
 )
