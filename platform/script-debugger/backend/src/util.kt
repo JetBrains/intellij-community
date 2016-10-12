@@ -72,7 +72,7 @@ fun createDebugLogger(@PropertyKey(resourceBundle = Registry.REGISTRY_BUNDLE) ke
   return createDebugLogger(debugFile)
 }
 
-fun createDebugLogger(debugFile: String): MessagingLogger? {
+private fun createDebugLogger(debugFile: String): MessagingLogger? {
   val queue = ConcurrentLinkedQueue<LogEntry>()
   val logger = MessagingLogger(queue)
   ApplicationManager.getApplication().executeOnPooledThread {
