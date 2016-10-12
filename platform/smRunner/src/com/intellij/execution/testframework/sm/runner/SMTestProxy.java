@@ -441,7 +441,15 @@ public class SMTestProxy extends AbstractTestProxy {
 
   public void setTestFailed(@NotNull String localizedMessage, @Nullable String stackTrace, boolean testError) {
     setStacktraceIfNotSet(stackTrace);
-    if (myState instanceof TestFailedState) {
+    if (myState instanceof TestComparisionFailedState) {
+      CompoundTestFailedState states = new CompoundTestFailedState(localizedMessage, stackTrace);
+      states.addFailure((TestFailedState)myState);
+      final TestFailedState failedState = new TestFailedState(localizedMessage, stackTrace);
+      states.addFailure(failedState);
+      fireOnNewPrintable(failedState);
+      myState = states;
+    }
+    else if (myState instanceof TestFailedState) {
       ((TestFailedState)myState).addError(localizedMessage, stackTrace, myPrinter);
     }
     else {
@@ -473,14 +481,14 @@ public class SMTestProxy extends AbstractTestProxy {
                                       @Nullable final String actualFilePath) {
     setStacktraceIfNotSet(stackTrace);
     final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(localizedMessage, stackTrace, actualText, expectedText, expectedFilePath, actualFilePath);
-    if (myState instanceof TestComparisionFailedState) {
-      final TestComparisonFailedStates states = new TestComparisonFailedStates(localizedMessage, stackTrace);
-      states.addComparisonFailure((TestComparisionFailedState)myState);
-      states.addComparisonFailure(comparisionFailedState);
-      myState = states;
+    if (myState instanceof CompoundTestFailedState) {
+      ((CompoundTestFailedState)myState).addFailure(comparisionFailedState);
     }
-    else if (myState instanceof TestComparisonFailedStates) {
-      ((TestComparisonFailedStates)myState).addComparisonFailure(comparisionFailedState);
+    else if (myState instanceof TestFailedState) {
+      final CompoundTestFailedState states = new CompoundTestFailedState(localizedMessage, stackTrace);
+      states.addFailure((TestFailedState)myState);
+      states.addFailure(comparisionFailedState);
+      myState = states;
     }
     else {
       myState = comparisionFailedState;
@@ -552,14 +560,19 @@ public class SMTestProxy extends AbstractTestProxy {
   public void printOn(final Printer printer) {
     final Printer rightPrinter = getRightPrinter(printer);
     super.printOn(rightPrinter);
-    final AbstractState oldState = myState;
+    printState(myState, rightPrinter);
+  }
 
-    invokeInAlarm(new Runnable() {
-      @Override
-      public void run() {
-        //Tests State, that provide and formats additional output
-        oldState.printOn(rightPrinter);
-      }
+  @Override
+  public void printOwnPrintablesOn(Printer printer) {
+    super.printOwnPrintablesOn(printer);
+    printState(myState, printer);
+  }
+
+  private static void printState(final AbstractState oldState, final Printer rightPrinter) {
+    invokeInAlarm(() -> {
+      //Tests State, that provide and formats additional output
+      oldState.printOn(rightPrinter);
     });
   }
 
@@ -643,8 +656,8 @@ public class SMTestProxy extends AbstractTestProxy {
       return ((TestComparisionFailedState)myState).getHyperlink();
     }
 
-    if (myState instanceof TestComparisonFailedStates) {
-      return ((TestComparisonFailedStates)myState).getHyperlinks().get(0);
+    if (myState instanceof CompoundTestFailedState) {
+      return ((CompoundTestFailedState)myState).getHyperlinks().get(0);
     }
 
     if (myChildren != null) {
@@ -662,8 +675,8 @@ public class SMTestProxy extends AbstractTestProxy {
   @NotNull
   @Override
   public List<DiffHyperlink> getDiffViewerProviders() {
-    if (myState instanceof TestComparisonFailedStates) {
-      return ((TestComparisonFailedStates)myState).getHyperlinks();
+    if (myState instanceof CompoundTestFailedState) {
+      return ((CompoundTestFailedState)myState).getHyperlinks();
     }
     return super.getDiffViewerProviders();
   }

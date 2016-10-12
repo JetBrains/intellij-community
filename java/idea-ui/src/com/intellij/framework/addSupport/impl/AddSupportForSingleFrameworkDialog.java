@@ -91,12 +91,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
 
   protected void doOKAction() {
     final Ref<Boolean> result = Ref.create(false);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        result.set(addSupport());
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> result.set(addSupport()));
 
     if (result.get()) {
       super.doOKAction();

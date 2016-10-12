@@ -17,7 +17,6 @@
 package com.intellij.tasks.trello.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -131,13 +130,11 @@ public class TrelloCard extends TrelloModel {
     if (labels == null || labels.isEmpty()) {
       return EnumSet.noneOf(LabelColor.class);
     }
-    return EnumSet.copyOf(ContainerUtil.mapNotNull(labels, new Function<TrelloLabel, LabelColor>() {
-      @Override
-      public LabelColor fun(TrelloLabel label) {
-        final LabelColor color = label.getColor();
-        return color == LabelColor.NO_COLOR ? null : color;
-      }
-    }));
+    final List<LabelColor> labelColors = ContainerUtil.mapNotNull(labels, label -> {
+      final LabelColor color = label.getColor();
+      return color == LabelColor.NO_COLOR ? null : color;
+    });
+    return labelColors.isEmpty() ? EnumSet.noneOf(LabelColor.class) : EnumSet.copyOf(labelColors);
   }
 
   public boolean isVisible() {

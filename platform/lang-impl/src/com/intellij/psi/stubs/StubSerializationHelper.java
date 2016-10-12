@@ -169,7 +169,9 @@ public class StubSerializationHelper {
       try {
         externalId = myNameStorage.valueOf(id);
       } catch (Throwable ignore) {}
-      throw new SerializerNotFoundException("No serializer registered for stub: ID=" + id + ", externalId:" + externalId + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null"));
+      throw new SerializerNotFoundException(
+        "No serializer registered for stub: ID=" + id + ", externalId:" + externalId +
+        "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
     }
 
     Stub stub = serializer.deserialize(stream, parentStub);

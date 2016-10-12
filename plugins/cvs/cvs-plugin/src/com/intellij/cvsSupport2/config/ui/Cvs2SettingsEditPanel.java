@@ -228,22 +228,13 @@ public class Cvs2SettingsEditPanel {
   }
 
   private static void showConnectionFailedMessage(final Component parent, final String message) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showMessageDialog(parent, message, CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon());
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(
+      () -> Messages.showMessageDialog(parent, message, CvsBundle.message("operation.name.test.connection"), Messages.getErrorIcon()));
   }
 
   private static void showSuccessfulConnectionMessage(final Component component) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showMessageDialog(component, CvsBundle.message("operation.status.connection.successful"),
-                                   CvsBundle.message("operation.name.test.connection"), Messages.getInformationIcon());
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> Messages.showMessageDialog(component, CvsBundle.message("operation.status.connection.successful"),
+                                                            CvsBundle.message("operation.name.test.connection"), Messages.getInformationIcon()));
   }
 
   public JComponent getPanel() {

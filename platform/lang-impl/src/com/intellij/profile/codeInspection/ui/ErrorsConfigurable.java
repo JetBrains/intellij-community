@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public interface ErrorsConfigurable extends Configurable {
   void selectProfile(final Profile profile);
   void selectInspectionTool(final String selectedToolShortName);
+  void selectInspectionGroup(final String[] groupPath);
   @Nullable
   Object getSelectedObject();
 

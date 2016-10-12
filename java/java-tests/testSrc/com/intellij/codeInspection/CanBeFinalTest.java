@@ -103,6 +103,15 @@ public class CanBeFinalTest extends InspectionTestCase {
     doTest(tool);
   }
 
+  public void testfieldNonInitializedUsedInClassInitializer() throws Exception {
+    CanBeFinalInspection tool = new CanBeFinalInspection();
+    tool.REPORT_CLASSES = false;
+    tool.REPORT_FIELDS = true;
+    tool.REPORT_METHODS = false;
+    doTest(tool);
+  }
+
+
   public void testInterfaceMethodInHierarchy() throws Exception {
     CanBeFinalInspection tool = new CanBeFinalInspection();
     tool.REPORT_CLASSES = false;

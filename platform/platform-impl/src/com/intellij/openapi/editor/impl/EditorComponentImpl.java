@@ -47,10 +47,9 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
@@ -134,8 +133,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     if (myEditor.isDisposed() || myEditor.isRendererMode()) return null;
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
-      // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getData())
-      return myEditor.getVirtualFile() == null ? myEditor : null;
+      return myEditor;
     }
     if (CommonDataKeys.CARET.is(dataId)) {
       return myEditor.getCaretModel().getCurrentCaret();
@@ -152,7 +150,13 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myEditor.getPasteProvider();
     }
-
+    if (CommonDataKeys.EDITOR_VIRTUAL_SPACE.is(dataId)) {
+      LogicalPosition location = myEditor.myLastMousePressedLocation;
+      if (location == null) {
+        location = myEditor.getCaretModel().getLogicalPosition();
+      }
+      return EditorUtil.inVirtualSpace(myEditor, location);
+    }
     return null;
   }
 
@@ -198,12 +202,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   @Override
   public ActionCallback type(final String text) {
     final ActionCallback result = new ActionCallback();
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myEditor.type(text).notify(result);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> myEditor.type(text).notify(result));
     return result;
   }
 
@@ -214,12 +213,16 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Override
   public void paintComponent(Graphics g) {
     myApplication.editorPaintStart();
 
     try {
-      Graphics2D gg = !Boolean.TRUE.equals(EditorTextField.SUPPLEMENTARY_KEY.get(myEditor)) ?
-                      IdeBackgroundUtil.withEditorBackground(g, this) : (Graphics2D)g;
+      Graphics2D gg = (Graphics2D)g;
       UIUtil.setupComposite(gg);
       EditorUIUtil.setupAntialiasing(gg);
       myEditor.paint(gg);
@@ -698,34 +701,30 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     if (!FileDocumentManager.getInstance().requestWriting(document, project)) {
       return;
     }
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, project) {
-          @Override
-          public void run() {
-            document.startGuardedBlockChecking();
-            try {
-              if (text == null) {
-                // remove
-                document.deleteString(offset, offset + length);
-              } else if (length == 0) {
-                // insert
-                document.insertString(offset, text);
-              } else {
-                document.replaceString(offset, offset + length, text);
-              }
-            }
-            catch (ReadOnlyFragmentModificationException e) {
-              EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
-            }
-            finally {
-              document.stopGuardedBlockChecking();
-            }
-          }
-        });
-      }
-    }, "", document, UndoConfirmationPolicy.DEFAULT, document);
+    CommandProcessor.getInstance().executeCommand(project,
+                                                  () -> ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(document, project) {
+                                                    @Override
+                                                    public void run() {
+                                                      document.startGuardedBlockChecking();
+                                                      try {
+                                                        if (text == null) {
+                                                          // remove
+                                                          document.deleteString(offset, offset + length);
+                                                        } else if (length == 0) {
+                                                          // insert
+                                                          document.insertString(offset, text);
+                                                        } else {
+                                                          document.replaceString(offset, offset + length, text);
+                                                        }
+                                                      }
+                                                      catch (ReadOnlyFragmentModificationException e) {
+                                                        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
+                                                      }
+                                                      finally {
+                                                        document.stopGuardedBlockChecking();
+                                                      }
+                                                    }
+                                                  }), "", document, UndoConfirmationPolicy.DEFAULT, document);
   }
 
   /** {@linkplain DefaultCaret} does a lot of work we don't want (listening
@@ -800,12 +799,16 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Override
     public void setDot(int offset) {
-      myEditor.getCaretModel().moveToOffset(offset);
+      if (!myEditor.isDisposed()) {
+        myEditor.getCaretModel().moveToOffset(offset);
+      }
     }
 
     @Override
     public void moveDot(int offset) {
-      myEditor.getCaretModel().moveToOffset(offset);
+      if (!myEditor.isDisposed()) {
+        myEditor.getCaretModel().moveToOffset(offset);
+      }
     }
   }
 
@@ -968,12 +971,9 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
           fireJTextComponentDocumentChange(event);
         }
       } else {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, null, pos);
-            fireJTextComponentDocumentChange(event);
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, null, pos);
+          fireJTextComponentDocumentChange(event);
         });
       }
     }

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Aug 6, 2007
- * Time: 3:09:55 PM
- */
 package com.intellij.codeInspection;
 
 import com.intellij.ide.DataManager;
@@ -103,7 +97,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     // no sense in checking transparently decoded file: all characters there are already safely encoded
     if (charset instanceof Native2AsciiCharset) return null;
 
-    List<ProblemDescriptor> descriptors = new SmartList<ProblemDescriptor>();
+    List<ProblemDescriptor> descriptors = new SmartList<>();
     boolean ok = checkFileLoadedInWrongEncoding(file, manager, isOnTheFly, virtualFile, charset, descriptors);
     if (ok) {
       checkIfCharactersWillBeLostAfterSave(file, manager, isOnTheFly, text, charset, descriptors);
@@ -172,9 +166,11 @@ public class LossyEncodingInspection extends LocalInspectionTool {
                                                            @NotNull List<ProblemDescriptor> descriptors) {
     int errorCount = 0;
     int start = -1;
+    CharBuffer buffer = CharBuffer.wrap(text); // temp buffer for encoding/decoding back a char or a surrogate pair.
     for (int i = 0; i <= text.length(); i++) {
-      char c = i == text.length() ? 0 : text.charAt(i);
-      if (i == text.length() || isRepresentable(c, charset)) {
+      char c = i >= text.length() ? 0 : text.charAt(i);
+      int end = Character.isHighSurrogate(c) && i<text.length()-1 ? i + 2 : i+1;
+      if (i == text.length() || isRepresentable(buffer, i, end, charset)) {
         if (start != -1) {
           TextRange range = new TextRange(start, i);
           String message = InspectionsBundle.message("unsupported.character.for.the.charset", charset);
@@ -189,14 +185,22 @@ public class LossyEncodingInspection extends LocalInspectionTool {
       else if (start == -1) {
         start = i;
       }
+      if (end != i+1) {
+        i++; // skip surrogate low
+      }
     }
   }
 
-  private static boolean isRepresentable(final char c, @NotNull Charset charset) {
-    String str = Character.toString(c);
-    ByteBuffer out = charset.encode(str);
+  private static boolean isRepresentable(@NotNull CharBuffer srcBuffer,
+                                         int start,
+                                         int end,
+                                         @NotNull Charset charset) {
+    srcBuffer.position(start);
+    srcBuffer.limit(end);
+    ByteBuffer out = charset.encode(srcBuffer);
     CharBuffer buffer = charset.decode(out);
-    return str.equals(buffer.toString());
+    srcBuffer.position(start);
+    return buffer.equals(srcBuffer);
   }
 
   private static class ReloadInAnotherEncodingFix extends ChangeEncodingFix {
@@ -240,7 +244,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     }
 
     @NotNull
-    public static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
+    static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
       DataContext parent = DataManager.getInstance().getDataContext(component);
       DataContext context = SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent);
       DataContext projectContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), project, context);

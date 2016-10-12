@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import java.util.*;
  */
 public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateDelegateHandler");
-  private boolean myToCopyJavaDoc = false;
+  private boolean myToCopyJavaDoc;
 
   @Override
   public boolean isValidFor(Editor editor, PsiFile file) {
@@ -69,33 +69,30 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     if (candidates == null || candidates.length == 0) return;
 
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          int offset = editor.getCaretModel().getOffset();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        int offset = editor.getCaretModel().getOffset();
 
-          List<PsiGenerationInfo<PsiMethod>> prototypes = new ArrayList<PsiGenerationInfo<PsiMethod>>(candidates.length);
-          for (PsiMethodMember candidate : candidates) {
-            prototypes.add(generateDelegatePrototype(candidate, target.getElement()));
-          }
-
-          List<PsiGenerationInfo<PsiMethod>> results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
-
-          if (!results.isEmpty()) {
-            PsiMethod firstMethod = results.get(0).getPsiMember();
-            final PsiCodeBlock block = firstMethod.getBody();
-            assert block != null;
-            final PsiElement first = block.getFirstBodyElement();
-            assert first != null;
-            editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
-            editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-            editor.getSelectionModel().removeSelection();
-          }
+        List<PsiGenerationInfo<PsiMethod>> prototypes = new ArrayList<PsiGenerationInfo<PsiMethod>>(candidates.length);
+        for (PsiMethodMember candidate : candidates) {
+          prototypes.add(generateDelegatePrototype(candidate, target.getElement()));
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+
+        List<PsiGenerationInfo<PsiMethod>> results = GenerateMembersUtil.insertMembersAtOffset(file, offset, prototypes);
+
+        if (!results.isEmpty()) {
+          PsiMethod firstMethod = results.get(0).getPsiMember();
+          final PsiCodeBlock block = firstMethod.getBody();
+          assert block != null;
+          final PsiElement first = block.getFirstBodyElement();
+          assert first != null;
+          editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
+          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+          editor.getSelectionModel().removeSelection();
         }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
       }
     });
   }
@@ -345,13 +342,14 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     int offset = editor.getCaretModel().getOffset();
     PsiElement element = file.findElementAt(offset);
     if (element == null) return null;
-    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    final PsiClass targetClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    PsiClass aClass = targetClass;
     if (aClass == null) return null;
 
     List<PsiElementClassMember> result = new ArrayList<PsiElementClassMember>();
 
     while (aClass != null) {
-      collectTargetsInClass(element, aClass, result);
+      collectTargetsInClass(element, targetClass, aClass, result);
       if (aClass.hasModifierProperty(PsiModifier.STATIC)) break;
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     }
@@ -359,12 +357,16 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
     return result.toArray(new PsiElementClassMember[result.size()]);
   }
 
-  private static void collectTargetsInClass(PsiElement element, final PsiClass aClass, List<PsiElementClassMember> result) {
+  private static void collectTargetsInClass(PsiElement element,
+                                            final PsiClass targetClass,
+                                            final PsiClass aClass,
+                                            List<PsiElementClassMember> result) {
     final PsiField[] fields = aClass.getAllFields();
     PsiResolveHelper helper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (PsiField field : fields) {
       final PsiType type = field.getType();
-      if (helper.isAccessible(field, aClass, aClass) && type instanceof PsiClassType && !PsiTreeUtil.isAncestor(field, element, false)) {
+      if (helper.isAccessible(field, aClass, aClass) && type instanceof PsiClassType &&
+          !(PsiTreeUtil.isAncestor(field, element, false) && targetClass != aClass)) {
         final PsiClass containingClass = field.getContainingClass();
         if (containingClass != null) {
           result.add(new PsiFieldMember(field, TypeConversionUtil.getSuperClassSubstitutor(containingClass, aClass, PsiSubstitutor.EMPTY)));
@@ -378,7 +380,7 @@ public class GenerateDelegateHandler implements LanguageCodeInsightActionHandler
       if (containingClass == null || CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) continue;
       final PsiType returnType = method.getReturnType();
       if (returnType != null && PropertyUtil.isSimplePropertyGetter(method) && helper.isAccessible(method, aClass, aClass) &&
-          returnType instanceof PsiClassType && !PsiTreeUtil.isAncestor(method, element, false)) {
+          returnType instanceof PsiClassType && !(PsiTreeUtil.isAncestor(method, element, false) && targetClass != aClass)) {
         result.add(new PsiMethodMember(method, TypeConversionUtil.getSuperClassSubstitutor( containingClass, aClass,PsiSubstitutor.EMPTY)));
       }
     }

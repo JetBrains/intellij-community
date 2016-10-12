@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpointPropertiesSubPanel<B> {
+public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
   private JPanel myMasterBreakpointComboBoxPanel;
   private JPanel myAfterBreakpointHitPanel;
   private JRadioButton myLeaveEnabledRadioButton;
@@ -43,7 +44,7 @@ public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpoin
   private XDependentBreakpointManager myDependentBreakpointManager;
 
   private List<BreakpointItem> getBreakpointItemsExceptMy() {
-    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
+    List<BreakpointItem> items = new ArrayList<>();
     DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class).getBreakpointPanelProvider().provideBreakpointItems(myProject, items);
     for (BreakpointItem item : items) {
       if (item.getBreakpoint() == myBreakpoint) {
@@ -56,7 +57,7 @@ public class XMasterBreakpointPanel<B extends XBreakpoint<?>> extends XBreakpoin
   }
 
   @Override
-  public void init(Project project, XBreakpointManager breakpointManager, @NotNull B breakpoint) {
+  public void init(Project project, XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint) {
     super.init(project, breakpointManager, breakpoint);
     myDependentBreakpointManager = ((XBreakpointManagerImpl)breakpointManager).getDependentBreakpointManager();
     myMasterBreakpointChooser = new BreakpointChooser(project, new BreakpointChooser.Delegate() {

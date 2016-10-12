@@ -117,12 +117,9 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
       myOKAction = new ApplyToSettings();
       myOKAction.setEnabled(false);
-      myTabbedLanguagePanel.setOnSomethingChangedCallback(new Runnable() {
-        @Override
-        public void run() {
-          boolean isModified = myTabbedLanguagePanel.isModified(mySettings);
-          myOKAction.setEnabled(isModified);
-        }
+      myTabbedLanguagePanel.setOnSomethingChangedCallback(() -> {
+        boolean isModified = myTabbedLanguagePanel.isModified(mySettings);
+        myOKAction.setEnabled(isModified);
       });
 
       myEditor = editor;
@@ -132,12 +129,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
       String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
       setTitle(StringUtil.capitalizeWords(title, true) + ": " + language.getDisplayName());
 
-      setInitialLocationCallback(new Computable<Point>() {
-        @Override
-        public Point compute() {
-          return new DialogPositionProvider().calculateLocation();
-        }
-      });
+      setInitialLocationCallback(() -> new DialogPositionProvider().calculateLocation());
 
       init();
     }

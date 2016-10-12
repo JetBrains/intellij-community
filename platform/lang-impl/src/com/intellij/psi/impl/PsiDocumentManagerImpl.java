@@ -56,14 +56,14 @@ import java.util.List;
 
 //todo listen & notifyListeners readonly events?
 public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements SettingsSavingComponent {
-  private final DocumentCommitThread myDocumentCommitThread;
+  private final DocumentCommitProcessor myDocumentCommitThread;
   private final boolean myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   public PsiDocumentManagerImpl(@NotNull final Project project,
                                 @NotNull PsiManager psiManager,
                                 @NotNull EditorFactory editorFactory,
                                 @NotNull MessageBus bus,
-                                @NonNls @NotNull final DocumentCommitThread documentCommitThread) {
+                                @NonNls @NotNull final DocumentCommitProcessor documentCommitThread) {
     super(project, psiManager, bus, documentCommitThread);
     myDocumentCommitThread = documentCommitThread;
     editorFactory.getEventMulticaster().addDocumentListener(this, project);
@@ -71,19 +71,15 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
     busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
       @Override
       public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
-        PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-          @Override
-          public PsiFile compute() {
-            return myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile);
-          }
-        });
+        PsiFile psiFile = ApplicationManager.getApplication().runReadAction(
+          (Computable<PsiFile>)() -> myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile));
         fireDocumentCreated(document, psiFile);
       }
     });
     busConnection.subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
       @Override
       public void updateFinished(@NotNull Document doc) {
-        documentCommitThread.queueCommit(project, doc, "Bulk update finished", ApplicationManager.getApplication().getDefaultModalityState());
+        documentCommitThread.commitAsynchronously(project, doc, "Bulk update finished", ApplicationManager.getApplication().getDefaultModalityState());
       }
     });
   }
@@ -140,7 +136,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   protected boolean finishCommitInWriteAction(@NotNull Document document,
                                               @NotNull List<Processor<Document>> finishProcessors,
                                               boolean synchronously) {
-    EditorWindowImpl.disposeInvalidEditors();  // in write action
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI
+      EditorWindowImpl.disposeInvalidEditors();
+    }
     return super.finishCommitInWriteAction(document, finishProcessors, synchronously);
   }
 
@@ -161,15 +159,12 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @Override
   public void save() {
     // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          commitAllDocuments();
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      try {
+        commitAllDocuments();
+      }
+      catch (Exception e) {
+        LOG.error(e);
       }
     });
   }
@@ -178,7 +173,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @TestOnly
   public void clearUncommittedDocuments() {
     super.clearUncommittedDocuments();
-    myDocumentCommitThread.clearQueue();
+    ((DocumentCommitThread)myDocumentCommitThread).clearQueue();
   }
 
   @NonNls

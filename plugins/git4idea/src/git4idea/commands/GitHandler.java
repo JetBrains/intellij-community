@@ -436,6 +436,7 @@ public abstract class GitHandler {
         }
       }
       setUpLocale();
+      unsetGitTrace();
       myCommandLine.getEnvironment().clear();
       myCommandLine.getEnvironment().putAll(myEnv);
       // start process
@@ -456,6 +457,10 @@ public abstract class GitHandler {
 
   private void setUpLocale() {
     myEnv.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
+  }
+
+  private void unsetGitTrace() {
+    myEnv.put("GIT_TRACE", "0");
   }
 
   private void setupHttpAuthenticator() throws IOException {
@@ -494,7 +499,7 @@ public abstract class GitHandler {
       myEnv.put(GitSSHHandler.SSH_PROXY_AUTHENTICATION_ENV, String.valueOf(proxyAuthentication));
 
       if (proxyAuthentication) {
-        myEnv.put(GitSSHHandler.SSH_PROXY_USER_ENV, StringUtil.notNullize(httpConfigurable.PROXY_LOGIN));
+        myEnv.put(GitSSHHandler.SSH_PROXY_USER_ENV, StringUtil.notNullize(httpConfigurable.getProxyLogin()));
         myEnv.put(GitSSHHandler.SSH_PROXY_PASSWORD_ENV, StringUtil.notNullize(httpConfigurable.getPlainProxyPassword()));
       }
     }

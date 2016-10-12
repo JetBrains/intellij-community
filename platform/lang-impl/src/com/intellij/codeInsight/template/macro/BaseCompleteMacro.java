@@ -37,9 +37,15 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseCompleteMacro extends Macro {
   private final String myName;
+  private final boolean myCheckCompletionChar;
 
-  protected BaseCompleteMacro(@NonNls String name) {
+  protected BaseCompleteMacro(@NonNls final String name) {
+    this(name, true);
+  }
+
+  protected BaseCompleteMacro(@NonNls final String name, final boolean checkCompletionChar) {
     myName = name;
+    myCheckCompletionChar = checkCompletionChar;
   }
 
   @Override
@@ -61,12 +67,7 @@ public abstract class BaseCompleteMacro extends Macro {
   @Override
   public final Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
     return new InvokeActionResult(
-      new Runnable() {
-        @Override
-        public void run() {
-          invokeCompletion(context);
-        }
-      }
+      () -> invokeCompletion(context)
     );
   }
 
@@ -75,29 +76,23 @@ public abstract class BaseCompleteMacro extends Macro {
     final Editor editor = context.getEditor();
 
     final PsiFile psiFile = editor != null ? PsiUtilBase.getPsiFileInEditor(editor, project) : null;
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed() || editor == null || editor.isDisposed() || psiFile == null || !psiFile.isValid()) return;
+    Runnable runnable = () -> {
+      if (project.isDisposed() || editor == null || editor.isDisposed() || psiFile == null || !psiFile.isValid()) return;
 
-        // it's invokeLater, so another completion could have started
-        if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() != null) return;
+      // it's invokeLater, so another completion could have started
+      if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() != null) return;
 
-        CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-          @Override
-          public void run() {
-            // if we're in some completion's insert handler, make sure our new completion isn't treated as the second invocation
-            CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-            
-            invokeCompletionHandler(project, editor);
-            Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        // if we're in some completion's insert handler, make sure our new completion isn't treated as the second invocation
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
 
-            if (lookup != null) {
-              lookup.addLookupListener(new MyLookupListener(context));
-            }
-          }
-        }, "", null);
-      }
+        invokeCompletionHandler(project, editor);
+        Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
+
+        if (lookup != null) {
+          lookup.addLookupListener(new MyLookupListener(context, myCheckCompletionChar));
+        }
+      }, "", null);
     };
     ApplicationManager.getApplication().invokeLater(runnable);
   }
@@ -122,9 +117,11 @@ public abstract class BaseCompleteMacro extends Macro {
 
   private static class MyLookupListener extends LookupAdapter {
     private final ExpressionContext myContext;
+    private final boolean myCheckCompletionChar;
 
-    public MyLookupListener(@NotNull ExpressionContext context) {
+    public MyLookupListener(@NotNull final ExpressionContext context, final boolean checkCompletionChar) {
       myContext = context;
+      myCheckCompletionChar = checkCompletionChar;
     }
 
     @Override
@@ -133,7 +130,7 @@ public abstract class BaseCompleteMacro extends Macro {
       if (item == null) return;
 
       char c = event.getCompletionChar();
-      if (!LookupEvent.isSpecialCompletionChar(c)) {
+      if (myCheckCompletionChar && !LookupEvent.isSpecialCompletionChar(c)) {
         return;
       }
 
@@ -148,20 +145,15 @@ public abstract class BaseCompleteMacro extends Macro {
         return;
       }
       
-      Runnable runnable = new Runnable() {
+      Runnable runnable = () -> new WriteCommandAction(project) {
         @Override
-        public void run() {
-          new WriteCommandAction(project) {
-            @Override
-            protected void run(@NotNull com.intellij.openapi.application.Result result) throws Throwable {
-              Editor editor = myContext.getEditor();
-              if (editor != null) {
-                considerNextTab(editor);
-              }
-            }
-          }.execute();
+        protected void run(@NotNull com.intellij.openapi.application.Result result) throws Throwable {
+          Editor editor = myContext.getEditor();
+          if (editor != null) {
+            considerNextTab(editor);
+          }
         }
-      };
+      }.execute();
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         runnable.run();
       } else {

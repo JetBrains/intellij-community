@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.Function;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +59,7 @@ public class DefaultLogger extends Logger {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     t = checkException(t);
+    message += attachmentsToString(t);
     System.err.println("ERROR: " + message);
     if (t != null) t.printStackTrace(System.err);
     if (details.length > 0) {
@@ -72,4 +76,22 @@ public class DefaultLogger extends Logger {
 
   @Override
   public void setLevel(Level level) { }
+
+  public static String attachmentsToString(@Nullable Throwable t) {
+    //noinspection ThrowableResultOfMethodCallIgnored
+    Throwable rootCause = t == null ? null : ExceptionUtil.getRootCause(t);
+    if (rootCause instanceof ExceptionWithAttachments) {
+      return "\nAttachments:" + StringUtil.join(((ExceptionWithAttachments)rootCause).getAttachments(),
+                                                new Function<Attachment, String>() {
+                                                  @Override
+                                                  public String fun(Attachment attachment) {
+                                                    return attachment.getPath() + "\n" + attachment.getDisplayText();
+                                                  }
+                                                },
+                                                "\n----\n");
+    }
+    return "";
+  }
+
+
 }

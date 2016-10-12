@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -41,10 +42,12 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
-@Deprecated
 public class ImageLoader implements Serializable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
+
+  private static final ConcurrentMap<String, Image> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private static class ImageDesc {
     public enum Type {
@@ -68,31 +71,48 @@ public class ImageLoader implements Serializable {
     public final @Nullable Class cls; // resource class if present
     public final float scale; // initial scale factor
     public final Type type;
+    public final boolean original; // path is not altered
 
     public ImageDesc(String path, Class cls, float scale, Type type) {
+      this(path, cls, scale, type, false);
+    }
+
+    public ImageDesc(String path, Class cls, float scale, Type type, boolean original) {
       this.path = path;
       this.cls = cls;
       this.scale = scale;
       this.type = type;
+      this.original = original;
     }
 
     @Nullable
     public Image load() throws IOException {
+      String cacheKey = null;
       InputStream stream = null;
       URL url = null;
       if (cls != null) {
+        //noinspection IOResourceOpenedButNotSafelyClosed
         stream = cls.getResourceAsStream(path);
         if (stream == null) return null;
       }
       if (stream == null) {
+        cacheKey = path;
+        Image image = ourCache.get(cacheKey);
+        if (image != null) return image;
+
         url = new URL(path);
         URLConnection connection = url.openConnection();
         if (connection instanceof HttpURLConnection) {
+          if (!original) return null;
           connection.addRequestProperty("User-Agent", "IntelliJ");
         }
         stream = connection.getInputStream();
       }
-      return type.load(url, stream, scale);
+      Image image = type.load(url, stream, scale);
+      if (image != null && cacheKey != null) {
+        ourCache.put(cacheKey, image);
+      }
+      return image;
     }
 
     @Override
@@ -159,7 +179,7 @@ public class ImageLoader implements Serializable {
           vars.add(new ImageDesc(name + "@2x." + ext, cls, 2f, ImageDesc.Type.PNG));
         }
       }
-      vars.add(new ImageDesc(file, cls, 1f, ImageDesc.Type.PNG));
+      vars.add(new ImageDesc(file, cls, 1f, ImageDesc.Type.PNG, true));
       return vars;
     }
   }
@@ -274,8 +294,13 @@ public class ImageLoader implements Serializable {
 
   @NotNull
   private static Image scaleImage(Image image, float scale) {
-    int width = (int)(scale * image.getWidth(null));
-    int height = (int)(scale * image.getHeight(null));
+    int w = image.getWidth(null);
+    int h = image.getHeight(null);
+    if (w <= 0 || h <= 0) {
+      return image;
+    }
+    int width = (int)(scale * w);
+    int height = (int)(scale * h);
     // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
     // because ultra quality performs a few more passes when scaling, which introduces blurriness
     // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.

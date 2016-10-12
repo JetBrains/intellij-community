@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,24 +26,16 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import java.util.HashSet;
 import java.util.List;
 
-
 public class MethodWrapper {
-
   public final RootStatement root;
-
   public final VarProcessor varproc;
-
   public final StructMethod methodStruct;
-
   public final CounterContainer counter;
+  public final HashSet<String> setOuterVarNames = new HashSet<String>();
 
   public DirectGraph graph;
-
   public List<VarVersionPair> signatureFields;
-
   public boolean decompiledWithErrors;
-
-  public final HashSet<String> setOuterVarNames = new HashSet<String>();
 
   public MethodWrapper(RootStatement root, VarProcessor varproc, StructMethod methodStruct, CounterContainer counter) {
     this.root = root;
@@ -54,8 +46,7 @@ public class MethodWrapper {
 
   public DirectGraph getOrBuildGraph() {
     if (graph == null && root != null) {
-      FlattenStatementsHelper flatthelper = new FlattenStatementsHelper();
-      graph = flatthelper.buildDirectGraph(root);
+      graph = new FlattenStatementsHelper().buildDirectGraph(root);
     }
     return graph;
   }

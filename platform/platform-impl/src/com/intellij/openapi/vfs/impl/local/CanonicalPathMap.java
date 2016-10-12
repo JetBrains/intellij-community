@@ -15,26 +15,18 @@
  */
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.stream.Stream;
+import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -68,15 +60,11 @@ class CanonicalPathMap {
   private static Map<String, String> resolvePaths(Collection<String> recursiveRoots, Collection<String> flatRoots) {
     Map<String, String> result = ContainerUtil.newConcurrentMap();
 
-    ExecutorService pool = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, Runtime.getRuntime().availableProcessors());
-    CompletableFuture<?>[] futures = Stream.concat(recursiveRoots.stream(), flatRoots.stream())
-      .map(root -> CompletableFuture.runAsync(() -> ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result), pool))
-      .toArray(CompletableFuture[]::new);
-
-    try { CompletableFuture.allOf(futures).get(); }
-    catch (InterruptedException | ExecutionException e) {
-      LOG.error(e);
-    }
+    List<String> roots = ContainerUtil.concat(Arrays.asList(recursiveRoots, flatRoots));
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(roots, null, false, false, root -> {
+      ContainerUtil.putIfNotNull(root, FileSystemUtil.resolveSymLink(root), result);
+      return true;
+    });
 
     return result;
   }
@@ -133,7 +121,7 @@ class CanonicalPathMap {
    * of the recursive root because if the root itself was changed, we need to know about it.
    */
   @NotNull
-  public Collection<String> getWatchedPaths(@NotNull String reportedPath, boolean isExact, boolean fastPath) {
+  public Collection<String> getWatchedPaths(@NotNull String reportedPath, boolean isExact) {
     if (myFlatWatchRoots.isEmpty() && myRecursiveWatchRoots.isEmpty()) return Collections.emptyList();
 
     Collection<String> affectedPaths = applyMapping(reportedPath);
@@ -141,8 +129,6 @@ class CanonicalPathMap {
 
     ext:
     for (String path : affectedPaths) {
-      if (fastPath && !changedPaths.isEmpty()) break;
-
       for (String root : myFlatWatchRoots) {
         if (FileUtil.namesEqual(path, root)) {
           changedPaths.add(path);
@@ -155,6 +141,13 @@ class CanonicalPathMap {
             continue ext;
           }
         }
+        else {
+          String rootParent = new File(root).getParent();
+          if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
+            changedPaths.add(root);
+            continue ext;
+          }
+        }
       }
 
       for (String root : myRecursiveWatchRoots) {
@@ -163,8 +156,8 @@ class CanonicalPathMap {
           continue ext;
         }
         if (!isExact) {
-          String parentPath = new File(root).getParent();
-          if (parentPath != null && FileUtil.namesEqual(path, parentPath)) {
+          String rootParent = new File(root).getParent();
+          if (rootParent != null && FileUtil.namesEqual(path, rootParent)) {
             changedPaths.add(root);
             continue ext;
           }
@@ -172,7 +165,7 @@ class CanonicalPathMap {
       }
     }
 
-    if (!fastPath && changedPaths.isEmpty() && LOG.isDebugEnabled()) {
+    if (changedPaths.isEmpty() && LOG.isDebugEnabled()) {
       LOG.debug("Not watchable, filtered: " + reportedPath);
     }
 

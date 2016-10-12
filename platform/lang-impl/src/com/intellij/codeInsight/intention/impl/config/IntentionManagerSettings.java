@@ -164,23 +164,20 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
     final TextDescriptor description = metaData.getDescription();
-    ourRegisterMetaDataAlarm.addRequest(new Runnable(){
-      @Override
-      public void run() {
-        try {
-          SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
-          if (registrar == null) return;
-          @NonNls String descriptionText = description.getText().toLowerCase();
-          descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
-          final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
-          words.addAll(registrar.getProcessedWords(metaData.getFamily()));
-          for (String word : words) {
-            registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
-          }
+    ourRegisterMetaDataAlarm.addRequest(() -> {
+      try {
+        SearchableOptionsRegistrar registrar = SearchableOptionsRegistrar.getInstance();
+        if (registrar == null) return;
+        @NonNls String descriptionText = description.getText().toLowerCase();
+        descriptionText = HTML_PATTERN.matcher(descriptionText).replaceAll(" ");
+        final Set<String> words = registrar.getProcessedWordsWithoutStemming(descriptionText);
+        words.addAll(registrar.getProcessedWords(metaData.getFamily()));
+        for (String word : words) {
+          registrar.addOption(word, metaData.getFamily(), metaData.getFamily(), IntentionSettingsConfigurable.HELP_ID, IntentionSettingsConfigurable.DISPLAY_NAME);
         }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }, 0);
   }

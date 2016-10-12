@@ -137,8 +137,10 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       for (int i = states.length - 1; i >= 0; i--) {
         final FileEditorProvider provider = oldProviders [i];
         LOG.assertTrue(provider != null);
+        FileEditor editor = editors[i];
+        if (!editor.isValid()) continue;
         providers[i] = provider;
-        states[i] = editors[i].getState(FileEditorStateLevel.FULL);
+        states[i] = editor.getState(FileEditorStateLevel.FULL);
       }
       addEntry(HistoryEntry.createHeavy(myProject, file, providers, states, providers[selectedProviderIndex]));
       trimToSize();
@@ -378,12 +380,9 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     public void selectionChanged(@NotNull final FileEditorManagerEvent event){
       // updateHistoryEntry does commitDocument which is 1) very expensive and 2) cannot be performed from within PSI change listener
       // so defer updating history entry until documents committed to improve responsiveness
-      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(new Runnable() {
-        @Override
-        public void run() {
-          updateHistoryEntry(event.getOldFile(), event.getOldEditor(), event.getOldProvider(), false);
-          updateHistoryEntry(event.getNewFile(), true);
-        }
+      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> {
+        updateHistoryEntry(event.getOldFile(), event.getOldEditor(), event.getOldProvider(), false);
+        updateHistoryEntry(event.getNewFile(), true);
       });
     }
   }

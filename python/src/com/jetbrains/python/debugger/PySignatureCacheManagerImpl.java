@@ -273,25 +273,20 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   @Override
   public void clearCache() {
     final Ref<Boolean> deleted = Ref.create(false);
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-
-      @Override
-      public void run() {
-        ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(new ContentIterator() {
-          @Override
-          public boolean processFile(VirtualFile fileOrDir) {
-            if (readAttribute(fileOrDir) != null) {
-              writeAttribute(fileOrDir, "");
-              deleted.set(true);
-            }
-            if (ProgressManager.getInstance().getProgressIndicator().isCanceled()) {
-              return false;
-            }
-            return true;
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      (Runnable)() -> ProjectFileIndex.SERVICE.getInstance(myProject).iterateContent(new ContentIterator() {
+        @Override
+        public boolean processFile(VirtualFile fileOrDir) {
+          if (readAttribute(fileOrDir) != null) {
+            writeAttribute(fileOrDir, "");
+            deleted.set(true);
           }
-        });
-      }
-    }, "Cleaning the Cache of Dynamically Collected Types", true, myProject);
+          if (ProgressManager.getInstance().getProgressIndicator().isCanceled()) {
+            return false;
+          }
+          return true;
+        }
+      }), "Cleaning the Cache of Dynamically Collected Types", true, myProject);
 
 
     String message;

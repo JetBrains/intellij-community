@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,14 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +51,7 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
 
   protected final JPanel myPanel;
   protected final JCheckBox myAmend;
-  @Nullable private String myPreviousMessage;
+  @NotNull private final String myPreviousMessage;
   @Nullable private String myAmendedMessage;
   @NotNull protected final CheckinProjectPanel myCheckinPanel;
   @Nullable  private  Map<VirtualFile, String> myMessagesForRoots;
@@ -57,7 +59,7 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
   public DvcsCommitAdditionalComponent(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
     myCheckinPanel = panel;
     myPanel = new JPanel(new GridBagLayout());
-    final Insets insets = new Insets(2, 2, 2, 2);
+    final Insets insets = JBUI.insets(2);
     // add amend checkbox
     GridBagConstraints c = new GridBagConstraints();
     //todo change to MigLayout
@@ -140,8 +142,8 @@ public abstract class DvcsCommitAdditionalComponent implements RefreshableOnComp
   }
 
   private void substituteCommitMessage(@NotNull String newMessage) {
-    myPreviousMessage = myCheckinPanel.getCommitMessage();
-    if (!myPreviousMessage.trim().equals(newMessage.trim())) {
+    if (!StringUtil.equalsIgnoreWhitespaces(myPreviousMessage, newMessage)) {
+      VcsConfiguration.getInstance(myCheckinPanel.getProject()).saveCommitMessage(myPreviousMessage);
       myCheckinPanel.setCommitMessage(newMessage);
     }
   }

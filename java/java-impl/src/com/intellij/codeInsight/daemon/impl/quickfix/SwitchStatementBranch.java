@@ -30,8 +30,8 @@ class SwitchStatementBranch {
     new ArrayList<PsiElement>(5);
   private final List<PsiElement> m_pendingWhiteSpace =
     new ArrayList<PsiElement>(2);
-  private boolean m_default = false;
-  private boolean m_hasStatements = false;
+  private boolean m_default;
+  private boolean m_hasStatements;
 
   public void addCaseValue(String labelString) {
     m_caseValues.add(labelString);

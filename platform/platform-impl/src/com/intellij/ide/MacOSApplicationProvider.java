@@ -25,6 +25,9 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,29 +39,40 @@ import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.color.ColorSpace;
+import java.awt.color.ICC_ColorSpace;
+import java.awt.color.ICC_Profile;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 
 /**
  * @author max
  */
 public class MacOSApplicationProvider implements ApplicationComponent {
+  private static final Logger LOG = Logger.getInstance(MacOSApplicationProvider.class);
   private static final Callback IMPL = new Callback() {
     @SuppressWarnings("unused")
     public void callback(ID self, String selector) {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ActionManagerEx am = ActionManagerEx.getInstanceEx();
-          MouseEvent me = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
-          am.tryToExecute(am.getAction("CheckForUpdate"), me, null, null, false);
-        }
+      SwingUtilities.invokeLater(() -> {
+        ActionManagerEx am = ActionManagerEx.getInstanceEx();
+        MouseEvent me = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
+        am.tryToExecute(am.getAction("CheckForUpdate"), me, null, null, false);
       });
     }
   };
+  private static final String GENERIC_RGB_PROFILE_PATH = "/System/Library/ColorSync/Profiles/Generic RGB Profile.icc";
+
+  private final ColorSpace genericRgbColorSpace;
+  
+  public static MacOSApplicationProvider getInstance() {
+    return ApplicationManager.getApplication().getComponent(MacOSApplicationProvider.class);
+  }
 
   public MacOSApplicationProvider() {
     if (SystemInfo.isMac) {
@@ -66,8 +80,23 @@ public class MacOSApplicationProvider implements ApplicationComponent {
         Worker.initMacApplication();
       }
       catch (Throwable t) {
-        Logger.getInstance(MacOSApplicationProvider.class).warn(t);
+        LOG.warn(t);
       }
+      genericRgbColorSpace = initializeNativeColorSpace();
+    }
+    else {
+      genericRgbColorSpace = null;
+    }
+  }
+
+  private static ColorSpace initializeNativeColorSpace() {
+    try (InputStream is = new FileInputStream(GENERIC_RGB_PROFILE_PATH)) {
+      ICC_Profile profile = ICC_Profile.getInstance(is);
+      return new ICC_ColorSpace(profile);
+    }
+    catch (Throwable e) {
+      LOG.warn("Couldn't load generic RGB color profile", e);
+      return null;
     }
   }
 
@@ -83,6 +112,11 @@ public class MacOSApplicationProvider implements ApplicationComponent {
   @Override
   public void disposeComponent() { }
 
+  @Nullable
+  public ColorSpace getGenericRgbColorSpace() {
+    return genericRgbColorSpace;
+  }
+
   private static class Worker {
     @SuppressWarnings("deprecation")
     public static void initMacApplication() {
@@ -96,21 +130,25 @@ public class MacOSApplicationProvider implements ApplicationComponent {
 
         @Override
         public void handlePreferences(ApplicationEvent applicationEvent) {
-          Project project = getProject();
-
-          if (project == null) {
-            project = ProjectManager.getInstance().getDefaultProject();
-          }
-
-          if (!((ShowSettingsUtilImpl)ShowSettingsUtil.getInstance()).isAlreadyShown()) {
-            ShowSettingsUtil.getInstance().showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true));
+          Project project = getNotNullProject();
+          ShowSettingsUtilImpl showSettingsUtil = (ShowSettingsUtilImpl)ShowSettingsUtil.getInstance();
+          if (!showSettingsUtil.isAlreadyShown()) {
+            TransactionGuard.submitTransaction(project, () ->
+              showSettingsUtil.showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true)));
           }
           applicationEvent.setHandled(true);
         }
 
+        @NotNull
+        private Project getNotNullProject() {
+          Project project = getProject();
+          return project == null ? ProjectManager.getInstance().getDefaultProject() : project;
+        }
+
         @Override
         public void handleQuit(ApplicationEvent applicationEvent) {
-          ApplicationManagerEx.getApplicationEx().exit();
+          ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+          TransactionGuard.submitTransaction(app, app::exit);
         }
 
         @Override
@@ -119,15 +157,17 @@ public class MacOSApplicationProvider implements ApplicationComponent {
           String filename = applicationEvent.getFilename();
           if (filename == null) return;
 
-          File file = new File(filename);
-          if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
-            IdeaApplication.getInstance().setPerformProjectLoad(false);
-            return;
-          }
-          if (project != null && file.exists()) {
-            OpenFileAction.openFile(filename, project);
-            applicationEvent.setHandled(true);
-          }
+          TransactionGuard.submitTransaction(ApplicationManager.getApplication(), () -> {
+            File file = new File(filename);
+            if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
+              IdeaApplication.getInstance().setPerformProjectLoad(false);
+              return;
+            }
+            if (project != null && file.exists()) {
+              OpenFileAction.openFile(filename, project);
+              applicationEvent.setHandled(true);
+            }
+          });
         }
       });
 

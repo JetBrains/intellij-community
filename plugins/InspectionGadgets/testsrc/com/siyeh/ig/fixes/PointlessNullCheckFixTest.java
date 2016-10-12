@@ -31,4 +31,12 @@ public class PointlessNullCheckFixTest extends IGQuickFixesTestCase {
   public void testScenario1() {
     doTest(InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", "arg != null"));
   }
+
+  public void testPolyadicExpression() {
+    doTest(InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", "arg != null"));
+  }
+
+  public void testPolyadicExpression2() {
+    doTest(InspectionGadgetsBundle.message("pointless.nullcheck.simplify.quickfix", "arg != null"));
+  }
 }

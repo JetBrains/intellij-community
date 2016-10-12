@@ -50,13 +50,10 @@ public class ExternalProjectPathLookupElement extends LookupElement {
   public void handleInsert(InsertionContext context) {
     Editor editor = context.getEditor();
     final FoldingModel foldingModel = editor.getFoldingModel();
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        FoldRegion[] regions = foldingModel.getAllFoldRegions();
-        for (FoldRegion region : regions) {
-          foldingModel.removeFoldRegion(region);
-        }
+    foldingModel.runBatchFoldingOperation(() -> {
+      FoldRegion[] regions = foldingModel.getAllFoldRegions();
+      for (FoldRegion region : regions) {
+        foldingModel.removeFoldRegion(region);
       }
     });
     
@@ -67,13 +64,10 @@ public class ExternalProjectPathLookupElement extends LookupElement {
     final Project project = context.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(document);
     
-    foldingModel.runBatchFoldingOperationDoNotCollapseCaret(new Runnable() {
-      @Override
-      public void run() {
-        FoldRegion region = foldingModel.addFoldRegion(startOffset, startOffset + myProjectPath.length(), myProjectName);
-        if (region != null) {
-          region.setExpanded(false);
-        }
+    foldingModel.runBatchFoldingOperationDoNotCollapseCaret(() -> {
+      FoldRegion region = foldingModel.addFoldRegion(startOffset, startOffset + myProjectPath.length(), myProjectName);
+      if (region != null) {
+        region.setExpanded(false);
       }
     });
   }

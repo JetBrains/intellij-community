@@ -52,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GitLogProvider implements VcsLogProvider {
 
@@ -235,7 +236,8 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   private static String printLogData(@NotNull DetailedLogData firstBlockSyncData) {
-    return String.format("Last 100 commits:\n%s\nRefs:\n%s", printCommits(firstBlockSyncData.getCommits()), printRefs(firstBlockSyncData.getRefs()));
+    return String
+      .format("Last 100 commits:\n%s\nRefs:\n%s", printCommits(firstBlockSyncData.getCommits()), printRefs(firstBlockSyncData.getRefs()));
   }
 
   @NotNull
@@ -461,10 +463,12 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     if (filterCollection.getUserFilter() != null) {
-      String authorFilter =
-        StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.INSTANCE), "|");
-      filterParameters.add(prepareParameter("author", StringUtil.escapeBackSlashes(authorFilter)));
-      filterParameters.add("--extended-regexp"); // extended regexp required for correctly filtering user names
+      List<String> authors = ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.BASIC_INSTANCE);
+      if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs.getVersion())) {
+        filterParameters.add(prepareParameter("author", StringUtil.join(authors, "\\|")));
+      } else {
+        filterParameters.addAll(authors.stream().map(a -> prepareParameter("author", a)).collect(Collectors.toList()));
+      }
     }
 
     if (filterCollection.getDateFilter() != null) {
@@ -571,5 +575,4 @@ public class GitLogProvider implements VcsLogProvider {
   private static <T> Set<T> newHashSet(@NotNull Collection<T> initialCollection) {
     return new THashSet<T>(initialCollection);
   }
-
 }

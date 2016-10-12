@@ -89,11 +89,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -104,7 +100,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
-  protected static final Collection<File> myFilesToDelete = new HashSet<File>();
+  protected static final Collection<File> myFilesToDelete = new HashSet<>();
   protected boolean myAssertionsInTestDetected;
   protected static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.PlatformTestCase");
   public static Thread ourTestThread;
@@ -177,6 +173,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
   }
 
+  @NotNull
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
     if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
@@ -379,8 +376,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
     }
 
-    ProjectManagerImpl projectManager = (ProjectManagerImpl)ProjectManager.getInstance();
-    if (projectManager.isDefaultProjectInitialized()) {
+    final ProjectManager projectManager = ProjectManager.getInstance();
+    assert projectManager != null : "The ProjectManager is not initialized yet";
+    ProjectManagerImpl projectManagerImpl = (ProjectManagerImpl)projectManager;
+    if (projectManagerImpl.isDefaultProjectInitialized()) {
       Project defaultProject = projectManager.getDefaultProject();
       ((PsiManagerImpl)PsiManager.getInstance(defaultProject)).cleanupForNextTest();
     }
@@ -399,7 +398,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       return ourEternallyLivingFilesCache;
     }
 
-    Set<VirtualFile> survivors = new HashSet<VirtualFile>();
+    Set<VirtualFile> survivors = new HashSet<>();
 
     for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensions()) {
       for (VirtualFile file : IndexableSetContributor.getRootsToIndex(contributor)) {
@@ -437,7 +436,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @Override
   protected void tearDown() throws Exception {
-    List<Throwable> exceptions = new SmartList<Throwable>();
+    List<Throwable> exceptions = new SmartList<>();
     Project project = myProject;
     if (project != null) {
       try {
@@ -564,15 +563,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       exceptions.add(e);
     }
     finally {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            Disposer.dispose(projectToClose);
-          }
-          catch (Throwable e) {
-            exceptions.add(e);
-          }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          Disposer.dispose(projectToClose);
+        }
+        catch (Throwable e) {
+          exceptions.add(e);
         }
       });
     }
@@ -636,12 +632,9 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
     finally {
       try {
-        SwingUtilities.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            cleanupApplicationCaches(getProject());
-            resetAllFields();
-          }
+        SwingUtilities.invokeAndWait(() -> {
+          cleanupApplicationCaches(getProject());
+          resetAllFields();
         });
       }
       catch (Throwable e) {
@@ -651,54 +644,51 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private void runBareImpl() throws Throwable {
-    ThrowableRunnable<Throwable> runnable = new ThrowableRunnable<Throwable>() {
-      @Override
-      public void run() throws Throwable {
-        ourTestThread = Thread.currentThread();
-        ourTestTime = DEFAULT_TEST_TIME;
+    ThrowableRunnable<Throwable> runnable = () -> {
+      ourTestThread = Thread.currentThread();
+      ourTestTime = DEFAULT_TEST_TIME;
+      try {
         try {
+          myAssertionsInTestDetected = true;
+          setUp();
+          myAssertionsInTestDetected = false;
+        }
+        catch (Throwable e) {
           try {
-            myAssertionsInTestDetected = true;
-            setUp();
-            myAssertionsInTestDetected = false;
+            tearDown();
           }
-          catch (Throwable e) {
-            try {
-              tearDown();
-            }
-            catch (Throwable ignored) {
-            }
-
-            throw e;
+          catch (Throwable ignored) {
           }
 
-          Throwable exception = null;
-          try {
-            myAssertionsInTestDetected = true;
-            runTest();
-            myAssertionsInTestDetected = false;
-          }
-          catch (Throwable e) {
-            exception = e;
-          }
-          finally {
-            try {
-              tearDown();
-            }
-            catch (Throwable e) {
-              if (exception == null) {
-                exception = e;
-              }
-            }
-          }
+          throw e;
+        }
 
-          if (exception != null) {
-            throw exception;
-          }
+        Throwable exception = null;
+        try {
+          myAssertionsInTestDetected = true;
+          runTest();
+          myAssertionsInTestDetected = false;
+        }
+        catch (Throwable e) {
+          exception = e;
         }
         finally {
-          ourTestThread = null;
+          try {
+            tearDown();
+          }
+          catch (Throwable e) {
+            if (exception == null) {
+              exception = e;
+            }
+          }
         }
+
+        if (exception != null) {
+          throw exception;
+        }
+      }
+      finally {
+        ourTestThread = null;
       }
     };
 
@@ -741,20 +731,17 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Override
   protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     final Exception[] e = new Exception[1];
-    Runnable runnable1 = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (ApplicationManager.getApplication().isDispatchThread() && isRunInWriteAction()) {
-            ApplicationManager.getApplication().runWriteAction(runnable);
-          }
-          else {
-            runnable.run();
-          }
+    Runnable runnable1 = () -> {
+      try {
+        if (ApplicationManager.getApplication().isDispatchThread() && isRunInWriteAction()) {
+          ApplicationManager.getApplication().runWriteAction(runnable);
         }
-        catch (Exception e1) {
-          e[0] = e1;
+        else {
+          runnable.run();
         }
+      }
+      catch (Exception e1) {
+        e[0] = e1;
       }
     };
 
@@ -818,12 +805,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (bom != null) {
       stream.write(bom);
     }
-    OutputStreamWriter writer = new OutputStreamWriter(stream, charset);
-    try {
+    try (OutputStreamWriter writer = new OutputStreamWriter(stream, charset)) {
       writer.write(content);
-    }
-    finally {
-      writer.close();
     }
   }
 
@@ -917,7 +900,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     VfsTestUtil.deleteFile(vFile1);
   }
 
-  protected static void move(@NotNull final VirtualFile vFile1, @NotNull final VirtualFile newFile) {
+  public static void move(@NotNull final VirtualFile vFile1, @NotNull final VirtualFile newFile) {
     new WriteCommandAction.Simple(null) {
       @Override
       protected void run() throws Throwable {

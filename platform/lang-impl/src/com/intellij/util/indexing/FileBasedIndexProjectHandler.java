@@ -23,6 +23,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -38,7 +39,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,35 +75,27 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
 
     final StartupManagerEx startupManager = (StartupManagerEx)StartupManager.getInstance(project);
     if (startupManager != null) {
-      startupManager.registerPreStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
+      startupManager.registerPreStartupActivity(() -> {
+        PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
 
-          // dumb mode should start before post-startup activities
-          // only when queueTask is called from UI thread, we can guarantee that
-          // when the method returns, the application has entered dumb mode
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              if (!project.isDisposed() && FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-                DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, true));
-              }
-            }
-          });
+        // schedule dumb mode start after the read action we're currently in
+        TransactionGuard.submitTransaction(project, () -> {
+          if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
+            DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, true));
+          }
+        });
 
-          myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
-          projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
-            private boolean removed;
-            @Override
-            public void projectClosing(Project project) {
-              if (!removed) {
-                removed = true;
-                myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
-              }
+        myIndex.registerIndexableSet(FileBasedIndexProjectHandler.this, project);
+        projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+          private boolean removed;
+          @Override
+          public void projectClosing(Project project1) {
+            if (!removed) {
+              removed = true;
+              myIndex.removeIndexableSet(FileBasedIndexProjectHandler.this);
             }
-          });
-        }
+          }
+        });
       });
     }
   }
@@ -164,11 +156,6 @@ public class FileBasedIndexProjectHandler extends AbstractProjectComponent imple
                                             Collection<VirtualFile> files,
                                             final Project project,
                                             final FileBasedIndexImpl index) {
-    CacheUpdateRunner.processFiles(indicator, true, files, project, new Consumer<FileContent>() {
-      @Override
-      public void consume(FileContent content) {
-        index.processRefreshedFile(project, content);
-      }
-    });
+    CacheUpdateRunner.processFiles(indicator, true, files, project, content -> index.processRefreshedFile(project, content));
   }
 }

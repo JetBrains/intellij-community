@@ -59,5 +59,4 @@ public interface VcsLogRefManager {
    */
   @NotNull
   List<RefGroup> group(Collection<VcsRef> refs);
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,24 +123,6 @@ public class PsiExpressionListImpl extends CompositePsiElement implements PsiExp
     TreeElement firstAdded = super.addInternal(first, last, anchor, before);
     if (ElementType.EXPRESSION_BIT_SET.contains(first.getElementType())) {
       JavaSourceUtil.addSeparatingComma(this, first, ElementType.EXPRESSION_BIT_SET);
-      /*ASTNode element = first;
-      for (ASTNode child = element.getTreeNext(); child != null; child = child.getTreeNext()) {
-        if (child.getElementType() == JavaTokenType.COMMA) break;
-        if (ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) {
-          TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, element, Boolean.FALSE);
-          break;
-        }
-      }
-      for (ASTNode child = element.getTreePrev(); child != null; child = child.getTreePrev()) {
-        final IElementType t = child.getElementType();
-        if (t == JavaTokenType.COMMA) break;
-        if (ElementType.EXPRESSION_BIT_SET.contains(t) || ElementType.JAVA_COMMENT_BIT_SET.contains(t)) {
-          TreeElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", 0, 1, treeCharTab, getManager());
-          super.addInternal(comma, comma, child, Boolean.FALSE);
-          break;
-        }
-      }*/
     }
     return firstAdded;
   }

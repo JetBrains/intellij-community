@@ -97,9 +97,11 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
   @Override
   protected GrVariable runRefactoring(GrIntroduceContext context, GrIntroduceFieldSettings settings, boolean processUsages) {
+    return refactorInWriteAction(() -> {
       GrIntroduceFieldProcessor processor = new GrIntroduceFieldProcessor(context, settings);
       return processUsages ? processor.run()
                            : processor.insertField((PsiClass)context.getScope()).getVariables()[0];
+    });
   }
 
   @Nullable

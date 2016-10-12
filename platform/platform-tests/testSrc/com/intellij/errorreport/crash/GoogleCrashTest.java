@@ -26,7 +26,6 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.multipart.Attribute;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
-import org.assertj.core.util.Maps;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
@@ -46,6 +45,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -94,7 +94,7 @@ public class GoogleCrashTest {
   @Test
   public void checkServerReceivesPostedData() throws Exception {
     String expectedReportId = "deadcafe";
-    Map<String,String> attributes = Maps.newConcurrentHashMap();
+    Map<String,String> attributes = new ConcurrentHashMap<>();
 
     myTestServer.setResponseSupplier(httpRequest -> {
       if (httpRequest.method() != HttpMethod.POST) {

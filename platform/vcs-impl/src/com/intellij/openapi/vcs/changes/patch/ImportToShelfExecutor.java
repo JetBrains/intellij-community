@@ -62,7 +62,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
   }
 
   @Override
-  public void apply(@NotNull final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+  public void apply(@NotNull List<FilePatch> remaining, @NotNull final MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable final String fileName,
                     @Nullable final TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
@@ -76,9 +76,9 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor<TextFilePatchIn
         final VirtualFile baseDir = myProject.getBaseDir();
         final File ioBase = new File(baseDir.getPath());
         final List<FilePatch> allPatches = new ArrayList<FilePatch>();
-        for (VirtualFile virtualFile : patchGroups.keySet()) {
+        for (VirtualFile virtualFile : patchGroupsToApply.keySet()) {
           final File ioCurrentBase = new File(virtualFile.getPath());
-          allPatches.addAll(ContainerUtil.map(patchGroups.get(virtualFile), new Function<TextFilePatchInProgress, TextFilePatch>() {
+          allPatches.addAll(ContainerUtil.map(patchGroupsToApply.get(virtualFile), new Function<TextFilePatchInProgress, TextFilePatch>() {
             public TextFilePatch fun(TextFilePatchInProgress patchInProgress) {
               final TextFilePatch was = patchInProgress.getPatch();
               was.setBeforeName(

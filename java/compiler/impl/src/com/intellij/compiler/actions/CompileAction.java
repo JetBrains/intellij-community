@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,12 +35,12 @@ import java.util.List;
 
 public class CompileAction extends CompileActionBase {
   protected void doAction(DataContext dataContext, Project project) {
-    final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
+    final Module module = dataContext.getData(LangDataKeys.MODULE_CONTEXT);
     if (module != null) {
       CompilerManager.getInstance(project).compile(module, null);
     }
     else {
-      VirtualFile[] files = getCompilableFiles(project, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+      VirtualFile[] files = getCompilableFiles(project, dataContext.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
       if (files.length > 0) {
         CompilerManager.getInstance(project).compile(files, null);
       }
@@ -48,30 +48,29 @@ public class CompileAction extends CompileActionBase {
 
   }
 
-  public void update(AnActionEvent event) {
-    super.update(event);
-    Presentation presentation = event.getPresentation();
+  public void update(AnActionEvent e) {
+    super.update(e);
+    Presentation presentation = e.getPresentation();
     if (!presentation.isEnabled()) {
       return;
     }
-    DataContext dataContext = event.getDataContext();
 
     presentation.setText(ActionsBundle.actionText(IdeActions.ACTION_COMPILE));
     presentation.setVisible(true);
 
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Project project = e.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
-    final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
+    final Module module = e.getData(LangDataKeys.MODULE_CONTEXT);
 
-    final VirtualFile[] files = getCompilableFiles(project, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    final VirtualFile[] files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
-      presentation.setVisible(!ActionPlaces.isPopupPlace(event.getPlace()));
+      presentation.setVisible(!ActionPlaces.isPopupPlace(e.getPlace()));
       return;
     }
 
@@ -88,7 +87,7 @@ public class CompileAction extends CompileActionBase {
         }
       }
       else {
-        PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+        PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
         if (element instanceof PsiPackage) {
           aPackage = (PsiPackage)element;
         }
@@ -110,7 +109,7 @@ public class CompileAction extends CompileActionBase {
           elementDescription = "'" + file.getName() + "'";
         }
         else {
-          if (!ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
+          if (!ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
             // the action should be invisible in popups for non-java files
             presentation.setEnabled(false);
             presentation.setVisible(false);

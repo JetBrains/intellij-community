@@ -4,7 +4,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <search.topHitProvider implementation="org.intellij.images.options.impl.ImagesOptionsTopHitProvider"/>
-    <applicationConfigurable groupId="editor" instance="org.intellij.images.options.impl.OptionsConfigurabe" id="Images" displayName="Images"/>
+    <applicationConfigurable groupId="editor" instance="org.intellij.images.options.impl.ImagesConfigurable" id="Images" displayName="Images"/>
     <fileEditorProvider implementation="org.intellij.images.editor.impl.ImageFileEditorProvider"/>
     <selectInTarget implementation="org.intellij.images.thumbnail.impl.ThumbnailSelectInTarget"/>
 
@@ -18,6 +18,8 @@
     <fileBasedIndex implementation="org.intellij.images.index.ImageInfoIndex"/>
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
+
+    <statistics.usagesCollector implementation="org.intellij.images.statistics.BackgroundImagesUsageCollector"/>
   </extensions>
 
   <actions>
@@ -39,6 +41,12 @@
             icon="ImagesIcons.ToggleTransparencyChessboard"
             text="Show Chessboard"
             description="Show a chessboard on transparent image parts">
+    </action>
+    <action class="org.intellij.images.editor.actions.SetBackgroundImageAction"
+            id="Images.SetBackgroundImage"
+            text="Set Background Image">
+      <add-to-group group-id="ProjectViewPopupMenu"/>
+      <add-to-group group-id="EditorPopupMenu3"/>
     </action>
     <group id="Images.EditorToolbar">
       <reference id="Images.ToggleTransparencyChessboard"/>
@@ -76,7 +84,7 @@
       <separator/>
       <reference id="Images.EditorToolbar"/>
       <separator/>
-      <reference id="CloseEditor"/>
+      <reference id="Images.SetBackgroundImage"/>
       <separator/>
       <reference id="AddToFavorites"/>
       <separator/>

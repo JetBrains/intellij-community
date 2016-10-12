@@ -11,14 +11,20 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.jetbrains.edu.courseFormat.Course;
 import com.jetbrains.edu.coursecreator.actions.CCCreateLesson;
 import com.jetbrains.edu.coursecreator.actions.CCCreateTask;
 import com.jetbrains.edu.coursecreator.ui.CCNewProjectPanel;
+import com.jetbrains.edu.learning.StudyTaskManager;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import icons.CourseCreatorPythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -26,6 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
+
+import static com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator.OUR_COURSES_DIR;
 
 
 public class PyCCProjectGenerator extends PythonProjectGenerator implements DirectoryProjectGenerator {
@@ -41,12 +50,6 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
 
   @Nullable
   @Override
-  public Object showGenerationSettings(VirtualFile baseDir) throws ProcessCanceledException {
-    return null;
-  }
-
-  @Nullable
-  @Override
   public Icon getLogo() {
     return CourseCreatorPythonIcons.CourseCreationProjectType;
   }
@@ -54,32 +57,21 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
   @Override
   public void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
                               @Nullable Object settings, @NotNull Module module) {
-    generateProject(project, baseDir, mySettingsPanel.getName(),
-                    mySettingsPanel.getAuthors(), mySettingsPanel.getDescription());
+    generateProject(project, baseDir, mySettingsPanel);
   }
 
-  public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                                     @NotNull final String name, @NotNull final String[] authors,
-                                     @NotNull final String description) {
-    final CCProjectService service = CCProjectService.getInstance(project);
-    final Course course = new Course();
-    course.setName(name);
-    course.setAuthors(authors);
-    course.setDescription(description);
-    course.setLanguage("Python");
-    service.setCourse(course);
+  public static void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir, CCNewProjectPanel settingsPanel) {
+    final Course course = getCourse(project, settingsPanel);
+    EduUsagesCollector.projectTypeCreated(CCUtils.COURSE_MODE);
 
     final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
     if (projectDir == null) return;
     new WriteCommandAction.Simple(project) {
       @Override
       protected void run() throws Throwable {
-        final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("test_helper");
-        try {
-          FileTemplateUtil.createFromTemplate(template, "test_helper.py", null, projectDir);
-        }
-        catch (Exception ignored) {
-        }
+
+        createTestHelper(project, projectDir);
+
         PsiDirectory lessonDir = new CCCreateLesson().createItem(null, project, projectDir, course);
         if (lessonDir == null) {
           LOG.error("Failed to create lesson");
@@ -88,6 +80,35 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
         new CCCreateTask().createItem(null, project, lessonDir, course);
       }
     }.execute();
+  }
+
+  private static void createTestHelper(@NotNull Project project, PsiDirectory projectDir) {
+    final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate(FileUtil.getNameWithoutExtension(EduNames.TEST_HELPER));
+    try {
+      FileTemplateUtil.createFromTemplate(template, EduNames.TEST_HELPER, null, projectDir);
+    }
+    catch (Exception ignored) {
+    }
+  }
+
+  @NotNull
+  private static Course getCourse(@NotNull Project project, @NotNull CCNewProjectPanel settingsPanel) {
+    final Course course = new Course();
+    String name = settingsPanel.getName();
+    course.setName(name);
+    course.setAuthorsAsString(settingsPanel.getAuthors());
+    course.setDescription(settingsPanel.getDescription());
+
+    String language = PythonLanguage.getInstance().getID();
+    course.setLanguage(language);
+    course.setCourseMode(CCUtils.COURSE_MODE);
+
+    File courseDir = new File(OUR_COURSES_DIR, name + "-" + project.getName());
+    course.setCourseDirectory(courseDir.getPath());
+
+    StudyTaskManager.getInstance(project).setCourse(course);
+    StudyUtils.registerStudyToolWindow(course, project);
+    return course;
   }
 
   @NotNull
@@ -114,5 +135,10 @@ public class PyCCProjectGenerator extends PythonProjectGenerator implements Dire
       }
     });
     return mySettingsPanel.getMainPanel();
+  }
+
+  @Override
+  public void locationChanged(@NotNull String newLocation) {
+    mySettingsPanel.getNameField().setText(newLocation);
   }
 }

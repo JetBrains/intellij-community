@@ -8,7 +8,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
-import com.jetbrains.edu.courseFormat.Course;
+import com.jetbrains.edu.learning.core.EduNames;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.Nullable;
 
 public class StudyMoveDelegate extends MoveHandlerDelegate{
@@ -22,7 +23,7 @@ public class StudyMoveDelegate extends MoveHandlerDelegate{
     if (elements.length == 1) {
       Project project = elements[0].getProject();
       Course course = StudyTaskManager.getInstance(project).getCourse();
-      if (course == null) {
+      if (course == null || !EduNames.STUDY.equals(course.getCourseMode())) {
         return false;
       }
       return !StudyUtils.isRenameableOrMoveable(project, course, elements[0]);
@@ -49,6 +50,6 @@ public class StudyMoveDelegate extends MoveHandlerDelegate{
                            DataContext dataContext,
                            @Nullable PsiReference reference,
                            Editor editor) {
-    return true;
+    return StudyUtils.isStudyProject(project);
   }
 }

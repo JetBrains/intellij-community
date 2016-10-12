@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
           try {
             file.delete(this);
           }
-          catch (IOException e) {
+          catch (Exception e) {
             LOG.info(e);
             problems.add(file.getName());
           }
@@ -104,7 +104,7 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
   private static String createConfirmationMessage(VirtualFile[] filesToDelete) {
     if (filesToDelete.length == 1) {
       if (filesToDelete[0].isDirectory()) {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folder.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folder.confirmation.message", filesToDelete[0].getName());
       }
       else {
         return UIBundle.message("are.you.sure.you.want.to.delete.selected.file.confirmation.message", filesToDelete[0].getName());
@@ -120,13 +120,13 @@ public final class VirtualFileDeleteProvider implements DeleteProvider {
       }
       LOG.assertTrue(hasFiles || hasFolders);
       if (hasFiles && hasFolders) {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.directories.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.directories.confirmation.message", filesToDelete.length);
       }
       else if (hasFolders) {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folders.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.folders.confirmation.message", filesToDelete.length);
       }
       else {
-        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.files.confirmation.message");
+        return UIBundle.message("are.you.sure.you.want.to.delete.selected.files.and.files.confirmation.message", filesToDelete.length);
       }
     }
   }

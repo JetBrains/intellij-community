@@ -18,6 +18,7 @@ package com.intellij.codeInspection.miscGenerics;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.IntArrayList;
@@ -104,6 +105,7 @@ public class SuspiciousMethodCallUtil {
 
   @Nullable
   public static String getSuspiciousMethodCallMessage(@NotNull PsiMethodCallExpression methodCall,
+                                                      PsiExpression arg,
                                                       PsiType argType,
                                                       boolean reportConvertibleMethodCalls,
                                                       @NotNull List<PsiMethod> patternMethods,
@@ -116,6 +118,12 @@ public class SuspiciousMethodCallUtil {
     }
 
     if (argType == null) return null;
+
+    if (arg instanceof PsiConditionalExpression &&
+        PsiPolyExpressionUtil.isPolyExpression(arg) &&
+        argType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+      return null;
+    }
 
     final JavaResolveResult resolveResult = methodExpression.advancedResolve(false);
     PsiMethod calleeMethod = (PsiMethod)resolveResult.getElement();

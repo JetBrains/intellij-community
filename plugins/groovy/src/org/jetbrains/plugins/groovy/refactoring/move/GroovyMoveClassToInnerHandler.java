@@ -94,12 +94,7 @@ public class GroovyMoveClassToInnerHandler implements MoveClassToInnerHandler {
     }
     else {
       //rebind imports first
-      Collections.sort(usageInfos, new Comparator<UsageInfo>() {
-        @Override
-        public int compare(UsageInfo o1, UsageInfo o2) {
-          return PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement());
-        }
-      });
+      Collections.sort(usageInfos, (o1, o2) -> PsiUtil.BY_POSITION.compare(o1.getElement(), o2.getElement()));
     }
     return importStatements;
   }

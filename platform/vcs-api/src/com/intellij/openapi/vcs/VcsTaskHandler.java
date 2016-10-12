@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -44,15 +45,23 @@ public abstract class VcsTaskHandler {
 
     private final String myBranch;
     private final Collection<String> myRepositories;
+    private final boolean myRemote;
 
     public TaskInfo(String branch, Collection<String> repositories) {
+      this(branch, repositories, false);
+    }
+
+    public TaskInfo(String branch, Collection<String> repositories, boolean remote) {
       myBranch = branch;
       myRepositories = repositories;
+      myRemote = remote;
     }
 
     public String getName() {
       return myBranch;
     }
+
+    public boolean isRemote() { return myRemote; }
 
     public Collection<String> getRepositories() {
       return myRepositories;
@@ -67,6 +76,23 @@ public abstract class VcsTaskHandler {
     public int compareTo(TaskInfo o) {
       return Comparing.compare(myBranch, o.myBranch);
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      TaskInfo info = (TaskInfo)o;
+
+      if (myRemote != info.myRemote) return false;
+      if (!myBranch.equals(info.myBranch)) return false;
+      return myRepositories.size() == info.myRepositories.size() && myRepositories.containsAll(info.myRepositories);
+    }
+
+    @Override
+    public int hashCode() {
+      return myBranch.hashCode();
+    }
   }
 
   private static final ExtensionPointName<VcsTaskHandler> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.vcs.taskHandler");
@@ -75,7 +101,7 @@ public abstract class VcsTaskHandler {
 
   public abstract TaskInfo startNewTask(@NotNull String taskName);
 
-  public abstract void switchToTask(TaskInfo taskInfo, Runnable invokeAfter);
+  public abstract void switchToTask(TaskInfo taskInfo, @Nullable Runnable invokeAfter);
 
   public abstract void closeTask(@NotNull TaskInfo taskInfo, @NotNull TaskInfo original);
 
@@ -84,6 +110,7 @@ public abstract class VcsTaskHandler {
   /**
    * @return currently active (checked out) tasks (branches)
    */
+  @NotNull
   public abstract TaskInfo[] getCurrentTasks();
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
@@ -80,11 +79,6 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
     LOG.assertTrue(accept(project, file));
     return new TextEditorImpl(project, file, this);
-  }
-
-  @Override
-  public void disposeEditor(@NotNull FileEditor editor) {
-    Disposer.dispose(editor);
   }
 
   @Override
@@ -281,9 +275,9 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
         TextEditorState.CaretState caretState = state.CARETS[0];
         LogicalPosition pos = new LogicalPosition(caretState.LINE, caretState.COLUMN);
         editor.getCaretModel().moveToLogicalPosition(pos);
-        int startOffset = editor.logicalPositionToOffset(new LogicalPosition(caretState.SELECTION_START_LINE, 
+        int startOffset = editor.logicalPositionToOffset(new LogicalPosition(caretState.SELECTION_START_LINE,
                                                                              caretState.SELECTION_START_COLUMN));
-        int endOffset = editor.logicalPositionToOffset(new LogicalPosition(caretState.SELECTION_END_LINE, 
+        int endOffset = editor.logicalPositionToOffset(new LogicalPosition(caretState.SELECTION_END_LINE,
                                                                            caretState.SELECTION_END_COLUMN));
         if (startOffset == endOffset) {
           editor.getSelectionModel().removeSelection();
@@ -295,16 +289,14 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     }
 
     final int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
-    UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), new Runnable() {
-      public void run() {
-        if (!editor.isDisposed()) {
-          editor.getScrollingModel().disableAnimation();
-          if (relativeCaretPosition != Integer.MAX_VALUE) {
-            EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
-          }
-          editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          editor.getScrollingModel().enableAnimation();
+    UiNotifyConnector.doWhenFirstShown(editor.getContentComponent(), () -> {
+      if (!editor.isDisposed()) {
+        editor.getScrollingModel().disableAnimation();
+        if (relativeCaretPosition != Integer.MAX_VALUE) {
+          EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
         }
+        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        editor.getScrollingModel().enableAnimation();
       }
     });
   }

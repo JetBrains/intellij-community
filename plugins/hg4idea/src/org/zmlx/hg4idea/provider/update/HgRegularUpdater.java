@@ -63,7 +63,7 @@ public class HgRegularUpdater implements HgUpdater {
     }
 
 
-    List<HgRevisionNumber> branchHeadsBeforePull = new HgHeadsCommand(project, repoRoot).execute();
+    List<HgRevisionNumber> branchHeadsBeforePull = new HgHeadsCommand(project, repoRoot).executeInCurrentThread();
 
     if (branchHeadsBeforePull.size() > 1) {
       reportWarning(warnings, HgVcsMessages.message("hg4idea.update.warning.multipleHeadsBeforeUpdate", repoRoot.getPath()));
@@ -91,7 +91,7 @@ public class HgRegularUpdater implements HgUpdater {
 
     indicator.setText2(HgVcsMessages.message("hg4idea.progress.countingHeads"));
 
-    List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).execute();
+    List<HgRevisionNumber> branchHeadsAfterPull = new HgHeadsCommand(project, repoRoot).executeInCurrentThread();
     List<HgRevisionNumber> pulledBranchHeads = determinePulledBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
     List<HgRevisionNumber> remainingOriginalBranchHeads =
       determingRemainingOriginalBranchHeads(branchHeadsBeforePull, branchHeadsAfterPull);
@@ -172,7 +172,7 @@ public class HgRegularUpdater implements HgUpdater {
 
   private @Nullable HgRevisionNumber findCommonParent(HgRevisionNumber newHead, HgRevisionNumber parentBeforeUpdate) {
     // hg log -r 0:source --prune dest --limit 1
-    final List<HgRevisionNumber> pulledRevisions = new HgMergePreviewCommand(project, newHead, parentBeforeUpdate, 1).execute(repoRoot);
+    final List<HgRevisionNumber> pulledRevisions = new HgMergePreviewCommand(project, newHead, parentBeforeUpdate, 1).executeInCurrentThread(repoRoot);
     if (pulledRevisions == null || pulledRevisions.isEmpty()) {
       return null;
     }
@@ -192,7 +192,7 @@ public class HgRegularUpdater implements HgUpdater {
           LOG.warn("Couldn't find repository info for " + repoRoot.getName());
           return;
         }
-        new HgCommitCommand(project, hgRepository, "Automated merge").execute();
+        new HgCommitCommand(project, hgRepository, "Automated merge").executeInCurrentThread();
       }
       catch (HgCommandException e) {
         throw new VcsException(e);
@@ -214,7 +214,7 @@ public class HgRegularUpdater implements HgUpdater {
     //do not explicitly set the revision, that way mercurial itself checks that there are exactly
     //two heads in this branch
     //    mergeCommand.setRevision(headToMerge.getRevision());
-    return mergeCommand.merge();
+    return mergeCommand.mergeSynchronously();
   }
 
   private void processRebase(ProgressIndicator indicator, final UpdatedFiles updatedFiles) throws VcsException {
@@ -257,7 +257,7 @@ public class HgRegularUpdater implements HgUpdater {
 
   private Set<HgChange> getLocalChanges() {
     HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).unknown(false).ignored(false).build(project);
-    return statusCommand.execute(repoRoot);
+    return statusCommand.executeInCurrentThread(repoRoot);
   }
 
   private HgCommandExitCode pull(@NotNull VirtualFile repo, @NotNull ProgressIndicator indicator) {
@@ -265,7 +265,7 @@ public class HgRegularUpdater implements HgUpdater {
     HgPullCommand hgPullCommand = new HgPullCommand(project, repo);
     final String defaultPath = HgUtil.getRepositoryDefaultPath(project, repo);
     hgPullCommand.setSource(defaultPath);
-    return hgPullCommand.execute();
+    return hgPullCommand.executeInCurrentThread();
   }
 
   private void update(@NotNull VirtualFile repo, ProgressIndicator indicator, UpdatedFiles updatedFiles, List<VcsException> warnings) throws VcsException {
@@ -304,7 +304,7 @@ public class HgRegularUpdater implements HgUpdater {
     }
     HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).ignored(false).unknown(false).baseRevision(parentBeforeUpdate).targetRevision(
       parentAfterUpdate).build(project);
-    Set<HgChange> changes = statusCommand.execute(repo);
+    Set<HgChange> changes = statusCommand.executeInCurrentThread(repo);
     for (HgChange change : changes) {
       HgFileStatusEnum status = change.getStatus();
       switch (status) {

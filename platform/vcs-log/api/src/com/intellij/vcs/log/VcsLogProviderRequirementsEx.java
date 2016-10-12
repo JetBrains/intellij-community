@@ -39,5 +39,4 @@ public interface VcsLogProviderRequirementsEx extends Requirements {
    */
   @NotNull
   Set<VcsRef> getPreviousRefs();
-
 }

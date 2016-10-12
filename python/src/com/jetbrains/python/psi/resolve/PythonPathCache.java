@@ -15,41 +15,62 @@
  */
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.reference.SoftReference;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
  */
 public abstract class PythonPathCache {
-  private final Map<QualifiedName, List<PsiElement>> myCache = new ConcurrentHashMap<QualifiedName, List<PsiElement>>();
-  private final Map<VirtualFile, List<QualifiedName>> myQNameCache = new ConcurrentHashMap<VirtualFile, List<QualifiedName>>();
+  private final Map<QualifiedName, List<SoftReference<PsiElement>>> myCache = ContainerUtil.newConcurrentMap();
+  private final Map<String, List<QualifiedName>> myQNameCache = ContainerUtil.newConcurrentMap();
 
   public void clearCache() {
     myCache.clear();
     myQNameCache.clear();
   }
 
+  @Nullable
   public List<PsiElement> get(QualifiedName qualifiedName) {
-    return myCache.get(qualifiedName);
+    final List<SoftReference<PsiElement>> references = myCache.get(qualifiedName);
+    if (references == null) {
+      return null;
+    }
+    final List<PsiElement> result = references.stream().map(r -> r.get()).filter(p -> p != null).collect(Collectors.toList());
+    final boolean staleElementRemoved = result.removeIf(e -> !e.isValid());
+    if (staleElementRemoved) {
+      Logger.getInstance(PythonPathCache.class).warn("Removing invalid element from cache");
+    }
+    return (!result.isEmpty() ? result : null);
   }
 
   public void put(QualifiedName qualifiedName, List<PsiElement> results) {
-    myCache.put(qualifiedName, results);
+    if (results != null) {
+      myCache.put(qualifiedName, new ArrayList<>(results.stream().map(e -> new SoftReference<>(e)).collect(Collectors.toList())));
+    }
   }
 
+  @Nullable
   public List<QualifiedName> getNames(VirtualFile vFile) {
-    return myQNameCache.get(vFile);
+    if (vFile == null) {
+      return null;
+    }
+    return myQNameCache.get(vFile.getUrl());
   }
-  
+
   public void putNames(VirtualFile vFile, List<QualifiedName> qNames) {
-    myQNameCache.put(vFile, qNames);
+    myQNameCache.put(vFile.getUrl(), new ArrayList<>(qNames));
   }
 
   protected class MyVirtualFileAdapter extends VirtualFileAdapter {

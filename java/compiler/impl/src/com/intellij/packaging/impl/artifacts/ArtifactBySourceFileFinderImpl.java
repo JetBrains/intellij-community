@@ -53,16 +53,14 @@ public class ArtifactBySourceFileFinderImpl extends ArtifactBySourceFileFinder {
   public CachedValue<MultiValuesMap<VirtualFile, Artifact>> getFileToArtifactsMap() {
     if (myFile2Artifacts == null) {
       myFile2Artifacts =
-        CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<MultiValuesMap<VirtualFile, Artifact>>() {
-          public Result<MultiValuesMap<VirtualFile, Artifact>> compute() {
-            MultiValuesMap<VirtualFile, Artifact> result = computeFileToArtifactsMap();
-            List<ModificationTracker> trackers = new ArrayList<ModificationTracker>();
-            trackers.add(ArtifactManager.getInstance(myProject).getModificationTracker());
-            for (ComplexPackagingElementType<?> type : PackagingElementFactory.getInstance().getComplexElementTypes()) {
-              ContainerUtil.addIfNotNull(type.getAllSubstitutionsModificationTracker(myProject), trackers);
-            }
-            return Result.create(result, trackers.toArray(new ModificationTracker[trackers.size()]));
+        CachedValuesManager.getManager(myProject).createCachedValue(() -> {
+          MultiValuesMap<VirtualFile, Artifact> result = computeFileToArtifactsMap();
+          List<ModificationTracker> trackers = new ArrayList<ModificationTracker>();
+          trackers.add(ArtifactManager.getInstance(myProject).getModificationTracker());
+          for (ComplexPackagingElementType<?> type : PackagingElementFactory.getInstance().getComplexElementTypes()) {
+            ContainerUtil.addIfNotNull(type.getAllSubstitutionsModificationTracker(myProject), trackers);
           }
+          return CachedValueProvider.Result.create(result, trackers.toArray(new ModificationTracker[trackers.size()]));
         }, false);
     }
     return myFile2Artifacts;

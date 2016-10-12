@@ -36,6 +36,11 @@ public class StubIdeaModule implements IdeaModule, Serializable {
   }
 
   @Override
+  public IdeaJavaLanguageSettings getJavaLanguageSettings() throws UnsupportedMethodException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public DomainObjectSet<? extends IdeaContentRoot> getContentRoots() {
     throw new UnsupportedOperationException();
   }
@@ -79,7 +84,4 @@ public class StubIdeaModule implements IdeaModule, Serializable {
   public String getDescription() {
     throw new UnsupportedOperationException();
   }
-
-  @Override
-  public IdeaJavaLanguageSettings getJavaLanguageSettings() throws UnsupportedMethodException { throw new UnsupportedOperationException(); }
 }

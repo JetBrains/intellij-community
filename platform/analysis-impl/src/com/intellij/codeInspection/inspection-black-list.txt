@@ -135,7 +135,6 @@ com.siyeh.ig.initialization.StaticVariableInitializationInspection
 com.siyeh.ig.initialization.StaticVariableUninitializedUseInspection
 com.siyeh.ig.internationalization.StringConcatenationInspection
 com.siyeh.ig.j2me.CheckForOutOfMemoryOnLargeArrayAllocationInspection
-com.siyeh.ig.j2me.FieldRepeatedlyAccessedInspection
 com.siyeh.ig.j2me.MultiplyOrDivideByPowerOfTwoInspection
 com.siyeh.ig.j2me.OverlyLargePrimitiveArrayInitializerInspection
 com.siyeh.ig.javabeans.ClassWithoutNoArgConstructorInspection

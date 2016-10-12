@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -52,9 +51,9 @@ import java.util.List;
  */
 public class XDebuggerEditorLinePainter extends EditorLinePainter {
   public static final Key<Map<Variable, VariableValue>> CACHE = Key.create("debug.inline.variables.cache");
-  // we want to limit number of line extentions to avoid very slow painting
+  // we want to limit number of line extensions to avoid very slow painting
   // the constant is rather random (feel free to adjust it upon getting a new information)
-  private static final int LINE_EXTENTIONS_MAX_COUNT = 200;
+  private static final int LINE_EXTENSIONS_MAX_COUNT = 200;
 
   @Override
   public Collection<LineExtensionInfo> getLineExtensions(@NotNull Project project, @NotNull VirtualFile file, int lineNumber) {
@@ -72,7 +71,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
     Map<Variable, VariableValue> oldValues = project.getUserData(CACHE);
     if (oldValues == null) {
-      oldValues = new HashMap<Variable, VariableValue>();
+      oldValues = new HashMap<>();
       project.putUserData(CACHE, oldValues);
     }
     final Long timestamp = timestamps.get(file);
@@ -88,7 +87,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
                                         ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).isFullLineHighlighter()
                                         ? getTopFrameSelectedAttributes() : getNormalAttributes();
 
-      ArrayList<VariableText> result = new ArrayList<VariableText>();
+      ArrayList<VariableText> result = new ArrayList<>();
       for (XValueNodeImpl value : values) {
         SimpleColoredText text = new SimpleColoredText();
         XValueTextRendererImpl renderer = new XValueTextRendererImpl(text);
@@ -141,11 +140,11 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
           variableValue.produceChangedParts(res.infos);
         }
       }
-      final List<LineExtensionInfo> infos = new ArrayList<LineExtensionInfo>();
+      final List<LineExtensionInfo> infos = new ArrayList<>();
       for (VariableText text : result) {
         infos.addAll(text.infos);
       }
-      return infos.size() > LINE_EXTENTIONS_MAX_COUNT ? infos.subList(0, LINE_EXTENTIONS_MAX_COUNT) : infos;
+      return infos.size() > LINE_EXTENSIONS_MAX_COUNT ? infos.subList(0, LINE_EXTENSIONS_MAX_COUNT) : infos;
     }
     return null;
   }
@@ -170,14 +169,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   public static TextAttributes getNormalAttributes() {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.INLINED_VALUES);
     if (attributes == null || attributes.getForegroundColor() == null) {
-     return new TextAttributes(new JBColor(new NotNullProducer<Color>() {
-        @SuppressWarnings("UseJBColor")
-        @NotNull
-        @Override
-        public Color produce() {
-          return isDarkEditor() ? new Color(0x3d8065) : Gray._135;
-        }
-      }), null, null, null, Font.ITALIC);
+     return new TextAttributes(new JBColor(() -> isDarkEditor() ? new Color(0x3d8065) : Gray._135), null, null, null, Font.ITALIC);
     }
     return attributes;
   }
@@ -185,14 +177,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   public static TextAttributes getChangedAttributes() {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.INLINED_VALUES_MODIFIED);
     if (attributes == null || attributes.getForegroundColor() == null) {
-      return new TextAttributes(new JBColor(new NotNullProducer<Color>() {
-        @SuppressWarnings("UseJBColor")
-        @NotNull
-        @Override
-        public Color produce() {
-          return isDarkEditor() ? new Color(0xa1830a) : new Color(0xca8021);
-        }
-      }), null, null, null, Font.ITALIC);
+      return new TextAttributes(new JBColor(() -> isDarkEditor() ? new Color(0xa1830a) : new Color(0xca8021)), null, null, null, Font.ITALIC);
     }
     return attributes;
   }
@@ -283,7 +268,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
   }
 
   private static class VariableText {
-    final List<LineExtensionInfo> infos = new ArrayList<LineExtensionInfo>();
+    final List<LineExtensionInfo> infos = new ArrayList<>();
     int length = 0;
 
     void add(LineExtensionInfo info) {

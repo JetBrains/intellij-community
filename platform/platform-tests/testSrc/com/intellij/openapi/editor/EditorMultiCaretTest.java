@@ -26,7 +26,6 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.util.ThrowableRunnable;
 
 import java.awt.event.InputEvent;
-import java.io.IOException;
 
 public class EditorMultiCaretTest extends AbstractEditorTest {
   private boolean myStoredVirtualSpaceSetting;
@@ -72,25 +71,19 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
   }
 
   public void testCustomShortcut() throws Throwable {
-    doWithAltClickShortcut(new ThrowableRunnable() {
-      @Override
-      public void run() throws IOException {
-        initText("<caret>text");
-        mouse().alt().clickAt(0, 2);
-        checkResultByText("<caret>te<caret>xt");
-      }
+    doWithAltClickShortcut(() -> {
+      initText("<caret>text");
+      mouse().alt().clickAt(0, 2);
+      checkResultByText("<caret>te<caret>xt");
     });
   }
   
   public void testCaretRemovalWithCustomShortcutDoesntAffectOtherSelections() throws Throwable {
-    doWithAltClickShortcut(new ThrowableRunnable() {
-      @Override
-      public void run() throws IOException {
-        initText("<selection>some<caret></selection> text");
-        mouse().alt().clickAt(0, 6);
-        mouse().alt().clickAt(0, 6);
-        checkResultByText("<selection>some<caret></selection> text");
-      }
+    doWithAltClickShortcut(() -> {
+      initText("<selection>some<caret></selection> text");
+      mouse().alt().clickAt(0, 6);
+      mouse().alt().clickAt(0, 6);
+      checkResultByText("<selection>some<caret></selection> text");
     });
   }
 
@@ -392,6 +385,20 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     addCollapsedFoldRegion(0, 6, "...");
     verifyCaretsAndSelections(1, 1, 1, 1,
                               2, 4, 4, 4);
+  }
+
+  public void testCaretStaysPrimaryOnMerging() throws Exception {
+    initText("word\n" +
+             "<caret>word word\n" +
+             "");
+    myEditor.getCaretModel().addCaret(new VisualPosition(0, 0));
+    myEditor.getCaretModel().addCaret(new VisualPosition(1, 5));
+    assertEquals(new VisualPosition(1, 5), myEditor.getCaretModel().getPrimaryCaret().getVisualPosition());
+    down();
+    checkResultByText("word\n" +
+                      "<caret>word word\n" +
+                      "<caret>");
+    assertEquals(new VisualPosition(2, 0), myEditor.getCaretModel().getPrimaryCaret().getVisualPosition());
   }
 
   private static void doWithAltClickShortcut(ThrowableRunnable runnable) throws Throwable {

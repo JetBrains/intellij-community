@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
@@ -29,24 +30,23 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 public class UnversionedViewDialog extends DialogWrapper {
@@ -55,9 +55,9 @@ public class UnversionedViewDialog extends DialogWrapper {
   private final ChangeListManager myChangeListManager;
   private boolean myInRefresh;
   private final Project myProject;
-  private boolean myFlattenState;
+  private AnAction myDeleteActionWithCustomShortcut;
 
-  public UnversionedViewDialog(final Project project) {
+  public UnversionedViewDialog(@NotNull Project project) {
     super(project, true);
     setTitle("Unversioned Files");
     myProject = project;
@@ -71,7 +71,7 @@ public class UnversionedViewDialog extends DialogWrapper {
       public void calcData(DataKey key, DataSink sink) {
         super.calcData(key, sink);
         if (ChangesListView.UNVERSIONED_FILES_DATA_KEY.is(key.getName())) {
-          sink.put(key, Arrays.asList(getSelectedFiles()));
+          sink.put(ChangesListView.UNVERSIONED_FILES_DATA_KEY, getSelectedFiles());
         }
       }
 
@@ -99,10 +99,9 @@ public class UnversionedViewDialog extends DialogWrapper {
   private void initData(final List<VirtualFile> files) {
     final TreeState state = TreeState.createOn(myView, (ChangesBrowserNode)myView.getModel().getRoot());
 
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, myFlattenState);
+    TreeModelBuilder builder = new TreeModelBuilder(myProject, myView.isShowFlatten());
     final DefaultTreeModel model = builder.buildModelFromFiles(files);
     myView.setModel(model);
-    myView.setCellRenderer(new ChangesBrowserNodeRenderer(myProject, myFlattenState, true));
     myView.expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 
     state.applyTo(myView);
@@ -112,61 +111,72 @@ public class UnversionedViewDialog extends DialogWrapper {
     myPanel = new JPanel(new BorderLayout());
 
     final DefaultActionGroup group = new DefaultActionGroup();
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, true);
 
-    final List<AnAction> actions = new LinkedList<AnAction>();
+    List<AnAction> actions = registerUnversionedActionsShortcuts(actionToolbar.getToolbarDataContext(), myView);
+    // special shortcut for deleting a file
+    actions.add(myDeleteActionWithCustomShortcut =
+                  EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView));
+
+    refreshViewAfterActionPerformed(actions);
+    group.add(getUnversionedActionGroup());
+
     final CommonActionsManager cam = CommonActionsManager.getInstance();
     final Expander expander = new Expander();
-    final AnAction expandAction = cam.createExpandAllAction(expander, myView);
-    actions.add(expandAction);
-    final AnAction collapseAction = cam.createCollapseAllAction(expander, myView);
-    actions.add(collapseAction);
-    actions.add(new ToggleShowFlattenAction());
+    group.addSeparator();
+    group.add(new ToggleShowFlattenAction());
+    group.add(cam.createExpandAllAction(expander, myView));
+    group.add(cam.createCollapseAllAction(expander, myView));
 
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, false);
-
-    final ActionGroup operatingActions = (ActionGroup)ActionManager.getInstance().getAction("Unversioned.Files.Dialog");
-    registerShortcuts(operatingActions, actionToolbar.getToolbarDataContext());
-    refreshViewAfterActionPerformed(operatingActions);
-    actions.add(operatingActions);
-
-    for (AnAction action : actions) {
-      group.add(action);
-    }
-    myPanel.add(actionToolbar.getComponent(), BorderLayout.WEST);
+    myPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
 
     final DefaultActionGroup secondGroup = new DefaultActionGroup();
-    for (AnAction action : actions) {
-      secondGroup.add(action);
-    }
+    secondGroup.addAll(getUnversionedActionGroup());
 
     myView.setMenuActions(secondGroup);
     myView.setShowFlatten(false);
   }
 
-  private void registerShortcuts(@NotNull ActionGroup opActionGroup, @NotNull DataContext dataContext) {
-    List<AnAction> opActions = new ArrayList<AnAction>();
-    Utils.expandActionGroup(opActionGroup, opActions, new PresentationFactory(), dataContext, "", ActionManager.getInstance());
-    for (AnAction action : opActions) {
-      action.registerCustomShortcutSet(action.getShortcutSet(), myView);
-    }
-
-    // special shortcut for deleting a file
-    EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned.From.Dialog", CommonShortcuts.getDelete(), myView);
-  }
-
-  private void refreshViewAfterActionPerformed(@NotNull final ActionGroup opActionGroup) {
+  private void refreshViewAfterActionPerformed(@NotNull final List<AnAction> actions) {
     ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
       @Override
       public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        for (AnAction anAction : opActionGroup.getChildren(event)) {
-          if (anAction.equals(action)) {
-            refreshView();
-            return;
+        if (actions.contains(action)) {
+          refreshView();
+          if (myDeleteActionWithCustomShortcut.equals(action)) {
+            // We can not utilize passed "dataContext" here as it results in
+            // "cannot share data context between Swing events" assertion.
+            refreshChanges(myProject, ChangesBrowserBase.DATA_KEY.getData(DataManager.getInstance().getDataContext(myView)));
           }
         }
       }
     }, myDisposable);
+  }
+
+  @NotNull
+  public static ActionGroup getUnversionedActionGroup() {
+    return (ActionGroup)ActionManager.getInstance().getAction("Unversioned.Files.Dialog");
+  }
+
+  @NotNull
+  public static List<AnAction> registerUnversionedActionsShortcuts(@NotNull DataContext dataContext, @NotNull JComponent component) {
+    ActionManager manager = ActionManager.getInstance();
+    List<AnAction> actions = ContainerUtil.newArrayList();
+
+    Utils.expandActionGroup(getUnversionedActionGroup(), actions, new PresentationFactory(), dataContext, "", manager);
+    for (AnAction action : actions) {
+      action.registerCustomShortcutSet(action.getShortcutSet(), component);
+    }
+
+    return actions;
+  }
+
+  public static void refreshChanges(@NotNull Project project, @Nullable ChangesBrowserBase browser) {
+    if (browser != null) {
+      ChangeListManager.getInstance(project)
+        .invokeAfterUpdate(browser::rebuildList, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Delete files", null);
+    }
   }
 
   @Override
@@ -190,7 +200,7 @@ public class UnversionedViewDialog extends DialogWrapper {
     }
 
     public boolean canExpand() {
-      return true;
+      return !myView.isShowFlatten();
     }
 
     public void collapseAll() {
@@ -199,7 +209,7 @@ public class UnversionedViewDialog extends DialogWrapper {
     }
 
     public boolean canCollapse() {
-      return true;
+      return !myView.isShowFlatten();
     }
   }
 
@@ -225,16 +235,14 @@ public class UnversionedViewDialog extends DialogWrapper {
       super(VcsBundle.message("changes.action.show.directories.text"),
             VcsBundle.message("changes.action.show.directories.description"),
             AllIcons.Actions.GroupByPackage);
-      myFlattenState = false;
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return !myFlattenState;
+      return !myView.isShowFlatten();
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      myFlattenState = !state;
-      myView.setShowFlatten(myFlattenState);
+      myView.setShowFlatten(!state);
       refreshView();
     }
   }

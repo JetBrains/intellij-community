@@ -27,6 +27,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -39,6 +40,7 @@ import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
@@ -49,6 +51,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
@@ -80,8 +85,8 @@ import java.util.jar.JarFile;
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
-  private static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
-  private static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
+  public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
+  public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
   @NotNull
   public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -250,36 +255,38 @@ public class PlatformTestUtil {
 
   @TestOnly
   public static void waitForAlarm(final int delay) throws InterruptedException {
-    assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
-    assert ApplicationManager.getApplication().isDispatchThread();
+    Application app = ApplicationManager.getApplication();
+    assert !app.isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
+    assert app.isDispatchThread();
 
-    final AtomicBoolean invoked = new AtomicBoolean();
+    final AtomicBoolean runnableInvoked = new AtomicBoolean();
+    final AtomicBoolean alarmInvoked1 = new AtomicBoolean();
+    final AtomicBoolean alarmInvoked2 = new AtomicBoolean();
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-    alarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            alarm.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                invoked.set(true);
-              }
-            }, delay);
-          }
-        });
-      }
+
+    alarm.addRequest(() -> {
+      alarmInvoked1.set(true);
+      app.invokeLater(() -> {
+        runnableInvoked.set(true);
+        alarm.addRequest(() -> alarmInvoked2.set(true), delay);
+      });
     }, delay);
 
     UIUtil.dispatchAllInvocationEvents();
 
+    long start = System.currentTimeMillis();
     boolean sleptAlready = false;
-    while (!invoked.get()) {
+    while (!alarmInvoked2.get()) {
       UIUtil.dispatchAllInvocationEvents();
       //noinspection BusyWait
       Thread.sleep(sleptAlready ? 10 : delay);
       sleptAlready = true;
+      if (System.currentTimeMillis() - start > 100 * 1000) {
+        throw new AssertionError("Couldn't await alarm" +
+                                 "; alarm1 passed=" + alarmInvoked1.get() +
+                                 "; invokeLater passed=" + runnableInvoked.get() +
+                                 "; app.disposed=" + app.isDisposed());
+      }
     }
     UIUtil.dispatchAllInvocationEvents();
   }
@@ -287,15 +294,31 @@ public class PlatformTestUtil {
   @TestOnly
   public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
-    final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+    final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
     while (true) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
-        AWTEvent event1 = eventQueue.getNextEvent();
-        if (event1 instanceof InvocationEvent) {
-          IdeEventQueue.getInstance().dispatchEvent(event1);
-        }
+      AWTEvent event1 = eventQueue.getNextEvent();
+      if (event1 instanceof InvocationEvent) {
+        eventQueue.dispatchEvent(event1);
+      }
     }
+  }
+
+  @TestOnly
+  public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
+    assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
+    final IdeEventQueue eventQueue = (IdeEventQueue)Toolkit.getDefaultToolkit().getSystemEventQueue();
+    while (dispatchNextEventIfAny(eventQueue) != null);
+  }
+
+  @TestOnly
+  public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
+    AWTEvent event = eventQueue.peekEvent();
+    if (event == null) return null;
+    AWTEvent event1 = eventQueue.getNextEvent();
+    eventQueue.dispatchEvent(event1);
+    return event1;
   }
 
   private static Date raidDate(Bombed bombed) {
@@ -385,8 +408,15 @@ public class PlatformTestUtil {
     return print(tree, false);
   }
 
-  public static void assertTreeStructureEquals(final AbstractTreeStructure treeStructure, final String expected) {
-    Assert.assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString());
+  public static void updateRecursively(@NotNull AbstractTreeNode<?> node) {
+    node.update();
+    for (AbstractTreeNode child : node.getChildren()) {
+      updateRecursively(child);
+    }
+  }
+
+  public static void assertTreeStructureEquals(@NotNull AbstractTreeStructure treeStructure, @NotNull String expected) {
+    Assert.assertEquals(expected.trim(), print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString().trim());
   }
 
   public static void invokeNamedAction(final String actionId) {
@@ -791,12 +821,9 @@ public class PlatformTestUtil {
     Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
     final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
     Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        dirAfter.refresh(false, true);
-        dirBefore.refresh(false, true);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      dirAfter.refresh(false, true);
+      dirBefore.refresh(false, true);
     });
     assertDirectoriesEqual(dirAfter, dirBefore);
   }
@@ -836,13 +863,10 @@ public class PlatformTestUtil {
 
 
   public static Comparator<AbstractTreeNode> createComparator(final Queryable.PrintInfo printInfo) {
-    return new Comparator<AbstractTreeNode>() {
-      @Override
-      public int compare(final AbstractTreeNode o1, final AbstractTreeNode o2) {
-        String displayText1 = o1.toTestString(printInfo);
-        String displayText2 = o2.toTestString(printInfo);
-        return Comparing.compare(displayText1, displayText2);
-      }
+    return (o1, o2) -> {
+      String displayText1 = o1.toTestString(printInfo);
+      String displayText2 = o2.toTestString(printInfo);
+      return Comparing.compare(displayText1, displayText2);
     };
   }
 
@@ -861,18 +885,9 @@ public class PlatformTestUtil {
     GCUtil.tryGcSoftlyReachableObjects();
   }
 
-  public static void withEncoding(@NotNull String encoding, @NotNull final Runnable r) {
-    withEncoding(encoding, new ThrowableRunnable() {
-      @Override
-      public void run() throws Throwable {
-        r.run();
-      }
-    });
-  }
-
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
-    Charset oldCharset = Charset.defaultCharset();
     try {
+      Charset oldCharset = Charset.defaultCharset();
       try {
         patchSystemFileEncoding(encoding);
         r.run();
@@ -916,5 +931,22 @@ public class PlatformTestUtil {
     catch (ExecutionException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @NotNull
+  public static List<WebReference> collectWebReferences(@NotNull PsiElement element) {
+    List<WebReference> refs = new ArrayList<>();
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(PsiElement element) {
+        for (PsiReference ref : element.getReferences()) {
+          if (ref instanceof WebReference) {
+            refs.add((WebReference)ref);
+          }
+        }
+        super.visitElement(element);
+      }
+    });
+    return refs;
   }
 }

@@ -15,11 +15,17 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Iterator;
+
 public class DiffNavigationContext {
   private final String myTargetString;
   private final Iterable<String> myPreviousLinesIterable;
 
-  public DiffNavigationContext(Iterable<String> previousLinesIterable, String targetString) {
+  public DiffNavigationContext(@NotNull Iterable<String> previousLinesIterable, @NotNull String targetString) {
     myPreviousLinesIterable = previousLinesIterable;
     myTargetString = targetString;
   }
@@ -30,5 +36,34 @@ public class DiffNavigationContext {
 
   public String getTargetString() {
     return myTargetString;
+  }
+
+
+  public int contextMatchCheck(@NotNull Iterator<Pair<Integer, CharSequence>> changedLinesIterator) {
+    // we ignore spaces.. at least at start/end, since some version controls could ignore their changes when doing annotate
+    Iterator<? extends CharSequence> iterator = getPreviousLinesIterable().iterator();
+
+    if (iterator.hasNext()) {
+      CharSequence contextLine = iterator.next();
+
+      while (changedLinesIterator.hasNext()) {
+        Pair<Integer, ? extends CharSequence> pair = changedLinesIterator.next();
+        if (StringUtil.equalsTrimWhitespaces(pair.getSecond(), contextLine)) {
+          if (!iterator.hasNext()) break;
+          contextLine = iterator.next();
+        }
+      }
+    }
+    if (iterator.hasNext()) return -1;
+    if (!changedLinesIterator.hasNext()) return -1;
+
+    while (changedLinesIterator.hasNext()) {
+      Pair<Integer, ? extends CharSequence> pair = changedLinesIterator.next();
+      if (StringUtil.equalsTrimWhitespaces(pair.getSecond(), getTargetString())) {
+        return pair.getFirst();
+      }
+    }
+
+    return -1;
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
  * @author egor
  */
 public class AnnotationsPreloader {
+  private static final Logger LOG = Logger.getInstance(AnnotationsPreloader.class);
+
   private final MergingUpdateQueue myUpdateQueue;
   private final Project myProject;
 
@@ -59,26 +62,27 @@ public class AnnotationsPreloader {
   private void schedulePreloading(@NotNull final VirtualFile file) {
     if (myProject.isDisposed() || file.getFileType().isBinary()) return;
 
-    FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(file);
-    if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
-      return;
-    }
-
-    AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
-    if (vcs == null || !(vcs.getAnnotationProvider() instanceof VcsCacheableAnnotationProvider)) return;
-
-    final AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
-    assert annotationProvider != null;
-
     myUpdateQueue.queue(new Update(file) {
       @Override
       public void run() {
         try {
-          if (FileEditorManager.getInstance(myProject).isFileOpen(file)) {
-            annotationProvider.annotate(file);
+          if (!FileEditorManager.getInstance(myProject).isFileOpen(file)) return;
+
+          FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(file);
+          if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
+            return;
           }
+
+          AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(file);
+          if (vcs == null || !(vcs.getAnnotationProvider() instanceof VcsCacheableAnnotationProvider)) return;
+
+          AnnotationProvider annotationProvider = vcs.getCachingAnnotationProvider();
+          assert annotationProvider != null;
+
+          annotationProvider.annotate(file);
         }
-        catch (VcsException ignore) {
+        catch (VcsException e) {
+          LOG.warn(e);
         }
       }
     });

@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgReferenceValidator;
 import org.zmlx.hg4idea.util.HgUtil;
 
+import java.util.Collections;
 import java.util.List;
 
 public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
@@ -58,7 +60,7 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
 
   @Override
   protected void checkoutAsNewBranch(@NotNull String name, @NotNull List<HgRepository> repositories) {
-    HgBookmarkCommand.createBookmark(repositories, name, true);
+    HgBookmarkCommand.createBookmarkAsynchronously(repositories, name, true);
   }
 
   @Override
@@ -69,9 +71,16 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
 
   @NotNull
   @Override
-  protected Iterable<String> getAllBranches(@NotNull HgRepository repository) {
+  protected Iterable<TaskInfo> getAllBranches(@NotNull HgRepository repository) {
     //be careful with equality names of branches/bookmarks =(
-    return ContainerUtil.concat(HgUtil.getSortedNamesWithoutHashes(repository.getBookmarks()), repository.getOpenedBranches());
+    Iterable<String> names =
+      ContainerUtil.concat(HgUtil.getSortedNamesWithoutHashes(repository.getBookmarks()), repository.getOpenedBranches());
+    return ContainerUtil.map(names, new Function<String, TaskInfo>() {
+      @Override
+      public TaskInfo fun(String s) {
+        return new TaskInfo(s, Collections.singleton(repository.getPresentableUrl()));
+      }
+    });
   }
 
   @Override
@@ -87,8 +96,8 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
           Project project = repository.getProject();
           VirtualFile repositoryRoot = repository.getRoot();
           try {
-            new HgCommitCommand(project, repository, "Automated merge with " + branch).execute();
-            new HgBookmarkCommand(project, repositoryRoot, branch).deleteBookmark();
+            new HgCommitCommand(project, repository, "Automated merge with " + branch).executeInCurrentThread();
+            HgBookmarkCommand.deleteBookmarkSynchronously(project, repositoryRoot, branch);
           }
           catch (HgCommandException e) {
               HgErrorUtil.handleException(project, e);
@@ -103,8 +112,8 @@ public class HgTaskHandler extends DvcsTaskHandler<HgRepository> {
   }
 
   @Override
-  protected boolean hasBranch(@NotNull HgRepository repository, @NotNull String name) {
-    return HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(name) || repository.getOpenedBranches().contains(name);
+  protected boolean hasBranch(@NotNull HgRepository repository, @NotNull TaskInfo name) {
+    return HgUtil.getNamesWithoutHashes(repository.getBookmarks()).contains(name.getName()) || repository.getOpenedBranches().contains(name.getName());
   }
 
   @Override

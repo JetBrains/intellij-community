@@ -174,12 +174,7 @@ public class ValueHint extends AbstractValueHint {
 
   private void createAndShowTree(final String expressionText, final NodeDescriptorImpl descriptor) {
     final DebuggerTreeCreatorImpl creator = new DebuggerTreeCreatorImpl(getProject());
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        showTreePopup(creator, Pair.create(descriptor, expressionText));
-      }
-    });
+    DebuggerInvocationUtil.invokeLater(getProject(), () -> showTreePopup(creator, Pair.create(descriptor, expressionText)));
   }
 
   private static boolean isActiveTooltipApplicable(final Value value) {
@@ -187,41 +182,35 @@ public class ValueHint extends AbstractValueHint {
   }
 
   private void showHint(final SimpleColoredText text, final WatchItemDescriptor descriptor) {
-    DebuggerInvocationUtil.invokeLater(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        if(!isHintHidden()) {
-          JComponent component;
-          if (!isActiveTooltipApplicable(descriptor.getValue())) {
-            component = HintUtil.createInformationLabel(text);
-          }
-          else {
-            component = createExpandableHintComponent(text, new Runnable() {
-              @Override
-              public void run() {
-                final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
-                final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-                debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+    DebuggerInvocationUtil.invokeLater(getProject(), () -> {
+      if(!isHintHidden()) {
+        JComponent component;
+        if (!isActiveTooltipApplicable(descriptor.getValue())) {
+          component = HintUtil.createInformationLabel(text);
+        }
+        else {
+          component = createExpandableHintComponent(text, () -> {
+            final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
+            final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+            debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext) {
+                          @Override
+                          public void threadAction() {
+                            descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
+                            final String expressionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
                               @Override
-                              public void threadAction() {
-                                descriptor.setRenderer(debugProcess.getAutoRenderer(descriptor));
-                                final String expressionText = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-                                  @Override
-                                  public String compute() {
-                                    return myCurrentExpression.getText();
-                                  }
-                                });
-
-                                createAndShowTree(expressionText, descriptor);
+                              public String compute() {
+                                return myCurrentExpression.getText();
                               }
                             });
-              }
-            });
-          }
-          if (!showHint(component)) return;
-          if(getType() == ValueHintType.MOUSE_CLICK_HINT) {
-            HintUtil.createInformationLabel(text).requestFocusInWindow();
-          }
+
+                            createAndShowTree(expressionText, descriptor);
+                          }
+                        });
+          });
+        }
+        if (!showHint(component)) return;
+        if(getType() == ValueHintType.MOUSE_CLICK_HINT) {
+          HintUtil.createInformationLabel(text).requestFocusInWindow();
         }
       }
     });
@@ -257,67 +246,64 @@ public class ValueHint extends AbstractValueHint {
     final Ref<TextRange> currentRange = Ref.create(null);
     final Ref<Value> preCalculatedValue = Ref.create(null);
 
-    PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Runnable() {
-      @Override
-      public void run() {
-        // Point -> offset
-        final int offset = calculateOffset(editor, point);
+    PsiDocumentManager.getInstance(project).commitAndRunReadAction(() -> {
+      // Point -> offset
+      final int offset = calculateOffset(editor, point);
 
 
-        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
 
-        if(psiFile == null || !psiFile.isValid()) {
+      if(psiFile == null || !psiFile.isValid()) {
+        return;
+      }
+
+      int selectionStart = editor.getSelectionModel().getSelectionStart();
+      int selectionEnd   = editor.getSelectionModel().getSelectionEnd();
+
+      if((type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT) && (selectionStart <= offset && offset <= selectionEnd)) {
+        PsiElement ctx = (selectionStart > 0) ? psiFile.findElementAt(selectionStart - 1) : psiFile.findElementAt(selectionStart);
+        try {
+          String text = editor.getSelectionModel().getSelectedText();
+          if(text != null && ctx != null) {
+            final JVMElementFactory factory = JVMElementFactories.getFactory(ctx.getLanguage(), project);
+            if (factory == null) {
+              return;
+            }
+            selectedExpression.set(factory.createExpressionFromText(text, ctx));
+            currentRange.set(new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd()));
+          }
+        }
+        catch (IncorrectOperationException ignored) {
+        }
+      }
+
+      if(currentRange.get() == null) {
+        PsiElement elementAtCursor = psiFile.findElementAt(offset);
+        if (elementAtCursor == null) {
           return;
         }
-
-        int selectionStart = editor.getSelectionModel().getSelectionStart();
-        int selectionEnd   = editor.getSelectionModel().getSelectionEnd();
-
-        if((type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT) && (selectionStart <= offset && offset <= selectionEnd)) {
-          PsiElement ctx = (selectionStart > 0) ? psiFile.findElementAt(selectionStart - 1) : psiFile.findElementAt(selectionStart);
-          try {
-            String text = editor.getSelectionModel().getSelectedText();
-            if(text != null && ctx != null) {
-              final JVMElementFactory factory = JVMElementFactories.getFactory(ctx.getLanguage(), project);
-              if (factory == null) {
-                return;
-              }
-              selectedExpression.set(factory.createExpressionFromText(text, ctx));
-              currentRange.set(new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd()));
-            }
-          }
-          catch (IncorrectOperationException ignored) {
-          }
-        }
-
-        if(currentRange.get() == null) {
-          PsiElement elementAtCursor = psiFile.findElementAt(offset);
-          if (elementAtCursor == null) {
-            return;
-          }
-          Pair<PsiElement, TextRange> pair = findExpression(elementAtCursor, type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT);
-          if (pair == null) {
-            if (type == ValueHintType.MOUSE_OVER_HINT) {
-              final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
-              if(debuggerSession != null && debuggerSession.isPaused()) {
-                final Pair<Method, Value> lastExecuted = debuggerSession.getProcess().getLastExecutedMethod();
-                if (lastExecuted != null) {
-                  final Method method = lastExecuted.getFirst();
-                  if (method != null) {
-                    final Pair<PsiElement, TextRange> expressionPair = findExpression(elementAtCursor, true);
-                    if (expressionPair != null && expressionPair.getFirst() instanceof PsiMethodCallExpression) {
-                      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expressionPair.getFirst();
-                      final PsiMethod psiMethod = methodCallExpression.resolveMethod();
-                      if (psiMethod != null) {
-                        final JVMName jvmSignature = JVMNameUtil.getJVMSignature(psiMethod);
-                        try {
-                          if (method.name().equals(psiMethod.getName()) && method.signature().equals(jvmSignature.getName(debuggerSession.getProcess()))) {
-                            pair = expressionPair;
-                            preCalculatedValue.set(lastExecuted.getSecond());
-                          }
+        Pair<PsiElement, TextRange> pair = findExpression(elementAtCursor, type == ValueHintType.MOUSE_CLICK_HINT || type == ValueHintType.MOUSE_ALT_OVER_HINT);
+        if (pair == null) {
+          if (type == ValueHintType.MOUSE_OVER_HINT) {
+            final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
+            if(debuggerSession != null && debuggerSession.isPaused()) {
+              final Pair<Method, Value> lastExecuted = debuggerSession.getProcess().getLastExecutedMethod();
+              if (lastExecuted != null) {
+                final Method method = lastExecuted.getFirst();
+                if (method != null) {
+                  final Pair<PsiElement, TextRange> expressionPair = findExpression(elementAtCursor, true);
+                  if (expressionPair != null && expressionPair.getFirst() instanceof PsiMethodCallExpression) {
+                    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expressionPair.getFirst();
+                    final PsiMethod psiMethod = methodCallExpression.resolveMethod();
+                    if (psiMethod != null) {
+                      final JVMName jvmSignature = JVMNameUtil.getJVMSignature(psiMethod);
+                      try {
+                        if (method.name().equals(psiMethod.getName()) && method.signature().equals(jvmSignature.getName(debuggerSession.getProcess()))) {
+                          pair = expressionPair;
+                          preCalculatedValue.set(lastExecuted.getSecond());
                         }
-                        catch (EvaluateException ignored) {
-                        }
+                      }
+                      catch (EvaluateException ignored) {
                       }
                     }
                   }
@@ -325,12 +311,12 @@ public class ValueHint extends AbstractValueHint {
               }
             }
           }
-          if (pair == null) {
-            return;
-          }
-          selectedExpression.set(pair.getFirst());
-          currentRange.set(pair.getSecond());
         }
+        if (pair == null) {
+          return;
+        }
+        selectedExpression.set(pair.getFirst());
+        currentRange.set(pair.getSecond());
       }
     });
     return Trinity.create(selectedExpression.get(), currentRange.get(), preCalculatedValue.get());

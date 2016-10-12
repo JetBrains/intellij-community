@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.IdIterator;
@@ -141,8 +141,9 @@ public abstract class StubIndex {
                                                                           @Nullable final GlobalSearchScope scope,
                                                                           @Nullable IdFilter idFilter,
                                                                           @NotNull Class<Psi> requiredClass) {
-    final List<Psi> result = new SmartList<Psi>();
-    getInstance().processElements(indexKey, key, project, scope, idFilter, requiredClass, new CommonProcessors.CollectProcessor<Psi>(result));
+    final List<Psi> result = new SmartList<>();
+    Processor<Psi> processor = Processors.cancelableCollectProcessor(result);
+    getInstance().processElements(indexKey, key, project, scope, idFilter, requiredClass, processor);
     return result;
   }
 

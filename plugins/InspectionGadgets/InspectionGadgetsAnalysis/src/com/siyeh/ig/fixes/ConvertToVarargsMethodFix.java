@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +88,7 @@ public class ConvertToVarargsMethodFix extends InspectionGadgetsFix {
     final PsiArrayType arrayType = (PsiArrayType)type;
     final PsiType componentType = arrayType.getComponentType();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
-    final PsiType ellipsisType = PsiEllipsisType.createEllipsis(componentType, type.getAnnotations());
+    final PsiType ellipsisType = new PsiEllipsisType(componentType, TypeAnnotationProvider.Static.create(type.getAnnotations()));
     final PsiTypeElement newTypeElement = factory.createTypeElement(ellipsisType);
     final PsiTypeElement typeElement = lastParameter.getTypeElement();
     if (typeElement != null) {

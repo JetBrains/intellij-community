@@ -46,7 +46,7 @@ public class ReplacePrimitiveWithBoxedTypeAction extends LocalQuickFixAndIntenti
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return "Convert primitive to boxed type";
   }
 
   @Override

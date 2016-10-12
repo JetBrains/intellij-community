@@ -103,10 +103,7 @@ public class SuperTypesGrouper implements Grouper{
 
   private static boolean methodOverridesSuper(PsiMethod method, PsiMethod superMethod) {
     boolean overrides = false;
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT)){
-      overrides = true;
-    }
-    else if (!superMethod.hasModifierProperty(PsiModifier.ABSTRACT)){
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT) || !superMethod.hasModifierProperty(PsiModifier.ABSTRACT)){
       overrides = true;
     }
     return overrides;

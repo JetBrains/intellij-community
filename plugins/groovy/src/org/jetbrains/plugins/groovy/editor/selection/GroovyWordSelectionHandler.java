@@ -68,7 +68,7 @@ public class GroovyWordSelectionHandler extends ExtendWordSelectionHandlerBase {
       ranges.add(e.getTextRange());
     }
 
-    SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, ranges);
+    SelectWordUtil.addWordOrLexemeSelection(editor.getSettings().isCamelWords(), editor, cursorOffset, ranges);
 
     return ranges;
   }

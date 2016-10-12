@@ -28,15 +28,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author max
@@ -69,8 +71,22 @@ public class ChangesUtil {
     return revision == null ? null : revision.getFile();
   }
 
-  public static AbstractVcs getVcsForChange(Change change, final Project project) {
-    return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
+  @Nullable
+  public static AbstractVcs getVcsForChange(@NotNull Change change, @NotNull Project project) {
+    AbstractVcs result = ChangeListManager.getInstance(project).getVcsFor(change);
+
+    return result != null ? result : ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
+  }
+
+  @NotNull
+  public static Set<AbstractVcs> getAffectedVcses(@NotNull Collection<Change> changes, @NotNull final Project project) {
+    return ContainerUtil.map2SetNotNull(changes, new NullableFunction<Change, AbstractVcs>() {
+      @Nullable
+      @Override
+      public AbstractVcs fun(@NotNull Change change) {
+        return getVcsForChange(change, project);
+      }
+    });
   }
 
   public static AbstractVcs getVcsForFile(VirtualFile file, Project project) {
@@ -156,32 +172,44 @@ public class ChangesUtil {
     return result;
   }
 
-  public static VirtualFile[] getFilesFromChanges(final Collection<Change> changes) {
-    ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
-    for (Change change : changes) {
-      final ContentRevision afterRevision = change.getAfterRevision();
-      if (afterRevision != null) {
-        FilePath filePath = afterRevision.getFile();
-        VirtualFile file = filePath.getVirtualFile();
-        if (file == null || !file.isValid()) {
-          file = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
-        }
-        if (file != null && file.isValid()) {
-          files.add(file);
-        }
-      }
-    }
-    return VfsUtilCore.toVirtualFileArray(files);
+  /**
+   * Leave this method as is as there are some external usages.
+   */
+  @SuppressWarnings("unused")
+  @NotNull
+  public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
+    return getAfterRevisionsFiles(changes.stream()).toArray(VirtualFile[]::new);
   }
 
-  public static Navigatable[] getNavigatableArray(final Project project, final VirtualFile[] selectedFiles) {
-    List<Navigatable> result = new ArrayList<Navigatable>();
-    for (VirtualFile selectedFile : selectedFiles) {
-      if (!selectedFile.isDirectory()) {
-        result.add(new OpenFileDescriptor(project, selectedFile));
-      }
-    }
-    return result.toArray(new Navigatable[result.size()]);
+  @NotNull
+  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes) {
+    return getAfterRevisionsFiles(changes, false);
+  }
+
+  @NotNull
+  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes, boolean refresh) {
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+
+    return changes
+      .map(Change::getAfterRevision)
+      .filter(Objects::nonNull)
+      .map(ContentRevision::getFile)
+      .map(path -> refresh ? fileSystem.refreshAndFindFileByPath(path.getPath()) : path.getVirtualFile())
+      .filter(Objects::nonNull)
+      .filter(VirtualFile::isValid);
+  }
+
+  @NotNull
+  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull VirtualFile[] files) {
+    return getNavigatableArray(project, Stream.of(files));
+  }
+
+  @NotNull
+  public static Navigatable[] getNavigatableArray(@NotNull Project project, @NotNull Stream<VirtualFile> files) {
+    return files
+      .filter(file -> !file.isDirectory())
+      .map(file -> new OpenFileDescriptor(project, file))
+      .toArray(Navigatable[]::new);
   }
 
   public static boolean allChangesInOneListOrWholeListsSelected(@NotNull final Project project, @NotNull Change[] changes) {
@@ -269,20 +297,21 @@ public class ChangesUtil {
   }
 
   @Nullable
-  public static VirtualFile findValidParentAccurately(final FilePath filePath) {
-    if (filePath.getVirtualFile() != null) return filePath.getVirtualFile();
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    VirtualFile result = lfs.findFileByIoFile(filePath.getIOFile());
-    if (result != null) return result;
-    if (! ApplicationManager.getApplication().isReadAccessAllowed()) {
-      result = lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
-      if (result != null) return result;
+  public static VirtualFile findValidParentAccurately(@NotNull FilePath filePath) {
+    VirtualFile result = filePath.getVirtualFile();
+
+    if (result == null && !ApplicationManager.getApplication().isReadAccessAllowed()) {
+      result = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath.getPath());
     }
-    return getValidParentUnderReadAction(filePath);
+    if (result == null) {
+      result = getValidParentUnderReadAction(filePath);
+    }
+
+    return result;
   }
 
   @Nullable
-  private static VirtualFile getValidParentUnderReadAction(final FilePath filePath) {
+  private static VirtualFile getValidParentUnderReadAction(@NotNull final FilePath filePath) {
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       @Override
       public VirtualFile compute() {
@@ -296,24 +325,19 @@ public class ChangesUtil {
    */
   @Nullable
   @Deprecated
-  public static VirtualFile findValidParent(FilePath file) {
+  public static VirtualFile findValidParent(@NotNull FilePath file) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    VirtualFile parent = file.getVirtualFile();
-    if (parent == null) {
-      parent = file.getVirtualFileParent();
+
+    VirtualFile result = null;
+    FilePath parent = file;
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+
+    while (result == null && parent != null) {
+      result = lfs.findFileByPath(parent.getPath());
+      parent = parent.getParentPath();
     }
-    if (parent == null) {
-      File ioFile = file.getIOFile();
-      final LocalFileSystem lfs = LocalFileSystem.getInstance();
-      do {
-        parent = lfs.findFileByIoFile(ioFile);
-        if (parent != null) break;
-        ioFile = ioFile.getParentFile();
-        if (ioFile == null) return null;
-      }
-      while (true);
-    }
-    return parent;
+
+    return result;
   }
 
   @Nullable
@@ -442,5 +466,34 @@ public class ChangesUtil {
 
   public static String getDefaultChangeListName() {
     return VcsBundle.message("changes.default.changelist.name");
+  }
+
+  /**
+   * Find common ancestor for changes (included both before and after files)
+   */
+  @Nullable
+  public static File findCommonAncestor(@NotNull Collection<Change> changes) {
+    File ancestor = null;
+    for (Change change : changes) {
+      File currentChangeAncestor = getCommonBeforeAfterAncestor(change);
+      if (currentChangeAncestor == null) return null;
+      if (ancestor == null) {
+        ancestor = currentChangeAncestor;
+      }
+      else {
+        ancestor = FileUtil.findAncestor(ancestor, currentChangeAncestor);
+        if (ancestor == null) return null;
+      }
+    }
+    return ancestor;
+  }
+
+  @Nullable
+  private static File getCommonBeforeAfterAncestor(@NotNull Change change) {
+    FilePath before = getBeforePath(change);
+    FilePath after = getAfterPath(change);
+    return before == null
+           ? ObjectUtils.assertNotNull(after).getIOFile()
+           : after == null ? before.getIOFile() : FileUtil.findAncestor(before.getIOFile(), after.getIOFile());
   }
 }

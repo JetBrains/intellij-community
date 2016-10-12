@@ -28,7 +28,6 @@ import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +127,7 @@ public class ByWord {
 
     List<WordBlock> wordBlocks = new LineFragmentSplitter(text1, text2, words1, words2, wordChanges, indicator).run();
 
-    List<LineBlock> lineBlocks = new ArrayList<LineBlock>(wordBlocks.size());
+    List<LineBlock> lineBlocks = new ArrayList<>(wordBlocks.size());
     for (WordBlock block : wordBlocks) {
       Range offsets = block.offsets;
       Range words = block.words;
@@ -162,12 +161,7 @@ public class ByWord {
 
   @NotNull
   private static List<MergeWordFragment> convertIntoFragments(@NotNull List<MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, new Function<MergeRange, MergeWordFragment>() {
-      @Override
-      public MergeWordFragment fun(MergeRange ch) {
-        return new MergeWordFragmentImpl(ch);
-      }
-    });
+    return ContainerUtil.map(conflicts, ch -> new MergeWordFragmentImpl(ch));
   }
 
   @NotNull
@@ -485,8 +479,8 @@ public class ByWord {
 
   @NotNull
   private static Couple<List<Range>> splitIterable2Side(@NotNull FairDiffIterable changes, int offset) {
-    final List<Range> ranges1 = new ArrayList<Range>();
-    final List<Range> ranges2 = new ArrayList<Range>();
+    final List<Range> ranges1 = new ArrayList<>();
+    final List<Range> ranges2 = new ArrayList<>();
     for (Range ch : changes.iterateUnchanged()) {
       if (ch.end2 <= offset) {
         ranges1.add(new Range(ch.start1, ch.end1, ch.start2, ch.end2));
@@ -524,7 +518,7 @@ public class ByWord {
       myText2 = text2;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<Range>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
@@ -564,7 +558,7 @@ public class ByWord {
       myText3 = text3;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<MergeRange>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
@@ -607,13 +601,15 @@ public class ByWord {
       myText2 = text2;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<Range>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
     public DiffIterable build() {
       for (Range range : myIterable.iterateChanges()) {
-        Range trimmed = trim(myText1, myText2, range);
+        // match spaces if we can, ignore them if we can't
+        Range expanded = expandW(myText1, myText2, range);
+        Range trimmed = trim(myText1, myText2, expanded);
 
         if (!trimmed.isEmpty()) {
           myChanges.add(trimmed);
@@ -644,13 +640,14 @@ public class ByWord {
       myText3 = text3;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<MergeRange>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
     public List<MergeRange> build() {
       for (MergeRange range : myIterable) {
-        MergeRange trimmed = trim(myText1, myText2, myText3, range);
+        MergeRange expanded = expandW(myText1, myText2, myText3, range);
+        MergeRange trimmed = trim(myText1, myText2, myText3, expanded);
 
         if (!trimmed.isEmpty()) {
           myChanges.add(trimmed);
@@ -678,7 +675,7 @@ public class ByWord {
       myText2 = text2;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<Range>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
@@ -733,7 +730,7 @@ public class ByWord {
       myText3 = text3;
       myIndicator = indicator;
 
-      myChanges = new ArrayList<MergeRange>();
+      myChanges = new ArrayList<>();
     }
 
     @NotNull
@@ -823,7 +820,7 @@ public class ByWord {
 
   @NotNull
   public static List<InlineChunk> getInlineChunks(@NotNull final CharSequence text) {
-    final List<InlineChunk> chunks = new ArrayList<InlineChunk>();
+    final List<InlineChunk> chunks = new ArrayList<>();
 
     final int len = text.length();
 

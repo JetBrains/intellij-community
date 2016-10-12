@@ -27,54 +27,51 @@ import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+import java.util.stream.Stream;
+
+import static com.intellij.util.ObjectUtils.notNull;
+
 public abstract class AbstractCommitChangesAction extends AbstractCommonCheckinAction {
-  @Override
   @NotNull
+  @Override
   protected FilePath[] getRoots(@NotNull VcsContext context) {
     return getAllContentRoots(context);
   }
 
   @Override
-  protected boolean approximatelyHasRoots(VcsContext dataContext) {
-    final Project project = dataContext.getProject();
-    final ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
-    return manager.hasAnyMappings();
+  protected boolean approximatelyHasRoots(@NotNull VcsContext dataContext) {
+    return ProjectLevelVcsManager.getInstance(dataContext.getProject()).hasAnyMappings();
   }
 
   @Override
-  protected boolean filterRootsBeforeAction() {
-    return false;
-  }
-
-  @Override
-  protected void update(final VcsContext vcsContext, final Presentation presentation) {
+  protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
     super.update(vcsContext, presentation);
-    if (presentation.isVisible() && presentation.isEnabled()) {
-      final ChangeList[] selectedChangeLists = vcsContext.getSelectedChangeLists();
-      final Change[] selectedChanges = vcsContext.getSelectedChanges();
+
+    if (presentation.isEnabledAndVisible()) {
+      Change[] changes = vcsContext.getSelectedChanges();
+
       if (vcsContext.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
-        if (selectedChangeLists != null && selectedChangeLists.length > 0) {
-          presentation.setEnabled(selectedChangeLists.length == 1 && !ContainerUtil.isEmpty(selectedChangeLists[0].getChanges()));
-        }
-        else {
-          presentation.setEnabled (selectedChanges != null && selectedChanges.length > 0);
-        }
+        ChangeList[] changeLists = vcsContext.getSelectedChangeLists();
+
+        presentation.setEnabled(!ArrayUtil.isEmpty(changeLists)
+                                ? changeLists.length == 1 && !changeLists[0].getChanges().isEmpty()
+                                : !ArrayUtil.isEmpty(changes));
       }
-      if (presentation.isEnabled() && selectedChanges != null) {
-        final ChangeListManager changeListManager = ChangeListManager.getInstance(vcsContext.getProject());
-        for(Change c: selectedChanges) {
-          if (c.getFileStatus() == FileStatus.HIJACKED && changeListManager.getChangeList(c) == null) {
-            presentation.setEnabled(false);
-            break;
-          }
-        }
+
+      if (presentation.isEnabled() && !ArrayUtil.isEmpty(changes)) {
+        disableIfAnyHijackedChanges(notNull(vcsContext.getProject()), presentation, changes);
       }
     }
+  }
+
+  private static void disableIfAnyHijackedChanges(@NotNull Project project, @NotNull Presentation presentation, @NotNull Change[] changes) {
+    ChangeListManager manager = ChangeListManager.getInstance(project);
+    boolean hasHijackedChanges =
+      Stream.of(changes).anyMatch(change -> change.getFileStatus() == FileStatus.HIJACKED && manager.getChangeList(change) == null);
+
+    presentation.setEnabled(!hasHijackedChanges);
   }
 }

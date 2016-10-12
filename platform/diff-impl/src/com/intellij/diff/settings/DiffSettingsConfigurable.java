@@ -41,7 +41,7 @@ public class DiffSettingsConfigurable implements SearchableConfigurable {
   @Nls
   @Override
   public String getDisplayName() {
-    return "Diff";
+    return "Diff & Merge";
   }
 
   @NotNull

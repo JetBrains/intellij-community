@@ -17,15 +17,16 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.BaseInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -111,7 +112,10 @@ public class MethodMatcher {
     return myClassNames;
   }
 
-  public boolean matches(PsiMethod method) {
+  public boolean matches(@Nullable PsiMethod method) {
+    if (method == null) {
+      return false;
+    }
     final String methodName = method.getName();
     final PsiClass aClass = method.getContainingClass();
     if (aClass == null) {
@@ -130,31 +134,8 @@ public class MethodMatcher {
     return false;
   }
 
-  public boolean matches(PsiMethodCallExpression methodCallExpression) {
-    final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-    final String methodName = methodExpression.getReferenceName();
-    if (methodName == null) {
-      return false;
-    }
-    PsiClass aClass = null;
-    for (int i = 0, size = myMethodNamePatterns.size(); i < size; i++) {
-      final Pattern pattern = getPattern(i);
-      if (pattern == null || !pattern.matcher(methodName).matches()) {
-        continue;
-      }
-      if (aClass == null) {
-        final PsiMethod method = methodCallExpression.resolveMethod();
-        if (method == null || method.isConstructor()) {
-          return false;
-        }
-        aClass = method.getContainingClass();
-      }
-      final String className = myClassNames.get(i);
-      if (InheritanceUtil.isInheritor(aClass, className)) {
-        return true;
-      }
-    }
-    return false;
+  public boolean matches(PsiCall call) {
+    return matches(call.resolveMethod());
   }
 
   private Pattern getPattern(int i) {

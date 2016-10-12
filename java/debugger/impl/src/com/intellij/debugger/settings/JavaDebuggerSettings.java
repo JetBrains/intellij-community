@@ -66,8 +66,8 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   @SuppressWarnings("SpellCheckingInspection")
   @NotNull
   public static List<Configurable> createDataViewsConfigurable() {
-    return Arrays.<Configurable>asList(new DebuggerDataViewsConfigurable(null),
-                                       SimpleConfigurable.create("reference.idesettings.debugger.typerenderers", DebuggerBundle.message("user.renderers.configurable.display.name"),
+    return Arrays.asList(new DebuggerDataViewsConfigurable(null),
+                         SimpleConfigurable.create("reference.idesettings.debugger.typerenderers", DebuggerBundle.message("user.renderers.configurable.display.name"),
                                                                  UserRenderersConfigurable.class, NodeRendererSettings::getInstance));
   }
 

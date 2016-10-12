@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,20 +167,17 @@ public class UnusedSymbolUtil {
 
     final PsiFile ignoreFile = helper.isCurrentFileAlreadyChecked() ? containingFile : null;
 
-    boolean sure = processUsages(project, containingFile, member, progress, ignoreFile, new Processor<UsageInfo>() {
-      @Override
-      public boolean process(UsageInfo info) {
-        PsiFile psiFile = info.getFile();
-        if (psiFile == ignoreFile || psiFile == null) {
-          return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
-        }
-        int offset = info.getNavigationOffset();
-        if (offset == -1) return true;
-        PsiElement element = psiFile.findElementAt(offset);
-        boolean inComment = element instanceof PsiComment;
-        log("*     "+member.getName()+": usage :"+element);
-        return inComment; // ignore comments
+    boolean sure = processUsages(project, containingFile, member, progress, ignoreFile, info -> {
+      PsiFile psiFile = info.getFile();
+      if (psiFile == ignoreFile || psiFile == null) {
+        return true; // ignore usages in containingFile because isLocallyUsed() method would have caught that
       }
+      int offset = info.getNavigationOffset();
+      if (offset == -1) return true;
+      PsiElement element = psiFile.findElementAt(offset);
+      boolean inComment = element instanceof PsiComment;
+      log("*     "+member.getName()+": usage :"+element);
+      return inComment; // ignore comments
     });
     log("*     "+member.getName()+": result:"+sure);
     return sure;
@@ -240,28 +237,27 @@ public class UnusedSymbolUtil {
     }
     FindUsagesOptions options;
     if (member instanceof PsiPackage) {
-      options = new JavaPackageFindUsagesOptions(project);
+      options = new JavaPackageFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = true;
     }
     else if (member instanceof PsiClass) {
-      options = new JavaClassFindUsagesOptions(project);
+      options = new JavaClassFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = true;
     }
     else if (member instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)member;
-      options = new JavaMethodFindUsagesOptions(project);
+      options = new JavaMethodFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = method.isConstructor();
     }
     else if (member instanceof PsiVariable) {
-      options = new JavaVariableFindUsagesOptions(project);
+      options = new JavaVariableFindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = false;
     }
     else {
-      options = new FindUsagesOptions(project);
+      options = new FindUsagesOptions(useScope);
       options.isSearchForTextOccurrences = true;
     }
     options.isUsages = true;
-    options.searchScope = useScope;
     return JavaFindUsagesHelper.processElementUsages(member, options, usageInfoProcessor);
   }
 

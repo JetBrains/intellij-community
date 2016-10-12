@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
@@ -31,7 +30,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +47,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private static final Icon ourEmptyIcon = EmptyIcon.ICON_18;
 
   private JBDimension myMinimumButtonSize;
-  private PropertyChangeListener myActionButtonSynchronizer;
+  private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
   private Icon myIcon;
   protected final Presentation myPresentation;
@@ -90,13 +88,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
-        mySelected = true;
         repaint();
       }
 
       @Override
       public void focusLost(FocusEvent e) {
-        mySelected = false;
         repaint();
       }
     });
@@ -167,7 +163,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   private void actionPerformed(final AnActionEvent event) {
-    if (myAction instanceof ActionGroup && !(myAction instanceof CustomComponentAction) && ((ActionGroup)myAction).isPopup()) {
+    if (myAction instanceof ActionGroup &&
+        !(myAction instanceof CustomComponentAction) &&
+        ((ActionGroup)myAction).isPopup() &&
+        !((ActionGroup)myAction).canBePerformed(event.getDataContext())) {
       final ActionManagerImpl am = (ActionManagerImpl)ActionManager.getInstance();
       ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(event.getPlace(), (ActionGroup)myAction, new MenuItemPresentationFactory() {
         @Override
@@ -178,12 +177,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
           }
         }
       });
-      popupMenu.setDataContextProvider(new Getter<DataContext>() {
-        @Override
-        public DataContext get() {
-          return ActionButton.this.getDataContext();
-        }
-      });
+      popupMenu.setDataContextProvider(() -> ActionButton.this.getDataContext());
       if (ActionPlaces.isToolbarPlace(event.getPlace())) {
         popupMenu.getComponent().show(this, 0, getHeight());
       }
@@ -197,18 +191,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void removeNotify() {
-    if (myActionButtonSynchronizer != null) {
-      myPresentation.removePropertyChangeListener(myActionButtonSynchronizer);
-      myActionButtonSynchronizer = null;
+    if (myPresentationListener != null) {
+      myPresentation.removePropertyChangeListener(myPresentationListener);
+      myPresentationListener = null;
     }
     super.removeNotify();
   }
 
   public void addNotify() {
     super.addNotify();
-    if (myActionButtonSynchronizer == null) {
-      myActionButtonSynchronizer = new ActionButtonSynchronizer();
-      myPresentation.addPropertyChangeListener(myActionButtonSynchronizer);
+    if (myPresentationListener == null) {
+      myPresentation.addPropertyChangeListener(myPresentationListener = this::presentationPropertyChanded);
     }
     AnActionEvent e = new AnActionEvent(null, getDataContext(), myPlace, myPresentation, ActionManager.getInstance(), 0);
     ActionUtil.performDumbAwareUpdate(myAction, e, false);
@@ -358,7 +351,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     else if (myRollover && isButtonEnabled()) {
       return POPPED;
     }
-    else if (mySelected) {
+    else if (isFocusOwner()) {
       return SELECTED;
     }
     else {
@@ -370,32 +363,27 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     return myAction;
   }
 
-  private class ActionButtonSynchronizer implements PropertyChangeListener {
-    @NonNls protected static final String SELECTED_PROPERTY_NAME = "selected";
-
-    public void propertyChange(PropertyChangeEvent e) {
-      String propertyName = e.getPropertyName();
-      if (Presentation.PROP_TEXT.equals(propertyName)) {
-        updateToolTipText();
-        revalidate(); // recalc preferred size & repaint instantly
-      }
-      else if (Presentation.PROP_ENABLED.equals(propertyName)) {
-        updateIcon();
-        repaint();
-      }
-      else if (Presentation.PROP_ICON.equals(propertyName)) {
-        updateIcon();
-        repaint();
-      }
-      else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
-        setDisabledIcon(myPresentation.getDisabledIcon());
-        repaint();
-      }
-      else if (Presentation.PROP_VISIBLE.equals(propertyName)) {
-      }
-      else if (SELECTED_PROPERTY_NAME.equals(propertyName)) {
-        repaint();
-      }
+  protected void presentationPropertyChanded(PropertyChangeEvent e) {
+    String propertyName = e.getPropertyName();
+    if (Presentation.PROP_TEXT.equals(propertyName)) {
+      updateToolTipText();
+    }
+    else if (Presentation.PROP_ENABLED.equals(propertyName)) {
+      updateIcon();
+      repaint();
+    }
+    else if (Presentation.PROP_ICON.equals(propertyName)) {
+      updateIcon();
+      repaint();
+    }
+    else if (Presentation.PROP_DISABLED_ICON.equals(propertyName)) {
+      setDisabledIcon(myPresentation.getDisabledIcon());
+      repaint();
+    }
+    else if (Presentation.PROP_VISIBLE.equals(propertyName)) {
+    }
+    else if ("selected".equals(propertyName)) {
+      repaint();
     }
   }
 

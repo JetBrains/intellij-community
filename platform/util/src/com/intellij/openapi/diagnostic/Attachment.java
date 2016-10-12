@@ -17,6 +17,7 @@ package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.Base64Converter;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +38,10 @@ public class Attachment {
     myPath = path;
     myBytes = bytes;
     myDisplayText = displayText;
+  }
+
+  public Attachment(@NotNull String name, @NotNull Throwable throwable) {
+    this(name + ".trace", ExceptionUtil.getThrowableText(throwable));
   }
 
   @NotNull

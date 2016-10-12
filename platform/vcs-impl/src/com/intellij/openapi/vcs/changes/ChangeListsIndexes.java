@@ -85,17 +85,17 @@ public class ChangeListsIndexes {
     }
   }
 
-  public VcsKey getVcsFor(final Change change) {
+  @Nullable
+  public VcsKey getVcsFor(@NotNull Change change) {
     VcsKey key = getVcsForRevision(change.getAfterRevision());
     if (key != null) return key;
     return getVcsForRevision(change.getBeforeRevision());
   }
 
   @Nullable
-  private VcsKey getVcsForRevision(final ContentRevision revision) {
+  private VcsKey getVcsForRevision(@Nullable ContentRevision revision) {
     if (revision != null) {
-      final FilePath fileKey = revision.getFile();
-      final Pair<VcsKey, VcsRevisionNumber> pair = myFileToVcs.get(fileKey);
+      Pair<VcsKey, VcsRevisionNumber> pair = myFileToVcs.get(revision.getFile());
       return pair == null ? null : pair.getFirst();
     }
     return null;

@@ -17,9 +17,14 @@ package com.intellij.psi.formatter.java;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -166,15 +171,59 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
       "}"
     );
   }
+  
+  public void testKeepWhitespacesOnEmptyLines() {
+    CommonCodeStyleSettings.IndentOptions indentOptions =
+      CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions();
+    assertNotNull(indentOptions);
+    boolean keepIndents = indentOptions.KEEP_INDENTS_ON_EMPTY_LINES;
+    EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+    String stripSpaces = editorSettings.getStripTrailingSpaces();
+    try {
+      editorSettings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+      indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = true;
+      final String initial =
+        "<caret>package com.acme;\n" +
+        "\n" +
+        "class Foo {\n" +
+        "   Integer[] foo() {\n" +
+        "        \n" +
+        "        \n" +
+        "    return new Integer[]{0, 1};\n" +
+        "   }\n" +
+        "    \n" +
+        "}";
+      
+      final String expected =
+        " package com.acme;\n" +
+        "\n" +
+        "class Foo {\n" +
+        "    Integer[] foo() {\n" +
+        "        \n" +
+        "        \n" +
+        "        return new Integer[]{0, 1};\n" +
+        "    }\n" +
+        "    \n" +
+        "}";
+
+      configureFromFileText(getTestName(false) + ".java", initial);
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject())
+        .reformatText(getFile(), 0, getEditor().getDocument().getTextLength()));
+       Document doc = getEditor().getDocument();
+      EditorTestUtil.performTypingAction(getEditor(), ' ');
+      PsiDocumentManager.getInstance(getProject()).commitDocument(doc);
+      FileDocumentManager.getInstance().saveAllDocuments();
+      checkResultByText(expected);
+    }
+    finally {
+      indentOptions.KEEP_INDENTS_ON_EMPTY_LINES = keepIndents;
+      editorSettings.setStripTrailingSpaces(stripSpaces);
+    }
+  } 
 
   public void doTest(@NotNull String before, @NotNull String after) throws IOException {
     configureFromFileText(getTestName(false) + ".java", before);
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        CodeStyleManager.getInstance(getProject()).reformatText(getFile(), 0, getEditor().getDocument().getTextLength());
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> CodeStyleManager.getInstance(getProject()).reformatText(getFile(), 0, getEditor().getDocument().getTextLength()));
 
     checkResultByText(after);
   }

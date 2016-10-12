@@ -31,7 +31,6 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.CustomPortServerManager;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
@@ -77,7 +76,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
 
     try {
       bootstrap.localAddress(user.isAvailableExternally() ? new InetSocketAddress(port) : NetKt.loopbackSocketAddress(port));
-      channelRegistrar.add(bootstrap.bind().syncUninterruptibly().channel());
+      channelRegistrar.setServerChannel(bootstrap.bind().syncUninterruptibly().channel(), false);
       return true;
     }
     catch (Exception e) {
@@ -98,7 +97,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
 
   private void stop() {
     if (channelRegistrar != null) {
-      channelRegistrar.close(false);
+      channelRegistrar.close();
     }
   }
 
@@ -123,7 +122,7 @@ public final class SubServer implements CustomPortServerManager.CustomPortServic
     }
 
     @Override
-    protected boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) throws IOException {
+    protected boolean process(@NotNull ChannelHandlerContext context, @NotNull FullHttpRequest request, @NotNull QueryStringDecoder urlDecoder) {
       if (handlers.isEmpty()) {
         // not yet initialized, for example, P2PTransport could add handlers after we bound.
         return false;

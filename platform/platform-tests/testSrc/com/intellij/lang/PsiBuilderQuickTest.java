@@ -565,19 +565,16 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
   }
 
   private static void doFailTest(@NonNls final String text, final Parser parser, @NonNls final String expected) {
-    PlatformTestUtil.withStdErrSuppressed(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(new PlainTextParserDefinition(), new MyTestLexer(), text);
-          builder.setDebugMode(true);
-          parser.parse(builder);
-          builder.getLightTree();
-          fail("should fail");
-        }
-        catch (AssertionError e) {
-          assertEquals(expected, e.getMessage());
-        }
+    PlatformTestUtil.withStdErrSuppressed(() -> {
+      try {
+        PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(new PlainTextParserDefinition(), new MyTestLexer(), text);
+        builder.setDebugMode(true);
+        parser.parse(builder);
+        builder.getLightTree();
+        fail("should fail");
+      }
+      catch (AssertionError e) {
+        assertEquals(expected, e.getMessage());
       }
     });
   }

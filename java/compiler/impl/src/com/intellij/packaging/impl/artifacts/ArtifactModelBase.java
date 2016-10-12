@@ -30,12 +30,7 @@ import java.util.*;
 public abstract class ArtifactModelBase implements ArtifactModel {
   private Map<String, Artifact> myArtifactsMap;
   private Artifact[] myArtifactsArray;
-  public static final Condition<Artifact> VALID_ARTIFACT_CONDITION = new Condition<Artifact>() {
-    @Override
-    public boolean value(Artifact artifact) {
-      return !(artifact instanceof InvalidArtifact);
-    }
-  };
+  public static final Condition<Artifact> VALID_ARTIFACT_CONDITION = artifact -> !(artifact instanceof InvalidArtifact);
 
   protected abstract List<? extends Artifact> getArtifactsList();
 

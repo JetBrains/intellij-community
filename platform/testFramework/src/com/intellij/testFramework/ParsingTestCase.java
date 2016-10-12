@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,12 +114,8 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     registerComponentInstance(appContainer, SchemesManagerFactory.class, new MockSchemesManagerFactory());
     final MockEditorFactory editorFactory = new MockEditorFactory();
     registerComponentInstance(appContainer, EditorFactory.class, editorFactory);
-    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(new Function<CharSequence, Document>() {
-      @Override
-      public Document fun(CharSequence charSequence) {
-        return editorFactory.createDocument(charSequence);
-      }
-    }, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
+    registerComponentInstance(appContainer, FileDocumentManager.class, new MockFileDocumentManagerImpl(
+      charSequence -> editorFactory.createDocument(charSequence), FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
     registerComponentInstance(appContainer, PsiDocumentManager.class, new MockPsiDocumentManager());
 
     registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
@@ -338,7 +334,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
 
     final String fileText = file.getText();
     final DiffLog diffLog = new BlockSupportImpl(file.getProject()).reparseRange(
-      file, TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
+      file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
     diffLog.performActualPsiChange(file);
 
     TestCase.assertEquals(psiToStringDefault, DebugUtil.psiToString(file, false, false));

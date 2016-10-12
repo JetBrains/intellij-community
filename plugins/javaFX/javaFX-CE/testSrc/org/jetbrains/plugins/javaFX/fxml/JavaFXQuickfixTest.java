@@ -40,7 +40,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   public static final DefaultLightProjectDescriptor JAVA_FX_WITH_GROOVY_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
        public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-       PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
+      AbstractJavaFXTestCase.addJavaFxJarAsLibrary(module, model);
        PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "groovy-1.8.0.jar");
        super.configureModule(module, model, contentEntry);
      }
@@ -58,6 +58,14 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
 
   public void testCreateControllerMethodInGroovy() throws Exception {
     doTest("Create method 'void bar(ActionEvent)'", ".groovy");
+  }
+
+  public void testCreateControllerMethodGeneric() throws Exception {
+    doTest("Create method 'void onSort(SortEvent)'", ".java");
+  }
+
+  public void testCreateControllerMethodHalfRaw() throws Exception {
+    doTest("Create method 'void onSort(SortEvent)'", ".java");
   }
 
   public void testCreateFieldPublicVisibility() throws Exception {
@@ -78,6 +86,26 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
 
   public void testCreateFieldEscalateVisibility() throws Exception {
     doTestWithDefaultVisibility("Create field 'btn'", "CreateField", VisibilityUtil.ESCALATE_VISIBILITY, ".java");
+  }
+
+  public void testCreateMethodPublicVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PUBLIC, ".java");
+  }
+
+  public void testCreateMethodProtectedVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PROTECTED, ".java");
+  }
+
+  public void testCreateMethodPrivateVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PRIVATE, ".java");
+  }
+
+  public void testCreateMethodPackageLocalVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", PsiModifier.PACKAGE_LOCAL, ".java");
+  }
+
+  public void testCreateMethodEscalateVisibility() throws Exception {
+    doTestWithDefaultVisibility("Create method 'void onAction(ActionEvent)'", "CreateMethod", VisibilityUtil.ESCALATE_VISIBILITY, ".java");
   }
 
   public void testCreateFieldEmptyName() throws Exception {
@@ -109,8 +137,7 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
   private void doTestWithDefaultVisibility(final String actionName,
                                            final String inputName,
                                            final String defaultVisibility,
-                                           final String extension)
-    throws Exception {
+                                           final String extension) throws Exception {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     String savedVisibility = settings.VISIBILITY;
     try {

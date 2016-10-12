@@ -30,7 +30,10 @@ import git4idea.GitVcs;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 

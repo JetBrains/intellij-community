@@ -169,7 +169,7 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     }
   }
 
-  @Order(2)
+  @Order(ExternalSystemNode.BUILTIN_DEPENDENCIES_DATA_NODE_ORDER)
   private static class MyDependenciesNode extends ExternalSystemNode {
     public MyDependenciesNode(ExternalProjectsView externalProjectsView) {
       //noinspection unchecked

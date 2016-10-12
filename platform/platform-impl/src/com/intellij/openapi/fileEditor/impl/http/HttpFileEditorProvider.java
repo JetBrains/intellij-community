@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import org.jdom.Element;
@@ -44,18 +43,9 @@ class HttpFileEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   @Override
-  public void disposeEditor(@NotNull final FileEditor editor) {
-    Disposer.dispose(editor);
-  }
-
-  @Override
   @NotNull
   public FileEditorState readState(@NotNull final Element sourceElement, @NotNull final Project project, @NotNull final VirtualFile file) {
     return new TextEditorState();
-  }
-
-  @Override
-  public void writeState(@NotNull final FileEditorState state, @NotNull final Project project, @NotNull final Element targetElement) {
   }
 
   @Override

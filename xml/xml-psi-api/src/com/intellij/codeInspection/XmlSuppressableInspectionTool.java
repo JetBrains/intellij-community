@@ -82,6 +82,11 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     public void setShouldBeAppliedToInjectionHost(@NotNull ThreeState shouldBeAppliedToInjectionHost) {
       myShouldBeAppliedToInjectionHost = shouldBeAppliedToInjectionHost;
     }
+
+    @Override
+    public boolean isSuppressAll() {
+      return false;
+    }
   }
 
   public static class SuppressTagStatic extends XmlSuppressFix {

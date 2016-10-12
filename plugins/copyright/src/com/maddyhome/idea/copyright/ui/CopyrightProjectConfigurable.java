@@ -44,12 +44,7 @@ public class CopyrightProjectConfigurable extends SearchableConfigurable.Parent.
 
   public JComponent createComponent() {
     myOptionsPanel = new ProjectSettingsPanel(project, myProfilesPanel);
-    myProfilesPanel.setUpdate(new Runnable() {
-      @Override
-      public void run() {
-        reloadProfiles();
-      }
-    });
+    myProfilesPanel.setUpdate(() -> reloadProfiles());
     return myOptionsPanel.getMainComponent();
   }
 

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * Editor text layout storage. Layout is stored on a per-logical-line basis, 
@@ -54,6 +55,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
       @Override
       protected boolean removeEldestEntry(Map.Entry<LineLayout.Chunk, Object> eldest) {
         if (size() > getChunkCacheSizeLimit()) {
+          if (LOG.isDebugEnabled()) LOG.debug("Clearing chunk for " + myView.getEditor().getVirtualFile());
           eldest.getKey().clearCache();
           return true;
         }
@@ -116,13 +118,20 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     for (int line = startLine; line <= endLine; line++) {
       LineLayout lineLayout = myLines.get(line);
       if (lineLayout != null) {
+        removeChunksFromCache(lineLayout);
         myLines.set(line, keepBidiNotRequiredState && lineLayout.isLtr() ? myBidiNotRequiredMarker : null);
       }
     }
     if (oldEndLine < newEndLine) {
-      myLines.addAll(oldEndLine + 1, Collections.nCopies(newEndLine - oldEndLine, (LineLayout)null));
+      myLines.addAll(oldEndLine + 1, Collections.nCopies(newEndLine - oldEndLine, null));
     } else if (oldEndLine > newEndLine) {
-      myLines.subList(newEndLine + 1, oldEndLine + 1).clear();
+      List<LineLayout> layouts = myLines.subList(newEndLine + 1, oldEndLine + 1);
+      for (LineLayout layout : layouts) {
+        if (layout != null) {
+          removeChunksFromCache(layout);
+        }
+      }
+      layouts.clear();
     }
   }
 
@@ -151,12 +160,17 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     myLaidOutChunks.put(chunk, null);
   }
 
+  private void removeChunksFromCache(LineLayout layout) {
+    layout.getChunksInLogicalOrder().forEach(myLaidOutChunks::remove);
+  }
+
   private void trimChunkCache() {
     int limit = getChunkCacheSizeLimit();
     if (myLaidOutChunks.size() > limit) {
       Iterator<LineLayout.Chunk> it = myLaidOutChunks.keySet().iterator();
       while (myLaidOutChunks.size() > limit) {
         LineLayout.Chunk chunk = it.next();
+        if (LOG.isDebugEnabled()) LOG.debug("Clearing chunk for " + myView.getEditor().getVirtualFile());
         chunk.clearCache();
         it.remove();
       }

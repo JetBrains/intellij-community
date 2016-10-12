@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class TextEditorBackgroundHighlighter implements BackgroundEditorHighlighter {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter");
   private static final int[] EXCEPT_OVERRIDDEN = {
     Pass.UPDATE_FOLDING,
     Pass.POPUP_HINTS,
@@ -75,7 +77,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
   @NotNull
   List<TextEditorHighlightingPass> getPasses(@NotNull int[] passesToIgnore) {
     if (myProject.isDisposed()) return Collections.emptyList();
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    LOG.assertTrue(!PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments());
     renewFile();
     if (myFile == null) return Collections.emptyList();
     if (myCompiled) {

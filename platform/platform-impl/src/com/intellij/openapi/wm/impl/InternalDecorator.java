@@ -35,14 +35,11 @@ import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -106,15 +103,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     setFocusable(false);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
 
-    myHeader = new ToolWindowHeader(toolWindow, info, new Producer<ActionGroup>() {
-      @Override
-      public ActionGroup produce() {
-        return /*createGearPopupGroup()*/createPopupGroup(true);
-      }
+    myHeader = new ToolWindowHeader(toolWindow, info, () -> {
+      return /*createGearPopupGroup()*/createPopupGroup(true);
     }) {
       @Override
       protected boolean isActive() {
-        return isFocused();
+        return myToolWindow.isActive();
       }
 
       @Override

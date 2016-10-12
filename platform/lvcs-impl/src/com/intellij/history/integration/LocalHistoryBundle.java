@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.history.integration;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
-
-public class LocalHistoryBundle {
-
-  public static String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, @NotNull Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+public class LocalHistoryBundle extends AbstractBundle {
+  public static String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
-  private static final String PATH_TO_BUNDLE = "com.intellij.history.integration.LocalHistoryBundle";
-  private static Reference<ResourceBundle> ourBundle;
+  private static final String BUNDLE = "messages.LocalHistoryBundle";
+  private static final LocalHistoryBundle INSTANCE = new LocalHistoryBundle();
 
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(ourBundle);
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(PATH_TO_BUNDLE);
-      ourBundle = new SoftReference<ResourceBundle>(bundle);
-    }
-    return bundle;
+  private LocalHistoryBundle() {
+    super(BUNDLE);
   }
 }

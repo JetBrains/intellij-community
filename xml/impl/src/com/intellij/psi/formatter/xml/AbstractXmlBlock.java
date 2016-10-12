@@ -201,10 +201,11 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
       processSimpleChild(child, indent, result, wrap, alignment);
       return child;
     }
-    else {
+    else if (!isBuildIndentsOnly()) {
       myInjectedBlockBuilder.addInjectedLanguageBlockWrapper(result, child, indent, 0, null);
-      return child;
     }
+    
+    return child;
   }
 
   protected boolean doesNotIntersectSubTagsWith(final PsiElement tag) {
@@ -435,6 +436,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   protected boolean buildInjectedPsiBlocks(List<Block> result, final ASTNode child, Wrap wrap, Alignment alignment, Indent indent) {
+    if (isBuildIndentsOnly()) return false;
+    
     if (myInjectedBlockBuilder.addInjectedBlocks(result, child, wrap, alignment, indent)) {
       return true;
     }

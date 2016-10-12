@@ -1042,12 +1042,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     try {
       final FoldRegion[] fold = new FoldRegion[1];
-      editor.getFoldingModel().runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          fold[0] = editor.getFoldingModel().addFoldRegion(0, 2, "");
-        }
-      });
+      editor.getFoldingModel().runBatchFoldingOperation(() -> fold[0] = editor.getFoldingModel().addFoldRegion(0, 2, ""));
       RangeMarker marker = document.createRangeMarker(0, 2);
       document.deleteString(1,2);
 
@@ -1138,16 +1133,13 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     }
     markupModel.addRangeHighlighter(N / 2, N / 2 + 1, 0, null, HighlighterTargetArea.LINES_IN_RANGE);
 
-    PlatformTestUtil.startPerformanceTest("slow highlighters lookup", (int)(N*Math.log(N)/1000), new ThrowableRunnable() {
-      @Override
-      public void run() {
-        List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
-        CommonProcessors.CollectProcessor<RangeHighlighterEx> coll = new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list);
-        for (int i=0; i<N-1;i++) {
-          list.clear();
-          markupModel.processRangeHighlightersOverlappingWith(2*i, 2*i+1, coll);
-          assertEquals(2, list.size());  // 1 line plus one exact range marker
-        }
+    PlatformTestUtil.startPerformanceTest("slow highlighters lookup", (int)(N*Math.log(N)/1000), () -> {
+      List<RangeHighlighterEx> list = new ArrayList<RangeHighlighterEx>();
+      CommonProcessors.CollectProcessor<RangeHighlighterEx> coll = new CommonProcessors.CollectProcessor<RangeHighlighterEx>(list);
+      for (int i=0; i<N-1;i++) {
+        list.clear();
+        markupModel.processRangeHighlightersOverlappingWith(2*i, 2*i+1, coll);
+        assertEquals(2, list.size());  // 1 line plus one exact range marker
       }
     }).useLegacyScaling().assertTiming();
   }

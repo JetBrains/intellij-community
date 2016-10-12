@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,10 +88,10 @@ public class ProjectUtil {
     return guessProjectForContentFile(file, file.getFileType());
   }
 
-  @Nullable
   /***
    * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
    */
+  @Nullable
   public static Project guessProjectForContentFile(@NotNull VirtualFile file, @NotNull FileType fileType) {
     if (isProjectOrWorkspaceFile(file, fileType)) {
       return null;

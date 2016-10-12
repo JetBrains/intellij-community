@@ -101,17 +101,9 @@ public final class CreateFieldFix extends QuickFix{
 
     CommandProcessor.getInstance().executeCommand(
       project,
-      new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(
-            new Runnable() {
-              public void run() {
-                createField(project, fieldClass, fieldName, boundClass, showErrors, rootContainer);
-              }
-            }
-          );
-        }
-      },
+      () -> ApplicationManager.getApplication().runWriteAction(
+        () -> createField(project, fieldClass, fieldName, boundClass, showErrors, rootContainer)
+      ),
       UIDesignerBundle.message("command.create.field"),
       undoGroupId
     );
@@ -151,15 +143,11 @@ public final class CreateFieldFix extends QuickFix{
     catch (final IncorrectOperationException exc) {
       if (showErrors) {
         ApplicationManager.getApplication().invokeLater(
-          new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(
-                project,
-                UIDesignerBundle.message("error.cannot.create.field.reason", fieldName, exc.getMessage()),
-                CommonBundle.getErrorTitle()
-              );
-            }
-          }
+          () -> Messages.showErrorDialog(
+            project,
+            UIDesignerBundle.message("error.cannot.create.field.reason", fieldName, exc.getMessage()),
+            CommonBundle.getErrorTitle()
+          )
         );
       }
     }

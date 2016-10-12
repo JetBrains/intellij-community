@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import com.intellij.structuralsearch.SSRBundle;
  * @author Bas Leijdekkers
  */
 public class ScriptLog {
+
+  public static final String SCRIPT_LOG_VAR_NAME = "__log__";
 
   private static final NotificationGroup myEventLog = NotificationGroup.logOnlyGroup(SSRBundle.message("structural.search.title"));
   private final Project myProject;

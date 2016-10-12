@@ -184,20 +184,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   public void newEntryAdded() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        rebuildHeaders();
-        updateControls();
-      }
+    SwingUtilities.invokeLater(() -> {
+      rebuildHeaders();
+      updateControls();
     });
   }
 
   public void poolCleared() {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        doOKAction();
-      }
-    });
+    SwingUtilities.invokeLater(() -> doOKAction());
   }
 
   @Override
@@ -592,7 +586,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
               .setHyperlinkText(
                 DiagnosticBundle.message("error.dialog.foreign.plugin.warning.text.vendor") + " " + vendor + " (",
                 contactInfo, ").");
-            myForeignPluginWarningLabel.setHyperlinkTarget("mailto:" + contactInfo);
+            final String target = (StringUtil.equals(contactInfo, plugin.getVendorEmail()) ? "mailto:" : "") + contactInfo;
+            myForeignPluginWarningLabel.setHyperlinkTarget(target);
           }
         }
         myForeignPluginWarningPanel.setVisible(true);
@@ -899,20 +894,14 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
 
       return submitter.submit(
-        getEvents(logMessage), logMessage.getAdditionalInfo(), parentComponent, new Consumer<SubmittedReportInfo>() {
-          @Override
-          public void consume(final SubmittedReportInfo submittedReportInfo) {
-            logMessage.setSubmitting(false);
-            logMessage.setSubmitted(submittedReportInfo);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (!dialogClosed) {
-                  updateOnSubmit();
-                }
-              }
-            });
-          }
+        getEvents(logMessage), logMessage.getAdditionalInfo(), parentComponent, submittedReportInfo -> {
+          logMessage.setSubmitting(false);
+          logMessage.setSubmitted(submittedReportInfo);
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!dialogClosed) {
+              updateOnSubmit();
+            }
+          });
         });
     }
 

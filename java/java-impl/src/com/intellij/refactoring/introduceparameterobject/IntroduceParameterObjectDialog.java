@@ -28,9 +28,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.refactoring.*;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.refactoring.introduceParameterObject.AbstractIntroduceParameterObjectDialog;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.ParameterTablePanel;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -45,18 +46,14 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
-public class IntroduceParameterObjectDialog extends RefactoringDialog {
+public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterObjectDialog<PsiMethod, ParameterInfoImpl, JavaIntroduceParameterObjectClassDescriptor, VariableData> {
 
-  private final PsiMethod sourceMethod;
-  private final VariableData[] parameterInfo;
-  private JTextField sourceMethodTextField;
 
   private JRadioButton useExistingClassButton;
   private JPanel myUseExistingPanel;
@@ -71,8 +68,6 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   private JPanel myInnerClassPanel;
 
   private JPanel myWholePanel;
-  private JPanel myParamsPanel;
-  private JCheckBox keepMethodAsDelegate;
   private ReferenceEditorComboWithBrowseButton packageTextField;
   private ReferenceEditorComboWithBrowseButton existingClassField;
   private JCheckBox myGenerateAccessorsCheckBox;
@@ -82,50 +77,40 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
   private static final String EXISTING_KEY = "IntroduceParameterObject.EXISTING_KEY";
 
   public IntroduceParameterObjectDialog(PsiMethod sourceMethod) {
-    super(sourceMethod.getProject(), true);
-    this.sourceMethod = sourceMethod;
-    setTitle(RefactorJBundle.message("introduce.parameter.object.title"));
+    super(sourceMethod);
     final DocumentListener docListener = new DocumentAdapter() {
       protected void textChanged(final DocumentEvent e) {
         validateButtons();
       }
     };
     final PsiClass containingClass = sourceMethod.getContainingClass();
-    keepMethodAsDelegate.setVisible(containingClass != null && !containingClass.isInterface());
     classNameField.getDocument().addDocumentListener(docListener);
     myInnerClassNameTextField.getDocument().addDocumentListener(docListener);
-    final PsiParameterList parameterList = sourceMethod.getParameterList();
-    final PsiParameter[] parameters = parameterList.getParameters();
-    parameterInfo = new VariableData[parameters.length];
-    for (int i = 0; i < parameterInfo.length; i++) {
-      parameterInfo[i] = new VariableData(parameters[i]);
-      parameterInfo[i].name = parameters[i].getName();
-      parameterInfo[i].passAsParameter = true;
-    }
 
-    sourceMethodTextField.setText(PsiFormatUtil.formatMethod(sourceMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, 0));
     final ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(useExistingClassButton);
     buttonGroup.add(createNewClassButton);
     buttonGroup.add(myCreateInnerClassRadioButton);
     createNewClassButton.setSelected(true);
-    if (containingClass != null && containingClass.getQualifiedName() == null) {
+    if (containingClass == null ||
+        containingClass.getQualifiedName() == null ||
+        containingClass.getContainingClass() != null ||
+        containingClass.isInterface()) {
       myCreateInnerClassRadioButton.setEnabled(false);
     }
     init();
 
-    final ActionListener listener = new ActionListener() {
-
-      public void actionPerformed(ActionEvent actionEvent) {
-        toggleRadioEnablement();
-        final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
-        if (useExistingClass()) {
-          focusManager.requestFocus(existingClassField, true);
-        } else if (myCreateInnerClassRadioButton.isSelected()) {
-          focusManager.requestFocus(myInnerClassNameTextField, true);
-        } else {
-          focusManager.requestFocus(classNameField, true);
-        }
+    final ActionListener listener = actionEvent -> {
+      toggleRadioEnablement();
+      final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+      if (useExistingClass()) {
+        focusManager.requestFocus(existingClassField, true);
+      }
+      else if (myCreateInnerClassRadioButton.isSelected()) {
+        focusManager.requestFocus(myInnerClassNameTextField, true);
+      }
+      else {
+        focusManager.requestFocus(classNameField, true);
       }
     };
     useExistingClassButton.addActionListener(listener);
@@ -134,6 +119,12 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     myGenerateAccessorsCheckBox.setSelected(true);
     myEscalateVisibilityCheckBox.setSelected(true);
     toggleRadioEnablement();
+  }
+
+  @Override
+  protected boolean isDelegateCheckboxVisible() {
+    final PsiClass containingClass = mySourceMethod.getContainingClass();
+    return containingClass != null && !containingClass.isInterface();
   }
 
   private void toggleRadioEnablement() {
@@ -148,9 +139,38 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     return "RefactorJ.IntroduceParameterObject";
   }
 
-  protected void doAction() {
+  protected String getSourceMethodPresentation() {
+    return PsiFormatUtil.formatMethod(mySourceMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, 0);
+  }
+
+  protected ParameterTablePanel createParametersPanel() {
+    final PsiParameterList parameterList = mySourceMethod.getParameterList();
+    final PsiParameter[] parameters = parameterList.getParameters();
+    VariableData[] parameterInfo = new VariableData[parameters.length];
+    for (int i = 0; i < parameterInfo.length; i++) {
+      parameterInfo[i] = new VariableData(parameters[i]);
+      parameterInfo[i].name = parameters[i].getName();
+      parameterInfo[i].passAsParameter = true;
+    }
+    return new ParameterTablePanel(myProject, parameterInfo) {
+      protected void updateSignature() {}
+
+      protected void doEnterAction() {}
+
+      protected void doCancelAction() {
+        IntroduceParameterObjectDialog.this.doCancelAction();
+      }
+    };
+  }
+
+  @Override
+  protected JPanel createParameterClassPanel() {
+    return myWholePanel;
+  }
+
+  @Override
+  protected JavaIntroduceParameterObjectClassDescriptor createClassDescriptor() {
     final boolean useExistingClass = useExistingClass();
-    final boolean keepMethod = keepMethodAsDelegate();
     final String className;
     final String packageName;
     final boolean createInnerClass = myCreateInnerClassRadioButton.isSelected();
@@ -166,35 +186,33 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
       packageName = getPackageName();
       className = getClassName();
     }
-    List<VariableData> parameters = new ArrayList<VariableData>();
-    for (VariableData data : parameterInfo) {
-      if (data.passAsParameter) {
-        parameters.add(data);
-      }
-    }
+
     final String newVisibility =
       myEscalateVisibilityCheckBox.isEnabled() && myEscalateVisibilityCheckBox.isSelected() ? VisibilityUtil.ESCALATE_VISIBILITY : null;
     final MoveDestination moveDestination = ((DestinationFolderComboBox)myDestinationCb)
       .selectDirectory(new PackageWrapper(PsiManager.getInstance(myProject), packageName), false);
-    invokeRefactoring(new IntroduceParameterObjectProcessor(className, packageName, moveDestination, sourceMethod,
-                                                            parameters.toArray(new VariableData[parameters.size()]),
-                                                            keepMethod, useExistingClass,
-                                                            createInnerClass, newVisibility, myGenerateAccessorsCheckBox.isSelected()));
+    final PsiParameterList parameterList = mySourceMethod.getParameterList();
+    final List<ParameterInfoImpl> parameters = new ArrayList<>();
+    for (VariableData data : myParameterTablePanel.getVariableData()) {
+      if (data.passAsParameter) {
+        parameters.add(new ParameterInfoImpl(parameterList.getParameterIndex((PsiParameter)data.variable), data.name, data.type));
+      }
+    }
+    final ParameterInfoImpl[] infos = parameters.toArray(new ParameterInfoImpl[parameters.size()]);
+    return new JavaIntroduceParameterObjectClassDescriptor(className, packageName, moveDestination, useExistingClass, createInnerClass,
+                                                           newVisibility, infos, mySourceMethod,
+                                                           myGenerateAccessorsCheckBox.isSelected());
   }
 
   @Override
   protected void canRun() throws ConfigurationException {
-    final Project project = sourceMethod.getProject();
+    super.canRun();
+    final Project project = mySourceMethod.getProject();
     final PsiNameHelper nameHelper = PsiNameHelper.getInstance(project);
-
-    final List<PsiParameter> parametersToExtract = getParametersToExtract();
-    if (parametersToExtract.isEmpty()) {
-      throw new ConfigurationException("Nothing found to extract");
-    }
     if (myCreateInnerClassRadioButton.isSelected()) {
-      final String innerClassName = getInnerClassName().trim();
+      final String innerClassName = getInnerClassName();
       if (!nameHelper.isIdentifier(innerClassName)) throw new ConfigurationException("\'" + innerClassName + "\' is invalid inner class name");
-      if (sourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) != null) throw new ConfigurationException("Inner class with name \'" + innerClassName + "\' already exist");
+      if (mySourceMethod.getContainingClass().findInnerClassByName(innerClassName, false) != null) throw new ConfigurationException("Inner class with name \'" + innerClassName + "\' already exist");
     } else if (!useExistingClass()) {
       final String className = getClassName();
       if (className.length() == 0 || !nameHelper.isIdentifier(className)) {
@@ -236,32 +254,6 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     return classNameField.getText().trim();
   }
 
-  @NotNull
-  public List<PsiParameter> getParametersToExtract() {
-    final List<PsiParameter> out = new ArrayList<PsiParameter>();
-    for (VariableData info : parameterInfo) {
-      if (info.passAsParameter) {
-        out.add((PsiParameter)info.variable);
-      }
-    }
-    return out;
-  }
-
-  protected JComponent createCenterPanel() {
-    sourceMethodTextField.setEditable(false);
-    final ParameterTablePanel paramsPanel = new ParameterTablePanel(myProject, parameterInfo, sourceMethod) {
-      protected void updateSignature() {}
-
-      protected void doEnterAction() {}
-
-      protected void doCancelAction() {
-        IntroduceParameterObjectDialog.this.doCancelAction();
-      }
-    };
-    myParamsPanel.add(paramsPanel, BorderLayout.CENTER);
-    return myWholePanel;
-  }
-
   public JComponent getPreferredFocusedComponent() {
     return classNameField;
   }
@@ -275,12 +267,8 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
     return useExistingClassButton.isSelected();
   }
 
-  public boolean keepMethodAsDelegate() {
-    return keepMethodAsDelegate.isSelected();
-  }
-
   private void createUIComponents() {
-    final PsiFile file = sourceMethod.getContainingFile();
+    final PsiFile file = mySourceMethod.getContainingFile();
     packageTextField =
           new PackageNameReferenceEditorCombo(file instanceof PsiJavaFile ? ((PsiJavaFile)file).getPackageName() : "", myProject, RECENTS_KEY, RefactoringBundle.message("choose.destination.package"));
         final Document document = packageTextField.getChildComponent().getDocument();
@@ -293,7 +281,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
 
     existingClassField = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        final Project project = sourceMethod.getProject();
+        final Project project = mySourceMethod.getProject();
         final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
         final TreeJavaClassChooserDialog chooser =
           new TreeJavaClassChooserDialog(RefactorJBundle.message("select.wrapper.class"), project, scope, null, null);
@@ -325,7 +313,7 @@ public class IntroduceParameterObjectDialog extends RefactoringDialog {
         return getPackageName();
       }
     };
-    ((DestinationFolderComboBox)myDestinationCb).setData(myProject, sourceMethod.getContainingFile().getContainingDirectory(), packageTextField.getChildComponent());
+    ((DestinationFolderComboBox)myDestinationCb).setData(myProject, mySourceMethod.getContainingFile().getContainingDirectory(), packageTextField.getChildComponent());
   }
 
   private void enableGenerateAccessors() {

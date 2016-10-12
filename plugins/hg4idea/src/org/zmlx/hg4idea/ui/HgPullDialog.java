@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
@@ -20,7 +19,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorComboBox;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.repo.HgRepository;
@@ -97,25 +95,14 @@ public class HgPullDialog extends DialogWrapper {
   }
 
   private void onChangeRepository() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        final VirtualFile repo = hgRepositorySelector.getRepository().getRoot();
-        final String defaultPath = HgUtil.getRepositoryDefaultPath(project, repo);
-        if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
-          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              addPathsFromHgrc(repo);
-              myRepositoryURL.setText(HgUtil.removePasswordIfNeeded(defaultPath));
-              myCurrentRepositoryUrl = defaultPath;
-            }
-          });
-
-          onChangePullSource();
-        }
-      }
-    });
+    final VirtualFile repo = hgRepositorySelector.getRepository().getRoot();
+    final String defaultPath = HgUtil.getRepositoryDefaultPath(project, repo);
+    if (!StringUtil.isEmptyOrSpaces(defaultPath)) {
+      addPathsFromHgrc(repo);
+      myRepositoryURL.setText(HgUtil.removePasswordIfNeeded(defaultPath));
+      myCurrentRepositoryUrl = defaultPath;
+      onChangePullSource();
+    }
   }
 
   private void onChangePullSource() {

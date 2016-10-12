@@ -19,9 +19,9 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.packaging.PyPackageManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,10 +72,9 @@ public abstract class TemplatesService {
                                                                                    DJANGO,
                                                                                    MAKO,
                                                                                   JINJA2,
-                                                                                  WEB2PY,
-                                                                                  CHAMELEON);
+                                                                                  WEB2PY);
 
-  public static List<String> ALL_TEMPLATE_BINDINGS = ContainerUtil.immutableList("django-mako", "django-jinja", "django-chameleon",
+  public static List<String> ALL_TEMPLATE_BINDINGS = ContainerUtil.immutableList("django-mako", "django-jinja",
                                                                                   "flask-mako", "pyramid_jinja2");
 
   @Nullable
@@ -111,7 +110,7 @@ public abstract class TemplatesService {
   public abstract void setTemplateFileTypes(List<String> fileTypes);
 
   public abstract void generateTemplates(@NotNull final TemplateSettingsHolder settings, VirtualFile baseDir);
-  public abstract void installTemplateEngine(@NotNull final TemplateSettingsHolder settings, @NotNull final PyPackageManager packageManager,
+  public abstract void installTemplateEngine(@NotNull final TemplateSettingsHolder settings, @NotNull final Sdk sdk,
                                              @NotNull final Project project, @NotNull final String prefix);
 
   public abstract void addLanguageSelectedListener(Runnable listener);

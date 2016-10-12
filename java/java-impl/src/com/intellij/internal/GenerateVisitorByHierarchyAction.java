@@ -176,11 +176,8 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
     for (PsiClass aClass : ClassInheritorsSearch.search(baseClass, scope, true).findAll()) {
       if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) == baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         final List<PsiClass> implementors =
-          ContainerUtil.findAll(ClassInheritorsSearch.search(aClass).findAll(), new Condition<PsiClass>() {
-            public boolean value(final PsiClass psiClass) {
-              return !psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
-            }
-          });
+          ContainerUtil.findAll(ClassInheritorsSearch.search(aClass).findAll(),
+                                psiClass -> !psiClass.hasModifierProperty(PsiModifier.ABSTRACT));
         classes.put(aClass, new THashSet<PsiClass>(implementors));
       }
     }

@@ -23,10 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Processor;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import com.jetbrains.python.PyTokenTypes;
@@ -49,16 +47,13 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       if (file.getFileType() == PythonFileType.INSTANCE || isPythonScratch(project, file)) {
-        XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
-          @Override
-          public boolean process(PsiElement psiElement) {
-            if (psiElement instanceof PsiWhiteSpace || psiElement instanceof PsiComment) return true;
-            if (psiElement.getNode() != null && notStoppableElementType(psiElement.getNode().getElementType())) return true;
+        XDebuggerUtil.getInstance().iterateLine(project, document, line, psiElement -> {
+          if (psiElement instanceof PsiWhiteSpace || psiElement instanceof PsiComment) return true;
+          if (psiElement.getNode() != null && notStoppableElementType(psiElement.getNode().getElementType())) return true;
 
-            // Python debugger seems to be able to stop on pretty much everything
-            stoppable.set(true);
-            return false;
-          }
+          // Python debugger seems to be able to stop on pretty much everything
+          stoppable.set(true);
+          return false;
         });
 
         if (PyDebugSupportUtils.isContinuationLine(document, line - 1)) {
@@ -68,6 +63,11 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
     }
 
     return stoppable.get();
+  }
+
+  @Override
+  public boolean isSuspendThreadSupported() {
+    return true;
   }
 
   private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {

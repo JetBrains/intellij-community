@@ -58,43 +58,35 @@ public class GithubTagListProvider {
   }
 
   private Runnable createUpdateTagListAction(@NotNull final GithubProjectGeneratorPeer peer) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          peer.onTagsUpdated(Collections.<GithubTagInfo>emptySet());
+    return () -> {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        peer.onTagsUpdated(Collections.<GithubTagInfo>emptySet());
+        return;
+      }
+      final String[] urls = formatTagListDownloadUrls();
+      String firstErrorMessage = null;
+      for (String url : urls) {
+        String errorMessage;
+        try {
+          final ImmutableSet<GithubTagInfo> tags = fetchGithubTagsByUrl(url);
+          LOG.info(getGeneratorName() + "Cache has been successfully updated");
+          UIUtil.invokeLaterIfNeeded(() -> peer.onTagsUpdated(tags));
           return;
         }
-        final String[] urls = formatTagListDownloadUrls();
-        String firstErrorMessage = null;
-        for (String url : urls) {
-          String errorMessage;
-          try {
-            final ImmutableSet<GithubTagInfo> tags = fetchGithubTagsByUrl(url);
-            LOG.info(getGeneratorName() + "Cache has been successfully updated");
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                peer.onTagsUpdated(tags);
-              }
-            });
-            return;
-          }
-          catch (IOException e) {
-            errorMessage = "Can not fetch tags from " + url;
-            LOG.warn(getGeneratorName() + errorMessage, e);
-          }
-          catch (GeneratorException e) {
-            errorMessage = "Malformed JSON received from " + url;
-            LOG.warn(getGeneratorName() + errorMessage, e);
-          }
-          if (firstErrorMessage == null) {
-            firstErrorMessage = errorMessage;
-          }
+        catch (IOException e) {
+          errorMessage = "Can not fetch tags from " + url;
+          LOG.warn(getGeneratorName() + errorMessage, e);
         }
-        if (firstErrorMessage != null) {
-          peer.onTagsUpdateError(firstErrorMessage);
+        catch (GeneratorException e) {
+          errorMessage = "Malformed JSON received from " + url;
+          LOG.warn(getGeneratorName() + errorMessage, e);
         }
+        if (firstErrorMessage == null) {
+          firstErrorMessage = errorMessage;
+        }
+      }
+      if (firstErrorMessage != null) {
+        peer.onTagsUpdateError(firstErrorMessage);
       }
     };
   }

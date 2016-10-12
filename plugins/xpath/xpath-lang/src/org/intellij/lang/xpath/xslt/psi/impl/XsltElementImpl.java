@@ -237,11 +237,6 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
     }
 
     @Override
-    public boolean isPhysical() {
-        return myElement.isPhysical();
-    }
-
-    @Override
     public PsiElement getParent() {
 //        final XmlTag parent = PsiTreeUtil.getParentOfType(myElement.getParent(), XmlTag.class);
 //        return parent != null ?

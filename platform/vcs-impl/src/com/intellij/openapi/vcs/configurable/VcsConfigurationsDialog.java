@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,7 +47,7 @@ public class VcsConfigurationsDialog extends DialogWrapper{
 
   private final Map<String, UnnamedConfigurable> myVcsNameToConfigurableMap = new HashMap<String, UnnamedConfigurable>();
   private static final ColoredListCellRenderer VCS_LIST_RENDERER = new ColoredListCellRenderer() {
-    protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
       String name = value == null ? NONE : ((VcsDescriptor) value).getDisplayName();
       append(name, new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
     }

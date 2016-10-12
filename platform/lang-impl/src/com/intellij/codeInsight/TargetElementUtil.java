@@ -48,6 +48,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -131,15 +132,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
 
     offset = adjustOffset(file, document, offset);
-
-    if (file instanceof PsiCompiledFile) {
-      return ((PsiCompiledFile) file).getDecompiledPsiFile().findReferenceAt(offset);
-    }
 
     return file.findReferenceAt(offset);
   }
@@ -226,7 +220,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     Project project = editor.getProject();
     if (project == null) return null;
 
-    if ((flags & LOOKUP_ITEM_ACCEPTED) != 0) {
+    if (BitUtil.isSet(flags, LOOKUP_ITEM_ACCEPTED)) {
       PsiElement element = getTargetElementFromLookup(project);
       if (element != null) {
         return element;
@@ -234,16 +228,13 @@ public class TargetElementUtil extends TargetElementUtilBase {
     }
 
     Document document = editor.getDocument();
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
     offset = adjustOffset(file, document, offset);
 
     PsiElement element = file.findElementAt(offset);
-    if ((flags & REFERENCED_ELEMENT_ACCEPTED) != 0) {
+    if (BitUtil.isSet(flags, REFERENCED_ELEMENT_ACCEPTED)) {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
       //if (referenceOrReferencedElement == null) {
       //  return getReferenceOrReferencedElement(file, editor, flags, offset);
@@ -255,7 +246,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     if (element == null) return null;
 
-    if ((flags & ELEMENT_NAME_ACCEPTED) != 0) {
+    if (BitUtil.isSet(flags, ELEMENT_NAME_ACCEPTED)) {
       if (element instanceof PsiNamedElement) return element;
       return getNamedElement(element, offset - element.getTextRange().getStartOffset());
     }
@@ -315,20 +306,17 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (element == null) return null;
 
     final List<PomTarget> targets = ContainerUtil.newArrayList();
-    final Consumer<PomTarget> consumer = new Consumer<PomTarget>() {
-      @Override
-      public void consume(PomTarget target) {
-        if (target instanceof PsiDeclaredTarget) {
-          final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
-          final PsiElement navigationElement = declaredTarget.getNavigationElement();
-          final TextRange range = declaredTarget.getNameIdentifierRange();
-          if (range != null && !range.shiftRight(navigationElement.getTextRange().getStartOffset())
-            .contains(element.getTextRange().getStartOffset() + offsetInElement)) {
-            return;
-          }
+    final Consumer<PomTarget> consumer = target -> {
+      if (target instanceof PsiDeclaredTarget) {
+        final PsiDeclaredTarget declaredTarget = (PsiDeclaredTarget)target;
+        final PsiElement navigationElement = declaredTarget.getNavigationElement();
+        final TextRange range = declaredTarget.getNameIdentifierRange();
+        if (range != null && !range.shiftRight(navigationElement.getTextRange().getStartOffset())
+          .contains(element.getTextRange().getStartOffset() + offsetInElement)) {
+          return;
         }
-        targets.add(target);
       }
+      targets.add(target);
     };
 
     PsiElement parent = element;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.vcs.vfs.ContentRevisionVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -37,6 +38,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Url;
@@ -117,7 +119,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
         if (psiFile == null) {
           psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         }
-        if (psiFile != null) {
+        if (psiFile != null && !(psiFile.getVirtualFile() instanceof ContentRevisionVirtualFile)) {
           return new OpenInBrowserRequest(psiFile) {
             private PsiElement element;
 
@@ -141,7 +143,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
         psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       }
 
-      if (psiFile != null) {
+      if (psiFile != null && !(psiFile.getVirtualFile() instanceof ContentRevisionVirtualFile)) {
         return OpenInBrowserRequest.create(psiFile);
       }
     }
@@ -157,7 +159,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
   }
 
   public static void open(@NotNull AnActionEvent event, @Nullable WebBrowser browser) {
-    open(createRequest(event.getDataContext()), (event.getModifiers() & InputEvent.SHIFT_MASK) != 0, browser);
+    open(createRequest(event.getDataContext()), BitUtil.isSet(event.getModifiers(), InputEvent.SHIFT_MASK), browser);
   }
 
   public static void open(@Nullable final OpenInBrowserRequest request, boolean preferLocalUrl, @Nullable final WebBrowser browser) {
@@ -169,12 +171,9 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
       Collection<Url> urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl);
       if (!urls.isEmpty()) {
         chooseUrl(urls)
-          .done(new Consumer<Url>() {
-            @Override
-            public void consume(Url url) {
-              ApplicationManager.getApplication().saveAll();
-              BrowserLauncher.getInstance().browse(url.toExternalForm(), browser, request.getProject());
-            }
+          .done(url -> {
+            ApplicationManager.getApplication().saveAll();
+            BrowserLauncher.getInstance().browse(url.toExternalForm(), browser, request.getProject());
           });
       }
     }
@@ -195,7 +194,7 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
     final JBList list = new JBList(urls);
     list.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         // todo icons looks good, but is it really suitable for all URLs providers?
         setIcon(AllIcons.Nodes.Servlet);
         append(((Url)value).toDecodedForm());
@@ -206,16 +205,13 @@ public abstract class BaseOpenInBrowserAction extends DumbAwareAction {
     JBPopupFactory.getInstance()
       .createListPopupBuilder(list)
       .setTitle("Choose Url")
-      .setItemChoosenCallback(new Runnable() {
-        @Override
-        public void run() {
-          Url value = (Url)list.getSelectedValue();
-          if (value == null) {
-            result.setError("selected value is null");
-          }
-          else {
-            result.setResult(value);
-          }
+      .setItemChoosenCallback(() -> {
+        Url value = (Url)list.getSelectedValue();
+        if (value == null) {
+          result.setError("selected value is null");
+        }
+        else {
+          result.setResult(value);
         }
       })
       .createPopup()

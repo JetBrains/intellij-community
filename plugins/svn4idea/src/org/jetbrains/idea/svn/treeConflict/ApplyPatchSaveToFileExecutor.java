@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
@@ -74,7 +73,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
   }
 
   @Override
-  public void apply(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+  public void apply(@NotNull List<FilePatch> remaining, @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
                     @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
@@ -87,9 +86,9 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<TextFile
 
       final VirtualFile baseForPatch = myBaseForPatch == null ? baseDir : myBaseForPatch;
       try {
-        final List<FilePatch> textPatches = patchGroupsToOneGroup(patchGroups, baseForPatch);
-        commitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, false);
-        PatchWriter.writePatches(myProject, save.getFile().getPath(), textPatches, commitContext, CharsetToolkit.UTF8_CHARSET);
+        final List<FilePatch> textPatches = patchGroupsToOneGroup(patchGroupsToApply, baseForPatch);
+        PatchWriter.writePatches(myProject, save.getFile().getPath(), baseForPatch.getPath(), textPatches, commitContext,
+                                 CharsetToolkit.UTF8_CHARSET);
       }
       catch (final IOException e) {
         LOG.info(e);

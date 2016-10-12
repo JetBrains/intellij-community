@@ -111,7 +111,7 @@ public final class FloatingDecorator extends JDialog {
 
     //
 
-    IdeGlassPaneImpl ideGlassPane = new IdeGlassPaneImpl(getRootPane());
+    IdeGlassPaneImpl ideGlassPane = new IdeGlassPaneImpl(getRootPane(), true);
     getRootPane().setGlassPane(ideGlassPane);
 
     //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
@@ -160,12 +160,7 @@ public final class FloatingDecorator extends JDialog {
       Disposer.dispose(myDisposable);
     } else {
       if (isShowing()) {
-        SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          show();
-        }
-      });
+        SwingUtilities.invokeLater(() -> show());
       }
     }
     super.dispose();
@@ -188,16 +183,14 @@ public final class FloatingDecorator extends JDialog {
         myFrameTicker.addRequest(myAnimator,DELAY);
       }else{ // make window transparent
         myDelayAlarm.addRequest(
-          new Runnable(){
-            public void run(){
-              myFrameTicker.cancelAllRequests();
-              myStartRatio=getCurrentAlphaRatio();
-              if(myCurrentFrame>0){
-                myCurrentFrame=TOTAL_FRAME_COUNT-myCurrentFrame;
-              }
-              myEndRatio=uiSettings.ALPHA_MODE_RATIO;
-              myFrameTicker.addRequest(myAnimator,DELAY);
+          () -> {
+            myFrameTicker.cancelAllRequests();
+            myStartRatio=getCurrentAlphaRatio();
+            if(myCurrentFrame>0){
+              myCurrentFrame=TOTAL_FRAME_COUNT-myCurrentFrame;
             }
+            myEndRatio=uiSettings.ALPHA_MODE_RATIO;
+            myFrameTicker.addRequest(myAnimator,DELAY);
           },
           uiSettings.ALPHA_MODE_DELAY
         );
@@ -233,9 +226,11 @@ public final class FloatingDecorator extends JDialog {
         final Point newPoint=e.getPoint();
         SwingUtilities.convertPointToScreen(newPoint,this);
         final Rectangle screenBounds=WindowManagerEx.getInstanceEx().getScreenBounds();
+        int screenMaxX = screenBounds.x + screenBounds.width;
+        int screenMaxY = screenBounds.y + screenBounds.height;
 
-        newPoint.x=Math.min(Math.max(newPoint.x,screenBounds.x),screenBounds.width);
-        newPoint.y=Math.min(Math.max(newPoint.y,screenBounds.y),screenBounds.height);
+        newPoint.x = Math.min(Math.max(newPoint.x, screenBounds.x), screenMaxX);
+        newPoint.y = Math.min(Math.max(newPoint.y, screenBounds.y), screenMaxY);
 
         final Rectangle oldBounds=FloatingDecorator.this.getBounds();
         final Rectangle newBounds=new Rectangle(oldBounds);
@@ -260,16 +255,16 @@ public final class FloatingDecorator extends JDialog {
         }
         if((myMotionMask&ANCHOR_BOTTOM)>0){
           newPoint.y=Math.max(newPoint.y,oldBounds.y+2*DIVIDER_WIDTH);
-          if(newPoint.y>screenBounds.height-DIVIDER_WIDTH){
-            newPoint.y=screenBounds.height;
+          if (newPoint.y > screenMaxY - DIVIDER_WIDTH) {
+            newPoint.y = screenMaxY;
           }
           final Point offset=new Point(newPoint.x-myLastPoint.x,newPoint.y-myLastPoint.y);
           newBounds.height=oldBounds.height+offset.y;
         }
         if((myMotionMask&ANCHOR_RIGHT)>0){
           newPoint.x=Math.max(newPoint.x,oldBounds.x+2*DIVIDER_WIDTH);
-          if(newPoint.x>screenBounds.width-DIVIDER_WIDTH){
-            newPoint.x=screenBounds.width;
+          if (newPoint.x > screenMaxX - DIVIDER_WIDTH) {
+            newPoint.x = screenMaxX;
           }
           final Point offset=new Point(newPoint.x-myLastPoint.x,newPoint.y-myLastPoint.y);
           newBounds.width=oldBounds.width+offset.x;

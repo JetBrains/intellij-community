@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
+import git4idea.GitReference;
 import git4idea.GitRemoteBranch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +88,7 @@ public final class GitBranchesCollection {
     return ContainerUtil.find(branches, new Condition<T>() {
       @Override
       public boolean value(T branch) {
-        return name.equals(branch.getName());
+        return GitReference.BRANCH_NAME_HASHING_STRATEGY.equals(name, branch.getName());
       }
     });
   }

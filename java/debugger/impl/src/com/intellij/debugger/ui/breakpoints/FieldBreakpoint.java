@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,18 +84,10 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
 
   @Override
   protected Icon getDisabledIcon(boolean isMuted) {
-    final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-    if (isMuted) {
-      return master == null? AllIcons.Debugger.Db_muted_disabled_field_breakpoint : AllIcons.Debugger.Db_muted_dep_field_breakpoint;
+    if (DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this) != null) {
+      return isMuted ? AllIcons.Debugger.Db_muted_dep_field_breakpoint : AllIcons.Debugger.Db_dep_field_breakpoint;
     }
-    else {
-      return master == null? AllIcons.Debugger.Db_disabled_field_breakpoint : AllIcons.Debugger.Db_dep_field_breakpoint;
-    }
-  }
-
-  @Override
-  protected Icon getSetIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint;
+    return null;
   }
 
   @Override
@@ -193,9 +185,7 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
       if (isWatchModification() && vm.canWatchFieldModification()) {
         ModificationWatchpointRequest request = manager.createModificationWatchpointRequest(this, field);
         debugProcess.getRequestsManager().enableRequest(request);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Modification request added");
-        }
+        LOG.debug("Modification request added");
       }
       if (isWatchAccess() && vm.canWatchFieldAccess()) {
         AccessWatchpointRequest request = manager.createAccessWatchpointRequest(this, field);
@@ -355,16 +345,13 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
     int line = document.getLineNumber(offset);
     if(field == null) {
       final PsiField[] fld = {null};
-      XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
-        @Override
-        public boolean process(PsiElement element) {
-          PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class, false);
-          if(field != null) {
-            fld[0] = field;
-            return false;
-          }
-          return true;
+      XDebuggerUtil.getInstance().iterateLine(project, document, line, element1 -> {
+        PsiField field1 = PsiTreeUtil.getParentOfType(element1, PsiField.class, false);
+        if(field1 != null) {
+          fld[0] = field1;
+          return false;
         }
+        return true;
       });
       field = fld[0];
     }

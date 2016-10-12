@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 package org.intellij.lang.regexp;
 
-import org.intellij.lang.regexp.psi.RegExpChar;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import com.intellij.psi.PsiElement;
+import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +31,18 @@ public interface RegExpLanguageHost {
   boolean supportsNamedGroupSyntax(RegExpGroup group);
   boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref);
   boolean supportsExtendedHexCharacter(RegExpChar regExpChar);
+
+  default boolean supportsSimpleClass(RegExpSimpleClass simpleClass) {
+    return true;
+  }
+
+  default boolean supportsLiteralBackspace(RegExpChar aChar) {
+    return true;
+  }
+
+  default boolean supportsInlineOptionFlag(char flag, PsiElement context) {
+    return true;
+  }
 
   boolean isValidCategory(@NotNull String category);
   @NotNull

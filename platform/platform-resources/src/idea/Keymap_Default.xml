@@ -15,9 +15,6 @@
   <action id="FullyExpandTreeNode">
     <keyboard-shortcut first-keystroke="MULTIPLY"/>
   </action>
-  <!--<action id="TextComponent.ClearAction">
-    <keyboard-shortcut first-keystroke="ESCAPE"/>
-  </action>-->
   <action id="ExpandTreeNode">
     <keyboard-shortcut first-keystroke="ADD"/>
   </action>
@@ -692,10 +689,16 @@
   <action id="ToggleTemporaryLineBreakpoint">
     <keyboard-shortcut first-keystroke="control shift alt F8"/>
   </action>
+  <action id="XDebugger.SetValue">
+    <keyboard-shortcut first-keystroke="F2"/>
+  </action>
+  <action id="XDebugger.NewWatch">
+    <keyboard-shortcut first-keystroke="INSERT"/>
+  </action>
   <action id="Debugger.EditTypeSource">
     <keyboard-shortcut first-keystroke="shift F4"/>
   </action>
-  <action id="ToggleBookmark">
+    <action id="ToggleBookmark">
     <keyboard-shortcut first-keystroke="F11"/>
   </action>
   <action id="ToggleBookmarkWithMnemonic">

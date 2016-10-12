@@ -139,12 +139,7 @@ public class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBa
       }
       ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      Runnable inspect = new Runnable() {
-        @Override
-        public void run() {
-          pass.doInspectInBatch(context, managerEx, toolsCopy);
-        }
-      };
+      Runnable inspect = () -> pass.doInspectInBatch(context, managerEx, toolsCopy);
       if (indicator == null) {
         ProgressManager.getInstance().executeProcessUnderProgress(inspect, new ProgressIndicatorBase());
       }

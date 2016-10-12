@@ -13,9 +13,8 @@ public class SymbolHandler extends MatchingHandler {
     this.handler = handler;
   }
 
+  @Override
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    // there is no need to do filtering since this is delegate of Substituion handler
-
-    return handler.handle(matchedNode,context);
+    return handler.canMatch(patternNode, matchedNode) && handler.handle(matchedNode, context);
   }
 }

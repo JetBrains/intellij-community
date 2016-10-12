@@ -81,6 +81,11 @@ public class ParameterCanBeLocalInspection extends ParameterCanBeLocalInspection
       return null;
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     @NotNull
     @Override
     protected String suggestLocalName(@NotNull Project project, @NotNull PsiParameter parameter, @NotNull PsiCodeBlock scope) {

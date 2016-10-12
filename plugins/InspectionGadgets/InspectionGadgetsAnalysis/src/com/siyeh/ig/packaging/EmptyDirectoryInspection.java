@@ -155,7 +155,7 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return getName();
+      return InspectionGadgetsBundle.message("empty.directories.delete.quickfix", "");
     }
 
     @Override

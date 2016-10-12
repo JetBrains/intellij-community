@@ -20,6 +20,8 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.util.ThrowableRunnable;
 import hg4idea.test.HgPlatformTest;
 import hg4idea.test.HgTestUtil;
 import org.testng.Assert;
@@ -27,16 +29,14 @@ import org.zmlx.hg4idea.HgVcs;
 
 import java.io.IOException;
 
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.echo;
-import static com.intellij.openapi.vcs.Executor.touch;
+import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.*;
 
 public class HgMergeProviderTest extends HgPlatformTest {
   protected MergeProvider myMergeProvider;
 
   @Override
-  protected void setUp() throws Exception {
+  public void setUp() throws Exception {
     super.setUp();
 
     HgVcs vcs = HgVcs.getInstance(myProject);
@@ -185,10 +185,12 @@ public class HgMergeProviderTest extends HgPlatformTest {
 
   private void verifyMergeData(final VirtualFile file, String expectedBase, String expectedLocal, String expectedServer)
     throws VcsException {
-    final MergeData mergeData = myMergeProvider.loadRevisions(file);
-    assertEquals(expectedBase, mergeData.ORIGINAL);
-    assertEquals(expectedServer, mergeData.LAST);
-    assertEquals(expectedLocal, mergeData.CURRENT);
+    EdtTestUtil.runInEdtAndWait((ThrowableRunnable<Throwable>)() -> {
+      MergeData mergeData = myMergeProvider.loadRevisions(file);
+      assertEquals(expectedBase, mergeData.ORIGINAL);
+      assertEquals(expectedServer, mergeData.LAST);
+      assertEquals(expectedLocal, mergeData.CURRENT);
+    });
   }
 
   private static void assertEquals(String s, byte[] bytes) {

@@ -620,4 +620,10 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   public IntentionAction createWrapLongWithMathToIntExactFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
     return QuickFixes.EMPTY_FIX;
   }
+
+  @NotNull
+  @Override
+  public IntentionAction createWrapWithOptionalFix(@Nullable PsiType type, @NotNull PsiExpression expression) {
+    return QuickFixes.EMPTY_FIX;
+  }
 }

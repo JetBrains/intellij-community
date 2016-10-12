@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
+import com.intellij.util.BitUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -61,7 +62,7 @@ public class LookupManagerImpl extends LookupManager {
       public void hintShown(final Project project, final LightweightHint hint, final int flags) {
         if (project == myProject) {
           Lookup lookup = getActiveLookup();
-          if (lookup != null && (flags & HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE) != 0) {
+          if (lookup != null && BitUtil.isSet(flags, HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE)) {
             lookup.addLookupListener(new LookupAdapter() {
               @Override
               public void currentItemChanged(LookupEvent event) {
@@ -135,20 +136,17 @@ public class LookupManagerImpl extends LookupManager {
     final LookupImpl lookup = new LookupImpl(myProject, editor, arranger);
 
     final Alarm alarm = new Alarm();
-    final Runnable request = new Runnable() {
-      @Override
-      public void run() {
-        if (myActiveLookup != lookup) return;
-        
-        LookupElement currentItem = lookup.getCurrentItem();
-        if (currentItem != null && currentItem.isValid()) {
-          final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
-          if (completion != null && !completion.isAutopopupCompletion()) {
-            try {
-              DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
-            }
-            catch (IndexNotReadyException ignored) {
-            }
+    final Runnable request = () -> {
+      if (myActiveLookup != lookup) return;
+
+      LookupElement currentItem = lookup.getCurrentItem();
+      if (currentItem != null && currentItem.isValid()) {
+        final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
+        if (completion != null && !completion.isAutopopupCompletion()) {
+          try {
+            DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
+          }
+          catch (IndexNotReadyException ignored) {
           }
         }
       }
@@ -182,15 +180,15 @@ public class LookupManagerImpl extends LookupManager {
 
       private void lookupClosed() {
         ApplicationManager.getApplication().assertIsDispatchThread();
-
         alarm.cancelAllRequests();
-        LookupImpl lookup = myActiveLookup;
-        if (lookup == null) return;
-
-        LOG.assertTrue(lookup.isLookupDisposed());
+        lookup.removeLookupListener(this);
+      }
+    });
+    Disposer.register(lookup, new Disposable() {
+      @Override
+      public void dispose() {
         myActiveLookup = null;
         myActiveLookupEditor = null;
-        lookup.removeLookupListener(this);
         myPropertyChangeSupport.firePropertyChange(PROP_ACTIVE_LOOKUP, lookup, null);
       }
     });

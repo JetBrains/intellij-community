@@ -165,12 +165,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   @Override
   protected final void doOKAction() {
     final Ref<Boolean> result = Ref.create(false);
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        result.set(doFinishAction());
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> result.set(doFinishAction()));
     if (!result.get()) return;
     
     super.doOKAction();
@@ -291,6 +286,11 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
       ((StepWithSubSteps)step).doPreviousAction();
     }
     super.doPreviousAction();
+  }
+
+  @Override
+  protected boolean canGoNext() {
+    return myDelegate != null ? myDelegate.canProceed() : super.canGoNext();
   }
 
   @Override

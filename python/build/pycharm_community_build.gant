@@ -175,6 +175,11 @@ public layoutCommunity(String classesPath, Set usedJars) {
   List pathsDist = new File("${home}/out/pycharm/jdk.win/jre").exists() ? [paths.distAll, paths.distWin, "${home}/out/pycharm/jdk.win"] : [paths.distAll, paths.distWin]
   buildWinZip("${paths.artifacts}/pycharmPC-${buildNumber}.zip", pathsDist)
 
+  //win oracle jdk
+  if (new File("${home}/out/pycharm/jdk.oracle.win/jre").exists()) {
+    buildWinZip("${paths.artifacts}/pycharmPC-${buildNumber}-oracle-win.zip", [paths.distAll, paths.distWin, "${home}/out/pycharm/jdk.oracle.win"])
+  }
+
   String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildNumber}-no-jdk.tar", [paths.distAll, paths.distUnix])
   requireProperty("jdk.linux", "false")

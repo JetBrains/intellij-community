@@ -20,6 +20,7 @@ import com.intellij.ide.actions.DeleteAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 
 public class FileDeleteAction extends DeleteAction {
@@ -34,13 +35,19 @@ public class FileDeleteAction extends DeleteAction {
   @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    final Boolean available = event.getData(FileChooserKeys.DELETE_ACTION_AVAILABLE);
-    if (available != null && !available) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
+    FileSystemTree tree = event.getData(FileSystemTree.DATA_KEY);
+    if (tree == null) {
+      presentation.setEnabledAndVisible(false);
       return;
     }
 
+    final Boolean available = event.getData(FileChooserKeys.DELETE_ACTION_AVAILABLE);
+    if (available != null && !available) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+
+    presentation.setEnabledAndVisible(true);
     super.update(event);
   }
 }

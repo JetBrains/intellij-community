@@ -60,18 +60,14 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     @Override
     protected VirtualFile[] computeFiles(final PsiFile file, final boolean compileTimeOnly) {
       final Set<VirtualFile> files = new THashSet<VirtualFile>();
-      processIncludes(file, new Processor<FileIncludeInfo>() {
-        @Override
-        public boolean process(FileIncludeInfo info) {
-          if (compileTimeOnly != info.runtimeOnly) {
-            PsiFileSystemItem item = resolveFileInclude(info, file);
-            if (item != null) {
-              ContainerUtil.addIfNotNull(files, item.getVirtualFile());
-            }
+      processIncludes(file, info -> {
+        if (compileTimeOnly != info.runtimeOnly) {
+          PsiFileSystemItem item = resolveFileInclude(info, file);
+          if (item != null) {
+            ContainerUtil.addIfNotNull(files, item.getVirtualFile());
           }
-          return true;
         }
-
+        return true;
       });
       return VfsUtilCore.toVirtualFileArray(files);
     }
@@ -92,12 +88,9 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     @Override
     protected VirtualFile[] computeFiles(PsiFile context, boolean compileTimeOnly) {
       final Set<VirtualFile> files = new THashSet<VirtualFile>();
-      processIncludingFiles(context, new Processor<Pair<VirtualFile, FileIncludeInfo>>() {
-        @Override
-        public boolean process(Pair<VirtualFile, FileIncludeInfo> virtualFileFileIncludeInfoPair) {
-          files.add(virtualFileFileIncludeInfoPair.first);
-          return true;
-        }
+      processIncludingFiles(context, virtualFileFileIncludeInfoPair -> {
+        files.add(virtualFileFileIncludeInfoPair.first);
+        return true;
       });
       return VfsUtilCore.toVirtualFileArray(files);
     }

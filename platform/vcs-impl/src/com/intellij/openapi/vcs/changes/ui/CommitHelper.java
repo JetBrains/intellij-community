@@ -52,10 +52,7 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class CommitHelper {
   public static final Key<Object> DOCUMENT_BEING_COMMITTED_KEY = new Key<Object>("DOCUMENT_BEING_COMMITTED");
@@ -503,7 +500,7 @@ public class CommitHelper {
                     ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
                     if (dialog.showAndGet()) {
                       final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
-                      MoveChangesToAnotherListAction.askAndMove(myProject, changes, null);
+                      MoveChangesToAnotherListAction.askAndMove(myProject, changes, Collections.emptyList());
                     }
                   }
                 }

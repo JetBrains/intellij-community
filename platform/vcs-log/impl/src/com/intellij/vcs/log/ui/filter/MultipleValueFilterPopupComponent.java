@@ -15,7 +15,10 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -157,10 +160,10 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
       });
       popup.showUnderneathOf(MultipleValueFilterPopupComponent.this);
     }
+
     @NotNull
     private String getPopupText(@Nullable Collection<String> selectedValues) {
       return selectedValues == null || selectedValues.isEmpty() ? "" : StringUtil.join(selectedValues, "\n");
     }
   }
-
 }

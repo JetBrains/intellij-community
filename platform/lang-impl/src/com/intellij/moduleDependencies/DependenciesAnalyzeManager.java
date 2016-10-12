@@ -46,15 +46,12 @@ public class DependenciesAnalyzeManager implements PersistentStateComponent<Depe
 
   public DependenciesAnalyzeManager(final Project project) {
     myProject = project;
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-      @Override
-      public void run() {
-        ToolWindowManager manager = ToolWindowManager.getInstance(myProject);
-        ToolWindow toolWindow = manager.registerToolWindow(ToolWindowId.MODULES_DEPENDENCIES, true, ToolWindowAnchor.RIGHT, project);
-        myContentManager = toolWindow.getContentManager();
-        toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowModuleDependencies);
-        new ContentManagerWatcher(toolWindow, myContentManager);
-      }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
+      ToolWindowManager manager = ToolWindowManager.getInstance(myProject);
+      ToolWindow toolWindow = manager.registerToolWindow(ToolWindowId.MODULES_DEPENDENCIES, true, ToolWindowAnchor.RIGHT, project);
+      myContentManager = toolWindow.getContentManager();
+      toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowModuleDependencies);
+      new ContentManagerWatcher(toolWindow, myContentManager);
     });
   }
 

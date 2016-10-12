@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,37 +59,43 @@ public interface IFernflowerPreferences {
   String LINE_SEPARATOR_WIN = "\r\n";
   String LINE_SEPARATOR_UNX = "\n";
 
-  Map<String, Object> DEFAULTS = Collections.unmodifiableMap(new HashMap<String, Object>() {{
-    put(REMOVE_BRIDGE, "1");
-    put(REMOVE_SYNTHETIC, "0");
-    put(DECOMPILE_INNER, "1");
-    put(DECOMPILE_CLASS_1_4, "1");
-    put(DECOMPILE_ASSERTIONS, "1");
-    put(HIDE_EMPTY_SUPER, "1");
-    put(HIDE_DEFAULT_CONSTRUCTOR, "1");
-    put(DECOMPILE_GENERIC_SIGNATURES, "0");
-    put(NO_EXCEPTIONS_RETURN, "1");
-    put(DECOMPILE_ENUM, "1");
-    put(REMOVE_GET_CLASS_NEW, "1");
-    put(LITERALS_AS_IS, "0");
-    put(BOOLEAN_TRUE_ONE, "1");
-    put(ASCII_STRING_CHARACTERS, "0");
-    put(SYNTHETIC_NOT_SET, "1");
-    put(UNDEFINED_PARAM_TYPE_OBJECT, "1");
-    put(USE_DEBUG_VAR_NAMES, "1");
-    put(REMOVE_EMPTY_RANGES, "1");
-    put(FINALLY_DEINLINE, "1");
-    put(IDEA_NOT_NULL_ANNOTATION, "1");
-    put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
-    put(BYTECODE_SOURCE_MAPPING, "0");
+  Map<String, Object> DEFAULTS = getDefaults();
 
-    put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
-    put(MAX_PROCESSING_METHOD, "0");
-    put(RENAME_ENTITIES, "0");
-    put(NEW_LINE_SEPARATOR, (InterpreterUtil.IS_WINDOWS ? "0" : "1"));
-    put(INDENT_STRING, "   ");
-    put(BANNER, "");
-    put(UNIT_TEST_MODE, "0");
-    put(DUMP_ORIGINAL_LINES, "0");
-  }});
+  static Map<String, Object> getDefaults() {
+    Map<String, Object> defaults = new HashMap<>();
+
+    defaults.put(REMOVE_BRIDGE, "1");
+    defaults.put(REMOVE_SYNTHETIC, "0");
+    defaults.put(DECOMPILE_INNER, "1");
+    defaults.put(DECOMPILE_CLASS_1_4, "1");
+    defaults.put(DECOMPILE_ASSERTIONS, "1");
+    defaults.put(HIDE_EMPTY_SUPER, "1");
+    defaults.put(HIDE_DEFAULT_CONSTRUCTOR, "1");
+    defaults.put(DECOMPILE_GENERIC_SIGNATURES, "0");
+    defaults.put(NO_EXCEPTIONS_RETURN, "1");
+    defaults.put(DECOMPILE_ENUM, "1");
+    defaults.put(REMOVE_GET_CLASS_NEW, "1");
+    defaults.put(LITERALS_AS_IS, "0");
+    defaults.put(BOOLEAN_TRUE_ONE, "1");
+    defaults.put(ASCII_STRING_CHARACTERS, "0");
+    defaults.put(SYNTHETIC_NOT_SET, "1");
+    defaults.put(UNDEFINED_PARAM_TYPE_OBJECT, "1");
+    defaults.put(USE_DEBUG_VAR_NAMES, "1");
+    defaults.put(REMOVE_EMPTY_RANGES, "1");
+    defaults.put(FINALLY_DEINLINE, "1");
+    defaults.put(IDEA_NOT_NULL_ANNOTATION, "1");
+    defaults.put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
+    defaults.put(BYTECODE_SOURCE_MAPPING, "0");
+
+    defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
+    defaults.put(MAX_PROCESSING_METHOD, "0");
+    defaults.put(RENAME_ENTITIES, "0");
+    defaults.put(NEW_LINE_SEPARATOR, (InterpreterUtil.IS_WINDOWS ? "0" : "1"));
+    defaults.put(INDENT_STRING, "   ");
+    defaults.put(BANNER, "");
+    defaults.put(UNIT_TEST_MODE, "0");
+    defaults.put(DUMP_ORIGINAL_LINES, "0");
+
+    return Collections.unmodifiableMap(defaults);
+  }
 }

@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.BitUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +83,7 @@ public class RemoveRedundantElseAction extends PsiElementBaseIntentionAction {
       ControlFlow controlFlow = ControlFlowFactory.getInstance(thenBranch.getProject()).getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
       int startOffset = controlFlow.getStartOffset(thenBranch);
       int endOffset = controlFlow.getEndOffset(thenBranch);
-      return startOffset != -1 && endOffset != -1 && !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset);
+      return startOffset != -1 && endOffset != -1 && !BitUtil.isSet(ControlFlowUtil.getCompletionReasons(controlFlow, startOffset, endOffset), ControlFlowUtil.NORMAL_COMPLETION_REASON);
     }
     catch (AnalysisCanceledException e) {
       return false;

@@ -77,38 +77,35 @@ public final class GenerateGroovyDocAction extends AnAction implements DumbAware
   }
 
   private static void generateGroovydoc(final GroovyDocConfiguration configuration, final Project project) {
-    Runnable groovyDocRun = new Runnable() {
-      @Override
-      public void run() {
-        Groovydoc groovydoc = new Groovydoc();
-        groovydoc.setProject(new org.apache.tools.ant.Project());
-        groovydoc.setDestdir(new File(configuration.OUTPUT_DIRECTORY));
-        groovydoc.setPrivate(configuration.OPTION_IS_PRIVATE);
-        groovydoc.setUse(configuration.OPTION_IS_USE);
-        groovydoc.setWindowtitle(configuration.WINDOW_TITLE);
+    Runnable groovyDocRun = () -> {
+      Groovydoc groovydoc = new Groovydoc();
+      groovydoc.setProject(new org.apache.tools.ant.Project());
+      groovydoc.setDestdir(new File(configuration.OUTPUT_DIRECTORY));
+      groovydoc.setPrivate(configuration.OPTION_IS_PRIVATE);
+      groovydoc.setUse(configuration.OPTION_IS_USE);
+      groovydoc.setWindowtitle(configuration.WINDOW_TITLE);
 
-        final Path path = new Path(new org.apache.tools.ant.Project());
-        path.setPath(configuration.INPUT_DIRECTORY);
-        groovydoc.setSourcepath(path);
+      final Path path = new Path(new org.apache.tools.ant.Project());
+      path.setPath(configuration.INPUT_DIRECTORY);
+      groovydoc.setSourcepath(path);
 
-        String packages = "";
-        for (int i = 0; i < configuration.PACKAGES.length; i++) {
-          final String s = configuration.PACKAGES[i];
-          if (s != null && s.isEmpty()) continue;
+      String packages = "";
+      for (int i = 0; i < configuration.PACKAGES.length; i++) {
+        final String s = configuration.PACKAGES[i];
+        if (s != null && s.isEmpty()) continue;
 
-          if (i > 0) {
-            packages += ",";
-          }
-
-          packages += s;
+        if (i > 0) {
+          packages += ",";
         }
-        groovydoc.setPackagenames(packages);
 
-        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        progressIndicator.setIndeterminate(true);
-        progressIndicator.setText(GroovyDocBundle.message("groovy.doc.progress.indication.text"));
-        groovydoc.execute();
+        packages += s;
       }
+      groovydoc.setPackagenames(packages);
+
+      final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      progressIndicator.setIndeterminate(true);
+      progressIndicator.setText(GroovyDocBundle.message("groovy.doc.progress.indication.text"));
+      groovydoc.execute();
     };
 
     ProgressManager.getInstance()

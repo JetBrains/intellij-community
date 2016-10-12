@@ -8,6 +8,5 @@
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="core-api" exported="" />
-    <orderEntry type="module" module-name="projectModel-api" />
   </component>
 </module>

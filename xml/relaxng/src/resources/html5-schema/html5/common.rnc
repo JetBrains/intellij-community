@@ -93,10 +93,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 		( text & common.elem.flow* )
 
 	common.inner.flow =
-		(	style.elem.scoped*,
-			(	text
-			&	common.elem.flow*
-			)
+		(	text
+		&	common.elem.flow*
 		)
 
 # #####################################################################
@@ -413,6 +411,11 @@ common.attrs.other =
 ## ECMAScript FunctionBody
   common.data.functionbody =
     w:functionbody
+
+## autocomplete
+
+	common.data.autocomplete.any =
+		w:autocomplete-any
 
 # #####################################################################
 ##  WF2 Module Hook                                                   #

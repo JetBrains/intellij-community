@@ -21,7 +21,11 @@ package com.intellij.profile.codeInspection.ui.header;
 public interface ManageButtonBuilder {
   boolean isProjectLevel();
 
-  void setIsProjectLevel(boolean share);
+  boolean canChangeProfileLevel();
+
+  void moveToProject();
+
+  void setAsGlobal();
 
   void copy();
 

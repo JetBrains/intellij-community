@@ -16,15 +16,11 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -50,14 +46,13 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   public void execute(@NotNull RefreshSessionImpl session) {
     if (session.isAsynchronous()) {
-      ModalityState state = session.getModalityState();
-      queueSession(session, state);
+      queueSession(session, session.getModalityState(), session.getTransaction());
     }
     else {
       Application app = ApplicationManager.getApplication();
       if (app.isDispatchThread()) {
         doScan(session);
-        session.fireEvents(app.isWriteAccessAllowed());
+        session.fireEvents();
       }
       else {
         if (((ApplicationEx)app).holdsReadLock()) {
@@ -65,35 +60,23 @@ public class RefreshQueueImpl extends RefreshQueue implements Disposable {
                     "this will cause a deadlock if there are any events to fire.");
           return;
         }
-        queueSession(session, ModalityState.defaultModalityState());
+        queueSession(session, ModalityState.defaultModalityState(), TransactionGuard.getInstance().getContextTransaction());
         session.waitFor();
       }
     }
   }
 
-  private void queueSession(@NotNull final RefreshSessionImpl session, @NotNull final ModalityState modality) {
-    myQueue.submit(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myRefreshIndicator.start();
-          AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session);
-          try {
-            doScan(session);
-          }
-          finally {
-            token.finish();
-            myRefreshIndicator.stop();
-          }
-        }
-        finally {
-          ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-            @Override
-            public void run() {
-              session.fireEvents(false);
-            }
-          }, modality);
-        }
+  private void queueSession(@NotNull final RefreshSessionImpl session, @NotNull final ModalityState modality, @Nullable TransactionId transaction) {
+    myQueue.submit(() -> {
+      myRefreshIndicator.start();
+      try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Doing file refresh. " + session)) {
+        doScan(session);
+      }
+      finally {
+        myRefreshIndicator.stop();
+        Application app = ApplicationManager.getApplication();
+        // invokeLater might be not necessary once transactions are enforced
+        app.invokeLater(session::fireEvents, modality);
       }
     });
     myEventCounter.eventHappened(session);

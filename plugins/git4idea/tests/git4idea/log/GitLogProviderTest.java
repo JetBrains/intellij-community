@@ -16,7 +16,6 @@
 package git4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -31,7 +30,6 @@ import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.filter.VcsLogUserFilterImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
-import git4idea.GitVcs;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +41,6 @@ import java.util.List;
 import java.util.Set;
 
 import static git4idea.test.GitExecutor.*;
-import static git4idea.test.GitTestUtil.setupUsername;
 import static java.util.Collections.singleton;
 
 public class GitLogProviderTest extends GitSingleRepoTest {
@@ -53,15 +50,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
   public void setUp() throws Exception {
     super.setUp();
-    List<VcsLogProvider> providers =
-      ContainerUtil.filter(Extensions.getExtensions(VcsLogManager.LOG_PROVIDER_EP, myProject), new Condition<VcsLogProvider>() {
-        @Override
-        public boolean value(VcsLogProvider provider) {
-          return provider.getSupportedVcs().equals(GitVcs.getKey());
-        }
-      });
-    assertEquals("Incorrect number of GitLogProviders", 1, providers.size());
-    myLogProvider = (GitLogProvider)providers.get(0);
+    myLogProvider = GitTestUtil.findGitLogProvider(myProject);
     myObjectsFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
   }
 
@@ -254,13 +243,12 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     List<String> hashes = ContainerUtil.newArrayList();
     hashes.add(last());
 
-    git("config user.name 'bob.smith'");
-    git("config user.name 'bob.smith@example.com'");
+    GitTestUtil.setupUsername("bob.smith", "bob.smith@example.com");
     if (takeAllUsers) {
       String commitByBob = tac("file.txt");
       hashes.add(commitByBob);
     }
-    setupUsername();
+    GitTestUtil.setupDefaultUsername();
 
     hashes.add(tac("file1.txt"));
     git("checkout -b feature");

@@ -330,11 +330,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
         myEditorComponent.requestFocusInWindow();
       }
 
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          scrollPathToVisible(path);
-        }
-      });
+      SwingUtilities.invokeLater(() -> scrollPathToVisible(path));
     }
   }
 
@@ -400,11 +396,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   private void handleDoubleClickOrEnter(final TreePath treePath, final InputEvent e) {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        getNodeFor(treePath).handleDoubleClickOrEnter(SimpleTree.this, e);
-      }
-    };
+    Runnable runnable = () -> getNodeFor(treePath).handleDoubleClickOrEnter(SimpleTree.this, e);
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.stateForComponent(this));
   }
 
@@ -418,11 +410,9 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   protected void invokeContextMenu(final MouseEvent e) {
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(myPlace, myPopupGroup);
-        menu.getComponent().show(e.getComponent(), e.getPoint().x, e.getPoint().y);
-      }
+    SwingUtilities.invokeLater(() -> {
+      final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(myPlace, myPopupGroup);
+      menu.getComponent().show(e.getComponent(), e.getPoint().x, e.getPoint().y);
     });
   }
 

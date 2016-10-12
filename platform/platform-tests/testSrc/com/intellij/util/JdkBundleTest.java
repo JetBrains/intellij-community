@@ -37,9 +37,7 @@ public class JdkBundleTest {
   private static final String STANDARD_JDK_6_LOCATION_ON_MAC_OS_X = "/System/Library/Java/JavaVirtualMachines/";
 
   private static File[] findJdkInDirectory (File locationToSearch, String version) {
-    return locationToSearch.listFiles(pathname -> {
-      return pathname.getName().contains(version);
-    });
+    return locationToSearch.listFiles(pathname -> pathname.getName().contains(version));
   }
 
   @Test
@@ -117,7 +115,6 @@ public class JdkBundleTest {
 
   @Test
   public void testCreateBundle() throws Exception {
-    if (SystemInfo.isWindows) return; // Windows is not supported so far
     File homeJDK = new File(System.getProperty("java.home")).getParentFile();
 
     if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre
@@ -127,7 +124,7 @@ public class JdkBundleTest {
 
     boolean macNonStandardJDK = SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists();
     JdkBundle bundle = macNonStandardJDK
-                       ? JdkBundle.createBundle(homeJDK, "", true, false) : // the test is run under jdk with non-standard layout
+                       ? JdkBundle.createBundle(homeJDK, "", true, false, true) : // the test is run under jdk with non-standard layout
                        JdkBundle.createBundle(bootJDK, true, false);
 
     assertNotNull(bundle);
@@ -140,12 +137,12 @@ public class JdkBundleTest {
 
     assertNotNull(verUpdate);
 
-    assertEquals(verStr, verUpdate.first.toString() + "_" + verUpdate.second.toString());
+    final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
+    assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));
   }
 
   @Test
   public void testCreateBoot() throws Exception {
-    if (SystemInfo.isWindows) return; // Windows is not supported so far
     File homeJDK = new File(System.getProperty("java.home")).getParentFile();
 
     if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre
@@ -166,6 +163,7 @@ public class JdkBundleTest {
 
     assertNotNull(verUpdate);
 
-    assertEquals(verStr, verUpdate.first.toString() + "_" + verUpdate.second.toString());
+    final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
+    assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));
   }
 }

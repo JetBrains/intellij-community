@@ -40,6 +40,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static git4idea.GitReference.BRANCH_NAME_HASHING_STRATEGY;
+
 /**
  * Reads information about the Git repository from Git service files located in the {@code .git} folder.
  * NB: works with {@link File}, i.e. reads from disk. Consider using caching.
@@ -131,7 +133,7 @@ class GitRepositoryReader {
     return ContainerUtil.find(localBranches, new Condition<GitLocalBranch>() {
       @Override
       public boolean value(GitLocalBranch branch) {
-        return branch.getFullName().equals(currentBranchName);
+        return BRANCH_NAME_HASHING_STRATEGY.equals(branch.getFullName(), currentBranchName);
       }
     });
   }

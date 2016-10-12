@@ -30,6 +30,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewManager;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FindInProjectManager {
   private final Project myProject;
-  private volatile boolean myIsFindInProgress = false;
+  private volatile boolean myIsFindInProgress;
 
   public static FindInProjectManager getInstance(Project project) {
     return ServiceManager.getService(project, FindInProjectManager.class);
@@ -78,18 +79,17 @@ public class FindInProjectManager {
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       FindUtil.initStringToFindWithSelection(findModel, editor);
     }
-
-    findManager.showFindDialog(findModel, new Runnable() {
-      @Override
-      public void run() {
-        findModel.setOpenInNewTabVisible(false);
-        if (isOpenInNewTabEnabled) {
-          FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
-        }
-
-        startFindInProject(findModel);
+    if (Registry.is("ide.find.as.popup")) {
+      findManager.showFindPopup(findModel, dataContext);
+      return;
+    }
+    findManager.showFindDialog(findModel, () -> {
+      findModel.setOpenInNewTabVisible(false);
+      if (isOpenInNewTabEnabled) {
+        FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
       }
 
+      startFindInProject(findModel);
     });
     findModel.setOpenInNewTabVisible(false);
   }
@@ -114,32 +114,24 @@ public class FindInProjectManager {
     ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().addToHistory(usageTarget);
 
     manager.searchAndShowUsages(new UsageTarget[] {usageTarget},
-      new Factory<UsageSearcher>() {
-        @Override
-        public UsageSearcher create() {
-          return new UsageSearcher() {
-            @Override
-            public void generate(@NotNull final Processor<Usage> processor) {
-              myIsFindInProgress = true;
+                                () -> new UsageSearcher() {
+                                  @Override
+                                  public void generate(@NotNull final Processor<Usage> processor) {
+                                    myIsFindInProgress = true;
 
-              try {
-                Processor<UsageInfo> consumer = new Processor<UsageInfo>() {
-                  @Override
-                  public boolean process(UsageInfo info) {
-                    Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
-                    usage.getPresentation().getIcon(); // cache icon
-                    return processor.process(usage);
-                  }
-                };
-                FindInProjectUtil.findUsages(findModelCopy, myProject, consumer, processPresentation);
-              }
-              finally {
-                myIsFindInProgress = false;
-              }
-            }
-          };
-        }
-      },
+                                    try {
+                                      Processor<UsageInfo> consumer = info -> {
+                                        Usage usage = UsageInfo2UsageAdapter.CONVERTER.fun(info);
+                                        usage.getPresentation().getIcon(); // cache icon
+                                        return processor.process(usage);
+                                      };
+                                      FindInProjectUtil.findUsages(findModelCopy, myProject, consumer, processPresentation);
+                                    }
+                                    finally {
+                                      myIsFindInProgress = false;
+                                    }
+                                  }
+                                },
       processPresentation,
       presentation,
       null

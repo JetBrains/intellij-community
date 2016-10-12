@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,11 @@ import java.util.List;
 /**
  * @author traff
  */
-public class CollectionComboBoxModel<T> extends CollectionListModel<T> implements ComboBoxModel {
+public class CollectionComboBoxModel<T> extends CollectionListModel<T> implements ComboBoxModel<T> {
   protected T mySelection;
 
   public CollectionComboBoxModel() {
     super();
-
     mySelection = null;
   }
 
@@ -40,15 +39,14 @@ public class CollectionComboBoxModel<T> extends CollectionListModel<T> implement
 
   public CollectionComboBoxModel(@NotNull List<T> items, @Nullable T selection) {
     super(items, true);
-
     mySelection = selection;
   }
 
   @Override
   public void setSelectedItem(@Nullable Object item) {
     if (mySelection != item) {
-      //noinspection unchecked
-      mySelection = (T)item;
+      @SuppressWarnings("unchecked") T t = (T)item;
+      mySelection = t;
       update();
     }
   }

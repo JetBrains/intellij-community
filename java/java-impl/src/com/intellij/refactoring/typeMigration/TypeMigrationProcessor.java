@@ -35,10 +35,8 @@ import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewManager;
-import com.intellij.usages.Usage;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
-import com.intellij.util.containers.HashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,35 +84,28 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
                                                   final PsiElement[] roots,
                                                   final Function<PsiElement, PsiType> migrationTypeFunction,
                                                   final boolean optimizeImports) {
-    final Set<PsiFile> containingFiles = ContainerUtil.map2Set(roots, new Function<PsiElement, PsiFile>() {
-      @Override
-      public PsiFile fun(PsiElement element) {
-        return element.getContainingFile();
-      }
-    });
+    final Set<PsiFile> containingFiles = ContainerUtil.map2Set(roots, element -> element.getContainingFile());
     final TypeMigrationProcessor processor = new TypeMigrationProcessor(project, roots, migrationTypeFunction, rules) {
       @Override
       public void performRefactoring(@NotNull final UsageInfo[] usages) {
         super.performRefactoring(usages);
         if (editor != null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              final List<PsiElement> result = new ArrayList<PsiElement>();
-              for (UsageInfo usage : usages) {
-                final PsiElement element = usage.getElement();
-                if (element == null || !containingFiles.contains(element.getContainingFile())) continue;
-                if (element instanceof PsiMethod) {
-                  result.add(((PsiMethod)element).getReturnTypeElement());
-                }
-                else if (element instanceof PsiVariable) {
-                  result.add(((PsiVariable)element).getTypeElement());
-                }
-                else {
-                  result.add(element);
-                }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            final List<PsiElement> result = new ArrayList<PsiElement>();
+            for (UsageInfo usage : usages) {
+              final PsiElement element = usage.getElement();
+              if (element == null || !containingFiles.contains(element.getContainingFile())) continue;
+              if (element instanceof PsiMethod) {
+                result.add(((PsiMethod)element).getReturnTypeElement());
               }
-              RefactoringUtil.highlightAllOccurrences(project, PsiUtilCore.toPsiElementArray(result), editor);
+              else if (element instanceof PsiVariable) {
+                result.add(((PsiVariable)element).getTypeElement());
+              }
+              else {
+                result.add(element);
+              }
             }
+            RefactoringUtil.highlightAllOccurrences(project, PsiUtilCore.toPsiElementArray(result), editor);
           });
         }
         if (optimizeImports) {
@@ -242,14 +233,15 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
         ((PsiVariable)element).normalizeDeclaration();
       }
     }
-    change(myLabeler, usages);
+    change(usages, myLabeler, myProject);
   }
 
-  public static void change(TypeMigrationLabeler labeler, UsageInfo[] usages) {
-    final List<PsiNewExpression> newExpressionsToCheckDiamonds = new SmartList<PsiNewExpression>();
+  public static void change(UsageInfo[] usages, TypeMigrationLabeler labeler, Project project) {
+    final List<SmartPsiElementPointer<PsiNewExpression>> newExpressionsToCheckDiamonds = new SmartList<>();
     final TypeMigrationLabeler.MigrationProducer producer = labeler.createMigratorFor(usages);
 
-    List<UsageInfo> nonCodeUsages = new ArrayList<UsageInfo>();
+    final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+    List<UsageInfo> nonCodeUsages = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (((TypeMigrationUsageInfo)usage).isExcluded()) continue;
       final PsiElement element = usage.getElement();
@@ -257,20 +249,20 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
           element instanceof PsiMember ||
           element instanceof PsiExpression ||
           element instanceof PsiReferenceParameterList) {
-        producer.change((TypeMigrationUsageInfo)usage, new Consumer<PsiNewExpression>() {
-          @Override
-          public void consume(@NotNull PsiNewExpression expression) {
-            newExpressionsToCheckDiamonds.add(expression);
-          }
-        });
+        producer.change((TypeMigrationUsageInfo)usage,
+                        expression -> newExpressionsToCheckDiamonds.add(smartPointerManager.createSmartPsiElementPointer(expression)),
+                        labeler);
       }
       else {
         nonCodeUsages.add(usage);
       }
     }
 
-    for (PsiNewExpression newExpression : newExpressionsToCheckDiamonds) {
-      labeler.postProcessNewExpression(newExpression);
+    for (SmartPsiElementPointer<PsiNewExpression> newExpressionPointer : newExpressionsToCheckDiamonds) {
+      final PsiNewExpression newExpression = newExpressionPointer.getElement();
+      if (newExpression != null) {
+        labeler.postProcessNewExpression(newExpression);
+      }
     }
 
     for (UsageInfo usageInfo : nonCodeUsages) {

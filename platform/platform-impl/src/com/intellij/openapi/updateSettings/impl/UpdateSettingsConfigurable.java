@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.externalComponents.ExternalComponentManager;
 import com.intellij.ide.externalComponents.ExternalComponentSource;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,12 +31,14 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.net.NetUtils;
@@ -43,10 +47,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -99,9 +99,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
   @Override
   public void apply() throws ConfigurationException {
     if (myPanel.myUseSecureConnection.isSelected() && !NetUtils.isSniEnabled()) {
-      boolean tooOld = !SystemInfo.isJavaVersionAtLeast("1.7");
-      String message = IdeBundle.message(tooOld ? "update.sni.not.available.error" : "update.sni.disabled.error");
-      throw new ConfigurationException(message);
+      throw new ConfigurationException(IdeBundle.message("update.sni.disabled.error"));
     }
 
     boolean wasEnabled = mySettings.isCheckNeeded();
@@ -127,7 +125,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
     myPanel.myUseSecureConnection.setSelected(mySettings.isSecureConnection());
     myPanel.updateLastCheckedLabel();
-    myPanel.setSelectedChannelType(mySettings.getSelectedChannelStatus());
+    myPanel.setSelectedChannelType(mySettings.getSelectedActiveChannel());
   }
 
   @Override
@@ -142,7 +140,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     }
 
     Object channel = myPanel.myUpdateChannels.getSelectedItem();
-    return channel != null && !channel.equals(mySettings.getSelectedChannelStatus());
+    return channel != null && !channel.equals(mySettings.getSelectedActiveChannel());
   }
 
   @Override
@@ -154,15 +152,15 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
     private final UpdateSettings mySettings;
     private JPanel myPanel;
     private JCheckBox myCheckForUpdates;
-    private JComboBox myUpdateChannels;
+    private JComboBox<ChannelStatus> myUpdateChannels;
     private JButton myCheckNow;
     private JBLabel myChannelWarning;
     private JCheckBox myUseSecureConnection;
     private JLabel myBuildNumber;
     private JLabel myVersionNumber;
     private JLabel myLastCheckedDate;
-    private JPanel mySettingsPanel;
     private JPanel myStatusPanel;
+    @SuppressWarnings("unused") private ActionLink myIgnoredBuildsLink;
 
     public UpdatesSettingsPanel(boolean checkNowEnabled) {
       mySettings = UpdateSettings.getInstance();
@@ -185,75 +183,51 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
       LabelTextReplacingUtil.replaceText(myPanel);
 
       if (checkNowEnabled) {
-        myCheckNow.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myCheckNow));
-            UpdateSettings settings = new UpdateSettings();
-            settings.loadState(mySettings.getState());
-            settings.setSelectedChannelStatus(getSelectedChannelType());
-            settings.setSecureConnection(myUseSecureConnection.isSelected());
-            UpdateChecker.updateAndShowResult(project, settings);
-            updateLastCheckedLabel();
-          }
+        myCheckNow.addActionListener(e -> {
+          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myCheckNow));
+          UpdateSettings settings = new UpdateSettings();
+          settings.loadState(mySettings.getState());
+          settings.setSelectedChannelStatus(getSelectedChannelType());
+          settings.setSecureConnection(myUseSecureConnection.isSelected());
+          UpdateChecker.updateAndShowResult(project, settings);
+          updateLastCheckedLabel();
         });
       }
       else {
         myCheckNow.setVisible(false);
       }
 
-      final ChannelStatus current = mySettings.getSelectedChannelStatus();
-      //noinspection unchecked
-      myUpdateChannels.setModel(new CollectionComboBoxModel<ChannelStatus>(Arrays.asList(ChannelStatus.values()), current));
-      myUpdateChannels.setEnabled(
-        !ApplicationInfoEx.getInstanceEx().isEAP() || !UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds());
-      myUpdateChannels.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          boolean lessStable = current.compareTo(getSelectedChannelType()) > 0;
-          myChannelWarning.setVisible(lessStable);
-        }
+      UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+      ChannelStatus current = mySettings.getSelectedActiveChannel();
+      myUpdateChannels.setModel(new CollectionComboBoxModel<>(mySettings.getActiveChannels(), current));
+      myUpdateChannels.setEnabled(!ApplicationInfoEx.getInstanceEx().isEAP() || !tweaker.forceEapUpdateChannelForEapBuilds());
+      myUpdateChannels.addActionListener(e -> {
+        boolean lessStable = current.compareTo(getSelectedChannelType()) > 0;
+        myChannelWarning.setVisible(lessStable);
       });
       myChannelWarning.setForeground(JBColor.RED);
     }
 
-    private void updateLastCheckedLabel() {
-      long time = mySettings.getLastTimeChecked();
-      myLastCheckedDate.setText(time == 0 ? IdeBundle.message("updates.last.check.never") : DateFormatUtil.formatPrettyDateTime(time));
-    }
-
-    public ChannelStatus getSelectedChannelType() {
-      return (ChannelStatus)myUpdateChannels.getSelectedItem();
-    }
-
-    public void setSelectedChannelType(ChannelStatus channelType) {
-      myUpdateChannels.setSelectedItem(channelType != null ? channelType : ChannelStatus.RELEASE);
-    }
-
     private void createUIComponents() {
+      myIgnoredBuildsLink = new ActionLink(IdeBundle.message("updates.settings.ignored"), new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          List<String> buildNumbers = mySettings.getIgnoredBuildNumbers();
+          String text = StringUtil.join(buildNumbers, "\n");
+          String result = Messages.showMultilineInputDialog(null, null, IdeBundle.message("updates.settings.ignored.title"), text, null, null);
+          if (result != null) {
+            buildNumbers.clear();
+            buildNumbers.addAll(StringUtil.split(result, "\n"));
+          }
+        }
+      });
       List<Pair<String, String>> extraStatuses = Lists.newArrayList();
 
       for (ExternalComponentSource source : ExternalComponentManager.getInstance().getComponentSources()) {
         extraStatuses.addAll(source.getStatuses());
       }
-      mySettingsPanel = new JPanel(new GridLayoutManager(1, 3));
-      mySettingsPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
-      myCheckForUpdates = new JCheckBox(IdeBundle.message("updates.settings.checkbox"));
-
-      myUpdateChannels = new JComboBox();
       int row = 0;
-      GridConstraints enabledConstraints =
-        new GridConstraints(row, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
-                            GridConstraints.SIZEPOLICY_FIXED, null, null, null);
-      GridConstraints controlConstraints =
-        new GridConstraints(row, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW,
-                            GridConstraints.SIZEPOLICY_FIXED, null, null, null);
-
-      mySettingsPanel.add(myCheckForUpdates, enabledConstraints);
-      mySettingsPanel.add(myUpdateChannels, controlConstraints);
-
       myStatusPanel = new JPanel(new GridLayoutManager(extraStatuses.size() + 3, 2));
-      row = 0;
       GridConstraints statusLabelConstraints =
         new GridConstraints(row, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED,
                             GridConstraints.SIZEPOLICY_FIXED, null, null, null);
@@ -282,6 +256,19 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
         myStatusPanel.add(new JLabel(extra.first), statusLabelConstraints);
         myStatusPanel.add(new JLabel(extra.second), statusValueConstraints);
       }
+    }
+
+    private void updateLastCheckedLabel() {
+      long time = mySettings.getLastTimeChecked();
+      myLastCheckedDate.setText(time == 0 ? IdeBundle.message("updates.last.check.never") : DateFormatUtil.formatPrettyDateTime(time));
+    }
+
+    public ChannelStatus getSelectedChannelType() {
+      return (ChannelStatus)myUpdateChannels.getSelectedItem();
+    }
+
+    public void setSelectedChannelType(ChannelStatus channelType) {
+      myUpdateChannels.setSelectedItem(channelType != null ? channelType : ChannelStatus.RELEASE);
     }
   }
 }

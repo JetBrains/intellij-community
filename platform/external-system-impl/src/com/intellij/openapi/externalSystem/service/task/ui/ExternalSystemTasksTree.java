@@ -48,12 +48,7 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
 
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
-  @NotNull private static final Comparator<TreePath> PATH_COMPARATOR = new Comparator<TreePath>() {
-    @Override
-    public int compare(TreePath o1, TreePath o2) {
-      return o2.getPathCount() - o1.getPathCount();
-    }
-  };
+  @NotNull private static final Comparator<TreePath> PATH_COMPARATOR = (o1, o2) -> o2.getPathCount() - o1.getPathCount();
 
   @NotNull private final Alarm myCollapseStateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
@@ -125,23 +120,20 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
   private void scheduleCollapseStateAppliance(@NotNull TreePath path) {
     myPathsToProcessCollapseState.add(path);
     myCollapseStateAlarm.cancelAllRequests();
-    myCollapseStateAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        // We assume that the paths collection is modified only from the EDT, so, ConcurrentModificationException doesn't have
-        // a chance.
-        // Another thing is that we sort the paths in order to process the longest first. That is related to the JTree specifics
-        // that it automatically expands parent paths on child path expansion.
-        List<TreePath> paths = ContainerUtilRt.newArrayList(myPathsToProcessCollapseState);
-        myPathsToProcessCollapseState.clear();
-        Collections.sort(paths, PATH_COMPARATOR);
-        for (TreePath treePath : paths) {
-          applyCollapseState(treePath);
-        }
-        final TreePath rootPath = new TreePath(getModel().getRoot());
-        if (isCollapsed(rootPath)) {
-          expandPath(rootPath);
-        }
+    myCollapseStateAlarm.addRequest(() -> {
+      // We assume that the paths collection is modified only from the EDT, so, ConcurrentModificationException doesn't have
+      // a chance.
+      // Another thing is that we sort the paths in order to process the longest first. That is related to the JTree specifics
+      // that it automatically expands parent paths on child path expansion.
+      List<TreePath> paths = ContainerUtilRt.newArrayList(myPathsToProcessCollapseState);
+      myPathsToProcessCollapseState.clear();
+      Collections.sort(paths, PATH_COMPARATOR);
+      for (TreePath treePath : paths) {
+        applyCollapseState(treePath);
+      }
+      final TreePath rootPath = new TreePath(getModel().getRoot());
+      if (isCollapsed(rootPath)) {
+        expandPath(rootPath);
       }
     }, COLLAPSE_STATE_PROCESSING_DELAY_MILLIS);
   }

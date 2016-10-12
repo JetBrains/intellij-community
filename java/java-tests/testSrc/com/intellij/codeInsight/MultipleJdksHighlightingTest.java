@@ -18,7 +18,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.pom.java.LanguageLevel;
@@ -26,7 +25,6 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
-import com.intellij.util.Consumer;
 
 public class MultipleJdksHighlightingTest extends UsefulTestCase {
 
@@ -72,28 +70,19 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myJava3Module = builders[0].getFixture().getModule();
     myJava7Module = builders[1].getFixture().getModule();
     myJava8Module = builders[2].getFixture().getModule();
-    ModuleRootModificationUtil.updateModel(myJava3Module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java3";
-        model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
-      }
+    ModuleRootModificationUtil.updateModel(myJava3Module, model -> {
+      String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java3";
+      model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
     });
 
-    ModuleRootModificationUtil.updateModel(myJava7Module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java7";
-        model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
-      }
+    ModuleRootModificationUtil.updateModel(myJava7Module, model -> {
+      String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java7";
+      model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
     });
 
-    ModuleRootModificationUtil.updateModel(myJava8Module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java8";
-        model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
-      }
+    ModuleRootModificationUtil.updateModel(myJava8Module, model -> {
+      String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java8";
+      model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
     });
   }
 
@@ -111,12 +100,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     addDependencies_37_78();
     final String name = getTestName(false);
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
-      ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
-        @Override
-        public void consume(ModifiableRootModel model) {
-          ClsGenericsHighlightingTest.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar");
-        }
-      });
+      ModuleRootModificationUtil.updateModel(module, model -> ClsGenericsHighlightingTest.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar"));
     }
 
     myFixture.configureByFile("java8/p/" + name + ".java");
@@ -211,6 +195,16 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     myFixture.checkHighlighting();
   }
 
+  public void testUnrelatedDefaultsFromDifferentJdkVersions() throws Exception {
+    ModuleRootModificationUtil.addDependency(myJava8Module, myJava7Module);
+    myFixture.copyFileToProject("java7/p/I.java");
+    myFixture.copyFileToProject("java8/p/I.java");
+
+    final String testName = getTestName(false);
+    myFixture.configureByFiles("java8/p/" + testName + ".java", "java7/p/" + testName + ".java");
+    myFixture.checkHighlighting();
+  }
+
   private void doTestWithoutLibrary() {
     final String name = getTestName(false);
     myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
@@ -227,12 +221,7 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
   private void doTest() {
     final String name = getTestName(false);
     for (Module module : new Module[] {myJava7Module, myJava8Module}) {
-      ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
-        @Override
-        public void consume(ModifiableRootModel model) {
-          ClsGenericsHighlightingTest.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar");
-        }
-      });
+      ModuleRootModificationUtil.updateModel(module, model -> ClsGenericsHighlightingTest.commitLibraryModel(model, myFixture.getTestDataPath(), name + ".jar"));
     }
 
     myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");

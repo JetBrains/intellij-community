@@ -350,7 +350,7 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
       setCurrentID(ID.create(id,myHelpSet));
     } catch(InvalidHelpSetContextException ex){
       // this should not happen
-      new Error("internal error?");
+      throw new Error("internal error?");
     }
   }
 

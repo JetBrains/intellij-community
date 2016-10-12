@@ -53,12 +53,7 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
     final Pair<String, CodeStyleScheme> importPair =
       ImportSchemeChooserDialog.selectOrCreateTargetScheme(project, currentScheme, schemeFactory, readSchemeNames(selectedFile));
     if (importPair != null) {
-      readFromStream(selectedFile, new ThrowableConsumer<InputStream, SchemeImportException>() {
-        @Override
-        public void consume(InputStream stream) throws SchemeImportException {
-          new EclipseCodeStyleImportWorker().importScheme(stream, importPair.first, importPair.second);
-        }
-      });
+      readFromStream(selectedFile, stream -> new EclipseCodeStyleImportWorker().importScheme(stream, importPair.first, importPair.second));
       return importPair.second;
     }
     return null;
@@ -90,12 +85,7 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
         names.add(name);
       }
     });
-    readFromStream(selectedFile, new ThrowableConsumer<InputStream, SchemeImportException>() {
-      @Override
-      public void consume(InputStream stream) throws SchemeImportException {
-        reader.readSettings(stream);
-      }
-    });
+    readFromStream(selectedFile, stream -> reader.readSettings(stream));
     return ArrayUtil.toStringArray(names);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ui.AppUIUtil;
-import com.intellij.xdebugger.XDebugSessionAdapter;
+import com.intellij.xdebugger.XDebugSessionListener;
 import org.jetbrains.annotations.NotNull;
 
 /**
 * @author nik
 */
-public class XDebugViewSessionListener extends XDebugSessionAdapter {
+public class XDebugViewSessionListener implements XDebugSessionListener {
   private final XDebugView myDebugView;
 
   public XDebugViewSessionListener(@NotNull XDebugView debugView) {
@@ -30,12 +30,7 @@ public class XDebugViewSessionListener extends XDebugSessionAdapter {
   }
 
   private void onSessionEvent(final @NotNull XDebugView.SessionEvent event) {
-    AppUIUtil.invokeOnEdt(new Runnable() {
-      @Override
-      public void run() {
-        myDebugView.processSessionEvent(event);
-      }
-    });
+    AppUIUtil.invokeOnEdt(() -> myDebugView.processSessionEvent(event));
   }
 
   @Override

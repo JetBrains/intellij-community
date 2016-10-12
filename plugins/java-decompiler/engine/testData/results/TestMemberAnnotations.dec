@@ -1,0 +1,34 @@
+package pkg;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
+class TestMemberAnnotations {
+   @TestMemberAnnotations.A("const")
+   public static final int CONST = 42;
+   @TestMemberAnnotations.A("field")
+   private int f;
+
+   @TestMemberAnnotations.A("return")
+   private int f(@TestMemberAnnotations.A("arg") int var1) {
+      return var1 + this.f + 42;// 12
+   }
+
+   @Retention(RetentionPolicy.RUNTIME)
+   @interface A {
+      String value() default "";
+   }
+}
+
+class 'pkg/TestMemberAnnotations' {
+   method 'f (I)I' {
+      2      13
+      5      13
+      6      13
+      8      13
+      9      13
+   }
+}
+
+Lines mapping:
+12 <-> 14

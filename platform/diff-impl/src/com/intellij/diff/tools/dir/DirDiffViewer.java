@@ -32,7 +32,6 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.impl.dir.DirDiffFrame;
@@ -42,8 +41,6 @@ import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,14 +90,11 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
 
     myPanel = new JPanel(new BorderLayout());
     myPanel.add(myDirDiffPanel.getPanel(), BorderLayout.CENTER);
-    DataManager.registerDataProvider(myPanel, new DataProvider() {
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (PlatformDataKeys.HELP_ID.is(dataId)) {
-          return "reference.dialogs.diff.folder";
-        }
-        return myDirDiffPanel.getData(dataId);
+    DataManager.registerDataProvider(myPanel, dataId -> {
+      if (PlatformDataKeys.HELP_ID.is(dataId)) {
+        return "reference.dialogs.diff.folder";
       }
+      return myDirDiffPanel.getData(dataId);
     });
   }
 

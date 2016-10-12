@@ -22,6 +22,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
@@ -67,6 +69,7 @@ public class _LastInSuiteTest extends TestCase {
 
         System.out.println(application.writeActionStatistics());
         System.out.println(ActionUtil.ACTION_UPDATE_PAUSES.statistics());
+        System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
       }
     });
 
@@ -74,11 +77,7 @@ public class _LastInSuiteTest extends TestCase {
       LeakHunter.checkProjectLeak();
       Disposer.assertIsEmpty(true);
     }
-    catch (AssertionError e) {
-      captureMemorySnapshot();
-      throw e;
-    }
-    catch (Exception e) {
+    catch (AssertionError | Exception e) {
       captureMemorySnapshot();
       throw e;
     }

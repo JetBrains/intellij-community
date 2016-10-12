@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ public class MoveClassToInnerTest extends RefactoringTestCase {
   }
 
   public void testPackageLocalClass() throws Exception {
-    doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses package-local class <b><code>pack1.Class2</code></b>");
+    doTestConflicts("pack1.Class1", "pack2.A", "Field <b><code>Class1.c2</code></b> uses package-private class <b><code>pack1.Class2</code></b>");
   }
 
   public void testMoveIntoPackageLocalClass() throws Exception {

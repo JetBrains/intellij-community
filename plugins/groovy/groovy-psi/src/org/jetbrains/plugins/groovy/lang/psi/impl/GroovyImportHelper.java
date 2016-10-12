@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.psi.*;
-import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
-import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.GrImportContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ImportType;
 
 import java.util.LinkedHashSet;
 
@@ -34,6 +34,13 @@ import java.util.LinkedHashSet;
  * @author Max Medvedev
  */
 public class GroovyImportHelper {
+
+  public enum ImportKind {
+    SIMPLE,
+    ON_DEMAND,
+    ALIAS;
+  }
+
   public static boolean isImplicitlyImported(PsiElement element, String expectedName, GroovyFile file) {
     if (!(element instanceof PsiClass)) return false;
 
@@ -60,8 +67,11 @@ public class GroovyImportHelper {
     final LinkedHashSet<String> result = new LinkedHashSet<String>();
     ContainerUtil.addAll(result, GroovyFileBase.IMPLICITLY_IMPORTED_PACKAGES);
 
-    for (DefaultImportContributor contributor : DefaultImportContributor.EP_NAME.getExtensions()) {
-      result.addAll(contributor.appendImplicitlyImportedPackages(file));
+    for (GrImportContributor contributor : GrImportContributor.EP_NAME.getExtensions()) {
+      result.addAll(ContainerUtil.mapNotNull(
+        contributor.getImports(file),
+        i -> i.getType() == ImportType.STAR ? i.getName() : null
+      ));
     }
 
     return result;
@@ -72,42 +82,22 @@ public class GroovyImportHelper {
                                        @NotNull PsiElement place,
                                        @NotNull PsiScopeProcessor importProcessor,
                                        @NotNull GrImportStatement[] importStatements,
-                                       boolean shouldProcessOnDemand) {
+                                       @NotNull ImportKind kind,
+                                       @Nullable Boolean processStatic) {
     for (int i = importStatements.length - 1; i >= 0; i--) {
       final GrImportStatement imp = importStatements[i];
-      if (shouldProcessOnDemand != imp.isOnDemand()) continue;
-      if (!imp.processDeclarations(importProcessor, state, lastParent, place)) {
-        return false;
-      }
+      if (getImportKind(imp) != kind) continue;
+      if (processStatic != null && processStatic != imp.isStatic()) continue;
+      if (!imp.processDeclarations(importProcessor, state, lastParent, place)) return false;
     }
     return true;
   }
 
-  public static boolean processImplicitImports(@NotNull PsiScopeProcessor processor,
-                                               @NotNull ResolveState state,
-                                               @Nullable PsiElement lastParent,
-                                               @NotNull PsiElement place,
-                                               @NotNull GroovyFile file) {
-    if (!ResolveUtil.shouldProcessClasses(processor.getHint(ElementClassHint.KEY))) return true;
-
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(file.getProject());
-
-    final PsiScopeProcessor packageSkipper = new PackageSkippingProcessor(processor);
-
-    for (final String implicitlyImported : getImplicitlyImportedPackages(file)) {
-      PsiPackage aPackage = facade.findPackage(implicitlyImported);
-      if (aPackage == null) continue;
-
-      if (!aPackage.processDeclarations(packageSkipper, state, lastParent, place)) {
-        return false;
-      }
-    }
-
-    GroovyPsiManager groovyPsiManager = GroovyPsiManager.getInstance(file.getProject());
-    for (String implicitlyImportedClass : GroovyFileBase.IMPLICITLY_IMPORTED_CLASSES) {
-      PsiClass clazz = groovyPsiManager.findClassWithCache(implicitlyImportedClass, file.getResolveScope());
-      if (clazz != null && !ResolveUtil.processElement(processor, clazz, state)) return false;
-    }
-    return true;
+  @Nullable
+  private static ImportKind getImportKind(GrImportStatement statement) {
+    if (statement.isOnDemand() && !statement.isAliasedImport()) return ImportKind.ON_DEMAND;
+    if (!statement.isOnDemand() && statement.isAliasedImport()) return ImportKind.ALIAS;
+    if (!statement.isAliasedImport() && !statement.isOnDemand()) return ImportKind.SIMPLE;
+    return null;
   }
 }

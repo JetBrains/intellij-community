@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.cvsSupport2.cvsExecution.CvsOperationExecutorCallback;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvsoperations.cvsContent.GetFileContentOperation;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.RevisionOrDate;
+import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -65,6 +66,7 @@ public class CvsContentRevision implements ByteBackedContentRevision {
     myProject = project;
   }
 
+  @Override
   @Nullable
   public String getContent() throws VcsException {
     byte[] content = getContentAsBytes();
@@ -96,14 +98,20 @@ public class CvsContentRevision implements ByteBackedContentRevision {
     return myContent;
   }
 
+  @Override
   @NotNull
   public FilePath getFile() {
     return myLocalFile;
   }
 
+  @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
-    return myRevision.getCvsRevisionNumber();
+    final CvsRevisionNumber cvsRevisionNumber = myRevision.getCvsRevisionNumber();
+    if (cvsRevisionNumber == null) {
+      return VcsRevisionNumber.NULL;
+    }
+    return cvsRevisionNumber;
   }
 
   @Override @NonNls

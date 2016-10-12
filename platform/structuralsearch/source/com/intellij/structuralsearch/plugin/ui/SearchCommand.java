@@ -43,12 +43,7 @@ public class SearchCommand {
   }
 
   protected UsageViewContext createUsageViewContext() {
-    final Runnable searchStarter = new Runnable() {
-      @Override
-      public void run() {
-        new SearchCommand(myConfiguration, mySearchContext).startSearching();
-      }
-    };
+    final Runnable searchStarter = () -> new SearchCommand(myConfiguration, mySearchContext).startSearching();
     return new UsageViewContext(myConfiguration, mySearchContext, searchStarter);
   }
 
@@ -84,15 +79,10 @@ public class SearchCommand {
     ((FindManagerImpl)FindManager.getInstance(mySearchContext.getProject())).getFindUsagesManager().addToHistory(target);
     UsageViewManager.getInstance(mySearchContext.getProject()).searchAndShowUsages(
       new UsageTarget[]{target},
-      new Factory<UsageSearcher>() {
+      () -> new UsageSearcher() {
         @Override
-        public UsageSearcher create() {
-          return new UsageSearcher() {
-            @Override
-            public void generate(@NotNull final Processor<Usage> processor) {
-              findUsages(processor);
-            }
-          };
+        public void generate(@NotNull final Processor<Usage> processor) {
+          findUsages(processor);
         }
       },
       processPresentation,
@@ -181,13 +171,8 @@ public class SearchCommand {
     catch (final StructuralSearchException e) {
       final Alarm alarm = new Alarm();
       alarm.addRequest(
-        new Runnable() {
-          @Override
-          public void run() {
-            NotificationGroup.toolWindowGroup("Structural Search", ToolWindowId.FIND)
-              .createNotification(SSRBundle.message("problem", e.getMessage()), MessageType.ERROR).notify(mySearchContext.getProject());
-          }
-        },
+        () -> NotificationGroup.toolWindowGroup("Structural Search", ToolWindowId.FIND)
+          .createNotification(SSRBundle.message("problem", e.getMessage()), MessageType.ERROR).notify(mySearchContext.getProject()),
         100, ModalityState.NON_MODAL
       );
     }

@@ -195,23 +195,20 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     @Override
     public void directoryMappingChanged() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (myContentManager == null || myProject.isDisposed()) {
-            // was not initialized yet
-            return;
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myContentManager == null || myProject.isDisposed()) {
+          // was not initialized yet
+          return;
+        }
 
-          boolean hasActiveVcss = ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss();
-          if (myIsVisible && !hasActiveVcss) {
-            myContentManager.removeContent(myChangeListTodosContent, false);
-            myIsVisible = false;
-          }
-          else if (!myIsVisible && hasActiveVcss) {
-            myContentManager.addContent(myChangeListTodosContent);
-            myIsVisible = true;
-          }
+        boolean hasActiveVcss = ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss();
+        if (myIsVisible && !hasActiveVcss) {
+          myContentManager.removeContent(myChangeListTodosContent, false);
+          myIsVisible = false;
+        }
+        else if (!myIsVisible && hasActiveVcss) {
+          myContentManager.addContent(myChangeListTodosContent);
+          myIsVisible = true;
         }
       }, ModalityState.NON_MODAL);
     }
@@ -230,12 +227,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         updateFilters();
       }
       catch (ProcessCanceledException e) {
-        DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
-          @Override
-          public void run() {
-            _updateFilters();
-          }
-        }, ModalityState.NON_MODAL);
+        DumbService.getInstance(myProject).smartInvokeLater(() -> _updateFilters(), ModalityState.NON_MODAL);
       }
     }
 
@@ -251,37 +243,23 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     public void fileTypesChanged(@NotNull FileTypeEvent e) {
       // this invokeLater guaranties that this code will be invoked after
       // PSI gets the same event.
-      DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-            @Override
-            public void run() {
-              if (myAllTodos == null) {
-                return;
-              }
-
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    for (TodoPanel panel : myPanels) {
-                      panel.rebuildCache();
-                    }
-                  }
-                }
-              );
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  for (TodoPanel panel : myPanels) {
-                    panel.updateTree();
-                  }
-                }
-              }, ModalityState.NON_MODAL);
-            }
-          }, IdeBundle.message("progress.looking.for.todos"), false, myProject);
+      DumbService.getInstance(myProject).smartInvokeLater(() -> ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        if (myAllTodos == null) {
+          return;
         }
-      });
+
+        ApplicationManager.getApplication().runReadAction(() -> {
+          for (TodoPanel panel : myPanels) {
+            panel.rebuildCache();
+          }
+        }
+        );
+        ApplicationManager.getApplication().invokeLater(() -> {
+          for (TodoPanel panel : myPanels) {
+            panel.updateTree();
+          }
+        }, ModalityState.NON_MODAL);
+      }, IdeBundle.message("progress.looking.for.todos"), false, myProject));
     }
   }
 

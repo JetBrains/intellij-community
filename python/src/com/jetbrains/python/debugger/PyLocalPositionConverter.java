@@ -47,7 +47,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
         return null;
       }
       if (SystemInfo.isWindows) {
-        file = file.toLowerCase();
+        file = winNormCase(file);
       }
       return super.normalize(file);
     }
@@ -64,7 +64,7 @@ public class PyLocalPositionConverter implements PyPositionConverter {
         return null;
       }
       if (SystemInfo.isWindows && isWindowsPath(file)) {
-        file = file.toLowerCase();
+        file = winNormCase(file);
       }
       return super.normalize(file);
     }
@@ -165,6 +165,19 @@ public class PyLocalPositionConverter implements PyPositionConverter {
     }
   }
 
+  private static String winNormCase(String file) {
+    int ind = -1;
+    for (String ext : EGG_EXTENSIONS) {
+      ind = file.indexOf(ext);
+      if (ind != -1) break;
+    }
+    if (ind != -1) {
+      return file.substring(0, ind + 4).toLowerCase() + file.substring(ind + 4);
+    }
+    else {
+      return file.toLowerCase();
+    }
+  }
   @Nullable
   protected static XSourcePosition createXSourcePosition(@Nullable VirtualFile vFile, int line) {
     if (vFile != null) {

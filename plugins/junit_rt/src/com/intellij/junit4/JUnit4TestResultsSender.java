@@ -98,7 +98,7 @@ public class JUnit4TestResultsSender extends RunListener {
 
   private static PacketFactory createExceptionNotification(Throwable assertion) {
     if (assertion instanceof KnownException) return ((KnownException)assertion).getPacketFactory();
-    final ComparisonFailureData notification = JUnit4TestListener.createExceptionNotification(assertion);
+    final ComparisonFailureData notification = ExpectedPatterns.createExceptionNotification(assertion);
     if (notification != null) {
       return ComparisonDetailsExtractor.create(assertion, notification.getExpected(), notification.getActual());
     }

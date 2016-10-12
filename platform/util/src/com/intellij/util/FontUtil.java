@@ -40,4 +40,9 @@ public class FontUtil {
   public static String spaceAndThinSpace() {
     return " " + canDisplay(UIUtil.getLabelFont(), '\u2009', " ");
   }
+
+  @NotNull
+  public static Font minusOne(@NotNull Font font) {
+    return font.deriveFont(font.getSize() - 1f);
+  }
 }

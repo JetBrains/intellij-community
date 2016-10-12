@@ -39,7 +39,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.exception.VelocityException;
 import org.apache.velocity.runtime.parser.ParseException;
@@ -55,6 +57,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author MYakovlev
@@ -192,7 +195,7 @@ public class FileTemplateUtil{
       String name = (String)o;
       context.put(name, attributes.get(name));
     }
-    return mergeTemplate(content, context, useSystemLineSeparators);
+    return mergeTemplate(content, context, useSystemLineSeparators, null);
   }
 
   private static VelocityContext createVelocityContext() {
@@ -201,29 +204,30 @@ public class FileTemplateUtil{
     return context;
   }
 
-  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators) throws IOException{
+  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators) throws IOException {
+    return mergeTemplate(attributes, content, useSystemLineSeparators, null);
+  }
+
+  public static String mergeTemplate(Properties attributes, String content, boolean useSystemLineSeparators,
+                                     @Nullable Consumer<VelocityException> exceptionHandler) throws IOException {
     VelocityContext context = createVelocityContext();
     Enumeration<?> names = attributes.propertyNames();
     while (names.hasMoreElements()){
       String name = (String)names.nextElement();
       context.put(name, attributes.getProperty(name));
     }
-    return mergeTemplate(content, context, useSystemLineSeparators);
+    return mergeTemplate(content, context, useSystemLineSeparators, exceptionHandler);
   }
 
-  private static String mergeTemplate(String templateContent, final VelocityContext context, boolean useSystemLineSeparators) throws IOException {
+  private static String mergeTemplate(String templateContent, final VelocityContext context, boolean useSystemLineSeparators,
+                                      @Nullable Consumer<VelocityException> exceptionHandler) throws IOException {
     final StringWriter stringWriter = new StringWriter();
     try {
       Project project = null;
       final Object projectName = context.get(FileTemplateManager.PROJECT_NAME_VARIABLE);
       if (projectName instanceof String) {
         Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        project = ContainerUtil.find(projects, new Condition<Project>() {
-          @Override
-          public boolean value(Project project) {
-            return projectName.equals(project.getName());
-          }
-        });
+        project = ContainerUtil.find(projects, project1 -> projectName.equals(project1.getName()));
       }
       VelocityWrapper.evaluate(project, context, stringWriter, templateContent);
     }
@@ -232,13 +236,14 @@ public class FileTemplateUtil{
         LOG.error(e);
       }
       LOG.info("Error evaluating template:\n" + templateContent, e);
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template", e.getMessage()),
-                                   IdeBundle.message("title.velocity.error"));
-        }
-      });
+      if (exceptionHandler == null) {
+        ApplicationManager.getApplication()
+          .invokeLater(() -> Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template", e.getMessage()),
+                                                      IdeBundle.message("title.velocity.error")));
+      }
+      else {
+        exceptionHandler.consume(e);
+      }
     }
     final String result = stringWriter.toString();
 
@@ -330,22 +335,14 @@ public class FileTemplateUtil{
     final String templateText = StringUtil.convertLineSeparators(mergedText);
     final Exception[] commandException = new Exception[1];
     final PsiElement[] result = new PsiElement[1];
-    CommandProcessor.getInstance().executeCommand(project, new Runnable(){
-      @Override
-      public void run(){
-        ApplicationManager.getApplication().runWriteAction(new Runnable(){
-          @Override
-          public void run(){
-            try{
-              result[0] = handler.createFromTemplate(project, directory, fileName_, template, templateText, props_);
-            }
-            catch (Exception ex){
-              commandException[0] = ex;
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try{
+        result[0] = handler.createFromTemplate(project, directory, fileName_, template, templateText, props_);
       }
-    }, template.isTemplateOfType(StdFileTypes.JAVA) && !"package-info".equals(template.getName())
+      catch (Exception ex){
+        commandException[0] = ex;
+      }
+    }), template.isTemplateOfType(StdFileTypes.JAVA) && !"package-info".equals(template.getName())
        ? IdeBundle.message("command.create.class.from.template")
        : IdeBundle.message("command.create.file.from.template"), null);
     if(commandException[0] != null){
@@ -412,5 +409,63 @@ public class FileTemplateUtil{
     final FileTemplate newTemplate = new CustomFileTemplate(name, extension);
     newTemplate.setText(content);
     return newTemplate;
+  }
+
+  public static Pattern getTemplatePattern(@NotNull FileTemplate template,
+                                           @NotNull Project project,
+                                           @NotNull TIntObjectHashMap<String> offsetToProperty) {
+    String templateText = template.getText().trim();
+    String regex = templateToRegex(templateText, offsetToProperty, project);
+    regex = StringUtil.replace(regex, "with", "(?:with|by)");
+    regex = ".*(" + regex + ").*";
+    return Pattern.compile(regex, Pattern.DOTALL);
+  }
+
+  private static String templateToRegex(String text, TIntObjectHashMap<String> offsetToProperty, Project project) {
+    List<Object> properties = ContainerUtil.newArrayList(FileTemplateManager.getInstance(project).getDefaultProperties().keySet());
+    properties.add("PACKAGE_NAME");
+
+    String regex = escapeRegexChars(text);
+    // first group is a whole file header
+    int groupNumber = 1;
+    for (Object property : properties) {
+      String name = property.toString();
+      String escaped = escapeRegexChars("${" + name + "}");
+      boolean first = true;
+      for (int i = regex.indexOf(escaped); i != -1 && i < regex.length(); i = regex.indexOf(escaped, i + 1)) {
+        String replacement = first ? "([^\\n]*)" : "\\" + groupNumber;
+        int delta = escaped.length() - replacement.length();
+        int[] offs = offsetToProperty.keys();
+        for (int off : offs) {
+          if (off > i) {
+            String prop = offsetToProperty.remove(off);
+            offsetToProperty.put(off - delta, prop);
+          }
+        }
+        offsetToProperty.put(i, name);
+        regex = regex.substring(0, i) + replacement + regex.substring(i + escaped.length());
+        if (first) {
+          groupNumber++;
+          first = false;
+        }
+      }
+    }
+    return regex;
+  }
+
+  private static String escapeRegexChars(String regex) {
+    regex = StringUtil.replace(regex, "|", "\\|");
+    regex = StringUtil.replace(regex, ".", "\\.");
+    regex = StringUtil.replace(regex, "*", "\\*");
+    regex = StringUtil.replace(regex, "+", "\\+");
+    regex = StringUtil.replace(regex, "?", "\\?");
+    regex = StringUtil.replace(regex, "$", "\\$");
+    regex = StringUtil.replace(regex, "(", "\\(");
+    regex = StringUtil.replace(regex, ")", "\\)");
+    regex = StringUtil.replace(regex, "[", "\\[");
+    regex = StringUtil.replace(regex, "]", "\\]");
+    regex = StringUtil.replace(regex, "{", "\\{");
+    regex = StringUtil.replace(regex, "}", "\\}");
+    return regex;
   }
 }

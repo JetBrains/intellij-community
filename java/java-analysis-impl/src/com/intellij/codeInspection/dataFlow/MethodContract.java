@@ -47,12 +47,7 @@ public class MethodContract {
 
   @Override
   public String toString() {
-    return StringUtil.join(arguments, new Function<ValueConstraint, String>() {
-      @Override
-      public String fun(ValueConstraint constraint) {
-        return constraint.toString();
-      }
-    }, ", ") + " -> " + returnValue;
+    return StringUtil.join(arguments, constraint -> constraint.toString(), ", ") + " -> " + returnValue;
   }
 
   public enum ValueConstraint {

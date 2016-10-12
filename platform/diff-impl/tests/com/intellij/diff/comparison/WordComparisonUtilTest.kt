@@ -81,6 +81,12 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       (" - " - " - ").default()
       testAll()
     }
+
+    words {
+      ("X xyz1 Z" - "X xyz2 Z")
+      ("  ----  " - "  ----  ").default()
+      testAll()
+    }
   }
 
   fun testPunctuation() {
@@ -372,6 +378,22 @@ class WordComparisonUtilTest : ComparisonUtilTestBase() {
       (" 123 " - "xyz")
       (" --- " - "---").trim()
       testTrim()
+    }
+  }
+
+  fun testEmptyRangePositions() {
+    words {
+      ("x? y" - "x y")
+      (" -  " - "   ").default()
+      default(del(1, 1, 1))
+      testAll()
+    }
+
+    words {
+      ("x ?y" - "x y")
+      ("  - " - "   ").default()
+      default(del(2, 2, 1))
+      testAll()
     }
   }
 }

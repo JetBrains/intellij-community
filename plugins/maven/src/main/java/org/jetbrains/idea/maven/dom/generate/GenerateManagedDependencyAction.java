@@ -115,15 +115,13 @@ public class GenerateManagedDependencyAction extends GenerateDomElementAction {
   public static Map<DependencyConflictId, MavenDomDependency> collectManagingDependencies(@NotNull final MavenDomProjectModel model) {
     final Map<DependencyConflictId, MavenDomDependency> dependencies = new HashMap<DependencyConflictId, MavenDomDependency>();
 
-    Processor<MavenDomDependency> collectProcessor = new Processor<MavenDomDependency>() {
-      public boolean process(MavenDomDependency dependency) {
-        DependencyConflictId id = DependencyConflictId.create(dependency);
-        if (id != null && !dependencies.containsKey(id)) {
-          dependencies.put(id, dependency);
-        }
-
-        return false;
+    Processor<MavenDomDependency> collectProcessor = dependency -> {
+      DependencyConflictId id = DependencyConflictId.create(dependency);
+      if (id != null && !dependencies.containsKey(id)) {
+        dependencies.put(id, dependency);
       }
+
+      return false;
     };
 
     MavenDomProjectProcessorUtils.processDependenciesInDependencyManagement(model, collectProcessor, model.getManager().getProject());

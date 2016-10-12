@@ -55,12 +55,9 @@ public class UiUtils {
         public void run(AnActionButton button) {
           final ListWrappingTableModel tableModel = table.getModel();
           tableModel.addRow();
-          EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              final int lastRowIndex = tableModel.getRowCount() - 1;
-              editTableCell(table, lastRowIndex, 0);
-            }
+          EventQueue.invokeLater(() -> {
+            final int lastRowIndex = tableModel.getRowCount() - 1;
+            editTableCell(table, lastRowIndex, 0);
           });
         }
       }).setRemoveAction(new RemoveAction(table))
@@ -120,18 +117,15 @@ public class UiUtils {
   private static void editTableCell(final ListTable table, final int row, final int column) {
     final ListSelectionModel selectionModel = table.getSelectionModel();
     selectionModel.setSelectionInterval(row, row);
-    EventQueue.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        final ListWrappingTableModel tableModel = table.getModel();
-        table.requestFocus();
-        final Rectangle rectangle = table.getCellRect(row, column, true);
-        table.scrollRectToVisible(rectangle);
-        table.editCellAt(row, column);
-        final TableCellEditor editor = table.getCellEditor();
-        final Component component = editor.getTableCellEditorComponent(table, tableModel.getValueAt(row, column), true, row, column);
-        component.requestFocus();
-      }
+    EventQueue.invokeLater(() -> {
+      final ListWrappingTableModel tableModel = table.getModel();
+      table.requestFocus();
+      final Rectangle rectangle = table.getCellRect(row, column, true);
+      table.scrollRectToVisible(rectangle);
+      table.editCellAt(row, column);
+      final TableCellEditor editor = table.getCellEditor();
+      final Component component = editor.getTableCellEditorComponent(table, tableModel.getValueAt(row, column), true, row, column);
+      component.requestFocus();
     });
   }
 
@@ -187,7 +181,7 @@ public class UiUtils {
       }).createPanel();
     panel.setPreferredSize(JBUI.size(150, 100));
     optionsPanel.setBorder(IdeBorderFactory.createTitledBorder(borderTitle,
-                                                               false, new Insets(10, 0, 0, 0)));
+                                                               false, JBUI.insetsTop(10)));
     optionsPanel.add(panel);
     return optionsPanel;
   }
@@ -202,37 +196,34 @@ public class UiUtils {
 
     @Override
     public void run(AnActionButton button) {
-      EventQueue.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          final TableCellEditor editor = table.getCellEditor();
-          if (editor != null) {
-            editor.stopCellEditing();
+      EventQueue.invokeLater(() -> {
+        final TableCellEditor editor = table.getCellEditor();
+        if (editor != null) {
+          editor.stopCellEditing();
+        }
+        final ListSelectionModel selectionModel = table.getSelectionModel();
+        final int minIndex = selectionModel.getMinSelectionIndex();
+        final int maxIndex = selectionModel.getMaxSelectionIndex();
+        if (minIndex == -1 || maxIndex == -1) {
+          return;
+        }
+        final ListWrappingTableModel tableModel = table.getModel();
+        for (int i = minIndex; i <= maxIndex; i++) {
+          if (selectionModel.isSelectedIndex(i)) {
+            tableModel.removeRow(i);
           }
-          final ListSelectionModel selectionModel = table.getSelectionModel();
-          final int minIndex = selectionModel.getMinSelectionIndex();
-          final int maxIndex = selectionModel.getMaxSelectionIndex();
-          if (minIndex == -1 || maxIndex == -1) {
-            return;
+        }
+        final int count = tableModel.getRowCount();
+        if (count <= minIndex) {
+          selectionModel.setSelectionInterval(count - 1, count - 1);
+        }
+        else if (minIndex <= 0) {
+          if (count > 0) {
+            selectionModel.setSelectionInterval(0, 0);
           }
-          final ListWrappingTableModel tableModel = table.getModel();
-          for (int i = minIndex; i <= maxIndex; i++) {
-            if (selectionModel.isSelectedIndex(i)) {
-              tableModel.removeRow(i);
-            }
-          }
-          final int count = tableModel.getRowCount();
-          if (count <= minIndex) {
-            selectionModel.setSelectionInterval(count - 1, count - 1);
-          }
-          else if (minIndex <= 0) {
-            if (count > 0) {
-              selectionModel.setSelectionInterval(0, 0);
-            }
-          }
-          else {
-            selectionModel.setSelectionInterval(minIndex - 1, minIndex - 1);
-          }
+        }
+        else {
+          selectionModel.setSelectionInterval(minIndex - 1, minIndex - 1);
         }
       });
     }

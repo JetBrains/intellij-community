@@ -37,28 +37,26 @@ final class MessageNode extends DefaultMutableTreeNode {
   private boolean myAllowToShowPosition;
 
   public MessageNode(final AntMessage message, final Project project, final boolean allowToShowPosition) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        myMessage = message;
-        myText = message.getTextLines();
-        if(myMessage.getFile() != null) {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(myMessage.getFile());
-          if (psiFile != null) {
-            myEditorDocument = PsiDocumentManager.getInstance(project).getDocument(psiFile);
-            if(myEditorDocument != null) {
-              int line = myMessage.getLine();
-              int column = myMessage.getColumn();
-              if(line-1 >= 0 && line < myEditorDocument.getLineCount()) {
-                int start = myEditorDocument.getLineStartOffset(line-1) + column-1;
-                if(start >=0 && start < myEditorDocument.getTextLength()) {
-                  myRangeMarker = myEditorDocument.createRangeMarker(start, start);
-                }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      myMessage = message;
+      myText = message.getTextLines();
+      if(myMessage.getFile() != null) {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(myMessage.getFile());
+        if (psiFile != null) {
+          myEditorDocument = PsiDocumentManager.getInstance(project).getDocument(psiFile);
+          if(myEditorDocument != null) {
+            int line = myMessage.getLine();
+            int column = myMessage.getColumn();
+            if(line-1 >= 0 && line < myEditorDocument.getLineCount()) {
+              int start = myEditorDocument.getLineStartOffset(line-1) + column-1;
+              if(start >=0 && start < myEditorDocument.getTextLength()) {
+                myRangeMarker = myEditorDocument.createRangeMarker(start, start);
               }
             }
           }
         }
-        myAllowToShowPosition = allowToShowPosition;
       }
+      myAllowToShowPosition = allowToShowPosition;
     });
   }
 

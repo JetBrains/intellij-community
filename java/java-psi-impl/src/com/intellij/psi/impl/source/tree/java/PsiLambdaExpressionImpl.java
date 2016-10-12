@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -107,6 +108,18 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
 
   @Override
   public boolean isValueCompatible() {
+    //it could be called when functional type of lambda expression is not yet defined (during lambda expression compatibility constraint reduction)
+    //thus inferred results for calls inside could be wrong and should not be cached
+    final Boolean result = MethodCandidateInfo.ourOverloadGuard.doPreventingRecursion(this, false, new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        return isValueCompatibleNoCache();
+      }
+    });
+    return result != null && result;
+  }
+
+  private boolean isValueCompatibleNoCache() {
     final PsiElement body = getBody();
     if (body instanceof PsiCodeBlock) {
       try {

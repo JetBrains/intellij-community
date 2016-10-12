@@ -18,36 +18,35 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
  */
 class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
   private boolean mySupportCommaInValue = false;
-  private final FileType[] myAcceptedFileTypes;
+  private final Set<FileType> myAcceptedFileTypes;
 
   JavaFxLocationReferenceProvider() {
     this(false);
   }
 
-  JavaFxLocationReferenceProvider(boolean supportCommaInValue, String... acceptedFileTypes) {
+  JavaFxLocationReferenceProvider(boolean supportCommaInValue, String... acceptedFileExtensions) {
     mySupportCommaInValue = supportCommaInValue;
-    myAcceptedFileTypes = new FileType[acceptedFileTypes.length];
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    for (int i = 0; i < acceptedFileTypes.length; i++) {
-      myAcceptedFileTypes[i] = fileTypeManager.getFileTypeByExtension(acceptedFileTypes[i]);
-    }
+    myAcceptedFileTypes = ContainerUtil.map2Set(acceptedFileExtensions, fileTypeManager::getFileTypeByExtension);
   }
 
   @NotNull
@@ -55,42 +54,40 @@ class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element,
                                                @NotNull ProcessingContext context) {
     final String value = ((XmlAttributeValue)element).getValue();
-    if (value.startsWith("@")) {
-      return new FileReferenceSet(value.substring(1), element, 2, null, true).getAllReferences();
+    if (mySupportCommaInValue && value.contains(",")) {
+      int startIdx = 0;
+      List<PsiReference> refs = new ArrayList<PsiReference>();
+      while (true) {
+        int endIdx = value.indexOf(',', startIdx);
+        final String item = endIdx >= 0 ? value.substring(startIdx, endIdx) : value.substring(startIdx);
+        Collections.addAll(refs, collectRefs(element, item, startIdx + 1));
+        if (endIdx < 0) {
+          break;
+        }
+        startIdx = endIdx + 1;
+      }
+      return refs.toArray(PsiReference.EMPTY_ARRAY);
     }
     else {
-      if (mySupportCommaInValue && value.contains(",")) {
-        int startIdx = 0;
-        int endIdx = 0;
-        List<PsiReference> refs = new ArrayList<PsiReference>();
-        while (true) {
-          endIdx = value.indexOf(",", startIdx);
-          Collections.addAll(refs, collectRefs(element, endIdx >= 0 ? value.substring(startIdx, endIdx) : value.substring(startIdx), startIdx + 1, myAcceptedFileTypes));
-          startIdx = endIdx + 1;
-          if (endIdx < 0) {
-            break;
-          }
-        }
-        return refs.toArray(new PsiReference[refs.size()]);
-      } else {
-        return collectRefs(element, value, 1, myAcceptedFileTypes);
-      }
+      return collectRefs(element, value, 1);
     }
   }
 
-  private static PsiReference[] collectRefs(@NotNull PsiElement element, String value, final int startInElement, final FileType... acceptedFileTypes) {
-    final FileReferenceSet set = new FileReferenceSet(value, element, startInElement, null, true){
+  private PsiReference[] collectRefs(@NotNull PsiElement element, String value, int startInElement) {
+    final int atSignIndex = value.indexOf('@');
+    if (atSignIndex >= 0 && (atSignIndex == 0 || StringUtil.trimLeading(value).startsWith("@"))) {
+      value = value.substring(atSignIndex + 1);
+      startInElement += atSignIndex + 1;
+    }
+    final FileReferenceSet set = new FileReferenceSet(value, element, startInElement, null, true) {
       @Override
       protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
-        return new Condition<PsiFileSystemItem>() {
-          @Override
-          public boolean value(PsiFileSystemItem item) {
-            if (item instanceof PsiDirectory) return true;
-            final VirtualFile virtualFile = item.getVirtualFile();
-            if (virtualFile == null) return false;
-            final FileType fileType = virtualFile.getFileType();
-            return ArrayUtilRt.find(acceptedFileTypes, fileType) >= 0;
-          }
+        return item -> {
+          if (item instanceof PsiDirectory) return true;
+          final VirtualFile virtualFile = item.getVirtualFile();
+          if (virtualFile == null) return false;
+          final FileType fileType = virtualFile.getFileType();
+          return myAcceptedFileTypes.contains(fileType);
         };
       }
     };

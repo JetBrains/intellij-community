@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +38,7 @@ public class XmlNSRenderer extends ColoredListCellRenderer {
   }
 
   @Override
-  protected void customizeCellRenderer(final JList list,
+  protected void customizeCellRenderer(@NotNull final JList list,
                                        final Object value,
                                        final int index,
                                        final boolean selected,

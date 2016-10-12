@@ -61,49 +61,38 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
     });
 
     final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new HashSet<SmartPsiElementPointer<PsiImportStatementBase>>();
-    final Runnable findRedundantImports = new Runnable() {
-      @Override
-      public void run() {
-        DumbService.getInstance(project).runReadActionInSmartMode(new Runnable() {
-          @Override
-          public void run() {
-            final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-            final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
-            int i = 0;
-            final int fileCount = javaFiles.size();
-            for (PsiJavaFile file : javaFiles) {
-              if (file.isValid()) {
-                final VirtualFile virtualFile = file.getVirtualFile();
-                if (virtualFile != null) {
-                  if (progressIndicator != null) {
-                    progressIndicator.setText2(virtualFile.getPresentableUrl());
-                    progressIndicator.setFraction((double)i++ / fileCount);
-                  }
-                  final Collection<PsiImportStatementBase> perFile = styleManager.findRedundantImports(file);
-                  if (perFile != null) {
-                    for (PsiImportStatementBase redundant : perFile) {
-                      redundants.add(pointerManager.createSmartPsiElementPointer(redundant));
-                    }
-                  }
-                }
+    final Runnable findRedundantImports = () -> DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+      final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+      int i = 0;
+      final int fileCount = javaFiles.size();
+      for (PsiJavaFile file : javaFiles) {
+        if (file.isValid()) {
+          final VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile != null) {
+            if (progressIndicator != null) {
+              progressIndicator.setText2(virtualFile.getPresentableUrl());
+              progressIndicator.setFraction((double)i++ / fileCount);
+            }
+            final Collection<PsiImportStatementBase> perFile = styleManager.findRedundantImports(file);
+            if (perFile != null) {
+              for (PsiImportStatementBase redundant : perFile) {
+                redundants.add(pointerManager.createSmartPsiElementPointer(redundant));
               }
             }
           }
-        });
+        }
       }
-    };
+    });
 
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRedundantImports, REMOVING_REDUNDANT_IMPORTS_TITLE, false, project)) return;
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, REMOVING_REDUNDANT_IMPORTS_TITLE, false);
-        progressTask.setMinIterationTime(200);
-        progressTask.setTask(new OptimizeImportsTask(progressTask, redundants));
-        ProgressManager.getInstance().run(progressTask);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, REMOVING_REDUNDANT_IMPORTS_TITLE, false);
+      progressTask.setMinIterationTime(200);
+      progressTask.setTask(new OptimizeImportsTask(progressTask, redundants));
+      ProgressManager.getInstance().run(progressTask);
     });
   }
 }

@@ -29,7 +29,7 @@ public class AutomaticOverloadsRenamer extends AutomaticRenamer {
     if (containingClass != null) {
       final PsiMethod[] overloads = containingClass.findMethodsByName(method.getName(), false);
       for (PsiMethod overload : overloads) {
-        if (overload != method) {
+        if (overload != method && overload.findDeepestSuperMethods().length == 0) {
           myElements.add(overload);
           suggestAllNames(overload.getName(), newName);
         }

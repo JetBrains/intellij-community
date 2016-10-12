@@ -209,16 +209,13 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
       if (VariableAccessUtils.variableIsUsedInInnerClass(variable, context)) {
         return false;
       }
-      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context, true, new Processor<PsiCall>() {
-        @Override
-        public boolean process(PsiCall call) {
-          final PsiMethod method = call.resolveMethod();
-          if (method == null) {
-            return false;
-          }
-          final PsiClass aClass = method.getContainingClass();
-          return aClass != null && excludes.contains(aClass.getQualifiedName());
+      if (VariableAccessUtils.variableIsPassedAsMethodArgument(variable, context, true, call -> {
+        final PsiMethod method = call.resolveMethod();
+        if (method == null) {
+          return false;
         }
+        final PsiClass aClass = method.getContainingClass();
+        return aClass != null && excludes.contains(aClass.getQualifiedName());
       })) {
         return false;
       }

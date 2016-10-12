@@ -58,13 +58,10 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
         PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
       final PsiAnnotation[] annotations = InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner);
       if (annotations.length > 0) {
-        final String annos = StringUtil.join(annotations, new Function<PsiAnnotation, String>() {
-          @Override
-          public String fun(PsiAnnotation annotation) {
-            final PsiJavaCodeReferenceElement nameRef = correctAnnotation(annotation).getNameReferenceElement();
-            final String name = nameRef != null ? nameRef.getReferenceName() : annotation.getQualifiedName();
-            return "@" + name + annotation.getParameterList().getText();
-          }
+        final String annos = StringUtil.join(annotations, annotation -> {
+          final PsiJavaCodeReferenceElement nameRef = correctAnnotation(annotation).getNameReferenceElement();
+          final String name = nameRef != null ? nameRef.getReferenceName() : annotation.getQualifiedName();
+          return "@" + name + annotation.getParameterList().getText();
         }, " ");
         setText("Insert '" + annos + "'");
         return true;
@@ -97,17 +94,8 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
         return;
       }
       
-      WriteCommandAction.runWriteCommandAction(project, new Runnable() {
-        @Override
-        public void run() {
-          DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-            @Override
-            public void run() {
-              JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addAfter(toInsert, null));
-            }
-          });
-        }
-      });
+      WriteCommandAction.runWriteCommandAction(project, () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
+        () -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addAfter(toInsert, null))));
     }
 
     

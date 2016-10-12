@@ -71,6 +71,9 @@ public class JavaDocUtil {
   @Nullable
   public static PsiElement findReferenceTarget(PsiManager manager, String refText, PsiElement context, boolean useNavigationElement) {
     LOG.assertTrue(context == null || context.isValid());
+    if (context != null) {
+      context = context.getNavigationElement();
+    }
 
     int poundIndex = refText.indexOf('#');
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
@@ -268,7 +271,7 @@ public class JavaDocUtil {
     final PsiManager manager = aClass.getManager();
     return manager.areElementsEquivalent(aClass, JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper().resolveReferencedClass(shortName, context))
       ? shortName
-      : qName;
+      : StringUtil.trimStart(qName, "java.lang.");
   }
 
   public static String getLabelText(Project project, PsiManager manager, String refText, PsiElement context) {

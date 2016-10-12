@@ -37,7 +37,6 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.ProjectBundle;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,16 +97,11 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
               }
               message.append("</html>");
 
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
-                                                            "Cannot download sources",
-                                                            message.toString(),
-                                                            NotificationType.WARNING),
-                                           psiFile.getProject());
-                }
-              });
+              Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
+                                                        "Cannot download sources",
+                                                        message.toString(),
+                                                        NotificationType.WARNING),
+                                       psiFile.getProject());
             }
 
             if (downloadResult.resolvedSources.isEmpty()) {

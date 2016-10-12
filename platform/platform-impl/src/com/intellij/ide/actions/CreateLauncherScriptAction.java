@@ -143,14 +143,9 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
   public static void reportFailure(@NotNull Exception e, @Nullable final Project project) {
     LOG.warn(e);
     final String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Notifications.Bus.notify(
-          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Launcher Script Creation Failed", message, NotificationType.ERROR),
-          project);
-      }
-    }, ModalityState.NON_MODAL);
+    Notifications.Bus.notify(
+      new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Launcher Script Creation Failed", message, NotificationType.ERROR),
+      project);
   }
 
   private static File createLauncherScriptFile() throws IOException, ExecutionException {

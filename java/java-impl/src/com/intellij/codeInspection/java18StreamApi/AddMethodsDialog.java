@@ -70,7 +70,7 @@ public class AddMethodsDialog extends DialogWrapper {
     myTemplatesCombo.setEnabled(false);
     myTemplatesCombo.setRenderer(new ColoredListCellRenderer<PseudoLambdaReplaceTemplate>() {
       @Override
-      protected void customizeCellRenderer(JList list,
+      protected void customizeCellRenderer(@NotNull JList list,
                                            PseudoLambdaReplaceTemplate template,
                                            int index,
                                            boolean selected,
@@ -157,25 +157,22 @@ public class AddMethodsDialog extends DialogWrapper {
         else {
           final List<PseudoLambdaReplaceTemplate> possibleTemplates = PseudoLambdaReplaceTemplate.getAllTemplates();
           final LinkedMultiMap<String, PsiMethod> nameToMethod = new LinkedMultiMap<String, PsiMethod>();
-          for (PsiMethod m : ContainerUtil.filter(aClass.getMethods(), new Condition<PsiMethod>() {
-            @Override
-            public boolean value(PsiMethod method) {
-              if (method.isConstructor() ||
-                  !method.hasModifierProperty(PsiModifier.STATIC) ||
-                  method.hasModifierProperty(PsiModifier.PRIVATE)) {
-                return false;
-              }
-              boolean templateFound = false;
-              for (PseudoLambdaReplaceTemplate template : possibleTemplates) {
-                if (template.validate(method) != null) {
-                  templateFound = true;
-                }
-              }
-              if (!templateFound) {
-                return false;
-              }
-              return true;
+          for (PsiMethod m : ContainerUtil.filter(aClass.getMethods(), method -> {
+            if (method.isConstructor() ||
+                !method.hasModifierProperty(PsiModifier.STATIC) ||
+                method.hasModifierProperty(PsiModifier.PRIVATE)) {
+              return false;
             }
+            boolean templateFound = false;
+            for (PseudoLambdaReplaceTemplate template : possibleTemplates) {
+              if (template.validate(method) != null) {
+                templateFound = true;
+              }
+            }
+            if (!templateFound) {
+              return false;
+            }
+            return true;
           })) {
             nameToMethod.putValue(m.getName(), m);
           }
@@ -209,12 +206,7 @@ public class AddMethodsDialog extends DialogWrapper {
     final String fqn = aClass.getQualifiedName();
     LOG.assertTrue(fqn != null);
     final String parameters =
-      StringUtil.join(ContainerUtil.map(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-        @Override
-        public String fun(PsiParameter parameter) {
-          return parameter.getName();
-        }
-      }), ", ");
+      StringUtil.join(ContainerUtil.map(method.getParameterList().getParameters(), parameter -> parameter.getName()), ", ");
     final String expressionText = fqn + "." + method.getName() + "(" + parameters + ")";
     final PsiExpression psiExpression = JavaPsiFacade.getElementFactory(method.getProject())
       .createExpressionFromText(expressionText, null);

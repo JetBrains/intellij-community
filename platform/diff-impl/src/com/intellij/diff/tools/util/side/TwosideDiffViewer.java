@@ -94,7 +94,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
   protected List<T> createEditorHolders(@NotNull EditorHolderFactory<T> factory) {
     List<DiffContent> contents = myRequest.getContents();
 
-    List<T> holders = new ArrayList<T>(2);
+    List<T> holders = new ArrayList<>(2);
     for (int i = 0; i < 2; i++) {
       DiffContent content = contents.get(i);
       holders.add(factory.create(content, myContext));

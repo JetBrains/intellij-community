@@ -73,12 +73,7 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     }
 
     final GrParameter[] parameters = closure.getAllParameters();
-    return ContainerUtil.findAll(expectedSignatures, new Condition<PsiType[]>() {
-      @Override
-      public boolean value(PsiType[] types) {
-        return types.length == parameters.length;
-      }
-    });
+    return ContainerUtil.findAll(expectedSignatures, types -> types.length == parameters.length);
   }
 
   private static List<PsiType[]> inferExpectedSignatures(@NotNull GroovyResolveResult variant, @NotNull GrCall call, @NotNull GrClosableBlock closure) {
@@ -118,12 +113,7 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
   }
 
   private static boolean containsParametersWithDeclaredType(GrParameter[] parameters) {
-    return ContainerUtil.find(parameters, new Condition<GrParameter>() {
-      @Override
-      public boolean value(GrParameter parameter) {
-        return parameter.getDeclaredType() != null;
-      }
-    }) != null;
+    return ContainerUtil.find(parameters, parameter -> parameter.getDeclaredType() != null) != null;
   }
 
   @Nullable

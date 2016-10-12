@@ -80,12 +80,7 @@ public class GroovyCodeFragmentFactory extends CodeFragmentFactory {
     final Map<String, String> parameters = pair.first;
 
     List<String> names = new ArrayList<String>(parameters.keySet());
-    List<String> values = ContainerUtil.map(names, new Function<String, String>() {
-      @Override
-      public String fun(String name) {
-        return parameters.get(name);
-      }
-    });
+    List<String> values = ContainerUtil.map(names, name -> parameters.get(name));
 
     String text = toEval.getText();
     final String groovyText = StringUtil.join(names, ", ") + "->" + stripImports(text, toEval);

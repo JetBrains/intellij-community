@@ -149,7 +149,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   @Override
   public List<Artifact> chooseArtifacts(final List<? extends Artifact> artifacts, final String title) {
     ChooseArtifactsDialog dialog = new ChooseArtifactsDialog(getProject(), artifacts, title, null);
-    return dialog.showAndGet() ? dialog.getChosenElements() : Collections.<Artifact>emptyList();
+    return dialog.showAndGet() ? dialog.getChosenElements() : Collections.emptyList();
   }
 
 
@@ -201,7 +201,7 @@ public class ArtifactEditorContextImpl implements ArtifactEditorContext {
   @Override
   public List<Library> chooseLibraries(final String title) {
     final ChooseLibrariesFromTablesDialog dialog = ChooseLibrariesFromTablesDialog.createDialog(title, getProject(), false);
-    return dialog.showAndGet() ? dialog.getSelectedLibraries() : Collections.<Library>emptyList();
+    return dialog.showAndGet() ? dialog.getSelectedLibraries() : Collections.emptyList();
   }
 
   @Override

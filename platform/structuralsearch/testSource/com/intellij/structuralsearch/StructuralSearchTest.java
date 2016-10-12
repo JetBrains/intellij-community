@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -680,9 +680,9 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "  void main(String argv[]);" +
                  "  void main(String argv);" +
                  "}";
-    String s12 = "'_t:[regex( *Object\\[\\] ) ] '_t2";
-    String s12_2 = "'_t:[regex( *Object ) ] '_t2 []";
-    String s12_3 = "'_t:[regex( *Object ) ] '_t2";
+    String s12 = "'_t:[regex( *Object\\[\\] ) ] '_t2;";
+    String s12_2 = "'_t:[regex( *Object ) ] '_t2 [];";
+    String s12_3 = "'_t:[regex( *Object ) ] '_t2;";
 
     assertEquals(
       "Find array covariant types",
@@ -725,10 +725,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  void y(String... ss) {}" +
                      "  void y(boolean b) {}" +
                      "}";
-    assertEquals("find ellipsis type 1", 1, findMatchesCount(source2, "String[] '_a"));
-    assertEquals("find ellipsis type 2", 1, findMatchesCount(source2, "int[] '_a"));
+    assertEquals("find ellipsis type 1", 1, findMatchesCount(source2, "String[] '_a;"));
+    assertEquals("find ellipsis type 2", 1, findMatchesCount(source2, "int[] '_a;"));
     assertEquals("find ellipsis type 3", 1, findMatchesCount(source2, "class '_X { void '_m(int... '_a); }"));
-    assertEquals("find ellipsis type 4", 2, findMatchesCount(source2, "'_T[] '_a"));
+    assertEquals("find ellipsis type 4", 2, findMatchesCount(source2, "'_T[] '_a;"));
 
     String source3 = "class A {" +
                      "  private int[] is;" +
@@ -1177,10 +1177,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String source2 = "class A {" +
                            "  String s = new String();" +
-                           "  int m() {" +
+                           "  @SuppressWarnings(\"\") int m() {" +
+                           "    n();" +
                            "    int i = 2+1;" +
                            "    return i;" +
                            "  }" +
+                           "  void n() {}" +
                            "}";
     assertEquals("type of variables in script are as expected", 1,
                  findMatchesCount(source2,
@@ -1196,15 +1198,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                                   "g instanceof PsiTypeElement &&" +
                                   "h instanceof PsiLocalVariable &&" +
                                   "i instanceof PsiPolyadicExpression &&" +
-                                  "j instanceof PsiReferenceExpression\n" +
+                                  "j instanceof PsiReferenceExpression &&" +
+                                  "k instanceof PsiMethodCallExpression &&" +
+                                  "l instanceof PsiAnnotation\n" +
                                   "\")]" +
                                   "class '_a {" +
-                                  "  '_b '_c = '_d;" +
-                                  "  '_e '_f() {" +
-                                  "    '_g '_h = '_i" +
+                                  "  '_b '_c = new '_d();" +
+                                  "  @'_l '_e '_f() {" +
+                                  "    '_k();" +
+                                  "    '_g '_h = '_i;" +
                                   "    return '_j;" +
                                   "  }" +
                                   "}"));
+
+    assertEquals("Current variable should be available under own name", 1,
+                 findMatchesCount(source2,
+                                  "'_a + '_b:[script(\"__log__.info(b)\n__log__.info(__context__)\ntrue\")]"));
   }
 
   public void testCheckScriptValidation() {
@@ -1389,6 +1398,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String pattern2 = "'_:[write && regex( i )]";
     assertEquals("Find writes of symbol", 3, findMatchesCount(in, pattern2));
+
+    final String source = "class A {" +
+                          "  static A a() {};" +
+                          "  void m() {" +
+                          "    A a = A.a();" +
+                          "  }" +
+                          "}";
+    final String pattern3 = "A";
+    assertEquals("No duplicate results", 4, findMatchesCount(source, pattern3));
   }
 
   public void testSearchGenerics() {
@@ -1622,7 +1640,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     // typed var with instanceof
     assertEquals("typed instanceof",findMatchesCount(s65,s66),1);
 
-    assertEquals("don't throw exception on incomplete instanceof expression", findMatchesCount(s65, "'_T instanceof"), 2);
+    try {
+      // warn on incomplete instanceof
+      findMatchesCount(s65, "'_T instanceof");
+      fail();
+    } catch (MalformedPatternException e) {
+      assertEquals("Type expected", e.getMessage());
+    }
 
     // typed vars with arrays
     assertEquals("typed pattern with array",findMatchesCount(s23,s24_1),2);
@@ -2710,12 +2734,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     String s2_2 = "@Modifier({\"packageLocal\",\"private\"}) '_Type '_Variable = '_Value?;";
     String s2_3 = "@Modifier({\"PackageLocal\",\"private\"}) '_Type '_Variable = '_Value?;";
 
-    assertEquals("Finding package local dcls",1,findMatchesCount(s1,s2));
-    assertEquals("Finding package local dcls",3,findMatchesCount(s1,s2_2));
+    assertEquals("Finding package-private dcls",1,findMatchesCount(s1,s2));
+    assertEquals("Finding package-private dcls",3,findMatchesCount(s1,s2_2));
 
     try {
       findMatchesCount(s1,s2_3);
-      assertTrue("Finding package local dcls",false);
+      assertTrue("Finding package-private dcls",false);
     } catch(MalformedPatternException ex) {
 
     }
@@ -2750,7 +2774,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     String template = "transient @Modifier(\"packageLocal\") '_Type '_Variable = '_Value?;";
 
-    assertEquals("Finding package-local transient fields", 1, findMatchesCount(source, template));
+    assertEquals("Finding package-private transient fields", 1, findMatchesCount(source, template));
   }
 
   public void test() {
@@ -3055,22 +3079,22 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "}";
 
     String pattern1 = "class '_A {" +
-                      "  '_type+ 'method+ () throws '_E{0,0}" +
+                      "  '_type+ 'method+ () throws '_E{0,0};" +
                       "}";
     assertEquals(1, findMatchesCount(source, pattern1));
 
     String pattern2 = "class '_A {" +
-                      "  '_type+ 'method+ () throws '_E{1,2}" +
+                      "  '_type+ 'method+ () throws '_E{1,2};" +
                       "}";
     assertEquals(2, findMatchesCount(source, pattern2));
 
     String pattern3 = "class '_A {" +
-                      "  '_type+ 'method+ () throws '_E{2,2}" +
+                      "  '_type+ 'method+ () throws '_E{2,2};" +
                       "}";
     assertEquals(1, findMatchesCount(source, pattern3));
 
     String pattern4 = "class '_A {" +
-                      "  '_type+ 'method+ () throws '_E{0,0}:[ regex( E2 )]" +
+                      "  '_type+ 'method+ () throws '_E{0,0}:[ regex( E2 )];" +
                       "}";
     assertEquals(2, findMatchesCount(source, pattern4));
   }
@@ -3147,8 +3171,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  }" +
                     "}";
 
-    String pattern1 = "() ->";
-    assertEquals("should find lamdas", 4, findMatchesCount(source, pattern1));
+    String pattern1 = "() -> {}";
+    assertEquals("should find lambdas", 4, findMatchesCount(source, pattern1));
 
     String pattern2 = "(int '_a) -> {}";
     assertEquals("should find lambdas with specific parameter type", 1, findMatchesCount(source, pattern2));
@@ -3331,7 +3355,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  } finally {}\n" +
                     "}}";
 
-    String pattern1 = "try ('_ResourceType '_Var) { '_Statement*; }";
+    String pattern1 = "try ('_ResourceType '_Var = '_exp) { '_Statement*; }";
     assertEquals("Find try-with-resources", 1, findMatchesCount(source, pattern1));
 
     String pattern2 = "try { '_St1*; } catch ('_ExceptionType1 '_e1) { '_St2*; } catch ('_ExceptionType2 '_e2) { '_St3*; }";
@@ -3410,10 +3434,58 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  void two() {" +
                      "    System.out.println();" +
                      "  }" +
+                     "  <T> T three() {" +
+                     "    return null;" +
+                     "  }" +
                      "}";
 
     assertEquals("find with simple method pattern", 2, findMatchesCount(source, "void '_a();"));
     assertEquals("find with simple method pattern 2", 1, findMatchesCount(source, "void one();"));
+    assertEquals("find with simple method pattern 3", 3, findMatchesCount(source, "'_t '_a('_pt '_p*);"));
+    assertEquals("find with simple generic method pattern", 1, findMatchesCount(source, "<'_+> '_Type '_Method('_ '_*);"));
     assertEquals("find with simple static initializer pattern", 3, findMatchesCount(source, "static { '_statement*;}"));
+  }
+
+  public void testFindPackageLocalAndInstanceFields() {
+    String source = "class X {" +
+                    "  final int var1;" +
+                    "  void a(final int var2) {" +
+                    "    final int var3;" +
+                    "  }" +
+                    "}";
+    assertEquals("parameters and local variables are not package-private", 1, findMatchesCount(source, "@Modifier(\"packageLocal\") '_T '_a;"));
+    assertEquals("any variable can be final", 3, findMatchesCount(source, "@Modifier(\"final\") '_T '_a;"));
+    assertEquals("parameters and local variables are not instance fields", 1, findMatchesCount(source, "@Modifier(\"Instance\") '_T '_a;"));
+  }
+
+  public void testFindParameterizedMethodCalls() {
+    String source = "interface Foo {" +
+                    "  <T> T bar();" +
+                    "  <S, T> void bar2(S, T);" +
+                    "}" +
+                    "class X {" +
+                    "  void x(Foo foo) {" +
+                    "    foo.<String>bar();" +
+                    "    foo.<Integer>bar();" +
+                    "    String s = foo.bar();" +
+                    "    foo.bar2(1, 2);" +
+                    "  }" +
+                    "}";
+    assertEquals("find parameterized method calls 1", 1, findMatchesCount(source, "foo.<Integer>bar()"));
+    assertEquals("find parameterized method calls 2", 2, findMatchesCount(source, "foo.<String>bar()"));
+    assertEquals("find parameterized method calls 3", 3, findMatchesCount(source, "'_a.<'_b>'_c('_d*)"));
+    assertEquals("find parameterized method calls 4", 4, findMatchesCount(source, "'_a.<'_b+>'_c('_d*)"));
+  }
+
+  public void testFindDiamondTypes() {
+    String source = "class A<X, Y> {}" +
+                    "class B {{" +
+                    "  A<Integer, String> a1 = new A<>();" +
+                    "  A<Integer, String> a2 = new A<Integer, String>();" +
+                    "  A<Double, Boolean> a3 = new A<>();" +
+                    "  A<Double, Boolean> a4 = new A<>();" +
+                    "}}";
+    assertEquals("find diamond new expressions", 3, findMatchesCount(source, "new A<>()"));
+    assertEquals("find parameterized new expressions", 2, findMatchesCount(source, "new A<Integer, String>()"));
   }
 }

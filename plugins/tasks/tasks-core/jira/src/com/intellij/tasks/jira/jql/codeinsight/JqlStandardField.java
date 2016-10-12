@@ -104,12 +104,7 @@ public enum JqlStandardField {
     return type == JqlFieldType.UNKNOWN? ALL_FIELD_NAMES : new ArrayList<String>(TYPE_LOOKUP.get(type));
   }
 
-  public static final List<String> ALL_FIELD_NAMES = ContainerUtil.map2List(VALUES, new Function<JqlStandardField, String>() {
-    @Override
-    public String fun(JqlStandardField field) {
-      return field.myName;
-    }
-  });
+  public static final List<String> ALL_FIELD_NAMES = ContainerUtil.map2List(VALUES, field -> field.myName);
 
   public static JqlFieldType typeOf(String name) {
     for (Map.Entry<JqlFieldType, Collection<String>> entry : TYPE_LOOKUP.entrySet()) {

@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,12 +33,14 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private static final String MERGES = "Merges";
   private static final String MERGES_DESCRIPTION = "merges";
 
-  public CollapseOrExpandGraphAction() {
-    super("Collapse or Expand " + LINEAR_BRANCHES, "Collapse or Expand " + LINEAR_BRANCHES_DESCRIPTION, null);
+  public CollapseOrExpandGraphAction(@NotNull String action) {
+    super(action + " " + LINEAR_BRANCHES, action + " " + LINEAR_BRANCHES_DESCRIPTION, null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    VcsLogUtil.triggerUsage(e);
+
     VcsLogUi ui = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
     executeAction((VcsLogUiImpl)ui);
   }
@@ -89,5 +92,4 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private static boolean isIconHidden(@NotNull AnActionEvent e) {
     return e.getPlace().equals(ToolWindowContentUi.POPUP_PLACE);
   }
-
 }

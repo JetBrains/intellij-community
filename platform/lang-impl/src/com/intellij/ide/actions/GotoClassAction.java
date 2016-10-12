@@ -31,8 +31,7 @@ import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -93,8 +92,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
-        AccessToken token = ReadAction.start();
-        try {
+        ApplicationManager.getApplication().runReadAction(() -> {
           if (element instanceof PsiElement && ((PsiElement)element).isValid()) {
             PsiElement psiElement = getElement(((PsiElement)element), popup);
             psiElement = psiElement.getNavigationElement();
@@ -122,10 +120,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
           else {
             EditSourceUtil.navigate(((NavigationItem)element), true, popup.isOpenInCurrentWindowRequested());
           }
-        }
-        finally {
-          token.finish();
-        }
+        });
       }
     }, IdeBundle.message("go.to.class.toolwindow.title"), true);
   }
@@ -145,8 +140,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       if (element == null) {
         return null;
       }
-
-      final MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      final MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
       int max = Integer.MIN_VALUE;
       Object target = null;
       for (TreeElement treeElement : element.getChildren()) {

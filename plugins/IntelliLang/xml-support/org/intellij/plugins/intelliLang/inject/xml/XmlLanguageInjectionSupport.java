@@ -168,11 +168,9 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
     builder.addCancelAction();
     builder.setCenterPanel(panel.getComponent());
     builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
-    builder.setOkOperation(new Runnable() {
-      public void run() {
-        panel.apply();
-        builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-      }
+    builder.setOkOperation(() -> {
+      panel.apply();
+      builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {
       return xmlInjection.copy();

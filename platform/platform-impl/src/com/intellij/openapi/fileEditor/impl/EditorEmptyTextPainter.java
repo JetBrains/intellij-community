@@ -48,14 +48,11 @@ public class EditorEmptyTextPainter {
     g.setFont(JBUI.Fonts.label(16f));
     UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.8f);
     advertiseActions(splitters, painter);
-    painter.draw(g, new PairFunction<Integer, Integer, Couple<Integer>>() {
-      @Override
-      public Couple<Integer> fun(Integer width, Integer height) {
-        Dimension s = splitters.getSize();
-        int w = (s.width - width) / 2;
-        int h = (int)(s.height * heightRatio());
-        return Couple.of(w, h);
-      }
+    painter.draw(g, (width, height) -> {
+      Dimension s = splitters.getSize();
+      int w = (s.width - width) / 2;
+      int h = (int)(s.height * heightRatio());
+      return Couple.of(w, h);
     });
   }
 

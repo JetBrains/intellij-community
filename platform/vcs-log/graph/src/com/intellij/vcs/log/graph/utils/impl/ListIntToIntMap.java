@@ -160,6 +160,4 @@ public class ListIntToIntMap extends AbstractIntToIntMap implements UpdatableInt
       mySubSumOfBlocks[blockIndex] += sumDelta;
     }
   }
-
-
 }

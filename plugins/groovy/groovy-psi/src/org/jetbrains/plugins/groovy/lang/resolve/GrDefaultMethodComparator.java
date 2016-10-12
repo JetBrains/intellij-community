@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
@@ -71,9 +72,12 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
     if (argTypes == null && params1.length != params2.length) return false;
 
     if (params1.length < params2.length) {
-      if (params1.length == 0) return false;
-      final PsiType lastType = params1[params1.length - 1].getType(); //varargs applicability
-      return lastType instanceof PsiArrayType;
+      PsiParameter last = ArrayUtil.getLastElement(params1);
+      return last != null && last.getType() instanceof PsiArrayType;
+    }
+    else if (params1.length > params2.length) {
+      PsiParameter last = ArrayUtil.getLastElement(params2);
+      return !(last != null && last.getType() instanceof PsiArrayType);
     }
 
     final PsiElement myPlace = context.getPlace();

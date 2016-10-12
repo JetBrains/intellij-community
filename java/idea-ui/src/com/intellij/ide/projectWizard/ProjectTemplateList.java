@@ -108,12 +108,7 @@ public class ProjectTemplateList extends JPanel {
   }
 
   public void setTemplates(List<ProjectTemplate> list, boolean preserveSelection) {
-    Collections.sort(list, new Comparator<ProjectTemplate>() {
-      @Override
-      public int compare(ProjectTemplate o1, ProjectTemplate o2) {
-        return Comparing.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate);
-      }
-    });
+    Collections.sort(list, (o1, o2) -> Comparing.compare(o1 instanceof ArchivedProjectTemplate, o2 instanceof ArchivedProjectTemplate));
 
     int index = preserveSelection ? myList.getSelectedIndex() : -1;
     //noinspection unchecked
@@ -147,12 +142,7 @@ public class ProjectTemplateList extends JPanel {
     if (templateName != null && myList.getModel() instanceof CollectionListModel) {
       @SuppressWarnings("unchecked")
       List<ProjectTemplate> list = ((CollectionListModel<ProjectTemplate>)myList.getModel()).toList();
-      ProjectTemplate template = ContainerUtil.find(list, new Condition<ProjectTemplate>() {
-        @Override
-        public boolean value(ProjectTemplate template) {
-          return templateName.equals(template.getName());
-        }
-      });
+      ProjectTemplate template = ContainerUtil.find(list, template1 -> templateName.equals(template1.getName()));
       if (template != null) {
         myList.setSelectedValue(template, true);
       }

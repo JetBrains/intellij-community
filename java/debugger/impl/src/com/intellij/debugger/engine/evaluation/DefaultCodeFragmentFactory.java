@@ -29,6 +29,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.PairFunction;
@@ -73,44 +74,42 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     }
     fragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
     //noinspection HardCodedStringLiteral
-    fragment.putUserData(DebuggerExpressionComboBox.KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
-    fragment.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, new PairFunction<PsiExpression, CompletionParameters, PsiType>() {
-      public PsiType fun(PsiExpression expression, CompletionParameters parameters) {
-        if (!RuntimeTypeEvaluator.isSubtypeable(expression)) {
-          return null;
-        }
+    fragment.putUserData(KEY, "DebuggerComboBoxEditor.IS_DEBUGGER_EDITOR");
+    fragment.putCopyableUserData(JavaCompletionUtil.DYNAMIC_TYPE_EVALUATOR, (expression, parameters) -> {
+      if (!RuntimeTypeEvaluator.isSubtypeable(expression)) {
+        return null;
+      }
 
-        if (parameters.getInvocationCount() <= 1 && JavaCompletionUtil.mayHaveSideEffects(expression)) {
-          final CompletionService service = CompletionService.getCompletionService();
-          if (parameters.getInvocationCount() < 2) {
-            service.setAdvertisementText("Invoke completion once more to see runtime type variants");
-          }
-          return null;
-        }
-
-        final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
-        DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
-        if (debuggerSession != null && debuggerContext.getSuspendContext() != null) {
-          final Semaphore semaphore = new Semaphore();
-          semaphore.down();
-          final AtomicReference<PsiType> nameRef = new AtomicReference<>();
-          final RuntimeTypeEvaluator worker =
-            new RuntimeTypeEvaluator(null, expression, debuggerContext, ProgressManager.getInstance().getProgressIndicator()) {
-              @Override
-              protected void typeCalculationFinished(@Nullable PsiType type) {
-                nameRef.set(type);
-                semaphore.up();
-              }
-            };
-          debuggerSession.getProcess().getManagerThread().invoke(worker);
-          for (int i = 0; i < 50; i++) {
-            ProgressManager.checkCanceled();
-            if (semaphore.waitFor(20)) break;
-          }
-          return nameRef.get();
+      if (parameters.getInvocationCount() <= 1 && JavaCompletionUtil.mayHaveSideEffects(expression)) {
+        final CompletionService service = CompletionService.getCompletionService();
+        if (parameters.getInvocationCount() < 2) {
+          service.setAdvertisementText("Invoke completion once more to see runtime type variants");
         }
         return null;
       }
+
+      final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(project).getContext();
+      DebuggerSession debuggerSession = debuggerContext.getDebuggerSession();
+      if (debuggerSession != null && debuggerContext.getSuspendContext() != null) {
+        final Semaphore semaphore = new Semaphore();
+        semaphore.down();
+        final AtomicReference<PsiType> nameRef = new AtomicReference<>();
+        final RuntimeTypeEvaluator worker =
+          new RuntimeTypeEvaluator(null, expression, debuggerContext, ProgressManager.getInstance().getProgressIndicator()) {
+            @Override
+            protected void typeCalculationFinished(@Nullable PsiType type) {
+              nameRef.set(type);
+              semaphore.up();
+            }
+          };
+        debuggerSession.getProcess().getManagerThread().invoke(worker);
+        for (int i = 0; i < 50; i++) {
+          ProgressManager.checkCanceled();
+          if (semaphore.waitFor(20)) break;
+        }
+        return nameRef.get();
+      }
+      return null;
     });
 
     return fragment;
@@ -128,5 +127,11 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   @Override
   public EvaluatorBuilder getEvaluatorBuilder() {
     return EvaluatorBuilderImpl.getInstance();
+  }
+
+  public static final Key<String> KEY = Key.create("DefaultCodeFragmentFactory.KEY");
+
+  public static boolean isDebuggerFile(PsiFile file) {
+    return file.getUserData(KEY) != null || file.getUserData(DebuggerExpressionComboBox.KEY) != null;
   }
 }

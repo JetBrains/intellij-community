@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,24 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author yole
+ * This extension is used in Find Usages, Highlighting and other places to
+ * classify the psi expression as:
+ * <ul>
+ * <li>read variable expression (e.g. {@code int var = expression;} ), see {@link Access#Read}</li>
+ * <li>write variable expression (e.g. {@code expression = value;} ), see {@link Access#Write}</li> or
+ * <li>read/write variable expression (e.g. {@code var++;} ), see {@link Access#ReadWrite}</li>
+ * </ul>
+ *
  */
 public abstract class ReadWriteAccessDetector {
   public static final ExtensionPointName<ReadWriteAccessDetector> EP_NAME = ExtensionPointName.create("com.intellij.readWriteAccessDetector");
 
   @Nullable
-  public static ReadWriteAccessDetector findDetector(final PsiElement element) {
+  public static ReadWriteAccessDetector findDetector(@NotNull PsiElement element) {
     ReadWriteAccessDetector detector = null;
     for(ReadWriteAccessDetector accessDetector: Extensions.getExtensions(EP_NAME)) {
       if (accessDetector.isReadWriteAccessible(element)) {
@@ -42,8 +50,10 @@ public abstract class ReadWriteAccessDetector {
 
   public enum Access { Read, Write, ReadWrite }
 
-  public abstract boolean isReadWriteAccessible(PsiElement element);
-  public abstract boolean isDeclarationWriteAccess(PsiElement element);
-  public abstract Access getReferenceAccess(final PsiElement referencedElement, PsiReference reference);
-  public abstract Access getExpressionAccess(PsiElement expression);
+  public abstract boolean isReadWriteAccessible(@NotNull PsiElement element);
+  public abstract boolean isDeclarationWriteAccess(@NotNull PsiElement element);
+  @NotNull
+  public abstract Access getReferenceAccess(@NotNull PsiElement referencedElement, @NotNull PsiReference reference);
+  @NotNull
+  public abstract Access getExpressionAccess(@NotNull PsiElement expression);
 }

@@ -69,17 +69,7 @@ public class DeleteRepeatedInterfaceFix implements IntentionAction {
       if (castType != null) {
         final PsiType type = castType.getType();
         if (type instanceof PsiIntersectionType) {
-          final String typeText = StringUtil.join(ContainerUtil.filter(myConjList, new Condition<PsiTypeElement>() {
-            @Override
-            public boolean value(PsiTypeElement element) {
-              return element != myConjunct;
-            }
-          }), new Function<PsiTypeElement, String>() {
-            @Override
-            public String fun(PsiTypeElement element) {
-              return element.getText();
-            }
-          }, " & ");
+          final String typeText = StringUtil.join(ContainerUtil.filter(myConjList, element -> element != myConjunct), element -> element.getText(), " & ");
           final PsiTypeCastExpression newCastExpr =
             (PsiTypeCastExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("(" + typeText + ")a", castType);
           CodeStyleManager.getInstance(project).reformat(castType.replace(newCastExpr.getCastType()));

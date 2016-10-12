@@ -30,7 +30,6 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
@@ -132,7 +131,6 @@ class ProjectRule() : ApplicationRule() {
 
   val module: Module
     get() {
-      var project = project
       var result = sharedModule
       if (result == null) {
         runInEdtAndWait {
@@ -140,9 +138,6 @@ class ProjectRule() : ApplicationRule() {
             override fun moduleCreated(module: Module) {
               result = module
               sharedModule = module
-            }
-
-            override fun sourceRootCreated(sourceRoot: VirtualFile) {
             }
           })
         }
@@ -228,6 +223,19 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
     if (isModeDisabled) {
       store.isOptimiseTestLoadSpeed = true
     }
+  }
+}
+
+fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false) = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
+
+fun Project.use(task: (Project) -> Unit) {
+  val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
+  try {
+    runInEdtAndWait { projectManager.openTestProject(this) }
+    task(this)
+  }
+  finally {
+    runInEdtAndWait { projectManager.closeProject(this, false, true, false) }
   }
 }
 

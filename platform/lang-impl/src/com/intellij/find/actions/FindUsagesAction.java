@@ -52,12 +52,9 @@ public class FindUsagesAction extends AnAction {
     UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
     if (usageTargets == null) {
       final Editor editor = e.getData(CommonDataKeys.EDITOR);
-      chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
-        @Override
-        public boolean execute(@NotNull final PsiElement element) {
-          startFindUsages(element);
-          return false;
-        }
+      chooseAmbiguousTargetAndPerform(project, editor, element -> {
+        startFindUsages(element);
+        return false;
       });
     }
     else {
@@ -93,12 +90,9 @@ public class FindUsagesAction extends AnAction {
       int offset = editor.getCaretModel().getOffset();
       boolean chosen = GotoDeclarationAction.chooseAmbiguousTarget(editor, offset, processor, FindBundle.message("find.usages.ambiguous.title"), null);
       if (!chosen) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
-            HintManager.getInstance().showErrorHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
-          }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
+          HintManager.getInstance().showErrorHint(editor, FindBundle.message("find.no.usages.at.cursor.error"));
         }, project.getDisposed());
       }
     }

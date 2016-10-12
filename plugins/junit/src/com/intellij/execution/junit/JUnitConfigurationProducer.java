@@ -96,25 +96,22 @@ public abstract class JUnitConfigurationProducer extends JavaRunConfigurationPro
   }
   
   protected Condition<PsiClass> getConditionToSearchForInheritors() {
-    return new Condition<PsiClass>() {
-      @Override
-      public boolean value(PsiClass psiClass) {
-        if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
-          return true;
-        }
-        
-        if (JUnitUtil.isTestCaseInheritor(psiClass)) {
-          final PsiMethod[] constructors = psiClass.getConstructors();
-          for (PsiMethod method : constructors) {
-            if (method.getParameterList().getParametersCount() == 0) {
-              return false;
-            }
-          }
-          return constructors.length != 0;
-        }
-
-        return false;
+    return psiClass -> {
+      if (psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        return true;
       }
+
+      if (JUnitUtil.isTestCaseInheritor(psiClass)) {
+        final PsiMethod[] constructors = psiClass.getConstructors();
+        for (PsiMethod method : constructors) {
+          if (method.getParameterList().getParametersCount() == 0) {
+            return false;
+          }
+        }
+        return constructors.length != 0;
+      }
+
+      return false;
     };
   }
 }

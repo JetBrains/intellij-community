@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,12 +66,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       JRootPane rootPane = UIUtil.getParentOfType(JRootPane.class, contextComponent);
       if (rootPane != null) {
         button = (ComboBoxButton)
-          UIUtil.uiTraverser().withRoot(rootPane).bfsTraversal().filter(new Condition<Component>() {
-            @Override
-            public boolean value(Component component) {
-              return component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == ComboBoxAction.this;
-            }
-          }).first();
+          UIUtil.uiTraverser(rootPane).bfsTraversal().filter(
+            component -> component instanceof ComboBoxButton && ((ComboBoxButton)component).getMyAction() == ComboBoxAction.this).first();
       }
       if (button == null) return;
     }
@@ -123,7 +119,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return false;
   }
 
-
   @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
 
@@ -149,11 +144,14 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
-      setEnabled(myPresentation.isEnabled());
       setModel(new MyButtonModel());
+      getModel().setEnabled(myPresentation.isEnabled());
+      setVisible(presentation.isVisible());
       setHorizontalAlignment(LEFT);
       setFocusable(ScreenReader.isActive());
-      putClientProperty("styleCombo", Boolean.TRUE);
+      if (isSmallVariant()) {
+        putClientProperty("styleCombo", Boolean.TRUE);
+      }
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {
@@ -167,12 +165,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           @Override
           public void actionPerformed(ActionEvent e) {
             if (!myForcePressed) {
-              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-                @Override
-                public void run() {
-                  showPopup();
-                }
-              });
+              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> showPopup());
             }
           }
         }
@@ -250,20 +243,14 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       myForcePressed = true;
       repaint();
 
-      return new Runnable() {
-        @Override
-        public void run() {
-          // give the button a chance to handle action listener
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              myForcePressed = false;
-              myPopup = null;
-            }
-          }, ModalityState.any());
-          repaint();
-          fireStateChanged();
-        }
+      return () -> {
+        // give the button a chance to handle action listener
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myForcePressed = false;
+          myPopup = null;
+        }, ModalityState.any());
+        repaint();
+        fireStateChanged();
       };
     }
 
@@ -411,7 +398,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       final Dimension size = getSize();
 
       if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-        putClientProperty("styleCombo", Boolean.TRUE);
         super.paint(g);
       } else {
         UISettings.setupAntialiasing(g);

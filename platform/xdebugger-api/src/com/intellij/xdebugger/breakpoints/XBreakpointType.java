@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   /**
-   * @deprecated override {@link #getEditorsProvider(B, com.intellij.openapi.project.Project)} instead
+   * @deprecated override {@link #getEditorsProvider(B, Project)} instead
    */
   @Nullable
   public XDebuggerEditorsProvider getEditorsProvider() {
@@ -185,18 +185,13 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   @NotNull 
   public Comparator<B> getBreakpointComparator() {
-    return new Comparator<B>() {
-      @Override
-      public int compare(B b, B b1) {
-        return (int)(b1.getTimeStamp() - b.getTimeStamp());
-      }
-    };
+    return (b, b1) -> (int)(b1.getTimeStamp() - b.getTimeStamp());
     //return XDebuggerUtil.getInstance().getDefaultBreakpointComparator(this);
   }
 
   /**
    * Return <code>true</code> from this method in order to allow adding breakpoints from the "Breakpoints" dialog. Also override
-   * {@link XBreakpointType#addBreakpoint(com.intellij.openapi.project.Project,javax.swing.JComponent)} method.
+   * {@link XBreakpointType#addBreakpoint(Project,JComponent)} method.
    * @return <code>true</code> if "Add" button should be visible in "Breakpoints" dialog
    */
   public boolean isAddBreakpointButtonVisible() {

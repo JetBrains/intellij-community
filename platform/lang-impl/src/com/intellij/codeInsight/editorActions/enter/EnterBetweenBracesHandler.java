@@ -49,9 +49,13 @@ public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
     int prevCharOffset = CharArrayUtil.shiftBackward(text, caretOffset - 1, " \t");
     int nextCharOffset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
     
-    if (!isValidOffset(prevCharOffset, text) || !isValidOffset(nextCharOffset, text) || 
-        !isBracePair(text.charAt(prevCharOffset), text.charAt(nextCharOffset)) ||
-        file.findElementAt(prevCharOffset) == file.findElementAt(nextCharOffset)) {
+    if (!isValidOffset(prevCharOffset, text) || !isValidOffset(nextCharOffset, text) ||
+        !isBracePair(text.charAt(prevCharOffset), text.charAt(nextCharOffset))) {
+      return Result.Continue;
+    }
+
+    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+    if (file.findElementAt(prevCharOffset) == file.findElementAt(nextCharOffset)) {
       return Result.Continue;
     }
 

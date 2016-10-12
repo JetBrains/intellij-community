@@ -6,13 +6,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDunderAllReference;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -40,12 +40,7 @@ public class PyMoveSymbolProcessor {
     myMovedElement = element;
     myDestinationFile = destination;
     myAllMovedElements = otherElements;
-    myUsages = ContainerUtil.sorted(usages, new Comparator<UsageInfo>() {
-      @Override
-      public int compare(UsageInfo u1, UsageInfo u2) {
-        return PsiUtilCore.compareElementsByPosition(u1.getElement(), u2.getElement());
-      }
-    });
+    myUsages = ContainerUtil.sorted(usages, (u1, u2) -> PsiUtilCore.compareElementsByPosition(u1.getElement(), u2.getElement()));
   }
 
   public final void moveElement() {
@@ -96,35 +91,22 @@ public class PyMoveSymbolProcessor {
 
   @Nullable
   private PsiElement findFirstTopLevelWithUsageAtDestination() {
-    final List<PsiElement> topLevelAtDestination = ContainerUtil.mapNotNull(myUsages, new Function<UsageInfo, PsiElement>() {
-      @Override
-      public PsiElement fun(UsageInfo usage) {
-        final PsiElement element = usage.getElement();
-        if (element != null && ScopeUtil.getScopeOwner(element) == myDestinationFile && getImportStatementByElement(element) == null) {
-          return findTopLevelParent(element);
-        }
-        return null;
+    final List<PsiElement> topLevelAtDestination = ContainerUtil.mapNotNull(myUsages, usage -> {
+      final PsiElement element = usage.getElement();
+      if (element != null && ScopeUtil.getScopeOwner(element) == myDestinationFile && getImportStatementByElement(element) == null) {
+        return findTopLevelParent(element);
       }
+      return null;
     });
     if (topLevelAtDestination.isEmpty()) {
       return null;
     }
-    return Collections.min(topLevelAtDestination, new Comparator<PsiElement>() {
-      @Override
-      public int compare(PsiElement e1, PsiElement e2) {
-        return PsiUtilCore.compareElementsByPosition(e1, e2);
-      }
-    });
+    return Collections.min(topLevelAtDestination, (e1, e2) -> PsiUtilCore.compareElementsByPosition(e1, e2));
   }
 
   @Nullable
   private PsiElement findTopLevelParent(@NotNull PsiElement element) {
-    return PsiTreeUtil.findFirstParent(element, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return element.getParent() == myDestinationFile;
-      }
-    });
+    return PsiTreeUtil.findFirstParent(element, element1 -> element1.getParent() == myDestinationFile);
   }
 
   private void updateSingleUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement newElement) {
@@ -162,10 +144,10 @@ public class PyMoveSymbolProcessor {
         if (importStmt != null) {
           PyClassRefactoringUtil.updateUnqualifiedImportOfElement(importStmt, newElement);
         }
-      }
-      if (resolvesToLocalStarImport(usage)) {
-        PyClassRefactoringUtil.insertImport(usage, newElement);
-        myOptimizeImportTargets.add(usageFile);
+        else if (resolvesToLocalStarImport(usage)) {
+          PyClassRefactoringUtil.insertImport(usage, newElement);
+          myOptimizeImportTargets.add(usageFile);
+        }
       }
     }
     else if (usage instanceof PyStringLiteralExpression) {
@@ -183,12 +165,9 @@ public class PyMoveSymbolProcessor {
   }
 
   private boolean belongsToSomeMovedElement(@NotNull final PsiElement element) {
-    return ContainerUtil.exists(myAllMovedElements, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement movedElement) {
-        final PsiElement movedElementBody = PyMoveModuleMembersHelper.expandNamedElementBody((PsiNamedElement)movedElement);
-        return PsiTreeUtil.isAncestor(movedElementBody, element, false);
-      }
+    return ContainerUtil.exists(myAllMovedElements, movedElement -> {
+      final PsiElement movedElementBody = PyMoveModuleMembersHelper.expandNamedElementBody((PsiNamedElement)movedElement);
+      return PsiTreeUtil.isAncestor(movedElementBody, element, false);
     });
   }
 
@@ -232,18 +211,22 @@ public class PyMoveSymbolProcessor {
     expression.replace(generated);
   }
 
-  private static boolean resolvesToLocalStarImport(@NotNull PsiElement element) {
-    final PsiReference ref = element.getReference();
-    final List<PsiElement> resolvedElements = new ArrayList<PsiElement>();
-    if (ref instanceof PsiPolyVariantReference) {
-      for (ResolveResult result : ((PsiPolyVariantReference)ref).multiResolve(false)) {
+  private static boolean resolvesToLocalStarImport(@NotNull PsiElement usage) {
+    // Don't use PyUtil#multiResolveTopPriority here since it filters out low priority ImportedResolveResults
+    final List<PsiElement> resolvedElements = new ArrayList<>();
+    if (usage instanceof PyReferenceOwner) {
+      final PsiPolyVariantReference reference = ((PyReferenceOwner)usage).getReference(PyResolveContext.defaultContext());
+      for (ResolveResult result : reference.multiResolve(false)) {
         resolvedElements.add(result.getElement());
       }
     }
-    else if (ref != null) {
-      resolvedElements.add(ref.resolve());
+    else {
+      final PsiReference ref = usage.getReference();  
+      if (ref != null) {
+        resolvedElements.add(ref.resolve());
+      }
     }
-    final PsiFile containingFile = element.getContainingFile();
+    final PsiFile containingFile = usage.getContainingFile();
     if (containingFile != null) {
       for (PsiElement resolved : resolvedElements) {
         if (resolved instanceof PyStarImportElement && resolved.getContainingFile() == containingFile) {

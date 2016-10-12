@@ -28,7 +28,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.NullableConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -73,12 +72,7 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
     myProjectOrNull = context.getProject();
     myBuilder = builder;
     myContext = context;
-    myParentProjectForm = new GradleParentProjectForm(context, new NullableConsumer<ProjectData>() {
-      @Override
-      public void consume(@Nullable ProjectData parentProject) {
-        updateComponents();
-      }
-    });
+    myParentProjectForm = new GradleParentProjectForm(context, parentProject -> updateComponents());
     initComponents();
     loadSettings();
   }
@@ -138,12 +132,8 @@ public class GradleModuleWizardStep extends ModuleWizardStep {
   @Override
   public boolean validate() throws ConfigurationException {
     if (StringUtil.isEmptyOrSpaces(myArtifactIdField.getText())) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField, true);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(
+        () -> IdeFocusManager.getInstance(myProjectOrNull).requestFocus(myArtifactIdField, true));
       throw new ConfigurationException("Please, specify artifactId");
     }
 

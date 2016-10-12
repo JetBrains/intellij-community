@@ -62,19 +62,10 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
     }
   };
   private static final String SCOPE_COLUMN_NAME = ProjectBundle.message("modules.order.export.scope.column");
-  private static final Comparator<DependencyScope> DEPENDENCY_SCOPE_COMPARATOR = new Comparator<DependencyScope>() {
-    @Override
-    public int compare(DependencyScope o1, DependencyScope o2) {
-      return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
-    }
-  };
+  private static final Comparator<DependencyScope> DEPENDENCY_SCOPE_COMPARATOR =
+    (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
   private static final Comparator<ClasspathTableItem<?>> CLASSPATH_ITEM_SCOPE_COMPARATOR =
-    new Comparator<ClasspathTableItem<?>>() {
-      @Override
-      public int compare(ClasspathTableItem<?> o1, ClasspathTableItem<?> o2) {
-        return Comparing.compare(o1.getScope(), o2.getScope(), DEPENDENCY_SCOPE_COMPARATOR);
-      }
-    };
+    (o1, o2) -> Comparing.compare(o1.getScope(), o2.getScope(), DEPENDENCY_SCOPE_COMPARATOR);
   private static final ColumnInfo<ClasspathTableItem<?>, DependencyScope> SCOPE_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, DependencyScope>(SCOPE_COLUMN_NAME) {
     @Nullable
     @Override
@@ -169,13 +160,10 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
 
     public ClasspathTableItemClasspathColumnInfo(final StructureConfigurableContext context) {
       super("");
-      myItemComparator = new Comparator<ClasspathTableItem<?>>() {
-        @Override
-        public int compare(ClasspathTableItem<?> o1, ClasspathTableItem<?> o2) {
-          String text1 = ClasspathPanelImpl.getCellAppearance(o1, context, false).getText();
-          String text2 = ClasspathPanelImpl.getCellAppearance(o2, context, false).getText();
-          return text1.compareToIgnoreCase(text2);
-        }
+      myItemComparator = (o1, o2) -> {
+        String text1 = ClasspathPanelImpl.getCellAppearance(o1, context, false).getText();
+        String text2 = ClasspathPanelImpl.getCellAppearance(o2, context, false).getText();
+        return text1.compareToIgnoreCase(text2);
       };
     }
 

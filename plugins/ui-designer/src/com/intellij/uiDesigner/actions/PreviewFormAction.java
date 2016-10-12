@@ -363,11 +363,7 @@ public final class PreviewFormAction extends AnAction{
           }
           finally {
             final Project project = myModule.getProject();
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                WindowManager.getInstance().getStatusBar(project).setInfo(myStatusbarMessage);
-              }
-            });
+            SwingUtilities.invokeLater(() -> WindowManager.getInstance().getStatusBar(project).setInfo(myStatusbarMessage));
           }
         }
       };

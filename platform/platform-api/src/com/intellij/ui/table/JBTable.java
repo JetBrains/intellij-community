@@ -65,7 +65,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private Integer myMinRowHeight;
   private boolean myStriped;
 
-  private AsyncProcessIcon myBusyIcon;
+  protected AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
 
   private int myMaxItemsForSizeCalculation = Integer.MAX_VALUE;
@@ -388,6 +388,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Override
   public void paint(@NotNull Graphics g) {
     if (!isEnabled()) {
       g = new Grayer((Graphics2D)g, getBackground());
@@ -408,7 +413,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private void updateBusy() {
     if (myBusy) {
       if (myBusyIcon == null) {
-        myBusyIcon = new AsyncProcessIcon(toString()).setUseMask(false);
+        myBusyIcon = createBusyIcon();
         myBusyIcon.setOpaque(false);
         myBusyIcon.setPaintPassiveIcon(false);
         add(myBusyIcon);
@@ -422,12 +427,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       else {
         myBusyIcon.suspend();
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myBusyIcon != null) {
-              repaint();
-            }
+        SwingUtilities.invokeLater(() -> {
+          if (myBusyIcon != null) {
+            repaint();
           }
         });
       }
@@ -435,6 +437,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         myBusyIcon.updateLocation(this);
       }
     }
+  }
+
+  @NotNull
+  protected AsyncProcessIcon createBusyIcon() {
+    return new AsyncProcessIcon(toString()).setUseMask(false);
   }
 
   public boolean isStriped() {
@@ -490,12 +497,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         // this replaces focus request in JTable.processKeyBinding
         final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(this);
         focusManager.setTypeaheadEnabled(false);
-        focusManager.requestFocus(editorComp, true).doWhenProcessed(new Runnable() {
-          @Override
-          public void run() {
-            focusManager.setTypeaheadEnabled(true);
-          }
-        });
+        focusManager.requestFocus(editorComp, true).doWhenProcessed(() -> focusManager.setTypeaheadEnabled(true));
       }
 
       setCellEditor(editor);
@@ -786,8 +788,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       JBTable.this.addPropertyChangeListener(new PropertyChangeListener() {
         @Override
         public void propertyChange(@NotNull PropertyChangeEvent evt) {
-          JBTableHeader.this.revalidate();
-          JBTableHeader.this.repaint();
+          if ("enabled".equals(evt.getPropertyName())) {
+            JBTableHeader.this.repaint();
+          }
         }
       });
     }
@@ -845,12 +848,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       tableSize.width += newWidth - column.getWidth();
       JBTable.this.setSize(tableSize);
       // let the table update it's layout with resizing column set
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          setResizingColumn(null);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> setResizingColumn(null));
     }
 
     private int getColumnToPack(Point p) {

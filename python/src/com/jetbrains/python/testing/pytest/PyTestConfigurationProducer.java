@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.testing.pytest;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.module.Module;
@@ -31,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -115,17 +115,12 @@ public class PyTestConfigurationProducer extends PythonTestConfigurationProducer
     if (pyFunction != null) {
       keywords = pyFunction.getName();
       if (pyClass != null) {
-        final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-        try {
-          final PyPackage pytestPackage = packageManager.findPackage("pytest", false);
-          if (pytestPackage != null && PackageVersionComparator.VERSION_COMPARATOR.compare(pytestPackage.getVersion(), "2.3.3") >= 0) {
-            keywords = pyClass.getName() + " and " + keywords;
-          }
-          else {
-            keywords = pyClass.getName() + "." + keywords;
-          }
+        final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+        final PyPackage pytestPackage = packages != null ? PyPackageUtil.findPackage(packages, "pytest") : null;
+        if (pytestPackage != null && PackageVersionComparator.VERSION_COMPARATOR.compare(pytestPackage.getVersion(), "2.3.3") >= 0) {
+          keywords = pyClass.getName() + " and " + keywords;
         }
-        catch (ExecutionException e) {
+        else {
           keywords = pyClass.getName() + "." + keywords;
         }
       }

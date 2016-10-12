@@ -29,6 +29,7 @@ import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -45,6 +46,8 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
     if (psiElement == null) return range;
 
     if (!psiElement.getLanguage().is(PythonLanguage.getInstance())) return range;
+
+    PyPsiUtils.assertValid(psiElement);
 
     PsiFile file = psiElement.isValid() ? psiElement.getContainingFile() : null;
     if (file == null) return range;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,19 +89,9 @@ public class InspectionDescriptionNotFoundInspection extends DevKitInspectionBas
     return isLastMethodDefinitionIn(methodName, classFQN, psiClass.getSuperClass());
   }
 
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return "Inspection Description Checker";
-  }
-
   @NotNull
   public String getShortName() {
     return "InspectionDescriptionNotFoundInspection";
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
 }

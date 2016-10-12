@@ -217,6 +217,6 @@ class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
   @NotNull
   @Override
   public Collection<ArchiveHandler.EntryInfo> values() {
-    return ContainerUtil.filter(Condition.NOT_NULL, entries);
+    return ContainerUtil.filter(entries, Condition.NOT_NULL);
   }
 }

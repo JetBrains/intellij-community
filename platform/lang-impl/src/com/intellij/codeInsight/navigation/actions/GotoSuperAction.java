@@ -51,12 +51,7 @@ public class GotoSuperAction extends PresentableActionHandlerBasedAction impleme
 
     final CodeInsightActionHandler codeInsightActionHandler = CodeInsightActions.GOTO_SUPER.forLanguage(language);
     if (codeInsightActionHandler != null) {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-        @Override
-        public void run() {
-          codeInsightActionHandler.invoke(project, editor, file);
-        }
-      });
+      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> codeInsightActionHandler.invoke(project, editor, file));
     }
   }
 

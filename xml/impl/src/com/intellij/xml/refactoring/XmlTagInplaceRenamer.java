@@ -90,41 +90,28 @@ public class XmlTagInplaceRenamer {
 
       myHighlighters = new ArrayList<RangeHighlighter>();
 
-      CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              final int offset = myEditor.getCaretModel().getOffset();
-              myEditor.getCaretModel().moveToOffset(tag.getTextOffset());
+      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+        final int offset = myEditor.getCaretModel().getOffset();
+        myEditor.getCaretModel().moveToOffset(tag.getTextOffset());
 
-              final Template t = buildTemplate(tag, pair);
-              TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
-                @Override
-                public void templateFinished(final Template template, boolean brokenOff) {
-                  finish();
-                }
+        final Template t = buildTemplate(tag, pair);
+        TemplateManager.getInstance(project).startTemplate(myEditor, t, new TemplateEditingAdapter() {
+          @Override
+          public void templateFinished(final Template template, boolean brokenOff) {
+            finish();
+          }
 
-                @Override
-                public void templateCancelled(final Template template) {
-                  finish();
-                }
-              }, new PairProcessor<String, String>() {
-                @Override
-                public boolean process(final String variableName, final String value) {
-                  return value.length() == 0 || value.charAt(value.length() - 1) != ' ';
-                }
-              });
+          @Override
+          public void templateCancelled(final Template template) {
+            finish();
+          }
+        }, (variableName, value) -> value.length() == 0 || value.charAt(value.length() - 1) != ' ');
 
-              // restore old offset
-              myEditor.getCaretModel().moveToOffset(offset);
+        // restore old offset
+        myEditor.getCaretModel().moveToOffset(offset);
 
-              addHighlights(highlightRanges, myEditor, myHighlighters);
-            }
-          });
-        }
-      }, RefactoringBundle.message("rename.title"), null);
+        addHighlights(highlightRanges, myEditor, myHighlighters);
+      }), RefactoringBundle.message("rename.title"), null);
     }
   }
 

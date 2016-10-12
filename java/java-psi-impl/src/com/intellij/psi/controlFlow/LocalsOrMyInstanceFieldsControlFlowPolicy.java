@@ -25,6 +25,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class LocalsOrMyInstanceFieldsControlFlowPolicy implements ControlFlowPolicy {
@@ -35,7 +36,7 @@ public class LocalsOrMyInstanceFieldsControlFlowPolicy implements ControlFlowPol
 
   @Override
   public PsiVariable getUsedVariable(@NotNull PsiReferenceExpression refExpr) {
-    PsiExpression qualifier = refExpr.getQualifierExpression();
+    PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(refExpr.getQualifierExpression());
     if (qualifier == null || qualifier instanceof PsiThisExpression) {
       PsiElement resolved = refExpr.resolve();
       if (!(resolved instanceof PsiVariable)) return null;

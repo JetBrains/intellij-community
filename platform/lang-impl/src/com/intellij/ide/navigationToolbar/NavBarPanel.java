@@ -225,12 +225,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public void clearItems() {
     final NavBarItem[] toDispose = myList.toArray(new NavBarItem[myList.size()]);
     myList.clear();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        for (NavBarItem item : toDispose) {
-          Disposer.dispose(item);
-        }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      for (NavBarItem item : toDispose) {
+        Disposer.dispose(item);
       }
     });
     
@@ -335,11 +332,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public void rebuildAndSelectTail(final boolean requestFocus) {
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
-    myUpdateQueue.queueSelect(new Runnable() {
-      @Override
-      public void run() {
-        if (!myList.isEmpty()) {
-          myModel.setSelectedIndex(myList.size() - 1);
+    myUpdateQueue.queueSelect(() -> {
+      if (!myList.isEmpty()) {
+        myModel.setSelectedIndex(myList.size() - 1);
+        if (requestFocus) {
           requestSelectedItemFocus();
         }
       }
@@ -401,12 +397,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     else {
       final NavBarItem item = new NavBarItem(this, null, 0, null);
       final Dimension size = item.getPreferredSize();
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(item);
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> Disposer.dispose(item));
       return size;
     }
   }
@@ -507,35 +498,30 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   private void installDnD(final int index, NavBarItem component) {
     DnDSupport.createBuilder(component)
-      .setBeanProvider(new Function<DnDActionInfo, DnDDragStartBean>() {
+      .setBeanProvider(dnDActionInfo -> new DnDDragStartBean(new TransferableWrapper() {
         @Override
-        public DnDDragStartBean fun(DnDActionInfo dnDActionInfo) {
-          return new DnDDragStartBean(new TransferableWrapper() {
-            @Override
-            public List<File> asFileList() {
-              final Object o = myModel.get(index);
-              if (o instanceof PsiElement) {
-                final VirtualFile vf =  o instanceof PsiDirectory ? ((PsiDirectory)o).getVirtualFile()
-                                                                  : ((PsiElement)o).getContainingFile().getVirtualFile();
-                if (vf != null) {
-                  return Arrays.asList(new File(vf.getPath()).getAbsoluteFile());
-                }
-              }
-              return Collections.emptyList();
+        public List<File> asFileList() {
+          final Object o = myModel.get(index);
+          if (o instanceof PsiElement) {
+            final VirtualFile vf =  o instanceof PsiDirectory ? ((PsiDirectory)o).getVirtualFile()
+                                                              : ((PsiElement)o).getContainingFile().getVirtualFile();
+            if (vf != null) {
+              return Arrays.asList(new File(vf.getPath()).getAbsoluteFile());
             }
-
-            @Override
-            public TreeNode[] getTreeNodes() {
-              return null;
-            }
-
-            @Override
-            public PsiElement[] getPsiElements() {
-              return null;
-            }
-          });
+          }
+          return Collections.emptyList();
         }
-      })
+
+        @Override
+        public TreeNode[] getTreeNodes() {
+          return null;
+        }
+
+        @Override
+        public PsiElement[] getPsiElements() {
+          return null;
+        }
+      }))
       .setDisposableParent(component)
       .install();
   }
@@ -607,20 +593,17 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
     myUpdateQueue.queueRebuildUi();
 
-    myUpdateQueue.queueAfterAll(new Runnable() {
-      @Override
-      public void run() {
-        int index = myModel.indexOf(obj);
-        if (index >= 0) {
-          myModel.setSelectedIndex(index);
-        }
+    myUpdateQueue.queueAfterAll(() -> {
+      int index = myModel.indexOf(obj);
+      if (index >= 0) {
+        myModel.setSelectedIndex(index);
+      }
 
-        if (myModel.hasChildren(obj)) {
-          restorePopup();
-        }
-        else {
-          doubleClick(obj);
-        }
+      if (myModel.hasChildren(obj)) {
+        restorePopup();
+      }
+      else {
+        doubleClick(obj);
       }
     }, NavBarUpdateQueue.ID.NAVIGATE_INSIDE);
   }

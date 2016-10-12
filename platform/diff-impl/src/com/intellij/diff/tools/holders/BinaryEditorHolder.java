@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +130,8 @@ public class BinaryEditorHolder extends EditorHolder {
         Project project = context.getProject();
         if (project == null) project = ProjectManager.getInstance().getDefaultProject();
         VirtualFile file = ((FileContent)content).getFile();
-
+        if (!file.isValid()) return false;
+        if (file instanceof VirtualFileWithoutContent) return false;
         return FileEditorProviderManager.getInstance().getProviders(project, file).length != 0;
       }
       return false;

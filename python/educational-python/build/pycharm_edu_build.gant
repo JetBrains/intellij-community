@@ -210,6 +210,10 @@ public layoutEducational(String classesPath, Set usedJars) {
   buildNSIS([paths.distAll, paths.distWin],
             "$pythonEduHome/build/strings.nsi", "$pythonEduHome/build/paths.nsi",
             "pycharmEDU-", false, true, system_selector)
+  //win oracle jdk
+  if (new File("${paths.sandbox}/jdk.oracle.win/jre").exists()) {
+    buildWinZip("${paths.artifacts}/pycharm${buildName}-oracle-win.zip", [paths.distAll, paths.distWin, "${paths.sandbox}/jdk.oracle.win"])
+  }
 
   String tarRoot = isEap() ? "pycharm-edu-$buildNumber" : "pycharm-edu-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}-no-jdk.tar", [paths.distAll, paths.distUnix])
@@ -224,7 +228,9 @@ public layoutEducational(String classesPath, Set usedJars) {
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    layouts.layoutPlugin("student")
+    layouts.layoutPlugin("student") {
+      fileset(dir: "$pythonCommunityHome/educational-core/student/lib")
+    }
     layouts.layoutPlugin("student-python") {
       dir("courses") {
         fileset(dir: "$pythonEduHome/student-python/resources/courses")
@@ -273,10 +279,6 @@ private layoutFull(Map args, String target, Set usedJars) {
             exclude(name: "**/tips/**")
           }
         }
-      }
-
-      jar("educational-core.jar") {
-        module("educational-core")
       }
 
       jar("pycharm-pydev.jar") {

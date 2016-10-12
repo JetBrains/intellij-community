@@ -268,50 +268,39 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                       final boolean selectInActivePanel, 
                                       final boolean openInEditor) {
     final boolean[] result = new boolean[] {false};
-    Runnable command = new Runnable() {
-      public void run() {
-        final Runnable action = new Runnable() {
-          public void run() {
-            try {
-              PsiDirectory target;
-              if (targetDirectory instanceof PsiDirectory) {
-                target = (PsiDirectory)targetDirectory;
-              } else {
-                target = ((MoveDestination)targetDirectory).getTargetDirectory(defaultTargetDirectory);
-              }
-              Collection<PsiFile> files = doCopyClasses(classes, map, copyClassName, target, project);
-              if (files != null) {
-                if (openInEditor) {
-                  for (PsiFile file : files) {
-                    CopyHandler.updateSelectionInActiveProjectView(file, project, selectInActivePanel);
-                  }
-                  EditorHelper.openFilesInEditor(files.toArray(new PsiFile[files.size()]));
-                }
-
-                result[0] = true;
-              }
-            }
-            catch (final IncorrectOperationException ex) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  Messages.showMessageDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
-                }
-              });
-            }
+    Runnable command = () -> {
+      final Runnable action = () -> {
+        try {
+          PsiDirectory target;
+          if (targetDirectory instanceof PsiDirectory) {
+            target = (PsiDirectory)targetDirectory;
+          } else {
+            target = ((MoveDestination)targetDirectory).getTargetDirectory(defaultTargetDirectory);
           }
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
-      }
+          Collection<PsiFile> files = doCopyClasses(classes, map, copyClassName, target, project);
+          if (files != null) {
+            if (openInEditor) {
+              for (PsiFile file : files) {
+                CopyHandler.updateSelectionInActiveProjectView(file, project, selectInActivePanel);
+              }
+              EditorHelper.openFilesInEditor(files.toArray(new PsiFile[files.size()]));
+            }
+
+            result[0] = true;
+          }
+        }
+        catch (final IncorrectOperationException ex) {
+          ApplicationManager.getApplication().invokeLater(
+            () -> Messages.showMessageDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon()));
+        }
+      };
+      ApplicationManager.getApplication().runWriteAction(action);
     };
     CommandProcessor processor = CommandProcessor.getInstance();
     processor.executeCommand(project, command, commandName, null);
 
     if (result[0]) {
-      ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
-        public void run() {
-          ToolWindowManager.getInstance(project).activateEditorComponent();
-        }
-      });
+      ToolWindowManager.getInstance(project).invokeLater(() -> ToolWindowManager.getInstance(project).activateEditorComponent());
     }
   }
 
@@ -348,7 +337,13 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       final PsiClass[] sources = entry.getValue();
       if (psiFile instanceof PsiClassOwner && sources != null) {
         final PsiFile createdFile = copy(psiFile, targetDirectory, copyClassName, map == null ? null : map.get(psiFile), choice);
-        if (createdFile == null) return null;
+        if (createdFile == null) {
+          //do not touch unmodified classes
+          for (PsiClass aClass : ((PsiClassOwner)psiFile).getClasses()) {
+            oldToNewMap.remove(aClass);
+          }
+          continue;
+        }
         for (final PsiClass destination : ((PsiClassOwner)createdFile).getClasses()) {
           if (isSynthetic(destination)) {
             continue;

@@ -30,7 +30,6 @@ import com.intellij.execution.testframework.sm.runner.ui.AttachToProcessListener
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerUIActionsHandler;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
-import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.DumbAware;
@@ -146,7 +145,6 @@ public class SMTestRunnerConnectionUtil {
         SMTestRunnerResultsForm resultsForm = consoleView.getResultsViewer();
         attachEventsProcessors(properties,
                                resultsForm,
-                               resultsForm.getStatisticsPane(),
                                processHandler,
                                testFrameworkName,
                                testLocator,
@@ -171,7 +169,6 @@ public class SMTestRunnerConnectionUtil {
 
   private static ProcessHandler attachEventsProcessors(TestConsoleProperties consoleProperties,
                                                        SMTestRunnerResultsForm resultsViewer,
-                                                       StatisticsPanel statisticsPane,
                                                        ProcessHandler processHandler,
                                                        String testFrameworkName,
                                                        @Nullable SMTestLocator locator,
@@ -214,10 +211,6 @@ public class SMTestRunnerConnectionUtil {
     eventsProcessor.addEventsListener(resultsViewer);
     // subscribes test runner's actions on results viewer events
     resultsViewer.addEventsListener(uiActionsHandler);
-    // subscribes statistics tab viewer on event processor
-    if (Registry.is("tests.view.old.statistics.panel")) {
-      eventsProcessor.addEventsListener(statisticsPane.createTestEventsListener());
-    }
 
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
@@ -330,7 +323,6 @@ public class SMTestRunnerConnectionUtil {
         SMTestRunnerResultsForm resultsForm = consoleView.getResultsViewer();
         attachEventsProcessors(properties,
                                resultsForm,
-                               resultsForm.getStatisticsPane(),
                                processHandler,
                                testFrameworkName,
                                testLocator,

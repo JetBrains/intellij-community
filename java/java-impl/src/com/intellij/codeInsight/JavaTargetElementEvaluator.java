@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.*;
+import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -63,14 +64,14 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   public PsiElement adjustTargetElement(Editor editor, int offset, int flags, @NotNull PsiElement targetElement) {
     if (targetElement instanceof PsiKeyword) {
       if (targetElement.getParent() instanceof PsiThisExpression) {
-        if ((flags & THIS_ACCEPTED) == 0) return null;
+        if (!BitUtil.isSet(flags, THIS_ACCEPTED)) return null;
         PsiType type = ((PsiThisExpression)targetElement.getParent()).getType();
         if (!(type instanceof PsiClassType)) return null;
         return ((PsiClassType)type).resolve();
       }
 
       if (targetElement.getParent() instanceof PsiSuperExpression) {
-        if ((flags & SUPER_ACCEPTED) == 0) return null;
+        if (!BitUtil.isSet(flags, SUPER_ACCEPTED)) return null;
         PsiType type = ((PsiSuperExpression)targetElement.getParent()).getType();
         if (!(type instanceof PsiClassType)) return null;
         return ((PsiClassType)type).resolve();
@@ -124,7 +125,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     }
 
     if (refElement != null) {
-      if ((flags & NEW_AS_CONSTRUCTOR) != 0) {
+      if (BitUtil.isSet(flags, NEW_AS_CONSTRUCTOR)) {
         if (ref == null) {
           ref = TargetElementUtil.findReference(editor, offset);
         }
@@ -316,25 +317,21 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     if (referenceExpression != null && element instanceof PsiMethod) {
       final PsiClass[] memberClass = getMemberClass(referenceExpression, element);
       if (memberClass != null && memberClass.length == 1) {
-        return CachedValuesManager.getCachedValue(memberClass[0], new CachedValueProvider<SearchScope>() {
-          @Nullable
-          @Override
-          public Result<SearchScope> compute() {
-            final List<PsiClass> classesToSearch = ContainerUtil.newArrayList(memberClass);
-            classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0], true).findAll());
+        return CachedValuesManager.getCachedValue(memberClass[0], () -> {
+          final List<PsiClass> classesToSearch = ContainerUtil.newArrayList(memberClass);
+          classesToSearch.addAll(ClassInheritorsSearch.search(memberClass[0]).findAll());
 
-            final Set<PsiClass> supers = new HashSet<PsiClass>();
-            for (PsiClass psiClass : classesToSearch) {
-              supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
-            }
-
-            final List<PsiElement> elements = new ArrayList<PsiElement>();
-            elements.addAll(classesToSearch);
-            elements.addAll(supers);
-            elements.addAll(FunctionalExpressionSearch.search(memberClass[0]).findAll());
-
-            return new Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements)), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          final Set<PsiClass> supers = new HashSet<PsiClass>();
+          for (PsiClass psiClass : classesToSearch) {
+            supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
           }
+
+          final List<PsiElement> elements = new ArrayList<PsiElement>();
+          elements.addAll(classesToSearch);
+          elements.addAll(supers);
+          elements.addAll(FunctionalExpressionSearch.search(memberClass[0]).findAll());
+
+          return new CachedValueProvider.Result<SearchScope>(new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements)), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         });
       }
     }

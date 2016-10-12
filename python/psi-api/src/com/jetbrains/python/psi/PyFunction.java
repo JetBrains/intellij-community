@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,7 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
                                     PyPossibleClassMember, PyTypeCommentOwner {
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
-  ArrayFactory<PyFunction> ARRAY_FACTORY = new ArrayFactory<PyFunction>() {
-    @NotNull
-    @Override
-    public PyFunction[] create(int count) {
-      return new PyFunction[count];
-    }
-  };
+  ArrayFactory<PyFunction> ARRAY_FACTORY = count -> new PyFunction[count];
 
   /**
    * Returns the AST node for the function name identifier.
@@ -75,6 +69,8 @@ public interface PyFunction extends PsiNamedElement, StubBasedPsiElement<PyFunct
   Modifier getModifier();
 
   boolean isAsync();
+
+  boolean isAsyncAllowed();
 
   /**
    * Flags that mark common alterations of a function: decoration by and wrapping in classmethod() and staticmethod().

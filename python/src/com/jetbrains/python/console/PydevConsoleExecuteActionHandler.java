@@ -100,6 +100,10 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
     sendLineToConsole(new ConsoleCommunication.ConsoleCodeFragment(myInputBuffer.toString(), false));
   }
 
+  public void clearInputBuffer() {
+    myInputBuffer = null;
+  }
+
   private void processOneLine(String line) {
     int indentSize = IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false);
     line = StringUtil.trimTrailing(line);
@@ -203,41 +207,33 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
       else {
         executingPrompt();
       }
-      myConsoleCommunication.execInterpreter(code, new Function<InterpreterResponse, Object>() {
-        @Override
-        public Object fun(final InterpreterResponse interpreterResponse) {
-          // clear
-          myInputBuffer = null;
+      myConsoleCommunication.execInterpreter(code, interpreterResponse -> {
+        // clear
+        myInputBuffer = null;
 
-          //notify listeners like xdebugger variables view re-builder
-          getConsoleCommunication().notifyCommandExecuted(interpreterResponse.more);
+        //notify listeners like xdebugger variables view re-builder
+        getConsoleCommunication().notifyCommandExecuted(interpreterResponse.more);
 
-          // Handle prompt
-          if (interpreterResponse.more) {
-            more();
-            if (myCurrentIndentSize == 0) {
-              // compute current indentation
-              setCurrentIndentSize(
-                IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, lastLine(code.getText()), false) + getPythonIndent());
-              // In this case we can insert indent automatically
-              final EditorEx editor = myConsoleView.getConsoleEditor();
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  indentEditor(editor, myCurrentIndentSize);
-                }
-              });
-            }
+        // Handle prompt
+        if (interpreterResponse.more) {
+          more();
+          if (myCurrentIndentSize == 0) {
+            // compute current indentation
+            setCurrentIndentSize(
+              IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, lastLine(code.getText()), false) + getPythonIndent());
+            // In this case we can insert indent automatically
+            final EditorEx editor = myConsoleView.getConsoleEditor();
+            UIUtil.invokeLaterIfNeeded(() -> indentEditor(editor, myCurrentIndentSize));
           }
-          else {
-            if (!myConsoleCommunication.isWaitingForInput()) {
-              inPrompt();
-            }
-            setCurrentIndentSize(0);
-          }
-
-          return null;
         }
+        else {
+          if (!myConsoleCommunication.isWaitingForInput()) {
+            inPrompt();
+          }
+          setCurrentIndentSize(0);
+        }
+
+        return null;
       });
       // After requesting input we got no call back to change prompt, change it manually
       if (waitedForInputBefore && !myConsoleCommunication.isWaitingForInput()) {
@@ -308,7 +304,7 @@ public class PydevConsoleExecuteActionHandler extends ProcessBackedConsoleExecut
 
   @Override
   public void commandExecuted(boolean more) {
-    if (!more && !ipythonEnabled()) {
+    if (!more && !ipythonEnabled() && !myConsoleCommunication.isWaitingForInput()) {
       ordinaryPrompt();
     }
   }

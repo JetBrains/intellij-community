@@ -17,6 +17,7 @@ package com.theoryinpractice.testng.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -34,9 +35,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.AllClassesSearch;
-import com.intellij.psi.util.PsiElementFilter;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -184,7 +183,8 @@ public class TestNGUtil {
   }
 
   public static boolean hasTest(PsiModifierListOwner element) {
-    return hasTest(element, true);
+    return CachedValuesManager.getCachedValue(element, () ->
+      CachedValueProvider.Result.create(hasTest(element, true), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   public static boolean hasTest(PsiModifierListOwner element, boolean checkDisabled) {
@@ -358,25 +358,19 @@ public class TestNGUtil {
     if (psiMethods != null) {
       for (final PsiMethod psiMethod : psiMethods) {
         ApplicationManager.getApplication().runReadAction(
-          new Runnable() {
-            public void run() {
-              appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod);
-            }
-          }
+          () -> appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiMethod, test), psiMethod)
         );
       }
     }
     else {
       for (final PsiClass psiClass : classes) {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            if (psiClass != null && hasTest(psiClass)) {
-              appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
-              PsiMethod[] methods = psiClass.getMethods();
-              for (PsiMethod method : methods) {
-                if (method != null) {
-                  appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(method, test), method);
-                }
+        ApplicationManager.getApplication().runReadAction(() -> {
+          if (psiClass != null && hasTest(psiClass)) {
+            appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(psiClass, test), psiClass);
+            PsiMethod[] methods = psiClass.getMethods();
+            for (PsiMethod method : methods) {
+              if (method != null) {
+                appendAnnotationAttributeValues(results, AnnotationUtil.findAnnotation(method, test), method);
               }
             }
           }
@@ -436,28 +430,22 @@ public class TestNGUtil {
   @Nullable
   public static PsiClass[] getAllTestClasses(final TestClassFilter filter, boolean sync) {
     final PsiClass[][] holder = new PsiClass[1][];
-    final Runnable process = new Runnable() {
-      public void run() {
-        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final Runnable process = () -> {
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
 
-        final Collection<PsiClass> set = new LinkedHashSet<PsiClass>();
-        final PsiManager manager = PsiManager.getInstance(filter.getProject());
-        final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
-        final GlobalSearchScope scope = projectScope.intersectWith(filter.getScope());
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
-              if (filter.isAccepted(psiClass)) {
-                if (indicator != null) {
-                  indicator.setText2("Found test class " + psiClass.getQualifiedName());
-                }
-                set.add(psiClass);
-              }
-            }
+      final Collection<PsiClass> set = new LinkedHashSet<PsiClass>();
+      final PsiManager manager = PsiManager.getInstance(filter.getProject());
+      final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(manager.getProject());
+      final GlobalSearchScope scope = projectScope.intersectWith(filter.getScope());
+      for (final PsiClass psiClass : AllClassesSearch.search(scope, manager.getProject())) {
+        if (filter.isAccepted(psiClass)) {
+          if (indicator != null) {
+            indicator.setText2("Found test class " + ReadAction.compute(psiClass::getQualifiedName));
           }
-        });
-        holder[0] = set.toArray(new PsiClass[set.size()]);
+          set.add(psiClass);
+        }
       }
+      holder[0] = set.toArray(new PsiClass[set.size()]);
     };
     if (sync) {
        ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Searching For Tests...", true, filter.getProject());

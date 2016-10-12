@@ -74,13 +74,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
     for (ModuleBuilderFactory factory : EP_NAME.getExtensions()) {
       result.add(factory.createBuilder());
     }
-    return ContainerUtil.filter(result, new Condition<ModuleBuilder>() {
-
-      @Override
-      public boolean value(ModuleBuilder moduleBuilder) {
-        return moduleBuilder.isAvailable();
-      }
-    });
+    return ContainerUtil.filter(result, moduleBuilder -> moduleBuilder.isAvailable());
   }
 
   public static void deleteModuleFile(String moduleFilePath) {
@@ -305,12 +299,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
       StartupManager.getInstance(module.getProject()).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         @Override
         public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              onModuleInitialized(module);
-            }
-          });
+          ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module));
         }
       });
     }

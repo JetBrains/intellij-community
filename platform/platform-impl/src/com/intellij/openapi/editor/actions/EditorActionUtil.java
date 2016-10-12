@@ -893,12 +893,7 @@ public class EditorActionUtil {
     FoldRegion collapsedRegionAtOffset;
     while ((collapsedRegionAtOffset  = foldingModel.getCollapsedRegionAtOffset(offset)) != null) {
       final FoldRegion region = collapsedRegionAtOffset;
-      foldingModel.runBatchFoldingOperation(new Runnable() {
-        @Override
-        public void run() {
-          region.setExpanded(true);
-        }
-      });
+      foldingModel.runBatchFoldingOperation(() -> region.setExpanded(true));
     }
   }
 

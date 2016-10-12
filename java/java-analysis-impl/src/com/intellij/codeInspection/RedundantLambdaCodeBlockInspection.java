@@ -20,20 +20,13 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 /**
  * User: anna
@@ -75,7 +68,7 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
         super.visitLambdaExpression(expression);
         if (PsiUtil.isLanguageLevel8OrHigher(expression)) {
           final PsiElement body = expression.getBody();
-          final PsiExpression psiExpression = isCodeBlockRedundant(expression, body);
+          final PsiExpression psiExpression = isCodeBlockRedundant(body);
           if (psiExpression != null) {
             final PsiElement errorElement;
             final PsiElement parent = psiExpression.getParent();
@@ -92,31 +85,22 @@ public class RedundantLambdaCodeBlockInspection extends BaseJavaBatchLocalInspec
     };
   }
 
-  public static PsiExpression isCodeBlockRedundant(PsiExpression expression, PsiElement body) {
+  public static PsiExpression isCodeBlockRedundant(PsiElement body) {
     if (body instanceof PsiCodeBlock) {
       PsiExpression psiExpression = LambdaUtil.extractSingleExpressionFromBody(body);
       if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
         if (LambdaUtil.isExpressionStatementExpression(psiExpression)) {
-          final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-          if (parent instanceof PsiExpressionList) {
-            final PsiElement gParent = parent.getParent();
-            if (gParent instanceof PsiCallExpression) {
-              final CandidateInfo[] candidates = PsiResolveHelper.SERVICE.getInstance(gParent.getProject())
-                .getReferencedMethodCandidates((PsiCallExpression)gParent, false, true);
-              if (candidates.length > 1) {
-                final List<CandidateInfo> info = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
-                final LanguageLevel level = PsiUtil.getLanguageLevel(parent);
-                final JavaMethodsConflictResolver conflictResolver = new JavaMethodsConflictResolver((PsiExpressionList)parent, level);
-                final PsiExpressionList argumentList = ((PsiCallExpression)gParent).getArgumentList();
-                if (argumentList == null) {
-                  return null;
-                }
-                final boolean atLeastOneMatchFound = conflictResolver.checkParametersNumber(info, argumentList.getExpressions().length, false);
-                if (!atLeastOneMatchFound) {
-                  return null;
-                }
-                conflictResolver.checkSpecifics(info, MethodCandidateInfo.ApplicabilityLevel.VARARGS, level);
-                if (info.size() > 1) {
+          final PsiCall call = LambdaUtil.treeWalkUp(body);
+          if (call != null && call.resolveMethod() != null) {
+            final int offsetInTopCall = body.getTextRange().getStartOffset() - call.getTextRange().getStartOffset();
+            PsiCall copyCall = LambdaUtil.copyTopLevelCall(call);
+            if (copyCall == null) return null;
+            final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(copyCall.findElementAt(offsetInTopCall), PsiCodeBlock.class);
+            if (codeBlock != null) {
+              final PsiElement parent = codeBlock.getParent();
+              if (parent instanceof PsiLambdaExpression) {
+                codeBlock.replace(psiExpression);
+                if (copyCall.resolveMethod() == null || ((PsiLambdaExpression)parent).getFunctionalInterfaceType() == null) {
                   return null;
                 }
               }

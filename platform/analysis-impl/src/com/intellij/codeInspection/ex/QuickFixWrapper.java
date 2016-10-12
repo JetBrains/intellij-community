@@ -92,8 +92,7 @@ public class QuickFixWrapper implements IntentionAction {
 
   @Override
   public boolean startInWriteAction() {
-    final LocalQuickFix fix = getFix();
-    return !(fix instanceof IntentionAction) || ((IntentionAction)fix).startInWriteAction();
+    return getFix().startInWriteAction();
   }
 
   public LocalQuickFix getFix() {

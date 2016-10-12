@@ -65,7 +65,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -171,13 +170,9 @@ public class CreateFromUsageUtils {
         m = factory.createMethodFromText(methodText, aClass);
       }
       catch (IncorrectOperationException e) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
-                                         QuickFixBundle.message("new.method.body.template.error.title"));
-              }
-            });
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
+                                   QuickFixBundle.message("new.method.body.template.error.title")));
         return;
       }
       PsiCodeBlock oldBody = method.getBody();
@@ -261,10 +256,7 @@ public class CreateFromUsageUtils {
         names = new String[]{"p" + i};
       }
 
-      if (argType == null || PsiType.NULL.equals(argType) ||
-          argType instanceof PsiLambdaExpressionType ||
-          argType instanceof PsiLambdaParameterType ||
-          argType instanceof PsiMethodReferenceType) {
+      if (argType == null || PsiType.NULL.equals(argType) || LambdaUtil.notInferredType(argType)) {
         argType = PsiType.getJavaLangObject(psiManager, resolveScope);
       } else if (argType instanceof PsiDisjunctionType) {
         argType = ((PsiDisjunctionType)argType).getLeastUpperBound();
@@ -482,15 +474,10 @@ public class CreateFromUsageUtils {
 
   public static void scheduleFileOrPackageCreationFailedMessageBox(final IncorrectOperationException e, final String name, final PsiDirectory directory,
                                                       final boolean isPackage) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showErrorDialog(QuickFixBundle.message(
-          isPackage ? "cannot.create.java.package.error.text" : "cannot.create.java.file.error.text", name, directory.getVirtualFile().getName(), e.getLocalizedMessage()),
-                                 QuickFixBundle.message(
-                                   isPackage ? "cannot.create.java.package.error.title" : "cannot.create.java.file.error.title"));
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(QuickFixBundle.message(
+      isPackage ? "cannot.create.java.package.error.text" : "cannot.create.java.file.error.text", name, directory.getVirtualFile().getName(), e.getLocalizedMessage()),
+                                                                               QuickFixBundle.message(
+                               isPackage ? "cannot.create.java.package.error.title" : "cannot.create.java.file.error.title")));
   }
 
   public static PsiReferenceExpression[] collectExpressions(final PsiExpression expression, Class<? extends PsiElement>... scopes) {
@@ -591,12 +578,7 @@ public class CreateFromUsageUtils {
       if (!(parent instanceof PsiReferenceExpression)) {
         ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, PsiUtil.skipParenthesizedExprUp(parent) instanceof PsiExpressionList);
         if (someExpectedTypes.length > 0) {
-          Arrays.sort(someExpectedTypes, new Comparator<ExpectedTypeInfo>() {
-            @Override
-            public int compare(ExpectedTypeInfo o1, ExpectedTypeInfo o2) {
-              return compareExpectedTypes(o1, o2, expression);
-            }
-          });
+          Arrays.sort(someExpectedTypes, (o1, o2) -> compareExpectedTypes(o1, o2, expression));
           types.add(someExpectedTypes);
         }
         continue;
@@ -613,12 +595,7 @@ public class CreateFromUsageUtils {
         if (refName.equals("equals")) {
           ExpectedTypeInfo[] someExpectedTypes = equalsExpectedTypes((PsiMethodCallExpression)pparent);
           if (someExpectedTypes.length > 0) {
-            Arrays.sort(someExpectedTypes, new Comparator<ExpectedTypeInfo>() {
-              @Override
-              public int compare(ExpectedTypeInfo o1, ExpectedTypeInfo o2) {
-                return compareExpectedTypes(o1, o2, expression);
-              }
-            });
+            Arrays.sort(someExpectedTypes, (o1, o2) -> compareExpectedTypes(o1, o2, expression));
             types.add(someExpectedTypes);
           }
         }
@@ -760,10 +737,7 @@ public class CreateFromUsageUtils {
         @Override
         @Nullable
         public PsiType visitType(PsiType type) {
-          if (PsiType.NULL.equals(type)) {
-            type = PsiType.getJavaLangObject(manager, resolveScope);
-          }
-          else if (PsiType.VOID.equals(type) && !allowVoidType) {
+          if (PsiType.NULL.equals(type) || PsiType.VOID.equals(type) && !allowVoidType) {
             type = PsiType.getJavaLangObject(manager, resolveScope);
           }
 
@@ -810,12 +784,7 @@ public class CreateFromUsageUtils {
                                     final PsiExpression expression,
                                     List<ExpectedTypeInfo[]> types,
                                     PsiElementFactory factory) {
-    Arrays.sort(members, new Comparator<PsiMember>() {
-      @Override
-      public int compare(final PsiMember m1, final PsiMember m2) {
-        return compareMembers(m1, m2, expression);
-      }
-    });
+    Arrays.sort(members, (m1, m2) -> compareMembers(m1, m2, expression));
 
     List<ExpectedTypeInfo> l = new ArrayList<ExpectedTypeInfo>();
     PsiManager manager = expression.getManager();
@@ -931,12 +900,9 @@ public class CreateFromUsageUtils {
           final String qName = getQualifiedName(containingClass);
           if (qName == null) continue;
 
-          ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).forEach(new Processor<PsiClass>() {
-            @Override
-            public boolean process(PsiClass psiClass) {
-              ContainerUtil.addIfNotNull(getQualifiedName(psiClass), possibleClassNames);
-              return true;
-            }
+          ClassInheritorsSearch.search(containingClass, descendantsSearchScope, true, true, false).forEach(psiClass -> {
+            ContainerUtil.addIfNotNull(getQualifiedName(psiClass), possibleClassNames);
+            return true;
           });
 
           possibleClassNames.add(qName);
@@ -949,19 +915,16 @@ public class CreateFromUsageUtils {
   private static boolean handleObjectMethod(Set<String> possibleClassNames, final JavaPsiFacade facade, final GlobalSearchScope searchScope, final boolean method, final String memberName, final boolean staticAccess, boolean addInheritors) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(facade.getProject());
     final boolean[] allClasses = {false};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        final PsiClass objectClass = facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, searchScope);
-        if (objectClass != null) {
-          if (method && objectClass.findMethodsByName(memberName, false).length > 0) {
+    ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiClass objectClass = facade.findClass(CommonClassNames.JAVA_LANG_OBJECT, searchScope);
+      if (objectClass != null) {
+        if (method && objectClass.findMethodsByName(memberName, false).length > 0) {
+          allClasses[0] = true;
+        }
+        else if (!method) {
+          final PsiField field = objectClass.findFieldByName(memberName, false);
+          if (hasCorrectModifiers(field, staticAccess)) {
             allClasses[0] = true;
-          }
-          else if (!method) {
-            final PsiField field = objectClass.findFieldByName(memberName, false);
-            if (hasCorrectModifiers(field, staticAccess)) {
-              allClasses[0] = true;
-            }
           }
         }
       }

@@ -50,7 +50,6 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -446,12 +445,7 @@ public class JavaDocInfoGenerator {
           buffer.append("<html><body></body></html>");
         }
         String errorSection = "<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>" +
-                              StringUtil.join(docURLs, new Function<String, String>() {
-                                @Override
-                                public String fun(String url) {
-                                  return XmlStringUtil.escapeString(url);
-                                }
-                              }, "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
+                              StringUtil.join(docURLs, url -> XmlStringUtil.escapeString(url), "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
                               "</i><br>The documentation for this element is not found. Please add all the needed paths to API docs in " +
                               "<a href=\"open://Project Settings\">Project Settings.</a></p>";
         buffer.insert(buffer.indexOf("<body>"), errorSection);
@@ -2302,13 +2296,12 @@ public class JavaDocInfoGenerator {
       if (type != null) {
         generateType(myBuffer, type, expression);
       }
-      myBuffer.append("(");
       expression.acceptChildren(this);
-      myBuffer.append(")");
     }
 
     @Override
     public void visitExpressionList(PsiExpressionList list) {
+      myBuffer.append("(");
       String separator = ", ";
       PsiExpression[] expressions = list.getExpressions();
       for (PsiExpression expression : expressions) {
@@ -2318,17 +2311,17 @@ public class JavaDocInfoGenerator {
       if (expressions.length > 0) {
         myBuffer.setLength(myBuffer.length() - separator.length());
       }
-    }
-
-    @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      myBuffer.append(StringUtil.escapeXml(expression.getMethodExpression().getText())).append("(");
-      expression.getArgumentList().accept(this);
       myBuffer.append(")");
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      myBuffer.append(StringUtil.escapeXml(expression.getMethodExpression().getText()));
+      expression.getArgumentList().accept(this);
+    }
+
+    @Override
+    public void visitExpression(PsiExpression expression) {
       myBuffer.append(StringUtil.escapeXml(expression.getText()));
     }
 

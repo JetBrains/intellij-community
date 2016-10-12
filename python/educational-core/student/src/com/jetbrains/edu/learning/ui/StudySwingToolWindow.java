@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 package com.jetbrains.edu.learning.ui;
+
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.project.Project;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -33,8 +38,9 @@ public class StudySwingToolWindow extends StudyToolWindow {
   }
 
   @Override
-  public JComponent createTaskInfoPanel(String taskText) {
+  public JComponent createTaskInfoPanel(Project project) {
     myTaskTextPane = new JTextPane();
+    final JBScrollPane scrollPane = new JBScrollPane(myTaskTextPane);
     myTaskTextPane.setContentType(new HTMLEditorKit().getContentType());
     final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
     int fontSize = editorColorsScheme.getEditorFontSize();
@@ -51,12 +57,12 @@ public class StudySwingToolWindow extends StudyToolWindow {
     if (!UIUtil.isUnderDarcula()) {
       myTaskTextPane.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     }
-    myTaskTextPane.setBorder(new EmptyBorder(15, 20, 0, 100));
-    myTaskTextPane.setText(taskText);
-    return myTaskTextPane;
+    myTaskTextPane.setBorder(new EmptyBorder(20, 20, 0, 10));
+    myTaskTextPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
+    return scrollPane;
   }
 
-  public void setTaskText(String text) {
+  public void setText(@NotNull String text) {
     myTaskTextPane.setText(text);
   }
 }

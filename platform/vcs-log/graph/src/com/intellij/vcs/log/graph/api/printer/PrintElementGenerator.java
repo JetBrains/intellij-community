@@ -28,5 +28,5 @@ public interface PrintElementGenerator {
   Collection<PrintElementWithGraphElement> getPrintElements(int visibleRow);
 
   @NotNull
-  PrintElementWithGraphElement toPrintElementWithGraphElement(@NotNull PrintElement printElement);
+  PrintElementWithGraphElement withGraphElement(@NotNull PrintElement printElement);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import org.jetbrains.annotations.NotNull;
 public class SurroundWithTryCatchFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SurroundWithTryCatchFix");
 
-  private PsiElement myStatement = null;
+  private PsiElement myStatement;
 
   public SurroundWithTryCatchFix(@NotNull PsiElement element) {
     final PsiFunctionalExpression functionalExpression = PsiTreeUtil.getParentOfType(element, PsiFunctionalExpression.class, false, PsiStatement.class);

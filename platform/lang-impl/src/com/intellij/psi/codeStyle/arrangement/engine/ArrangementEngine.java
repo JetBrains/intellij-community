@@ -137,22 +137,19 @@ public class ArrangementEngine {
       DumbService.getInstance(file.getProject()).setAlternativeResolveEnabled(false);
     }
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      if (documentEx != null) {
+        //documentEx.setInBulkUpdate(true);
+      }
+      try {
+        doArrange(context);
+        if (callback != null) {
+          callback.afterArrangement(context.moveInfos);
+        }
+      }
+      finally {
         if (documentEx != null) {
-          //documentEx.setInBulkUpdate(true);
-        }
-        try {
-          doArrange(context);
-          if (callback != null) {
-            callback.afterArrangement(context.moveInfos);
-          }
-        }
-        finally {
-          if (documentEx != null) {
-            //documentEx.setInBulkUpdate(false);
-          }
+          //documentEx.setInBulkUpdate(false);
         }
       }
     });
@@ -357,23 +354,20 @@ public class ArrangementEngine {
     for (E e : entries) {
       weights.put(e, ++i);
     }
-    ContainerUtil.sort(entries, new Comparator<E>() {
-      @Override
-      public int compare(E e1, E e2) {
-        String name1 = e1 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e1).getName() : null;
-        String name2 = e2 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e2).getName() : null;
-        if (name1 != null && name2 != null) {
-          return name1.compareTo(name2);
-        }
-        else if (name1 == null && name2 == null) {
-          return weights.get(e1) - weights.get(e2);
-        }
-        else if (name2 == null) {
-          return -1;
-        }
-        else {
-          return 1;
-        }
+    ContainerUtil.sort(entries, (e1, e2) -> {
+      String name1 = e1 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e1).getName() : null;
+      String name2 = e2 instanceof NameAwareArrangementEntry ? ((NameAwareArrangementEntry)e2).getName() : null;
+      if (name1 != null && name2 != null) {
+        return name1.compareTo(name2);
+      }
+      else if (name1 == null && name2 == null) {
+        return weights.get(e1) - weights.get(e2);
+      }
+      else if (name2 == null) {
+        return -1;
+      }
+      else {
+        return 1;
       }
     });
   }

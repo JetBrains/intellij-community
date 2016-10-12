@@ -197,12 +197,7 @@ public class GridCellImpl implements GridCell {
     if (myContents.containsKey(content)) return;
     myContents.put(content, null);
 
-    revalidateCell(new Runnable() {
-      @Override
-      public void run() {
-        myTabs.addTab(createTabInfoFor(content));
-      }
-    });
+    revalidateCell(() -> myTabs.addTab(createTabInfoFor(content)));
 
     updateSelection(myTabs.getComponent().getRootPane() != null);
   }
@@ -213,12 +208,7 @@ public class GridCellImpl implements GridCell {
     final TabInfo info = getTabFor(content);
     myContents.remove(content);
 
-    revalidateCell(new Runnable() {
-      @Override
-      public void run() {
-        myTabs.removeTab(info);
-      }
-    });
+    revalidateCell(() -> myTabs.removeTab(info));
 
     updateSelection(myTabs.getComponent().getRootPane() != null);
   }

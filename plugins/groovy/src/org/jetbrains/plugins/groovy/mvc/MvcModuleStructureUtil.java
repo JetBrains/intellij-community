@@ -112,12 +112,7 @@ public class MvcModuleStructureUtil {
 
     for (final VirtualFile excluded : structure.getExcludedFolders(root)) {
       if (moduleRootManager.getFileIndex().isInContent(excluded)) {
-        actions.add(new Consumer<ContentEntry>() {
-          @Override
-          public void consume(ContentEntry contentEntry) {
-            contentEntry.addExcludeFolder(excluded);
-          }
-        });
+        actions.add(contentEntry -> contentEntry.addExcludeFolder(excluded));
       }
     }
 
@@ -127,20 +122,17 @@ public class MvcModuleStructureUtil {
       return null;
     }
 
-    return new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        ContentEntry contentEntry = findContentEntry(model, root);
-        if (contentEntry == null) {
-          contentEntry = model.addContentEntry(root);
-        }
+    return model -> {
+      ContentEntry contentEntry = findContentEntry(model, root);
+      if (contentEntry == null) {
+        contentEntry = model.addContentEntry(root);
+      }
 
-        for (final Consumer<ContentEntry> action : actions) {
-          action.consume(contentEntry);
-        }
-        if (modifyLib != null) {
-          modifyLib.consume(model);
-        }
+      for (final Consumer<ContentEntry> action : actions) {
+        action.consume(contentEntry);
+      }
+      if (modifyLib != null) {
+        modifyLib.consume(model);
       }
     };
   }
@@ -155,14 +147,11 @@ public class MvcModuleStructureUtil {
                                               @NotNull List<Consumer<ContentEntry>> actions,
                                               @NotNull Collection<VirtualFile> sourceRoots) {
     if (sourceRoots.contains(file)) {
-      actions.add(new Consumer<ContentEntry>() {
-        @Override
-        public void consume(ContentEntry contentEntry) {
-          SourceFolder[] folders = contentEntry.getSourceFolders();
-          for (SourceFolder folder : folders) {
-            if (Comparing.equal(folder.getFile(), file)) {
-              contentEntry.removeSourceFolder(folder);
-            }
+      actions.add(contentEntry -> {
+        SourceFolder[] folders = contentEntry.getSourceFolders();
+        for (SourceFolder folder : folders) {
+          if (Comparing.equal(folder.getFile(), file)) {
+            contentEntry.removeSourceFolder(folder);
           }
         }
       });
@@ -181,13 +170,10 @@ public class MvcModuleStructureUtil {
       return null;
     }
 
-    return new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        Library.ModifiableModel libModel = modifyDefaultLibrary(model, libName);
-        libModel.addJarDirectory(libDir, false);
-        libModel.commit();
-      }
+    return model -> {
+      Library.ModifiableModel libModel = modifyDefaultLibrary(model, libName);
+      libModel.addJarDirectory(libDir, false);
+      libModel.commit();
     };
   }
 
@@ -227,27 +213,19 @@ public class MvcModuleStructureUtil {
     JpsModuleSourceRootType<?> existingRootType = sourceRoots.get(src);
 
     if (rootType == JavaSourceRootType.TEST_SOURCE && (existingRootType != null && existingRootType != JavaSourceRootType.TEST_SOURCE)) { // see http://youtrack.jetbrains.net/issue/IDEA-70642
-      actions.add(new Consumer<ContentEntry>() {
-        @Override
-        public void consume(ContentEntry entry) {
-          for (SourceFolder folder : entry.getSourceFolders()) {
-            if (Comparing.equal(folder.getFile(), src)) {
-              entry.removeSourceFolder(folder);
-              entry.addSourceFolder(src, rootType);
-              break;
-            }
+      actions.add(entry -> {
+        for (SourceFolder folder : entry.getSourceFolders()) {
+          if (Comparing.equal(folder.getFile(), src)) {
+            entry.removeSourceFolder(folder);
+            entry.addSourceFolder(src, rootType);
+            break;
           }
         }
       });
       return;
     }
 
-    actions.add(new Consumer<ContentEntry>() {
-      @Override
-      public void consume(ContentEntry contentEntry) {
-        contentEntry.addSourceFolder(src, rootType);
-      }
-    });
+    actions.add(contentEntry -> contentEntry.addSourceFolder(src, rootType));
   }
 
   public static void updateModuleStructure(final Module module, MvcProjectStructure structure, @NotNull VirtualFile root) {
@@ -256,12 +234,9 @@ public class MvcModuleStructureUtil {
 
     // update module
     if (!actions.first.isEmpty()) {
-      ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
-        @Override
-        public void consume(ModifiableRootModel model) {
-          for (final Consumer<ModifiableRootModel> action : actions.first) {
-            action.consume(model);
-          }
+      ModuleRootModificationUtil.updateModel(module, model -> {
+        for (final Consumer<ModifiableRootModel> action : actions.first) {
+          action.consume(model);
         }
       });
     }
@@ -278,17 +253,7 @@ public class MvcModuleStructureUtil {
       for (Consumer<ModifiableFacetModel> action : actions.second) {
         action.consume(model);
       }
-      application.invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          application.runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              model.commit();
-            }
-          });
-        }
-      }, application.getDefaultModalityState());
+      application.invokeAndWait(() -> application.runWriteAction(() -> model.commit()), application.getDefaultModalityState());
     }
   }
 
@@ -359,13 +324,10 @@ public class MvcModuleStructureUtil {
 
   private static void moveupLibrariesFromMavenPlugin(final Module module, Collection<Consumer<ModifiableRootModel>> actions) {
     if (moveupLibrariesFromMavenPlugin(ModuleRootManager.getInstance(module)) != null) {
-      actions.add(new Consumer<ModifiableRootModel>() {
-        @Override
-        public void consume(ModifiableRootModel modifiableRootModel) {
-          OrderEntry[] orderEntries = moveupLibrariesFromMavenPlugin(modifiableRootModel);
-          if (orderEntries != null) {
-            modifiableRootModel.rearrangeOrderEntries(orderEntries);
-          }
+      actions.add(modifiableRootModel -> {
+        OrderEntry[] orderEntries = moveupLibrariesFromMavenPlugin(modifiableRootModel);
+        if (orderEntries != null) {
+          modifiableRootModel.rearrangeOrderEntries(orderEntries);
         }
       });
     }
@@ -389,18 +351,15 @@ public class MvcModuleStructureUtil {
     }
 
     if (!toRemove.isEmpty() || !toRemoveContent.isEmpty()) {
-      actions.add(new Consumer<ModifiableRootModel>() {
-        @Override
-        public void consume(ModifiableRootModel model) {
-          for (ContentEntry entry : model.getContentEntries()) {
-            if (toRemoveContent.remove(entry.getUrl())) {
-              model.removeContentEntry(entry);
-            }
-            else {
-              for (SourceFolder folder : entry.getSourceFolders()) {
-                if (toRemove.remove(folder)) {
-                  entry.removeSourceFolder(folder);
-                }
+      actions.add(model -> {
+        for (ContentEntry entry : model.getContentEntries()) {
+          if (toRemoveContent.remove(entry.getUrl())) {
+            model.removeContentEntry(entry);
+          }
+          else {
+            for (SourceFolder folder : entry.getSourceFolders()) {
+              if (toRemove.remove(folder)) {
+                entry.removeSourceFolder(folder);
               }
             }
           }
@@ -438,15 +397,12 @@ public class MvcModuleStructureUtil {
     }
 
     if (!toRemoveUrls.isEmpty()) {
-      actions.add(new Consumer<ModifiableRootModel>() {
-        @Override
-        public void consume(ModifiableRootModel model) {
-          final Library.ModifiableModel modifiableModel = modifyDefaultLibrary(model, libName);
-          for (String url : toRemoveUrls) {
-            modifiableModel.removeRoot(url, OrderRootType.CLASSES);
-          }
-          modifiableModel.commit();
+      actions.add(model -> {
+        final Library.ModifiableModel modifiableModel = modifyDefaultLibrary(model, libName);
+        for (String url : toRemoveUrls) {
+          modifiableModel.removeRoot(url, OrderRootType.CLASSES);
         }
+        modifiableModel.commit();
       });
     }
   }
@@ -529,16 +485,13 @@ public class MvcModuleStructureUtil {
     final boolean isLibrariesEquals = appLibraries.equals(auxLibraries) && getJarUrls(auxUserLibrary).equals(getJarUrls(appUserLibrary));
 
     if (!isSdkEquals || !isLibrariesEquals) {
-      ModuleRootModificationUtil.updateModel(pluginsModule, new Consumer<ModifiableRootModel>() {
-        @Override
-        public void consume(ModifiableRootModel model) {
-          if (!isSdkEquals) {
-            copySdk(appRootManager, model);
-          }
+      ModuleRootModificationUtil.updateModel(pluginsModule, model -> {
+        if (!isSdkEquals) {
+          copySdk(appRootManager, model);
+        }
 
-          if (!isLibrariesEquals) {
-            copyUserLibraries(appRootManager, model, framework);
-          }
+        if (!isLibrariesEquals) {
+          copyUserLibraries(appRootManager, model, framework);
         }
       });
     }
@@ -751,13 +704,10 @@ public class MvcModuleStructureUtil {
   }
 
   public static Consumer<ModifiableRootModel> removeStaleContentEntries(final Collection<VirtualFile> pluginDirs) {
-    return new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel modifiableRootModel) {
-        for (final ContentEntry entry : modifiableRootModel.getContentEntries()) {
-          if (!pluginDirs.contains(entry.getFile())) {
-            modifiableRootModel.removeContentEntry(entry);
-          }
+    return modifiableRootModel -> {
+      for (final ContentEntry entry : modifiableRootModel.getContentEntries()) {
+        if (!pluginDirs.contains(entry.getFile())) {
+          modifiableRootModel.removeContentEntry(entry);
         }
       }
     };
@@ -796,16 +746,13 @@ public class MvcModuleStructureUtil {
   }
 
   public static Consumer<ModifiableRootModel> exportDefaultLibrary(final String libraryName) {
-    return new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel modifiableRootModel) {
-        for (final OrderEntry entry : modifiableRootModel.getOrderEntries()) {
-          if (entry instanceof LibraryOrderEntry) {
-            final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
-            String lName = libraryOrderEntry.getLibraryName();
-            if (lName != null && lName.startsWith(libraryName)) {
-              libraryOrderEntry.setExported(true);
-            }
+    return modifiableRootModel -> {
+      for (final OrderEntry entry : modifiableRootModel.getOrderEntries()) {
+        if (entry instanceof LibraryOrderEntry) {
+          final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)entry;
+          String lName = libraryOrderEntry.getLibraryName();
+          if (lName != null && lName.startsWith(libraryName)) {
+            libraryOrderEntry.setExported(true);
           }
         }
       }

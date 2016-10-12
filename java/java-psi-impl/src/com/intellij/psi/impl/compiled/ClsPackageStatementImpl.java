@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,25 +45,16 @@ class ClsPackageStatementImpl extends ClsElementImpl implements PsiPackageStatem
     return myFile;
   }
 
-  /**
-   * @not_implemented
-   */
   @Override
   public PsiJavaCodeReferenceElement getPackageReference() {
     throw new UnsupportedOperationException("Method not implemented");
   }
 
-  /**
-   * @not_implemented
-   */
   @Override
   public PsiModifierList getAnnotationList() {
     throw new UnsupportedOperationException("Method not implemented");
   }
 
-  /**
-   * @not_implemented
-   */
   @Override
   @NotNull
   public PsiElement[] getChildren() {

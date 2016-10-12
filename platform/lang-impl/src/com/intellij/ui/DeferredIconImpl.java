@@ -30,13 +30,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import javax.swing.*;
 import javax.swing.plaf.TreeUI;
@@ -64,7 +63,7 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
   private float myScale = 1f;
   private Icon myOriginalDeferredIcon = null;
 
-  private static final Executor ourIconsCalculatingExecutor = new BoundedTaskExecutor(PooledThreadExecutor.INSTANCE, 1);
+  private static final Executor ourIconsCalculatingExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(1);
 
   private final IconListener<T> myEvalListener;
   private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator", 200);
@@ -72,18 +71,7 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
   @Override
   public Icon scale(final float scaleFactor) {
     if (scaleFactor != myScale) {
-      DeferredIconImpl icon = new DeferredIconImpl(null, myParam, myNeedReadAction, myEvaluator, myEvalListener, myAutoUpdatable) {
-        @Override
-        void setDone(@NotNull Icon result) {
-          super.setDone(result);
-          if (result instanceof ScalableIcon) {
-            myDelegateIcon = ((ScalableIcon)result).scale(scaleFactor);
-          }
-        }
-      };
-      icon.myScale = scaleFactor;
-      icon.myOriginalDeferredIcon = myOriginalDeferredIcon == null ? this : myOriginalDeferredIcon;
-      return icon;
+      myDelegateIcon = ((ScalableIcon)myDelegateIcon).scale(myScale = scaleFactor);
     }
     return this;
   }
@@ -141,91 +129,69 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
     final Component target = getTarget(c);
     final Component paintingParent = SwingUtilities.getAncestorOfClass(PaintingParent.class, c);
     final Rectangle paintingParentRec = paintingParent == null ? null : ((PaintingParent)paintingParent).getChildRec(c);
-    ourIconsCalculatingExecutor.execute(new Runnable() {
-      @Override
-      public void run() {
-        int oldWidth = myDelegateIcon.getIconWidth();
-        final Icon[] evaluated = new Icon[1];
+    ourIconsCalculatingExecutor.execute(() -> {
+      int oldWidth = myDelegateIcon.getIconWidth();
+      final Icon[] evaluated = new Icon[1];
 
-        final long startTime = System.currentTimeMillis();
-        if (myNeedReadAction) {
-          boolean result = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(new Runnable() {
-            @Override
-            public void run() {
-              IconDeferrerImpl.evaluateDeferred(new Runnable() {
-                @Override
-                public void run() {
-                  evaluated[0] = evaluate();
-                  if (myScale != 1f && evaluated[0] instanceof ScalableIcon) {
-                    evaluated[0] = ((ScalableIcon)evaluated[0]).scale(myScale);
-                  }
-                }
-              });
-              if (myAutoUpdatable) {
-                myLastCalcTime = System.currentTimeMillis();
-                myLastTimeSpent = myLastCalcTime - startTime;
-              }
-            }
-          });
-          if (!result) {
-            myIsScheduled = false;
-            return;
-          }
-        }
-        else {
-          IconDeferrerImpl.evaluateDeferred(new Runnable() {
-            @Override
-            public void run() {
-              evaluated[0] = evaluate();
-            }
-          });
+      final long startTime = System.currentTimeMillis();
+      if (myNeedReadAction) {
+        boolean result = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> {
+          IconDeferrerImpl.evaluateDeferred(() -> evaluated[0] = evaluate());
           if (myAutoUpdatable) {
             myLastCalcTime = System.currentTimeMillis();
             myLastTimeSpent = myLastCalcTime - startTime;
           }
+        });
+        if (!result) {
+          myIsScheduled = false;
+          return;
         }
-        final Icon result = evaluated[0];
-        myDelegateIcon = result;
-        checkDelegationDepth();
+      }
+      else {
+        IconDeferrerImpl.evaluateDeferred(() -> evaluated[0] = evaluate());
+        if (myAutoUpdatable) {
+          myLastCalcTime = System.currentTimeMillis();
+          myLastTimeSpent = myLastCalcTime - startTime;
+        }
+      }
+      final Icon result = evaluated[0];
+      myDelegateIcon = result;
+      checkDelegationDepth();
 
-        final boolean shouldRevalidate =
-          Registry.is("ide.tree.deferred.icon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
+      final boolean shouldRevalidate =
+        Registry.is("ide.tree.deferred.icon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
 
-        ourLaterInvocator.offer(new Runnable() {
-          @Override
-          public void run() {
-            setDone(result);
+      ourLaterInvocator.offer(() -> {
+        setDone(result);
 
-            Component actualTarget = target;
-            if (actualTarget != null && SwingUtilities.getWindowAncestor(actualTarget) == null) {
-              actualTarget = paintingParent;
-              if (actualTarget == null || SwingUtilities.getWindowAncestor(actualTarget) == null) {
-                actualTarget = null;
-              }
-            }
+        Component actualTarget = target;
+        if (actualTarget != null && SwingUtilities.getWindowAncestor(actualTarget) == null) {
+          actualTarget = paintingParent;
+          if (actualTarget == null || SwingUtilities.getWindowAncestor(actualTarget) == null) {
+            actualTarget = null;
+          }
+        }
 
-            if (actualTarget == null) return;
+        if (actualTarget == null) return;
 
-            if (shouldRevalidate) {
-              // revalidate will not work: JTree caches size of nodes
-              if (actualTarget instanceof JTree) {
-                final TreeUI ui = ((JTree)actualTarget).getUI();
-                if (ui instanceof BasicTreeUI) {
-                  // this call is "fake" and only need to reset tree layout cache
-                  ((BasicTreeUI)ui).setLeftChildIndent(UIUtil.getTreeLeftChildIndent());
-                }
-              }
-            }
-
-            if (c == actualTarget) {
-              c.repaint(x, y, getIconWidth(), getIconHeight());
-            }
-            else {
-              ourRepaintScheduler.pushDirtyComponent(actualTarget, paintingParentRec);
+        if (shouldRevalidate) {
+          // revalidate will not work: JTree caches size of nodes
+          if (actualTarget instanceof JTree) {
+            final TreeUI ui = ((JTree)actualTarget).getUI();
+            if (ui instanceof BasicTreeUI) {
+              // this call is "fake" and only need to reset tree layout cache
+              ((BasicTreeUI)ui).setLeftChildIndent(UIUtil.getTreeLeftChildIndent());
             }
           }
-        });
-      }
+        }
+
+        if (c == actualTarget) {
+          c.repaint(x, y, getIconWidth(), getIconHeight());
+        }
+        else {
+          ourRepaintScheduler.pushDirtyComponent(actualTarget, paintingParentRec);
+        }
+      });
     });
   }
 
@@ -294,6 +260,9 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
       checkDoesntReferenceThis(result);
     }
 
+    if (myScale != 1f && result instanceof ScalableIcon) {
+      result = ((ScalableIcon)result).scale(myScale);
+    }
     return result;
   }
 
@@ -344,20 +313,17 @@ public class DeferredIconImpl<T> implements DeferredIcon, RetrievableIcon, Scala
     private void pushDirtyComponent(@NotNull Component c, final Rectangle rec) {
       ApplicationManager.getApplication().assertIsDispatchThread(); // assert myQueue accessed from EDT only
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          for (RepaintRequest each : myQueue) {
-            Rectangle r = each.getRectangle();
-            if (r == null) {
-              each.getComponent().repaint();
-            }
-            else {
-              each.getComponent().repaint(r.x, r.y, r.width, r.height);
-            }
+      myAlarm.addRequest(() -> {
+        for (RepaintRequest each : myQueue) {
+          Rectangle r = each.getRectangle();
+          if (r == null) {
+            each.getComponent().repaint();
           }
-          myQueue.clear();
+          else {
+            each.getComponent().repaint(r.x, r.y, r.width, r.height);
+          }
         }
+        myQueue.clear();
       }, 50);
 
       myQueue.add(new RepaintRequest(c, rec));

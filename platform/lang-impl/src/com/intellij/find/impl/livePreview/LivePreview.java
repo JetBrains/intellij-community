@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
   private static TextAttributes strikeout() {
     Color color = EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
-    return new TextAttributes(null, null, color, EffectType.STRIKEOUT, 0);
+    return new TextAttributes(null, null, color, EffectType.STRIKEOUT, Font.PLAIN);
   }
 
   @Override
@@ -151,24 +151,21 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     }
     ranges.add(new Pair<Integer, Character>(-1, '\n'));
     ranges.add(new Pair<Integer, Character>(editor.getDocument().getTextLength()+1, '\n'));
-    ContainerUtil.sort(ranges, new Comparator<Pair<Integer, Character>>() {
-      @Override
-      public int compare(@NotNull Pair<Integer, Character> pair, @NotNull Pair<Integer, Character> pair2) {
-        int res = pair.first - pair2.first;
-        if (res == 0) {
+    ContainerUtil.sort(ranges, (pair, pair2) -> {
+      int res = pair.first - pair2.first;
+      if (res == 0) {
 
-          Character c1 = pair.second;
-          Character c2 = pair2.second;
-          if (c1 == '<' && c2 == '[') {
-            return 1;
-          }
-          else if (c1 == '[' && c2 == '<') {
-            return -1;
-          }
-          return c1.compareTo(c2);
+        Character c1 = pair.second;
+        Character c2 = pair2.second;
+        if (c1 == '<' && c2 == '[') {
+          return 1;
         }
-        return res;
+        else if (c1 == '[' && c2 == '<') {
+          return -1;
+        }
+        return c1.compareTo(c2);
       }
+      return res;
     });
 
     Document document = editor.getDocument();
@@ -233,17 +230,12 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
     if (cursor != null && cursor.getEndOffset() <= editor.getDocument().getTextLength()) {
       Set<RangeHighlighter> dummy = new HashSet<RangeHighlighter>();
       Color color = editor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
-      highlightRange(cursor, new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, 0), dummy);
+      highlightRange(cursor, new TextAttributes(null, null, color, EffectType.ROUNDED_BOX, Font.PLAIN), dummy);
       if (!dummy.isEmpty()) {
         myCursorHighlighter = dummy.iterator().next();
       }
 
-      editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-        @Override
-        public void run() {
-          showReplacementPreview();
-        }
-      });
+      editor.getScrollingModel().runActionOnScrollingFinished(() -> showReplacementPreview());
     }
   }
 
@@ -363,7 +355,7 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
         if (cursor != null && highlighter.getStartOffset() == cursor.getStartOffset() &&
             highlighter.getEndOffset() == cursor.getEndOffset()) continue;
         final RangeHighlighter toAnnotate = highlightRange(new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()),
-                                                                 new TextAttributes(null, null, Color.WHITE, EffectType.ROUNDED_BOX, 0), toAdd);
+                                                           new TextAttributes(null, null, Color.WHITE, EffectType.ROUNDED_BOX, Font.PLAIN), toAdd);
         highlighter.putUserData(IN_SELECTION_KEY, IN_SELECTION1);
         toAnnotate.putUserData(IN_SELECTION_KEY, IN_SELECTION2);
       }
@@ -454,21 +446,18 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
 
     boolean notFound = markupModel.processRangeHighlightersOverlappingWith(
       textRange.getStartOffset(), textRange.getEndOffset(),
-      new Processor<RangeHighlighterEx>() {
-        @Override
-        public boolean process(RangeHighlighterEx highlighter) {
-          TextAttributes textAttributes =
-            highlighter.getTextAttributes();
-          if (highlighter.getUserData(SEARCH_MARKER) != null &&
-              textAttributes != null &&
-              textAttributes.equals(attributes) &&
-              highlighter.getStartOffset() == textRange.getStartOffset() &&
-              highlighter.getEndOffset() == textRange.getEndOffset()) {
-            candidate[0] = highlighter;
-            return false;
-          }
-          return true;
+      highlighter -> {
+        TextAttributes textAttributes =
+          highlighter.getTextAttributes();
+        if (highlighter.getUserData(SEARCH_MARKER) != null &&
+            textAttributes != null &&
+            textAttributes.equals(attributes) &&
+            highlighter.getStartOffset() == textRange.getStartOffset() &&
+            highlighter.getEndOffset() == textRange.getEndOffset()) {
+          candidate[0] = highlighter;
+          return false;
         }
+        return true;
       });
 
     if (!notFound && highlighters.contains(candidate[0])) {
@@ -541,11 +530,6 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
   }
 
   private static void requestBalloonHiding(final Balloon object) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        object.hide();
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> object.hide());
   }
 }

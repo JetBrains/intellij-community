@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SingleRootFileViewProvider extends UserDataHolderBase implements FileViewProvider {
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance("#" + SingleRootFileViewProvider.class.getCanonicalName());
+  public static final Key<Object> FREE_THREADED = Key.create("FREE_THREADED");
   @NotNull private final PsiManager myManager;
   @NotNull private final VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
@@ -114,6 +115,9 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     myPhysical = isEventSystemEnabled() &&
                  !(virtualFile instanceof LightVirtualFile) &&
                  !(virtualFile.getFileSystem() instanceof NonPhysicalFileSystem);
+    if (virtualFile instanceof LightVirtualFile && !isEventSystemEnabled()) {
+      virtualFile.putUserData(FREE_THREADED, true);
+    }
     myFileType = type;
   }
 
@@ -476,7 +480,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   }
 
   @Nullable
-  private static PsiReference findReferenceAt(@Nullable final PsiFile psiFile, final int offset) {
+  protected static PsiReference findReferenceAt(@Nullable final PsiFile psiFile, final int offset) {
     if (psiFile == null) return null;
     int offsetInElement = offset;
     PsiElement child = psiFile.getFirstChild();

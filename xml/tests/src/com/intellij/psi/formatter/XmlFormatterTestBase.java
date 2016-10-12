@@ -14,41 +14,11 @@ public abstract class XmlFormatterTestBase extends XmlFormatterTestCase {
     String text = loadFile(name + ".xml", null);
     final XmlFileImpl file = (XmlFileImpl)createFile(name + ".xml", text);
     myTextRange = new TextRange(10000, 10001);
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            performFormatting(file);
-          }
-        });
-      }
-    }, "", "");
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> performFormatting(file)), "", "");
 
     myTextRange = new TextRange(1000000, 1000001);
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            performFormatting(file);
-          }
-        });
-      }
-    }, "", "");
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> performFormatting(file)), "", "");
     myTextRange = new TextRange(0, text.length());
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            performFormatting(file);
-          }
-        });
-      }
-    }, "", "");
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> performFormatting(file)), "", "");
   }
 }

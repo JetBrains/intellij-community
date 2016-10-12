@@ -22,6 +22,12 @@
                      enabledByDefault="true" level="WARNING" groupName="JavaFX"/>
     <localInspection language="XML" shortName="JavaFxUnusedImports" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnusedImportsInspection"
                          enabledByDefault="true" level="WARNING" displayName="JavaFX unused imports" groupName="JavaFX"/>
+    <localInspection language="XML" shortName="JavaFxRedundantPropertyValue" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxRedundantPropertyValueInspection"
+                         enabledByDefault="true" level="WARNING" displayName="JavaFX redundant property values" groupName="JavaFX"/>
+    <localInspection language="XML" shortName="JavaFxColorRgb" displayName="Color component is out of range" groupName="JavaFX"
+                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxColorRgbInspection"/>
+    <localInspection language="XML" shortName="JavaFxEventHandler" displayName="Event handler method signature problems" groupName="JavaFX"
+                     enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection"/>
 
     <applicationService serviceInterface="org.jetbrains.plugins.javaFX.JavaFxSettings" serviceImplementation="org.jetbrains.plugins.javaFX.JavaFxSettings"/>
     <applicationConfigurable groupId="language" displayName="JavaFX" id="preferences.JavaFX" instance="org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable"/>
@@ -47,11 +53,14 @@
     <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactPropertiesProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxImplicitUsageProvider"/>
     <referencesSearch implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxControllerFieldSearcher"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.plugins.javaFX.JavaFxRenameAttributeProcessor" order="before xmlAttribute"/>
+    <referencesSearch implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxMethodSearcher"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxRenameAttributeProcessor" order="before xmlAttribute"/>
+    <renameHandler implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxPropertyRenameHandler"/>
     <completion.contributor implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxCompletionContributor" language="XML" order="before xmlNonFirst"/>
     <manifest.parser.provider implementation="org.jetbrains.plugins.javaFX.manifest.JavaFxManifestHeaderParsers"/>
     <projectTemplate projectType="Java FX" templatePath="resources/projectTemplates/Java/JavaFX Application.zip" category="true"/>
     <javaMainMethodProvider implementation="org.jetbrains.plugins.javaFX.JavaFxMainMethodRunConfigurationProvider"/>
+    <deadCode implementation="org.jetbrains.plugins.javaFX.JavaFxEntryPoint"/>
   </extensions>
 
   <actions>

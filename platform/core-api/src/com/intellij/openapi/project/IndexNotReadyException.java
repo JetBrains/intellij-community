@@ -18,7 +18,6 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.Computable;
-import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +67,6 @@ public class IndexNotReadyException extends RuntimeException implements Exceptio
   public Attachment[] getAttachments() {
     return myStartTrace == null
            ? Attachment.EMPTY_ARRAY
-           : new Attachment[]{new Attachment("indexingStart.trace", ExceptionUtil.getThrowableText(myStartTrace))};
+           : new Attachment[]{new Attachment("indexingStart", myStartTrace)};
   }
 }

@@ -46,6 +46,7 @@ public final class ExecutionEnvironmentBuilder {
   @NotNull private Executor myExecutor;
   @Nullable private DataContext myDataContext;
   @Nullable private UserDataHolderBase myCopyableUserDataHolder;
+  private final UserDataHolderBase myUserData = new UserDataHolderBase();
 
   public ExecutionEnvironmentBuilder(@NotNull Project project, @NotNull Executor executor) {
     myProject = project;
@@ -110,6 +111,7 @@ public final class ExecutionEnvironmentBuilder {
     myExecutor = copySource.getExecutor();
     myCopyableUserDataHolder = new UserDataHolderBase();
     copySource.copyCopyableDataTo(myCopyableUserDataHolder);
+    copySource.copyUserDataTo(myUserData);
   }
 
   public ExecutionEnvironmentBuilder target(@Nullable ExecutionTarget target) {
@@ -190,6 +192,7 @@ public final class ExecutionEnvironmentBuilder {
     if (myCopyableUserDataHolder != null) {
       myCopyableUserDataHolder.copyCopyableDataTo(environment);
     }
+    myUserData.copyUserDataTo(environment);
     return environment;
   }
 

@@ -145,12 +145,6 @@ class FoldingModelWindow implements FoldingModelEx{
   }
 
   @Override
-  public FoldRegion fetchOutermost(int offset) {
-    FoldRegion host = myDelegate.fetchOutermost(myDocumentWindow.injectedToHost(offset));
-    return host; //todo convert to window?
-  }
-
-  @Override
   public int getLastCollapsedRegionBefore(int offset) {
     return -1; //todo implement
   }

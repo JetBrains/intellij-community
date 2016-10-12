@@ -251,17 +251,10 @@ public class JavacOutputParser extends OutputParser {
     else if (JavacResourcesReader.MSG_WARNING.equals(category)) {
       WARNING_PREFIX = resourceBundleValue;
     }
-    else if (JavacResourcesReader.MSG_STATISTICS.equals(category)) {
+    else if (JavacResourcesReader.MSG_STATISTICS.equals(category) || JavacResourcesReader.MSG_IGNORED.equals(category)) {
       myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
         protected void doExecute(final String line, @Nullable String parsedData, final Callback callback) {
           // empty
-        }
-      });
-    }
-    else if (JavacResourcesReader.MSG_IGNORED.equals(category)) {
-      myParserActions.add(new JavacParserAction(createMatcher(resourceBundleValue)) {
-        protected void doExecute(final String line, @Nullable String parsedData, final Callback callback) {
-          // ignored
         }
       });
     }

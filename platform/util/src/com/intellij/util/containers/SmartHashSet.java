@@ -19,6 +19,7 @@ import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.Collection;
@@ -95,7 +96,7 @@ public class SmartHashSet<T> extends THashSet<T> {
   }
 
   @Override
-  public boolean equals(@NotNull Object other) {
+  public boolean equals(@Nullable Object other) {
     T theElement = this.theElement;
     if (theElement != null) {
       return other instanceof Set && ((Set)other).size() == 1 && eq(theElement, (T)((Set)other).iterator().next());

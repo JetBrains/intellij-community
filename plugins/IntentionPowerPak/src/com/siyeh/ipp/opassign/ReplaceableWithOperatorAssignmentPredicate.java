@@ -53,7 +53,7 @@ class ReplaceableWithOperatorAssignmentPredicate implements PsiElementPredicate 
     if (SideEffectChecker.mayHaveSideEffects(lhs)) {
       return false;
     }
-    if (!EquivalenceChecker.expressionsAreEquivalent(lhs, operands[0])) {
+    if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(lhs, operands[0])) {
       return false;
     }
     return !ErrorUtil.containsError(element);

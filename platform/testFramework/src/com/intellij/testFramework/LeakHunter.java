@@ -46,10 +46,10 @@ import java.util.*;
  */
 public class LeakHunter {
 
-   // To avoid false positives, the leak checker won't inspect the internal state of mocking libraries.
-   private static final List<String> MOCKING_SUPPORT_CLASSES = Arrays.asList(
-     "org.easymock.internal.MocksBehavior",
-     "org.mockito.internal.stubbing.OngoingStubbingImpl");
+  // To avoid false positives, the leak checker won't inspect the internal state of mocking libraries.
+  private static final List<String> MOCKING_SUPPORT_CLASSES = Arrays.asList(
+    "org.easymock.internal.MocksBehavior",
+    "org.mockito.internal.stubbing.OngoingStubbingImpl");
 
   private static void walkObjects(@NotNull final Class<?> lookFor, @NotNull Collection<Object> startRoots, @NotNull final Processor<BackLink> leakProcessor) {
     TIntHashSet visited = new TIntHashSet();
@@ -67,18 +67,15 @@ public class LeakHunter {
       // Android Studio: ignore ProxyUtil and its proxy cache from the traversal.
       if (root instanceof Class && "com.android.tools.idea.gradle.util.ProxyUtil".equals(((Class)root).getName())) continue;
 
-      DebugReflectionUtil.processStronglyReferencedValues(root, new PairProcessor<Object, Field>() {
-        @Override
-        public boolean process(Object value, Field field) {
-          Class<?> valueClass = value.getClass();
-          if (lookFor.isAssignableFrom(valueClass) && isReallyLeak(value)) {
-            leakProcessor.process(new BackLink(value, field, backLink));
-          }
-          else {
-            toVisit.addLast(new BackLink(value, field, backLink));
-          }
-          return true;
+      DebugReflectionUtil.processStronglyReferencedValues(root, (value, field) -> {
+        Class<?> valueClass = value.getClass();
+        if (lookFor.isAssignableFrom(valueClass) && isReallyLeak(value)) {
+          leakProcessor.process(new BackLink(value, field, backLink));
         }
+        else {
+          toVisit.addLast(new BackLink(value, field, backLink));
+        }
+        return true;
       });
     }
   }
@@ -94,12 +91,7 @@ public class LeakHunter {
   private static final Key<Boolean> REPORTED_LEAKED = Key.create("REPORTED_LEAKED");
   @TestOnly
   public static void checkProjectLeak() throws Exception {
-    Processor<Project> isReallyLeak = new Processor<Project>() {
-      @Override
-      public boolean process(Project project) {
-        return !project.isDefault() && !((ProjectImpl)project).isLight();
-      }
-    };
+    Processor<Project> isReallyLeak = project -> !project.isDefault() && !((ProjectImpl)project).isLight();
     Collection<Object> roots = new ArrayList<Object>(allRoots());
     ClassLoader classLoader = LeakHunter.class.getClassLoader();
     Vector<Class> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");

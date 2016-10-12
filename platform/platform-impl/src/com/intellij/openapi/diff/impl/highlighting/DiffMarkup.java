@@ -131,21 +131,6 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     }
   }
 
-  void setSeparatorMarker(int line, Consumer<Integer> consumer) {
-    EditorEx editor = getEditor();
-    MarkupModel markupModel = getMarkupModel();
-    if (editor == null || markupModel == null) {
-      return;
-    }
-    RangeHighlighter marker = markupModel.addLineHighlighter(line, LAYER, null);
-    marker.setLineSeparatorPlacement(SeparatorPlacement.TOP);
-    final FragmentBoundRenderer renderer = new FragmentBoundRenderer(editor.getLineHeight(), editor, consumer);
-    marker.setLineSeparatorColor(renderer.getColor());
-    marker.setLineSeparatorRenderer(renderer);
-    marker.setLineMarkerRenderer(renderer);
-    myExtraHighLighters.add(marker);
-  }
-
   @Nullable
   private RangeHighlighter createLineMarker(@Nullable final TextDiffType type, int line, SeparatorPlacement placement) {
     MarkupModel markupModel = getMarkupModel();

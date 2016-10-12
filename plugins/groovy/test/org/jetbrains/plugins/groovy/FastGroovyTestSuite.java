@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,28 @@ package org.jetbrains.plugins.groovy;
 import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest;
 import org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest;
 import org.jetbrains.plugins.groovy.lang.GroovyStressPerformanceTest;
+import org.jetbrains.plugins.groovy.util.AllTestsSuite;
+import org.junit.runner.RunWith;
 
-/**
- * @author Max Medvedev
- */
+import java.util.List;
+
+@RunWith(AllTestsSuite.class)
 public class FastGroovyTestSuite {
 
-  public static Test suite() throws Throwable {
+  public static List<Class<?>> suite() throws Throwable {
     TestCaseLoader loader = new TestCaseLoader("", true);
     TestAll.fillTestCases(loader, "org.jetbrains.plugins.groovy", TestAll.getClassRoots());
-
-    TestSuite suite = new TestSuite();
+    List<Class<?>> result = ContainerUtil.newArrayList();
     for (Class aClass : loader.getClasses()) {
       if (!isSlow(aClass)) {
-        suite.addTestSuite(aClass);
+        result.add(aClass);
       }
-
     }
-    return suite;
+    return result;
   }
 
   private static boolean isSlow(Class aClass) {

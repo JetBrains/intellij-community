@@ -118,9 +118,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       final ContentEntry contentEntryB = rootModelB.addContentEntry(getVirtualFileInTestData("b"));
       contentEntryB.addSourceFolder(getVirtualFileInTestData("b/src"), false);
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB, rootModelA}, moduleModel);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB, rootModelA}, moduleModel));
     }
 
     final JavaPsiFacade psiManager = getJavaFacade();
@@ -152,9 +150,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       final ModifiableRootModel rootModelB = ModuleRootManager.getInstance(moduleB).getModifiableModel();
       rootModelB.addModuleOrderEntry(moduleC);
       moduleModel.disposeModule(moduleC);
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB}, moduleModel);
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(new ModifiableRootModel[]{rootModelB}, moduleModel));
     }
 
     final ModuleRootManager rootManagerB = ModuleRootManager.getInstance(moduleB);
@@ -170,12 +166,7 @@ public class MultiModuleEditingTest extends ModuleTestCase {
       assertSame(moduleA, moduleManager.findModuleByName("a"));
       assertEquals("c", moduleModel.getNewName(moduleA));
       assertSame(moduleA, moduleModel.getModuleToBeRenamed("c"));
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          moduleModel.commit();
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> moduleModel.commit());
     }
 
     assertEquals(1, rootManagerB.getDependencies().length);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class SearchUtils{
     }
 
     public static Iterable<PsiMethod> findOverridingMethods(PsiMethod method){
-        return new ArrayIterable<PsiMethod>(OverridingMethodsSearch.search(method, true).toArray(new PsiMethod[0]));
+        return new ArrayIterable<PsiMethod>(OverridingMethodsSearch.search(method).toArray(new PsiMethod[0]));
        // return OverridingMethodsSearch.search(method, method.getUseScope(), true).findAll();
     }
 

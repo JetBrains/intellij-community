@@ -108,9 +108,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
       });
     }
     else {
-      ((JBComboBoxTableCellEditorComponent)component).setToString(new Function<Object, String>() {
-        @Override public String fun(Object o) { return o == null ? "" : ((NamedScope)o).getName(); }
-      });
+      ((JBComboBoxTableCellEditorComponent)component).setToString(o -> o == null ? "" : ((NamedScope)o).getName());
     }
 
     rebuild();

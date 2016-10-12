@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,16 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
   }
 
   @Override
+  void setUp() throws Exception {
+    super.setUp()
+  }
+
+  @Override
+  void tearDown() throws Exception {
+    super.tearDown()
+  }
+
+  @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
     return GroovyLightProjectDescriptor.GROOVY_2_1;
@@ -48,7 +58,7 @@ public abstract class LightGroovyTestCase extends LightCodeInsightFixtureTestCas
    */
   @Override
   @NonNls
-  protected abstract String getBasePath();
+  protected String getBasePath() { null }
 
 
   protected void addGroovyTransformField() {

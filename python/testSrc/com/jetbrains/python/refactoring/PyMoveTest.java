@@ -70,19 +70,16 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-11923
   public void testMovableTopLevelAssignmentDetection() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, new Runnable() {
-      @SuppressWarnings("ConstantConditions")
-      public void run() {
-        myFixture.configureByFile("/refactoring/move/" + getTestName(true) + ".py");
-        assertFalse(isMovableModuleMember(findFirstNamedElement("X1")));
-        assertFalse(isMovableModuleMember(findFirstNamedElement("X3")));
-        assertFalse(isMovableModuleMember(findFirstNamedElement("X2")));
-        assertFalse(isMovableModuleMember(findFirstNamedElement("X4")));
-        assertFalse(isMovableModuleMember(findFirstNamedElement("X5")));
-        assertFalse(isMovableModuleMember(findFirstNamedElement("X6")));
-        assertFalse(isMovableModuleMember(findFirstNamedElement("X7")));
-        assertTrue(isMovableModuleMember(findFirstNamedElement("X8")));
-      }
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      myFixture.configureByFile("/refactoring/move/" + getTestName(true) + ".py");
+      assertFalse(isMovableModuleMember(findFirstNamedElement("X1")));
+      assertFalse(isMovableModuleMember(findFirstNamedElement("X3")));
+      assertFalse(isMovableModuleMember(findFirstNamedElement("X2")));
+      assertFalse(isMovableModuleMember(findFirstNamedElement("X4")));
+      assertFalse(isMovableModuleMember(findFirstNamedElement("X5")));
+      assertFalse(isMovableModuleMember(findFirstNamedElement("X6")));
+      assertFalse(isMovableModuleMember(findFirstNamedElement("X7")));
+      assertTrue(isMovableModuleMember(findFirstNamedElement("X8")));
     });
   }
 
@@ -90,12 +87,7 @@ public class PyMoveTest extends PyTestCase {
   public void testCollectMovableModuleMembers() {
     myFixture.configureByFile("/refactoring/move/" + getTestName(true) + ".py");
     final List<PyElement> members = PyMoveModuleMembersHelper.getTopLevelModuleMembers((PyFile)myFixture.getFile());
-    final List<String> names = ContainerUtil.map(members, new Function<PyElement, String>() {
-      @Override
-      public String fun(PyElement element) {
-        return element.getName();
-      }
-    });
+    final List<String> names = ContainerUtil.map(members, element -> element.getName());
     assertSameElements(names, "CONST", "C", "outer_func");
   }
 
@@ -213,42 +205,22 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-7378
   public void testMoveNamespacePackage1() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doMoveFileTest("nspkg/nssubpkg", "");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doMoveFileTest("nspkg/nssubpkg", ""));
   }
 
   // PY-7378
   public void testMoveNamespacePackage2() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doMoveFileTest("nspkg/nssubpkg/a.py", "");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doMoveFileTest("nspkg/nssubpkg/a.py", ""));
   }
 
   // PY-7378
   public void testMoveNamespacePackage3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doMoveFileTest("nspkg/nssubpkg/a.py", "nspkg");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doMoveFileTest("nspkg/nssubpkg/a.py", "nspkg"));
   }
 
   // PY-14384
   public void testRelativeImportInsideNamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doMoveFileTest("nspkg/nssubpkg", "");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doMoveFileTest("nspkg/nssubpkg", ""));
   }
 
   // PY-14384
@@ -269,12 +241,7 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-14595
   public void testNamespacePackageUsedInMovedFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doMoveSymbolTest("func", "b.py");
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doMoveSymbolTest("func", "b.py"));
   }
 
   // PY-14599
@@ -423,13 +390,10 @@ public class PyMoveTest extends PyTestCase {
     VirtualFile dir1 = myFixture.copyDirectoryToProject(rootBefore, "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
-    final PsiNamedElement[] symbols = ContainerUtil.map2Array(symbolNames, PsiNamedElement.class, new Function<String, PsiNamedElement>() {
-      @Override
-      public PsiNamedElement fun(String name) {
-        final PsiNamedElement found = findFirstNamedElement(name);
-        assertNotNull("Symbol '" + name + "' does not exist", found);
-        return found;
-      }
+    final PsiNamedElement[] symbols = ContainerUtil.map2Array(symbolNames, PsiNamedElement.class, name -> {
+      final PsiNamedElement found = findFirstNamedElement(name);
+      assertNotNull("Symbol '" + name + "' does not exist", found);
+      return found;
     });
 
     VirtualFile toVirtualFile = dir1.findFileByRelativePath(toFileName);

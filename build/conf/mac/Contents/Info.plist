@@ -87,7 +87,7 @@
       </dict>
 
       <key>VMOptions</key>
-      <string>@@vmoptions@@ -Xbootclasspath/a:../lib/boot.jar</string>
+      <string>@@vmoptions@@ -XX:ErrorFile=$USER_HOME/java_error_in_@@executable@@_%p.log -XX:HeapDumpPath=$USER_HOME/java_error_in_@@executable@@.hprof -Xbootclasspath/a:../lib/boot.jar</string>
 
       <key>WorkingDirectory</key>
       <string>$APP_PACKAGE/Contents/bin</string>

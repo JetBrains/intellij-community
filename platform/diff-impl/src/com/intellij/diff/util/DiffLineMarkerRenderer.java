@@ -29,6 +29,7 @@ public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
   @NotNull private final TextDiffType myDiffType;
   private final boolean myIgnoredFoldingOutline;
   private final boolean myResolved;
+  private final boolean myHideWithoutLineNumbers;
 
   private final boolean myEmptyRange;
   private final boolean myLastLine;
@@ -37,12 +38,14 @@ public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
                                 @NotNull TextDiffType diffType,
                                 boolean ignoredFoldingOutline,
                                 boolean resolved,
+                                boolean hideWithoutLineNumbers,
                                 boolean isEmptyRange,
                                 boolean isLastLine) {
     myHighlighter = highlighter;
     myDiffType = diffType;
     myIgnoredFoldingOutline = ignoredFoldingOutline;
     myResolved = resolved;
+    myHideWithoutLineNumbers = hideWithoutLineNumbers;
     myEmptyRange = isEmptyRange;
     myLastLine = isLastLine;
   }
@@ -54,57 +57,63 @@ public class DiffLineMarkerRenderer implements LineMarkerRendererEx {
     int x1 = 0;
     int x2 = x1 + gutter.getWidth();
 
-    int y, height;
+    int y1, y2;
     if (myEmptyRange && myLastLine) {
-      y = DiffDrawUtil.lineToY(editor, DiffUtil.getLineCount(editor.getDocument()));
-      height = 0;
+      y1 = DiffDrawUtil.lineToY(editor, DiffUtil.getLineCount(editor.getDocument()));
+      y2 = y1;
     }
     else {
       int startLine = editor.getDocument().getLineNumber(myHighlighter.getStartOffset());
       int endLine = editor.getDocument().getLineNumber(myHighlighter.getEndOffset()) + 1;
-      y = DiffDrawUtil.lineToY(editor, startLine);
-      height = myEmptyRange ? 0 : DiffDrawUtil.lineToY(editor, endLine) - y;
+      y1 = DiffDrawUtil.lineToY(editor, startLine);
+      y2 = myEmptyRange ? y1 : DiffDrawUtil.lineToY(editor, endLine);
     }
 
-    int annotationsOffset = gutter.getAnnotationsAreaOffset();
-    int annotationsWidth = gutter.getAnnotationsAreaWidth();
-    if (annotationsWidth != 0) {
-      drawMarker(editor, g2, x1, annotationsOffset, y, height, false);
-      x1 = annotationsOffset + annotationsWidth;
+    if (myHideWithoutLineNumbers && !editor.getSettings().isLineNumbersShown()) {
+      x1 = gutter.getWhitespaceSeparatorOffset();
+    }
+    else {
+      int annotationsOffset = gutter.getAnnotationsAreaOffset();
+      int annotationsWidth = gutter.getAnnotationsAreaWidth();
+      if (annotationsWidth != 0) {
+        drawMarker(editor, g2, x1, annotationsOffset, y1, y2, false);
+        x1 = annotationsOffset + annotationsWidth;
+      }
     }
 
     if (myIgnoredFoldingOutline) {
       int xOutline = gutter.getWhitespaceSeparatorOffset();
-      drawMarker(editor, g2, xOutline, x2, y, height, true);
-      drawMarker(editor, g2, x1, xOutline, y, height, false);
-    } else {
-      drawMarker(editor, g2, x1, x2, y, height, false);
+      drawMarker(editor, g2, xOutline, x2, y1, y2, true);
+      drawMarker(editor, g2, x1, xOutline, y1, y2, false);
+    }
+    else {
+      drawMarker(editor, g2, x1, x2, y1, y2, false);
     }
   }
 
   private void drawMarker(Editor editor, Graphics2D g2,
-                          int x1, int x2, int y, int height,
-                          boolean ignoredOutline) {
-    Color color = myDiffType.getColor(editor);
-    if (height > 2) {
-      if (ignoredOutline) {
-        g2.setColor(myDiffType.getIgnoredColor(editor));
-      }
-      else {
-        g2.setColor(color);
-      }
-      if (!myResolved) g2.fillRect(x1, y, x2 - x1, height);
+                          int x1, int x2, int y1, int y2,
+                          boolean ignoredBackgroundColor) {
+    if (x1 >= x2) return;
 
-      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y - 1, color, false, myResolved);
-      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y + height - 1, color, false, myResolved);
+    Color color = myDiffType.getColor(editor);
+    if (y2 - y1 > 2) {
+      if (!myResolved) {
+        g2.setColor(ignoredBackgroundColor ? myDiffType.getIgnoredColor(editor) : color);
+        g2.fillRect(x1, y1, x2 - x1, y2 - y1);
+      }
+
+      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y1 - 1, color, false, myResolved);
+      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y2 - 1, color, false, myResolved);
     }
     else {
       // range is empty - insertion or deletion
       // Draw 2 pixel line in that case
-      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y - 1, color, true, myResolved);
+      DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y1 - 1, color, true, myResolved);
     }
   }
 
+  @NotNull
   @Override
   public Position getPosition() {
     return Position.CUSTOM;

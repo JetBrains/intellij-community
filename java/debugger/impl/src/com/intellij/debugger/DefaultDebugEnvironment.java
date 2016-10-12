@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package com.intellij.debugger;
 
+import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RemoteState;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.SearchScopeProvider;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -28,21 +27,38 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultDebugEnvironment implements DebugEnvironment {
   private final GlobalSearchScope mySearchScope;
   private final RemoteConnection myRemoteConnection;
-  private final boolean myPollConnection;
+  private final long myPollTimeout;
   private final ExecutionEnvironment environment;
   private final RunProfileState state;
+  private final boolean myNeedParametersSet;
 
   public DefaultDebugEnvironment(@NotNull ExecutionEnvironment environment, @NotNull RunProfileState state, RemoteConnection remoteConnection, boolean pollConnection) {
+    this(environment, state, remoteConnection, pollConnection ? LOCAL_START_TIMEOUT : 0);
+  }
+
+  public DefaultDebugEnvironment(@NotNull ExecutionEnvironment environment,
+                                 @NotNull RunProfileState state,
+                                 RemoteConnection remoteConnection,
+                                 long pollTimeout) {
     this.environment = environment;
     this.state = state;
     myRemoteConnection = remoteConnection;
-    myPollConnection = pollConnection;
+    myPollTimeout = pollTimeout;
 
     mySearchScope = SearchScopeProvider.createSearchScope(environment.getProject(), environment.getRunProfile());
+    myNeedParametersSet = remoteConnection.isServerMode() && remoteConnection.isUseSockets() && "0".equals(remoteConnection.getAddress());
   }
 
   @Override
   public ExecutionResult createExecutionResult() throws ExecutionException {
+    // debug port may have changed, reinit parameters just in case
+    if (myNeedParametersSet && state instanceof JavaCommandLine) {
+      DebuggerManagerImpl.createDebugParameters(((JavaCommandLine)state).getJavaParameters(),
+                                                true,
+                                                DebuggerSettings.SOCKET_TRANSPORT,
+                                                myRemoteConnection.getAddress(),
+                                                false);
+    }
     return state.execute(environment.getExecutor(), environment.getRunner());
   }
 
@@ -63,8 +79,8 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
   }
 
   @Override
-  public boolean isPollConnection() {
-    return myPollConnection;
+  public long getPollTimeout() {
+    return myPollTimeout;
   }
 
   @Override

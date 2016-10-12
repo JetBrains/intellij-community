@@ -60,7 +60,7 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   }
 
   @Override
-  protected int getSelectionMode() {
+  public int getSelectionMode() {
     return TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
   }
 

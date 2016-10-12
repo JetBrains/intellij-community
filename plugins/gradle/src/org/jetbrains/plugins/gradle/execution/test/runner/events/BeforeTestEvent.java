@@ -49,47 +49,34 @@ public class BeforeTestEvent extends AbstractTestEvent {
     registerTestProxy(testId, testProxy);
 
     if (StringUtil.isEmpty(parentTestId)) {
-      addToInvokeLater(new Runnable() {
-        @Override
-        public void run() {
-          getResultsViewer().getTestsRootNode().addChild(testProxy);
-        }
-      });
+      addToInvokeLater(() -> getResultsViewer().getTestsRootNode().addChild(testProxy));
     }
     else {
       final SMTestProxy parentTestProxy = findTestProxy(parentTestId);
       if (parentTestProxy != null) {
-        addToInvokeLater(new Runnable() {
-          @Override
-          public void run() {
-            final List<GradleSMTestProxy> notYetAddedParents = ContainerUtil.newSmartList();
-            SMTestProxy currentParentTestProxy = parentTestProxy;
-            while (currentParentTestProxy != null && currentParentTestProxy instanceof GradleSMTestProxy) {
-              final String parentId = ((GradleSMTestProxy)currentParentTestProxy).getParentId();
-              if (currentParentTestProxy.getParent() == null && parentId != null) {
-                notYetAddedParents.add((GradleSMTestProxy)currentParentTestProxy);
-              }
-              currentParentTestProxy = findTestProxy(parentId);
+        addToInvokeLater(() -> {
+          final List<GradleSMTestProxy> notYetAddedParents = ContainerUtil.newSmartList();
+          SMTestProxy currentParentTestProxy = parentTestProxy;
+          while (currentParentTestProxy != null && currentParentTestProxy instanceof GradleSMTestProxy) {
+            final String parentId = ((GradleSMTestProxy)currentParentTestProxy).getParentId();
+            if (currentParentTestProxy.getParent() == null && parentId != null) {
+              notYetAddedParents.add((GradleSMTestProxy)currentParentTestProxy);
             }
-
-            for (GradleSMTestProxy gradleSMTestProxy : ContainerUtil.reverse(notYetAddedParents)) {
-              final SMTestProxy parentTestProxy = findTestProxy(gradleSMTestProxy.getParentId());
-              if (parentTestProxy != null) {
-                parentTestProxy.addChild(gradleSMTestProxy);
-                getResultsViewer().onSuiteStarted(gradleSMTestProxy);
-              }
-            }
-            parentTestProxy.addChild(testProxy);
+            currentParentTestProxy = findTestProxy(parentId);
           }
+
+          for (GradleSMTestProxy gradleSMTestProxy : ContainerUtil.reverse(notYetAddedParents)) {
+            final SMTestProxy parentTestProxy1 = findTestProxy(gradleSMTestProxy.getParentId());
+            if (parentTestProxy1 != null) {
+              parentTestProxy1.addChild(gradleSMTestProxy);
+              getResultsViewer().onSuiteStarted(gradleSMTestProxy);
+            }
+          }
+          parentTestProxy.addChild(testProxy);
         });
       }
     }
 
-    addToInvokeLater(new Runnable() {
-      @Override
-      public void run() {
-        getResultsViewer().onTestStarted(testProxy);
-      }
-    });
+    addToInvokeLater(() -> getResultsViewer().onTestStarted(testProxy));
   }
 }

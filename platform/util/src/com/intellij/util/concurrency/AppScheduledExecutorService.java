@@ -20,6 +20,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.concurrent.*;
@@ -32,7 +33,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class AppScheduledExecutorService extends SchedulingWrapper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.ide.PooledThreadExecutor");
+  static final String POOLED_THREAD_PREFIX = "ApplicationImpl pooled thread ";
   private Consumer<Thread> newThreadListener;
+  private final AtomicInteger counter = new AtomicInteger();
 
   private static class Holder {
     private static final AppScheduledExecutorService INSTANCE = new AppScheduledExecutorService();
@@ -46,11 +49,10 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
   AppScheduledExecutorService() {
     super(new BackendThreadPoolExecutor(), new AppDelayQueue());
     ((BackendThreadPoolExecutor)backendExecutorService).doSetThreadFactory(new ThreadFactory() {
-      private final AtomicInteger counter = new AtomicInteger();
       @NotNull
       @Override
       public Thread newThread(@NotNull final Runnable r) {
-        Thread thread = new Thread(r, "ApplicationImpl pooled thread " + counter.incrementAndGet());
+        Thread thread = new Thread(r, POOLED_THREAD_PREFIX + counter.incrementAndGet());
 
         thread.setPriority(Thread.NORM_PRIORITY - 1);
 
@@ -100,8 +102,20 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     doShutdown();
   }
 
+  @NotNull
+  @TestOnly
+  public String statistics() {
+    return "app threads created counter = " + counter;
+  }
+
   public int getBackendPoolExecutorSize() {
-    return ((ThreadPoolExecutor)backendExecutorService).getPoolSize();
+    return ((BackendThreadPoolExecutor)backendExecutorService).getPoolSize();
+  }
+  void setBackendPoolCorePoolSize(int size) {
+    ((BackendThreadPoolExecutor)backendExecutorService).doSetCorePoolSize(size);
+  }
+  int getBackendPoolCorePoolSize() {
+    return ((BackendThreadPoolExecutor)backendExecutorService).getCorePoolSize();
   }
 
   private static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
@@ -112,7 +126,7 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     protected void beforeExecute(Thread t, Runnable r) {
       if (LOG.isTraceEnabled()) {
-        LOG.trace("Running " + BoundedTaskExecutor.info(r) + " in thread@" + System.identityHashCode(t));
+        LOG.trace("Running " + BoundedTaskExecutor.info(r) + " in " + t+" ("+System.identityHashCode(t)+")");
       }
     }
 
@@ -126,11 +140,13 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     private void doShutdown() {
       super.shutdown();
     }
+
+    @NotNull
     private List<Runnable> doShutdownNow() {
       return super.shutdownNow();
     }
 
-    private void doSetThreadFactory(ThreadFactory threadFactory) {
+    private void doSetThreadFactory(@NotNull ThreadFactory threadFactory) {
       super.setThreadFactory(threadFactory);
     }
 
@@ -149,6 +165,10 @@ public class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     public void setCorePoolSize(int corePoolSize) {
       error();
+    }
+
+    private void doSetCorePoolSize(int corePoolSize) {
+      super.setCorePoolSize(corePoolSize);
     }
 
     @Override

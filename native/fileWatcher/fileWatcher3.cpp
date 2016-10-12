@@ -306,7 +306,7 @@ DWORD WINAPI WatcherThread(void *param) {
     HANDLE hRootDir = CreateFileA(rootPath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
             NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL);
 
-    int buffer_size = 10240;
+    int buffer_size = 1024 * 1024;
     char *buffer = new char[buffer_size];
 
     HANDLE handles[2];

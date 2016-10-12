@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -277,26 +277,24 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   @Override
   public void prepareRenaming(PsiElement element, final String newName, final Map<PsiElement, String> allRenames, SearchScope scope) {
     final PsiMethod method = (PsiMethod) element;
-    OverridingMethodsSearch.search(method, scope, true).forEach(new Processor<PsiMethod>() {
-      public boolean process(PsiMethod overrider) {
-        if (overrider instanceof PsiMirrorElement) {
-          final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
-          if (prototype instanceof PsiMethod) {
-            overrider = (PsiMethod)prototype;
-          }
+    OverridingMethodsSearch.search(method, scope, true).forEach(overrider -> {
+      if (overrider instanceof PsiMirrorElement) {
+        final PsiElement prototype = ((PsiMirrorElement)overrider).getPrototype();
+        if (prototype instanceof PsiMethod) {
+          overrider = (PsiMethod)prototype;
         }
-
-        if (overrider instanceof SyntheticElement) return true;
-
-        final String overriderName = overrider.getName();
-        final String baseName = method.getName();
-        final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
-        if (newOverriderName != null) {
-          RenameProcessor.assertNonCompileElement(overrider);
-          allRenames.put(overrider, newOverriderName);
-        }
-        return true;
       }
+
+      if (overrider instanceof SyntheticElement) return true;
+
+      final String overriderName = overrider.getName();
+      final String baseName = method.getName();
+      final String newOverriderName = RefactoringUtil.suggestNewOverriderName(overriderName, baseName, newName);
+      if (newOverriderName != null) {
+        RenameProcessor.assertNonCompileElement(overrider);
+        allRenames.put(overrider, newOverriderName);
+      }
+      return true;
     });
   }
 
@@ -360,7 +358,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     final PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return;
     if (method.hasModifierProperty(PsiModifier.PRIVATE)) return;
-    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass, true).findAll();
+    Collection<PsiClass> inheritors = ClassInheritorsSearch.search(containingClass).findAll();
 
     MethodSignature oldSignature = method.getSignature(PsiSubstitutor.EMPTY);
     MethodSignature newSignature = MethodSignatureUtil.createMethodSignature(newName, oldSignature.getParameterTypes(),

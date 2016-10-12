@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,19 +24,19 @@ import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplate
 
 public class WhileStatementPostfixTemplate extends StringBasedPostfixTemplate {
   public WhileStatementPostfixTemplate() {
-    super("while", "while (expr)", selectorTopmost(IS_BOOLEAN));
+    super("while", "while (expr) {}", selectorTopmost(IS_BOOLEAN));
   }
 
 
   @Nullable
   @Override
   public String getTemplateString(@NotNull PsiElement element) {
-    return "while ($expr$)$END$";
+    return "while ($expr$) {\n$END$\n}";
   }
 
   @Override
   protected boolean shouldReformat() {
-    return false;
+    return true;
   }
 }
 

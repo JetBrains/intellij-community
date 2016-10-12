@@ -156,12 +156,7 @@ public class CopyReferenceAction extends DumbAwareAction {
       }
     }
 
-    return ContainerUtil.mapNotNull(elements, new Function<PsiElement, PsiElement>() {
-      @Override
-      public PsiElement fun(PsiElement element) {
-        return element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical() ? null : adjustElement(element);
-      }
-    });
+    return ContainerUtil.mapNotNull(elements, element -> element instanceof PsiFile && !((PsiFile)element).getViewProvider().isPhysical() ? null : adjustElement(element));
   }
 
   private static PsiElement adjustElement(PsiElement element) {

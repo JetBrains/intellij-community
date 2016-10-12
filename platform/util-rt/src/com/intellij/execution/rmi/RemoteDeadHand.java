@@ -20,6 +20,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author gregsh
@@ -27,6 +28,7 @@ import java.rmi.server.UnicastRemoteObject;
 public interface RemoteDeadHand extends Remote {
 
   String BINDING_NAME = "_DEAD_HAND_";
+  long PING_TIMEOUT = 20 * 1000L;
 
   /**
    * @return time in milliseconds to wait till the next ping.
@@ -38,7 +40,7 @@ public interface RemoteDeadHand extends Remote {
 
     private static final TwoMinutesTurkish ourCook = new TwoMinutesTurkish();
     private static final Remote ourHand;
-    private static long ourAskedThatManyTimes;
+    private static final AtomicLong ourAskedThatManyTimes = new AtomicLong();
 
     static {
       Remote remote;
@@ -52,14 +54,13 @@ public interface RemoteDeadHand extends Remote {
     }
 
     public long ping(String id) throws RemoteException {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ourAskedThatManyTimes ++;
-      return 2 * 60 * 1000L;
+      ourAskedThatManyTimes.incrementAndGet();
+      return PING_TIMEOUT;
     }
 
     public static void startCooking(String host, int port) throws Exception {
-      final Registry registry = LocateRegistry.getRegistry(host, port);
-      registry.bind(RemoteDeadHand.BINDING_NAME, ourHand);
+      Registry registry = LocateRegistry.getRegistry(host, port);
+      registry.bind(BINDING_NAME, ourHand);
     }
   }
 }

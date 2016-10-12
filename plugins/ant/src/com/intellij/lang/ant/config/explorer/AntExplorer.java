@@ -223,38 +223,36 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     if (files.length == 0) {
       return;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        final AntConfiguration antConfiguration = myConfig;
-        if (antConfiguration == null) {
-          return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final AntConfiguration antConfiguration = myConfig;
+      if (antConfiguration == null) {
+        return;
+      }
+      final List<VirtualFile> ignoredFiles = new ArrayList<VirtualFile>();
+      for (VirtualFile file : files) {
+        try {
+          antConfiguration.addBuildFile(file);
         }
-        final List<VirtualFile> ignoredFiles = new ArrayList<VirtualFile>();
-        for (VirtualFile file : files) {
-          try {
-            antConfiguration.addBuildFile(file);
-          }
-          catch (AntNoFileException e) {
-            ignoredFiles.add(e.getFile());
-          }
+        catch (AntNoFileException e) {
+          ignoredFiles.add(e.getFile());
         }
-        if (ignoredFiles.size() != 0) {
-          String messageText;
-          final StringBuilder message = StringBuilderSpinAllocator.alloc();
-          try {
-            String separator = "";
-            for (final VirtualFile virtualFile : ignoredFiles) {
-              message.append(separator);
-              message.append(virtualFile.getPresentableUrl());
-              separator = "\n";
-            }
-            messageText = message.toString();
+      }
+      if (ignoredFiles.size() != 0) {
+        String messageText;
+        final StringBuilder message = StringBuilderSpinAllocator.alloc();
+        try {
+          String separator = "";
+          for (final VirtualFile virtualFile : ignoredFiles) {
+            message.append(separator);
+            message.append(virtualFile.getPresentableUrl());
+            separator = "\n";
           }
-          finally {
-            StringBuilderSpinAllocator.dispose(message);
-          }
-          Messages.showWarningDialog(myProject, messageText, AntBundle.message("cannot.add.ant.files.dialog.title"));
+          messageText = message.toString();
         }
+        finally {
+          StringBuilderSpinAllocator.dispose(message);
+        }
+        Messages.showWarningDialog(myProject, messageText, AntBundle.message("cannot.add.ant.files.dialog.title"));
       }
     });
   }
@@ -465,25 +463,17 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       return myProject != null? myTreeExpander : null;
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      final List<VirtualFile> virtualFiles = collectAntFiles(new Function<AntBuildFile, VirtualFile>() {
-        @Override
-        public VirtualFile fun(AntBuildFile buildFile) {
-          final VirtualFile virtualFile = buildFile.getVirtualFile();
-          if (virtualFile != null && virtualFile.isValid()) {
-            return virtualFile;
-          }
-          return null;
+      final List<VirtualFile> virtualFiles = collectAntFiles(buildFile -> {
+        final VirtualFile virtualFile = buildFile.getVirtualFile();
+        if (virtualFile != null && virtualFile.isValid()) {
+          return virtualFile;
         }
+        return null;
       });
       return virtualFiles == null ? null : virtualFiles.toArray(new VirtualFile[virtualFiles.size()]);
     }
     else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      final List<PsiElement> elements = collectAntFiles(new Function<AntBuildFile, PsiElement>() {
-        @Override
-        public PsiElement fun(AntBuildFile buildFile) {
-          return buildFile.getAntFile();
-        }
-      });
+      final List<PsiElement> elements = collectAntFiles(buildFile -> buildFile.getAntFile());
       return elements == null ? null : elements.toArray(new PsiElement[elements.size()]);
     } 
     return super.getData(dataId);
@@ -511,12 +501,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
     }
     final List<T> result = new ArrayList<T>();
-    ContainerUtil.addAllNotNull(result, ContainerUtil.map(antFiles, new Function<AntBuildFile, T>() {
-      @Override
-      public T fun(AntBuildFile buildFile) {
-        return function.fun(buildFile);
-      }
-    }));
+    ContainerUtil.addAllNotNull(result, ContainerUtil.map(antFiles, buildFile -> function.fun(buildFile)));
     return result.isEmpty() ? null : result;
   }
 

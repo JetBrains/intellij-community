@@ -48,6 +48,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -883,16 +884,13 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           final Method finalGetter = getter;
           final Method setter = myComponent.getClass().getMethod("set" + StringUtil.capitalize(name), getter.getReturnType());
           setter.setAccessible(true);
-          return new Function<Object, Object>() {
-            @Override
-            public Object fun(Object o) {
-              try {
-                setter.invoke(myComponent, fromObject(o, finalGetter.getReturnType()));
-                return finalGetter.invoke(myComponent);
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
+          return o -> {
+            try {
+              setter.invoke(myComponent, fromObject(o, finalGetter.getReturnType()));
+              return finalGetter.invoke(myComponent);
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
             }
           };
         }
@@ -901,16 +899,13 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           if (Modifier.isFinal(field.getModifiers()) || Modifier.isStatic(field.getModifiers())) {
             return null;
           }
-          return new Function<Object, Object>() {
-            @Override
-            public Object fun(Object o) {
-              try {
-                field.set(myComponent, fromObject(o, field.getType()));
-                return field.get(myComponent);
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
+          return o -> {
+            try {
+              field.set(myComponent, fromObject(o, field.getType()));
+              return field.get(myComponent);
+            }
+            catch (Exception e1) {
+              throw new RuntimeException(e1);
             }
           };
         }
@@ -1049,8 +1044,8 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
                                            Integer.parseInt(s[4]), Integer.parseInt(s[4]));
     }
     else if (type == Color.class) {
-      if (s.length >= 5) return new Color(Integer.parseInt(s[1]), Integer.parseInt(s[2]),
-                                          Integer.parseInt(s[3]), Integer.parseInt(s[4]));
+      if (s.length >= 5) return new ColorUIResource(
+        new Color(Integer.parseInt(s[1]), Integer.parseInt(s[2]), Integer.parseInt(s[3]), Integer.parseInt(s[4])));
     }
     throw new UnsupportedOperationException(type.toString());
   }

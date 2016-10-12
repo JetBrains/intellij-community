@@ -61,13 +61,10 @@ public class AnnotationInitializerBlocksBuilder {
       .setDefaultAlignment(alignment)
       .setNoAlignment(JavaTokenType.COMMA)
       .setNoAlignment(JavaTokenType.LPARENTH)
-      .setNoAlignmentIf(JavaTokenType.RPARENTH, new Condition<ASTNode>() {
-        @Override
-        public boolean value(ASTNode node) {
-          PsiElement prev = PsiTreeUtil.skipSiblingsBackward(node.getPsi(), PsiWhiteSpace.class);
-          if (prev == null) return false;
-          return prev instanceof PsiNameValuePair && !PsiTreeUtil.hasErrorElements(prev);
-        }
+      .setNoAlignmentIf(JavaTokenType.RPARENTH, node -> {
+        PsiElement prev = PsiTreeUtil.skipSiblingsBackward(node.getPsi(), PsiWhiteSpace.class);
+        if (prev == null) return false;
+        return prev instanceof PsiNameValuePair && !PsiTreeUtil.hasErrorElements(prev);
       });
 
     return config.createBuilder().buildNodeChildBlocks(myNode, myFactory);

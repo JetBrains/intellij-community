@@ -194,4 +194,4 @@ if [ -x "$RESTARTER" ]; then
   fi
 fi
 
-exec "$0" "$@"
+exec "$0"

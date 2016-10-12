@@ -196,12 +196,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     for (String s : JavaProjectCodeInsightSettings.getSettings(myProject).excludedNames) {
       rows.add(new Item(s, ExclusionScope.Project));
     }
-    Collections.sort(rows, new Comparator<Item>() {
-      @Override
-      public int compare(Item o1, Item o2) {
-        return o1.exclude.compareTo(o2.exclude);
-      }
-    });
+    Collections.sort(rows, (o1, o2) -> o1.exclude.compareTo(o2.exclude));
 
     setValues(rows);
   }

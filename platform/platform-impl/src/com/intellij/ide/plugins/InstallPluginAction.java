@@ -24,7 +24,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.net.IOExceptionDialog;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -117,49 +116,43 @@ public class InstallPluginAction extends AnAction implements DumbAware {
       }
 
       final InstalledPluginsTableModel installedModel = (InstalledPluginsTableModel)myInstalled.getPluginsModel();
-      PluginEnablerImpl pluginEnabler = new PluginEnablerImpl(installedModel);
+      PluginManagerMain.PluginEnabler.UI pluginEnabler = new PluginManagerMain.PluginEnabler.UI(installedModel);
 
       if (PluginManagerMain.suggestToEnableInstalledDependantPlugins(pluginEnabler, list)) {
         myInstalled.setRequireShutdown(true);
       }
 
       try {
-        Runnable onInstallRunnable = new Runnable() {
-          @Override
-          public void run() {
+        Runnable onInstallRunnable = () -> {
+          for (PluginNode node : list) {
+            installedModel.appendOrUpdateDescriptor(node);
+          }
+          if (!myInstalled.isDisposed()) {
+            getPluginTable().updateUI();
+            myInstalled.setRequireShutdown(true);
+          }
+          else {
+            boolean needToRestart = false;
             for (PluginNode node : list) {
-              installedModel.appendOrUpdateDescriptor(node);
-            }
-            if (!myInstalled.isDisposed()) {
-              getPluginTable().updateUI();
-              myInstalled.setRequireShutdown(true);
-            }
-            else {
-              boolean needToRestart = false;
-              for (PluginNode node : list) {
-                final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(node.getPluginId());
-                if (pluginDescriptor == null || pluginDescriptor.isEnabled()) {
-                  needToRestart = true;
-                  break;
-                }
+              final IdeaPluginDescriptor pluginDescriptor = PluginManager.getPlugin(node.getPluginId());
+              if (pluginDescriptor == null || pluginDescriptor.isEnabled()) {
+                needToRestart = true;
+                break;
               }
+            }
 
-              if (needToRestart) {
-                PluginManagerMain.notifyPluginsUpdated(null);
-              }
-            }
-            if (onSuccess != null) {
-              onSuccess.run();
+            if (needToRestart) {
+              PluginManagerMain.notifyPluginsUpdated(null);
             }
           }
+          if (onSuccess != null) {
+            onSuccess.run();
+          }
         };
-        Runnable cleanupRunnable = new Runnable() {
-          @Override
-          public void run() {
-            ourInstallingNodes.removeAll(list);
-            if (cleanup != null) {
-              cleanup.run();
-            }
+        Runnable cleanupRunnable = () -> {
+          ourInstallingNodes.removeAll(list);
+          if (cleanup != null) {
+            cleanup.run();
           }
         };
         final List<IdeaPluginDescriptor> plugins = myHost.getPluginsModel().getAllPlugins();
@@ -169,32 +162,8 @@ public class InstallPluginAction extends AnAction implements DumbAware {
         ourInstallingNodes.removeAll(list);
         PluginManagerMain.LOG.error(e1);
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            IOExceptionDialog.showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed"));
-          }
-        });
+        SwingUtilities.invokeLater(() -> IOExceptionDialog.showErrorDialog(IdeBundle.message("action.download.and.install.plugin"), IdeBundle.message("error.plugin.download.failed")));
       }
-    }
-  }
-
-  private static class PluginEnablerImpl implements PluginManagerMain.PluginEnabler {
-    @NotNull
-    private final InstalledPluginsTableModel pluginsModel;
-
-    private PluginEnablerImpl(@NotNull InstalledPluginsTableModel model) {
-      pluginsModel = model;
-    }
-
-    @Override
-    public void enablePlugins(Set<IdeaPluginDescriptor> disabled) {
-      pluginsModel.enableRows(disabled.toArray(new IdeaPluginDescriptor[disabled.size()]), true);
-    }
-
-    @Override
-    public boolean isDisabled(PluginId pluginId) {
-      return pluginsModel.isDisabled(pluginId);
     }
   }
 

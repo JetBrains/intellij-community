@@ -138,16 +138,13 @@ public class OptimizeImportsAction extends AnAction {
       final OptimizeImportsProcessor optimizer = new OptimizeImportsProcessor(project, file);
       if (editor != null && EditorSettingsExternalizable.getInstance().getOptions().SHOW_NOTIFICATION_AFTER_OPTIMIZE_IMPORTS_ACTION) {
         optimizer.setCollectInfo(true);
-        optimizer.setPostRunnable(new Runnable() {
-          @Override
-          public void run() {
-            LayoutCodeInfoCollector collector = optimizer.getInfoCollector();
-            if (collector != null) {
-              String info = collector.getOptimizeImportsNotification();
-              if (!editor.isDisposed() && editor.getComponent().isShowing()) {
-                String message = info != null ? info : NO_IMPORTS_OPTIMIZED;
-                FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message), null);
-              }
+        optimizer.setPostRunnable(() -> {
+          LayoutCodeInfoCollector collector = optimizer.getInfoCollector();
+          if (collector != null) {
+            String info = collector.getOptimizeImportsNotification();
+            if (!editor.isDisposed() && editor.getComponent().isShowing()) {
+              String message = info != null ? info : NO_IMPORTS_OPTIMIZED;
+              FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message), null);
             }
           }
         });

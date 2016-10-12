@@ -23,15 +23,16 @@ import com.intellij.vcs.log.VcsLogSettings;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * TODO remove in IDEA 17
+ *
  * @author Kirill Likhodedov
  */
 @State(name = "Vcs.Log.Settings", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@Deprecated
 public class VcsLogSettingsImpl implements VcsLogSettings, PersistentStateComponent<VcsLogSettingsImpl.State> {
-
   private State myState = new State();
 
   public static class State {
-    public int RECENT_COMMITS_COUNT = 1000;
     public boolean SHOW_BRANCHES_PANEL = false;
   }
 
@@ -44,11 +45,6 @@ public class VcsLogSettingsImpl implements VcsLogSettings, PersistentStateCompon
   @Override
   public void loadState(State state) {
     myState = state;
-  }
-
-  @Override
-  public int getRecentCommitsCount() {
-    return myState.RECENT_COMMITS_COUNT;
   }
 
   @Override

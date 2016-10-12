@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -28,15 +29,18 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,21 +88,26 @@ public class ImportFromExistingAction implements QuestionAction {
   public boolean execute() {
     // check if the tree is sane
     PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-    if (!myTarget.isValid()) return false;
+    PyPsiUtils.assertValid(myTarget);
     if ((myTarget instanceof PyQualifiedExpression) && ((((PyQualifiedExpression)myTarget).isQualified()))) return false; // we cannot be qualified
     for (ImportCandidateHolder item : mySources) {
-      if (!item.getImportable().isValid()) return false;
-      if (!item.getFile().isValid()) return false;
-      if (item.getImportElement() != null && !item.getImportElement().isValid()) return false;
+      PyPsiUtils.assertValid(item.getImportable());
+      PyPsiUtils.assertValid(item.getFile());
+      final PyImportElement element = item.getImportElement();
+      if (element != null) {
+        PyPsiUtils.assertValid(element);
+      }
     }
     if (mySources.isEmpty()) {
       return false;
     }
     // act
-    if (mySources.size() > 1) {
+    if (mySources.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
+      doWriteAction(mySources.get(0));
+    }
+    else {
       selectSourceAndDo();
     }
-    else doWriteAction(mySources.get(0));
     return true;
   }
 
@@ -108,14 +117,12 @@ public class ImportFromExistingAction implements QuestionAction {
     final JList list = new JBList(items);
     list.setCellRenderer(new CellRenderer(myName));
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        final Object selected = list.getSelectedValue();
-        if (selected instanceof ImportCandidateHolder) {
-          final ImportCandidateHolder item = (ImportCandidateHolder)selected;
-          PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
-          doWriteAction(item);
-        }
+    final Runnable runnable = () -> {
+      final Object selected = list.getSelectedValue();
+      if (selected instanceof ImportCandidateHolder) {
+        final ImportCandidateHolder item = (ImportCandidateHolder)selected;
+        PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
+        doWriteAction(item);
       }
     };
 
@@ -125,12 +132,7 @@ public class ImportFromExistingAction implements QuestionAction {
         new PopupChooserBuilder(list)
           .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
           .setItemChoosenCallback(runnable)
-          .setFilteringEnabled(new Function<Object, String>() {
-            @Override
-            public String fun(Object o) {
-              return ((ImportCandidateHolder) o).getPresentableText(myName);
-            }
-          })
+          .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
           .createPopup()
           .showInBestPositionFor(dataContext);
       }
@@ -228,13 +230,6 @@ public class ImportFromExistingAction implements QuestionAction {
     return Comparing.equal(fileIndex.getClassRootForFile(vFile), vFile) ||
            Comparing.equal(fileIndex.getContentRootForFile(vFile), vFile) ||
            Comparing.equal(fileIndex.getSourceRootForFile(vFile), vFile);
-  }
-
-  public static boolean isResolved(PsiReference reference) {
-    if (reference instanceof PsiPolyVariantReference) {
-      return ((PsiPolyVariantReference)reference).multiResolve(false).length > 0;
-    }
-    return reference.resolve() != null;
   }
 
   // Stolen from FQNameCellRenderer

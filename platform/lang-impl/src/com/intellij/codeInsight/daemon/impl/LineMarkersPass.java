@@ -153,12 +153,9 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
     List<LineMarkerProvider> forLanguage = LineMarkerProviders.INSTANCE.allForLanguageOrAny(language);
     List<LineMarkerProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(forLanguage);
     final LineMarkerSettings settings = LineMarkerSettings.getSettings();
-    return ContainerUtil.filter(providers, new Condition<LineMarkerProvider>() {
-      @Override
-      public boolean value(LineMarkerProvider provider) {
-        if (!(provider instanceof LineMarkerProviderDescriptor)) return true;
-        return settings.isEnabled((LineMarkerProviderDescriptor)provider);
-      }
+    return ContainerUtil.filter(providers, provider -> {
+      if (!(provider instanceof LineMarkerProviderDescriptor)) return true;
+      return settings.isEnabled((LineMarkerProviderDescriptor)provider);
     });
   }
 
@@ -212,12 +209,9 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
         injectedFiles.add(injectedPsi);
       }
     };
-    InjectedLanguageManagerImpl.getInstanceImpl(file.getProject()).processInjectableElements(elements, new Processor<PsiElement>() {
-      @Override
-      public boolean process(PsiElement element) {
-        InjectedLanguageUtil.enumerate(element, file, false, collectingVisitor);
-        return true;
-      }
+    InjectedLanguageManagerImpl.getInstanceImpl(file.getProject()).processInjectableElements(elements, element -> {
+      InjectedLanguageUtil.enumerate(element, file, false, collectingVisitor);
+      return true;
     });
     for (PsiFile injectedPsi : injectedFiles) {
       final Project project = injectedPsi.getProject();
@@ -235,12 +229,7 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements LineM
           Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
           LineMarkerInfo<PsiElement> converted =
               new LineMarkerInfo<PsiElement>(injectedMarker.getElement(), hostRange, icon, injectedMarker.updatePass,
-                                 new Function<PsiElement, String>() {
-                                   @Override
-                                   public String fun(PsiElement element) {
-                                     return injectedMarker.getLineMarkerTooltip();
-                                   }
-                                 }, injectedMarker.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
+                                             element -> injectedMarker.getLineMarkerTooltip(), injectedMarker.getNavigationHandler(), GutterIconRenderer.Alignment.RIGHT);
           result.add(converted);
         }
       }

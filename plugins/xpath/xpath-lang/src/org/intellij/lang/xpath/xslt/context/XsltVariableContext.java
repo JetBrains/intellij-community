@@ -80,11 +80,9 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         if (!processForwardGlobals(context, processor)) {
           final XmlFile file = PsiTreeUtil.getParentOfType(context, XmlFile.class, true);
           if (file != null) {
-            XsltIncludeIndex.processBackwardDependencies(file, new Processor<XmlFile>() {
-              public boolean process(XmlFile xmlFile) {
-                processor.processExternalFile(xmlFile, context);
-                return processor.shouldContinue();
-              }
+            XsltIncludeIndex.processBackwardDependencies(file, xmlFile -> {
+              processor.processExternalFile(xmlFile, context);
+              return processor.shouldContinue();
             });
           }
         }

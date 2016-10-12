@@ -124,11 +124,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
   public void reset() {
     myValidateBox.setSelected(myConfiguration.VALIDATE_ON_BUILD);
     final List<Compiler> validators = getValidators();
-    Collections.sort(validators, new Comparator<Compiler>() {
-      public int compare(final Compiler o1, final Compiler o2) {
-        return o1.getDescription().compareTo(o2.getDescription());
-      }
-    });
+    Collections.sort(validators, (o1, o2) -> o1.getDescription().compareTo(o2.getDescription()));
     myValidators.setElements(validators, false);
     myValidators.markElements(getMarkedValidators());
     myExcludedConfigurable.reset();
@@ -136,11 +132,7 @@ public class ValidationConfigurable implements SearchableConfigurable, Configura
 
   private List<Compiler> getMarkedValidators() {
     final List<Compiler> validators = getValidators();
-    return ContainerUtil.mapNotNull(validators, new NullableFunction<Compiler, Compiler>() {
-      public Compiler fun(final Compiler validator) {
-        return myConfiguration.isSelected(validator) ? validator : null;
-      }
-    });
+    return ContainerUtil.mapNotNull(validators, (NullableFunction<Compiler, Compiler>)validator -> myConfiguration.isSelected(validator) ? validator : null);
   }
 
   private List<Compiler> getValidators() {

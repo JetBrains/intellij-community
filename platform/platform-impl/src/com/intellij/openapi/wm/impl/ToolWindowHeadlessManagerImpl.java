@@ -512,6 +512,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     @Override
     public void addContent(@NotNull final Content content) {
       myContents.add(content);
+      Disposer.register(this, content);
       ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
       myDispatcher.getMulticaster().contentAdded(e);
       if (mySelected == null) setSelectedContent(content);
@@ -520,6 +521,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     @Override
     public void addContent(@NotNull Content content, int order) {
       myContents.add(order, content);
+      Disposer.register(this, content);
       ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
       myDispatcher.getMulticaster().contentAdded(e);
       if (mySelected == null) setSelectedContent(content);

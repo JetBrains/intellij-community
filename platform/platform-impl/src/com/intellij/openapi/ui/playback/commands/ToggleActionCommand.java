@@ -81,24 +81,21 @@ public class ToggleActionCommand extends AbstractCommand {
     context.getRobot().delay(Registry.intValue("actionSystem.playback.delay"));
 
     IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
-    fm.doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        final Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
-        AnActionEvent event =
-            new AnActionEvent(inputEvent, DataManager.getInstance()
-                .getDataContext(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()), ActionPlaces.UNKNOWN,
-                              presentation, ActionManager.getInstance(), 0);
+    fm.doWhenFocusSettlesDown(() -> {
+      final Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
+      AnActionEvent event =
+          new AnActionEvent(inputEvent, DataManager.getInstance()
+              .getDataContext(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()), ActionPlaces.UNKNOWN,
+                            presentation, ActionManager.getInstance(), 0);
 
-        ActionUtil.performDumbAwareUpdate(action, event, false);
+      ActionUtil.performDumbAwareUpdate(action, event, false);
 
-        Boolean state = (Boolean)event.getPresentation().getClientProperty(ToggleAction.SELECTED_PROPERTY);
-        if (state.booleanValue() != on) {
-          ActionManager.getInstance().tryToExecute(action, inputEvent, null, ActionPlaces.UNKNOWN, true).doWhenProcessed(result.createSetDoneRunnable());
-        }
-        else {
-          result.setDone();
-        }
+      Boolean state = (Boolean)event.getPresentation().getClientProperty(ToggleAction.SELECTED_PROPERTY);
+      if (state.booleanValue() != on) {
+        ActionManager.getInstance().tryToExecute(action, inputEvent, null, ActionPlaces.UNKNOWN, true).doWhenProcessed(result.createSetDoneRunnable());
+      }
+      else {
+        result.setDone();
       }
     });
 

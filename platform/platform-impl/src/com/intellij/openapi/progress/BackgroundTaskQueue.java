@@ -17,19 +17,15 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PairConsumer;
-import com.intellij.util.PlusMinus;
 import com.intellij.util.concurrency.QueueProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,42 +35,57 @@ import org.jetbrains.annotations.TestOnly;
  * Runs backgroundable tasks one by one.
  * To add a task to the queue use {@link #run(com.intellij.openapi.progress.Task.Backgroundable)}
  * BackgroundTaskQueue may have a title - this title will be used if the task which is currently running doesn't have a title.
- * 
- * @author yole
- * @author Kirill Likhodedov
  */
 @SomeQueue
 public class BackgroundTaskQueue {
-  private final static String ourMonitorFlag = "monitor.background.queue.load";
-  private static final Logger LOG = Logger.getInstance(BackgroundTaskQueue.class.getName());
-  //private final Project myProject;
-  private final QueueProcessor<Pair<Task.Backgroundable, Getter<ProgressIndicator>>> myProcessor;
-  private Boolean myForcedTestMode;
-  private final PlusMinus<String> myMonitor;
+  @NotNull private final String myTitle;
+  @NotNull private final QueueProcessor<TaskData> myProcessor;
+
+  @NotNull private final Object TEST_TASK_LOCK = new Object();
+  private volatile boolean myForceAsyncInTests = false;
 
   public BackgroundTaskQueue(@Nullable Project project, @NotNull String title) {
-    this(project, title, null);
-  }
+    myTitle = title;
 
-  public BackgroundTaskQueue(@Nullable final Project project, @NotNull String title, final Boolean forcedHeadlessMode) {
-    myMonitor = Boolean.TRUE.equals(Boolean.getBoolean(ourMonitorFlag)) ? new BackgroundTasksMonitor(title) : new PlusMinus.Empty<String>();
-    final boolean headless = forcedHeadlessMode != null ? forcedHeadlessMode : ApplicationManager.getApplication().isHeadlessEnvironment();
+    Condition disposeCondition = project != null ? project.getDisposed() : ApplicationManager.getApplication().getDisposed();
 
-    final QueueProcessor.ThreadToUse threadToUse = headless ? QueueProcessor.ThreadToUse.POOLED : QueueProcessor.ThreadToUse.AWT;
-    final PairConsumer<Pair<Task.Backgroundable, Getter<ProgressIndicator>>, Runnable> consumer
-      = headless ? new BackgroundableHeadlessRunner() : new BackgroundableUnderProgressRunner(title, project, myMonitor);
-
-    myProcessor = new QueueProcessor<Pair<Task.Backgroundable, Getter<ProgressIndicator>>>(consumer, true,
-                                                                                           threadToUse, new Condition<Object>() {
-        @Override public boolean value(Object o) {
-          if (project == null) return ApplicationManager.getApplication().isDisposed();
-          if (project.isDefault()) {
-            return project.isDisposed();
-          } else {
-            return !ApplicationManager.getApplication().isUnitTestMode() && !project.isOpen() || project.isDisposed();
-          }
+    myProcessor = new QueueProcessor<TaskData>((data, continuation) -> {
+      Task.Backgroundable task = data.task;
+      
+      ProgressIndicator indicator = data.indicator;
+      if (indicator == null) {
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          indicator = new EmptyProgressIndicator();
         }
-      });
+        else {
+          // BackgroundableProcessIndicator should be created from EDT
+          indicator = new BackgroundableProcessIndicator(task);
+        }
+      }
+      
+      ModalityState modalityState = data.modalityState;
+      if (modalityState == null) modalityState = ModalityState.NON_MODAL;
+
+      if (StringUtil.isEmptyOrSpaces(task.getTitle())) {
+        task.setTitle(myTitle);
+      }
+
+      boolean synchronous = (task.isHeadless() && !myForceAsyncInTests) ||
+                            (task.isConditionalModal() && !task.shouldStartInBackground());
+
+      ProgressManagerImpl pm = (ProgressManagerImpl)ProgressManager.getInstance();
+      if (synchronous) {
+        try {
+          pm.runProcessWithProgressSynchronously(task, null);
+        }
+        finally {
+          continuation.run();
+        }
+      }
+      else {
+        pm.runProcessWithProgressAsynchronously(task, indicator, continuation, modalityState);
+      }
+    }, true, QueueProcessor.ThreadToUse.AWT, disposeCondition);
   }
 
   public void clear() {
@@ -84,94 +95,98 @@ public class BackgroundTaskQueue {
   public boolean isEmpty() {
     return myProcessor.isEmpty();
   }
-  
+
   public void waitForTasksToFinish() {
     myProcessor.waitFor();
   }
 
-  public void run(Task.Backgroundable task) {
+  public void run(@NotNull Task.Backgroundable task) {
     run(task, null, null);
   }
 
-  public void run(Task.Backgroundable task, final ModalityState state, final Getter<ProgressIndicator> pi) {
-    myMonitor.plus(task.getTitle());
-    if (isTestMode()) { // test tasks are executed in this thread without the progress manager
-      RunBackgroundable.runIfBackgroundThread(task, new EmptyProgressIndicator(), null);
-    } else {
-      myProcessor.add(Pair.create(task, pi), state);
+  public void run(@NotNull Task.Backgroundable task, @Nullable ModalityState modalityState, @Nullable ProgressIndicator indicator) {
+    TaskData taskData = new TaskData(task, modalityState, indicator);
+    if (!myForceAsyncInTests && ApplicationManager.getApplication().isUnitTestMode()) {
+      runTaskInCurrentThread(taskData);
+    }
+    else {
+      myProcessor.add(taskData, modalityState);
     }
   }
 
-  private static class BackgroundableHeadlessRunner implements PairConsumer<Pair<Task.Backgroundable, Getter<ProgressIndicator>>, Runnable> {
-    @Override
-    public void consume(Pair<Task.Backgroundable, Getter<ProgressIndicator>> pair, Runnable runnable) {
-      final Task.Backgroundable backgroundable = pair.getFirst();
-      // synchronously
-      ProgressManager.getInstance().run(backgroundable);
-      runnable.run();
+  private static class TaskData {
+    @NotNull public final Task.Backgroundable task;
+    @Nullable public final ModalityState modalityState;
+    @Nullable public final ProgressIndicator indicator;
+
+    public TaskData(@NotNull Task.Backgroundable task, @Nullable ModalityState modalityState, @Nullable ProgressIndicator indicator) {
+      this.task = task;
+      this.modalityState = modalityState;
+      this.indicator = indicator;
     }
-  }
-
-  private static class BackgroundableUnderProgressRunner implements PairConsumer<Pair<Task.Backgroundable, Getter<ProgressIndicator>>, Runnable> {
-    private final String myTitle;
-    private final Project myProject;
-    private final PlusMinus<String> myMonitor;
-
-    public BackgroundableUnderProgressRunner(String title, final Project project, PlusMinus<String> monitor) {
-      myTitle = title;
-      myProject = project;
-      myMonitor = monitor;
-    }
-
-    @Override
-    public void consume(final Pair<Task.Backgroundable, Getter<ProgressIndicator>> pair, final Runnable runnable) {
-      myMonitor.minus(pair.getFirst().getTitle());
-      final Task.Backgroundable backgroundable = pair.getFirst();
-      final ProgressIndicator[] pi = new ProgressIndicator[1];
-      final boolean taskTitleIsEmpty = StringUtil.isEmptyOrSpaces(backgroundable.getTitle());
-
-      final Runnable wrappedTask = new Runnable() {
-        @Override
-        public void run() {
-          // calls task's run and onCancel() or onSuccess(); call continuation after task.run()
-          RunBackgroundable.runIfBackgroundThread(backgroundable,
-            pi[0] == null ? ProgressManager.getInstance().getProgressIndicator() : pi[0], runnable);
-        }
-      };
-
-      final ProgressManager pm = ProgressManager.getInstance();
-      if (backgroundable.isConditionalModal() && ! backgroundable.shouldStartInBackground()) {
-        pm.runProcessWithProgressSynchronously(wrappedTask, taskTitleIsEmpty ? myTitle : backgroundable.getTitle(),
-                                               backgroundable.isCancellable(), myProject);
-      } else {
-        if (pair.getSecond() != null) {
-          pi[0] = pair.getSecond().get();
-        }
-        if (pi[0] == null) {
-          if (taskTitleIsEmpty) {
-            backgroundable.setTitle(myTitle);
-          }
-          pi[0] = new BackgroundableProcessIndicator(backgroundable);
-        }
-
-        ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(backgroundable, pi[0], runnable);
-      }
-    }
-  }
-
-  public boolean isTestMode() {
-    if (myForcedTestMode != null) return myForcedTestMode;
-    return ApplicationManager.getApplication().isUnitTestMode();
   }
 
   @TestOnly
-  public void setForcedTestMode(Boolean forcedTestMode, Disposable parentDisposable) {
-    myForcedTestMode = forcedTestMode;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myForcedTestMode = null;
+  public void setForceAsyncInTests(boolean value, @Nullable Disposable disposable) {
+    myForceAsyncInTests = value;
+    if (disposable != null) {
+      Disposer.register(disposable, new Disposable() {
+        @Override
+        public void dispose() {
+          myForceAsyncInTests = false;
+        }
+      });
+    }
+  }
+
+  private void runTaskInCurrentThread(@NotNull TaskData data) {
+    Task.Backgroundable task = data.task;
+
+    ProgressIndicator indicator = data.indicator;
+    if (indicator == null) indicator = new EmptyProgressIndicator();
+
+    ModalityState modalityState = data.modalityState;
+    if (modalityState == null) modalityState = ModalityState.NON_MODAL;
+
+    boolean processCanceled = false;
+    Exception exception = null;
+    try {
+      synchronized (TEST_TASK_LOCK) {
+        task.run(indicator);
       }
-    });
+    }
+    catch (ProcessCanceledException e) {
+      processCanceled = true;
+    }
+    catch (Exception e) {
+      exception = e;
+    }
+
+    final boolean finalCanceled = processCanceled || indicator.isCanceled();
+    final Exception finalException = exception;
+    Runnable finishTask = () -> {
+      try {
+        if (finalException != null) {
+          task.onError(finalException);
+        }
+        else if (finalCanceled) {
+          task.onCancel();
+        }
+        else {
+          task.onSuccess();
+        }
+      }
+      finally {
+        task.onFinished();
+      }
+    };
+
+    Application application = ApplicationManager.getApplication();
+    if (application.isDispatchThread()) {
+      finishTask.run();
+    }
+    else {
+      application.invokeLater(finishTask, modalityState);
+    }
   }
 }

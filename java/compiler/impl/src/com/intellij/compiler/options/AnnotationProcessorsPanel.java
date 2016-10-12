@@ -92,34 +92,31 @@ public class AnnotationProcessorsPanel extends JPanel {
               final JBList list = new JBList(profiles);
               final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
                 .setTitle("Move to")
-                .setItemChoosenCallback(new Runnable() {
-                  @Override
-                  public void run() {
-                    final Object value = list.getSelectedValue();
-                    if (value instanceof ProcessorConfigProfile) {
-                      final ProcessorConfigProfile chosenProfile = (ProcessorConfigProfile)value;
-                      final Module toSelect = (Module)node.getUserObject();
-                      if (selectedNodes != null) {
-                        for (TreePath selectedNode : selectedNodes) {
-                          final Object node = selectedNode.getLastPathComponent();
-                          if (node instanceof MyModuleNode) {
-                            final Module module = (Module)((MyModuleNode)node).getUserObject();
-                            if (nodeProfile != myDefaultProfile) {
-                              nodeProfile.removeModuleName(module.getName());
-                            }
-                            if (chosenProfile != myDefaultProfile) {
-                              chosenProfile.addModuleName(module.getName());
-                            }
+                .setItemChoosenCallback(() -> {
+                  final Object value = list.getSelectedValue();
+                  if (value instanceof ProcessorConfigProfile) {
+                    final ProcessorConfigProfile chosenProfile = (ProcessorConfigProfile)value;
+                    final Module toSelect = (Module)node.getUserObject();
+                    if (selectedNodes != null) {
+                      for (TreePath selectedNode : selectedNodes) {
+                        final Object node1 = selectedNode.getLastPathComponent();
+                        if (node1 instanceof MyModuleNode) {
+                          final Module module = (Module)((MyModuleNode)node1).getUserObject();
+                          if (nodeProfile != myDefaultProfile) {
+                            nodeProfile.removeModuleName(module.getName());
+                          }
+                          if (chosenProfile != myDefaultProfile) {
+                            chosenProfile.addModuleName(module.getName());
                           }
                         }
                       }
+                    }
 
-                      final RootNode root = (RootNode)myTree.getModel().getRoot();
-                      root.sync();
-                      final DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, toSelect);
-                      if (node != null) {
-                        TreeUtil.selectNode(myTree, node);
-                      }
+                    final RootNode root = (RootNode)myTree.getModel().getRoot();
+                    root.sync();
+                    final DefaultMutableTreeNode node1 = TreeUtil.findNodeWithObject(root, toSelect);
+                    if (node1 != null) {
+                      TreeUtil.selectNode(myTree, node1);
                     }
                   }
                 })

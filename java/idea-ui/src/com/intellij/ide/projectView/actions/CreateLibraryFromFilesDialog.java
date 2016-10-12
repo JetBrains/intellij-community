@@ -133,12 +133,7 @@ public class CreateLibraryFromFilesDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-      @Override
-      public void run() {
-        addLibrary();
-      }
-    });
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, () -> addLibrary());
     super.doOKAction();
   }
 

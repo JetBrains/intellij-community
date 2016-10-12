@@ -31,7 +31,7 @@ import java.util.UUID;
 public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttpAuthenticator> {
 
   protected GitHttpAuthService() {
-    super("git-askpass-", GitAskPassXmlRpcHandler.HANDLER_NAME, GitAskPassApp.class);
+    super("intellij-git-askpass", GitAskPassXmlRpcHandler.HANDLER_NAME, GitAskPassApp.class);
   }
 
   @Override

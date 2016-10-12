@@ -20,8 +20,6 @@
 package org.jetbrains.java.generate;
 
 import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -39,7 +37,10 @@ import org.jetbrains.java.generate.psi.PsiAdapter;
 import org.jetbrains.java.generate.template.TemplateResource;
 import org.jetbrains.java.generate.view.MethodExistsDialog;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 public class GenerateToStringWorker {
   private static final Logger logger = Logger.getInstance("#" + GenerateToStringWorker.class.getName());
@@ -242,36 +243,5 @@ public class GenerateToStringWorker {
       if (logger.isDebugEnabled()) logger.debug("Auto importing package: " + packageName);
       PsiAdapter.addImportStatement(psiJavaFile, packageName);
     }
-  }
-
-  /**
-   * Generates the toString() code for the specified class and selected
-   * fields, doing the work through a WriteAction ran by a CommandProcessor.
-   *
-   * @param selectedMembers list of members selected
-   * @param template         the chosen template to use
-   * @param insertAtOverride
-   */
-  public static void executeGenerateActionLater(final PsiClass clazz,
-                                                final Editor editor,
-                                                final Collection<PsiMember> selectedMembers,
-                                                final TemplateResource template,
-                                                final boolean insertAtOverride) {
-    Runnable writeCommand = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              new GenerateToStringWorker(clazz, editor, insertAtOverride).execute(selectedMembers, template);
-            }
-            catch (Exception e) {
-              GenerationUtil.handleException(clazz.getProject(), e);
-            }
-          }
-        });
-      }
-    };
-
-    CommandProcessor.getInstance().executeCommand(clazz.getProject(), writeCommand, "GenerateToString", null);
   }
 }

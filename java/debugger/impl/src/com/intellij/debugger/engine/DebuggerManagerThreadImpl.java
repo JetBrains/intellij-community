@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,31 +111,28 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
     if (currentCommand != null) {
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-      alarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            if (currentCommand == myEvents.getCurrentEvent()) {
-              // if current command is still in progress, cancel it
-              getCurrentRequest().requestStop();
-              try {
-                getCurrentRequest().join();
-              }
-              catch (InterruptedException ignored) {
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-              finally {
-                if (!myDisposed) {
-                  startNewWorkerThread();
-                }
+      alarm.addRequest(() -> {
+        try {
+          if (currentCommand == myEvents.getCurrentEvent()) {
+            // if current command is still in progress, cancel it
+            getCurrentRequest().requestStop();
+            try {
+              getCurrentRequest().join();
+            }
+            catch (InterruptedException ignored) {
+            }
+            catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+            finally {
+              if (!myDisposed) {
+                startNewWorkerThread();
               }
             }
           }
-          finally {
-            Disposer.dispose(alarm);
-          }
+        }
+        finally {
+          Disposer.dispose(alarm);
         }
       }, terminateTimeout);
     }
@@ -175,17 +172,8 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
       }
     });
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().runProcess(new Runnable() {
-          @Override
-          public void run() {
-            invokeAndWait(command);
-          }
-        }, progressWindow);
-      }
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ProgressManager.getInstance().runProcess(() -> invokeAndWait(command), progressWindow));
   }
 
 
@@ -211,9 +199,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
 
         @Override
         protected void commandCancelled() {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Event queue was closed, killing request");
-          }
+          LOG.debug("Event queue was closed, killing request");
           request.requestStop();
         }
       });

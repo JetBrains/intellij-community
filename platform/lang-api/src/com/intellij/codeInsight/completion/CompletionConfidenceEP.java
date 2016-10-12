@@ -29,6 +29,6 @@ public class CompletionConfidenceEP extends LanguageExtensionPoint<CompletionCon
   private static final LanguageExtension<CompletionConfidence> INSTANCE = new LanguageExtension<CompletionConfidence>("com.intellij.completion.confidence");
 
   public static List<CompletionConfidence> forLanguage(@NotNull Language language) {
-    return INSTANCE.forKey(language);
+    return INSTANCE.allForLanguage(language);
   }
 }

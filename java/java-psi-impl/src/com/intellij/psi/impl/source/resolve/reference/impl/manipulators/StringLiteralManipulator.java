@@ -18,6 +18,8 @@ package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,8 +53,17 @@ public class StringLiteralManipulator extends AbstractElementManipulator<PsiLite
 
   @NotNull
   public static TextRange getValueRange(@NotNull PsiLiteralExpression element) {
-    final Object value = element.getValue();
-    if (!(value instanceof String || value instanceof Character)) return TextRange.from(0, element.getTextLength());
-    return new TextRange(1, Math.max(1, element.getTextLength() - 1));
+    int length = element.getTextLength();
+    boolean isQuoted;
+    if (element instanceof PsiLiteralExpressionImpl) {
+      // avoid calling getValue(): it allocates new string, it returns null for invalid escapes
+      IElementType type = ((PsiLiteralExpressionImpl)element).getLiteralElementType();
+      isQuoted = type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.CHARACTER_LITERAL;
+    }
+    else {
+      final Object value = element.getValue();
+      isQuoted = value instanceof String || value instanceof Character;
+    }
+    return isQuoted ? new TextRange(1, Math.max(1, length - 1)) : TextRange.from(0, length);
   }
 }

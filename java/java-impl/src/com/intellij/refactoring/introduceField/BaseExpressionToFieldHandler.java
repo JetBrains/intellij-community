@@ -134,7 +134,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
     else {
       PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
-      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), new PsiClassListCellRenderer(),
+      NavigationUtil.getPsiElementPopup(classes.toArray(new PsiClass[classes.size()]), PsiClassListCellRenderer.INSTANCE,
                                         "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
                                         new PsiElementProcessor<PsiClass>() {
                                           @Override
@@ -712,7 +712,8 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
           initializer = mySelectedExpr;
         }
 
-        initializer = IntroduceVariableBase.replaceExplicitWithDiamondWhenApplicable(initializer, myType);
+        final SmartTypePointer type = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myType);
+        initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, myType);
 
         final PsiMethod enclosingConstructor = getEnclosingConstructor(myParentClass, myAnchorElement);
         PsiClass destClass = mySettings.getDestinationClass() == null ? myParentClass : mySettings.getDestinationClass();
@@ -722,8 +723,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         ChangeContextUtil.encodeContextInfo(destClass, true);
 
         myField = mySettings.isIntroduceEnumConstant() ? EnumConstantsUtil.createEnumConstant(destClass, myFieldName, initializer) :
-                         createField(myFieldName, myType, initializer, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
-                                     myParentClass);
+                  createField(myFieldName, type.getType(), initializer,
+                              initializerPlace == InitializationPlace.IN_FIELD_DECLARATION && initializer != null,
+                              myParentClass);
 
         setModifiers(myField, mySettings);
         PsiElement finalAnchorElement = null;

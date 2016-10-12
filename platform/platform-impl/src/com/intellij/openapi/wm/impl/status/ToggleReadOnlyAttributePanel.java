@@ -84,26 +84,22 @@ public class ToggleReadOnlyAttributePanel extends FileEditorManagerAdapter imple
   }
 
   public Consumer<MouseEvent> getClickConsumer() {
-    return new Consumer<MouseEvent>() {
-      public void consume(MouseEvent mouseEvent) {
-        final VirtualFile file = getCurrentFile();
-        if (!isReadOnlyApplicableForFile(file)) {
-          return;
-        }
-        FileDocumentManager.getInstance().saveAllDocuments();
-
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            try {
-              ReadOnlyAttributeUtil.setReadOnlyAttribute(file, file.isWritable());
-              myStatusBar.updateWidget(ID());
-            }
-            catch (IOException e) {
-              Messages.showMessageDialog(getProject(), e.getMessage(), UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
-            }
-          }
-        });
+    return mouseEvent -> {
+      final VirtualFile file = getCurrentFile();
+      if (!isReadOnlyApplicableForFile(file)) {
+        return;
       }
+      FileDocumentManager.getInstance().saveAllDocuments();
+
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        try {
+          ReadOnlyAttributeUtil.setReadOnlyAttribute(file, file.isWritable());
+          myStatusBar.updateWidget(ID());
+        }
+        catch (IOException e) {
+          Messages.showMessageDialog(getProject(), e.getMessage(), UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
+        }
+      });
     };
   }
 

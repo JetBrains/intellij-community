@@ -209,10 +209,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     if (myProtectedRadioButton.isSelected()) {
       return PsiModifier.PROTECTED;
     }
-    if (myPrivateRadioButton.isSelected()) {
-      return PsiModifier.PRIVATE;
-    }
-    return null;
+    return PsiModifier.PRIVATE;
   }
 
 
@@ -367,11 +364,7 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
       buffer.append("\n}.");
       buffer.append(myMethodName.getText());
       buffer.append("(");
-      buffer.append(StringUtil.join(myInputVariables, new Function<VariableData, String>() {
-        public String fun(final VariableData variableData) {
-          return variableData.name;
-        }
-      }, ", "));
+      buffer.append(StringUtil.join(myInputVariables, variableData -> variableData.name, ", "));
       buffer.append(")");
     }
 

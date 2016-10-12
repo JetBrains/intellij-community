@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,10 @@ import java.awt.event.MouseEvent;
  * @author Konstantin Bulenkov
  */
 public class OnePixelDivider extends Divider {
-  public static final Color BACKGROUND = new JBColor(Gray.xC5, Gray.x51);
+  public static final Color BACKGROUND = new JBColor(() -> {
+    final Color bg = UIManager.getColor("OnePixelDivider.background");
+    return bg != null ? bg : new JBColor(Gray.xC5, Gray.x51);
+  });
 
   private boolean myVertical;
   private Splittable mySplitter;

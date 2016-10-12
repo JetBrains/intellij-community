@@ -45,12 +45,7 @@ public class EditScopesAction extends AnAction implements DumbAware {
     final String scopeName = ProjectView.getInstance(project).getCurrentProjectViewPane().getSubId();
     LOG.assertTrue(scopeName != null);
     final ScopeChooserConfigurable scopeChooserConfigurable = new ScopeChooserConfigurable(project);
-    ShowSettingsUtil.getInstance().editConfigurable(project, scopeChooserConfigurable, new Runnable(){
-      @Override
-      public void run() {
-        scopeChooserConfigurable.selectNodeInTree(scopeName);
-      }
-    });
+    ShowSettingsUtil.getInstance().editConfigurable(project, scopeChooserConfigurable, () -> scopeChooserConfigurable.selectNodeInTree(scopeName));
   }
 
   @Override

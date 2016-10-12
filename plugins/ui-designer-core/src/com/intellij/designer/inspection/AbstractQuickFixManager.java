@@ -70,12 +70,7 @@ public abstract class AbstractQuickFixManager {
     myComponent = component;
     myViewPort = viewPort;
 
-    myShowHintRequest = new Runnable() {
-      @Override
-      public void run() {
-        showHint();
-      }
-    };
+    myShowHintRequest = () -> showHint();
 
     new VisibilityWatcher() {
       @Override
@@ -316,17 +311,7 @@ public abstract class AbstractQuickFixManager {
   }
 
   private Runnable getQuickFixRunnable(final QuickFix value) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        myDesigner.getToolProvider().executeWithReparse(new ThrowableRunnable<Exception>() {
-          @Override
-          public void run() throws Exception {
-            ApplicationManager.getApplication().runWriteAction(value);
-          }
-        }, "Run '" + value.getName() + "' QuickFix");
-      }
-    };
+    return () -> myDesigner.getToolProvider().executeWithReparse(() -> ApplicationManager.getApplication().runWriteAction(value), "Run '" + value.getName() + "' QuickFix");
   }
 
   private static final Border INACTIVE_BORDER = BorderFactory.createEmptyBorder(4, 4, 4, 4);

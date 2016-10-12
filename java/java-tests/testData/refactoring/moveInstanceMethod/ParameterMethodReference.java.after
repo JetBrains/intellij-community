@@ -1,0 +1,16 @@
+import java.util.stream.Stream;
+
+class Test {
+  private static class Destination{
+      private boolean notNull() {
+        return this != null;
+      }
+  }
+
+  private final Destination destination = new Destination();
+
+  public void main(Stream<Destination> stream){
+    stream.filter(Test.Destination::notNull);
+  }
+
+}

@@ -49,7 +49,6 @@ public class LinkLabel<T> extends JLabel {
   private static final Set<String> ourVisitedLinks = new HashSet<String>();
 
   private boolean myIsLinkActive;
-  private boolean myIsSelected;
 
   private String myVisitedLinksKey;
   private Icon myHoveringIcon;
@@ -105,14 +104,12 @@ public class LinkLabel<T> extends JLabel {
     addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
-        myIsSelected = true;
         myUnderline = true;
         repaint();
       }
 
       @Override
       public void focusLost(FocusEvent e) {
-        myIsSelected = false;
         myUnderline = false;
         repaint();
       }
@@ -171,9 +168,16 @@ public class LinkLabel<T> extends JLabel {
         g.drawLine(bounds.x, lineY, bounds.x + bounds.width, lineY);
       }
 
-      if (myIsSelected){
+      if (isFocusOwner()){
         g.setColor(UIUtil.getTreeSelectionBorderColor());
-        UIUtil.drawLabelDottedRectangle(this, g, getTextBounds());
+        Rectangle bounds = getTextBounds();
+        // JLabel draws the text relative to the baseline. So, we must ensure
+        // we draw the dotted rectangle relative to that same baseline.
+        FontMetrics fm = getFontMetrics(getFont());
+        int baseLine = getUI().getBaseline(this, getWidth(), getHeight());
+        int textY = baseLine - fm.getLeading() - fm.getAscent();
+        int textHeight = fm.getHeight();
+        UIUtil.drawDottedRectangle(g, bounds.x, textY, bounds.x + bounds.width - 1, textY + textHeight - 1);
       }
     }
   }
@@ -211,7 +215,7 @@ public class LinkLabel<T> extends JLabel {
   private final JBRectangle textR = new JBRectangle();
   private final JBRectangle viewR = new JBRectangle();
 
-  private boolean isInClickableArea(Point pt) {
+  protected boolean isInClickableArea(Point pt) {
     iconR.clear();
     textR.clear();
     final Insets insets = getInsets(null);

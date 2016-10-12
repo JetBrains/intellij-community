@@ -22,4 +22,6 @@ import org.jetbrains.annotations.NotNull;
 public interface SuppressQuickFix extends LocalQuickFix {
   SuppressQuickFix[] EMPTY_ARRAY = new SuppressQuickFix[0];
   boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context);
+
+  boolean isSuppressAll();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -41,12 +42,12 @@ public class GutterIntentionsTest extends LightCodeInsightFixtureTestCase {
     myFixture.configureByText(JavaFileType.INSTANCE, "public class Foo {\n" +
                                                      "  public static void <caret>main(String[] args) {}" +
                                                      "}");
-    assertEquals(1, myFixture.findGuttersAtCaret().size());
+    assertSize(1, myFixture.findGuttersAtCaret());
 
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     ShowIntentionsPass.getActionsToShow(getEditor(), getFile(), intentions, -1);
-    assertEquals(1, intentions.guttersToShow.size());
-    List<IntentionAction> options = intentions.guttersToShow.get(0).getOptions(myFixture.getElementAtCaret(), getEditor());
+    final HighlightInfo.IntentionActionDescriptor intentionActionDescriptor = assertOneElement(intentions.guttersToShow);
+    List<IntentionAction> options = intentionActionDescriptor.getOptions(myFixture.getElementAtCaret(), getEditor());
     assertNotNull(options);
     assertNotEmpty(options);
   }

@@ -66,7 +66,7 @@ class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements Persis
   @Override
   public void loadState(Element state) {
     XmlSerializer.deserializeInto(this, state);
-    CodeStyleScheme current = CURRENT_SCHEME_NAME == null ? null : findSchemeByName(CURRENT_SCHEME_NAME);
+    CodeStyleScheme current = CURRENT_SCHEME_NAME == null ? null : mySchemeManager.findSchemeByName(CURRENT_SCHEME_NAME);
     setCurrentScheme(current == null ? getDefaultScheme() : current);
   }
 }

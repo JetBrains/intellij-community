@@ -15,25 +15,30 @@
  */
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.execution.CantRunException;
 import com.intellij.execution.CommandLineWrapperUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +50,7 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -119,13 +125,10 @@ public class JdkUtil {
     File binPath = new File(homePath, "bin");
     if (!binPath.exists()) return false;
 
-    FileFilter fileFilter = new FileFilter() {
-      @Override
-      public boolean accept(@NotNull File f) {
-        if (f.isDirectory()) return false;
-        String name = FileUtil.getNameWithoutExtension(f);
-        return "javac".equals(name) || "javah".equals(name);
-      }
+    FileFilter fileFilter = f -> {
+      if (f.isDirectory()) return false;
+      String name = FileUtil.getNameWithoutExtension(f);
+      return "javac".equals(name) || "javah".equals(name);
     };
     File[] children = binPath.listFiles(fileFilter);
 
@@ -141,12 +144,7 @@ public class JdkUtil {
     File binPath = new File(homePath, "bin");
     if (!binPath.exists()) return false;
 
-    FileFilter fileFilter = new FileFilter() {
-      @Override
-      public boolean accept(@NotNull File f) {
-        return !f.isDirectory() && "java".equals(FileUtil.getNameWithoutExtension(f));
-      }
-    };
+    FileFilter fileFilter = f -> !f.isDirectory() && "java".equals(FileUtil.getNameWithoutExtension(f));
     File[] children = binPath.listFiles(fileFilter);
 
     return children != null && children.length >= 1 &&
@@ -172,10 +170,12 @@ public class JdkUtil {
     commandLine.withParentEnvironmentType(javaParameters.isPassParentEnvs() ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
 
     final Class commandLineWrapper;
+    boolean passProgramParametersViaClassPathJar = false;
     if ((commandLineWrapper = getCommandLineWrapperClass()) != null) {
       if (forceDynamicClasspath && !vmParametersList.hasParameter("-classpath") && !vmParametersList.hasParameter("-cp")) {
         if (isClassPathJarEnabled(javaParameters, PathUtil.getJarPathForClass(ClassPath.class))) {
-          appendJarClasspathParams(javaParameters, commandLine, vmParametersList, commandLineWrapper);
+          passProgramParametersViaClassPathJar = javaParameters.isPassProgramParametersViaClasspathJar();
+          appendJarClasspathParams(javaParameters, commandLine, vmParametersList, commandLineWrapper, passProgramParametersViaClassPathJar);
         }
         else {
           appendOldCommandLineWrapper(javaParameters, commandLine, vmParametersList, commandLineWrapper);
@@ -199,7 +199,9 @@ public class JdkUtil {
       commandLine.addParameter(jarPath);
     }
 
-    commandLine.addParameters(javaParameters.getProgramParametersList().getList());
+    if (!passProgramParametersViaClassPathJar) {
+      commandLine.addParameters(javaParameters.getProgramParametersList().getList());
+    }
 
     commandLine.withWorkDirectory(javaParameters.getWorkingDirectory());
 
@@ -266,23 +268,28 @@ public class JdkUtil {
       commandLine.addParameter(classpath);
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
+      throwUnableToCreateTempFile();
     }
     appendEncoding(javaParameters, commandLine, vmParametersList);
-    if (classpathFile != null) {
-      commandLine.addParameter(commandLineWrapper.getName());
-      commandLine.addParameter(classpathFile.getAbsolutePath());
-    }
+    commandLine.addParameter(commandLineWrapper.getName());
+    commandLine.addParameter(classpathFile.getAbsolutePath());
 
     if (vmParamsFile != null) {
       commandLine.addParameter("@vm_params");
       commandLine.addParameter(vmParamsFile.getAbsolutePath());
     }
+
+    final Set<File> filesToDelete = getFilesToDeleteUserData(commandLine);
+    ContainerUtil.addIfNotNull(classpathFile, filesToDelete);
+    ContainerUtil.addIfNotNull(vmParamsFile, filesToDelete);
   }
 
   private static void appendJarClasspathParams(SimpleJavaParameters javaParameters,
                                                GeneralCommandLine commandLine,
-                                               ParametersList vmParametersList, Class commandLineWrapper) {
+                                               ParametersList vmParametersList,
+                                               Class commandLineWrapper,
+                                               boolean storeProgramParametersInJar) {
     try {
       final Manifest manifest = new Manifest();
       manifest.getMainAttributes().putValue("Created-By",
@@ -304,11 +311,19 @@ public class JdkUtil {
       else {
         commandLine.addParameters(vmParametersList.getList());
       }
+      if (storeProgramParametersInJar) {
+        manifest.getMainAttributes().putValue("Program-Parameters", ParametersListUtil.join(javaParameters.getProgramParametersList().getList()));
+      }
+
       final boolean notEscape = vmParametersList.hasParameter(PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL);
       final List<String> classPathList = javaParameters.getClassPath().getPathList();
-      final String jarFile = CommandLineWrapperUtil.createClasspathJarFile(manifest, classPathList, notEscape).getAbsolutePath();
+
+      final File classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(manifest, classPathList, notEscape);
+      getFilesToDeleteUserData(commandLine).add(classpathJarFile);
+
+      final String jarFile = classpathJarFile.getAbsolutePath();
       commandLine.addParameter("-classpath");
-      if (writeDynamicVMOptions) {
+      if (writeDynamicVMOptions || storeProgramParametersInJar) {
         commandLine.addParameter(PathUtil.getJarPathForClass(commandLineWrapper) + File.pathSeparator + jarFile);
         appendEncoding(javaParameters, commandLine, vmParametersList);
         commandLine.addParameter(commandLineWrapper.getName());
@@ -320,8 +335,13 @@ public class JdkUtil {
       }
     }
     catch (IOException e) {
-      LOG.error(e);
+      LOG.info(e);
+      throwUnableToCreateTempFile();
     }
+  }
+
+  private static void throwUnableToCreateTempFile() {
+    throw new RuntimeException(new CantRunException("Failed to create temp file with long classpath in " + FileUtilRt.getTempDirectory()));
   }
 
   private static boolean isClassPathJarEnabled(SimpleJavaParameters javaParameters, String currentPath) {
@@ -378,6 +398,15 @@ public class JdkUtil {
       catch (UnsupportedCharsetException ignore) { }
       catch (IllegalCharsetNameException ignore) { }
     }
+  }
+
+  private static Set<File> getFilesToDeleteUserData(GeneralCommandLine commandLine) {
+    Set<File> filesToDelete = commandLine.getUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION);
+    if (filesToDelete == null) {
+      filesToDelete = new THashSet<>();
+      commandLine.putUserData(OSProcessHandler.DELETE_FILES_ON_TERMINATION, filesToDelete);
+    }
+    return filesToDelete;
   }
 
   @Nullable

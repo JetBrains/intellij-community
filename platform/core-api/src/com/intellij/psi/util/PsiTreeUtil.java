@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -344,6 +344,24 @@ public class PsiTreeUtil {
       }
     }
     return result == null ? null : ArrayUtil.toObjectArray(result, aClass);
+  }
+
+  @NotNull
+  public static <T extends PsiElement> List<T> getChildrenOfAnyType(@Nullable PsiElement element, @NotNull Class<? extends T>... classes) {
+    if (element == null) return ContainerUtil.emptyList();
+
+    List<T> result = null;
+    for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (instanceOf(child, classes)) {
+        if (result == null) result = ContainerUtil.newSmartList();
+        //noinspection unchecked
+        result.add((T)child);
+      }
+    }
+    if (result == null) {
+      return ContainerUtil.emptyList();
+    }
+    return result;
   }
 
   @NotNull

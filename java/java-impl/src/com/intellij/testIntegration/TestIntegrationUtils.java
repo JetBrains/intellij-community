@@ -139,7 +139,7 @@ public class TestIntegrationUtils {
     return result;
   }
 
-  public static void runTestMethodTemplate(MethodKind methodKind,
+  public static void runTestMethodTemplate(@NotNull MethodKind methodKind,
                                            TestFramework framework,
                                            final Editor editor,
                                            final PsiClass targetClass,
@@ -149,15 +149,15 @@ public class TestIntegrationUtils {
     runTestMethodTemplate(methodKind, framework, editor, targetClass, null, method, name, automatic, existingNames);
   }
 
-  public static void runTestMethodTemplate(MethodKind methodKind,
+  public static void runTestMethodTemplate(@NotNull MethodKind methodKind,
                                            TestFramework framework,
                                            final Editor editor,
                                            final PsiClass targetClass,
                                            @Nullable PsiClass sourceClass,
                                            final PsiMethod method,
                                            @Nullable String name,
-    boolean automatic,
-    Set<String> existingNames) {
+                                           boolean automatic,
+                                           Set<String> existingNames) {
     runTestMethodTemplate(editor, targetClass, method, automatic,
                           createTestMethodTemplate(methodKind, framework, targetClass, sourceClass, name, automatic, existingNames));
   }
@@ -167,7 +167,8 @@ public class TestIntegrationUtils {
                                            final PsiMethod method,
                                            boolean automatic, final Template template) {
 
-    final TextRange range = method.getTextRange();
+    final int startOffset = method.getModifierList().getTextRange().getStartOffset();
+    final TextRange range = new TextRange(startOffset, method.getTextRange().getEndOffset());
     editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
     editor.getCaretModel().moveToOffset(range.getStartOffset());
 
@@ -179,20 +180,18 @@ public class TestIntegrationUtils {
       adapter = new TemplateEditingAdapter() {
         @Override
         public void templateFinished(Template template, boolean brokenOff) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-              PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-              PsiElement el = PsiTreeUtil.findElementOfClassAtOffset(psi, editor.getCaretModel().getOffset() - 1, PsiMethod.class, false);
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+            PsiFile psi = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+            PsiElement el = PsiTreeUtil.findElementOfClassAtOffset(psi, editor.getCaretModel().getOffset() - 1, PsiMethod.class, false);
 
-              if (el != null) {
-                PsiMethod method = PsiTreeUtil.getParentOfType(el, PsiMethod.class, false);
-                if (method != null) {
-                  if (method.findDeepestSuperMethods().length > 0) {
-                    GenerateMembersUtil.setupGeneratedMethod(method);
-                  }
-                  CreateFromUsageUtils.setupEditor(method, editor);
+            if (el != null) {
+              PsiMethod method1 = PsiTreeUtil.getParentOfType(el, PsiMethod.class, false);
+              if (method1 != null) {
+                if (method1.findDeepestSuperMethods().length > 0) {
+                  GenerateMembersUtil.setupGeneratedMethod(method1);
                 }
+                CreateFromUsageUtils.setupEditor(method1, editor);
               }
             }
           });
@@ -203,18 +202,18 @@ public class TestIntegrationUtils {
     TemplateManager.getInstance(project).startTemplate(editor, template, adapter);
   }
 
-  public static Template createTestMethodTemplate(MethodKind methodKind,
+  public static Template createTestMethodTemplate(@NotNull MethodKind methodKind,
                                                   TestFramework descriptor,
-                                                  PsiClass targetClass,
+                                                  @NotNull PsiClass targetClass,
                                                   @Nullable String name,
                                                   boolean automatic,
                                                   Set<String> existingNames) {
     return createTestMethodTemplate(methodKind, descriptor, targetClass, null, name, automatic, existingNames);
   }
 
-  public static Template createTestMethodTemplate(MethodKind methodKind,
+  public static Template createTestMethodTemplate(@NotNull MethodKind methodKind,
                                                   TestFramework descriptor,
-                                                  @NotNull PsiClass targetClass, 
+                                                  @NotNull PsiClass targetClass,
                                                   @Nullable PsiClass sourceClass,
                                                   @Nullable String name,
                                                   boolean automatic,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
   public XDebuggerTreeInplaceEditor(final XDebuggerTreeNode node, @NonNls final String historyId) {
     myNode = node;
     myTree = myNode.getTree();
-    myExpressionEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), historyId, myTree.getSourcePosition());
+    myExpressionEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), historyId, myTree.getSourcePosition(), false);
   }
 
   @Override
@@ -60,6 +60,7 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
     doOKAction();
   }
 
+  @Override
   protected JComponent getPreferredFocusedComponent() {
     return myExpressionEditor.getPreferredFocusedComponent();
   }
@@ -68,22 +69,27 @@ public abstract class XDebuggerTreeInplaceEditor extends TreeInplaceEditor {
     return myNode;
   }
 
+  @Override
   public Editor getEditor() {
     return myExpressionEditor.getEditor();
   }
 
+  @Override
   public JComponent getEditorComponent() {
     return myExpressionEditor.getEditorComponent();
   }
 
+  @Override
   protected TreePath getNodePath() {
     return myNode.getPath();
   }
 
+  @Override
   protected JTree getTree() {
     return myNode.getTree();
   }
 
+  @Override
   protected Project getProject() {
     return myNode.getTree().getProject();
   }

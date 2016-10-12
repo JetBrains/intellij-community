@@ -15,18 +15,20 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
-public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBrowserExtender {
+public class AlienChangeListBrowser extends ChangesBrowser {
   private final List<Change> myChanges;
   private final AbstractVcs myVcs;
 
@@ -51,25 +53,22 @@ public class AlienChangeListBrowser extends ChangesBrowser implements ChangesBro
     }
   }
 
-  public void addToolbarActions(final DialogWrapper dialogWrapper) {
-    final ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("AlienCommitChangesDialog.AdditionalActions");
-    final AnAction[] children = group.getChildren(null);
-    if (children != null) {
-      for (AnAction anAction : children) {
-        super.addToolbarAction(anAction);
-      }
-    }
+  @Override
+  protected void buildToolBar(DefaultActionGroup toolBarGroup) {
+    super.buildToolBar(toolBarGroup);
+
+    toolBarGroup.add(ActionManager.getInstance().getAction("AlienCommitChangesDialog.AdditionalActions"));
   }
 
-  public void addSelectedListChangeListener(final SelectedListChangeListener listener) {
-    // does nothing - only one change list so far
+  @Override
+  @NotNull
+  public Set<AbstractVcs> getAffectedVcses() {
+    return ContainerUtil.immutableSet(myVcs);
   }
 
-  public Collection<AbstractVcs> getAffectedVcses() {
-    return Collections.singletonList(myVcs);
-  }
-
+  @Override
+  @NotNull
   public List<Change> getCurrentIncludedChanges() {
-    return new ArrayList<Change>(myChanges);
+    return ContainerUtil.newArrayList(myChanges);
   }
 }

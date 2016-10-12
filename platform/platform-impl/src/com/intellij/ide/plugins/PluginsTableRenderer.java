@@ -232,12 +232,9 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
           sb.append(IdeBundle.message("plugin.manager.incompatible.ultimate.tooltip"));
         }
         else {
-          String deps = StringUtil.join(required, new Function<PluginId, String>() {
-            @Override
-            public String fun(PluginId id) {
-              IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
-              return plugin != null ? plugin.getName() : id.getIdString();
-            }
+          String deps = StringUtil.join(required, id -> {
+            IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+            return plugin != null ? plugin.getName() : id.getIdString();
           }, ", ");
           sb.append(IdeBundle.message("plugin.manager.incompatible.deps.tooltip", required.size(), deps));
         }

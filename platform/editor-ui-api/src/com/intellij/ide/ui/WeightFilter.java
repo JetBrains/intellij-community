@@ -3,14 +3,24 @@ package com.intellij.ide.ui;
 import java.awt.image.RGBImageFilter;
 
 abstract class WeightFilter extends RGBImageFilter {
+  private final String myName;
   private final Double myWeight;
 
-  WeightFilter(Double weight) {
-    if (weight != null && (weight < 0 || 1 < weight)) {
-      throw new IllegalArgumentException("weight " + weight + " out of [0..1]");
+  WeightFilter(String name, Double weight) {
+    if (weight != null) {
+      if (weight < 0 || 1 < weight) {
+        throw new IllegalArgumentException("weight " + weight + " out of [0..1]");
+      }
+      name = name + " weight: " + weight;
     }
+    myName = name;
     myWeight = weight;
     canFilterIndexColorModel = true;
+  }
+
+  @Override
+  public String toString() {
+    return myName;
   }
 
   @Override
@@ -33,5 +43,9 @@ abstract class WeightFilter extends RGBImageFilter {
     srcG = (int)dstG;
     srcB = (int)dstB;
     return (srcR << 16) | (srcG << 8) | srcB;
+  }
+
+  static double fix(double value) {
+    return Double.isNaN(value) || value < 0 ? 0 : value > 255 ? 255 : value;
   }
 }

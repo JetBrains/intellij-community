@@ -118,7 +118,7 @@ public class BasicBlock implements IGraphNode {
     block.removePredecessor(this);
   }
 
-  // FIXME: unify block comparisons: id or direkt equality
+  // FIXME: unify block comparisons: id or direct equality
   public void replaceSuccessor(BasicBlock oldBlock, BasicBlock newBlock) {
     for (int i = 0; i < succs.size(); i++) {
       if (succs.get(i).id == oldBlock.id) {

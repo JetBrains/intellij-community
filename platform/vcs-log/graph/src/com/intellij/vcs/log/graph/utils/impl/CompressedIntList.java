@@ -90,5 +90,4 @@ public class CompressedIntList implements IntList {
     int strongIndex = index / myBlockSize;
     return myStrongValues[strongIndex] + myCompressedDeltas.get(index);
   }
-
 }

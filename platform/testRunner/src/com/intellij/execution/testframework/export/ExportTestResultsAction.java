@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     LOG.assertTrue(project != null);
     final ExportTestResultsConfiguration config = ExportTestResultsConfiguration.getInstance(project);
 
@@ -260,15 +260,12 @@ public class ExportTestResultsAction extends DumbAwareAction {
   }
 
   private static void openEditorOrBrowser(final VirtualFile result, final Project project, final boolean editor) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (editor) {
-          FileEditorManager.getInstance(project).openFile(result, true);
-        }
-        else {
-          BrowserUtil.browse(result);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (editor) {
+        FileEditorManager.getInstance(project).openFile(result, true);
+      }
+      else {
+        BrowserUtil.browse(result);
       }
     });
   }
@@ -316,12 +313,10 @@ public class ExportTestResultsAction extends DumbAwareAction {
   }
 
   private void showBalloon(final Project project, final MessageType type, final String text, @Nullable final HyperlinkListener listener) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (project.isDisposed()) return;
-        if (ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId) != null) {
-          ToolWindowManager.getInstance(project).notifyByBalloon(myToolWindowId, type, text, null, listener);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed()) return;
+      if (ToolWindowManager.getInstance(project).getToolWindow(myToolWindowId) != null) {
+        ToolWindowManager.getInstance(project).notifyByBalloon(myToolWindowId, type, text, null, listener);
       }
     });
   }

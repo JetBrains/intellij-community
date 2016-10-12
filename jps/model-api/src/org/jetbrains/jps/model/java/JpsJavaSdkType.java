@@ -16,11 +16,12 @@
 package org.jetbrains.jps.model.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 /**
  * @author nik
@@ -42,4 +43,42 @@ public class JpsJavaSdkType extends JpsSdkType<JpsDummyElement> implements JpsEl
   public String toString() {
     return "java sdk type";
   }
+
+  public static int getJavaVersion(@Nullable JpsSdk<?> sdk) {
+    return parseVersion(sdk != null && sdk.getSdkType() instanceof JpsJavaSdkType? sdk.getVersionString() : null);
+  }
+
+  public static int parseVersion(String javaVersionString) {
+    if (javaVersionString == null) {
+      return 0;
+    }
+    final int quoteBegin = javaVersionString.indexOf('\"');
+    if (quoteBegin >= 0) {
+      final int quoteEnd = javaVersionString.indexOf('\"', quoteBegin + 1);
+      if (quoteEnd > quoteBegin) {
+        javaVersionString = javaVersionString.substring(quoteBegin + 1, quoteEnd);
+      }
+    }
+    if (javaVersionString.isEmpty()) {
+      return 0;
+    }
+
+    final String prefix = "1.";
+    final int parseBegin = javaVersionString.startsWith(prefix) ? prefix.length() : 0;
+
+    int parseEnd = parseBegin;
+    while (parseEnd < javaVersionString.length()) {
+      if (!Character.isDigit(javaVersionString.charAt(parseEnd))) {
+        break;
+      }
+      parseEnd++;
+    }
+    try {
+      return Integer.parseInt(javaVersionString.substring(parseBegin, parseEnd));
+    }
+    catch (NumberFormatException ignored) {
+    }
+    return 0;
+  }
+
 }

@@ -30,6 +30,7 @@ import org.intellij.lang.regexp.RegExpLanguageHosts;
 import org.intellij.lang.regexp.RegExpTT;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 import java.util.HashSet;
@@ -46,6 +47,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     myLanguageHosts = RegExpLanguageHosts.getInstance();
   }
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     assert myHolder == null : "unsupported concurrent annotator invocation";
     try {
@@ -57,6 +59,28 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
+  public void visitRegExpOptions(RegExpOptions options) {
+    checkValidFlag(options.getOptionsOn(), options);
+    checkValidFlag(options.getOptionsOff(), options);
+  }
+
+  private void checkValidFlag(@Nullable ASTNode optionsNode, @NotNull RegExpOptions context) {
+    if (optionsNode == null) {
+      return;
+    }
+    final String text = optionsNode.getText();
+    final int start = (optionsNode.getElementType() == RegExpTT.OPTIONS_OFF) ? 1 : 0; // skip '-' if necessary
+    for (int i = start, length = text.length(); i < length; i++) {
+      final int c = text.codePointAt(i);
+      if (!Character.isBmpCodePoint(c) || !myLanguageHosts.supportsInlineOptionFlag((char)c, context)) {
+        final int offset = optionsNode.getStartOffset() + i;
+        myHolder.createErrorAnnotation(new TextRange(offset, offset + 1), "Unknown inline option flag");
+      }
+    }
+  }
+
+  @Override
   public void visitRegExpCharRange(RegExpCharRange range) {
     final RegExpCharRange.Endpoint from = range.getFrom();
     final RegExpCharRange.Endpoint to = range.getTo();
@@ -107,23 +131,45 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   }
 
   @Override
+  public void visitSimpleClass(RegExpSimpleClass simpleClass) {
+    if (!myLanguageHosts.supportsSimpleClass(simpleClass)) {
+      myHolder.createErrorAnnotation(simpleClass, "Illegal/unsupported escape sequence");
+    }
+  }
+
+  @Override
   public void visitRegExpClass(RegExpClass regExpClass) {
-    final HashSet<Character> seen = new HashSet<Character>();
-    for (RegExpClassElement element : regExpClass.getElements()) {
-      if (!(element instanceof RegExpChar)) {
-        continue;
-      }
+    if (!(regExpClass.getParent() instanceof RegExpClass)) {
+      checkForDuplicates(regExpClass, new HashSet<Character>());
+    }
+  }
+
+  private void checkForDuplicates(RegExpClassElement element, Set<Character> seen) {
+    if (element instanceof RegExpChar) {
       final RegExpChar regExpChar = (RegExpChar)element;
       final Character value = regExpChar.getValue();
       if (value != null && !seen.add(value)) {
         myHolder.createWarningAnnotation(regExpChar, "Duplicate character '" + regExpChar.getText() + "' in character class");
       }
     }
+    else if (element instanceof RegExpClass) {
+      final RegExpClass regExpClass = (RegExpClass)element;
+      for (RegExpClassElement classElement : regExpClass.getElements()) {
+        checkForDuplicates(classElement, seen);
+      }
+    }
+    else if (element instanceof RegExpUnion) {
+      final RegExpUnion union = (RegExpUnion)element;
+      for (RegExpClassElement classElement : union.getElements()) {
+        checkForDuplicates(classElement, seen);
+      }
+    }
   }
 
+  @Override
   public void visitRegExpChar(final RegExpChar ch) {
     final Character value = ch.getValue();
-    if (value == null) {
+    if (value == null || (value == '\b' && !myLanguageHosts.supportsLiteralBackspace(ch))) {
       switch (ch.getType()) {
         case CHAR:
           myHolder.createErrorAnnotation(ch, "Illegal/unsupported escape sequence");
@@ -161,6 +207,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
   public void visitRegExpProperty(RegExpProperty property) {
     final ASTNode category = property.getCategoryNode();
     if (category == null) {
@@ -175,6 +222,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
   public void visitRegExpBackref(final RegExpBackref backref) {
     final RegExpGroup group = backref.resolve();
     if (group == null) {
@@ -189,6 +237,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     }
   }
 
+  @Override
   public void visitRegExpGroup(RegExpGroup group) {
     final RegExpPattern pattern = group.getPattern();
     if (pattern != null) {
@@ -263,6 +312,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     return true;
   }
 
+  @Override
   public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
     final RegExpQuantifier.Count count = quantifier.getCount();
     if (!(count instanceof RegExpQuantifier.SimpleCount)) {

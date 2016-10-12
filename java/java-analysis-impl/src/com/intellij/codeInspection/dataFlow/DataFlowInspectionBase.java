@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,10 +63,10 @@ import java.util.*;
 public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInspection");
   @NonNls private static final String SHORT_NAME = "ConstantConditions";
-  public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
-  public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS = false;
-  public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = false;
-  public boolean IGNORE_ASSERT_STATEMENTS = false;
+  public boolean SUGGEST_NULLABLE_ANNOTATIONS;
+  public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS;
+  public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE;
+  public boolean IGNORE_ASSERT_STATEMENTS;
   public boolean REPORT_CONSTANT_REFERENCE_VALUES = true;
 
   @Override
@@ -160,12 +160,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         if (((PsiMethod)element).isConstructor()) return true;
         
         final PsiClass containingClass = ((PsiMethod)element).getContainingClass();
-        return !InheritanceUtil.processSupers(containingClass, true, new Processor<PsiClass>() {
-          @Override
-          public boolean process(PsiClass psiClass) {
-            return !canCallMethodsInConstructors(psiClass, psiClass != containingClass);
-          }
-        });
+        return !InheritanceUtil.processSupers(containingClass, true,
+                                              psiClass -> !canCallMethodsInConstructors(psiClass, psiClass != containingClass));
         
       }
     }
@@ -181,7 +177,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
       for (PsiMethodCallExpression call : SyntaxTraverser.psiTraverser().withRoot(body).filter(PsiMethodCallExpression.class)) {
         PsiReferenceExpression methodExpression = call.getMethodExpression();
-        if (methodExpression instanceof PsiThisExpression || methodExpression instanceof PsiSuperExpression) continue;
+        if (methodExpression.textMatches(PsiKeyword.THIS) || methodExpression.textMatches(PsiKeyword.SUPER)) continue;
         if (!virtual) return true;
         
         PsiMethod target = call.resolveMethod();
@@ -279,12 +275,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     allProblems.addAll(trueSet);
     allProblems.addAll(falseSet);
     allProblems.addAll(visitor.myCCEInstructions);
-    allProblems.addAll(ContainerUtil.filter(runner.getInstructions(), new Condition<Instruction>() {
-      @Override
-      public boolean value(Instruction instruction1) {
-        return instruction1 instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction1);
-      }
-    }));
+    allProblems.addAll(ContainerUtil.filter(runner.getInstructions(), instruction1 -> instruction1 instanceof InstanceofInstruction && visitor.isInstanceofRedundant((InstanceofInstruction)instruction1)));
 
     HashSet<PsiElement> reportedAnchors = new HashSet<PsiElement>();
     for (PsiElement element : visitor.getProblems(NullabilityProblem.callNPE)) {
@@ -658,12 +649,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (isCompileTimeFlagReference(condition)) return true;
 
     Collection<PsiReferenceExpression> refs = PsiTreeUtil.findChildrenOfType(condition, PsiReferenceExpression.class);
-    return ContainerUtil.or(refs, new Condition<PsiReferenceExpression>() {
-      @Override
-      public boolean value(PsiReferenceExpression ref) {
-        return isCompileTimeFlagReference(ref);
-      }
-    });
+    return ContainerUtil.or(refs, ref -> isCompileTimeFlagReference(ref));
   }
 
   private static boolean isCompileTimeFlagReference(PsiElement element) {
@@ -828,15 +814,12 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
     
     Collection<PsiElement> getProblems(final NullabilityProblem kind) {
-      return ContainerUtil.filter(myProblems.get(kind), new Condition<PsiElement>() {
-        @Override
-        public boolean value(PsiElement psiElement) {
-          StateInfo info = myStateInfos.get(Pair.create(kind, psiElement));
-          // non-ephemeral NPE should be reported
-          // ephemeral NPE should also be reported if only ephemeral states have reached a particular problematic instruction
-          //  (e.g. if it's inside "if (var == null)" check after contract method invocation
-          return info.normalNpe || info.ephemeralNpe && !info.normalOk;
-        }
+      return ContainerUtil.filter(myProblems.get(kind), psiElement -> {
+        StateInfo info = myStateInfos.get(Pair.create(kind, psiElement));
+        // non-ephemeral NPE should be reported
+        // ephemeral NPE should also be reported if only ephemeral states have reached a particular problematic instruction
+        //  (e.g. if it's inside "if (var == null)" check after contract method invocation
+        return info.normalNpe || info.ephemeralNpe && !info.normalOk;
       });
     }
 

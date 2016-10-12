@@ -87,13 +87,10 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
         if (showAllTemplates()) {
           final AtomicBoolean templatesShown = new AtomicBoolean(false);
           final CompletionResultSet finalResult = result;
-          result.runRemainingContributors(parameters, new Consumer<CompletionResult>() {
-            @Override
-            public void consume(CompletionResult completionResult) {
-              finalResult.passResult(completionResult);
-              if (completionResult.isStartMatch()) {
-                ensureTemplatesShown(templatesShown, templates, parameters, finalResult);
-              }
+          result.runRemainingContributors(parameters, completionResult -> {
+            finalResult.passResult(completionResult);
+            if (completionResult.isStartMatch()) {
+              ensureTemplatesShown(templatesShown, templates, parameters, finalResult);
             }
           });
 

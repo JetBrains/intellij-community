@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,6 @@ import com.intellij.cvsSupport2.config.CvsRootConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvsBrowser.CvsElement;
 import com.intellij.cvsSupport2.cvsBrowser.CvsFile;
-import com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsLog.LocalPathIndifferentLogOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsLog.LogOperation;
-import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProvider;
 import com.intellij.cvsSupport2.cvsoperations.cvsTagOrBranch.TagsProviderOnEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.dateOrRevision.ui.DateOrRevisionOrTagSettings;
 import com.intellij.cvsSupport2.ui.ChangeKeywordSubstitutionPanel;
@@ -33,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.checkout.CheckoutStrategy;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -81,9 +76,9 @@ public class ChooseCheckoutMode extends WizardStep {
     super("###", wizard);
     myCheckoutModeList.setCellRenderer(new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         final CheckoutStrategy checkoutStrategy = (CheckoutStrategy)value;
-        append(checkoutStrategy.getResult().getAbsolutePath(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
+        append(checkoutStrategy.getResult().getAbsolutePath(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
         setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
       }
     });
@@ -259,12 +254,7 @@ public class ChooseCheckoutMode extends WizardStep {
       if (!hasParentIn(allFiles, file)) result.add(file);
     }
 
-    Collections.sort(result, new Comparator<File>(){
-      @Override
-      public int compare(File file, File file1) {
-        return file.getPath().compareTo(file1.getPath());
-      }
-    });
+    Collections.sort(result, (file, file1) -> file.getPath().compareTo(file1.getPath()));
     return result;
   }
 

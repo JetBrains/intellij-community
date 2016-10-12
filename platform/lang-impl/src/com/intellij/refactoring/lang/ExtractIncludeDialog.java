@@ -152,25 +152,19 @@ public class ExtractIncludeDialog extends DialogWrapper {
       return;
     }
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        final Runnable action = new Runnable() {
-          @Override
-          public void run() {
-            try {
-              PsiDirectory targetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(project), directoryName);
-              targetDirectory.checkCreateFile(targetFileName);
-              final String webPath = PsiFileSystemItemUtil.getRelativePath(myCurrentDirectory, targetDirectory);
-              myTargetDirectory = webPath == null ? null : targetDirectory;
-            }
-            catch (IncorrectOperationException e) {
-              CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), null, project);
-            }
-          }
-        };
-        ApplicationManager.getApplication().runWriteAction(action);
-      }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      final Runnable action = () -> {
+        try {
+          PsiDirectory targetDirectory = DirectoryUtil.mkdirs(PsiManager.getInstance(project), directoryName);
+          targetDirectory.checkCreateFile(targetFileName);
+          final String webPath = PsiFileSystemItemUtil.getRelativePath(myCurrentDirectory, targetDirectory);
+          myTargetDirectory = webPath == null ? null : targetDirectory;
+        }
+        catch (IncorrectOperationException e) {
+          CommonRefactoringUtil.showErrorMessage(REFACTORING_NAME, e.getMessage(), null, project);
+        }
+      };
+      ApplicationManager.getApplication().runWriteAction(action);
     }, RefactoringBundle.message("create.directory"), null);
     if (myTargetDirectory == null) return;
     super.doOKAction();

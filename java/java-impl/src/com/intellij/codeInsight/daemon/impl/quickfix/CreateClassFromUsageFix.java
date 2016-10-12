@@ -56,23 +56,20 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
     if (aClass == null) return;
 
     ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          PsiJavaCodeReferenceElement refElement = element;
-          try {
-            refElement = (PsiJavaCodeReferenceElement)refElement.bindToElement(aClass);
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
-
-          IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
-
-          OpenFileDescriptor descriptor = new OpenFileDescriptor(refElement.getProject(), aClass.getContainingFile().getVirtualFile(),
-                                                                 aClass.getTextOffset());
-          FileEditorManager.getInstance(aClass.getProject()).openTextEditor(descriptor, true);
+      () -> {
+        PsiJavaCodeReferenceElement refElement = element;
+        try {
+          refElement = (PsiJavaCodeReferenceElement)refElement.bindToElement(aClass);
         }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
+
+        IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+
+        OpenFileDescriptor descriptor = new OpenFileDescriptor(refElement.getProject(), aClass.getContainingFile().getVirtualFile(),
+                                                               aClass.getTextOffset());
+        FileEditorManager.getInstance(aClass.getProject()).openTextEditor(descriptor, true);
       }
     );
   }

@@ -80,6 +80,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return Arrays.asList(ModuleManager.getInstance(getProject()).getModules());
   }
 
+  /**
+   * @deprecated  method {@link com.intellij.execution.configurations.ConfigurationFactory#createTemplateConfiguration(com.intellij.openapi.project.Project)}
+   * would be used instead to avoid wrong custom 'cloning'
+   */
   protected ModuleBasedConfiguration createInstance() {
     ModuleBasedConfiguration<ConfigurationModule> configuration =
       (ModuleBasedConfiguration<ConfigurationModule>)getFactory().createTemplateConfiguration(getProject());
@@ -92,11 +96,11 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     final Element element = new Element(TO_CLONE_ELEMENT_NAME);
     try {
       writeExternal(element);
-      final ModuleBasedConfiguration configuration = createInstance();
-
+      RunConfiguration configuration = getFactory().createTemplateConfiguration(getProject());
+      configuration.setName(getName());
       configuration.readExternal(element);
 
-      return configuration;
+      return (ModuleBasedConfiguration)configuration;
     } catch (InvalidDataException e) {
       LOG.error(e);
       return null;

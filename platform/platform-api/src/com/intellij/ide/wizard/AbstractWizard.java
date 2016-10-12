@@ -448,12 +448,9 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   private static void requestFocusTo(final JComponent component) {
-    UiNotifyConnector.doWhenFirstShown(component, new Runnable() {
-      @Override
-      public void run() {
-        final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
-        focusManager.requestFocus(component, false);
-      }
+    UiNotifyConnector.doWhenFirstShown(component, () -> {
+      final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
+      focusManager.requestFocus(component, false);
     });
   }
 
@@ -475,6 +472,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected void updateButtons() {
     boolean lastStep = isLastStep();
     updateButtons(lastStep, lastStep ? canFinish() : canGoNext(), isFirstStep());
+  }
+
+  public void updateWizardButtons() {
+    if (!mySteps.isEmpty() && getRootPane() != null)
+      updateButtons();
   }
 
   public void updateButtons(boolean lastStep, boolean canGoNext, boolean firstStep) {

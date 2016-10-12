@@ -163,12 +163,7 @@ public class MessagesEx extends Messages {
     }
 
     public void showLater() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            showNow();
-          }
-        }, ApplicationManager.getApplication().getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> showNow(), ApplicationManager.getApplication().getDisposed());
     }
 
     @YesNoResult

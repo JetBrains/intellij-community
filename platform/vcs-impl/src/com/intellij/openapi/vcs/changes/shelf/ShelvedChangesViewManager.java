@@ -60,6 +60,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
@@ -465,6 +466,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     private final Map<Couple<String>, String> myMoveRenameInfo;
     private static final Icon PatchIcon = StdFileTypes.PATCH.getIcon();
     private static final Icon DisabledPatchIcon = AllIcons.Nodes.DisabledPointcut;
+    private static final Icon DisabledToDeleteIcon = IconUtil.desaturate(AllIcons.Actions.GC);
 
     public ShelfTreeCellRenderer(Project project, final Map<Couple<String>, String> moveRenameInfo) {
       myMoveRenameInfo = moveRenameInfo;
@@ -478,7 +480,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
         ShelvedChangeList changeListData = (ShelvedChangeList) nodeValue;
         if (changeListData.isRecycled()) {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES);
-          setIcon(DisabledPatchIcon);
+          setIcon(changeListData.isMarkedToDelete() ? DisabledToDeleteIcon : DisabledPatchIcon);
         }
         else {
           myIssueLinkRenderer.appendTextWithLinks(changeListData.DESCRIPTION);

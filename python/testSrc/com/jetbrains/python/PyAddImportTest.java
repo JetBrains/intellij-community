@@ -100,6 +100,11 @@ public class PyAddImportTest extends PyTestCase {
     testLocalImport();
   }
 
+  // PY-18098
+  public void testIgnoreImportedAsModule() {
+    doAddImport("numpy", THIRD_PARTY);
+  }
+
   // PY-16373
   public void testLocalImportQuickFixAvailable() {
     myFixture.configureByFile(getTestName(true) + ".py");
@@ -109,33 +114,22 @@ public class PyAddImportTest extends PyTestCase {
 
   private void doAddOrUpdateFromImport(final String path, final String name, final ImportPriority priority) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        AddImportHelper.addOrUpdateFromImportStatement(myFixture.getFile(), path, name, null, priority, null);
-      }
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      AddImportHelper.addOrUpdateFromImportStatement(myFixture.getFile(), path, name, null, priority, null);
     });
     myFixture.checkResultByFile(getTestName(true) + ".after.py");
   }
 
   private void doAddFromImport(final String path, final String name, final ImportPriority priority) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        AddImportHelper.addFromImportStatement(myFixture.getFile(), path, name, null, priority, null);
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> AddImportHelper.addFromImportStatement(myFixture.getFile(), path, name, null, priority, null));
     myFixture.checkResultByFile(getTestName(true) + ".after.py");
   }
 
   private void doAddImport(final String name, final ImportPriority priority) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        AddImportHelper.addImportStatement(myFixture.getFile(), name, null, priority, null);
-      }
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      AddImportHelper.addImportStatement(myFixture.getFile(), name, null, priority, null);
     });
     myFixture.checkResultByFile(getTestName(true) + ".after.py");
   }
@@ -144,11 +138,8 @@ public class PyAddImportTest extends PyTestCase {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");
     myFixture.configureByFile("main.py");
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        AddImportHelper.addImportStatement(myFixture.getFile(), name, null, priority, null);
-      }
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      AddImportHelper.addImportStatement(myFixture.getFile(), name, null, priority, null);
     });
     myFixture.checkResultByFile(testName + "/main.after.py");
   }
@@ -161,16 +152,13 @@ public class PyAddImportTest extends PyTestCase {
    */
   private void doAddLocalImport(@NotNull final String name, @Nullable final String qualifier) {
     myFixture.configureByFile(getTestName(true) + ".py");
-    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        final PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
-        if (qualifier != null) {
-          AddImportHelper.addLocalFromImportStatement(reference.getElement(), qualifier, name);
-        }
-        else {
-          AddImportHelper.addLocalImportStatement(reference.getElement(), name);
-        }
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      final PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
+      if (qualifier != null) {
+        AddImportHelper.addLocalFromImportStatement(reference.getElement(), qualifier, name);
+      }
+      else {
+        AddImportHelper.addLocalImportStatement(reference.getElement(), name);
       }
     });
     myFixture.checkResultByFile(getTestName(true) + ".after.py");

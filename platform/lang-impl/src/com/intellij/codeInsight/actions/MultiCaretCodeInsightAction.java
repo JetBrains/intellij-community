@@ -60,23 +60,15 @@ public abstract class MultiCaretCodeInsightAction extends AnAction {
   }
 
   public void actionPerformedImpl(final Project project, final Editor hostEditor) {
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            MultiCaretCodeInsightActionHandler handler = getHandler();
-            try {
-              iterateOverCarets(project, hostEditor, handler);
-            }
-            finally {
-              handler.postInvoke();
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      MultiCaretCodeInsightActionHandler handler = getHandler();
+      try {
+        iterateOverCarets(project, hostEditor, handler);
       }
-    }, getCommandName(), DocCommandGroupId.noneGroupId(hostEditor.getDocument()));
+      finally {
+        handler.postInvoke();
+      }
+    }), getCommandName(), DocCommandGroupId.noneGroupId(hostEditor.getDocument()));
 
     hostEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }

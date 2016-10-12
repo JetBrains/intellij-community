@@ -31,7 +31,7 @@ public class JavaFXExpandAttributeTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUpModule() {
     super.setUpModule();
-    PsiTestUtil.addLibrary(getModule(), "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
+    AbstractJavaFXTestCase.addJavaFxJarAsLibrary(getModule());
   }
 
   public void testDefaultAttr() throws Exception {

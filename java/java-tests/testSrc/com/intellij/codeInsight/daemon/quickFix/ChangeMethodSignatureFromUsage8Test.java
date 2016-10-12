@@ -19,6 +19,9 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 public class ChangeMethodSignatureFromUsage8Test extends LightQuickFixParameterizedTestCase {
 
   public void test() throws Exception { doAllTests(); }

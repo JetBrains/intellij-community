@@ -191,43 +191,30 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   void buildStructure(final Node root, final boolean activate) throws Exception {
-    doAndWaitForBuilder(new Runnable() {
-      @Override
-      public void run() {
-        myCom = root.addChild("com");
-        myIntellij = myCom.addChild("intellij");
-        myOpenApi = myIntellij.addChild("openapi");
-        myFabrique = root.addChild("jetbrains").addChild("fabrique");
-        myIde = myFabrique.addChild("ide");
-        myRunner = root.addChild("xUnit").addChild("runner");
-        myRcp = root.addChild("org").addChild("eclipse").addChild("rcp");
+    doAndWaitForBuilder(() -> {
+      myCom = root.addChild("com");
+      myIntellij = myCom.addChild("intellij");
+      myOpenApi = myIntellij.addChild("openapi");
+      myFabrique = root.addChild("jetbrains").addChild("fabrique");
+      myIde = myFabrique.addChild("ide");
+      myRunner = root.addChild("xUnit").addChild("runner");
+      myRcp = root.addChild("org").addChild("eclipse").addChild("rcp");
 
-        if (activate) {
-          getBuilder().getUi().activate(true);
-        }
+      if (activate) {
+        getBuilder().getUi().activate(true);
       }
     });
   }
 
   protected void activate() throws Exception {
-    doAndWaitForBuilder(new Runnable() {
-      @Override
-      public void run() {
-        getBuilder().getUi().activate(true);
-      }
-    });
+    doAndWaitForBuilder(() -> getBuilder().getUi().activate(true));
   }
 
 
   void hideTree() throws Exception {
     Assert.assertFalse(getMyBuilder().myWasCleanedUp);
 
-    invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        getBuilder().getUi().deactivate();
-      }
-    });
+    invokeLaterIfNeeded(() -> getBuilder().getUi().deactivate());
 
     final WaitFor waitFor = new WaitFor() {
       @Override
@@ -261,31 +248,13 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   void buildNode(final NodeElement element, final boolean select, final boolean addToSelection) throws Exception {
     final boolean[] done = new boolean[] {false};
 
-    doAndWaitForBuilder(new Runnable() {
-      @Override
-      public void run() {
-        if (select) {
-          getBuilder().select(element, new Runnable() {
-            @Override
-            public void run() {
-              done[0] = true;
-            }
-          }, addToSelection);
-        } else {
-          getBuilder().expand(element, new Runnable() {
-            @Override
-            public void run() {
-              done[0] = true;
-            }
-          });
-        }
+    doAndWaitForBuilder(() -> {
+      if (select) {
+        getBuilder().select(element, () -> done[0] = true, addToSelection);
+      } else {
+        getBuilder().expand(element, () -> done[0] = true);
       }
-    }, new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return done[0];
-      }
-    });
+    }, o -> done[0]);
 
     Assert.assertNotNull(findNode(element, select));
   }

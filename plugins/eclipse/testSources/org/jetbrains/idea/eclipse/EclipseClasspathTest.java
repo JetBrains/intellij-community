@@ -90,18 +90,15 @@ public class EclipseClasspathTest extends IdeaTestCase {
       }
     });
 
-    ModuleRootModificationUtil.updateModel(module, new Consumer<ModifiableRootModel>() {
-      @Override
-      public void consume(ModifiableRootModel model) {
-        try {
-          EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
-          classpathReader.init(model);
-          classpathReader.readClasspath(model, classpathElement);
-          new EclipseClasspathStorageProvider().assertCompatible(model);
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    ModuleRootModificationUtil.updateModel(module, model -> {
+      try {
+        EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
+        classpathReader.init(model);
+        classpathReader.readClasspath(model, classpathElement);
+        new EclipseClasspathStorageProvider().assertCompatible(model);
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
     return module;

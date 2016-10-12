@@ -48,12 +48,7 @@ class LanguageResolvingConverter extends ResolvingConverter<LanguageResolvingUti
   @Nullable
   @Override
   public LanguageResolvingUtil.LanguageDefinition fromString(@Nullable @NonNls final String s, ConvertContext context) {
-    return ContainerUtil.find(getVariants(context), new Condition<LanguageResolvingUtil.LanguageDefinition>() {
-      @Override
-      public boolean value(LanguageResolvingUtil.LanguageDefinition definition) {
-        return definition.id.equals(s);
-      }
-    });
+    return ContainerUtil.find(getVariants(context), definition -> definition.id.equals(s));
   }
 
   @Nullable

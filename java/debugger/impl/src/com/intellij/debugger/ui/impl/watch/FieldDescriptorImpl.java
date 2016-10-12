@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,11 +137,11 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(context.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     String fieldName;
     if(isStatic()) {
       String typeName = myField.declaringType().name().replace('$', '.');
-      typeName = DebuggerTreeNodeExpression.normalize(typeName, PositionUtil.getContextElement(context), context.getProject());
+      typeName = DebuggerTreeNodeExpression.normalize(typeName, PositionUtil.getContextElement(context), myProject);
       fieldName = typeName + "." + getName();
     }
     else {

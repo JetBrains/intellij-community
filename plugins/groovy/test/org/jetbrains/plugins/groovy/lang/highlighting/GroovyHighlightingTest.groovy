@@ -15,13 +15,11 @@
  */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
-import com.intellij.testFramework.IdeaTestUtil
 import com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
 import com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
-import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
+
 /**
  * @author peter
  */
@@ -183,15 +181,6 @@ class A {
   public void testBuiltInTypeInstantiation() { doTest(); }
 
   public void testSOEInFieldDeclarations() { doTest(); }
-
-  public void testVeryLongDfaWithComplexGenerics() {
-    IdeaTestUtil.assertTiming("", 10000, 1, new Runnable() {
-      @Override
-      public void run() {
-        doTest(new GroovyAssignabilityCheckInspection(), new UnusedDefInspection(), new GrUnusedIncDecInspection());
-      }
-    });
-  }
 
   public void testWrongAnnotation() { doTest(); }
 
@@ -2003,5 +1992,29 @@ class Main {
     }
 }
 '''
+  }
+
+  void 'test static GDK method applicable'() {
+    testHighlighting '''
+def doParse() {
+  Date.parse('dd.MM.yyyy', '01.12.2016')
+}
+''', GroovyAssignabilityCheckInspection
+  }
+
+  void 'test unresolved anonymous base class'() {
+    testHighlighting '''
+def foo = new <error descr="Cannot resolve symbol 'Rrrrrrrr'">Rrrrrrrr</error>() {}
+'''
+  }
+
+  void "test allow and do not highlight 'trait', 'as', 'def', 'in' within package"() {
+    myFixture.addClass '''\
+package a.b.c.trait.d.as.e.def.f.in.g;
+public class Foo {} 
+'''
+    testHighlighting '''\
+<info>import</info> a.b.c.trait.d.as.e.def.f.in.g.*
+''', false, true
   }
 }

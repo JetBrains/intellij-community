@@ -27,13 +27,6 @@ import java.util.Comparator;
  *         Date: 10/7/13
  */
 public class DecompiledLocalVariable{
-  public static final Comparator<DecompiledLocalVariable> COMPARATOR = new Comparator<DecompiledLocalVariable>() {
-    @Override
-    public int compare(DecompiledLocalVariable v1, DecompiledLocalVariable v2) {
-      return v1.getSlot() - v2.getSlot();
-    }
-  };
-
   private final int mySlot;
   private final String mySignature;
   private final boolean myIsParam;

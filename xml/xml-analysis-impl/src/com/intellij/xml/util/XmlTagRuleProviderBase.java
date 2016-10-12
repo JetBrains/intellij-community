@@ -106,12 +106,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
   }
 
   public static Condition<XmlTag> ifAttrPresent(final String attrName) {
-    return new Condition<XmlTag>() {
-      @Override
-      public boolean value(XmlTag tag) {
-        return tag.getAttribute(attrName) != null;
-      }
-    };
+    return tag -> tag.getAttribute(attrName) != null;
   }
 
   // ---=== Classes ===---

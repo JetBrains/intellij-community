@@ -56,6 +56,12 @@ public class UnnecessaryBoxingFixTest extends IGQuickFixesTestCase {
                  "Double l = 1d;");
   }
 
+  public void testBooleanLiteral() {
+    doMemberTest(InspectionGadgetsBundle.message("unnecessary.boxing.remove.quickfix"),
+                 "final Boolean aBoolean = Boolean.valueOf(/**/true);",
+                 "final Boolean aBoolean = Boolean.TRUE;");
+  }
+
   public void testCast() {
     doFixTest();
   }

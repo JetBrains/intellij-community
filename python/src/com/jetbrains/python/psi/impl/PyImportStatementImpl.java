@@ -58,12 +58,7 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
   public PyImportElement[] getImportElements() {
     final PyImportStatementStub stub = getStub();
     if (stub != null) {
-      return stub.getChildrenByType(PyElementTypes.IMPORT_ELEMENT, new ArrayFactory<PyImportElement>() {
-        @NotNull
-        public PyImportElement[] create(int count) {
-          return new PyImportElement[count];
-        }
-      });
+      return stub.getChildrenByType(PyElementTypes.IMPORT_ELEMENT, count -> new PyImportElement[count]);
     }
     return childrenToPsi(TokenSet.create(PyElementTypes.IMPORT_ELEMENT), new PyImportElement[0]);
   }

@@ -292,12 +292,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   }
 
   private void addErrorPane() {
-    addConfigurable(new ErrorPaneConfigurable(myProject, myContext, new Runnable() {
-      @Override
-      public void run() {
-        mySidePanel.getList().repaint();
-      }
-    }), true);
+    addConfigurable(new ErrorPaneConfigurable(myProject, myContext, () -> mySidePanel.getList().repaint()), true);
   }
 
   private void addGlobalLibrariesConfig() {
@@ -342,11 +337,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     }
 
     myContext.getDaemonAnalyzer().clearCaches();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        BuildManager.getInstance().scheduleAutoMake();
-      }
-    });
+    SwingUtilities.invokeLater(() -> BuildManager.getInstance().scheduleAutoMake());
   }
 
   @Override

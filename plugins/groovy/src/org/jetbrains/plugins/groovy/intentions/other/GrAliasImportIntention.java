@@ -166,27 +166,19 @@ public class GrAliasImportIntention extends Intention {
 
         if (brokenOff) {
           if (importStatement != null) {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                importStatement.delete();
-              }
-            });
+            ApplicationManager.getApplication().runWriteAction(() -> importStatement.delete());
           }
           return;
         }
 
         updateRefs(usages, name, importStatement);
 
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final GrImportStatement context = PsiTreeUtil.findElementOfClassAtRange(file, contextImportPointer.getStartOffset(),
-                                                                                    contextImportPointer.getEndOffset(),
-                                                                                    GrImportStatement.class);
-            if (context != null) {
-              context.delete();
-            }
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          final GrImportStatement context1 = PsiTreeUtil.findElementOfClassAtRange(file, contextImportPointer.getStartOffset(),
+                                                                                   contextImportPointer.getEndOffset(),
+                                                                                   GrImportStatement.class);
+          if (context1 != null) {
+            context1.delete();
           }
         });
       }
@@ -206,46 +198,43 @@ public class GrAliasImportIntention extends Intention {
     });
 
     for (final UsageInfo usage : usages) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final PsiElement usageElement = usage.getElement();
-          if (usageElement == null) return;
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        final PsiElement usageElement = usage.getElement();
+        if (usageElement == null) return;
 
-          if (usageElement.getParent() instanceof GrImportStatement) return;
+        if (usageElement.getParent() instanceof GrImportStatement) return;
 
-          if (usageElement instanceof GrReferenceElement) {
-            final GrReferenceElement ref = (GrReferenceElement)usageElement;
-            final PsiElement qualifier = ref.getQualifier();
+        if (usageElement instanceof GrReferenceElement) {
+          final GrReferenceElement ref = (GrReferenceElement)usageElement;
+          final PsiElement qualifier = ref.getQualifier();
 
-            if (qualifier == null) {
-              final String refName = ref.getReferenceName();
-              if (refName == null) return;
+          if (qualifier == null) {
+            final String refName = ref.getReferenceName();
+            if (refName == null) return;
 
-              if (memberName.equals(refName)) {
+            if (memberName.equals(refName)) {
+              ref.handleElementRenameSimple(name);
+            }
+            else if (refName.equals(GroovyPropertyUtils.getPropertyNameByAccessorName(memberName))) {
+              final String newPropName = GroovyPropertyUtils.getPropertyNameByAccessorName(name);
+              if (newPropName != null) {
+                ref.handleElementRenameSimple(newPropName);
+              }
+              else {
                 ref.handleElementRenameSimple(name);
               }
-              else if (refName.equals(GroovyPropertyUtils.getPropertyNameByAccessorName(memberName))) {
-                final String newPropName = GroovyPropertyUtils.getPropertyNameByAccessorName(name);
-                if (newPropName != null) {
-                  ref.handleElementRenameSimple(newPropName);
-                }
-                else {
-                  ref.handleElementRenameSimple(name);
-                }
-              }
-              else if (refName.equals(GroovyPropertyUtils.getGetterNameBoolean(memberName))) {
-                final String getterName = GroovyPropertyUtils.getGetterNameBoolean(name);
-                ref.handleElementRenameSimple(getterName);
-              }
-              else if (refName.equals(GroovyPropertyUtils.getGetterNameNonBoolean(memberName))) {
-                final String getterName = GroovyPropertyUtils.getGetterNameNonBoolean(name);
-                ref.handleElementRenameSimple(getterName);
-              }
-              else if (refName.equals(GroovyPropertyUtils.getSetterName(memberName))) {
-                final String getterName = GroovyPropertyUtils.getSetterName(name);
-                ref.handleElementRenameSimple(getterName);
-              }
+            }
+            else if (refName.equals(GroovyPropertyUtils.getGetterNameBoolean(memberName))) {
+              final String getterName = GroovyPropertyUtils.getGetterNameBoolean(name);
+              ref.handleElementRenameSimple(getterName);
+            }
+            else if (refName.equals(GroovyPropertyUtils.getGetterNameNonBoolean(memberName))) {
+              final String getterName = GroovyPropertyUtils.getGetterNameNonBoolean(name);
+              ref.handleElementRenameSimple(getterName);
+            }
+            else if (refName.equals(GroovyPropertyUtils.getSetterName(memberName))) {
+              final String getterName = GroovyPropertyUtils.getSetterName(name);
+              ref.handleElementRenameSimple(getterName);
             }
           }
         }
@@ -259,15 +248,12 @@ public class GrAliasImportIntention extends Intention {
     final ArrayList<UsageInfo> infos = new ArrayList<UsageInfo>();
     final HashSet<Object> usedRefs = ContainerUtil.newHashSet();
 
-    final Processor<PsiReference> consumer = new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        if (usedRefs.add(reference)) {
-          infos.add(new UsageInfo(reference));
-        }
-
-        return true;
+    final Processor<PsiReference> consumer = reference -> {
+      if (usedRefs.add(reference)) {
+        infos.add(new UsageInfo(reference));
       }
+
+      return true;
     };
 
 

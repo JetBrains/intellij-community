@@ -96,7 +96,7 @@ public class ResourceBundlePropertyStructureViewElement implements StructureView
 
   @NotNull
   public Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>[] getProblemDescriptors() {
-    return myInspectionPassInfo.getDescriptors();
+    return myInspectionPassInfo == null ? new Pair[0] : myInspectionPassInfo.getDescriptors();
   }
 
   @Override

@@ -141,12 +141,12 @@ public class PyProtectedMemberInspection extends PyInspection {
         if (parentClass != null) {
           if (PyTestUtil.isPyTestClass(parentClass, null) && ignoreTestFunctions) return;
 
-          if (parentClass.isSubclass(resolvedClass, null))
+          if (parentClass.isSubclass(resolvedClass, myTypeEvalContext))
             return;
 
           PyClass outerClass = getClassOwner(parentClass);
           while (outerClass != null) {
-            if (outerClass.isSubclass(resolvedClass, null))
+            if (outerClass.isSubclass(resolvedClass, myTypeEvalContext))
               return;
 
             outerClass = getClassOwner(outerClass);

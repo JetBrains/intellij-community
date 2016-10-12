@@ -26,22 +26,19 @@ import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.io.File;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-/**
- * @author yole
- */
 public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> implements TreeLinkMouseListener.HaveTooltip {
-  private final Project myProject;
-  private final ChangeNodeDecorator myDecorator;
 
-  protected ChangesBrowserChangeNode(final Project project, Change userObject, @Nullable final ChangeNodeDecorator decorator) {
+  @NotNull private final Project myProject;
+  @Nullable private final ChangeNodeDecorator myDecorator;
+
+  protected ChangesBrowserChangeNode(@NotNull Project project, @NotNull Change userObject, @Nullable ChangeNodeDecorator decorator) {
     super(userObject);
     myProject = project;
     myDecorator = decorator;
@@ -56,60 +53,59 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
   }
 
   @Override
-  public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
-    final Change change = getUserObject();
-    final FilePath filePath = ChangesUtil.getFilePath(change);
-    final String fileName = filePath.getName();
-    VirtualFile vFile = filePath.getVirtualFile();
+  public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+    Change change = getUserObject();
+    FilePath filePath = ChangesUtil.getFilePath(change);
+    VirtualFile file = filePath.getVirtualFile();
 
     if (myDecorator != null) {
       myDecorator.preDecorate(change, renderer, renderer.isShowFlatten());
     }
 
-    final Color changeColor = change.getFileStatus().getColor();
-    renderer.appendFileName(vFile, fileName, changeColor);
+    renderer.appendFileName(file, filePath.getName(), change.getFileStatus().getColor());
 
-    final String originText = change.getOriginText(myProject);
+    String originText = change.getOriginText(myProject);
     if (originText != null) {
       renderer.append(spaceAndThinSpace() + originText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
     if (renderer.isShowFlatten()) {
-      final File parentFile = filePath.getIOFile().getParentFile();
-      if (parentFile != null) {
-        renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentFile.getPath()), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      FilePath parentPath = filePath.getParentPath();
+      if (parentPath != null) {
+        renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath.getPath()),
+                        SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
-      appendSwitched(renderer);
+      appendSwitched(renderer, file);
     }
     else if (getCount() != 1 || getDirectoryCount() != 0) {
-      appendSwitched(renderer);
+      appendSwitched(renderer, file);
       appendCount(renderer);
     }
     else {
-      appendSwitched(renderer);
+      appendSwitched(renderer, file);
     }
 
-    final Icon addIcon = change.getAdditionalIcon();
-    if (addIcon != null) {
-      renderer.setIcon(addIcon);
-    } else {
-      if (filePath.isDirectory() || !isLeaf()) {
-        renderer.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
-      }
-      else {
-        renderer.setIcon(filePath.getFileType().getIcon());
-      }
-    }
+    renderer.setIcon(getIcon(change, filePath));
 
     if (myDecorator != null) {
       myDecorator.decorate(change, renderer, renderer.isShowFlatten());
     }
   }
 
-  private void appendSwitched(final ChangesBrowserNodeRenderer renderer) {
-    final VirtualFile virtualFile = ChangesUtil.getFilePath(getUserObject()).getVirtualFile();
-    if (virtualFile != null && ! myProject.isDefault()) {
-      String branch = ChangeListManager.getInstance(myProject).getSwitchedBranch(virtualFile);
+  @Nullable
+  private Icon getIcon(@NotNull Change change, @NotNull FilePath filePath) {
+    Icon result = change.getAdditionalIcon();
+
+    if (result == null) {
+      result = filePath.isDirectory() || !isLeaf() ? PlatformIcons.DIRECTORY_CLOSED_ICON : filePath.getFileType().getIcon();
+    }
+
+    return result;
+  }
+
+  private void appendSwitched(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile file) {
+    if (file != null && !myProject.isDefault()) {
+      String branch = ChangeListManager.getInstance(myProject).getSwitchedBranch(file);
       if (branch != null) {
         renderer.append(spaceAndThinSpace() + "[switched to " + branch + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
@@ -117,8 +113,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
   }
 
   public String getTooltip() {
-    final Change change = getUserObject();
-    return change.getDescription();
+    return getUserObject().getDescription();
   }
 
   @Override

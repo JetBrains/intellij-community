@@ -17,7 +17,6 @@ package org.intellij.lang.xpath.xslt.quickfix;
 
 import com.intellij.ide.DataManager;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,21 +49,16 @@ public class RenameVariableFix extends AbstractFix {
     }
 
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, new PsiElement[]{myElement},
-                                                                                   DataManager.getInstance().getDataContext());
-      }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-    }
+    RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, new PsiElement[]{myElement},
+                                                                               DataManager.getInstance().getDataContext());
   }
 
     protected boolean requiresEditor() {
+        return false;
+    }
+
+    @Override
+    public boolean startInWriteAction() {
         return false;
     }
 }

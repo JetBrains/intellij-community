@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -42,7 +41,7 @@ public class AddMethodQualifierFix implements IntentionAction {
   private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
 
   private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCall;
-  private List<PsiVariable> myCandidates = null;
+  private List<PsiVariable> myCandidates;
 
   public AddMethodQualifierFix(final PsiMethodCallExpression methodCallExpression) {
     myMethodCall = SmartPointerManager.getInstance(methodCallExpression.getProject()).createSmartPsiElementPointer(methodCallExpression);
@@ -130,12 +129,7 @@ public class AddMethodQualifierFix implements IntentionAction {
         @Override
         public PopupStep onChosen(final PsiVariable selectedValue, final boolean finalChoice) {
           if (selectedValue != null && finalChoice) {
-            WriteCommandAction.runWriteCommandAction(selectedValue.getProject(), new Runnable() {
-              @Override
-              public void run() {
-                qualify(selectedValue, editor);
-              }
-            });
+            WriteCommandAction.runWriteCommandAction(selectedValue.getProject(), () -> qualify(selectedValue, editor));
           }
           return FINAL_CHOICE;
         }

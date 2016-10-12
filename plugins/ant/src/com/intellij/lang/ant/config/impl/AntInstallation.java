@@ -34,11 +34,8 @@ public class AntInstallation {
   public static final StringProperty HOME_DIR = new StringProperty("homeDir", "");
   public static final AbstractProperty<String> NAME = new StringProperty("name", "");
   public static final ListProperty<AntClasspathEntry> CLASS_PATH = ListProperty.<AntClasspathEntry>create("classpath");
-  public static final Comparator<AntInstallation> NAME_COMPARATOR = new Comparator<AntInstallation>() {
-    public int compare(AntInstallation antInstallation, AntInstallation antInstallation1) {
-      return String.CASE_INSENSITIVE_ORDER.compare(antInstallation.getName(), antInstallation1.getName());
-    }
-  };
+  public static final Comparator<AntInstallation> NAME_COMPARATOR =
+    (antInstallation, antInstallation1) -> String.CASE_INSENSITIVE_ORDER.compare(antInstallation.getName(), antInstallation1.getName());
 
   public static final Convertor<AntInstallation, AntReference> REFERENCE_TO_ANT = new Convertor<AntInstallation, AntReference>() {
     public AntReference convert(AntInstallation antInstallation) {

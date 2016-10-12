@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.FilePathChangesTreeList;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -41,7 +42,7 @@ public class GitSimplePathsBrowser extends JPanel {
     ActionToolbar toolbar = createToolbar(browser);
 
     add(toolbar.getComponent(), BorderLayout.NORTH);
-    add(browser);
+    add(ScrollPaneFactory.createScrollPane(browser));
   }
 
   @NotNull

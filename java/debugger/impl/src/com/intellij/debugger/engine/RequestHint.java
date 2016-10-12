@@ -95,9 +95,7 @@ public class RequestHint {
                 return stepThread.frame(0);
               }
               catch (EvaluateException e) {
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug(e);
-                }
+                LOG.debug(e);
                 return null;
               }
             }

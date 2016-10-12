@@ -30,12 +30,9 @@ public class XCompareWithClipboardAction extends XFetchValueActionBase {
 
   @Override
   protected void handle(final Project project, final String value, XDebuggerTree tree) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        DiffRequest request = DiffRequestFactory.getInstance().createClipboardVsValue(value);
-        DiffManager.getInstance().showDiff(project, request);
-      }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      DiffRequest request = DiffRequestFactory.getInstance().createClipboardVsValue(value);
+      DiffManager.getInstance().showDiff(project, request);
     });
   }
 }

@@ -390,12 +390,8 @@ public class ExternalSystemUtil {
             public void cancel() {
               super.cancel();
 
-              ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-                @Override
-                public void run() {
-                  myTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
-                }
-              });
+              ApplicationManager.getApplication().executeOnPooledThread(
+                (Runnable)() -> myTask.cancel(ExternalSystemTaskNotificationListener.EP_NAME.getExtensions()));
             }
           });
         }
@@ -478,38 +474,35 @@ public class ExternalSystemUtil {
       }
     };
 
-    ExternalSystemApiUtil.executeOnEdt(true, new Runnable() {
-      @Override
-      public void run() {
-        final String title;
-        switch (progressExecutionMode) {
-          case MODAL_SYNC:
-            title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
-            new Task.Modal(project, title, true) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                refreshProjectStructureTask.execute(indicator);
-              }
-            }.queue();
-            break;
-          case IN_BACKGROUND_ASYNC:
-            title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
-            new Task.Backgroundable(project, title) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                refreshProjectStructureTask.execute(indicator);
-              }
-            }.queue();
-            break;
-          case START_IN_FOREGROUND_ASYNC:
-            title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
-            new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
-              @Override
-              public void run(@NotNull ProgressIndicator indicator) {
-                refreshProjectStructureTask.execute(indicator);
-              }
-            }.queue();
-        }
+    ExternalSystemApiUtil.executeOnEdt(true, () -> {
+      final String title;
+      switch (progressExecutionMode) {
+        case MODAL_SYNC:
+          title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
+          new Task.Modal(project, title, true) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              refreshProjectStructureTask.execute(indicator);
+            }
+          }.queue();
+          break;
+        case IN_BACKGROUND_ASYNC:
+          title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+          new Task.Backgroundable(project, title) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              refreshProjectStructureTask.execute(indicator);
+            }
+          }.queue();
+          break;
+        case START_IN_FOREGROUND_ASYNC:
+          title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+          new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              refreshProjectStructureTask.execute(indicator);
+            }
+          }.queue();
       }
     });
   }
@@ -568,16 +561,13 @@ public class ExternalSystemUtil {
         });
 
         try {
-          ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                runner.execute(environment);
-              }
-              catch (ExecutionException e) {
-                targetDone.up();
-                LOG.error(e);
-              }
+          ApplicationManager.getApplication().invokeAndWait(() -> {
+            try {
+              runner.execute(environment);
+            }
+            catch (ExecutionException e) {
+              targetDone.up();
+              LOG.error(e);
             }
           }, ModalityState.NON_MODAL);
         }
@@ -768,12 +758,7 @@ public class ExternalSystemUtil {
 
   @Nullable
   private static VirtualFile findLocalFileByPathUnderWriteAction(final String path) {
-    return doWriteAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return StandardFileSystems.local().refreshAndFindFileByPath(path);
-      }
-    });
+    return doWriteAction(() -> StandardFileSystems.local().refreshAndFindFileByPath(path));
   }
 
   @Nullable

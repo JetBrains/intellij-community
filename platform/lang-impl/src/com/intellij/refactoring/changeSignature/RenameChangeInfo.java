@@ -94,11 +94,8 @@ public abstract class RenameChangeInfo implements ChangeInfo {
     final PsiNameIdentifierOwner element = getNamedElement();
     if (element != null) {
       final String name = element.getName();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          element.setName(myOldName);
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        element.setName(myOldName);
       });
       new RenameProcessor(element.getProject(), element, name, false, false).run();
     }

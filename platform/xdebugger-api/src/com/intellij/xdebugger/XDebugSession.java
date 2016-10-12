@@ -117,7 +117,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
                             @NotNull XSuspendContext suspendContext);
 
   /**
-   * @deprecated use {@link #breakpointReached(com.intellij.xdebugger.breakpoints.XBreakpoint, String, com.intellij.xdebugger.frame.XSuspendContext)} instead
+   * @deprecated use {@link #breakpointReached(XBreakpoint, String, XSuspendContext)} instead
    */
   boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext);
 

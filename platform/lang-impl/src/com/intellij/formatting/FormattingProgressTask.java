@@ -121,7 +121,6 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
 
   @Override
   public void onSuccess() {
-    super.onSuccess();
     for (Runnable callback : getCallbacks(EventType.SUCCESS)) {
       callback.run();
     }
@@ -129,7 +128,14 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
 
   @Override
   public void onCancel() {
-    super.onCancel();
+    for (Runnable callback : getCallbacks(EventType.CANCEL)) {
+      callback.run();
+    }
+  }
+
+  @Override
+  public void onError(@NotNull Exception error) {
+    super.onError(error);
     for (Runnable callback : getCallbacks(EventType.CANCEL)) {
       callback.run();
     }

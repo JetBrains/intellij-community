@@ -94,21 +94,13 @@ public class PasteReferenceProvider implements PasteProvider {
     final PsiFile file = documentManager.getPsiFile(editor.getDocument());
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            Document document = editor.getDocument();
-            documentManager.doPostponedOperationsAndUnblockDocument(document);
-            documentManager.commitDocument(document);
-            EditorModificationUtil.deleteSelectedText(editor);
-            provider.insertQualifiedName(fqn, element, editor, project);
-          }
-        });
-      }
-    }, IdeBundle.message("command.pasting.reference"), null);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      Document document = editor.getDocument();
+      documentManager.doPostponedOperationsAndUnblockDocument(document);
+      documentManager.commitDocument(document);
+      EditorModificationUtil.deleteSelectedText(editor);
+      provider.insertQualifiedName(fqn, element, editor, project);
+    }), IdeBundle.message("command.pasting.reference"), null);
   }
 
   @Nullable

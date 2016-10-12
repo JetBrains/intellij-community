@@ -49,7 +49,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private final FactoryMap<MethodCallInstruction, Nullness> myReturnTypeNullability = new FactoryMap<MethodCallInstruction, Nullness>() {
     @Override
     protected Nullness create(MethodCallInstruction key) {
-      final PsiCallExpression callExpression = key.getCallExpression();
+      final PsiCall callExpression = key.getCallExpression();
       if (callExpression instanceof PsiNewExpression) {
         return Nullness.NOT_NULL;
       }
@@ -237,7 +237,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     @NotNull final DfaValue qualifier = memState.pop();
     boolean unboxing = instruction.getMethodType() == MethodCallInstruction.MethodType.UNBOXING;
     NullabilityProblem problem = unboxing ? NullabilityProblem.unboxingNullable : NullabilityProblem.callNPE;
-    PsiExpression anchor = unboxing ? instruction.getContext() : instruction.getCallExpression();
+    PsiElement anchor = unboxing ? instruction.getContext() : instruction.getCallExpression();
     if (!checkNotNullable(memState, qualifier, problem, anchor)) {
       forceNotNull(runner, memState, qualifier);
     }

@@ -32,6 +32,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.ear.EarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarResourceImpl
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl
+import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
 
 /**
  * @author Vladislav.Soroka
@@ -40,6 +41,7 @@ import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl
 class EarModelBuilderImpl implements ModelBuilderService {
 
   private static final String APP_DIR_PROPERTY = "appDirName"
+  private SourceSetCachedFinder mySourceSetFinder = null;
 
   @Override
   public boolean canBuild(String modelName) {
@@ -52,6 +54,8 @@ class EarModelBuilderImpl implements ModelBuilderService {
     final EarPlugin earPlugin = project.plugins.findPlugin(EarPlugin)
     if (earPlugin == null) return null
 
+    if(mySourceSetFinder == null) mySourceSetFinder = new SourceSetCachedFinder(project);
+
     final String appDirName = !project.hasProperty(APP_DIR_PROPERTY) ?
                               "src/main/application" : String.valueOf(project.property(APP_DIR_PROPERTY))
     def earModels = []
@@ -59,7 +63,7 @@ class EarModelBuilderImpl implements ModelBuilderService {
     def deployConfiguration = project.configurations.findByName(EarPlugin.DEPLOY_CONFIGURATION_NAME)
     def earlibConfiguration = project.configurations.findByName(EarPlugin.EARLIB_CONFIGURATION_NAME)
 
-    DependencyResolver dependencyResolver = new DependencyResolverImpl(project, false, false, false)
+    DependencyResolver dependencyResolver = new DependencyResolverImpl(project, false, false, false, mySourceSetFinder)
     def deployDependencies = dependencyResolver.resolveDependencies(deployConfiguration)
     def earlibDependencies = dependencyResolver.resolveDependencies(earlibConfiguration)
     def buildDirPath = project.getBuildDir().absolutePath

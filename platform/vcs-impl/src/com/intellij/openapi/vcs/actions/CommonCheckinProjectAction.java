@@ -15,62 +15,31 @@
  */
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-
+import java.util.stream.Stream;
 
 public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
 
   @Override
   @NotNull
-  protected FilePath[] getRoots(@NotNull final VcsContext context) {
-    Project project = context.getProject();
-    ArrayList<FilePath> virtualFiles = new ArrayList<FilePath>();
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    for(AbstractVcs vcs: vcsManager.getAllActiveVcss()) {
-      if (vcs.getCheckinEnvironment() != null) {
-        VirtualFile[] roots = vcsManager.getRootsUnderVcs(vcs);
-        for (VirtualFile root : roots) {
-          virtualFiles.add(VcsUtil.getFilePath(root));
-        }
-      }
-    }
-    return virtualFiles.toArray(new FilePath[virtualFiles.size()]);
+  protected FilePath[] getRoots(@NotNull VcsContext context) {
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(context.getProject());
+
+    return Stream.of(manager.getAllActiveVcss())
+        .filter(vcs -> vcs.getCheckinEnvironment() != null)
+        .flatMap(vcs -> Stream.of(manager.getRootsUnderVcs(vcs)))
+        .map(VcsUtil::getFilePath)
+        .toArray(FilePath[]::new);
   }
 
   @Override
-  protected boolean approximatelyHasRoots(VcsContext dataContext) {
-    Project project = dataContext.getProject();
-    final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    return vcsManager.hasAnyMappings();
-  }
-
-  @Override
-  protected void update(VcsContext vcsContext, Presentation presentation) {
-    Project project = vcsContext.getProject();
-    if (project == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
-    }
-    final ProjectLevelVcsManager plVcsManager = ProjectLevelVcsManager.getInstance(project);
-    if (! plVcsManager.hasActiveVcss()) {
-      presentation.setEnabled(false);
-      presentation.setVisible(false);
-      return;
-    }
-
-    String actionName = getActionName(vcsContext) + "...";
-    presentation.setText(actionName);
-
-    presentation.setEnabled(! plVcsManager.isBackgroundVcsOperationRunning());
-    presentation.setVisible(true);
+  protected boolean approximatelyHasRoots(@NotNull VcsContext dataContext) {
+    return true;
   }
 
   @Override
@@ -79,12 +48,7 @@ public class CommonCheckinProjectAction extends AbstractCommonCheckinAction {
   }
 
   @Override
-  protected String getMnemonicsFreeActionName(VcsContext context) {
+  protected String getMnemonicsFreeActionName(@NotNull VcsContext context) {
     return VcsBundle.message("vcs.command.name.checkin.no.mnemonics");
-  }
-
-  @Override
-  protected boolean filterRootsBeforeAction() {
-    return false;
   }
 }

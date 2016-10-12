@@ -36,7 +36,7 @@ def run_file(file, globals=None, locals=None):
 # main
 #=======================================================================================================================
 if __name__ == '__main__':
-    sys.stdin = BaseStdIn()
+    sys.stdin = BaseStdIn(sys.stdin)
     port, client_port = sys.argv[1:3]
 
     del sys.argv[1]

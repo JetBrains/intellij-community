@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -133,9 +135,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     while (!insideReadAction.get()) {
 
     }
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      assertTrue(indicator.isCanceled());
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> assertTrue(indicator.isCanceled()));
     assertTrue(indicator.isCanceled());
   }
 
@@ -375,6 +375,19 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     catch (ProcessCanceledException ignored) {
 
     }
+  }
+
+  public void testSOEUnderExtremelyNestedWrappedIndicator() {
+    ProgressIndicator indicator = new DaemonProgressIndicator();
+    for (int i=0;i<10000;i++) {
+      indicator = new SensitiveProgressWrapper(indicator);
+    }
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+      assertTrue(progressIndicator instanceof SensitiveProgressWrapper);
+      progressIndicator.checkCanceled();
+      progressIndicator.isCanceled();
+    }, indicator);
   }
 
   public void testBombedIndicator() {

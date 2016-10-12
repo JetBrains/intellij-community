@@ -105,7 +105,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
       }
     }.execute();
     myProjectSettings = new GradleProjectSettings();
-    GradleSettings.getInstance(myProject).setGradleVmOptions("-Xmx64m -XX:MaxPermSize=64m");
+    GradleSettings.getInstance(myProject).setGradleVmOptions("-Xmx128m -XX:MaxPermSize=64m");
     System.setProperty(ExternalSystemExecutionSettings.REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY, String.valueOf(GRADLE_DAEMON_TTL_MS));
     configureWrapper();
   }

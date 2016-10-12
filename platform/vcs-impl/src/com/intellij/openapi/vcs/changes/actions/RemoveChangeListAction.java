@@ -35,46 +35,44 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public class RemoveChangeListAction extends AnAction implements DumbAware {
-  public void update(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
-    ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
-    final boolean visible = canRemoveChangeLists(project, lists);
-    if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP))
+  public void update(@NotNull AnActionEvent e) {
+    boolean visible = canRemoveChangeLists(e.getProject(), e.getData(VcsDataKeys.CHANGE_LISTS));
+
+    e.getPresentation().setEnabled(visible);
+    if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
       e.getPresentation().setVisible(visible);
-    else
-      e.getPresentation().setEnabled(visible);
+    }
   }
 
-  private static boolean canRemoveChangeLists(final Project project, final ChangeList[] lists) {
+  private static boolean canRemoveChangeLists(@Nullable Project project, @Nullable ChangeList[] lists) {
     if (project == null || lists == null || lists.length == 0) return false;
+
+    int allChangeListsCount = ChangeListManager.getInstance(project).getChangeListsNumber();
     for(ChangeList changeList: lists) {
       if (!(changeList instanceof LocalChangeList)) return false;
       LocalChangeList localChangeList = (LocalChangeList) changeList;
       if (localChangeList.isReadOnly()) return false;
-      if (localChangeList.isDefault() && ChangeListManager.getInstance(project).getChangeListsCopy().size() <= lists.length) return false;
+      if (localChangeList.isDefault() && allChangeListsCount <= lists.length) return false;
     }
     return true;
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final ChangeList[] lists = e.getData(VcsDataKeys.CHANGE_LISTS);
-    assert lists != null;
-    if (! canRemoveChangeLists(project, lists)) {
-      return;
-    }
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    final ChangeList[] selectedLists = e.getRequiredData(VcsDataKeys.CHANGE_LISTS);
 
     //noinspection unchecked
-    ChangeListRemoveConfirmation.processLists(project, true, (Collection)Arrays.asList(lists), new ChangeListRemoveConfirmation() {
+    ChangeListRemoveConfirmation.processLists(project, true, (Collection)Arrays.asList(selectedLists), new ChangeListRemoveConfirmation() {
       @Override
-      public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> lists1) {
-        return RemoveChangeListAction.askIfShouldRemoveChangeLists(lists1, project);
+      public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> lists) {
+        return RemoveChangeListAction.askIfShouldRemoveChangeLists(lists, project);
       }
     });
   }
@@ -86,40 +84,27 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
       }
     }
 
-    int rc;
-    if (lists.size() == 1) {
-      final LocalChangeList list = lists.get(0);
-      rc = list.getChanges().size() == 0 ? Messages.YES :
-               Messages.showYesNoDialog(project,
-                                        VcsBundle.message("changes.removechangelist.warning.text", list.getName()),
-                                        VcsBundle.message("changes.removechangelist.warning.title"),
-                                        Messages.getQuestionIcon());
-    }
-    else {
-      boolean notEmpty = false;
-      for (ChangeList list : lists) {
-        notEmpty |= (list.getChanges().size() > 0);
-      }
-      rc = (! notEmpty) ? Messages.YES : Messages.showYesNoDialog(project,
-                                    VcsBundle.message("changes.removechangelist.multiple.warning.text", lists.size()),
-                                    VcsBundle.message("changes.removechangelist.warning.title"),
-                                    Messages.getQuestionIcon());
-      
-    }
-    return rc == Messages.YES;
+    boolean haveNoChanges = lists.stream().noneMatch(list -> !list.getChanges().isEmpty());
+    String message = lists.size() == 1
+                     ? VcsBundle.message("changes.removechangelist.warning.text", lists.get(0).getName())
+                     : VcsBundle.message("changes.removechangelist.multiple.warning.text", lists.size());
+
+    return haveNoChanges ||
+           Messages.YES ==
+           Messages
+             .showYesNoDialog(project, message, VcsBundle.message("changes.removechangelist.warning.title"), Messages.getQuestionIcon());
   }
 
-  static boolean confirmActiveChangeListRemoval(final Project project, final List<? extends LocalChangeList> lists, final boolean empty) {
+  static boolean confirmActiveChangeListRemoval(@NotNull Project project, @NotNull List<? extends LocalChangeList> lists, boolean empty) {
     List<LocalChangeList> remainingLists = ChangeListManager.getInstance(project).getChangeListsCopy();
     remainingLists.removeAll(lists);
-    String[] names = new String[remainingLists.size()];
-    for(int i=0; i<remainingLists.size(); i++) {
-      names [i] = remainingLists.get(i).getName();
-    }
-    int nameIndex = Messages.showChooseDialog(project,
-                                              empty ? VcsBundle.message("changes.remove.active.empty.prompt") : VcsBundle.message("changes.remove.active.prompt"),
-                                              VcsBundle.message("changes.remove.active.title"),
-                                              Messages.getQuestionIcon(), names, names [0]);
+
+    String[] remainingListsNames = remainingLists.stream().map(ChangeList::getName).toArray(String[]::new);
+    int nameIndex = Messages.showChooseDialog(project, empty
+                                                       ? VcsBundle.message("changes.remove.active.empty.prompt")
+                                                       : VcsBundle.message("changes.remove.active.prompt"),
+                                              VcsBundle.message("changes.remove.active.title"), Messages.getQuestionIcon(),
+                                              remainingListsNames, remainingListsNames[0]);
     if (nameIndex < 0) return false;
     ChangeListManager.getInstance(project).setDefaultChangeList(remainingLists.get(nameIndex));
     return true;

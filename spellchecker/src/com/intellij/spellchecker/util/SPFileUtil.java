@@ -28,16 +28,14 @@ public class SPFileUtil {
   public static void processFilesRecursively(final String rootPath, final Consumer<String> consumer){
     final File rootFile = new File(rootPath);
     if (rootFile.exists() && rootFile.isDirectory()){
-      FileUtil.processFilesRecursively(rootFile, new Processor<File>() {
-        public boolean process(final File file) {
-          if (!file.isDirectory()){
-            final String path = file.getPath();
-            if (path.endsWith(".dic")){
-              consumer.consume(path);
-            }
+      FileUtil.processFilesRecursively(rootFile, file -> {
+        if (!file.isDirectory()){
+          final String path = file.getPath();
+          if (path.endsWith(".dic")){
+            consumer.consume(path);
           }
-          return true;
         }
+        return true;
       });
     }
   }

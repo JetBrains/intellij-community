@@ -9,6 +9,9 @@
     <component>
       <implementation-class>com.intellij.openapi.editor.impl.VisibleEditorsTracker</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

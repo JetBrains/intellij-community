@@ -62,12 +62,7 @@ public class ArrangementTextFieldUiComponent extends AbstractArrangementUiCompon
 
   private void scheduleUpdate() {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        fireStateChanged();
-      }
-    }, ArrangementConstants.TEXT_UPDATE_DELAY_MILLIS);
+    myAlarm.addRequest(() -> fireStateChanged(), ArrangementConstants.TEXT_UPDATE_DELAY_MILLIS);
   }
 
   @NotNull

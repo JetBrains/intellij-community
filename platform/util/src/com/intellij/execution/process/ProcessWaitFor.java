@@ -41,7 +41,7 @@ public class ProcessWaitFor {
       public void run() {
         String oldThreadName = Thread.currentThread().getName();
         if (!StringUtil.isEmptyOrSpaces(presentableName)) {
-          Thread.currentThread().setName(StringUtil.first("ProcessWaitFor: " + presentableName, 120, true));
+          Thread.currentThread().setName("ProcessWaitFor: " + presentableName);
         }
         int exitCode = 0;
         try {
@@ -88,4 +88,20 @@ public class ProcessWaitFor {
     catch (CancellationException ignored) {
     }
   }
+
+  public boolean waitFor(long timeout, @NotNull TimeUnit unit) throws InterruptedException {
+    try {
+      myWaitForThreadFuture.get(timeout, unit);
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+    catch (CancellationException ignored) {
+    }
+    catch (TimeoutException ignored) {
+    }
+
+    return myWaitForThreadFuture.isDone();
+  }
+
 }

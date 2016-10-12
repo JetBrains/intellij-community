@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -27,21 +26,18 @@ import java.util.List;
 
 class DevelopersLoader {
   private static final String DEVELOPERS_LIST_URL = "http://ea-engine.labs.intellij.net/data?category=developers";
-  public static final int TIMEOUT = 1000;
 
-  private DevelopersLoader() {
-  }
+  private DevelopersLoader() { }
 
-  public static Collection<Developer> fetchDevelopers(@NotNull final ProgressIndicator indicator) throws IOException {
+  public static Collection<Developer> fetchDevelopers(@NotNull ProgressIndicator indicator) throws IOException {
     return HttpRequests.request(DEVELOPERS_LIST_URL).connect(new HttpRequests.RequestProcessor<Collection<Developer>>() {
       @Override
       public Collection<Developer> process(@NotNull HttpRequests.Request request) throws IOException {
         List<Developer> developers = new LinkedList<Developer>();
         developers.add(Developer.NULL);
-        BufferedReader reader = request.getReader();
-        while (true) {
-          String line = reader.readLine();
-          if (line == null) break;
+
+        String line;
+        while ((line = request.getReader().readLine()) != null) {
           int i = line.indexOf('\t');
           if (i == -1) throw new IOException("Protocol error");
           int id = Integer.parseInt(line.substring(0, i));
@@ -49,6 +45,7 @@ class DevelopersLoader {
           developers.add(new Developer(id, name));
           indicator.checkCanceled();
         }
+
         return developers;
       }
     });

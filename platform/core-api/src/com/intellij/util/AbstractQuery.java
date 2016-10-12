@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,29 @@ package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncUtil;
+import com.intellij.openapi.application.ReadActionProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author peter
  */
 public abstract class AbstractQuery<Result> implements Query<Result> {
-  private boolean myIsProcessing = false;
+  private boolean myIsProcessing;
 
   @Override
   @NotNull
   public Collection<Result> findAll() {
     assertNotProcessing();
-    final CommonProcessors.CollectProcessor<Result> processor = new CommonProcessors.CollectProcessor<Result>();
+    List<Result> result = new ArrayList<Result>();
+    Processor<Result> processor = Processors.cancelableCollectProcessor(result);
     forEach(processor);
-    return processor.getResults();
+    return result;
   }
 
   @Override
@@ -90,5 +94,15 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
   @NotNull
   protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<Result> consumer) {
     return AsyncUtil.wrapBoolean(processResults(consumer));
+  }
+
+  @NotNull
+  public static <T> Query<T> wrapInReadAction(@NotNull final Query<T> query) {
+    return new AbstractQuery<T>() {
+      @Override
+      protected boolean processResults(@NotNull Processor<T> consumer) {
+        return query.forEach(ReadActionProcessor.wrapInReadAction(consumer));
+      }
+    };
   }
 }

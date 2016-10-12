@@ -15,18 +15,17 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.vcsUtil.RollbackUtil;
 
@@ -37,15 +36,14 @@ import java.util.Arrays;
 */
 public class RollbackDialogAction extends AnAction implements DumbAware {
   public RollbackDialogAction() {
-    super(VcsBundle.message("changes.action.rollback.text"), VcsBundle.message("changes.action.rollback.description"),
-          AllIcons.Actions.Rollback);
+    ActionUtil.copyFrom(this, IdeActions.CHANGES_VIEW_ROLLBACK);
   }
 
   public void actionPerformed(AnActionEvent e) {
     FileDocumentManager.getInstance().saveAllDocuments();
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
     Project project = e.getData(CommonDataKeys.PROJECT);
-    final ChangesBrowser browser = e.getData(ChangesBrowser.DATA_KEY);
+    final ChangesBrowserBase browser = e.getData(ChangesBrowserBase.DATA_KEY);
     if (browser != null) {
       browser.setDataIsDirty(true);
     }

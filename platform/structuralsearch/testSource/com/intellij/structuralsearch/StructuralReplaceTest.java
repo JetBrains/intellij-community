@@ -584,8 +584,8 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
 
   public void testReplaceParameter() {
     String s1 = "class A { void b(int c, int d, int e) {} }";
-    String s2 = "int d";
-    String s3 = "int d2";
+    String s2 = "int d;";
+    String s3 = "int d2;";
     String expectedResult = "class A { void b(int c, int d2, int e) {} }";
 
     actualResult = replacer.testReplace(s1,s2,s3,options);
@@ -1294,7 +1294,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "  private int c = 2;\n" +
                 "}";
 
-    String s2 = "@Modifier(\"PackageLocal\") '_Type '_Instance = '_Init?;";
+    String s2 = "@Modifier(\"packageLocal\") '_Type '_Instance = '_Init?;";
     String s3 = "public $Type$ $Instance$ = $Init$;";
 
     String expectedResult = "class A {\n" +
@@ -2194,12 +2194,12 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                 "     final int x = 5;\n" +
                 "  }\n" +
                 "}";
-    String s2 = "final '_type 'var = '_init?";
-    String s3 = "$type$ $var$ = $init$";
+    String s2 = "final '_type 'var = '_init?;";
+    String s3 = "$type$ $var$ = $init$;";
 
     String expected = "class Foo {\n" +
                       "  void foo(int i, int i2, int i3) {\n" +
-                      "     int x = 5\n" +
+                      "     int x = 5;\n" +
                       "  }\n" +
                       "}";
 
@@ -2445,5 +2445,27 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "  }\n" +
                  "}\n",
                  replacer.testReplace(in, what2, by2, options));
+  }
+
+  public void testReplaceMethodWithoutBody() {
+    final String in = "abstract class A {\n" +
+                      "  abstract void a();\n" +
+                      "}";
+    final String what = "void '_a();";
+    final String by = "void $a$(int i);";
+    assertEquals("abstract class A {\n" +
+                 "  abstract void a(int i);\n" +
+                 "}", replacer.testReplace(in, what, by, options));
+  }
+
+  public void testReplaceParameterWithComment() {
+    final String in = "class A {\n" +
+                      "  void a(int b) {}\n" +
+                      "}";
+    final String what = "int '_a = '_b{0,1};";
+    final String by = "final long /*!*/ $a$ = $b$;";
+    assertEquals("class A {\n" +
+                 "  void a(final long /*!*/ b) {}\n" +
+                 "}", replacer.testReplace(in, what, by, options));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.psi.stubs;
 
-import com.intellij.util.io.*;
+import com.intellij.util.io.AbstractStringEnumerator;
+import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +32,7 @@ public class StubOutputStream extends DataOutputStream {
   private final AbstractStringEnumerator myNameStorage;
   private final byte[] myStringIOBuffer = IOUtil.allocReadWriteUTFBuffer();
 
-  public StubOutputStream(OutputStream out, AbstractStringEnumerator nameStorage) {
+  public StubOutputStream(@NotNull OutputStream out, @NotNull AbstractStringEnumerator nameStorage) {
     super(out);
     myNameStorage = nameStorage;
   }

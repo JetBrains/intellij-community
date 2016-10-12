@@ -64,7 +64,7 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
 
       @Override
       public String getLogin() {
-        return httpConfigurable.PROXY_LOGIN;
+        return httpConfigurable.getProxyLogin();
       }
 
       @Override

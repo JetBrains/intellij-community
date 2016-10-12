@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Base interface for concurrent (long key -> V value) map
@@ -34,7 +35,26 @@ public interface ConcurrentLongObjectMap<V> {
   @NotNull
   V cacheOrGet(long key, @NotNull V value);
   boolean remove(long key, @NotNull V value);
+
+  /**
+   * @see ConcurrentMap#replace(java.lang.Object, java.lang.Object, java.lang.Object)
+   * @param key key with which the specified value is associated
+   * @param oldValue value expected to be associated with the specified key
+   * @param newValue value to be associated with the specified key
+   * @return {@code true} if the value was replaced
+   */
   boolean replace(long key, @NotNull V oldValue, @NotNull V newValue);
+
+  /**
+   * @see ConcurrentMap#replace(java.lang.Object, java.lang.Object)
+   * @param key key with which the specified value is associated
+   * @param value value to be associated with the specified key
+   * @return the previous value associated with the specified key, or
+   *         {@code null} if there was no mapping for the key.
+   *         (A {@code null} return can also indicate that the map
+   *         previously associated {@code null} with the key,
+   *         if the implementation supports null values.)
+   */
   V replace(long key, @NotNull V value);
 
   // regular Map methods
@@ -64,6 +84,10 @@ public interface ConcurrentLongObjectMap<V> {
   @NotNull
   Collection<V> values();
   boolean containsValue(@NotNull V value);
+  /**
+   * @return the previous value associated with the specified key,
+   * or {@code null} if there was no mapping for the key
+   */
   V putIfAbsent(long key, @NotNull V value);
 
   interface LongEntry<V> {

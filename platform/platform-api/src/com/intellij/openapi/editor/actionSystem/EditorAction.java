@@ -44,6 +44,11 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
+  @Override
+  public boolean startInTransaction() {
+    return false;
+  }
+
   public final EditorActionHandler setupHandler(@NotNull EditorActionHandler newHandler) {
     ensureHandlersLoaded();
     EditorActionHandler tmp = myHandler;
@@ -92,12 +97,7 @@ public abstract class EditorAction extends AnAction implements DumbAware {
     if (editor == null) return;
 
     final EditorActionHandler handler = getHandler();
-    Runnable command = new Runnable() {
-      @Override
-      public void run() {
-        handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
-      }
-    };
+    Runnable command = () -> handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
 
     if (!handler.executeInCommand(editor, dataContext)) {
       command.run();

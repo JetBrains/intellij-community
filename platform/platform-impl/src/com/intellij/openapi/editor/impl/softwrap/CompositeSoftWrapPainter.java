@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ColorProvider;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,13 +74,10 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
       }
     }
 
-    if (!SystemInfo.isAppleJvm) {
-      // these characters are known to take a very long time to render when Apple's JDK is used (for the default color scheme)
-      SYMBOLS.add(asMap(
-                    asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
-                    asList('\u2926', '\u2925'))
-      );
-    }
+    SYMBOLS.add(asMap(
+      asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
+      asList('\u2926', '\u2925'))
+    );
     SYMBOLS.add(asMap(
       asList(BEFORE_SOFT_WRAP_LINE_FEED, AFTER_SOFT_WRAP),
       asList('\u21B2',                   '\u21B3'))

@@ -21,21 +21,6 @@ public final class ColorBlindnessTest extends TestCase {
     compareFilters(DaltonizationFilter.forTritanopia(1.0), DaltonizationFilter.tritanopia);
   }
 
-  public void testProtanopiaSimulation() {
-    testZeroFilter(SimulationFilter.forProtanopia(0.0));
-    compareFilters(SimulationFilter.forProtanopia(1.0), SimulationFilter.protanopia);
-  }
-
-  public void testDeuteranopiaSimulation() {
-    testZeroFilter(SimulationFilter.forDeuteranopia(0.0));
-    compareFilters(SimulationFilter.forDeuteranopia(1.0), SimulationFilter.deuteranopia);
-  }
-
-  public void testTritanopiaSimulation() {
-    testZeroFilter(SimulationFilter.forTritanopia(0.0));
-    compareFilters(SimulationFilter.forTritanopia(1.0), SimulationFilter.tritanopia);
-  }
-
   public void testAchromatopsiaSimulation() {
     testZeroFilter(SimulationFilter.forAchromatopsia(0.0));
     compareFilters(SimulationFilter.forAchromatopsia(1.0), SimulationFilter.achromatopsia);

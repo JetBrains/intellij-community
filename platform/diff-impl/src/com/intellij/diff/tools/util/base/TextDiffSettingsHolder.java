@@ -42,6 +42,8 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
   private final static class SharedSettings {
     // Fragments settings
     public int CONTEXT_RANGE = 4;
+
+    public boolean MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES = false;
   }
 
   private static class PlaceSettings {
@@ -84,7 +86,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
     }
 
     public void setEnableSyncScroll(boolean value) {
-      this.PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
+      PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value;
     }
 
     // Diff settings
@@ -105,6 +107,18 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
     public void setIgnorePolicy(@NotNull IgnorePolicy policy) {
       PLACE_SETTINGS.IGNORE_POLICY = policy;
+    }
+
+    //
+    // Merge
+    //
+
+    public boolean isAutoApplyNonConflictedChanges() {
+      return SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES;
+    }
+
+    public void setAutoApplyNonConflictedChanges(boolean value) {
+      SHARED_SETTINGS.MERGE_AUTO_APPLY_NON_CONFLICTED_CHANGES = value;
     }
 
     // Editor settings
@@ -226,7 +240,7 @@ public class TextDiffSettingsHolder implements PersistentStateComponent<TextDiff
 
   @NotNull
   public static Map<String, PlaceSettings> getDefaultPlaceSettings() {
-    Map<String, PlaceSettings> map = new TreeMap<String, PlaceSettings>();
+    Map<String, PlaceSettings> map = new TreeMap<>();
 
     PlaceSettings changes = new PlaceSettings();
     changes.EXPAND_BY_DEFAULT = false;

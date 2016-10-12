@@ -21,11 +21,8 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.RefsModel;
-import git4idea.GitPlatformFacade;
 import git4idea.config.GitVcsSettings;
 import git4idea.log.GitRefManager;
 import git4idea.repo.GitRepository;
@@ -34,7 +31,10 @@ import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions;
 import git4idea.ui.branch.GitBranchPopupActions.RemoteBranchActions;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class GitLogBranchOperationsActionGroup extends ActionGroup implements DumbAware {
   private static final int MAX_BRANCH_GROUPS = 2;
@@ -55,7 +55,8 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     Project project = e.getProject();
     VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
     VcsLogUi logUI = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (project == null || log == null || logUI == null) {
+    List<VcsRef> branches = e.getData(VcsLogDataKeys.VCS_LOG_BRANCHES);
+    if (project == null || log == null || logUI == null || branches == null) {
       return AnAction.EMPTY_ARRAY;
     }
 
@@ -67,10 +68,7 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
     final GitRepository root = repositoryManager.getRepositoryForRoot(commit.getRoot());
     if (root == null) return AnAction.EMPTY_ARRAY;
 
-    VcsLogDataPack dataPack = logUI.getDataPack();
-    Collection<VcsRef> allVcsRefs = ((RefsModel)dataPack.getRefs()).refsToCommit(commit.getHash(), commit.getRoot());
-
-    List<VcsRef> vcsRefs = ContainerUtil.filter(allVcsRefs, new Condition<VcsRef>() {
+    List<VcsRef> vcsRefs = ContainerUtil.filter(branches, new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef ref) {
         if (ref.getType() == GitRefManager.LOCAL_BRANCH) {
@@ -81,7 +79,7 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
       }
     });
 
-    VcsLogProvider provider = dataPack.getLogProviders().get(root.getRoot());
+    VcsLogProvider provider = logUI.getDataPack().getLogProviders().get(root.getRoot());
     if (provider != null) {
       VcsLogRefManager refManager = provider.getReferenceManager();
       Comparator<VcsRef> comparator = refManager.getLabelsOrderComparator();
@@ -90,7 +88,7 @@ public class GitLogBranchOperationsActionGroup extends ActionGroup implements Du
 
     if (vcsRefs.isEmpty()) return AnAction.EMPTY_ARRAY;
 
-    GitVcsSettings settings = ServiceManager.getService(project, GitPlatformFacade.class).getSettings(project);
+    GitVcsSettings settings = GitVcsSettings.getInstance(project);
     boolean showBranchesPopup = vcsRefs.size() > MAX_BRANCH_GROUPS;
 
     List<AnAction> branchActionGroups = new ArrayList<AnAction>();

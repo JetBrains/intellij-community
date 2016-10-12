@@ -25,6 +25,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -48,7 +49,7 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
   }
 
   @Override
-  protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+  protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
     final FilePath path = TreeModelBuilder.getPathForObject(value);
     renderIcon(path);
     final FileStatus fileStatus = myIgnoreFileStatus ? FileStatus.NOT_CHANGED : getStatus(value, path);

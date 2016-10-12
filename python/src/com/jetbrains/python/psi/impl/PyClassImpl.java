@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -278,10 +278,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return false;
   }
 
-  public boolean isSubclass(PyClass parent) {
-    return isSubclass(parent, null);
-  }
-
   @Override
   public boolean isSubclass(@NotNull String superClassQName, @Nullable TypeEvalContext context) {
     if (context == null) {
@@ -360,18 +356,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       @Nullable
       @Override
       public String getPresentableText() {
-        if (!isValid()) {
-          return null;
-        }
+        PyPsiUtils.assertValid(PyClassImpl.this);
         final StringBuilder result = new StringBuilder(notNullize(getName(), PyNames.UNNAMED_ELEMENT));
         final PyExpression[] superClassExpressions = getSuperClassExpressions();
         if (superClassExpressions.length > 0) {
           result.append("(");
-          result.append(join(Arrays.asList(superClassExpressions), new Function<PyExpression, String>() {
-            public String fun(PyExpression expr) {
-              String name = expr.getText();
-              return notNullize(name, PyNames.UNNAMED_ELEMENT);
-            }
+          result.append(join(Arrays.asList(superClassExpressions), expr -> {
+            String name = expr.getText();
+            return notNullize(name, PyNames.UNNAMED_ELEMENT);
           }, ", "));
           result.append(")");
         }
@@ -445,16 +437,17 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       }
       return computed.get();
     }
-    cache.put(type, Ref.<List<PyClassLikeType>>create());
+    cache.put(type, Ref.create());
     List<PyClassLikeType> result = null;
     try {
-      final List<PyClassLikeType> bases = type.getSuperClassTypes(context);
-      final List<List<PyClassLikeType>> lines = new ArrayList<List<PyClassLikeType>>();
+      final List<PyClassLikeType> bases = removeNotNullDuplicates(type.getSuperClassTypes(context));
+      final List<List<PyClassLikeType>> lines = new ArrayList<>();
       for (PyClassLikeType base : bases) {
         if (base != null) {
           final List<PyClassLikeType> baseClassMRO = mroLinearize(base, true, context, cache);
           if (!baseClassMRO.isEmpty()) {
-            lines.add(baseClassMRO);
+            // mroMerge() updates passed MRO lists internally
+            lines.add(new LinkedList<>(baseClassMRO));
           }
         }
       }
@@ -465,9 +458,26 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       if (addThisType) {
         result.add(0, type);
       }
+      result = Collections.unmodifiableList(result);
     }
     finally {
       cache.put(type, Ref.create(result));
+    }
+    return result;
+  }
+
+  @NotNull
+  private static <T> List<T> removeNotNullDuplicates(@NotNull List<T> list) {
+    final Set<T> distinct = new HashSet<>();
+    final List<T> result = new ArrayList<>();
+    for (T elem : list) {
+      if (elem != null) {
+        final boolean isUnique = distinct.add(elem);
+        if (!isUnique) {
+          continue;
+        }
+      }
+      result.add(elem);
     }
     return result;
   }
@@ -737,12 +747,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private Map<String, Property> initializePropertyCache() {
     final Map<String, Property> result = new HashMap<String, Property>();
-    processProperties(null, new Processor<Property>() {
-      @Override
-      public boolean process(Property property) {
-        result.put(property.getName(), property);
-        return false;
-      }
+    processProperties(null, property -> {
+      result.put(property.getName(), property);
+      return false;
     }, false);
     return result;
   }
@@ -755,9 +762,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Nullable
   private Property processProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
-    if (!isValid()) {
-      return null;
-    }
+    PyPsiUtils.assertValid(this);
     LanguageLevel level = LanguageLevel.getDefault();
     // EA-32381: A tree-based instance may not have a parent element somehow, so getContainingFile() may be not appropriate
     final PsiFile file = getParentByStub() != null ? getContainingFile() : null;
@@ -1244,6 +1249,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
 
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
+    PyPsiUtils.assertValid(this);
     if (result.isEmpty() && isValid() && !builtinCache.isBuiltin(this)) {
       final String implicitSuperName = LanguageLevel.forElement(this).isPy3K() ? PyNames.OBJECT : PyNames.FAKE_OLD_BASE;
       final PyClass implicitSuper = builtinCache.getClass(implicitSuperName);
@@ -1278,7 +1284,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             if (resolvedType instanceof PyClassLikeType) {
               classLikeType = (PyClassLikeType)resolvedType;
             }
-          }
+         }
         }
       }
       result.add(classLikeType);
@@ -1288,18 +1294,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private void fillSuperClassesNoSwitchToAst(@NotNull final TypeEvalContext context,
                                              @Nullable final PyClassStub stub,
                                              @NotNull final List<PyClassLikeType> result) {
-    final List<QualifiedName> qualifiedNames;
-    if (stub != null) {
-      qualifiedNames = Arrays.asList(stub.getSuperClasses());
-    }
-    else {
-      qualifiedNames = PyClassElementType.getSuperClassQNames(this);
-    }
-
+    final Map<QualifiedName, QualifiedName> superClasses = stub != null
+                                                           ? stub.getSuperClasses()
+                                                           : PyClassElementType.getSuperClassQNames(this);
 
     final PsiFile file = getContainingFile();
     if (file instanceof PyFile) {
-      for (QualifiedName name : qualifiedNames) {
+      for (QualifiedName name : superClasses.keySet()) {
         result.add(name != null ? classTypeFromQName(name, (PyFile)file, context) : null);
       }
     }
@@ -1314,6 +1315,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   @Override
   public PyType getMetaClassType(@NotNull TypeEvalContext context) {
+    PyPsiUtils.assertValid(this);
     if (context.maySwitchToAST(this)) {
       final PyExpression expression = getMetaClassExpression();
       if (expression != null) {
@@ -1374,13 +1376,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @NotNull
   private List<PyClassLikeType> getMROAncestorTypes(@NotNull TypeEvalContext context) throws MROException {
+    PyPsiUtils.assertValid(this);
     final PyType thisType = context.getType(this);
     if (thisType instanceof PyClassLikeType) {
-      final PyClassLikeType thisClassLikeType = (PyClassLikeType)thisType;
-      final List<PyClassLikeType> ancestorTypes =
-        mroLinearize(thisClassLikeType, false, context, new HashMap<PyClassLikeType, Ref<List<PyClassLikeType>>>());
+      final List<PyClassLikeType> ancestorTypes = mroLinearize((PyClassLikeType)thisType, false, context, new HashMap<>());
       if (isOverriddenMRO(ancestorTypes, context)) {
-        ancestorTypes.add(null);
+        final ArrayList<PyClassLikeType> withNull = new ArrayList<>(ancestorTypes);
+        withNull.add(null);
+        return withNull;
       }
       return ancestorTypes;
     }

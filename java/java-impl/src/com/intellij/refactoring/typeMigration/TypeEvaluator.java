@@ -360,11 +360,7 @@ public class TypeEvaluator {
       if (types != null) {
         b.append(info.getElement()).append(" : ");
 
-        b.append(StringUtil.join(types, new Function<PsiType, String>() {
-          public String fun(final PsiType psiType) {
-            return psiType.getCanonicalText();
-          }
-        }, " "));
+        b.append(StringUtil.join(types, psiType -> psiType.getCanonicalText(), " "));
 
         b.append("\n");
       }
@@ -445,6 +441,11 @@ public class TypeEvaluator {
       }
     }
     return migrationTtype;
+  }
+
+  @Nullable
+  public <T> T getSettings(Class<T> aClass) {
+    return myRules.getConversionSettings(aClass);
   }
 
   private class SubstitutorBuilder {

@@ -77,7 +77,7 @@ public interface RegExpTT {
     IElementType ESC_CTRL_CHARACTER = new RegExpElementType("ESC_CTRL_CHARACTER");
     // "\\" ("." | "|" | "$" | "^" | "?" | "*" | "+" | "[" | "{" | "(" | ")")
     IElementType ESC_CHARACTER = new RegExpElementType("ESC_CHARACTER");
-    // "\\" ("w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "h" | "H")
+    // "\\" ("w" | "W" | "s" | "S" | "d" | "D" | "v" | "V" | "h" | "H" | "X" | "R")
     IElementType CHAR_CLASS = new RegExpElementType("CHAR_CLASS");
     // "\\u" XXXX
     IElementType UNICODE_CHAR = new RegExpElementType("UNICODE_CHAR");
@@ -117,11 +117,15 @@ public interface RegExpTT {
     IElementType RUBY_NAMED_GROUP = new RegExpElementType("RUBY_NAMED_GROUP");
     // \k<name>
     IElementType RUBY_NAMED_GROUP_REF = new RegExpElementType("RUBY_NAMED_GROUP_REF");
+    // \g<name>
+    IElementType RUBY_NAMED_GROUP_CALL = new RegExpElementType("RUBY_NAMED_GROUP_CALL");
 
     // (?'name'...
     IElementType RUBY_QUOTED_NAMED_GROUP = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP");
     // \k'name'
     IElementType RUBY_QUOTED_NAMED_GROUP_REF = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_REF");
+    // \g'name'
+    IElementType RUBY_QUOTED_NAMED_GROUP_CALL = new RegExpElementType("RUBY_QUOTED_NAMED_GROUP_CALL");
 
     TokenSet KEYWORDS = TokenSet.create(DOT, STAR, QUEST, PLUS);
 

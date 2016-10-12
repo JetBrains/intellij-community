@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class ModuleTestCase extends IdeaTestCase {
-  protected final Collection<Module> myModulesToDispose = new ArrayList<Module>();
+  protected final Collection<Module> myModulesToDispose = new ArrayList<>();
 
   @Override
   protected void setUp() throws Exception {
@@ -70,7 +70,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
           }
           catch (Throwable e) {
             if (errors == null) {
-              errors = new SmartList<Throwable>();
+              errors = new SmartList<>();
             }
             errors.add(e);
           }
@@ -99,12 +99,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
 
   protected Module createModule(final String path, final ModuleType moduleType) {
     Module module = ApplicationManager.getApplication().runWriteAction(
-      new Computable<Module>() {
-        @Override
-        public Module compute() {
-          return ModuleManager.getInstance(myProject).newModule(path, moduleType.getId());
-        }
-      }
+      (Computable<Module>)() -> ModuleManager.getInstance(myProject).newModule(path, moduleType.getId())
     );
 
     myModulesToDispose.add(module);
@@ -118,12 +113,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     Module module;
     try {
-    module = ApplicationManager.getApplication().runWriteAction(new ThrowableComputable<Module, Exception>() {
-      @Override
-      public Module compute() throws Exception {
-        return moduleManager.loadModule(normalizedPath);
-      }
-    });
+      module = ApplicationManager.getApplication().runWriteAction((ThrowableComputable<Module, Exception>)() -> moduleManager.loadModule(normalizedPath));
     }
     catch (Exception e) {
       LOG.error(e);

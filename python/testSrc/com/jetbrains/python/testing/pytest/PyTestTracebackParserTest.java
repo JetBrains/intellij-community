@@ -102,7 +102,7 @@ public final class PyTestTracebackParserTest {
     requiredStrings.add("/Users/Mac Hipster/Applications/PyCharm 4.0 .app/helpers/lala.py - 12");
     requiredStrings.add("C:\\Users\\ilya.kazakevich\\virtenvs\\spammy\\lib\\site-packages\\django_cron\\models.py - 4");
     final Logger logger = Logger.getInstance(PyTestTracebackParserTest.class);
-    final String[] strings = s.split("\n");
+    final String[] strings = StringUtil.splitByLines(s);
     logger.warn(String.format("Got lines %s", strings));
     for (final String line : strings) {
       logger.warn(String.format("Starting with string %s", line));

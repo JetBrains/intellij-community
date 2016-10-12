@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,30 +74,27 @@ public class ConstructorReferencesSearchHelper {
     }
 
     // search usages like "new XXX(..)"
-    PairProcessor<PsiReference, SearchRequestCollector> processor1 = new PairProcessor<PsiReference, SearchRequestCollector>() {
-      @Override
-      public boolean process(PsiReference reference, SearchRequestCollector collector) {
-        PsiElement parent = reference.getElement().getParent();
-        if (parent instanceof PsiAnonymousClass) {
-          parent = parent.getParent();
-        }
-        if (parent instanceof PsiNewExpression) {
-          PsiMethod constructor1 = ((PsiNewExpression)parent).resolveConstructor();
-          if (constructor1 != null) {
-            if (isStrictSignatureSearch) {
-              if (myManager.areElementsEquivalent(constructor, constructor1)) {
-                return processor.process(reference);
-              }
+    PairProcessor<PsiReference, SearchRequestCollector> processor1 = (reference, collector1) -> {
+      PsiElement parent = reference.getElement().getParent();
+      if (parent instanceof PsiAnonymousClass) {
+        parent = parent.getParent();
+      }
+      if (parent instanceof PsiNewExpression) {
+        PsiMethod constructor1 = ((PsiNewExpression)parent).resolveConstructor();
+        if (constructor1 != null) {
+          if (isStrictSignatureSearch) {
+            if (myManager.areElementsEquivalent(constructor, constructor1)) {
+              return processor.process(reference);
             }
-            else {
-              if (myManager.areElementsEquivalent(containingClass, constructor1.getContainingClass())) {
-                return processor.process(reference);
-              }
+          }
+          else {
+            if (myManager.areElementsEquivalent(containingClass, constructor1.getContainingClass())) {
+              return processor.process(reference);
             }
           }
         }
-        return true;
       }
+      return true;
     };
 
     ReferencesSearch.searchOptimized(containingClass, searchScope, ignoreAccessScope, collector, true, processor1);
@@ -106,28 +103,21 @@ public class ConstructorReferencesSearchHelper {
     }
 
     // search usages like "this(..)"
-    if (!MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
-                                  isStrictSignatureSearch,
-                                  PsiKeyword.THIS, processor);
-      }
-    })) {
+    if (!MethodUsagesSearcher.resolveInReadAction(project,
+                                                  () -> processSuperOrThis(containingClass, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
+                                                                                                                     isStrictSignatureSearch,
+                                                                                                                     PsiKeyword.THIS, processor))) {
       return false;
     }
 
     // search usages like "super(..)"
-    Processor<PsiClass> processor2 = new Processor<PsiClass>() {
-      @Override
-      public boolean process(PsiClass inheritor) {
-        final PsiElement navigationElement = inheritor.getNavigationElement();
-        if (navigationElement instanceof PsiClass) {
-          return processSuperOrThis((PsiClass)navigationElement, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
-                                    isStrictSignatureSearch, PsiKeyword.SUPER, processor);
-        }
-        return true;
+    Processor<PsiClass> processor2 = inheritor -> {
+      final PsiElement navigationElement = inheritor.getNavigationElement();
+      if (navigationElement instanceof PsiClass) {
+        return processSuperOrThis((PsiClass)navigationElement, constructor, constructorCanBeCalledImplicitly[0], searchScope, project,
+                                  isStrictSignatureSearch, PsiKeyword.SUPER, processor);
       }
+      return true;
     };
 
     return ClassInheritorsSearch.search(containingClass, searchScope, false).forEach(processor2);
@@ -137,21 +127,18 @@ public class ConstructorReferencesSearchHelper {
                                                @NotNull final PsiMethod constructor,
                                                @NotNull final Project project,
                                                @NotNull final PsiClass aClass) {
-    return MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        for (PsiField field : aClass.getFields()) {
-          if (field instanceof PsiEnumConstant) {
-            PsiReference reference = field.getReference();
-            if (reference != null && reference.isReferenceTo(constructor)) {
-              if (!processor.process(reference)) {
-                return false;
-              }
+    return MethodUsagesSearcher.resolveInReadAction(project, () -> {
+      for (PsiField field : aClass.getFields()) {
+        if (field instanceof PsiEnumConstant) {
+          PsiReference reference = field.getReference();
+          if (reference != null && reference.isReferenceTo(constructor)) {
+            if (!processor.process(reference)) {
+              return false;
             }
           }
         }
-        return true;
       }
+      return true;
     });
   }
 
@@ -159,27 +146,21 @@ public class ConstructorReferencesSearchHelper {
                                                  @NotNull final PsiMethod constructor,
                                                  @NotNull final Project project,
                                                  @NotNull PsiClass aClass, SearchScope searchScope) {
-    return ReferencesSearch.search(aClass, searchScope).forEach(new Processor<PsiReference>() {
-      @Override
-      public boolean process(PsiReference reference) {
-        final PsiElement element = reference.getElement();
-        if (element != null) {
-          return MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
-            @Override
-            public Boolean compute() {
-              final PsiElement parent = element.getParent();
-              if (parent instanceof PsiMethodReferenceExpression &&
-                  ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
-                if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
-                  if (!processor.process((PsiReference)parent)) return false;
-                }
-              }
-              return true;
+    return ReferencesSearch.search(aClass, searchScope).forEach(reference -> {
+      final PsiElement element = reference.getElement();
+      if (element != null) {
+        return MethodUsagesSearcher.resolveInReadAction(project, () -> {
+          final PsiElement parent = element.getParent();
+          if (parent instanceof PsiMethodReferenceExpression &&
+              ((PsiMethodReferenceExpression)parent).getReferenceNameElement() instanceof PsiKeyword) {
+            if (((PsiMethodReferenceExpression)parent).isReferenceTo(constructor)) {
+              if (!processor.process((PsiReference)parent)) return false;
             }
-          });
-        }
-        return true;
+          }
+          return true;
+        });
       }
+      return true;
     });
   }
 
@@ -224,7 +205,7 @@ public class ConstructorReferencesSearchHelper {
           }
         }
       }
-      if (constructorCanBeCalledImplicitly) {
+      if (constructorCanBeCalledImplicitly && PsiSearchScopeUtil.isInScope(searchScope, method)) {
         if (!processImplicitConstructorCall(method, processor, constructor, project, inheritor)) return false;
       }
     }
@@ -238,12 +219,7 @@ public class ConstructorReferencesSearchHelper {
                                                  @NotNull final Project project,
                                                  @NotNull final PsiClass containingClass) {
     if (containingClass instanceof PsiAnonymousClass) return true;
-    boolean same = MethodUsagesSearcher.resolveInReadAction(project, new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return myManager.areElementsEquivalent(constructor.getContainingClass(), containingClass.getSuperClass());
-      }
-    });
+    boolean same = MethodUsagesSearcher.resolveInReadAction(project, () -> myManager.areElementsEquivalent(constructor.getContainingClass(), containingClass.getSuperClass()));
     if (!same) {
       return true;
     }
@@ -255,17 +231,14 @@ public class ConstructorReferencesSearchHelper {
 
       @Override
       public TextRange getRangeInElement() {
-        if (usage instanceof PsiClass) {
-          PsiIdentifier identifier = ((PsiClass)usage).getNameIdentifier();
-          if (identifier != null) return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
-        }
-        else if (usage instanceof PsiField) {
-          PsiIdentifier identifier = ((PsiField)usage).getNameIdentifier();
-          return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
-        }
-        else if (usage instanceof PsiMethod) {
-          PsiIdentifier identifier = ((PsiMethod)usage).getNameIdentifier();
-          if (identifier != null) return TextRange.from(identifier.getStartOffsetInParent(), identifier.getTextLength());
+        if (usage instanceof PsiNameIdentifierOwner) {
+          PsiElement identifier = ((PsiNameIdentifierOwner)usage).getNameIdentifier();
+          if (identifier != null) {
+            final int startOffsetInParent = identifier.getStartOffsetInParent();
+            if (startOffsetInParent >= 0) { // -1 for light elements generated e.g. by lombok
+              return TextRange.from(startOffsetInParent, identifier.getTextLength());
+            }
+          }
         }
         return super.getRangeInElement();
       }

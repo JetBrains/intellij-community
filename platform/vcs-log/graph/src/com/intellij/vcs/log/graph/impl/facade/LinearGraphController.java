@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.vcs.log.graph.actions.GraphAction;
-import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
@@ -40,20 +39,23 @@ public interface LinearGraphController {
   }
 
   // Integer = nodeId
-  class LinearGraphAnswer implements GraphAnswer<Integer> {
+  class LinearGraphAnswer {
     @Nullable private final GraphChanges<Integer> myGraphChanges;
-    @Nullable private final Cursor myCursorToSet;
-    @Nullable private final Integer myCommitToJump;
+    @Nullable private final Cursor myCursor;
     @Nullable private final Set<Integer> mySelectedNodeIds;
 
-    public LinearGraphAnswer(@Nullable GraphChanges<Integer> graphChanges,
-                             @Nullable Cursor cursorToSet,
-                             @Nullable Integer commitToJump,
-                             @Nullable Set<Integer> selectedNodeIds) {
-      myGraphChanges = graphChanges;
-      myCursorToSet = cursorToSet;
-      myCommitToJump = commitToJump;
+    public LinearGraphAnswer(@Nullable GraphChanges<Integer> changes, @Nullable Cursor cursor, @Nullable Set<Integer> selectedNodeIds) {
+      myGraphChanges = changes;
+      myCursor = cursor;
       mySelectedNodeIds = selectedNodeIds;
+    }
+
+    public LinearGraphAnswer(@Nullable Cursor cursor, @Nullable Set<Integer> selectedNodeIds) {
+      this(null, cursor, selectedNodeIds);
+    }
+
+    public LinearGraphAnswer(@Nullable GraphChanges<Integer> changes) {
+      this(changes, null, null);
     }
 
     @Nullable
@@ -62,21 +64,13 @@ public interface LinearGraphController {
     }
 
     @Nullable
-    @Override
-    public Cursor getCursorToSet() {
-      return myCursorToSet;
-    }
-
-    @Nullable
-    @Override
-    public Integer getCommitToJump() {
-      return myCommitToJump;
-    }
-
-    @Nullable
-    @Override
     public Runnable getGraphUpdater() {
       return null;
+    }
+
+    @Nullable
+    public Cursor getCursorToSet() {
+      return myCursor;
     }
 
     @Nullable
@@ -84,5 +78,4 @@ public interface LinearGraphController {
       return mySelectedNodeIds;
     }
   }
-
 }

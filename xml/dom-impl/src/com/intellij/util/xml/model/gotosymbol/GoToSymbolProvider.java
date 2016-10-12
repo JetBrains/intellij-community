@@ -65,18 +65,9 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   }
 
   private List<Module> getAcceptableModules(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, ACCEPTABLE_MODULES, new CachedValueProvider<List<Module>>() {
-      @Nullable
-      @Override
-      public Result<List<Module>> compute() {
-        List<Module> result = ContainerUtil.findAll(ModuleManager.getInstance(project).getModules(), new Condition<Module>() {
-          @Override
-          public boolean value(Module module) {
-            return acceptModule(module);
-          }
-        });
-        return Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-      }
+    return CachedValuesManager.getManager(project).getCachedValue(project, ACCEPTABLE_MODULES, () -> {
+      List<Module> result = ContainerUtil.findAll(ModuleManager.getInstance(project).getModules(), module -> acceptModule(module));
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     }, false);
   }
 

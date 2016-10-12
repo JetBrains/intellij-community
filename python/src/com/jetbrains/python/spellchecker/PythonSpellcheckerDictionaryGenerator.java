@@ -42,12 +42,9 @@ public class PythonSpellcheckerDictionaryGenerator extends SpellCheckerDictionar
   protected void processFolder(final HashSet<String> seenNames, PsiManager manager, VirtualFile folder) {
     if (!myExcludedFolders.contains(folder)) {
       final String name = folder.getName();
-      IdentifierSplitter.getInstance().split(name, TextRange.allOf(name), new Consumer<TextRange>() {
-        @Override
-        public void consume(TextRange textRange) {
-          final String word = textRange.substring(name);
-          addSeenWord(seenNames, word, Language.ANY);
-        }
+      IdentifierSplitter.getInstance().split(name, TextRange.allOf(name), textRange -> {
+        final String word = textRange.substring(name);
+        addSeenWord(seenNames, word, Language.ANY);
       });
     }
     super.processFolder(seenNames, manager, folder);

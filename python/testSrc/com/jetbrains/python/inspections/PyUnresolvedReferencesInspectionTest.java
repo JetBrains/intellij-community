@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,32 +234,17 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-6745
   public void testQualNameAttribute() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
   }
 
   // PY-7389
   public void testComprehensionScope27() {
-    runWithLanguageLevel(LanguageLevel.PYTHON27, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   // PY-7389
   public void testComprehensionScope33() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, new Runnable() {
-      @Override
-      public void run() {
-        doTest();
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
   }
 
   // PY-7516
@@ -736,6 +721,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-19084
   public void testPercentStringKeywordTupleArgument() {
+    doTest();
+  }
+
+  // PY-13734
+  public void testDunderClass() {
     doTest();
   }
 

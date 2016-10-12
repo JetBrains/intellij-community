@@ -83,6 +83,7 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
     if (text == null) return null;
 
     if (editor.getCaretModel().supportsMultipleCarets()) {
+      CaretStateTransferableData caretData = null;
       int caretCount = editor.getCaretModel().getCaretCount();
       if (caretCount == 1 && editor.isColumnMode()) {
         int pastedLineCount = LineTokenizer.calcLineCount(text, true);
@@ -96,13 +97,14 @@ public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
         }
         caretCount = editor.getCaretModel().getCaretCount();
       }
-      CaretStateTransferableData caretData = null;
-      try {
-        caretData = content.isDataFlavorSupported(CaretStateTransferableData.FLAVOR)
-                    ? (CaretStateTransferableData)content.getTransferData(CaretStateTransferableData.FLAVOR) : null;
-      }
-      catch (Exception e) {
-        LOG.error(e);
+      else {
+        try {
+          caretData = content.isDataFlavorSupported(CaretStateTransferableData.FLAVOR)
+                      ? (CaretStateTransferableData)content.getTransferData(CaretStateTransferableData.FLAVOR) : null;
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
       final TextRange[] ranges = new TextRange[caretCount];
       final Iterator<String> segments = new ClipboardTextPerCaretSplitter().split(text, caretData, caretCount).iterator();

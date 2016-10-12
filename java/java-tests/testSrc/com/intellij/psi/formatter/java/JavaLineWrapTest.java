@@ -34,4 +34,23 @@ public class JavaLineWrapTest extends AbstractLineWrapPositionStrategyTest {
     String document = "void method(String p1, String p2, Boolean b1, <WRAP>String...a<EDGE>rgs) {}";
     doTest(myLineWrapStrategy, document, false);
   }
+
+  @Test
+  public void testNoWrapOnDouble1() {
+    String document = "double t = 1000000 + <WRAP>.112<EDGE>122";
+    doTest(myLineWrapStrategy, document, false);
+  }
+
+  @Test
+  public void testNoWrapOnDouble2() {
+    String document = "double t = 1000000 + <WRAP>112.<EDGE>";
+    doTest(myLineWrapStrategy, document, false);
+  }
+
+  @Test
+  public void testNoWrapOnFloat2() {
+    String document = "float t = 1000000 + <WRAP>11111.112<EDGE>122";
+    doTest(myLineWrapStrategy, document, false);
+  }
+  
 }

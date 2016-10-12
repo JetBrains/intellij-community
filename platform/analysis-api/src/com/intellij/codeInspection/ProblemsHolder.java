@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection;
 
 import com.intellij.BundleBase;
@@ -42,6 +41,7 @@ import java.util.List;
  */
 public class ProblemsHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ProblemsHolder");
+
   private final InspectionManager myManager;
   private final PsiFile myFile;
   private final boolean myOnTheFly;
@@ -147,6 +147,13 @@ public class ProblemsHolder {
     return message;
   }
 
+  public void registerProblem(@NotNull PsiElement psiElement,
+                              @Nullable TextRange rangeInElement,
+                              @NotNull String message,
+                              @Nullable LocalQuickFix... fixes) {
+    registerProblem(psiElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, rangeInElement, fixes);
+  }
+
   /**
    * Creates highlighter for the specified place in the file.
    * @param psiElement The highlighter will be created at the text range od this element. This psiElement must be in the current file.
@@ -156,22 +163,12 @@ public class ProblemsHolder {
    *                       If you want to highlight only part of the supplied psiElement. Pass null otherwise.
    * @param fixes (Optional) fixes to appear for this highlighter.
    */
-  public void registerProblem(@NotNull final PsiElement psiElement,
-                              @NotNull final String message,
+  public void registerProblem(@NotNull PsiElement psiElement,
+                              @NotNull String message,
                               @NotNull ProblemHighlightType highlightType,
                               @Nullable TextRange rangeInElement,
                               @Nullable LocalQuickFix... fixes) {
-
-    final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, highlightType, myOnTheFly, fixes);
-    registerProblem(descriptor);
-  }
-
-  public void registerProblem(@NotNull final PsiElement psiElement,
-                              @Nullable TextRange rangeInElement,
-                              @NotNull final String message,
-                              @Nullable LocalQuickFix... fixes) {
-    final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, fixes);
-    registerProblem(descriptor);
+    registerProblem(myManager.createProblemDescriptor(psiElement, rangeInElement, message, highlightType, myOnTheFly, fixes));
   }
 
   @NotNull

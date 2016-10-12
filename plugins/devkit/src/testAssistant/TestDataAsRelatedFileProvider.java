@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,9 @@ public class TestDataAsRelatedFileProvider extends GotoRelatedProvider {
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(context);
-    final Project project = CommonDataKeys.PROJECT.getData(context);
-    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
+    final Editor editor = context.getData(CommonDataKeys.EDITOR);
+    final Project project = context.getData(CommonDataKeys.PROJECT);
+    final PsiElement element = context.getData(CommonDataKeys.PSI_ELEMENT);
     if (editor == null || element == null || project == null) {
       return Collections.emptyList(); 
     }

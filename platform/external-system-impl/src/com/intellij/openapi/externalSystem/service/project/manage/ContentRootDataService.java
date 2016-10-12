@@ -217,15 +217,12 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       }
     }
     if(createEmptyContentRootDirectories) {
-      ExternalSystemApiUtil.doWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            VfsUtil.createDirectoryIfMissing(root.getPath());
-          }
-          catch (IOException e) {
-            LOG.warn(String.format("Unable to create directory for the path: %s", root.getPath()), e);
-          }
+      ExternalSystemApiUtil.doWriteAction(() -> {
+        try {
+          VfsUtil.createDirectoryIfMissing(root.getPath());
+        }
+        catch (IOException e) {
+          LOG.warn(String.format("Unable to create directory for the path: %s", root.getPath()), e);
         }
       });
     }

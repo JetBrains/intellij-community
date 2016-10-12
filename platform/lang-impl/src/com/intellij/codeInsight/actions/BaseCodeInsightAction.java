@@ -43,10 +43,10 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
 
   @Override
   @Nullable
-  protected Editor getEditor(@NotNull final DataContext dataContext, @NotNull final Project project) {
+  protected Editor getEditor(@NotNull final DataContext dataContext, @NotNull final Project project, boolean forUpdate) {
     Editor editor = getBaseEditor(dataContext, project);
     if (!myLookForInjectedEditor) return editor;
-    return getInjectedEditor(project, editor);
+    return getInjectedEditor(project, editor, !forUpdate);
   }
 
   public static Editor getInjectedEditor(@NotNull Project project, final Editor editor) {
@@ -68,7 +68,7 @@ public abstract class BaseCodeInsightAction extends CodeInsightAction {
 
   @Nullable
   protected Editor getBaseEditor(@NotNull final DataContext dataContext, @NotNull final Project project) {
-    return super.getEditor(dataContext, project);
+    return super.getEditor(dataContext, project, true);
   }
 
   @Override

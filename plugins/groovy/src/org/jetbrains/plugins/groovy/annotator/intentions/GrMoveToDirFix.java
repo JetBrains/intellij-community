@@ -81,4 +81,9 @@ public class GrMoveToDirFix extends GroovyFix {
     }
     new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{file}, directory, false, false, false, null, null).run();
   }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }

@@ -75,7 +75,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
   }
 
   @Override
-  protected IndentData getNumberOfSymbolsBeforeBlock() {
+  public IndentData getNumberOfSymbolsBeforeBlock() {
     if (myChildren == null || myChildren.isEmpty()) {
       return new IndentData(0, 0);
     }

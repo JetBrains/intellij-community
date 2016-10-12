@@ -1,6 +1,13 @@
 package com.intellij.projectView;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.impl.ModuleManagerImpl;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import org.junit.Assert;
 
 public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
 
@@ -109,5 +116,31 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                                                 "    Form2.form\n");
 
     checkContainsMethod(myStructure.getRootElement(), myStructure);
+  }
+
+  public void testNoDuplicateModules() {
+    VirtualFile mainModuleRoot = ModuleRootManager.getInstance(myModule).getContentRoots()[0];
+
+    PsiTestUtil.addExcludedRoot(myModule, mainModuleRoot.findFileByRelativePath("src/com/package1/p2"));
+
+    Module module = createModule("nested_module");
+    ModuleManagerImpl.getInstanceImpl(myProject).setModuleGroupPath(module, new String[]{"modules"});
+    PsiTestUtil.addContentRoot(module, mainModuleRoot.findFileByRelativePath("src/com/package1/p2/p3"));
+
+    TestProjectTreeStructure structure = new TestProjectTreeStructure(myProject, myTestRootDisposable);
+    structure.setShowLibraryContents(false);
+
+    String structureContent = PlatformTestUtil.print(structure, structure.getRootElement(), 0, null, 10, ' ', myPrintInfo).toString();
+
+    Assert.assertFalse(structureContent.contains("modules"));
+    assertEquals("Project\n" +
+                 " noDuplicateModules\n" +
+                 "  src\n" +
+                 "   com\n" +
+                 "    package1\n" +
+                 "     Test.java\n" +
+                 " nested_module.iml\n" +
+                 " testNoDuplicateModules.iml\n",
+                 structureContent);
   }
 }

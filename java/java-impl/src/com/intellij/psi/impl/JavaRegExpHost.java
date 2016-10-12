@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -28,6 +27,7 @@ import org.intellij.lang.regexp.RegExpLanguageHost;
 import org.intellij.lang.regexp.psi.RegExpChar;
 import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
+import org.intellij.lang.regexp.psi.RegExpSimpleClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +40,23 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   public JavaRegExpHost() {
     myPropertiesProvider = DefaultRegExpPropertiesProvider.getInstance();
+  }
+
+  @Override
+  public boolean supportsInlineOptionFlag(char flag, PsiElement context) {
+    switch (flag) {
+      case 'i': // case-insensitive matching
+      case 'd': // Unix lines mode
+      case 'm': // multiline mode
+      case 's': // dotall mode
+      case 'u': // Unicode-aware case folding
+      case 'x': // whitespace and comments in pattern
+        return true;
+      case 'U': // Enables the Unicode version of Predefined character classes and POSIX character classes
+        return hasAtLeastJdkVersion(context, JavaSdkVersion.JDK_1_7);
+      default:
+        return false;
+    }
   }
 
   @Override
@@ -64,41 +81,63 @@ public class JavaRegExpHost implements RegExpLanguageHost {
 
   @Override
   public boolean supportsNamedGroupSyntax(RegExpGroup group) {
-    if (group.isNamedGroup()) {
-      final JavaSdkVersion version = getJavaVersion(group);
-      return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
-    }
-    return false;
+    return group.isNamedGroup() && hasAtLeastJdkVersion(group, JavaSdkVersion.JDK_1_7);
   }
 
   @Override
   public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
-    if (ref.isNamedGroupRef()) {
-      final JavaSdkVersion version = getJavaVersion(ref);
-      return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
-    }
-    return false;
+    return ref.isNamedGroupRef() && hasAtLeastJdkVersion(ref, JavaSdkVersion.JDK_1_7);
   }
 
   @Override
   public boolean supportsExtendedHexCharacter(RegExpChar regExpChar) {
-    final JavaSdkVersion version = getJavaVersion(regExpChar);
-    return version != null && version.isAtLeast(JavaSdkVersion.JDK_1_7);
+    return hasAtLeastJdkVersion(regExpChar, JavaSdkVersion.JDK_1_7);
   }
 
-  @Nullable
-  private static JavaSdkVersion getJavaVersion(PsiElement element) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return JavaSdkVersion.JDK_1_9;
+  @Override
+  public boolean supportsSimpleClass(RegExpSimpleClass simpleClass) {
+    switch(simpleClass.getKind()) {
+      case UNICODE_LINEBREAK:
+      case HORIZONTAL_SPACE:
+      case NON_HORIZONTAL_SPACE:
+      case NON_VERTICAL_SPACE:
+        return hasAtLeastJdkVersion(simpleClass, JavaSdkVersion.JDK_1_8);
+      case VERTICAL_SPACE:
+        // is vertical tab before jdk 1.8
+        return true;
+      case UNICODE_GRAPHEME:
+      case XML_NAME_START:
+      case NON_XML_NAME_START:
+      case XML_NAME_PART:
+      case NON_XML_NAME_PART:
+        return false;
+      default:
+        return true;
     }
+  }
+
+  @Override
+  public boolean supportsLiteralBackspace(RegExpChar aChar) {
+    return false;
+  }
+
+  private static boolean hasAtLeastJdkVersion(PsiElement element, JavaSdkVersion version) {
+    return getJavaVersion(element).isAtLeast(version);
+  }
+
+  @NotNull
+  private static JavaSdkVersion getJavaVersion(PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
     if (module != null) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
       if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-        return JavaSdk.getInstance().getVersion(sdk);
+        final JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
+        if (version != null) {
+          return version;
+        }
       }
     }
-    return null;
+    return JavaSdkVersion.JDK_1_9;
   }
 
   @Override

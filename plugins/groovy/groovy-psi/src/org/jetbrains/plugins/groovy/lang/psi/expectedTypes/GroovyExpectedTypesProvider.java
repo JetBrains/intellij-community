@@ -70,42 +70,34 @@ import java.util.List;
 public class GroovyExpectedTypesProvider {
 
   public static TypeConstraint[] calculateTypeConstraints(@NotNull final GrExpression expression) {
-    return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, new Computable<TypeConstraint[]>() {
-      @Override
-      public TypeConstraint[] compute() {
-          MyCalculator calculator = new MyCalculator(expression);
-          final PsiElement parent = expression.getParent();
-          if (parent instanceof GroovyPsiElement) {
-            ((GroovyPsiElement)parent).accept(calculator);
-          }
-          else {
-            parent.accept(new GroovyPsiElementVisitor(calculator));
-          }
-          final TypeConstraint[] result = calculator.getResult();
-
-          List<TypeConstraint> custom = ContainerUtil.newArrayList();
-          for (GroovyExpectedTypesContributor contributor : GroovyExpectedTypesContributor.EP_NAME.getExtensions()) {
-            custom.addAll(contributor.calculateTypeConstraints(expression));
-          }
-
-          if (!custom.isEmpty()) {
-            custom.addAll(0, Arrays.asList(result));
-            return custom.toArray(new TypeConstraint[custom.size()]);
-          }
-
-          return result;
+    return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, () -> {
+        MyCalculator calculator = new MyCalculator(expression);
+        final PsiElement parent = expression.getParent();
+        if (parent instanceof GroovyPsiElement) {
+          ((GroovyPsiElement)parent).accept(calculator);
         }
+        else {
+          parent.accept(new GroovyPsiElementVisitor(calculator));
+        }
+        final TypeConstraint[] result = calculator.getResult();
+
+        List<TypeConstraint> custom = ContainerUtil.newArrayList();
+        for (GroovyExpectedTypesContributor contributor : GroovyExpectedTypesContributor.EP_NAME.getExtensions()) {
+          custom.addAll(contributor.calculateTypeConstraints(expression));
+        }
+
+        if (!custom.isEmpty()) {
+          custom.addAll(0, Arrays.asList(result));
+          return custom.toArray(new TypeConstraint[custom.size()]);
+        }
+
+        return result;
       });
   }
 
   public static List<PsiType> getDefaultExpectedTypes(@NotNull GrExpression element) {
     TypeConstraint[] constraints = calculateTypeConstraints(element);
-    return ContainerUtil.map(constraints, new Function<TypeConstraint, PsiType>() {
-      @Override
-      public PsiType fun(TypeConstraint constraint) {
-        return constraint.getDefaultType();
-      }
-    });
+    return ContainerUtil.map(constraints, constraint -> constraint.getDefaultType());
   }
 
   private static class MyCalculator extends GroovyElementVisitor {
@@ -263,12 +255,7 @@ public class GroovyExpectedTypesProvider {
           else {
             final PsiMethod[] valueAttr = annot.findMethodsByName("value", false);
             if (valueAttr.length > 0) {
-              boolean canHaveSimpleExpr = ContainerUtil.find(annot.getMethods(), new Condition<PsiMethod>() {
-                @Override
-                public boolean value(PsiMethod method) {
-                  return !("value".equals(method.getName()) || method instanceof PsiAnnotationMethod && ((PsiAnnotationMethod)method).getDefaultValue() != null);
-                }
-              }) == null;
+              boolean canHaveSimpleExpr = ContainerUtil.find(annot.getMethods(), method -> !("value".equals(method.getName()) || method instanceof PsiAnnotationMethod && ((PsiAnnotationMethod)method).getDefaultValue() != null)) == null;
 
 
               if (canHaveSimpleExpr) {

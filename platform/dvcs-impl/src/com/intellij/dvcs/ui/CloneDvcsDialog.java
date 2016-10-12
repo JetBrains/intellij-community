@@ -16,6 +16,8 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
+import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -92,6 +94,24 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myRepositoryUrlLabel.setText(DvcsBundle.message("clone.repository.url", displayName));
     myRepositoryUrlLabel.setDisplayedMnemonic('R');
     setOKButtonText(DvcsBundle.getString("clone.button"));
+
+    FrameStateManager.getInstance().addListener(new FrameStateListener.Adapter() {
+      @Override
+      public void onFrameActivated() {
+        updateButtons();
+      }
+    }, getDisposable());
+  }
+
+  @Override
+  protected void doOKAction() {
+    File parent = new File(getParentDirectory());
+    if (parent.exists() && parent.isDirectory() && parent.canWrite() || parent.mkdirs()) {
+      super.doOKAction();
+      return;
+    }
+    setErrorText("Couldn't create " + parent + "<br/>Check your access rights");
+    setOKActionEnabled(false);
   }
 
   @NotNull
@@ -210,13 +230,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       return false;
     }
     File file = new File(myParentDirectory.getText(), myDirectoryName.getText());
-    if (file.exists()) {
+    if (file.exists() && (!file.isDirectory()) || !ArrayUtil.isEmpty(file.list())) {
       setErrorText(DvcsBundle.message("clone.destination.exists.error", file));
-      setOKActionEnabled(false);
-      return false;
-    }
-    else if (!file.getParentFile().exists()) {
-      setErrorText(DvcsBundle.message("clone.parent.missing.error", file.getParent()));
       setOKActionEnabled(false);
       return false;
     }

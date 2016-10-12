@@ -81,12 +81,7 @@ public abstract class VisibilityListener {
 
     final String finalVisibility = visibility + (wasPackageLocal ? " " : "");
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        document.replaceString(startOffset, endOffset, finalVisibility);
-      }
-    };
+    Runnable runnable = () -> document.replaceString(startOffset, endOffset, finalVisibility);
 
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
     if (lookup != null) {

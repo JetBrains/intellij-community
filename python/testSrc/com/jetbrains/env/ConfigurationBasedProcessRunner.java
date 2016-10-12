@@ -52,22 +52,20 @@ import java.util.List;
  * you need to implement {@link #getEnvironmentToRerun(RunContentDescriptor)}, accept last run descriptor and return
  * {@link ExecutionEnvironment} to rerun (probably obtained from descriptor).
  * <p/>
- * It also has {@link #getAvailableRunnersForLastRun()} with list of strings that represents runner ids available for last run.
+ * It also has {@link #getAvailableRunnersForLastRun()} with list of runners that represents runner ids available for last run.
  *
  * @param <CONF_T> configuration class this runner supports
  * @author Ilya.Kazakevich
  */
 public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPythonRunConfigurationParams>
   extends ProcessWithConsoleRunner {
-  @Nullable
-  protected final String myWorkingFolder;
   @NotNull
   private final ConfigurationFactory myConfigurationFactory;
   @NotNull
   private final Class<CONF_T> myExpectedConfigurationType;
 
   @NotNull
-  private final List<String> myAvailableRunnersForLastRun = new ArrayList<String>();
+  private final List<ProgramRunner<?>> myAvailableRunnersForLastRun = new ArrayList<>();
 
   /**
    * Environment to be used to run instead of factory. Used to rerun
@@ -77,39 +75,38 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
   /**
    * Process descriptor of last run
    */
-  private RunContentDescriptor myLastProcessDescriptor;
+  protected RunContentDescriptor myLastProcessDescriptor;
 
   /**
    * @param configurationFactory      factory tp create configurations
    * @param expectedConfigurationType configuration type class
-   * @param workingFolder             folder to pass to configuration: {@link AbstractPythonRunConfigurationParams#setWorkingDirectory(String)}
    */
   protected ConfigurationBasedProcessRunner(@NotNull final ConfigurationFactory configurationFactory,
-                                            @NotNull final Class<CONF_T> expectedConfigurationType,
-                                            @Nullable final String workingFolder) {
+                                            @NotNull final Class<CONF_T> expectedConfigurationType) {
     myConfigurationFactory = configurationFactory;
     myExpectedConfigurationType = expectedConfigurationType;
-    myWorkingFolder = workingFolder;
   }
 
   @Override
-  final void runProcess(@NotNull final String sdkPath, @NotNull final Project project, @NotNull final ProcessListener processListener)
+  final void runProcess(@NotNull final String sdkPath,
+                        @NotNull final Project project,
+                        @NotNull final ProcessListener processListener,
+                        @NotNull final String tempWorkingPath)
     throws ExecutionException {
+    ensureConsoleOk(myConsole);
+
     // Do not create new environment from factory, if child provided environment to rerun
     final ExecutionEnvironment executionEnvironment =
-      (myRerunExecutionEnvironment != null ? myRerunExecutionEnvironment : createExecutionEnvironment(sdkPath, project));
+      // TODO: RENAME
+      (myRerunExecutionEnvironment != null ? myRerunExecutionEnvironment : createExecutionEnvironment
+        (sdkPath, project, tempWorkingPath));
 
     // Engine to be run after process end to post process console
     final ProcessListener consolePostprocessor = new ProcessAdapter() {
       @Override
       public void processTerminated(final ProcessEvent event) {
         super.processTerminated(event);
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            prepareConsoleAfterProcessEnd();
-          }
-        }, ModalityState.NON_MODAL);
+        ApplicationManager.getApplication().invokeAndWait(() -> prepareConsoleAfterProcessEnd(), ModalityState.NON_MODAL);
       }
     };
 
@@ -119,7 +116,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     for (final ProgramRunner<?> runner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensions()) {
       for (final Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
         if (runner.canRun(executor.getId(), executionEnvironment.getRunProfile())) {
-          myAvailableRunnersForLastRun.add(runner.getRunnerId());
+          myAvailableRunnersForLastRun.add(runner);
         }
       }
     }
@@ -141,8 +138,23 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     });
   }
 
+  /**
+   * {@link PyProcessWithConsoleTestTask#createProcessRunner()} should always return new runner.
+   * But some buggy code returns runner from prev. rerun with stale project in console.
+   * This code checks it.
+   */
+  private static void ensureConsoleOk(@Nullable final ConsoleViewImpl console) {
+    if (console == null) { // Not set yet
+      return;
+    }
+    if (console.getProject().isDisposed()) {
+      throw new AssertionError(
+        "=== Console is stale. Make sure you did not cache and reuse runner from prev. run. See this method doc for more info === ");
+    }
+  }
+
   @NotNull
-  private ExecutionEnvironment createExecutionEnvironment(@NotNull String sdkPath, @NotNull final Project project)
+  private ExecutionEnvironment createExecutionEnvironment(@NotNull final String sdkPath, @NotNull final Project project, @NotNull final String workingDir)
     throws ExecutionException {
     final RunnerAndConfigurationSettings settings =
       RunManager.getInstance(project).createRunConfiguration("test", myConfigurationFactory);
@@ -155,6 +167,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     @SuppressWarnings("unchecked") // Checked by assert
     final CONF_T castedConfiguration = (CONF_T)config;
     castedConfiguration.setSdkHome(sdkPath);
+    castedConfiguration.setWorkingDirectory(workingDir);
 
     new WriteAction() {
       @Override
@@ -197,7 +210,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
    * @param configuration configuration to configure
    */
   protected void configurationCreatedAndWillLaunch(@NotNull final CONF_T configuration) throws IOException {
-    configuration.setWorkingDirectory(myWorkingFolder);
+
   }
 
   @Override
@@ -226,7 +239,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
    * Use it to check if desired runner (like debugger) exists
    */
   @NotNull
-  public final List<String> getAvailableRunnersForLastRun() {
+  public final List<ProgramRunner<?>> getAvailableRunnersForLastRun() {
     return Collections.unmodifiableList(myAvailableRunnersForLastRun);
   }
 }

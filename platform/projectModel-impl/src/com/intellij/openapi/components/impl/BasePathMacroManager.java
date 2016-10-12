@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public class BasePathMacroManager extends PathMacroManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.BasePathMacroManager");
@@ -100,20 +103,20 @@ public class BasePathMacroManager extends PathMacroManager {
   @NotNull
   public ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
+    getPathMacros().addMacroExpands(result);
     for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
       result.addMacroExpand(entry.getKey(), entry.getValue());
     }
-    getPathMacros().addMacroExpands(result);
     return result;
   }
 
   @NotNull
   protected ReplacePathToMacroMap getReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
+    getPathMacros().addMacroReplacements(result);
     for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
       result.addMacroReplacement(entry.getValue(), entry.getKey());
     }
-    getPathMacros().addMacroReplacements(result);
     return result;
   }
 
@@ -218,7 +221,7 @@ public class BasePathMacroManager extends PathMacroManager {
     @Override
     public Set<String> getComponents(@NotNull Collection<String> macros) {
       synchronized (myLock) {
-        Set<String> result = new SmartHashSet<String>();
+        Set<String> result = new SmartHashSet<>();
         for (String macro : macros) {
           result.addAll(myMacroToComponentNames.get(macro));
         }
@@ -230,8 +233,8 @@ public class BasePathMacroManager extends PathMacroManager {
     @Override
     public Set<String> getUnknownMacros(@Nullable String componentName) {
       synchronized (myLock) {
-        Set<String> list = componentName == null ? myMacroToComponentNames.keySet() : (Set<String>)myComponentNameToMacros.get(componentName);
-        return ContainerUtil.isEmpty(list) ? Collections.<String>emptySet() : Collections.unmodifiableSet(list);
+        return ContainerUtil.notNullize(
+          componentName == null ? myMacroToComponentNames.keySet() : (Set<String>)myComponentNameToMacros.get(componentName));
       }
     }
 
@@ -240,8 +243,8 @@ public class BasePathMacroManager extends PathMacroManager {
       if (unknownMacros.isEmpty()) {
         return;
       }
-      
-      LOG.debug("Registering unknown macros " + new ArrayList<String>(unknownMacros) + " in component " + componentName);
+
+      LOG.debug("Registering unknown macros " + new ArrayList<>(unknownMacros) + " in component " + componentName);
 
       synchronized (myLock) {
         for (String unknownMacro : unknownMacros) {

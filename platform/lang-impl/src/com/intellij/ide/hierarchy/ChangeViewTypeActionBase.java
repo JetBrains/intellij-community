@@ -45,12 +45,9 @@ abstract class ChangeViewTypeActionBase extends ToggleAction {
     if (flag) {
       final TypeHierarchyBrowserBase browser = getTypeHierarchyBrowser(event.getDataContext());
       //        setWaitCursor();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (browser != null) {
-            browser.changeView(getTypeName());
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (browser != null) {
+          browser.changeView(getTypeName());
         }
       });
     }

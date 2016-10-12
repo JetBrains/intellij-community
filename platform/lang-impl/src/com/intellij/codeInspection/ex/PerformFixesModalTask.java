@@ -77,32 +77,24 @@ public abstract class PerformFixesModalTask implements SequentialTask {
     final QuickFix[] fixes = descriptor.getFixes();
     if (fixes != null) {
       for (QuickFix fix : fixes) {
-        if (fix instanceof IntentionAction) {
-          if (!((IntentionAction)fix).startInWriteAction()) {
-            runInReadAction[0] = true;
-          } else {
-            runInReadAction[0] = false;
-            break;
-          }
+        if (!fix.startInWriteAction()) {
+          runInReadAction[0] = true;
+        } else {
+          runInReadAction[0] = false;
+          break;
         }
       }
     }
 
-    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            myDocumentManager.commitAllDocuments();
-            if (!runInReadAction[0]) {
-              applyFix(myProject, descriptor);
-            }
-          }
-        });
-        if (runInReadAction[0]) {
+    DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> {
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        myDocumentManager.commitAllDocuments();
+        if (!runInReadAction[0]) {
           applyFix(myProject, descriptor);
         }
+      });
+      if (runInReadAction[0]) {
+        applyFix(myProject, descriptor);
       }
     });
     return isDone();

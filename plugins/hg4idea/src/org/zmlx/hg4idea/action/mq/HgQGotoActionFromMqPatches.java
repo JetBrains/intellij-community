@@ -22,7 +22,7 @@ import org.zmlx.hg4idea.repo.HgRepository;
 public class HgQGotoActionFromMqPatches extends HgSingleActionFomMqPatches {
 
   @Override
-  protected void execute(@NotNull HgRepository repository, @NotNull String patchName) {
+  protected void executeInCurrentThread(@NotNull HgRepository repository, @NotNull String patchName) {
     new HgQGotoCommand(repository).executeInCurrentThread(patchName);
   }
 

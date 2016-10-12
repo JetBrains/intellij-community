@@ -34,12 +34,9 @@ public class GetModulesListOperation extends LocalPathIndifferentOperation imple
 
   public GetModulesListOperation(CvsEnvironment environment) {
     super(environment);
-    addFinishAction(new Runnable() {
-      @Override
-      public void run() {
-        if (myStreamingListener != null && myStreamingDirectoryContent.getTotalSize() > 0) {
-          myStreamingListener.consume(myStreamingDirectoryContent);
-        }
+    addFinishAction(() -> {
+      if (myStreamingListener != null && myStreamingDirectoryContent.getTotalSize() > 0) {
+        myStreamingListener.consume(myStreamingDirectoryContent);
       }
     });
   }
@@ -72,16 +69,13 @@ public class GetModulesListOperation extends LocalPathIndifferentOperation imple
   public void setStreamingListener(final Consumer<DirectoryContent> streamingListener) {
     myStreamingListener = streamingListener;
     myStreamingDirectoryContent = new DirectoryContent();
-    myCommand.setModuleConsumer(new Consumer<Module>() {
-      @Override
-      public void consume(Module module) {
-        myStreamingDirectoryContent.addModule(module.getModuleName());
-        final long timePassed = System.currentTimeMillis() - timeStamp;
-        if (timePassed > 25L) {
-          streamingListener.consume(myStreamingDirectoryContent);
-          myStreamingDirectoryContent = new DirectoryContent();
-          timeStamp = System.currentTimeMillis();
-        }
+    myCommand.setModuleConsumer(module -> {
+      myStreamingDirectoryContent.addModule(module.getModuleName());
+      final long timePassed = System.currentTimeMillis() - timeStamp;
+      if (timePassed > 25L) {
+        streamingListener.consume(myStreamingDirectoryContent);
+        myStreamingDirectoryContent = new DirectoryContent();
+        timeStamp = System.currentTimeMillis();
       }
     });
   }

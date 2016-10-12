@@ -81,22 +81,13 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
     if (mySelectedConfiguration == null) return;
     final Project project = context.getProject();
     if (! loginImpl(context.getProject(),
-                    new Consumer<VcsException>() {
-                      @Override
-                      public void consume(VcsException e) {
-                        VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.WARNING);
-                      }
-                    })) return;
+                    e -> VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.WARNING))) return;
     super.onActionPerformed(context, tabbedWindow, successfully, handler);
     if (successfully){
       LOG.assertTrue(project != null);
       LOG.assertTrue(mySelectedConfiguration != null);
-      final BrowserPanel browserPanel = new BrowserPanel(mySelectedConfiguration, project, new Consumer<VcsException>() {
-        @Override
-        public void consume(VcsException e) {
-          VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.ERROR);
-        }
-      });
+      final BrowserPanel browserPanel = new BrowserPanel(mySelectedConfiguration, project,
+                                                         e -> VcsBalloonProblemNotifier.showOverChangesView(project, e.getMessage(), MessageType.ERROR));
       tabbedWindow.addTab(TITLE, browserPanel,
                           true, true, true, true, browserPanel.getActionGroup(), "cvs.browse");
     }
@@ -120,11 +111,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
 
     @Override
     public boolean login(Project project) {
-      return loginImpl(project, new Consumer<VcsException>() {
-        public void consume(VcsException e) {
-          myErrors.add(e);
-        }
-      });
+      return loginImpl(project, e -> myErrors.add(e));
     }
   }
 

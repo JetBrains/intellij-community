@@ -24,13 +24,8 @@ import org.jetbrains.annotations.Contract;
 public class GdslUtil {
   public static final Key<GroovyClassDescriptor> INITIAL_CONTEXT = Key.create("gdsl.initialContext");
 
-  public static final Condition<VirtualFile> GDSL_FILTER = new Condition<VirtualFile>() {
-    @Override
-    @Contract("null -> false")
-    public boolean value(VirtualFile file) {
-      return file != null && !file.isDirectory() && StringUtil.endsWith(file.getNameSequence(), ".gdsl");
-    }
-  };
+  public static final Condition<VirtualFile> GDSL_FILTER =
+    file -> file != null && !file.isDirectory() && StringUtil.endsWith(file.getNameSequence(), ".gdsl");
   static volatile boolean ourGdslStopped = false;
 
   static void stopGdsl() {

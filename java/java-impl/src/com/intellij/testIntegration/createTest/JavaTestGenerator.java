@@ -41,6 +41,7 @@ import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -53,42 +54,39 @@ public class JavaTestGenerator implements TestGenerator {
   }
 
   public PsiElement generateTest(final Project project, final CreateTestDialog d) {
-    return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(new Computable<PsiElement>() {
-      public PsiElement compute() {
-        return ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
-          public PsiElement compute() {
-            try {
-              IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
+    return PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
+      () -> ApplicationManager.getApplication().runWriteAction(new Computable<PsiElement>() {
+        public PsiElement compute() {
+          try {
+            IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-              PsiClass targetClass = createTestClass(d);
-              if (targetClass == null) {
-                return null;
-              }
-              final TestFramework frameworkDescriptor = d.getSelectedTestFrameworkDescriptor();
-              final String defaultSuperClass = frameworkDescriptor.getDefaultSuperClass();
-              final String superClassName = d.getSuperClassName();
-              if (!Comparing.strEqual(superClassName, defaultSuperClass)) {
-                addSuperClass(targetClass, project, superClassName);
-              }
-
-              Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
-              addTestMethods(editor,
-                             targetClass,
-                             d.getTargetClass(),
-                             frameworkDescriptor,
-                             d.getSelectedMethods(),
-                             d.shouldGeneratedBefore(),
-                             d.shouldGeneratedAfter());
-              return targetClass;
-            }
-            catch (IncorrectOperationException e) {
-              showErrorLater(project, d.getClassName());
+            PsiClass targetClass = createTestClass(d);
+            if (targetClass == null) {
               return null;
             }
+            final TestFramework frameworkDescriptor = d.getSelectedTestFrameworkDescriptor();
+            final String defaultSuperClass = frameworkDescriptor.getDefaultSuperClass();
+            final String superClassName = d.getSuperClassName();
+            if (!Comparing.strEqual(superClassName, defaultSuperClass)) {
+              addSuperClass(targetClass, project, superClassName);
+            }
+
+            Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
+            addTestMethods(editor,
+                           targetClass,
+                           d.getTargetClass(),
+                           frameworkDescriptor,
+                           d.getSelectedMethods(),
+                           d.shouldGeneratedBefore(),
+                           d.shouldGeneratedAfter());
+            return targetClass;
           }
-        });
-      }
-    });
+          catch (IncorrectOperationException e) {
+            showErrorLater(project, d.getClassName());
+            return null;
+          }
+        }
+      }));
   }
 
   @Nullable
@@ -201,12 +199,7 @@ public class JavaTestGenerator implements TestGenerator {
     final Template template = TestIntegrationUtils.createTestMethodTemplate(TestIntegrationUtils.MethodKind.TEST, descriptor,
                                                                             targetClass, sourceClass, null, true, existingNames);
     final String prefix = JavaPsiFacade.getElementFactory(targetClass.getProject()).createMethodFromText(template.getTemplateText(), targetClass).getName();
-    existingNames.addAll(ContainerUtil.map(targetClass.getMethods(), new Function<PsiMethod, String>() {
-      @Override
-      public String fun(PsiMethod method) {
-        return StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix));
-      }
-    }));
+    existingNames.addAll(ContainerUtil.map(targetClass.getMethods(), method -> StringUtil.decapitalize(StringUtil.trimStart(method.getName(), prefix))));
 
     for (MemberInfo m : methods) {
       anchor = generateMethod(TestIntegrationUtils.MethodKind.TEST, descriptor, targetClass, sourceClass, editor, m.getMember().getName(), existingNames, anchor);
@@ -214,16 +207,12 @@ public class JavaTestGenerator implements TestGenerator {
   }
 
   private static void showErrorLater(final Project project, final String targetClassName) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        Messages.showErrorDialog(project,
-                                 CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
-                                 CodeInsightBundle.message("intention.error.cannot.create.class.title"));
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(project,
+                                                                               CodeInsightBundle.message("intention.error.cannot.create.class.message", targetClassName),
+                                                                               CodeInsightBundle.message("intention.error.cannot.create.class.title")));
   }
 
-  private static PsiMethod generateMethod(TestIntegrationUtils.MethodKind methodKind,
+  private static PsiMethod generateMethod(@NotNull TestIntegrationUtils.MethodKind methodKind,
                                           TestFramework descriptor,
                                           PsiClass targetClass,
                                           @Nullable PsiClass sourceClass,

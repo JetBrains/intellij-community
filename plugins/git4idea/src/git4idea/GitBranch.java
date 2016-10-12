@@ -15,7 +15,6 @@
  */
 package git4idea;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.Hash;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
@@ -44,8 +43,6 @@ public abstract class GitBranch extends GitReference {
   @NonNls public static final String REFS_HEADS_PREFIX = "refs/heads/"; // Prefix for local branches ({@value})
   @NonNls public static final String REFS_REMOTES_PREFIX = "refs/remotes/"; // Prefix for remote branches ({@value})
 
-  private static final Logger LOG = Logger.getInstance(GitBranch.class);
-
   /**
    * @deprecated All usages should be reviewed and substituted with actual GitBranch objects with Hashes retrieved from the GitRepository.
    */
@@ -66,49 +63,4 @@ public abstract class GitBranch extends GitReference {
   public String getFullName() {
     return (isRemote() ? REFS_REMOTES_PREFIX : REFS_HEADS_PREFIX) + myName;
   }
-
-  @Override
-  public boolean equals(Object o) {
-    if (!super.equals(o)) {
-      return false;
-    }
-
-    // Reusing equals from super: only the name is important:
-    // branches are considered equal even if they point to different commits.
-
-    /*
-      Commenting this for a while, because GitRepository has different update() methods: thus in certain cases only current branch is
-      updated => this branch in the branches collection has different hash.
-      Need either to update everything always, either to have a GitBranches collection in GitRepository and not recreate it.
-
-    // But if equal branches point to different commits (or have different local/remote nature), then it is a programmer bug:
-    // one if GitBranch instances in the calling code is out-of-date.
-    // throwing assertion in that case forcing the programmer to update before comparing.
-    GitBranch that = (GitBranch)o;
-    if (!myHash.equals(that.myHash)) {
-      LOG.error("Branches have equal names, but different hash codes. This: " + toLogString() + ", that: " + that.toLogString());
-    }
-    else if (isRemote() != that.isRemote()) {
-      LOG.error("Branches have equal names, but different local/remote type. This: " + toLogString() + ", that: " + that.toLogString());
-    }
-    */
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return super.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return super.toString();
-  }
-
-  @NotNull
-  public String toLogString() {
-    return String.format("%s:%s", getFullName(), isRemote() ? "remote" : "local");
-  }
-
 }

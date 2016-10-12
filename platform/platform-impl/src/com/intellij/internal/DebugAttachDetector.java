@@ -75,22 +75,19 @@ public class DebugAttachDetector {
 
     if (myPort < 0) return;
 
-    myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
-        @Override
-        public void run() {
-          boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
-          if (!myReady) {
-            myAttached = attached;
-            myReady = true;
-          }
-          else if (attached != myAttached) {
-            myAttached = attached;
-            Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                                                      "Remote debugger",
-                                                      myAttached ? "attached" : "detached",
-                                                      NotificationType.WARNING));
-          }
-        }
-      }, 5, 5, TimeUnit.SECONDS);
+    myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+      boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
+      if (!myReady) {
+        myAttached = attached;
+        myReady = true;
+      }
+      else if (attached != myAttached) {
+        myAttached = attached;
+        Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
+                                                  "Remote debugger",
+                                                  myAttached ? "attached" : "detached",
+                                                  NotificationType.WARNING));
+      }
+    }, 5, 5, TimeUnit.SECONDS);
   }
 }

@@ -30,7 +30,7 @@
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*((CREATE|DROP)\\s+DATABASE\\s.+)")]]></place>
     <!-- CREATE|DROP DATABASE smth -->
 
-    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*(CREATE\\s+TABLE\\s.+?\\(.+?\\))")]]></place>
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*(CREATE\\s+((TEMP(ORARY)?|(GLOBAL\\s+TEMPORARY))\\s+)?TABLE\\s.+?\\(.+?\\))")]]></place>
     <!-- CREATE TABLE smth (...) -->
 
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*((ALTER|TRUNCATE)\\s+TABLE\\s.+)")]]></place>
@@ -57,7 +57,7 @@
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*(WITH\\s.+?\\sAS\\s.+)")]]></place>
     <!-- WITH smth AS smth-->
 
-    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*(COPY\\s.+?\\s(FROM|TO)\\s.+)")]]></place>
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*(COPY\\s.+?\\s(FROM|TO)\\s.+;\$)")]]></place>
     <!-- COPY smth (FROM|TO) smth -->
 
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*]|\\*[^/])*\\*+/))(\r\n|\n|\r))+)?\\s*(CREATE\\s+(OR\\s+REPLACE\\s+)?TRIGGER\\s.+?\\sON\\s.+)")]]></place>

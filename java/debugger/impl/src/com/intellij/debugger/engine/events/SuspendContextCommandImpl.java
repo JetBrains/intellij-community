@@ -20,6 +20,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,7 +35,18 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
     mySuspendContext = suspendContext;
   }
 
-  public abstract void contextAction() throws Exception;
+  /**
+   * @deprecated override {@link #contextAction(SuspendContextImpl)}
+   */
+  @Deprecated
+  public void contextAction() throws Exception {
+    throw new AbstractMethodError();
+  }
+
+  public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+    //noinspection deprecation
+    contextAction();
+  }
 
   @Override
   public final void action() throws Exception {
@@ -58,7 +70,7 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
       try {
         if (!suspendContext.isResumed()) {
           suspendContext.myInProgress = true;
-          contextAction();
+          contextAction(suspendContext);
         }
         else {
           notifyCancelled();

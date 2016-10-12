@@ -94,6 +94,10 @@ public class PlainEnterProcessor implements EnterProcessor {
       return ((PsiTryStatement)element).getFinallyBlock();
     }
 
+    if (element instanceof PsiSynchronizedStatement) {
+      return ((PsiSynchronizedStatement)element).getBody();
+    }
+
     if (element instanceof PsiMethod) {
       PsiCodeBlock methodBody = ((PsiMethod)element).getBody();
       if (methodBody != null) return methodBody;

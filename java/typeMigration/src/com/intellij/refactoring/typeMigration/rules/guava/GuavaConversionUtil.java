@@ -16,18 +16,25 @@
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
+import com.intellij.refactoring.typeMigration.inspections.GuavaConversionSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
 public class GuavaConversionUtil {
+  private final static Logger LOG = Logger.getInstance(GuavaConversionUtil.class);
+
   @Nullable
   public static PsiType getFunctionReturnType(PsiExpression functionExpression) {
     if (functionExpression instanceof PsiFunctionalExpression) {
@@ -88,18 +95,28 @@ public class GuavaConversionUtil {
     return false;
   }
 
-  public static PsiExpression adjustLambdaContainingExpression(PsiExpression expression, boolean insertTypeCase, PsiType targetType, TypeEvaluator evaluator) {
+  public static PsiExpression adjustLambdaContainingExpression(PsiExpression expression,
+                                                               boolean insertTypeCase,
+                                                               PsiType targetType,
+                                                               @NotNull TypeEvaluator evaluator) {
     if (expression instanceof PsiNewExpression) {
       final PsiAnonymousClass anonymousClass = ((PsiNewExpression)expression).getAnonymousClass();
       if (anonymousClass != null) {
-        if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, true)) {
-          return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, true, true);
-        }
+        return convertAnonymousClass((PsiNewExpression)expression, anonymousClass, evaluator);
       }
       else {
         final GuavaLambda lambda = GuavaLambda.findFor(evaluator.evaluateType(expression));
-        return lambda == null ? expression
-                              : addMethodReference(expression, lambda);
+        if (lambda == null) {
+          return expression;
+        }
+        else {
+          final PsiExpression expressionWithMethodReference = addMethodReference(expression, lambda);
+          if (insertTypeCase) {
+            return adjustLambdaContainingExpression(expressionWithMethodReference, true, targetType, evaluator);
+          } else {
+            return expressionWithMethodReference;
+          }
+        }
       }
     }
     if (expression instanceof PsiMethodReferenceExpression) {
@@ -123,6 +140,53 @@ public class GuavaConversionUtil {
       }
     }
     return expression;
+  }
+
+  public static PsiExpression convertAnonymousClass(@NotNull PsiNewExpression expression,
+                                                    @NotNull PsiAnonymousClass anonymousClass,
+                                                    @NotNull TypeEvaluator typeEvaluator) {
+    final GuavaConversionSettings settings = typeEvaluator.getSettings(GuavaConversionSettings.class);
+    final Set<String> ignoredAnnotations = settings != null ? settings.getIgnoredAnnotations() : Collections.emptySet();
+    if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(anonymousClass, true, ignoredAnnotations)) {
+      return AnonymousCanBeLambdaInspection.replacePsiElementWithLambda(expression, true, true);
+    } else {
+      return tryConvertClassAndSamNameToJava(expression);
+    }
+  }
+
+  public static PsiExpression tryConvertClassAndSamNameToJava(PsiNewExpression expression) {
+    final GuavaLambda lambda = GuavaLambda.findFor(expression.getType());
+    if (lambda == null) return expression;
+    final PsiAnonymousClass aClass = expression.getAnonymousClass();
+    LOG.assertTrue(aClass != null);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
+
+    if (!lambda.getSamName().equals(lambda.getJavaAnalogueSamName())) {
+      boolean isFound = false;
+      for (PsiMethod method : aClass.findMethodsByName(lambda.getSamName(), false)) {
+        if (method.getParameterList().getParametersCount() == lambda.getParametersCount()) {
+          for (PsiMethod psiMethod : method.findSuperMethods()) {
+            final PsiClass superMethodContainingClass = psiMethod.getContainingClass();
+            if (superMethodContainingClass != null && lambda.getClassQName().equals(superMethodContainingClass.getQualifiedName())) {
+              final PsiIdentifier methodNameIdentifier = method.getNameIdentifier();
+              LOG.assertTrue(methodNameIdentifier != null);
+              methodNameIdentifier.replace(factory.createIdentifier(lambda.getJavaAnalogueSamName()));
+              isFound = true;
+              break;
+            }
+          }
+        }
+        if (isFound) break;
+      }
+    }
+
+    final PsiElement currentClassName = aClass.getBaseClassReference().getReferenceNameElement();
+    if (currentClassName != null) {
+      final PsiElement newNameElement = factory.createReferenceFromText(lambda.getJavaAnalogueClassQName(), null);
+      currentClassName.replace(newNameElement);
+    }
+
+    return (PsiExpression)expression.replace(factory.createExpressionFromText(expression.getText(), null));
   }
 
   private static PsiExpression addMethodReference(@NotNull PsiExpression expression, @NotNull GuavaLambda lambda) {

@@ -98,6 +98,11 @@ public class PyRenameElementQuickFix implements LocalQuickFix {
     return null;
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   private static void renameInUnitTestMode(@NotNull Project project, @NotNull PsiNameIdentifierOwner nameOwner,
                                            @Nullable Editor editor) {
     final PsiElement substitution = RenamePsiElementProcessor.forElement(nameOwner).substituteElementToRename(nameOwner, editor);

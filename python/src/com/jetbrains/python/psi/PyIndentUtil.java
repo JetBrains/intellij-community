@@ -131,7 +131,7 @@ public class PyIndentUtil {
     return statementList;
   } 
 
-  public static int getExpectedElementIndentSize(@NotNull PsiElement anchor) {
+  private static int getExpectedElementIndentSize(@NotNull PsiElement anchor) {
     int depth = 0;
     PyStatementList block = getAnchorStatementList(anchor);
     while (block != null) {
@@ -139,6 +139,15 @@ public class PyIndentUtil {
       block = PsiTreeUtil.getParentOfType(block, PyStatementList.class);
     }
     return depth * getIndentSizeFromSettings(anchor.getProject());
+  }
+
+  public static boolean areTabsUsedForIndentation(@NotNull Project project) {
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    return codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE);
+  }
+
+  public static char getIndentCharacter(@NotNull Project project) {
+    return areTabsUsedForIndentation(project) ? '\t' : ' ';
   }
 
   /**
@@ -153,14 +162,16 @@ public class PyIndentUtil {
   }
 
   /**
-   * Returns indentation configured in the Python code style settings as plain space character repeated number times specified there.
-   * Note that it doesn't take into account usage of tab characters that might be configured there as well.
+   * Returns indentation configured in the Python code style settings either as space character repeated number times specified there
+   * or a single tab character if tabs are set to use for indentation.
    * 
    * @see #getIndentSizeFromSettings(Project) 
+   * @see #areTabsUsedForIndentation(Project) 
    */
   @NotNull
   public static String getIndentFromSettings(@NotNull Project project) {
-    return StringUtil.repeatSymbol(' ', getIndentSizeFromSettings(project));
+    final boolean useTabs = areTabsUsedForIndentation(project);
+    return useTabs ? "\t" : StringUtil.repeatSymbol(' ', getIndentSizeFromSettings(project));
   }
 
   @NotNull
@@ -190,15 +201,12 @@ public class PyIndentUtil {
       return Collections.emptyList();
     }
 
-    final List<String> result = ContainerUtil.map(Iterables.skip(lines, ignoreFirstLine ? 1 : 0), new Function<String, String>() {
-      @Override
-      public String fun(String line) {
-        if (StringUtil.isEmptyOrSpaces(line)) {
-          return "";
-        }
-        else {
-          return newIndent + line.substring(oldIndent.length());
-        }
+    final List<String> result = ContainerUtil.map(Iterables.skip(lines, ignoreFirstLine ? 1 : 0), line -> {
+      if (StringUtil.isEmptyOrSpaces(line)) {
+        return "";
+      }
+      else {
+        return newIndent + line.substring(oldIndent.length());
       }
     });
     if (ignoreFirstLine) {

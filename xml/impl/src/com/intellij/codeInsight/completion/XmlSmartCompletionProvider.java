@@ -45,19 +45,16 @@ public class XmlSmartCompletionProvider {
     if (parentTag == null) return;
     final XmlContentDFA dfa = XmlContentDFA.getContentDFA(parentTag);
     if (dfa == null) return;
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        for (XmlTag subTag : parentTag.getSubTags()) {
-          if (subTag == tag) {
-            break;
-          }
-          dfa.transition(subTag);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      for (XmlTag subTag : parentTag.getSubTags()) {
+        if (subTag == tag) {
+          break;
         }
-        List<XmlElementDescriptor> elements = dfa.getPossibleElements();
-        for (XmlElementDescriptor elementDescriptor: elements) {
-          addElementToResult(elementDescriptor, result);
-        }
+        dfa.transition(subTag);
+      }
+      List<XmlElementDescriptor> elements = dfa.getPossibleElements();
+      for (XmlElementDescriptor elementDescriptor: elements) {
+        addElementToResult(elementDescriptor, result);
       }
     });
   }

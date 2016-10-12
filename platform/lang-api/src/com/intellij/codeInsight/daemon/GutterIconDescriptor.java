@@ -73,6 +73,10 @@ public abstract class GutterIconDescriptor {
       myIcon = icon;
     }
 
+    public boolean isEnabled() {
+      return LineMarkerSettings.getSettings().isEnabled(this);
+    }
+    
     @Nullable
     @Override
     public Icon getIcon() {

@@ -193,26 +193,23 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     final ExtractMethodInfoHelper helper = getSettings(initialInfo, owner);
     if (helper == null) return;
 
-    CommandProcessor.getInstance().executeCommand(helper.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GroovyExtractMethodHandler.class);
-        try {
-          createMethod(helper, owner);
-          GrStatementOwner declarationOwner =
-            helper.getStringPartInfo() == null ? GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]) : null;
-          GrStatement realStatement = ExtractUtil.replaceStatement(declarationOwner, helper);
+    CommandProcessor.getInstance().executeCommand(helper.getProject(), () -> {
+      final AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(GroovyExtractMethodHandler.class);
+      try {
+        createMethod(helper, owner);
+        GrStatementOwner declarationOwner =
+          helper.getStringPartInfo() == null ? GroovyRefactoringUtil.getDeclarationOwner(helper.getStatements()[0]) : null;
+        GrStatement realStatement = ExtractUtil.replaceStatement(declarationOwner, helper);
 
-          // move to offset
-          if (editor != null) {
-            PsiDocumentManager.getInstance(helper.getProject()).commitDocument(editor.getDocument());
-            editor.getSelectionModel().removeSelection();
-            editor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(realStatement));
-          }
+        // move to offset
+        if (editor != null) {
+          PsiDocumentManager.getInstance(helper.getProject()).commitDocument(editor.getDocument());
+          editor.getSelectionModel().removeSelection();
+          editor.getCaretModel().moveToOffset(ExtractUtil.getCaretOffset(realStatement));
         }
-        finally {
-          lock.finish();
-        }
+      }
+      finally {
+        lock.finish();
       }
     }, REFACTORING_NAME, null);
   }
@@ -275,7 +272,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(helper.getProject());
     for (ParameterInfo info : helper.getParameterInfos()) {
-      final String oldName = info.getOldName();
+      final String oldName = info.getOriginalName();
       final String newName = info.getName();
       final ArrayList<GrExpression> result = new ArrayList<GrExpression>();
       if (!oldName.equals(newName)) {

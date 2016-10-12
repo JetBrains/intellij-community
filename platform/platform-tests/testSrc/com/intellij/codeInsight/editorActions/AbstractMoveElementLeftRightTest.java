@@ -24,6 +24,11 @@ public abstract class AbstractMoveElementLeftRightTest extends AbstractEditorTes
     doTest(false, leftMostPosition, rightPositions);
   }
 
+  protected void doTestFromRightToLeft(String rightMostPosition, String... leftPositions) throws Exception {
+    doTest(false, rightMostPosition);
+    doTest(true, rightMostPosition, leftPositions);
+  }
+
   private void doTest(boolean moveLeft, String before, String... after) throws Exception {
     String current = before;
     for (String next : after) {

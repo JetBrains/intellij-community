@@ -70,12 +70,7 @@ public class ImportedTestRunnableState implements RunProfileState {
     if (component instanceof TestFrameworkRunningModel) {
       rerunFailedTestsAction = consoleProperties.createRerunFailedTestsAction(console);
       if (rerunFailedTestsAction != null) {
-        rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-          @Override
-          public TestFrameworkRunningModel get() {
-            return (TestFrameworkRunningModel)component;
-          }
-        });
+        rerunFailedTestsAction.setModelProvider(() -> (TestFrameworkRunningModel)component);
       }
     }
     

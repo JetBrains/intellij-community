@@ -40,12 +40,7 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
    * @param action  Runnable to be executed
    */
   public static void performAction(final Project project, final Runnable action) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(project, action, "test command", null);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(project, action, "test command", null));
   }
 
   @Override
@@ -115,13 +110,10 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
     myFixture.configureByText(FileTypes.PLAIN_TEXT, before);
     final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
 
-    performAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        for (int i = 0, max = cs.length(); i < max; i++) {
-          final char c = cs.charAt(i);
-          typedAction.actionPerformed(myFixture.getEditor(), c, ((EditorEx)myFixture.getEditor()).getDataContext());
-        }
+    performAction(myFixture.getProject(), () -> {
+      for (int i = 0, max = cs.length(); i < max; i++) {
+        final char c = cs.charAt(i);
+        typedAction.actionPerformed(myFixture.getEditor(), c, ((EditorEx)myFixture.getEditor()).getDataContext());
       }
     });
     myFixture.checkResult(expected);
@@ -132,22 +124,15 @@ public class SelectionQuotingTypedHandlerTest extends LightPlatformCodeInsightFi
     myFixture.getEditor().getCaretModel().moveToOffset(0);
     myFixture.getEditor().getSelectionModel().setSelection(0, 5);
     final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
-    performAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        typedAction.actionPerformed(myFixture.getEditor(), '\'', ((EditorEx)myFixture.getEditor()).getDataContext());
-      }
-    });
+    performAction(myFixture.getProject(),
+                  () -> typedAction.actionPerformed(myFixture.getEditor(), '\'', ((EditorEx)myFixture.getEditor()).getDataContext()));
     myFixture.getEditor().getSelectionModel().removeSelection();
     myFixture.checkResult("'aaa'\nbbb\n\n");
 
     myFixture.getEditor().getCaretModel().moveToOffset(myFixture.getEditor().getDocument().getLineStartOffset(3));
-    performAction(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        typedAction.actionPerformed(myFixture.getEditor(), 'A', ((EditorEx)myFixture.getEditor()).getDataContext());
-        typedAction.actionPerformed(myFixture.getEditor(), 'B', ((EditorEx)myFixture.getEditor()).getDataContext());
-      }
+    performAction(myFixture.getProject(), () -> {
+      typedAction.actionPerformed(myFixture.getEditor(), 'A', ((EditorEx)myFixture.getEditor()).getDataContext());
+      typedAction.actionPerformed(myFixture.getEditor(), 'B', ((EditorEx)myFixture.getEditor()).getDataContext());
     });
     myFixture.checkResult("'aaa'\nbbb\n\nAB");
   }

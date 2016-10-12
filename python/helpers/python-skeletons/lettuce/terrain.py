@@ -28,6 +28,15 @@ class __When(object):
         pass
 
     @staticmethod
+    def each_outline(function):
+        """
+        Runs before/after each outline in scenario outline.
+        Accepts scenario (object) and outline(dict) as arguments.
+        Available only since 0.22
+        """
+        pass
+
+    @staticmethod
     def each_background(function):
         """
         Runs before/after each background

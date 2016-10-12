@@ -43,16 +43,34 @@ public class PyNameSuggestionProvider implements NameSuggestionProvider {
       result.add(toCamelCase(name, true));
     }
     else if (element instanceof PyFunction || element instanceof PyParameter) {
-      result.add(name.toLowerCase());
+      result.add(toUnderscores(name));
     }
     else {
-      result.add(name.toLowerCase());
+      result.add(toUnderscores(name));
       final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
       if (assignmentStatement != null) return null;
       result.add(name.toUpperCase());
       result.add(toCamelCase(name, false));
     }
     return SuggestedNameInfo.NULL_INFO;
+  }
+
+  @NotNull
+  protected String toUnderscores(@NotNull final String name) {
+    final StringBuilder result = new StringBuilder();
+    for (int i = 0; i < name.length(); i++) {
+      final char c = name.charAt(i);
+      if (Character.isUpperCase(c)) {
+        if (i != 0) {
+          result.append("_");
+        }
+        result.append(Character.toLowerCase(c));
+      }
+      else {
+        result.append(c);
+      }
+    }
+    return result.toString();
   }
 
   @NotNull

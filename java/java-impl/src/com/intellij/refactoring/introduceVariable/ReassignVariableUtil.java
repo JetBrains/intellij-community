@@ -16,6 +16,7 @@
 package com.intellij.refactoring.introduceVariable;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.Result;
@@ -28,18 +29,23 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * User: anna
@@ -61,22 +67,42 @@ public class ReassignVariableUtil {
       VariablesProcessor proc = findVariablesOfType(declaration, type);
       if (proc.size() > 0) {
 
-        if (proc.size() == 1) {
+        List<PsiVariable> vars = new ArrayList<>();
+        for (int i = 0; i < proc.size(); i++) {
+          final PsiVariable variable = proc.getResult(i);
+          PsiElement outerCodeBlock = PsiUtil.getVariableCodeBlock(variable, null);
+          if (outerCodeBlock == null) continue;
+          if (ReferencesSearch.search(variable, new LocalSearchScope(outerCodeBlock)).forEach(reference -> {
+            final PsiElement element = reference.getElement();
+            if (element != null) {
+              return HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(variable, element) == null;
+            }
+            return true;
+          })) {
+            vars.add(variable);
+          }
+        }
+
+        if (vars.isEmpty()) {
+          return true;
+        }
+
+        if (vars.size() == 1) {
           replaceWithAssignment(declaration, proc.getResult(0), editor);
           return true;
         }
 
-        final DefaultListModel model = new DefaultListModel();
-        for (int i = 0; i < proc.size(); i++) {
-          model.addElement(proc.getResult(i));
+        final DefaultListModel<PsiVariable> model = new DefaultListModel<>();
+        for (PsiVariable var : vars) {
+          model.addElement(var);
         }
-        final JList list = new JBList(model);
-        list.setCellRenderer(new ListCellRendererWrapper() {
+        final JBList list = new JBList(model);
+        list.setCellRenderer(new ListCellRendererWrapper<PsiVariable>() {
           @Override
-          public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-            if (value instanceof PsiVariable) {
-              setText(((PsiVariable)value).getName());
-              setIcon(((PsiVariable)value).getIcon(0));
+          public void customize(JList list, PsiVariable value, int index, boolean selected, boolean hasFocus) {
+            if (value != null) {
+              setText(value.getName());
+              setIcon(value.getIcon(0));
             }
           }
         });
@@ -87,11 +113,7 @@ public class ReassignVariableUtil {
         JBPopupFactory.getInstance().createListPopupBuilder(list)
           .setTitle("Choose variable to reassign")
           .setRequestFocus(true)
-          .setItemChoosenCallback(new Runnable() {
-            public void run() {
-              replaceWithAssignment(declaration, (PsiVariable)list.getSelectedValue(), editor);
-            }
-          }).createPopup().show(new RelativePoint(editor.getContentComponent(), point));
+          .setItemChoosenCallback(() -> replaceWithAssignment(declaration, (PsiVariable)list.getSelectedValue(), editor)).createPopup().show(new RelativePoint(editor.getContentComponent(), point));
       }
 
       return true;
@@ -150,6 +172,10 @@ public class ReassignVariableUtil {
           if (element instanceof PsiExpression) {
             element.replace(elementFactory.createExpressionFromText(chosenVariableName, newDeclaration));
           }
+        }
+        final PsiModifierList modifierList = variable.getModifierList();
+        if (modifierList != null) {
+          modifierList.setModifierProperty(PsiModifier.FINAL, false);
         }
       }
     }.execute();

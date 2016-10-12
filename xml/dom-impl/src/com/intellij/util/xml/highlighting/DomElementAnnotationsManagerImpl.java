@@ -157,12 +157,8 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     if (isHolderOutdated(element.getFile()) || holder == null) {
       holder = new DomElementsProblemsHolderImpl(element);
       rootTag.putUserData(DOM_PROBLEM_HOLDER_KEY, holder);
-      final CachedValue<Boolean> cachedValue = CachedValuesManager.getManager(myProject).createCachedValue(new CachedValueProvider<Boolean>() {
-        @Override
-        public Result<Boolean> compute() {
-          return new Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, DomElementAnnotationsManagerImpl.this, ProjectRootManager.getInstance(myProject));
-        }
-      }, false);
+      final CachedValue<Boolean> cachedValue = CachedValuesManager.getManager(myProject).createCachedValue(
+        () -> new CachedValueProvider.Result<Boolean>(Boolean.FALSE, element, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT, DomElementAnnotationsManagerImpl.this, ProjectRootManager.getInstance(myProject)), false);
       cachedValue.getValue();
       element.getFile().putUserData(CACHED_VALUE_KEY, cachedValue);
     }

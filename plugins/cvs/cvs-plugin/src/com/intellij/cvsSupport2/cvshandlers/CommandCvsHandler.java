@@ -199,15 +199,12 @@ public class CommandCvsHandler extends CvsHandler {
       }
     }
     if (!dirsToPrune.isEmpty()) {
-      operation.addFinishAction(new Runnable() {
-        @Override
-        public void run() {
-          final IOFilesBasedDirectoryPruner pruner = new IOFilesBasedDirectoryPruner(null);
-          for(File dir: dirsToPrune) {
-            pruner.addFile(dir);
-          }
-          pruner.execute();
+      operation.addFinishAction(() -> {
+        final IOFilesBasedDirectoryPruner pruner = new IOFilesBasedDirectoryPruner(null);
+        for(File dir: dirsToPrune) {
+          pruner.addFile(dir);
         }
+        pruner.execute();
       });
     }
 
@@ -274,25 +271,22 @@ public class CommandCvsHandler extends CvsHandler {
     final CommandCvsHandler cvsHandler =
       new CommandCvsHandler(CvsBundle.message("operation.name.restore"), operation, FileSetToBeUpdated.EMPTY);
 
-    operation.addFinishAction(new Runnable() {
-      @Override
-      public void run() {
-        final List<VcsException> errors = cvsHandler.getErrors();
-        if (errors != null && !errors.isEmpty()) return;
-        
-        if (entry != null) {
-          entry.setRevision(revision);
-          entry.setConflict(CvsUtil.formatDate(new Date(ioFile.lastModified())));
-          try {
-            CvsUtil.saveEntryForFile(ioFile, entry);
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-          CvsEntriesManager.getInstance().clearCachedEntriesFor(parent);
-        }
+    operation.addFinishAction(() -> {
+      final List<VcsException> errors = cvsHandler.getErrors();
+      if (errors != null && !errors.isEmpty()) return;
 
+      if (entry != null) {
+        entry.setRevision(revision);
+        entry.setConflict(CvsUtil.formatDate(new Date(ioFile.lastModified())));
+        try {
+          CvsUtil.saveEntryForFile(ioFile, entry);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+        CvsEntriesManager.getInstance().clearCachedEntriesFor(parent);
       }
+
     });
 
     return cvsHandler;
@@ -344,12 +338,7 @@ public class CommandCvsHandler extends CvsHandler {
       return false;
     }
 
-    final LoginPerformer performer = new LoginPerformer(project, allRoots, new Consumer<VcsException>() {
-      @Override
-      public void consume(VcsException e) {
-        myErrorMessageProcessor.addError(e);
-      }
-    });
+    final LoginPerformer performer = new LoginPerformer(project, allRoots, e -> myErrorMessageProcessor.addError(e));
     performer.setForceCheck(true);
     return performer.loginAll();
   }

@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
       if (project != null && !FileDocumentManager.getInstance().requestWriting(editor.getDocument(), project)) return;
     }
 
-    ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(),editor.getProject()) {
+    DocumentRunnable runnable = new DocumentRunnable(editor.getDocument(), editor.getProject()) {
       @Override
       public void run() {
         final Document doc = editor.getDocument();
@@ -62,7 +63,12 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
           doc.stopGuardedBlockChecking();
         }
       }
-    });
+    };
+    if (editor instanceof TextComponentEditor) {
+      runnable.run();
+    } else {
+      ApplicationManager.getApplication().runWriteAction(runnable);
+    }
   }
 
   /**

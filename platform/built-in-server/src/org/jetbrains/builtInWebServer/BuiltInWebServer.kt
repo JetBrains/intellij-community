@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.endsWithName
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.*
 import com.intellij.util.io.URLUtil
 import com.intellij.util.net.NetUtils
 import io.netty.channel.Channel
@@ -48,11 +49,12 @@ import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.*
 import org.jetbrains.notification.SingletonNotificationManager
 import java.awt.datatransfer.StringSelection
-import java.io.File
 import java.io.IOException
 import java.math.BigInteger
 import java.net.InetAddress
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.attribute.PosixFilePermission
 import java.security.SecureRandom
@@ -112,11 +114,11 @@ const val TOKEN_HEADER_NAME = "x-ijt"
 private val STANDARD_COOKIE by lazy {
   val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
   val configPath = PathManager.getConfigPath()
-  val file = File(configPath, IDE_TOKEN_FILE)
+  val file = Paths.get(configPath, IDE_TOKEN_FILE)
   var token: String? = null
   if (file.exists()) {
     try {
-      token = UUID.fromString(FileUtil.loadFile(file)).toString()
+      token = UUID.fromString(file.readText()).toString()
     }
     catch (e: Exception) {
       LOG.warn(e)
@@ -124,8 +126,8 @@ private val STANDARD_COOKIE by lazy {
   }
   if (token == null) {
     token = UUID.randomUUID().toString()
-    FileUtil.writeToFile(file, token!!)
-    val view = Files.getFileAttributeView(file.toPath(), PosixFileAttributeView::class.java)
+    file.write(token!!)
+    val view = Files.getFileAttributeView(file, PosixFileAttributeView::class.java)
     if (view != null) {
       try {
         view.setPermissions(setOf(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE))
@@ -140,6 +142,7 @@ private val STANDARD_COOKIE by lazy {
   // http://stackoverflow.com/questions/8134384/chrome-doesnt-create-cookie-for-domain-localhost-in-broken-https
   val cookie = DefaultCookie(productName + "-" + Integer.toHexString(configPath.hashCode()), token!!)
   cookie.isHttpOnly = true
+  // Android Studio: Using 90 days instead of 10 years
   cookie.setMaxAge(TimeUnit.DAYS.toSeconds(90))
   cookie.setPath("/")
   cookie
@@ -149,6 +152,9 @@ private val STANDARD_COOKIE by lazy {
 private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
 
 fun acquireToken(): String {
+  // TODO: Use alternative token?
+  //return BuiltinWebServerAccess.getUserAuthenticationToken()
+
   var token = tokens.asMap().keys.firstOrNull()
   if (token == null) {
     token = TokenGenerator.generate()
@@ -202,7 +208,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
     else {
       // WEB-17839 Internal web server reports 404 when serving files from project with slashes in name
       if (decodedPath.regionMatches(1, name, 0, name.length, !SystemInfoRt.isFileSystemCaseSensitive)) {
-        var isEmptyPathCandidate = decodedPath.length == (name.length + 1)
+        val isEmptyPathCandidate = decodedPath.length == (name.length + 1)
         if (isEmptyPathCandidate || decodedPath[name.length + 1] == '/') {
           projectName = name
           offset = name.length + 1
@@ -231,8 +237,7 @@ private fun doProcess(urlDecoder: QueryStringDecoder, request: FullHttpRequest, 
 
   val path = toIdeaPath(decodedPath, offset)
   if (path == null) {
-    LOG.warn("$decodedPath is not valid")
-    Responses.sendStatus(HttpResponseStatus.NOT_FOUND, context.channel(), request)
+    HttpResponseStatus.BAD_REQUEST.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(context.channel(), request)
     return true
   }
 
@@ -298,7 +303,7 @@ internal fun validateToken(request: HttpRequest, channel: Channel, isSignedReque
     }
   }
 
-  Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
+  HttpResponseStatus.UNAUTHORIZED.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
   return null
 }
 
@@ -344,18 +349,18 @@ fun findIndexFile(basedir: VirtualFile): VirtualFile? {
   return null
 }
 
-fun findIndexFile(basedir: File): File? {
-  val children = basedir.listFiles { dir, name -> name.startsWith("index.") || name.startsWith("default.") }
-  if (children == null || children.isEmpty()) {
-    return null
-  }
+fun findIndexFile(basedir: Path): Path? {
+  val children = basedir.directoryStreamIfExists({
+    val name = it.fileName.toString()
+    name.startsWith("index.") || name.startsWith("default.")
+  }) { it.toList() } ?: return null
 
   for (indexNamePrefix in arrayOf("index.", "default.")) {
-    var index: File? = null
+    var index: Path? = null
     val preferredName = "${indexNamePrefix}html"
     for (child in children) {
-      if (!child.isDirectory) {
-        val name = child.name
+      if (!child.isDirectory()) {
+        val name = child.fileName.toString()
         if (name == preferredName) {
           return child
         }

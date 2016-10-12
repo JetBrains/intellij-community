@@ -40,15 +40,12 @@ public class BranchInfo {
   public boolean original;
 
   public static List<BranchInfo> fromTaskInfo(final VcsTaskHandler.TaskInfo taskInfo, final boolean original) {
-    return ContainerUtil.map(taskInfo.getRepositories(), new Function<String, BranchInfo>() {
-      @Override
-      public BranchInfo fun(String s) {
-        BranchInfo info = new BranchInfo();
-        info.name = taskInfo.getName();
-        info.repository = s;
-        info.original = original;
-        return info;
-      }
+    return ContainerUtil.map(taskInfo.getRepositories(), s -> {
+      BranchInfo info = new BranchInfo();
+      info.name = taskInfo.getName();
+      info.repository = s;
+      info.original = original;
+      return info;
     });
   }
 

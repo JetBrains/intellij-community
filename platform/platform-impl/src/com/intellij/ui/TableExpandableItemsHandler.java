@@ -72,12 +72,7 @@ public class TableExpandableItemsHandler extends AbstractExpandableItemsHandler<
       public void tableChanged(final TableModelEvent e) {
         // This method may be called from TableModelListener (before selection model update)
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4730055
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            updateSelection(table);
-          }
-        });
+        SwingUtilities.invokeLater(() -> updateSelection(table));
       }
     };
 

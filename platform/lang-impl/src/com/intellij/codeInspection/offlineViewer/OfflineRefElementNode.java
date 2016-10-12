@@ -28,27 +28,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class OfflineRefElementNode extends RefElementNode {
+  @NotNull
+  private OfflineProblemDescriptor myOfflineDescriptor;
+
   public OfflineRefElementNode(@NotNull OfflineProblemDescriptor descriptor, @NotNull InspectionToolPresentation presentation) {
-    super(descriptor, presentation);
+    super(descriptor.getRefElement(presentation.getContext().getRefManager()), presentation);
+    myOfflineDescriptor = descriptor;
   }
 
   @Override
   @Nullable
   public RefEntity getElement() {
-    if (userObject instanceof RefEntity) {
-      return (RefEntity)userObject;
-    }
-    if (userObject == null) return null;
-    final RefEntity refElement = ((OfflineProblemDescriptor)userObject).getRefElement(myToolPresentation.getContext().getRefManager());
-    setUserObject(refElement);
-    return refElement;
+    return (RefEntity)getUserObject();
   }
 
-  @Nullable
-  public OfflineProblemDescriptor getDescriptor() {
-    if (userObject instanceof OfflineProblemDescriptor) {
-      return (OfflineProblemDescriptor)userObject;
-    }
-    return null;
+  @NotNull
+  public OfflineProblemDescriptor getOfflineDescriptor() {
+    return myOfflineDescriptor;
   }
 }

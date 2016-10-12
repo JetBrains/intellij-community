@@ -133,22 +133,14 @@ public class IndentTest extends LightIdeaTestCase {
   private void doTest(String fileNameBefore, String fileNameAfter) throws Exception {
     String text = loadFile(fileNameBefore);
     final PsiFile file = createFile(fileNameBefore, text);
-    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              CodeStyleManager.getInstance(getProject()).reformat(file);
-            }
-            catch (IncorrectOperationException e) {
-              assertTrue(false);
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      try {
+        CodeStyleManager.getInstance(getProject()).reformat(file);
       }
-    }, null, null);
+      catch (IncorrectOperationException e) {
+        assertTrue(false);
+      }
+    }), null, null);
 
 
     String textAfter = loadFile(fileNameAfter);

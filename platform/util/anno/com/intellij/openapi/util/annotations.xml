@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+  <item name="com.intellij.openapi.util.BooleanGetter">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.Computable">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.Factory">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.NotNullComputable">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.NotNullFactory">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.NullableComputable">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.NullableFactory">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.Throwable2Computable">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.ThrowableComputable">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.ThrowableNotNullFunction">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.Transform">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+  <item name="com.intellij.openapi.util.text.CharFilter">
+    <annotation name="java.lang.FunctionalInterface"/>
+  </item>
+</root>

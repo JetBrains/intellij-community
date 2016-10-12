@@ -158,12 +158,8 @@ public class NullityInferrer {
   }
 
   public static void nothingFoundMessage(final Project project) {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        Messages.showInfoMessage(project, "No places found to infer @Nullable/@NotNull", "Infer Nullity Results");
-      }
-    });
+    SwingUtilities.invokeLater(
+      () -> Messages.showInfoMessage(project, "No places found to infer @Nullable/@NotNull", "Infer Nullity Results"));
   }
 
   private static void annotateNotNull(Project project,
@@ -186,12 +182,7 @@ public class NullityInferrer {
   private static void invoke(final Project project,
                              final PsiModifierListOwner element,
                              final String fqn, final String toRemove) {
-    WriteCommandAction.runWriteCommandAction(project, new Runnable() {
-      @Override
-      public void run() {
-        new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile());
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(project, () -> new AddAnnotationFix(fqn, element, toRemove).invoke(project, null, element.getContainingFile()));
   }
 
   public int getCount() {

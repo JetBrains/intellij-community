@@ -429,14 +429,7 @@ public class PatternCompiler {
         addPredicate(handler,predicate);
       }
 
-      Set<MatchPredicate> predicates = new LinkedHashSet<MatchPredicate>();
-      for (MatchPredicateProvider matchPredicateProvider : Extensions.getExtensions(MatchPredicateProvider.EP_NAME)) {
-        matchPredicateProvider.collectPredicates(constraint, name, options, predicates);
-      }
-      for (MatchPredicate matchPredicate : predicates) {
-        addPredicate(handler, matchPredicate);
-      }
-
+      addExtensionPredicates(options, constraint, handler);
       addScriptConstraint(project, name, constraint, handler);
 
       if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
@@ -474,6 +467,7 @@ public class PatternCompiler {
         addPredicate(handler,predicate);
       }
 
+      addExtensionPredicates(options, constraint, handler);
       addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler);
     }
 
@@ -505,6 +499,16 @@ public class PatternCompiler {
     return elements;
   }
 
+  private static void addExtensionPredicates(MatchOptions options, MatchVariableConstraint constraint, SubstitutionHandler handler) {
+    Set<MatchPredicate> predicates = new LinkedHashSet<MatchPredicate>();
+    for (MatchPredicateProvider matchPredicateProvider : Extensions.getExtensions(MatchPredicateProvider.EP_NAME)) {
+      matchPredicateProvider.collectPredicates(constraint, handler.getName(), options, predicates);
+    }
+    for (MatchPredicate matchPredicate : predicates) {
+      addPredicate(handler, matchPredicate);
+    }
+  }
+
   private static void addScriptConstraint(Project project, String name, MatchVariableConstraint constraint, SubstitutionHandler handler) {
     if (constraint.getScriptCodeConstraint()!= null && constraint.getScriptCodeConstraint().length() > 2) {
       final String script = StringUtil.stripQuotesAroundValue(constraint.getScriptCodeConstraint());
@@ -515,12 +519,11 @@ public class PatternCompiler {
     }
   }
 
-  static void addPredicate(SubstitutionHandler handler, MatchPredicate predicate) {
+  private static void addPredicate(SubstitutionHandler handler, MatchPredicate predicate) {
     if (handler.getPredicate()==null) {
       handler.setPredicate(predicate);
     } else {
       handler.setPredicate(new BinaryPredicate(handler.getPredicate(), predicate, false));
     }
   }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,22 +23,30 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
+import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * @author pti
@@ -47,35 +55,61 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private final UpdateChannel myUpdatedChannel;
   private final boolean myForceHttps;
   private final Collection<PluginDownloader> myUpdatedPlugins;
-  private final BuildInfo myLatestBuild;
+  private final BuildInfo myNewBuild;
   private final PatchInfo myPatch;
   private final boolean myWriteProtected;
+  private final Pair<String, Color> myLicenseInfo;
 
-  protected UpdateInfoDialog(@NotNull UpdateChannel channel,
-                             @NotNull BuildInfo latestBuild,
-                             boolean enableLink,
-                             boolean forceHttps,
-                             Collection<PluginDownloader> updatedPlugins,
-                             Collection<IdeaPluginDescriptor> incompatiblePlugins) {
+  UpdateInfoDialog(@NotNull UpdateChannel channel,
+                   @NotNull BuildInfo newBuild,
+                   @Nullable PatchInfo patch,
+                   boolean enableLink,
+                   boolean forceHttps,
+                   Collection<PluginDownloader> updatedPlugins,
+                   Collection<IdeaPluginDescriptor> incompatiblePlugins) {
     super(enableLink);
     myUpdatedChannel = channel;
     myForceHttps = forceHttps;
     myUpdatedPlugins = updatedPlugins;
-    myLatestBuild = latestBuild;
-    myPatch = myLatestBuild.findPatchForCurrentBuild();
+    myNewBuild = newBuild;
+    myPatch = patch;
     myWriteProtected = myPatch != null && !new File(PathManager.getHomePath()).canWrite();
     getCancelAction().putValue(DEFAULT_ACTION, Boolean.TRUE);
-    initLicensingInfo(myUpdatedChannel, myLatestBuild);
+    myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     init();
 
     if (incompatiblePlugins != null && !incompatiblePlugins.isEmpty()) {
-      String list = StringUtil.join(incompatiblePlugins, new Function<IdeaPluginDescriptor, String>() {
-        @Override
-        public String fun(IdeaPluginDescriptor downloader) {
-          return downloader.getName();
-        }
-      }, "<br/>");
+      String list = StringUtil.join(incompatiblePlugins, IdeaPluginDescriptor::getName, "<br/>");
       setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
+    }
+  }
+
+  private static Pair<String, Color> initLicensingInfo(UpdateChannel channel, BuildInfo build) {
+    LicensingFacade facade = LicensingFacade.getInstance();
+    if (facade == null) return null;
+
+    if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
+      return pair(IdeBundle.message("updates.channel.bundled.key"), null);
+    }
+
+    Date releaseDate = build.getReleaseDate();
+    Boolean applicable = releaseDate == null ? null : facade.isApplicableForProduct(releaseDate);
+    if (applicable == null) {
+      return null;
+    }
+    if (applicable == Boolean.FALSE) {
+      return pair(IdeBundle.message("updates.paid.upgrade", channel.getEvalDays()), JBColor.RED);
+    }
+    if (facade.isPerpetualForProduct(releaseDate) == Boolean.TRUE) {
+      return pair(IdeBundle.message("updates.fallback.build"), null);
+    }
+
+    Date expiration = facade.getLicenseExpirationDate();
+    if (expiration != null) {
+      return pair(IdeBundle.message("updates.interim.build", DateFormatUtil.formatAboutDialogDate(expiration)), null);
+    }
+    else {
+      return null;
     }
   }
 
@@ -104,7 +138,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       });
     }
 
-    List<ButtonInfo> buttons = myLatestBuild.getButtons();
+    List<ButtonInfo> buttons = myNewBuild.getButtons();
     if (buttons.isEmpty()) {
       actions.add(new AbstractAction(IdeBundle.message("updates.more.info.button")) {
         @Override
@@ -124,7 +158,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     actions.add(new AbstractAction(IdeBundle.message("updates.ignore.update.button")) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        String build = myLatestBuild.getNumber().asStringWithoutProductCode();
+        String build = myNewBuild.getNumber().asStringWithoutProductCode();
         UpdateSettings.getInstance().getIgnoredBuildNumbers().add(build);
         doCancelAction();
       }
@@ -142,7 +176,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   private void downloadPatchAndRestart() {
     try {
-      UpdateChecker.installPlatformUpdate(myPatch, myLatestBuild.getNumber(), myForceHttps);
+      UpdateChecker.installPlatformUpdate(myPatch, myNewBuild.getNumber(), myForceHttps);
 
       if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
         new PluginUpdateInfoDialog(getContentPanel(), myUpdatedPlugins).show();
@@ -164,7 +198,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   private void openDownloadPage() {
     String url = myUpdatedChannel.getHomePageUrl();
     assert url != null : "channel: " + myUpdatedChannel.getId();
-    BrowserUtil.browse(url);
+    BrowserUtil.browse(augmentUrl(url));
   }
 
   private static class ButtonAction extends AbstractAction {
@@ -177,7 +211,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      BrowserUtil.browse(myUrl);
+      BrowserUtil.browse(augmentUrl(myUrl));
     }
   }
 
@@ -195,7 +229,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       ApplicationNamesInfo appNames = ApplicationNamesInfo.getInstance();
 
-      String message = myLatestBuild.getMessage();
+      String message = myNewBuild.getMessage();
       final String fullProductName = appNames.getFullProductName();
       if (StringUtil.isEmpty(message)) {
         message = IdeBundle.message("updates.new.version.available", fullProductName);
@@ -205,25 +239,18 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         final int idx = message.indexOf(fullProductName);
         if (idx >= 0) {
           message = message.substring(0, idx) +
-                    "<a href=\'" + homePageUrl + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
+                    "<a href=\'" + augmentUrl(homePageUrl) + "\'>" + fullProductName + "</a>" + message.substring(idx + fullProductName.length());
         }
       }
       configureMessageArea(myUpdateMessage, message, null, BrowserHyperlinkListener.INSTANCE);
 
       myCurrentVersion.setText(
         formatVersion(
-          // Android Studio: We don't want to include the "EAP" suffix here, because (a) we include the channel
-          // in the version name anyway (as in 2.0 Preview 7), and (b) we don't have an EAP designation in the
-          // patch name, so you end up seeing
-          //     Current: 2.0 Preview 7 EAP
-          //     New:     2.0 Preview 8
-          // which makes it look like the new build isn't an EAP build.
-          //appInfo.getFullVersion() + (appInfo instanceof ApplicationInfoEx && ((ApplicationInfoEx)appInfo).isEAP() ? " EAP": ""),
           appInfo.getFullVersion(),
           appInfo.getBuild().asStringWithoutProductCode()
         )
       );
-      myNewVersion.setText(formatVersion(myLatestBuild.getVersion(), myLatestBuild.getNumber().asStringWithoutProductCode()));
+      myNewVersion.setText(formatVersion(myNewBuild.getVersion(), myNewBuild.getNumber().asStringWithoutProductCode()));
 
       if (myPatch != null && !StringUtil.isEmptyOrSpaces(myPatch.getSize())) {
         myPatchInfo.setText(myPatch.getSize() + " MB");
@@ -242,12 +269,22 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       }
 
       if (myLicenseInfo != null) {
-        configureMessageArea(myLicenseArea, myLicenseInfo, myPaidUpgrade ? JBColor.RED : null, null);
+        configureMessageArea(myLicenseArea, myLicenseInfo.first, myLicenseInfo.second, null);
       }
     }
   }
 
   protected static String formatVersion(String versionString, String build) {
     return IdeBundle.message("updates.version.info", versionString, build);
+  }
+
+  private static String augmentUrl(String url) {
+    try {
+      return new URIBuilder(url).addParameter("fromIDE", "").build().toString();
+    }
+    catch (URISyntaxException e) {
+      Logger.getInstance(UpdateInfoDialog.class).warn(url, e);
+      return url;
+    }
   }
 }

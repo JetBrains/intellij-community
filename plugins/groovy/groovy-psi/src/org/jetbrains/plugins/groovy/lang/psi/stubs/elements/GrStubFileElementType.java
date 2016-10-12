@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,19 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBuilder;
 import com.intellij.psi.stubs.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrStubUtils;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnnotatedMemberIndex;
@@ -53,12 +57,34 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
         return super.createStubForFile(file);
       }
+
+      @Override
+      public boolean skipChildProcessingWhenBuildingStubs(@NotNull ASTNode parent, @NotNull ASTNode node) {
+        IElementType childType = node.getElementType();
+        IElementType parentType = parent.getElementType();
+        if (childType == GroovyElementTypes.PARAMETER && parentType != GroovyElementTypes.PARAMETERS_LIST) {
+          return true;
+        }
+        if (childType == GroovyElementTypes.PARAMETERS_LIST && !(parent.getPsi() instanceof GrMethod)) {
+          return true;
+        }
+        if (childType == GroovyElementTypes.MODIFIERS) {
+          if (parentType == GroovyElementTypes.CLASS_INITIALIZER) {
+            return true;
+          }
+          if (parentType == GroovyElementTypes.VARIABLE_DEFINITION && !GroovyElementTypes.VARIABLE_DEFINITION.shouldCreateStub(parent)) {
+            return true;
+          }
+        }
+
+        return false;
+      }
     };
   }
 
   @Override
   public int getStubVersion() {
-    return super.getStubVersion() + 25;
+    return super.getStubVersion() + 29;
   }
 
   @Override

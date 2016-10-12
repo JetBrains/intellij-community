@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
@@ -11,9 +10,9 @@ import java.util.List;
 
 /**
  * <p>We suppose that the Hash is the unique identifier of the Commit,
- *    i. e. it is the only value that should be checked in equals() and hashCode().</p>
+ * i. e. it is the only value that should be checked in equals() and hashCode().</p>
  * <p>equals() and hashCode() are made final to ensure that any descendants of this class are considered equal
- *    if and only if their hashes are equals.</p>
+ * if and only if their hashes are equals.</p>
  * <p>It is highly recommended to use this standard implementation of the VcsCommit because of the above reasons.</p>
  *
  * @author erokhins
@@ -61,17 +60,11 @@ public class TimedVcsCommitImpl implements TimedVcsCommit {
 
   @Override
   public String toString() {
-    return myHash.toShortString() + "|-" + StringUtil.join(ContainerUtil.map(myParents, new Function<Hash, String>() {
-      @Override
-      public String fun(Hash hash) {
-        return hash.toShortString();
-      }
-    }), ",") + ":" + myTime;
+    return myHash.toShortString() + "|-" + StringUtil.join(ContainerUtil.map(myParents, hash -> hash.toShortString()), ",") + ":" + myTime;
   }
 
   @Override
   public final long getTimestamp() {
     return myTime;
   }
-
 }

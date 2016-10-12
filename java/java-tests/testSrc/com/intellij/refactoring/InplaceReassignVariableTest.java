@@ -17,6 +17,9 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.refactoring.introduceVariable.ReassignVariableUtil;
 
 public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTest {
@@ -34,6 +37,14 @@ public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTes
     doTest();
   }
 
+  public void testFilterVariablesWhichMustBeEffectivelyFinal() throws Exception {
+    doTest();
+  }
+
+  public void testUndoPositionAfterSpace() throws Exception {
+    doUndoTest();
+  }
+
   private void doTest() {
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
@@ -49,6 +60,32 @@ public class InplaceReassignVariableTest extends AbstractJavaInplaceIntroduceTes
       assert state != null;
       state.gotoEnd(false);
       checkResultByFile(getBasePath() + name + "_after" + getExtension());
+    }
+    finally {
+      getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
+    }
+  }
+
+  private void doUndoTest() {
+    String name = getTestName(true);
+    configureByFile(getBasePath() + name + getExtension());
+    final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
+    try {
+      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+      getEditor().getSettings().setVariableInplaceRenameEnabled(true);
+
+      invokeRefactoring();
+      ReassignVariableUtil.reassign(getEditor());
+
+      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+      assert state != null;
+      state.gotoEnd(false);
+
+      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
+      assertNotNull(textEditor);
+      UndoManager.getInstance(getProject()).undo(textEditor);
+
+      checkResultByFile(getBasePath() + name + getExtension());
     }
     finally {
       getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);

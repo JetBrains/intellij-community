@@ -293,12 +293,9 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
         MavenDomDependency managedDependency = MavenDomProjectProcessorUtils.searchManagingDependency((MavenDomDependency)parent);
         if (managedDependency != null) {
           final GenericDomValue<String> managedDependencyArtifactId = managedDependency.getArtifactId();
-          return RecursionManager.doPreventingRecursion(managedDependencyArtifactId, false, new Computable<PsiFile>() {
-            @Override
-            public PsiFile compute() {
-              PsiElement res = new GenericDomValueReference(managedDependencyArtifactId).resolve();
-              return res instanceof PsiFile ? (PsiFile)res : null;
-            }
+          return RecursionManager.doPreventingRecursion(managedDependencyArtifactId, false, () -> {
+            PsiElement res1 = new GenericDomValueReference(managedDependencyArtifactId).resolve();
+            return res1 instanceof PsiFile ? (PsiFile)res1 : null;
           });
         }
       }

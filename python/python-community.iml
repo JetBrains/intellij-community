@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="xml-psi-impl" />
+    <orderEntry type="library" name="gson" level="project" />
   </component>
 </module>
 

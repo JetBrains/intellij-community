@@ -83,12 +83,9 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
     if (!modulesWithPackage.isEmpty()) {
       final String testRunDebugId = isDebug ? ToolWindowId.DEBUG : ToolWindowId.RUN;
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-      final Function<Module, String> moduleNameRef = new Function<Module, String>() {
-        @Override
-        public String fun(Module module) {
-          final String moduleName = module.getName();
-          return "<a href=\"" + moduleName + "\">" + moduleName + "</a>";
-        }
+      final Function<Module, String> moduleNameRef = module1 -> {
+        final String moduleName = module1.getName();
+        return "<a href=\"" + moduleName + "\">" + moduleName + "</a>";
       };
       String message = "Tests were not found in module \"" + module.getName() + "\".\n" +
                        "Use ";

@@ -57,7 +57,7 @@ public class IdeHttpClientHelpers {
 
   @NotNull
   private static String getProxyLogin() {
-    return StringUtil.notNullize(getHttpConfigurable().PROXY_LOGIN);
+    return StringUtil.notNullize(getHttpConfigurable().getProxyLogin());
   }
 
   @NotNull

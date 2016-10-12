@@ -55,30 +55,15 @@ public class InspectionToolRegistrar {
       final boolean isInternal = ApplicationManager.getApplication().isInternal();
       for (final LocalInspectionEP ep : Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)) {
         if (!isInternal && ep.isInternal) continue;
-        factories.add(new Factory<InspectionToolWrapper>() {
-          @Override
-          public InspectionToolWrapper create() {
-            return new LocalInspectionToolWrapper(ep);
-          }
-        });
+        factories.add(() -> new LocalInspectionToolWrapper(ep));
       }
       for (final InspectionEP ep : Extensions.getExtensions(InspectionEP.GLOBAL_INSPECTION)) {
         if (!isInternal && ep.isInternal) continue;
-        factories.add(new Factory<InspectionToolWrapper>() {
-          @Override
-          public InspectionToolWrapper create() {
-            return new GlobalInspectionToolWrapper(ep);
-          }
-        });
+        factories.add(() -> new GlobalInspectionToolWrapper(ep));
       }
       for (InspectionToolsFactory factory : Extensions.getExtensions(InspectionToolsFactory.EXTENSION_POINT_NAME)) {
         for (final InspectionProfileEntry profileEntry : factory.createTools()) {
-          factories.add(new Factory<InspectionToolWrapper>() {
-            @Override
-            public InspectionToolWrapper create() {
-              return wrapTool(profileEntry);
-            }
-          });
+          factories.add(() -> wrapTool(profileEntry));
         }
       }
       myInspectionToolFactories.addAll(factories);
@@ -101,12 +86,8 @@ public class InspectionToolRegistrar {
     for (InspectionToolProvider provider : providers) {
       Class[] classes = provider.getInspectionClasses();
       for (final Class aClass : classes) {
-        Factory<InspectionToolWrapper> factory = new Factory<InspectionToolWrapper>() {
-          @Override
-          public InspectionToolWrapper create() {
-            return wrapTool((InspectionProfileEntry)InspectionToolsRegistrarCore.instantiateTool(aClass));
-          }
-        };
+        Factory<InspectionToolWrapper> factory =
+          () -> wrapTool((InspectionProfileEntry)InspectionToolsRegistrarCore.instantiateTool(aClass));
         factories.add(factory);
       }
     }

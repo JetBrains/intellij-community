@@ -35,11 +35,7 @@ import java.util.List;
 
 public class AllJarsUnderDirEntry implements AntClasspathEntry {
 
-  private static final Function<VirtualFile, AntClasspathEntry> CREATE_FROM_VIRTUAL_FILE = new Function<VirtualFile, AntClasspathEntry>() {
-    public AntClasspathEntry fun(VirtualFile file) {
-      return fromVirtualFile(file);
-    }
-  };
+  private static final Function<VirtualFile, AntClasspathEntry> CREATE_FROM_VIRTUAL_FILE = file -> fromVirtualFile(file);
 
   @NonNls static final String DIR = "dir";
 

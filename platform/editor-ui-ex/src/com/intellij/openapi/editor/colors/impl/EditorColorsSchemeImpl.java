@@ -80,6 +80,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
     EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(myParentScheme);
     copyTo(newScheme);
     newScheme.setName(getName());
+    newScheme.setDefaultMetaInfo(this);
     return newScheme;
   }
 }

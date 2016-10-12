@@ -292,8 +292,10 @@ public final class Presentation implements Cloneable {
     setVisible(enabled);
   }
 
-  void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
-    myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+  private void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+    if (oldValue != newValue) {
+      myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
   }
 
   @Override

@@ -84,12 +84,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
       return;
     }
     final ElementPattern<PsiElement> pattern = psiElement().withElementType(definition.getStringLiteralElements());
-    final PsiElement localString = PsiTreeUtil.findFirstParent(position, false, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return pattern.accepts(element);
-      }
-    });
+    final PsiElement localString = PsiTreeUtil.findFirstParent(position, false, element -> pattern.accepts(element));
     if (localString == null) {
       return;
     }

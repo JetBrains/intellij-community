@@ -107,12 +107,7 @@ public abstract class PyTestCase extends UsefulTestCase {
    * Reformats currently configured file.
    */
   protected final void reformatFile() {
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        doPerformFormatting();
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> doPerformFormatting());
   }
 
   private void doPerformFormatting() throws IncorrectOperationException {
@@ -321,19 +316,11 @@ public abstract class PyTestCase extends UsefulTestCase {
    * @param file file to clear
    */
   protected void clearFile(@NotNull final PsiFile file) {
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            for (final PsiElement element : file.getChildren()) {
-              element.delete();
-            }
-          }
-        });
+    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
+      for (final PsiElement element : file.getChildren()) {
+        element.delete();
       }
-    }, null, null);
+    }), null, null);
   }
 
   /**
@@ -413,12 +400,7 @@ public abstract class PyTestCase extends UsefulTestCase {
    * @see IdeActions
    */
   protected final void pressButton(@NotNull final String action) {
-    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), new Runnable() {
-      @Override
-      public void run() {
-        myFixture.performEditorAction(action);
-      }
-    }, "", null);
+    CommandProcessor.getInstance().executeCommand(myFixture.getProject(), () -> myFixture.performEditorAction(action), "", null);
   }
 
   @NotNull

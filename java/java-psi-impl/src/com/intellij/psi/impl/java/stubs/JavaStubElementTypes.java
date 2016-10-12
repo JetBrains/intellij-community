@@ -131,6 +131,7 @@ public interface JavaStubElementTypes {
       return new ImportStaticStatementElement();
     }
   };
+  PsiLiteralElementType LITERAL_EXPRESSION = new PsiLiteralElementType();
 
   IStubFileElementType JAVA_FILE = new JavaFileElementType();
 }

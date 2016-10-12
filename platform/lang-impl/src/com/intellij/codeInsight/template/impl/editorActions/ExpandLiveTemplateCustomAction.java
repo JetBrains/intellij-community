@@ -36,7 +36,7 @@ public class ExpandLiveTemplateCustomAction extends EditorAction {
     setInjectedContext(true);
   }
 
-  static EditorWriteActionHandler createExpandTemplateHandler(final char shortcutChar) {
+  public static EditorWriteActionHandler createExpandTemplateHandler(final char shortcutChar) {
     return new EditorWriteActionHandler(true) {
       @Override
       public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {

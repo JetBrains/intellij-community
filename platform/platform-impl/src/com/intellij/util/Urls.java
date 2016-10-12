@@ -82,10 +82,10 @@ public final class Urls {
     return new UrlImpl(scheme, authority, path);
   }
 
-  @NotNull
   /**
    * Url will not be normalized (see {@link VfsUtilCore#toIdeaUrl(String)}), parsed as is
    */
+  @NotNull
   public static Url newFromIdea(@NotNull CharSequence url) {
     Url result = parseFromIdea(url);
     LOG.assertTrue(result != null, url);

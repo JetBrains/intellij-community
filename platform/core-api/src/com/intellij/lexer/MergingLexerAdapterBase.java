@@ -33,6 +33,8 @@ public abstract class MergingLexerAdapterBase extends DelegateLexer {
   public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     super.start(buffer, startOffset, endOffset, initialState);
     myTokenType = null;
+    myState = 0;
+    myTokenStart = 0;
   }
 
   @Override
@@ -62,6 +64,8 @@ public abstract class MergingLexerAdapterBase extends DelegateLexer {
   @Override
   public void advance(){
     myTokenType = null;
+    myState = 0;
+    myTokenStart = 0;
   }
 
   private void locateToken(){

@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.graph.impl.facade;
 
 import com.intellij.util.NotNullFunction;
+import com.intellij.vcs.log.graph.GraphColorManager;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphElement;
@@ -40,9 +41,11 @@ class PrintElementManagerImpl implements PrintElementManager {
   @Nullable private PrintElementWithGraphElement mySelectedPrintElement = null;
 
   @SuppressWarnings("unchecked")
-  PrintElementManagerImpl(@NotNull final LinearGraph linearGraph, @NotNull final PermanentGraphInfo myPermanentGraph) {
+  PrintElementManagerImpl(@NotNull final LinearGraph linearGraph,
+                          @NotNull final PermanentGraphInfo myPermanentGraph,
+                          @NotNull GraphColorManager colorManager) {
     myLinearGraph = linearGraph;
-    myColorGetter = new ColorGetterByLayoutIndex(linearGraph, myPermanentGraph);
+    myColorGetter = new ColorGetterByLayoutIndex(linearGraph, myPermanentGraph, colorManager);
     myGraphElementComparator = new GraphElementComparatorByLayoutIndex(new NotNullFunction<Integer, Integer>() {
       @NotNull
       @Override

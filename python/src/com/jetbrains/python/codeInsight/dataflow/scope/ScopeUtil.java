@@ -98,13 +98,8 @@ public class ScopeUtil {
         return null;
       }
     }
-    return CachedValuesManager.getCachedValue(element, new CachedValueProvider<ScopeOwner>() {
-      @Nullable
-      @Override
-      public Result<ScopeOwner> compute() {
-        return Result.create(calculateScopeOwnerByAST(element), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(element, () -> CachedValueProvider.Result
+      .create(calculateScopeOwnerByAST(element), PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Nullable

@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -79,10 +80,13 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     myFixture.setUp();
     myModule = builder.getFixture().getModule();
     myProject = myFixture.getProject();
+
+    CodeStyleSettingsManager.getSettings(myProject).USE_EXTERNAL_ANNOTATIONS = true;
   }
 
   @Override
   protected void tearDown() throws Exception {
+    CodeStyleSettingsManager.getSettings(myProject).USE_EXTERNAL_ANNOTATIONS = false;
     try {
       myFixture.tearDown();
     }
@@ -182,9 +186,6 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     final PsiFile file = myFixture.getFile();
     final Editor editor = myFixture.getEditor();
 
-    final IntentionAction fix = myFixture.findSingleIntention("Annotate method 'get' as @NotNull");
-    assertTrue(fix.isAvailable(myProject, editor, file));
-
     // expecting other @Nullable annotations to be removed, and default @NotNull to be added
     List<Trinity<PsiModifierListOwner, String, Boolean>> expectedSequence = new ArrayList<>();
     for (String notNull : NullableNotNullManager.getInstance(myProject).getNullables()) {
@@ -192,12 +193,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     }
     expectedSequence.add(Trinity.create(getOwner(), AnnotationUtil.NOT_NULL, true));
     startListening(expectedSequence);
-    new WriteCommandAction(myProject){
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        fix.invoke(myProject, editor, file);
-      }
-    }.execute();
+    myFixture.launchAction(myFixture.findSingleIntention("Annotate method 'get' as @NotNull"));
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -216,6 +212,20 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     PsiTestUtil.addSourceRoot(myModule, psiFile.getVirtualFile().getParent());
 
     assertNotAvailable("Annotate method 'get' as @NotNull");
+
+    assertFalse(((PsiMethod)getOwner()).isDeprecated());
+    myFixture.launchAction(myFixture.findSingleIntention("Annotate method 'get' as @Deprecated"));
+    assertTrue(((PsiMethod)getOwner()).isDeprecated());
+  }
+
+  public void testAvailableFixesOnClass() {
+    PsiFile psiFile = myFixture.configureByFile("lib/p/TestPrimitive.java");
+    PsiTestUtil.addSourceRoot(myModule, psiFile.getVirtualFile().getParent());
+    myFixture.getEditor().getCaretModel().moveToOffset(((PsiJavaFile) psiFile).getClasses()[0].getTextOffset());
+
+    myFixture.findSingleIntention("Annotate class 'Test' as @Deprecated");
+    assertNotAvailable("Annotate class 'Test' as @NotNull");
+    assertNotAvailable("Annotate class 'Test' as @Nullable");
   }
 
   private void assertNotAvailable(String hint) {

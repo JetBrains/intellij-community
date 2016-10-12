@@ -16,28 +16,13 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener
+import com.intellij.openapi.util.Computable
 import com.intellij.util.messages.MessageBus
 import javax.swing.SwingUtilities
 
-inline fun <T> runWriteAction(runnable: () -> T): T {
-  val token = WriteAction.start()
-  try {
-    return runnable()
-  }
-  finally {
-    token.finish()
-  }
-}
+fun <T> runWriteAction(runnable: () -> T): T = ApplicationManager.getApplication().runWriteAction (Computable { runnable.invoke() })
 
-inline fun <T> runReadAction(runnable: () -> T): T {
-  val token = ReadAction.start()
-  try {
-    return runnable()
-  }
-  finally {
-    token.finish()
-  }
-}
+fun <T> runReadAction(runnable: () -> T): T = ApplicationManager.getApplication().runReadAction (Computable { runnable.invoke() })
 
 inline fun <T> runBatchUpdate(messageBus: MessageBus, runnable: () -> T): T {
   val publisher = messageBus.syncPublisher(BatchUpdateListener.TOPIC)
@@ -59,6 +44,6 @@ fun invokeAndWaitIfNeed(runnable: () -> Unit) {
     if (SwingUtilities.isEventDispatchThread()) runnable() else SwingUtilities.invokeAndWait(runnable)
   }
   else {
-    app.invokeAndWait(runnable, ModalityState.any())
+    app.invokeAndWait(runnable, ModalityState.defaultModalityState())
   }
 }

@@ -143,13 +143,10 @@ public class GrSetStrongTypeIntention extends Intention {
       @Override
       public void templateFinished(Template template, boolean brokenOff) {
         if (brokenOff) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              if (rangeMarker.isValid()) {
-                document.replaceString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), originalText);
-                editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset() + typeInfo.originalOffset);
-              }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            if (rangeMarker.isValid()) {
+              document.replaceString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), originalText);
+              editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset() + typeInfo.originalOffset);
             }
           });
         }

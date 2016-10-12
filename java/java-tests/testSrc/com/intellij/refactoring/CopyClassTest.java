@@ -119,22 +119,14 @@ public class CopyClassTest extends CodeInsightTestCase {
     }
 
     final VirtualFile targetVDir = rootDir.findChild("p2");
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CopyClassesHandler.doCopyClasses(map, null, myPsiManager.findDirectory(targetVDir), myProject);
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      CopyClassesHandler.doCopyClasses(map, null, myPsiManager.findDirectory(targetVDir), myProject);
     });
 
 
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting());
 
     PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }

@@ -27,7 +27,6 @@ import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.*;
 import com.intellij.execution.testframework.sm.runner.history.ImportedTestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
-import com.intellij.execution.testframework.sm.runner.ui.statistics.StatisticsPanel;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
 import com.intellij.openapi.Disposable;
@@ -46,7 +45,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -70,8 +68,6 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.text.SimpleDateFormat;
@@ -112,7 +108,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private int myIgnoredTestCount = 0;
   private long myStartTime;
   private long myEndTime;
-  private StatisticsPanel myStatisticsPane;
 
   // custom progress
   private String myCurrentCustomProgressCategory;
@@ -153,22 +148,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     */
   }
 
-  @Override
-  public void initUI() {
-    super.initUI();
-
-    if (Registry.is("tests.view.old.statistics.panel")) {
-      final KeyStroke shiftEnterKey = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK);
-      SMRunnerUtil.registerAsAction(shiftEnterKey, "show-statistics-for-test-proxy",
-                                    new Runnable() {
-                                      public void run() {
-                                        showStatisticsForSelectedProxy();
-                                      }
-                                    },
-                                    myTreeView);
-    }
-  }
-
   protected ToolbarPanel createToolbarPanel() {
     return new SMTRunnerToolbarPanel(myProperties, this, this);
   }
@@ -179,18 +158,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     myTreeView.setLargeModel(true);
     myTreeView.attachToModel(this);
     myTreeView.setTestResultsViewer(this);
-    if (Registry.is("tests.view.old.statistics.panel")) {
-      addTestsTreeSelectionListener(new TreeSelectionListener() {
-        @Override
-        public void valueChanged(TreeSelectionEvent e) {
-          AbstractTestProxy selectedTest = getTreeView().getSelectedTest();
-          if (selectedTest instanceof SMTestProxy) {
-            myStatisticsPane.selectProxy(((SMTestProxy)selectedTest), this, false);
-          }
-        }
-      });
-    }
-
     final SMTRunnerTreeStructure structure = new SMTRunnerTreeStructure(myProject, myTestsRootNode);
     myTreeBuilder = new SMTRunnerTreeBuilder(myTreeView, structure);
     myTreeBuilder.setTestsComparator(TestConsoleProperties.SORT_ALPHABETICALLY.value(myProperties));
@@ -234,22 +201,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     //myTreeView.setRootVisible(false);
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
     return myTreeView;
-  }
-
-  protected JComponent createStatisticsPanel() {
-    // Statistics tab
-    final StatisticsPanel statisticsPane = new StatisticsPanel(myProject, this);
-    // handler to select in results viewer by statistics pane events
-    statisticsPane.addPropagateSelectionListener(createSelectMeListener());
-    // handler to select test statistics pane by result viewer events
-    setShowStatisticForProxyHandler(statisticsPane.createSelectMeListener());
-
-    myStatisticsPane = statisticsPane;
-    return myStatisticsPane.getContentPane();
-  }
-
-  public StatisticsPanel getStatisticsPane() {
-    return myStatisticsPane;
   }
 
   public void addTestsTreeSelectionListener(final TreeSelectionListener listener) {
@@ -314,14 +265,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     LvcsHelper.addLabel(this);
 
 
-    final Runnable onDone = new Runnable() {
-      @Override
-      public void run() {
-        myTestsRunning = false;
-        final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
-        if (sortByDuration) {
-          myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
-        }
+    final Runnable onDone = () -> {
+      myTestsRunning = false;
+      final boolean sortByDuration = TestConsoleProperties.SORT_BY_DURATION.value(myProperties);
+      if (sortByDuration) {
+        myTreeBuilder.setStatisticsComparator(myProperties, sortByDuration);
       }
     };
     if (myLastSelected == null) {
@@ -523,11 +471,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private void selectAndNotify(@Nullable final AbstractTestProxy testProxy, @Nullable Runnable onDone) {
     selectWithoutNotify(testProxy, onDone);
 
-    // Is used by Statistic tab to differ use selection in tree
-    // from manual selection from API (e.g. test runner events)
-    if (Registry.is("tests.view.old.statistics.panel")) {
-      showStatisticsForSelectedProxy(testProxy, false);
-    }
+
   }
 
   public void addEventsListener(final EventsListener listener) {
@@ -549,7 +493,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     super.dispose();
     myShowStatisticForProxyHandler = null;
     myEventListeners.clear();
-    myStatisticsPane.doDispose();
     myDisposed = true;
   }
 
@@ -656,13 +599,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       return;
     }
 
-    SMRunnerUtil.runInEventDispatchThread(new Runnable() {
-      public void run() {
-        if (myTreeBuilder.isDisposed()) {
-          return;
-        }
-        myTreeBuilder.select(testProxy, onDone);
+    SMRunnerUtil.runInEventDispatchThread(() -> {
+      if (myTreeBuilder.isDisposed()) {
+        return;
       }
+      myTreeBuilder.select(testProxy, onDone);
     }, ModalityState.NON_MODAL);
   }
 
@@ -724,15 +665,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return new PropagateSelectionHandler() {
       public void handlePropagateSelectionRequest(@Nullable final SMTestProxy selectedTestProxy, @NotNull final Object sender,
                                                   final boolean requestFocus) {
-        SMRunnerUtil.addToInvokeLater(new Runnable() {
-          public void run() {
-            selectWithoutNotify(selectedTestProxy, null);
+        SMRunnerUtil.addToInvokeLater(() -> {
+          selectWithoutNotify(selectedTestProxy, null);
 
-            // Request focus if necessary
-            if (requestFocus) {
-              //myTreeView.requestFocusInWindow();
-              IdeFocusManager.getInstance(myProject).requestFocus(myTreeView, true);
-            }
+          // Request focus if necessary
+          if (requestFocus) {
+            //myTreeView.requestFocusInWindow();
+            IdeFocusManager.getInstance(myProject).requestFocus(myTreeView, true);
           }
         });
       }
@@ -850,18 +789,17 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
     private void writeState() {
       // read action to prevent project (and storage) from being disposed
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          Project project = getProject();
-          if (project.isDisposed()) return;
-          TestStateStorage storage = TestStateStorage.getInstance(project);
-          List<SMTestProxy> tests = myRoot.getAllTests();
-          for (SMTestProxy proxy : tests) {
-            String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
-            if (url != null) {
-              storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date()));
-            }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        Project project = getProject();
+        if (project.isDisposed()) return;
+        TestStateStorage storage = TestStateStorage.getInstance(project);
+        List<SMTestProxy> tests = myRoot.getAllTests();
+        for (SMTestProxy proxy : tests) {
+          String url = proxy instanceof SMTestProxy.SMRootTestProxy ? ((SMTestProxy.SMRootTestProxy)proxy).getRootLocation() : proxy.getLocationUrl();
+          if (url != null) {
+            String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
+            storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(), 
+                                                                configurationName == null ? 0 : configurationName.hashCode()));
           }
         }
       });

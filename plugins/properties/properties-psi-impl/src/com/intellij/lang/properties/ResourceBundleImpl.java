@@ -89,7 +89,7 @@ public class ResourceBundleImpl extends ResourceBundle {
   }
 
   public boolean isValid() {
-    return myValid;
+    return myValid && myDefaultPropertiesFile.getContainingFile().isValid();
   }
 
   public void invalidate() {

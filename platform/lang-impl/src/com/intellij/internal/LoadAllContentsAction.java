@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ package com.intellij.internal;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -54,7 +53,7 @@ public class LoadAllContentsAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = e.getProject();
     String m = "Started loading content";
     LOG.info(m);
     System.out.println(m);
@@ -62,29 +61,25 @@ public class LoadAllContentsAction extends AnAction implements DumbAware {
 
     count.set(0);
     totalSize.set(0);
-    ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
-          @Override
-          public boolean processFile(VirtualFile fileOrDir) {
-            if (fileOrDir.isDirectory() || fileOrDir.is(VFileProperty.SPECIAL)) {
-              return true;
-            }
-            try {
-              count.incrementAndGet();
-              byte[] bytes = FileUtil.loadFileBytes(new File(fileOrDir.getPath()));
-              totalSize.addAndGet(bytes.length);
-              ProgressManager.getInstance().getProgressIndicator().setText(fileOrDir.getPresentableUrl());
-            }
-            catch (IOException e1) {
-              LOG.error(e1);
-            }
+    ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(
+      () -> ProjectRootManager.getInstance(project).getFileIndex().iterateContent(new ContentIterator() {
+        @Override
+        public boolean processFile(VirtualFile fileOrDir) {
+          if (fileOrDir.isDirectory() || fileOrDir.is(VFileProperty.SPECIAL)) {
             return true;
           }
-        });
-       }
-    }, "Loading", false, project);
+          try {
+            count.incrementAndGet();
+            byte[] bytes = FileUtil.loadFileBytes(new File(fileOrDir.getPath()));
+            totalSize.addAndGet(bytes.length);
+            ProgressManager.getInstance().getProgressIndicator().setText(fileOrDir.getPresentableUrl());
+          }
+          catch (IOException e1) {
+            LOG.error(e1);
+          }
+          return true;
+        }
+      }), "Loading", false, project);
 
     long end = System.currentTimeMillis();
     String message = "Finished loading content of " + count + " files. " +

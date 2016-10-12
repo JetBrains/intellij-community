@@ -230,4 +230,9 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     LookupManager.getInstance(getProject()).hideActiveLookup();
     super.tearDown();
   }
+
+  public void testNoThisFieldsInDelegatingConstructorCall() {
+    configure();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "delegate.field", "x");
+  }
 }

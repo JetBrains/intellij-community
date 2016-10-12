@@ -1,18 +1,21 @@
 package com.jetbrains.env.python.dotNet;
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationManager;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.sdk.InvalidSdkException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
+import org.junit.Test;
+
+import java.io.IOException;
 
 /**
  * IronPython.NET specific tests
  *
  * @author Ilya.Kazakevich
  */
-public class PyIronPythonTest extends PyEnvTestCase {
+public final class PyIronPythonTest extends PyEnvTestCase {
 
   /**
    * IronPython tag
@@ -26,6 +29,7 @@ public class PyIronPythonTest extends PyEnvTestCase {
   /**
    * Tests skeleton generation
    */
+  @Test
   public void testSkeletons() throws Exception {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.java.py",
@@ -38,6 +42,7 @@ public class PyIronPythonTest extends PyEnvTestCase {
   /**
    * Tests skeleton generation with "from" statements
    */
+  @Test
   public void testClassFromModule() throws Exception {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.java.py",
@@ -50,6 +55,7 @@ public class PyIronPythonTest extends PyEnvTestCase {
   /**
    * Tests skeleton generation when imported as alias
    */
+  @Test
   public void testClassFromModuleAlias() throws Exception {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.java.py",
@@ -62,6 +68,7 @@ public class PyIronPythonTest extends PyEnvTestCase {
   /**
    * Tests skeleton generation when module is imported
    */
+  @Test
   public void testModuleFromPackage() throws Exception {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.java.py",
@@ -74,6 +81,7 @@ public class PyIronPythonTest extends PyEnvTestCase {
   /**
    * Tests skeleton generation when several classes are imported
    */
+  @Test
   public void testSeveralClasses() throws Exception {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.java.py",
@@ -87,29 +95,32 @@ public class PyIronPythonTest extends PyEnvTestCase {
    * Tests skeletons for built-in classes. We can't compare files (CLR class may be changed from version to version),
    * but we are sure there should be class System.Web.AspNetHostingPermissionLevel which is part of public API
    */
+  @Test
   public void testImportBuiltInSystem() throws Exception {
     final SkeletonTestTask task = new SkeletonTestTask(
       null,
       "System.Web",
       "import_system.py",
       null
-    );
-    runPythonTest(task);
-    final PyFile skeleton = task.getGeneratedSkeleton();
-    new ReadAction() {
+    ) {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        Assert.assertNotNull("System.Web does not contain class AspNetHostingPermissionLevel. Error generating stub? It has classes  " +
-                             skeleton.getTopLevelClasses(),
-                             skeleton.findTopLevelClass("AspNetHostingPermissionLevel"));
+      public void runTestOn(@NotNull final String sdkHome) throws IOException, InvalidSdkException {
+        super.runTestOn(sdkHome);
+        ApplicationManager.getApplication().runReadAction(() -> {
+          final PyFile skeleton = (PyFile)myFixture.getFile();
+          Assert.assertNotNull("System.Web does not contain class AspNetHostingPermissionLevel. Error generating stub? It has classes  " +
+                               skeleton.getTopLevelClasses(),
+                               skeleton.findTopLevelClass("AspNetHostingPermissionLevel"));
+        });
       }
-    }.execute();
-
+    };
+    runPythonTest(task);
   }
 
   /**
    * Test importing of inner classes
    */
+  @Test
   public void testImportInnerClass() throws Exception {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.Deep.py",
@@ -122,6 +133,7 @@ public class PyIronPythonTest extends PyEnvTestCase {
   /**
    * Test importing of the whole namespace
    */
+  @Test
   public void testWholeNameSpace() throws Exception {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.SingleNameSpace.py",
@@ -134,6 +146,7 @@ public class PyIronPythonTest extends PyEnvTestCase {
   /**
    * Test importing of single class
    */
+  @Test
   public void testSingleClass() throws Exception {
     runPythonTest(new SkeletonTestTask(
       "dotNet/expected.skeleton.SingleNameSpace.py",

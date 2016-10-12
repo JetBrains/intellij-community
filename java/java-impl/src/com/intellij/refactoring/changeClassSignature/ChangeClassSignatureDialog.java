@@ -156,12 +156,7 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
             final TableColumnAnimator animator = new TableColumnAnimator(myTable);
             animator.setStep(20);
             animator.addColumn(defaultValue, myTable.getWidth() / 2);
-            animator.startAndDoWhenDone(new Runnable() {
-              @Override
-              public void run() {
-                myTable.editCellAt(myTable.getRowCount() - 1, 0);
-              }
-            });
+            animator.startAndDoWhenDone(() -> myTable.editCellAt(myTable.getRowCount() - 1, 0));
             animator.start();
           }
         }

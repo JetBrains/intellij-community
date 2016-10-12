@@ -24,8 +24,8 @@ import java.util.List;
 public class HgQFoldActionFromPatches extends HgActionFromMqPatches {
 
   @Override
-  protected void execute(@NotNull HgRepository repository, @NotNull List<String> patchNames) {
-    new HgQFoldCommand(repository).execute(patchNames);
+  protected void executeInCurrentThread(@NotNull HgRepository repository, @NotNull List<String> patchNames) {
+    new HgQFoldCommand(repository).executeInCurrentThread(patchNames);
   }
 
   @NotNull

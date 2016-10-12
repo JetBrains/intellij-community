@@ -385,29 +385,24 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myGeneralCommandLine = createCommandLine(mySdk, myEnvironmentVariables, getWorkingDir(), myPorts);
     myCommandLine = myGeneralCommandLine.getCommandLineString();
 
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(() -> ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to Console", false) {
       @Override
-      public void run() {
-        ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to Console", false) {
-          @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
-            indicator.setText("Connecting to console...");
-            try {
-              initAndRun(myStatementsToExecute);
+      public void run(@NotNull final ProgressIndicator indicator) {
+        indicator.setText("Connecting to console...");
+        try {
+          initAndRun(myStatementsToExecute);
+        }
+        catch (final Exception e) {
+          LOG.warn("Error running console", e);
+          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              showErrorsInConsole(e);
             }
-            catch (final Exception e) {
-              LOG.warn("Error running console", e);
-              UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  showErrorsInConsole(e);
-                }
-              });
-            }
-          }
-        });
+          });
+        }
       }
-    });
+    }));
   }
 
   private void showErrorsInConsole(Exception e) {
@@ -671,31 +666,27 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   public void connect(final String[] statements2execute) {
     if (handshake()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        // Propagate console communication to language console
+        final PythonConsoleView consoleView = getConsoleView();
 
-        @Override
-        public void run() {
-          // Propagate console communication to language console
-          final PythonConsoleView consoleView = getConsoleView();
-
-          consoleView.setConsoleCommunication(myPydevConsoleCommunication);
-          consoleView.setSdk(mySdk);
-          consoleView.setExecutionHandler(myConsoleExecuteActionHandler);
-          myProcessHandler.addProcessListener(new ProcessAdapter() {
-            @Override
-            public void onTextAvailable(ProcessEvent event, Key outputType) {
-              consoleView.print(event.getText(), outputType);
-            }
-          });
-
-          enableConsoleExecuteAction();
-
-          for (String statement : statements2execute) {
-            consoleView.executeStatement(statement + "\n", ProcessOutputTypes.SYSTEM);
+        consoleView.setConsoleCommunication(myPydevConsoleCommunication);
+        consoleView.setSdk(mySdk);
+        consoleView.setExecutionHandler(myConsoleExecuteActionHandler);
+        myProcessHandler.addProcessListener(new ProcessAdapter() {
+          @Override
+          public void onTextAvailable(ProcessEvent event, Key outputType) {
+            consoleView.print(event.getText(), outputType);
           }
+        });
 
-          fireConsoleInitializedEvent(consoleView);
+        enableConsoleExecuteAction();
+
+        for (String statement : statements2execute) {
+          consoleView.executeStatement(statement + "\n", ProcessOutputTypes.SYSTEM);
         }
+
+        fireConsoleInitializedEvent(consoleView);
       });
     }
     else {
@@ -1012,22 +1003,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         if (myProcessHandler != null) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              closeCommunication();
-            }
-          });
+          UIUtil.invokeLaterIfNeeded(() -> closeCommunication());
 
           myProcessHandler.waitFor();
         }
 
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            PydevConsoleRunner.this.run();
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(() -> PydevConsoleRunner.this.run());
       }
     }.queue();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,15 +38,16 @@ import javax.swing.*;
 
 public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
   /**
-   * @noinspection PublicField
+   * @noinspection PublicField, WeakerAccess
    */
-  public boolean m_ignoreImmediatelyReturnedVariables = false;
+  public boolean m_ignoreImmediatelyReturnedVariables;
 
-  @Deprecated
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreAnnotatedVariables = false;
+  @Deprecated
+  public boolean m_ignoreAnnotatedVariables;
+  @SuppressWarnings("WeakerAccess")
   public boolean m_ignoreAnnotatedVariablesNew = true;
 
   @Override
@@ -89,7 +90,7 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
 
   private class UnnecessaryLocalVariableVisitor extends BaseInspectionVisitor {
 
-    @SuppressWarnings({"IfStatementWithIdenticalBranches"})
+    @SuppressWarnings("IfStatementWithIdenticalBranches")
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
@@ -126,11 +127,16 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
       if (referent == null) {
         return false;
       }
-      if (!(referent instanceof PsiLocalVariable || referent instanceof PsiParameter)) {
-        return false;
-      }
       if (!(referent instanceof PsiResourceVariable) && variable instanceof PsiResourceVariable) {
         return false;
+      }
+      if (!(referent instanceof PsiLocalVariable || referent instanceof PsiParameter)) {
+        if (!(referent instanceof PsiField) || !((PsiField)referent).hasModifierProperty(PsiModifier.FINAL)
+            || ReferencesSearch.search(variable).findAll().size() != 1) {
+          // only warn when variable is referenced once, to avoid warning when a field is cached in local variable
+          // as in e.g. gnu.trove.TObjectHash#forEach()
+          return false;
+        }
       }
       final PsiCodeBlock containingScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
       if (containingScope == null) {
@@ -148,6 +154,9 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
 
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(containingScope.getProject()).getResolveHelper();
       final String initializationName = initialization.getName();
+      if (initializationName == null) {
+        return false;
+      }
 
       final boolean finalVariableIntroduction = 
         !initialization.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.FINAL) ||

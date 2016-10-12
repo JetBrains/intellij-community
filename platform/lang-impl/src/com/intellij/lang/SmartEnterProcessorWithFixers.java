@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -46,9 +47,11 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
   protected static final Key<Long> SMART_ENTER_TIMESTAMP = Key.create("smartEnterOriginalTimestamp");
 
   protected int myFirstErrorOffset = Integer.MAX_VALUE;
+  protected int myAttempt = 0;
 
   private final List<Fixer<? extends SmartEnterProcessorWithFixers>> myFixers = new ArrayList<Fixer<? extends SmartEnterProcessorWithFixers>>();
-  private final List<FixEnterProcessor> myEnterProcessors = new ArrayList<FixEnterProcessor>();
+  protected final List<FixEnterProcessor> myEnterProcessors = new ArrayList<FixEnterProcessor>();
+  private final List<FixEnterProcessor> myAfterEnterProcessors = new ArrayList<FixEnterProcessor>();
 
   protected static void plainEnter(@NotNull final Editor editor) {
     getEnterHandler().execute(editor, ((EditorEx)editor).getDataContext());
@@ -70,12 +73,25 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
 
   @Override
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.complete.statement");
+    return invokeProcessor(project, editor, psiFile, false);
+  }
+
+  @Override
+  public boolean processAfterCompletion(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return invokeProcessor(psiFile.getProject(), editor, psiFile, true);
+  }
+
+  protected boolean invokeProcessor(@NotNull final Project project,
+                                    @NotNull final Editor editor,
+                                    @NotNull final PsiFile psiFile,
+                                    boolean afterCompletion) {
     final Document document = editor.getDocument();
-    final String textForRollback = document.getText();
+    final CharSequence textForRollback = document.getImmutableCharSequence();
     try {
       editor.putUserData(SMART_ENTER_TIMESTAMP, editor.getDocument().getModificationStamp());
       myFirstErrorOffset = Integer.MAX_VALUE;
-      process(project, editor, psiFile, 0);
+      process(project, editor, psiFile, 0, afterCompletion);
     }
     catch (TooManyAttemptsException e) {
       document.replaceString(0, document.getTextLength(), textForRollback);
@@ -86,10 +102,15 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     return true;
   }
 
-  protected void process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, final int attempt)
-    throws TooManyAttemptsException {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.complete.statement");
+  protected void process(
+    @NotNull final Project project,
+    @NotNull final Editor editor,
+    @NotNull final PsiFile file,
+    final int attempt,
+    boolean afterCompletion) throws TooManyAttemptsException {
+
     if (attempt > MAX_ATTEMPTS) throw new TooManyAttemptsException();
+    myAttempt = attempt;
 
     try {
       commit(editor);
@@ -101,11 +122,12 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
 
       PsiElement atCaret = getStatementAtCaret(editor, file);
       if (atCaret == null) {
+        processDefaultEnter(project, editor, file);
         return;
       }
 
       OrderedSet<PsiElement> queue = new OrderedSet<PsiElement>();
-      collectAllElements(atCaret, queue, true);
+      collectAllElements(atCaret, queue, collectChildrenRecursively(atCaret));
       queue.add(atCaret);
 
       for (PsiElement psiElement : queue) {
@@ -116,18 +138,26 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
           }
           if (isUncommited(project) || !psiElement.isValid()) {
             moveCaretInsideBracesIfAny(editor, file);
-            process(project, editor, file, attempt + 1);
+            process(project, editor, file, attempt + 1, afterCompletion);
             return;
           }
         }
       }
 
-      doEnter(atCaret, file, editor);
+      doEnter(atCaret, file, editor, afterCompletion);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
+
+  protected boolean collectChildrenRecursively(@NotNull PsiElement atCaret) {
+    return true;
+  }
+
+  protected void processDefaultEnter(@NotNull final Project project,
+                                     @NotNull final Editor editor,
+                                     @NotNull final PsiFile file) {}
 
   protected void collectAllElements(@NotNull PsiElement element, @NotNull OrderedSet<PsiElement> result, boolean recursive) {
     result.add(0, element);
@@ -143,37 +173,62 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     }
   }
 
-  protected void doEnter(@NotNull PsiElement atCaret, @NotNull PsiFile file, @NotNull Editor editor) throws IncorrectOperationException {
+  protected void doEnter(@NotNull PsiElement atCaret, @NotNull PsiFile psiFile, @NotNull Editor editor, boolean afterCompletion)
+    throws IncorrectOperationException {
     if (myFirstErrorOffset != Integer.MAX_VALUE) {
       editor.getCaretModel().moveToOffset(myFirstErrorOffset);
       reformat(atCaret);
       return;
     }
 
-    reformat(atCaret);
-    commit(editor);
+    final RangeMarker rangeMarker = createRangeMarker(atCaret);
 
-    for (FixEnterProcessor enterProcessor : myEnterProcessors) {
-      if (enterProcessor.doEnter(atCaret, file, editor, isModified(editor))) {
-        return;
+    if (reformatBeforeEnter(atCaret)) {
+      reformat(atCaret);
+    }
+    commit(editor);
+    PsiElement actualAtCaret = restoreElementAtCaret(psiFile, atCaret, rangeMarker);
+    int endOffset = rangeMarker.getEndOffset();
+
+    rangeMarker.dispose();
+
+    if (actualAtCaret != null) {
+      for (FixEnterProcessor enterProcessor : myEnterProcessors) {
+        if (enterProcessor.doEnter(actualAtCaret, psiFile, editor, isModified(editor))) {
+          return;
+        }
       }
     }
 
-    if (!isModified(editor)) {
-      plainEnter(editor);
+    if (!isModified(editor) && !afterCompletion) {
+      if (actualAtCaret != null) {
+        plainEnter(editor);
+      }
     }
     else {
-      if (myFirstErrorOffset == Integer.MAX_VALUE) {
-        editor.getCaretModel().moveToOffset(atCaret.getTextRange().getEndOffset());
-      }
-      else {
-        editor.getCaretModel().moveToOffset(myFirstErrorOffset);
-      }
+      editor.getCaretModel().moveToOffset(myFirstErrorOffset == Integer.MAX_VALUE
+                                          ? (actualAtCaret != null
+                                             ? actualAtCaret.getTextRange().getEndOffset()
+                                             : endOffset)
+                                          : myFirstErrorOffset);
     }
   }
 
+  protected PsiElement restoreElementAtCaret(PsiFile file, PsiElement origElement, RangeMarker marker){
+    if (!origElement.isValid()) {
+      LOG.warn("Please, override com.intellij.lang.SmartEnterProcessorWithFixers.restoreElementAtCaret for your language!");
+    }
+    return origElement;
+  }
+
+  protected boolean reformatBeforeEnter(@NotNull PsiElement atCaret) {return true;}
+
   protected void addEnterProcessors(FixEnterProcessor... processors) {
     ContainerUtil.addAllNotNull(myEnterProcessors, processors);
+  }
+
+  protected void addAfterEnterProcessors(FixEnterProcessor... processors) {
+    ContainerUtil.addAllNotNull(myAfterEnterProcessors, processors);
   }
 
   protected void addFixers(Fixer<? extends SmartEnterProcessorWithFixers>... fixers) {
@@ -201,8 +256,9 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
     }
   }
 
-  @Override
-  public void commit(@NotNull Editor editor) { // pull up
-    super.commit(editor);
+  public void registerUnresolvedError(int offset) {
+    if (myFirstErrorOffset > offset) {
+      myFirstErrorOffset = offset;
+    }
   }
 }

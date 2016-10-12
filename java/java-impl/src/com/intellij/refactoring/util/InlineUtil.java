@@ -260,6 +260,11 @@ public class InlineUtil {
   }
 
   private static boolean isSafeToFlatten(PsiCall callExpression, PsiMethod oldRefMethod, PsiExpression[] arrayElements) {
+    for (PsiExpression arrayElement : arrayElements) {
+      if (arrayElement instanceof PsiArrayInitializerExpression) {
+        return false;
+      }
+    }
     PsiCall copy = (PsiCall)callExpression.copy();
     PsiExpressionList copyArgumentList = copy.getArgumentList();
     LOG.assertTrue(copyArgumentList != null);
@@ -278,22 +283,15 @@ public class InlineUtil {
 
   public static boolean allUsagesAreTailCalls(final PsiMethod method) {
     final List<PsiReference> nonTailCallUsages = Collections.synchronizedList(new ArrayList<PsiReference>());
-    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        ReferencesSearch.search(method).forEach(new Processor<PsiReference>() {
-          @Override
-          public boolean process(final PsiReference psiReference) {
-            ProgressManager.checkCanceled();
-            if (getTailCallType(psiReference) == TailCallType.None) {
-              nonTailCallUsages.add(psiReference);
-              return false;
-            }
-            return true;
-          }
-        });
-      }
-    }, RefactoringBundle.message("inline.method.checking.tail.calls.progress"), true, method.getProject());
+    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      (Runnable)() -> ReferencesSearch.search(method).forEach(psiReference -> {
+        ProgressManager.checkCanceled();
+        if (getTailCallType(psiReference) == TailCallType.None) {
+          nonTailCallUsages.add(psiReference);
+          return false;
+        }
+        return true;
+      }), RefactoringBundle.message("inline.method.checking.tail.calls.progress"), true, method.getProject());
     return result && nonTailCallUsages.isEmpty();
   }
 
@@ -362,12 +360,7 @@ public class InlineUtil {
           ref = parent.replace(copy);
           if (!result.equals(inferenceResult)) {
             final String inferredTypeText = StringUtil.join(inferenceResult.getTypes(),
-                                                            new Function<PsiType, String>() {
-                                                              @Override
-                                                              public String fun(PsiType psiType) {
-                                                                return psiType.getCanonicalText();
-                                                              }
-                                                            }, ", ");
+                                                            psiType -> psiType.getCanonicalText(), ", ");
             final PsiExpressionList argumentList = ((PsiNewExpression)initializer).getArgumentList();
             if (argumentList != null) {
               final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)initializer).getClassOrAnonymousClassReference();

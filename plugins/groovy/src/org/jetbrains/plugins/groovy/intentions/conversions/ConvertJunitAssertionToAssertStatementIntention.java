@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,6 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
     if (replacementStatements == null) return null;
     
     GrArgumentList argumentList = methodCall.getArgumentList();
-    if (argumentList == null) return null;
 
     if (argumentList.getNamedArguments().length > 0) return null;
 
@@ -87,7 +86,6 @@ public class ConvertJunitAssertionToAssertStatementIntention extends Intention i
     String replacementStatement = getReplacementStatement(method, methodCall);
     if (replacementStatement == null) return null;
     
-    @SuppressWarnings("ConstantConditions") final
     GrExpression[] arguments = methodCall.getArgumentList().getExpressionArguments();
     
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());

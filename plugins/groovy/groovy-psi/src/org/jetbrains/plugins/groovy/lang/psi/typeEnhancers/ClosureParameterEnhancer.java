@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -286,6 +287,8 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     return PsiImplUtil.normalizeWildcardTypeByPosition(type, qualifier);
   }
 
+  @Contract("null,_ -> null")
+  @Nullable
   public static PsiType findTypeForIteration(@Nullable PsiType type, @NotNull PsiElement context) {
     final PsiManager manager = context.getManager();
     final GlobalSearchScope resolveScope = context.getResolveScope();

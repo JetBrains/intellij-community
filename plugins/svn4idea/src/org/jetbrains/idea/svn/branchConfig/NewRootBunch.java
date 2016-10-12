@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManagerQueue;
+import com.intellij.vcs.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.openapi.vfs.VirtualFile;

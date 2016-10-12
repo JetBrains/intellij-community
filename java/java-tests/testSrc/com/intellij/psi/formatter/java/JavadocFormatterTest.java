@@ -43,6 +43,27 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   }
 
+  public void test_NoFormatting_IfStartsWithLotsOfAsterisks() {
+    doTextTest(
+      "/****\n" +
+      " * description\n" +
+      " *\n" +
+      " *\n" +
+      " * xxxx\n" +
+      " */\n" +
+      "      class X {}",
+      "/****\n" +
+      " * description\n" +
+      " *\n" +
+      " *\n" +
+      " * xxxx\n" +
+      " */\n" +
+      "class X {\n" +
+      "}"
+    );
+  }
+  
+
   public void testDoNotWrapLink() throws Exception {
     getSettings().WRAP_LONG_LINES = true;
     getSettings().RIGHT_MARGIN = 70;
@@ -116,11 +137,11 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   public void test_wrap_after_asterisks() {
     doTextTest(
-        "/******* hollla la\n" +
+        "/** hollla la\n" +
         " * I am javadoc comment\n" +
         " * heey ***********/\n" +
         "   class T {   }\n",
-        "/*******\n" +
+        "/**\n" +
         " * hollla la\n" +
         " * I am javadoc comment\n" +
         " * heey\n" +
@@ -132,10 +153,10 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   public void test_strange_comment() {
     doTextTest(
-        "/******F*****/\n" +
+        "/**F*****/\n" +
         "public class T {\n" +
         "}",
-        "/******\n" +
+        "/**\n" +
         " * F\n" +
         " *****/\n" +
         "public class T {\n" +
@@ -525,6 +546,30 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
                    "}";
 
     doClassTest(before, after);
+  }
+
+  public void testDoNotMergeCommentLines() {
+    getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().WRAP_COMMENTS = true;
+
+    doClassTest(
+      "/**\n" +
+      " * Some comment\n" +
+      " * 2016\n" +
+      " * Date: Mar 03, 2016\n" +
+      " *\n" +
+      " */\n" +
+      "     public class TestCase {\n" +
+      "}",
+      
+      "/**\n" +
+      " * Some comment\n" +
+      " * 2016\n" +
+      " * Date: Mar 03, 2016\n" +
+      " */\n" +
+      "public class TestCase {\n" +
+      "}"
+    );
   }
 
   public void testSeeTagAlignment() throws Exception {

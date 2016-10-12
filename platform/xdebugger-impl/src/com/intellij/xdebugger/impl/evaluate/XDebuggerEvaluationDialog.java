@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.evaluate;
 
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -81,15 +82,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
 
-    mySession.addSessionListener(new XDebugSessionAdapter() {
+    mySession.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionStopped() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            close(CANCEL_EXIT_CODE);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> close(CANCEL_EXIT_CODE));
       }
 
       @Override
@@ -114,6 +110,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     new AnAction(){
       @Override
+      public void update(AnActionEvent e) {
+        Project project = e.getProject();
+        e.getPresentation().setEnabled(project != null && LookupManager.getInstance(project).getActiveLookup() == null);
+      }
+
+      @Override
       public void actionPerformed(AnActionEvent e) {
         doOKAction();
         addToWatches();
@@ -128,12 +130,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
                                 myDisposable);
 
-    Condition<TreeNode> rootFilter = new Condition<TreeNode>() {
-      @Override
-      public boolean value(TreeNode node) {
-        return node.getParent() instanceof EvaluatingExpressionRootNode;
-      }
-    };
+    Condition<TreeNode> rootFilter = node -> node.getParent() instanceof EvaluatingExpressionRootNode;
     myTreePanel.getTree().expandNodesOnLoad(rootFilter);
     myTreePanel.getTree().selectNodeOnLoad(rootFilter);
 
@@ -156,12 +153,9 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   private void updateSourcePosition() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        mySourcePosition = mySession.getCurrentPosition();
-        getInputEditor().setSourcePosition(mySourcePosition);
-      }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      mySourcePosition = mySession.getCurrentPosition();
+      getInputEditor().setSourcePosition(mySourcePosition);
     });
   }
 
@@ -295,6 +289,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       editor.getCaretModel().moveToOffset(offset);
       editor.getSelectionModel().setSelection(offset, offset);
     }
+  }
+
+  @Override
+  public void doCancelAction() {
+    getInputEditor().saveTextInHistory();
+    super.doCancelAction();
   }
 
   @Override

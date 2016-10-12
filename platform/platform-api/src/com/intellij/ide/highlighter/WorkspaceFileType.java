@@ -53,7 +53,7 @@ public class WorkspaceFileType implements InternalFileType {
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.IdeaWorkspace;
+    return AllIcons.Nodes.IdeaModule;
   }
 
   @Override

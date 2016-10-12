@@ -82,12 +82,8 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @Nullable
   @Override
   public ModuleWizardStep modifyProjectTypeStep(@NotNull SettingsStep settingsStep, @NotNull final ModuleBuilder moduleBuilder) {
-    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder, new Condition<SdkTypeId>() {
-      @Override
-      public boolean value(SdkTypeId sdkType) {
-        return moduleBuilder.isSuitableSdkType(sdkType);
-      }
-    });
+    return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, moduleBuilder,
+                                                                         sdkType -> moduleBuilder.isSuitableSdkType(sdkType));
   }
 
   private static Icon getJavaModuleIcon() {

@@ -45,6 +45,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testDeprecated() { doTest(); }
   public void testAnnotations() { doTest(); }
   public void testMoreAnnotations() { doTest(); }
+  public void testMemberAnnotations() { doTest(); }
   public void testParameterNames() { doTest(); }
   public void testEmptyEnum() { doTest(); }
   public void test$BuckClass() { doTest(); }
@@ -62,6 +63,8 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testLocalClass() { doTest(); }
   public void testBounds() { doTest(); }
   public void testGrEnum() { doTest(); }
+  public void testSuspiciousParameterNames() { doTest(); }
+  public void testTypeAnnotations() { doTest(); }
 
   public void testTextPsiMismatch() {
     CommonCodeStyleSettings.IndentOptions options =
@@ -78,16 +81,12 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
 
   public void testJdk8Class() {
     String testDir = JavaTestUtil.getJavaTestDataPath();
-    String clsPath = testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class";
-    String txtPath = testDir + "/psi/cls/mirror/Class.txt";
-    doTest(clsPath, txtPath);
+    doTest(testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/lang/Class.class", testDir + "/psi/cls/mirror/Class.txt");
   }
 
   public void testStaticMethodInInterface() {
     String testDir = JavaTestUtil.getJavaTestDataPath();
-    String clsPath = testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/util/function/Function.class";
-    String txtPath = testDir + "/psi/cls/mirror/Function.txt";
-    doTest(clsPath, txtPath);
+    doTest(testDir + "/../../mockJDK-1.8/jre/lib/rt.jar!/java/util/function/Function.class", testDir + "/psi/cls/mirror/Function.txt");
   }
 
   public void testStrayInnersFiltering() throws IOException {
@@ -122,7 +121,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testDocumentReuse() throws IOException {
     File classFile = new File(FileUtil.getTempDirectory(), "ReuseTest.class");
     FileUtil.writeToFile(classFile, "");
-    VirtualFile vFile = StandardFileSystems.local().findFileByPath(classFile.getPath());
+    VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(classFile.getPath());
     assertNotNull(classFile.getPath(), vFile);
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
     assertNotNull(psiFile);
@@ -157,7 +156,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertNotNull(path, psiFile);
     for (int i = 0; i < psiFile.getTextLength(); i++) {
       PsiElement element = psiFile.findElementAt(i);
-      assertTrue(i + ":" + element, element == null || element instanceof ClsElementImpl && !(element instanceof PsiFile));
+      assertTrue(i + ":" + element, element != null && !(element instanceof ClsElementImpl));
     }
   }
 
@@ -190,7 +189,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   }
 
   private static void doTest(String clsPath, String txtPath) {
-    VirtualFile file = (clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local()).findFileByPath(clsPath);
+    VirtualFile file = (clsPath.contains("!/") ? StandardFileSystems.jar() : StandardFileSystems.local()).refreshAndFindFileByPath(clsPath);
     assertNotNull(clsPath, file);
 
     String expected;

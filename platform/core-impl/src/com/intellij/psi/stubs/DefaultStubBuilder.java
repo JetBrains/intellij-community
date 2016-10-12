@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class DefaultStubBuilder implements StubBuilder {
 
   @Override
   public StubElement buildStubTree(@NotNull PsiFile file) {
-    return buildStubTreeFor(file, createStubForFile(file));
+    return buildStubTreeFor(file.getNode(), createStubForFile(file));
   }
 
   @NotNull
@@ -42,46 +42,11 @@ public class DefaultStubBuilder implements StubBuilder {
     return stub;
   }
 
-  @NotNull
-  private StubElement buildStubTreeFor(@NotNull PsiElement root, @NotNull StubElement parentStub) {
-    Stack<StubElement> parentStubs = new Stack<StubElement>();
-    Stack<PsiElement> parentElements = new Stack<PsiElement>();
-    parentElements.push(root);
-    parentStubs.push(parentStub);
-
-    while (!parentElements.isEmpty()) {
-      StubElement stub = parentStubs.pop();
-      PsiElement elt = parentElements.pop();
-
-      if (elt instanceof StubBasedPsiElement) {
-        final IStubElementType type = ((StubBasedPsiElement)elt).getElementType();
-
-        if (type.shouldCreateStub(elt.getNode())) {
-          @SuppressWarnings("unchecked") StubElement s = type.createStub(elt, stub);
-          stub = s;
-        }
-      }
-      else {
-        final ASTNode node = elt.getNode();
-        final IElementType type = node == null? null : node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
-          LOG.error("Non-StubBasedPsiElement requests stub creation. Stub type: " + type + ", PSI: " + elt);
-        }
-      }
-
-      for (PsiElement child = elt.getLastChild(); child != null; child = child.getPrevSibling()) {
-        if (!skipChildProcessingWhenBuildingStubs(elt, child)) {
-          parentStubs.push(stub);
-          parentElements.push(child);
-        }
-      }
-    }
-    return parentStub;
-  }
-
   /**
+   * @deprecated override and invoke {@link #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)} (to be removed in IDEA 2017)
    * Note to implementers: always keep in sync with {@linkplain #skipChildProcessingWhenBuildingStubs(ASTNode, ASTNode)}.
    */
+  @SuppressWarnings("unused")
   protected boolean skipChildProcessingWhenBuildingStubs(@NotNull PsiElement parent, @NotNull PsiElement element) {
     return false;
   }

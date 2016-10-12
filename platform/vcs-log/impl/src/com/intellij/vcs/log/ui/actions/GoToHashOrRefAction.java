@@ -16,42 +16,34 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.VcsGoToRefComparator;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 
-import java.util.*;
-import java.util.concurrent.Future;
+import java.util.Collection;
+import java.util.Set;
 
 public class GoToHashOrRefAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    final VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    final VcsLogUiImpl logUi = (VcsLogUiImpl)e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (project == null || log == null || logUi == null) {
-      return;
-    }
+    VcsLogUtil.triggerUsage(e);
+
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    final VcsLog log = e.getRequiredData(VcsLogDataKeys.VCS_LOG);
+    final VcsLogUiImpl logUi = (VcsLogUiImpl)e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI);
 
     Set<VirtualFile> visibleRoots = VcsLogUtil.getVisibleRoots(logUi);
     Collection<VcsRef> visibleBranches = VcsLogUtil.getVisibleBranches(log, visibleRoots);
-    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, visibleBranches, visibleRoots, new Function<String, Future>() {
-      @Override
-      public Future fun(String text) {
-        return log.jumpToReference(text);
-      }
-    }, new Function<VcsRef, Future>() {
-      @Override
-      public Future fun(VcsRef vcsRef) {
-        return logUi.jumpToCommit(vcsRef.getCommitHash(), vcsRef.getRoot());
-      }
-    }, logUi.getColorManager(), new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
+    GoToHashOrRefPopup popup = new GoToHashOrRefPopup(project, visibleBranches, visibleRoots, text -> log.jumpToReference(text),
+                                                      vcsRef -> logUi.jumpToCommit(vcsRef.getCommitHash(), vcsRef.getRoot()),
+                                                      logUi.getColorManager(),
+                                                      new VcsGoToRefComparator(logUi.getDataPack().getLogProviders()));
     popup.show(logUi.getTable());
   }
 

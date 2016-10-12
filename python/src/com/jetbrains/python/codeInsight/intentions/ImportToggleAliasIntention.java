@@ -65,9 +65,11 @@ public class ImportToggleAliasIntention implements IntentionAction {
     private static IntentionState fromContext(Editor editor, PsiFile file) {
       IntentionState state = new IntentionState();
       state.myImportElement  = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyImportElement.class);
-      if (state.myImportElement != null && state.myImportElement.isValid()) {
+      PyPsiUtils.assertValid(state.myImportElement);
+      if (state.myImportElement != null) {
         PyTargetExpression target = state.myImportElement.getAsNameElement();
-        if (target != null && target.isValid()) state.myAlias = target.getName();
+        PyPsiUtils.assertValid(target);
+        if (target != null) state.myAlias = target.getName();
         else state.myAlias = null;
         state.myFromImportStatement = PsiTreeUtil.getParentOfType(state.myImportElement, PyFromImportStatement.class);
         state.myImportStatement = PsiTreeUtil.getParentOfType(state.myImportElement, PyImportStatement.class);
@@ -77,11 +79,13 @@ public class ImportToggleAliasIntention implements IntentionAction {
 
     public boolean isAvailable() {
       if (myFromImportStatement != null) {
+        PyPsiUtils.assertValid(myFromImportStatement);
         if (!myFromImportStatement.isValid() || myFromImportStatement.isFromFuture()) {
           return false;
         }
       }
       else {
+        PyPsiUtils.assertValid(myImportStatement);
         if (myImportStatement == null || !myImportStatement.isValid()) {
           return false;
         }

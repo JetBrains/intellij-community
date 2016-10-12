@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,31 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.diff.DiffMixin;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static com.intellij.util.ObjectUtils.assertNotNull;
 
 /**
  * Created by IntelliJ IDEA.
@@ -45,14 +50,11 @@ import java.awt.*;
 public class ShowBaseRevisionAction extends AbstractVcsAction {
   @Override
   protected void actionPerformed(@NotNull VcsContext vcsContext) {
-    final AbstractVcs vcs = AbstractShowDiffAction.isEnabled(vcsContext, null);
-    if (vcs == null) return;
-    final VirtualFile[] selectedFilePaths = vcsContext.getSelectedFiles();
-    if (selectedFilePaths.length != 1) return;
-    final VirtualFile selectedFile = selectedFilePaths[0];
-    if (selectedFile.isDirectory()) return;
+    Project project = assertNotNull(vcsContext.getProject());
+    VirtualFile file = vcsContext.getSelectedFiles()[0];
+    AbstractVcs vcs = assertNotNull(ChangesUtil.getVcsForFile(file, project));
 
-    ProgressManager.getInstance().run(new MyTask(selectedFile, vcs, vcsContext));
+    ProgressManager.getInstance().run(new MyTask(file, vcs, vcsContext));
   }
 
   private static class MyTask extends Task.Backgroundable {
@@ -70,7 +72,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      myDescription = ObjectUtils.assertNotNull((DiffMixin)vcs.getDiffProvider()).getCurrentRevisionDescription(selectedFile);
+      myDescription = assertNotNull((DiffMixin)vcs.getDiffProvider()).getCurrentRevisionDescription(selectedFile);
     }
 
     @Override
@@ -99,8 +101,12 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
 
   @Override
   protected void update(VcsContext vcsContext, Presentation presentation) {
-    final AbstractVcs vcs = AbstractShowDiffAction.isEnabled(vcsContext, null);
-    presentation.setEnabled(vcs != null);
+    presentation.setEnabled(AbstractShowDiffAction.isEnabled(vcsContext, null));
+  }
+
+  @Override
+  protected boolean forceSyncUpdate(AnActionEvent e) {
+    return true;
   }
 
   static class NotificationPanel extends JPanel {
@@ -113,7 +119,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
       myLabel.setEditable(false);
       myLabel.setFont(UIUtil.getToolTipFont());
 
-      setBorder(BorderFactory.createEmptyBorder(1, 15, 1, 15));
+      setBorder(JBUI.Borders.empty(1, 15));
 
       add(myLabel, BorderLayout.CENTER);
       myLabel.setBackground(getBackground());

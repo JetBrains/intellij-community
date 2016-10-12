@@ -20,13 +20,12 @@ import com.intellij.ide.highlighter.WorkspaceFileType
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -47,7 +46,6 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 
 const val PROJECT_FILE = "\$PROJECT_FILE$"
 const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
@@ -70,6 +68,9 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   override final fun getStorageScheme() = scheme
 
   override abstract val storageManager: StateStorageManagerImpl
+
+  protected val isDirectoryBased: Boolean
+    get() = scheme == StorageScheme.DIRECTORY_BASED
 
   override final fun setOptimiseTestLoadSpeed(value: Boolean) {
     // we don't load default state in tests as app store does because
@@ -151,140 +152,6 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       }
     }
   }
-}
-
-private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
-  private var lastSavedProjectName: String? = null
-
-  init {
-    assert(!project.isDefault)
-  }
-
-  override final fun getPathMacroManagerForDefaults() = pathMacroManager
-
-  override val storageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
-
-  override fun setPath(filePath: String) {
-    setPath(filePath, true, true)
-  }
-
-  override fun getProjectName(): String {
-    if (isDirectoryBased) {
-      val baseDir = projectBasePath
-      val nameFile = nameFile
-      if (nameFile.exists()) {
-        try {
-          nameFile.inputStream().reader().useLines() { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
-            lastSavedProjectName = it
-            return it
-          }
-        }
-        catch (ignored: IOException) {
-        }
-      }
-
-      return PathUtilRt.getFileName(baseDir).replace(":", "")
-    }
-    else {
-      var temp = PathUtilRt.getFileName(projectFilePath)
-      val fileType = FileTypeManager.getInstance().getFileTypeByFileName(temp)
-      if (fileType is ProjectFileType) {
-        temp = temp.substring(0, temp.length - fileType.defaultExtension.length - 1)
-      }
-      val i = temp.lastIndexOf(File.separatorChar)
-      if (i >= 0) {
-        temp = temp.substring(i + 1, temp.length - i + 1)
-      }
-      return temp
-    }
-  }
-
-  private val isDirectoryBased: Boolean
-    get() = scheme == StorageScheme.DIRECTORY_BASED
-
-  private fun saveProjectName() {
-    if (!isDirectoryBased) {
-      return
-    }
-
-    val currentProjectName = project.name
-    if (lastSavedProjectName == currentProjectName) {
-      return
-    }
-
-    lastSavedProjectName = currentProjectName
-
-    val basePath = projectBasePath
-    if (currentProjectName == PathUtilRt.getFileName(basePath)) {
-      // name equals to base path name - just remove name
-      nameFile.delete()
-    }
-    else {
-      val baseDir = Paths.get(basePath)
-      if (baseDir.isDirectory()) {
-        nameFile.write(currentProjectName.toByteArray())
-      }
-    }
-  }
-
-  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
-    try {
-      saveProjectName()
-    }
-    catch (e: Throwable) {
-      LOG.error("Unable to store project name", e)
-    }
-
-    var errors = prevErrors
-    beforeSave(readonlyFiles)
-
-    super.doSave(saveSessions, readonlyFiles, errors)
-
-    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
-    if (readonlyFiles.isEmpty()) {
-      for (notification in notifications) {
-        notification.expire()
-      }
-      return errors
-    }
-
-    if (!notifications.isEmpty()) {
-      throw IComponentStore.SaveCancelledException()
-    }
-
-    val status: ReadonlyStatusHandler.OperationStatus
-    val token = ReadAction.start()
-    try {
-      status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(*getFilesList(readonlyFiles))
-    }
-    finally {
-      token.finish()
-    }
-
-    if (status.hasReadonlyFiles()) {
-      dropUnableToSaveProjectNotification(project, status.readonlyFiles)
-      throw IComponentStore.SaveCancelledException()
-    }
-    val oldList = ArrayList(readonlyFiles)
-    readonlyFiles.clear()
-    for (entry in oldList) {
-      errors = executeSave(entry.first, readonlyFiles, errors)
-    }
-
-    if (errors != null) {
-      CompoundRuntimeException.throwIfNotEmpty(errors)
-    }
-
-    if (!readonlyFiles.isEmpty()) {
-      dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
-      throw IComponentStore.SaveCancelledException()
-    }
-
-    return errors
-  }
-
-  protected open fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
-  }
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
     val storages = stateSpec.storages
@@ -342,6 +209,118 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
         return result.toTypedArray()
       }
     }
+  }
+}
+
+private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
+  private var lastSavedProjectName: String? = null
+
+  init {
+    assert(!project.isDefault)
+  }
+
+  override final fun getPathMacroManagerForDefaults() = pathMacroManager
+
+  override val storageManager = ProjectStateStorageManager(pathMacroManager.createTrackingSubstitutor(), project)
+
+  override fun setPath(filePath: String) {
+    setPath(filePath, true, true)
+  }
+
+  override fun getProjectName(): String {
+    if (isDirectoryBased) {
+      val baseDir = projectBasePath
+      val nameFile = nameFile
+      if (nameFile.exists()) {
+        try {
+          nameFile.inputStream().reader().useLines() { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
+            lastSavedProjectName = it
+            return it
+          }
+        }
+        catch (ignored: IOException) {
+        }
+      }
+
+      return PathUtilRt.getFileName(baseDir).replace(":", "")
+    }
+    else {
+      return PathUtilRt.getFileName(projectFilePath).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+    }
+  }
+
+  private fun saveProjectName() {
+    if (!isDirectoryBased) {
+      return
+    }
+
+    val currentProjectName = project.name
+    if (lastSavedProjectName == currentProjectName) {
+      return
+    }
+
+    lastSavedProjectName = currentProjectName
+
+    val basePath = projectBasePath
+    if (currentProjectName == PathUtilRt.getFileName(basePath)) {
+      // name equals to base path name - just remove name
+      nameFile.delete()
+    }
+    else {
+      if (Paths.get(basePath).isDirectory()) {
+        nameFile.write(currentProjectName.toByteArray())
+      }
+    }
+  }
+
+  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<Pair<SaveSession, VirtualFile>>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+    try {
+      saveProjectName()
+    }
+    catch (e: Throwable) {
+      LOG.error("Unable to store project name", e)
+    }
+
+    var errors = prevErrors
+    beforeSave(readonlyFiles)
+
+    errors = super.doSave(saveSessions, readonlyFiles, errors)
+
+    val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
+    if (readonlyFiles.isEmpty()) {
+      for (notification in notifications) {
+        notification.expire()
+      }
+      return errors
+    }
+
+    if (!notifications.isEmpty()) {
+      throw IComponentStore.SaveCancelledException()
+    }
+
+    val status = runReadAction { ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(*getFilesList(readonlyFiles)) }
+    if (status.hasReadonlyFiles()) {
+      dropUnableToSaveProjectNotification(project, status.readonlyFiles)
+      throw IComponentStore.SaveCancelledException()
+    }
+
+    val oldList = readonlyFiles.toTypedArray()
+    readonlyFiles.clear()
+    for (entry in oldList) {
+      errors = executeSave(entry.first, readonlyFiles, errors)
+    }
+
+    CompoundRuntimeException.throwIfNotEmpty(errors)
+
+    if (!readonlyFiles.isEmpty()) {
+      dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
+      throw IComponentStore.SaveCancelledException()
+    }
+
+    return errors
+  }
+
+  protected open fun beforeSave(readonlyFiles: List<Pair<SaveSession, VirtualFile>>) {
   }
 }
 

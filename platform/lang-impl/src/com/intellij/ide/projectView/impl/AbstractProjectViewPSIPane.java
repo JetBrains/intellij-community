@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author cdr
- */
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
@@ -209,15 +206,12 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     final ActionCallback cb = new ActionCallback();
     if (restoreExpandedPaths) {
       TreeBuilderUtil.storePaths(getTreeBuilder(), (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
-      afterUpdate = new Runnable() {
-        @Override
-        public void run() {
-          if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
-            myTree.setSelectionPaths(new TreePath[0]);
-            TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
-          }
-          cb.setDone();
+      afterUpdate = () -> {
+        if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
+          myTree.setSelectionPaths(new TreePath[0]);
+          TreeBuilderUtil.restorePaths(getTreeBuilder(), pathsToExpand, selectionPaths, true);
         }
+        cb.setDone();
       };
     }
     else {

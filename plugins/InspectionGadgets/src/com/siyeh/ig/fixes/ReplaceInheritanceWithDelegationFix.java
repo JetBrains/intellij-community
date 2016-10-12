@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -48,23 +47,20 @@ public class ReplaceInheritanceWithDelegationFix extends InspectionGadgetsFix {
     final PsiElement nameElement = descriptor.getPsiElement();
     final PsiClass aClass = (PsiClass)nameElement.getParent();
     assert !(aClass instanceof PsiAnonymousClass);
-    final JavaRefactoringActionHandlerFactory factory =
-      JavaRefactoringActionHandlerFactory.getInstance();
-    final RefactoringActionHandler anonymousToInner =
-      factory.createInheritanceToDelegationHandler();
+    final JavaRefactoringActionHandlerFactory factory = JavaRefactoringActionHandlerFactory.getInstance();
+    final RefactoringActionHandler inheritanceToDelegationHandler = factory.createInheritanceToDelegationHandler();
     final DataManager dataManager = DataManager.getInstance();
     final DataContext dataContext = dataManager.getDataContext();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        anonymousToInner.invoke(project, new PsiElement[]{aClass}, dataContext);
-      }
-    };
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      runnable.run();
-    }
-    else {
-      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
-    }
+    inheritanceToDelegationHandler.invoke(project, new PsiElement[]{aClass}, dataContext);
+  }
+
+  @Override
+  protected boolean prepareForWriting() {
+    return false;
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

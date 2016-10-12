@@ -55,5 +55,4 @@ class FilterModel<Filter extends VcsLogFilter> {
   void addSetFilterListener(@NotNull Runnable runnable) {
     mySetFilterListeners.add(runnable);
   }
-
 }

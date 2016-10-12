@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,8 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import javax.tools.*;
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -96,8 +98,14 @@ public class ExternalJavacManager {
                                    compilationRequestsHandler);
       }
     });
-    myChannelRegistrar.add(bootstrap.bind(listenPort).syncUninterruptibly().channel());
-    myListenPort = listenPort;
+    try {
+      final InetAddress loopback = InetAddress.getByName(null);
+      myChannelRegistrar.add(bootstrap.bind(loopback, listenPort).syncUninterruptibly().channel());
+      myListenPort = listenPort;
+    }
+    catch (UnknownHostException e) {
+      throw new RuntimeException(e);
+    }
   }
   
 
@@ -309,7 +317,8 @@ public class ExternalJavacManager {
       });
     }
 
-    public int getExitCode() {
+    @NotNull
+    public Integer getExitCode() {
       return myExitCode;
     }
   }
@@ -318,7 +327,7 @@ public class ExternalJavacManager {
   private class CompilationRequestsHandler extends SimpleChannelInboundHandler<JavacRemoteProto.Message> {
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-      JavacProcessDescriptor descriptor = ctx.attr(SESSION_DESCRIPTOR).get();
+      JavacProcessDescriptor descriptor = ctx.channel().attr(SESSION_DESCRIPTOR).getAndRemove();
       if (descriptor != null) {
         descriptor.setDone();
       }
@@ -327,7 +336,7 @@ public class ExternalJavacManager {
 
     @Override
     public void channelRead0(final ChannelHandlerContext context, JavacRemoteProto.Message message) throws Exception {
-      JavacProcessDescriptor descriptor = context.attr(SESSION_DESCRIPTOR).get();
+      JavacProcessDescriptor descriptor = context.channel().attr(SESSION_DESCRIPTOR).get();
   
       UUID sessionId;
       if (descriptor == null) {
@@ -337,7 +346,7 @@ public class ExternalJavacManager {
         descriptor = myMessageHandlers.get(sessionId);
         if (descriptor != null) {
           descriptor.channel = context.channel();
-          context.attr(SESSION_DESCRIPTOR).set(descriptor);
+          context.channel().attr(SESSION_DESCRIPTOR).set(descriptor);
         }
       }
       else {

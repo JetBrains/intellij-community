@@ -128,10 +128,8 @@ public abstract class ActionOnSelectedElement extends AbstractAction {
 
   private static boolean documentIsModified(final VirtualFile file) {
     final boolean[] result = new boolean[]{false};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        result[0] = FileDocumentManager.getInstance().isFileModified(file);
-      }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      result[0] = FileDocumentManager.getInstance().isFileModified(file);
     });
     return result[0];
   }

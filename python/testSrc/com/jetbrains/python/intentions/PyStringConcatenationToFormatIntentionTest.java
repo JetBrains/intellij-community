@@ -32,12 +32,7 @@ public class PyStringConcatenationToFormatIntentionTest extends PyIntentionTestC
   }
 
   public void testNegative() {   //PY-6505
-    runWithLanguageLevel(LanguageLevel.PYTHON25, new Runnable() {
-      @Override
-      public void run() {
-        doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator"));
-      }
-    });
+    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> doNegativeTest(PyBundle.message("INTN.replace.plus.with.format.operator")));
   }
 
   public void testTwoStrings() {   //PY-6505

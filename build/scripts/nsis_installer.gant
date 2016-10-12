@@ -1,3 +1,5 @@
+import com.intellij.openapi.util.SystemInfo
+
 target(nsis: 'Build nsis windows installer') {
   nsis_installer()
 }
@@ -71,20 +73,31 @@ def nsis_installer(pathsToInclude, stringsFile, pathsFile, outNamePrefix, includ
     replacefilter(token: "__BUILD_NUMBER__", value: buildNumber)
     replacefilter(token: "__VERSION_MAJOR__", value: p("component.version.major"))
     replacefilter(token: "__VERSION_MINOR__", value: p("component.version.minor"))
-    replacefilter(token: "__MIN_UPGRADE_BUILD__", value: p("component.install-over.minbuild"))
-    replacefilter(token: "__MAX_UPGRADE_BUILD__", value: p("component.install-over.maxbuild"))
-    replacefilter(token: "__UPGRADE_VERSION__", value: p("component.install-over.version"))
     replacefilter(token: "__PRODUCT_PATHS_SELECTOR__", value: system_selector)
   }
 
   ant.unzip(src: "$home/build/tools/NSIS.zip", dest: box)
-  ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
-                    " /DBASE_DIR=\"$home\"" +
-                    " /DCOMMUNITY_DIR=\"$home/community\"" +
-                    " /DIPR=\"${associateIpr}\"" +
-                    " /DOUT_FILE=\"${outFileName}\"" +
-                    " /DOUT_DIR=\"$paths.artifacts\"" +
-                    " \"${box}/nsiconf/idea.nsi\"")
+  if (SystemInfo.isWindows) {
+    ant.exec(command: "\"${box}/NSIS/makensis.exe\"" +
+                      " /DBASE_DIR=\"$home\"" +
+                      " /DCOMMUNITY_DIR=\"$home/community\"" +
+                      " /DIPR=\"${associateIpr}\"" +
+                      " /DOUT_FILE=\"${outFileName}\"" +
+                      " /DOUT_DIR=\"$paths.artifacts\"" +
+                      " \"${box}/nsiconf/idea.nsi\"")
+  }
+  else if (SystemInfo.isLinux) {
+    ant.exec(command: "makensis" +
+                      " '-X!AddPluginDir \"${box}/NSIS/Plugins\"'" +
+                      " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
+                      " -DBASE_DIR=\"$home\"" +
+                      " -DCOMMUNITY_DIR=\"$home/community\"" +
+                      " -DIPR=\"${associateIpr}\"" +
+                      " -DOUT_FILE=\"${outFileName}\"" +
+                      " -DOUT_DIR=\"$paths.artifacts\"" +
+                      " \"${box}/nsiconf/idea.nsi\"")
+  }
+  
 
   projectBuilder.stage("Signing binaries")
   executeExternalAnt(["dirName": "${paths.artifacts}", "fileName": "${outFileName}.exe"], "$home/build/signBuild.xml")

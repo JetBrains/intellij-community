@@ -88,18 +88,15 @@ public class TagNameVariantCollector {
     }
 
     final boolean hasPrefix = StringUtil.isNotEmpty(element.getNamespacePrefix());
-    return ContainerUtil.filter(variants, new Condition<XmlElementDescriptor>() {
-      @Override
-      public boolean value(XmlElementDescriptor descriptor) {
-        if (descriptor instanceof AnyXmlElementDescriptor) {
-          return false;
-        }
-        else if (hasPrefix && descriptor instanceof XmlElementDescriptorImpl &&
-                 !namespaces.contains(((XmlElementDescriptorImpl)descriptor).getNamespace())) {
-          return false;
-        }
-        return true;
+    return ContainerUtil.filter(variants, descriptor -> {
+      if (descriptor instanceof AnyXmlElementDescriptor) {
+        return false;
       }
+      else if (hasPrefix && descriptor instanceof XmlElementDescriptorImpl &&
+               !namespaces.contains(((XmlElementDescriptorImpl)descriptor).getNamespace())) {
+        return false;
+      }
+      return true;
     });
   }
 

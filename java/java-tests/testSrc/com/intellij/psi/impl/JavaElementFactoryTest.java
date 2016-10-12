@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,16 @@
  */
 package com.intellij.psi.impl;
 
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementFactory;
-import com.intellij.testFramework.LightIdeaTestCase;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.IncorrectOperationException;
 
-public class JavaElementFactoryTest extends LightIdeaTestCase {
+import static com.intellij.testFramework.LightCodeInsightTestCase.getJavaFacade;
+
+public class JavaElementFactoryTest extends LightCodeInsightFixtureTestCase {
   private PsiElementFactory myFactory;
 
   @Override
@@ -38,5 +43,12 @@ public class JavaElementFactoryTest extends LightIdeaTestCase {
       fail();
     }
     catch (IncorrectOperationException ignored) { }
+  }
+
+  public void testArrayClassLanguageLevel() {
+    PsiClass arrayClass3 = myFactory.getArrayClass(LanguageLevel.JDK_1_4);
+    PsiClass arrayClass5 = myFactory.getArrayClass(LanguageLevel.HIGHEST);
+    assertEquals(LanguageLevel.JDK_1_3, PsiUtil.getLanguageLevel(arrayClass3));
+    assertEquals(LanguageLevel.JDK_1_5, PsiUtil.getLanguageLevel(arrayClass5));
   }
 }

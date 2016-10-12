@@ -71,11 +71,8 @@ public class SpellCheckerSettingsPane implements Disposable {
           if (allSettings != null) {
             final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
             if (errorsConfigurable != null) {
-              allSettings.select(errorsConfigurable).doWhenDone(new Runnable() {
-                public void run() {
-                  errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
-                }
-              });
+              allSettings.select(errorsConfigurable).doWhenDone(
+                () -> errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME));
             }
           }
         }
@@ -99,11 +96,7 @@ public class SpellCheckerSettingsPane implements Disposable {
         paths.add(path);
 
         final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getCurrentModel();
-        SPFileUtil.processFilesRecursively(path, new Consumer<String>() {
-          public void consume(final String s) {
-            currentDictionaries.add(Pair.create(s, true));
-          }
-        });
+        SPFileUtil.processFilesRecursively(path, s -> currentDictionaries.add(Pair.create(s, true)));
         optionalChooserComponent.refresh();
         return true;
       }
@@ -229,11 +222,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     //todo [shkate]: refactoring  - SpellCheckerManager contains the same code withing reloadConfiguration()
     final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
     for (String folder : dictionariesFolders) {
-      SPFileUtil.processFilesRecursively(folder, new Consumer<String>() {
-        public void consume(final String s) {
-          allDictionaries.add(Pair.create(s, !disabledDictionaries.contains(s)));
-        }
-      });
+      SPFileUtil.processFilesRecursively(folder, s -> allDictionaries.add(Pair.create(s, !disabledDictionaries.contains(s))));
     }
   }
 

@@ -17,6 +17,7 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.formatting.engine.ExpandableIndent;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -46,7 +47,7 @@ import java.util.Set;
  * Allows to build {@link AbstractBlockWrapper formatting block wrappers} for the target {@link Block formatting blocks}.
  * The main idea of block wrapping is to associate information about {@link WhiteSpace white space before block} with the block itself.
  */
-class InitialInfoBuilder {
+public class InitialInfoBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.formatting.InitialInfoBuilder");
 
   private final Map<AbstractBlockWrapper, Block> myResult = new THashMap<AbstractBlockWrapper, Block>();
@@ -98,15 +99,16 @@ class InitialInfoBuilder {
     myFormatterTagHandler = new FormatterTagHandler(settings);
   }
 
-  protected static InitialInfoBuilder prepareToBuildBlocksSequentially(Block root,
-                                                                    FormattingDocumentModel model,
-                                                                    @Nullable final FormatTextRanges affectedRanges,
-                                                                    @NotNull CodeStyleSettings settings,
-                                                                    final CommonCodeStyleSettings.IndentOptions options,
-                                                                    int interestingOffset,
-                                                                    @NotNull FormattingProgressCallback progressCallback)
+  protected static InitialInfoBuilder prepareToBuildBlocksSequentially(
+    Block root, 
+    FormattingDocumentModel model, 
+    FormatProcessor.FormatOptions formatOptions, 
+    CodeStyleSettings settings, 
+    CommonCodeStyleSettings.IndentOptions options, 
+    @NotNull FormattingProgressCallback progressCallback) 
   {
-    InitialInfoBuilder builder = new InitialInfoBuilder(root, model, affectedRanges, settings, options, interestingOffset, progressCallback);
+    InitialInfoBuilder builder = new InitialInfoBuilder(root, model, formatOptions.myAffectedRanges, settings, options, formatOptions.myInterestingOffset, progressCallback);
+    builder.setCollectAlignmentsInsideFormattingRange(formatOptions.myReformatContext);
     builder.buildFrom(root, 0, null, null, null, true);
     return builder;
   }
@@ -120,8 +122,12 @@ class InitialInfoBuilder {
     }
     return minOffset;
   }
+  
+  public FormattingDocumentModel getFormattingDocumentModel() {
+    return myModel;
+  }
 
-  int getEndOffset() {
+  public int getEndOffset() {
     int maxDocOffset = myModel.getTextLength();
     int maxOffset = myRootBlockWrapper != null ? myRootBlockWrapper.getEndOffset() : 0;
     if (myAffectedRanges != null) {

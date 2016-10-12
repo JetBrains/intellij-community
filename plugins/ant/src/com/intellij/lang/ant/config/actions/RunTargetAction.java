@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,10 @@ import com.intellij.lang.ant.config.execution.ExecutionHandler;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.ant.resources.AntActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -81,15 +84,13 @@ public class RunTargetAction extends AnAction {
 
   @Nullable
   private static Pair<AntBuildFileBase, AntDomTarget> findAntTarget(@NotNull AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+    final Project project = e.getProject();
 
     if (project == null || editor == null) {
       return null;
     }
-    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (file == null) {
       return null;
     }

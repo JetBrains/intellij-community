@@ -8,15 +8,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorLocation;
+import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +30,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Alexander Lobas
@@ -39,7 +45,6 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   private final Project myProject;
   private final VirtualFile myFile;
-  private final SceneBuilderProvider myCreatorProvider;
 
   private final CardLayout myLayout = new CardLayout();
   private final JPanel myPanel = new JPanel(myLayout);
@@ -52,13 +57,11 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   private final Document myDocument;
   private final ExternalChangeListener myChangeListener;
 
-  private SceneBuilderCreator myBuilderCreator;
   private SceneBuilder mySceneBuilder;
 
-  public SceneBuilderEditor(@NotNull Project project, @NotNull VirtualFile file, SceneBuilderProvider creatorProvider) {
+  public SceneBuilderEditor(@NotNull Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
-    myCreatorProvider = creatorProvider;
 
     myDocument = FileDocumentManager.getInstance().getDocument(file);
     myChangeListener = new ExternalChangeListener();
@@ -72,7 +75,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     myErrorLabel.addHyperlinkListener(new HyperlinkListener() {
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
-        initSceneBuilder(true);
+        updateState();
       }
     });
 
@@ -84,76 +87,72 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     myPanel.add(myErrorPanel);
   }
 
-  private void showErrorPage(State state, Throwable e) {
+  private void showErrorPage(Throwable e) {
     if (e != null) {
       LOG.info(e);
     }
 
     removeSceneBuilder();
 
-    if (e == null) {
-      if (state == State.CREATE_ERROR) {
-        myErrorLabel.setHyperlinkText("JavaFX Scene Builder initialize error", "", "");
-        myErrorLabel.setIcon(Messages.getErrorIcon());
-      }
-      else {
-        if (state == State.EMPTY_PATH) {
-          myErrorLabel.setHyperlinkText("Please configure JavaFX Scene Builder ", "path", "");
+    final String description;
+    if (e != null) {
+      final List<String> messages = new ArrayList<>();
+      for (Throwable t = e; t != null && t != t.getCause(); t = t.getCause()) {
+        final String message = getErrorMessage(t);
+        if (messages.isEmpty() || !messages.get(messages.size() - 1).contains(message)) {
+          messages.add(message);
         }
         else {
-          myErrorLabel.setHyperlinkText("Please reconfigure JavaFX Scene Builder ", "path", "");
+          messages.set(messages.size() - 1, message);
         }
-        myErrorLabel.setIcon(Messages.getWarningIcon());
       }
-
-      myErrorStack.setText(null);
-      myErrorStack.setVisible(false);
+      Collections.reverse(messages);
+      description = "\n" + messages.stream().collect(Collectors.joining("\n\n"));
     }
     else {
-      String message = e.getMessage();
-      if (message == null) {
-        message = e.getClass().getName();
-      }
-
-      myErrorLabel.setHyperlinkText("Error: " + message, "", "");
-      myErrorLabel.setIcon(Messages.getErrorIcon());
-
-      myErrorStack.setText(ExceptionUtil.getThrowableText(e));
-      myErrorStack.setVisible(true);
+      description = "Unknown error occurred";
     }
+
+    myErrorLabel.setHyperlinkText("Failed to open the file in the Scene Builder", "", "");
+    myErrorLabel.setIcon(Messages.getErrorIcon());
+    myErrorStack.setText(description);
+    myErrorStack.setVisible(true);
     myLayout.show(myPanel, ERROR_CARD);
+  }
+
+  private static String getErrorMessage(Throwable e) {
+    final String message = e.getMessage();
+    final String className = e.getClass().getName();
+    if (StringUtil.isEmpty(message)) {
+      if (e instanceof ClassNotFoundException) {
+        return className + ": Unresolved import";
+      }
+      return className;
+    }
+    if (!message.contains(className)) {
+      return className + ": " + message;
+    }
+    return message;
   }
 
   @Override
   public void saveChanges(final String content) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (mySceneBuilder != null) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (mySceneBuilder != null) {
 
-          if (!myDocument.isWritable() && ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myFile).hasReadonlyFiles()) {
-            return;
-          }
+        if (!myDocument.isWritable() && ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myFile).hasReadonlyFiles()) {
+          return;
+        }
 
-          try {
-            myChangeListener.setRunState(false);
+        try {
+          myChangeListener.setRunState(false);
 
-            // XXX: strange behavior with undo/redo
+          // XXX: strange behavior with undo/redo
 
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-                  @Override
-                  public void run() {
-                    myDocument.setText(content);
-                  }
-                }, "JavaFX Scene Builder edit operation", null);
-              }
-            });
-          }
-          finally {
-            myChangeListener.setRunState(true);
-          }
+          ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(myProject, () -> myDocument.setText(content), "JavaFX Scene Builder edit operation", null));
+        }
+        finally {
+          myChangeListener.setRunState(true);
         }
       }
     });
@@ -161,38 +160,11 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   @Override
   public void handleError(final Throwable e) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        showErrorPage(null, e);
-      }
-    });
-  }
-
-  private void initSceneBuilder(boolean choosePathIfEmpty) {
-    if (choosePathIfEmpty || myBuilderCreator == null) {
-      myBuilderCreator = myCreatorProvider.get(myProject, choosePathIfEmpty);
-      updateState();
-    }
-    else {
-      SceneBuilderCreator creator = myCreatorProvider.get(null, false);
-      if (myBuilderCreator.equals(creator)) {
-        if (myBuilderCreator.getState() == State.OK) {
-          myChangeListener.checkContent();
-        }
-      }
-      else {
-        updateState();
-      }
-    }
+    UIUtil.invokeLaterIfNeeded(() -> showErrorPage(e));
   }
 
   private void updateState() {
-    if (myBuilderCreator.getState() == State.OK) {
-      addSceneBuilder();
-    }
-    else {
-      showErrorPage(myBuilderCreator.getState(), null);
-    }
+    addSceneBuilder();
   }
 
   private void addSceneBuilder() {
@@ -201,7 +173,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     try {
       FileDocumentManager.getInstance().saveDocument(myDocument);
 
-      mySceneBuilder = myBuilderCreator.create(new File(myFile.getPath()).toURI().toURL(), this);
+      mySceneBuilder = SceneBuilder.create(new File(myFile.getPath()).toURI().toURL(), myProject, this);
 
       myPanel.add(mySceneBuilder.getPanel(), SCENE_CARD);
       myLayout.show(myPanel, SCENE_CARD);
@@ -209,7 +181,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       myChangeListener.start();
     }
     catch (Throwable e) {
-      showErrorPage(null, e);
+      showErrorPage(e);
     }
   }
 
@@ -249,18 +221,12 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   @Override
   public void selectNotify() {
-    initSceneBuilder(false);
+    updateState();
   }
 
   @Override
   public void deselectNotify() {
     myChangeListener.stop();
-  }
-
-  @NotNull
-  @Override
-  public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    return FileEditorState.INSTANCE;
   }
 
   @Override
@@ -305,7 +271,6 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
   private class ExternalChangeListener extends DocumentAdapter {
     private volatile boolean myRunState;
-    private String myContent;
 
     public ExternalChangeListener() {
       myDocument.addDocumentListener(this);
@@ -314,14 +279,12 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     public void start() {
       if (!myRunState) {
         myRunState = true;
-        myContent = null;
       }
     }
 
     public void stop() {
       if (myRunState) {
         myRunState = false;
-        myContent = myDocument.getText();
       }
     }
 
@@ -331,13 +294,6 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
 
     public void dispose() {
       myDocument.removeDocumentListener(this);
-    }
-
-    public void checkContent() {
-      if (!myRunState && !myDocument.getText().equals(myContent)) {
-        addSceneBuilder();
-        start();
-      }
     }
 
     @Override

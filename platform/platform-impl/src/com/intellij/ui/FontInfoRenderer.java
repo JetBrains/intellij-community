@@ -21,8 +21,8 @@ import com.intellij.util.ui.FontInfo;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
-import java.awt.Font;
-import javax.swing.JList;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Sergey.Malenkov
@@ -31,15 +31,17 @@ public class FontInfoRenderer extends ListCellRendererWrapper {
   @Override
   public void customize(JList list, Object value, int index, boolean selected, boolean focused) {
     Font font = list.getFont();
+    String text = value == null ? "" : value.toString();
+    setText(text);
     if (value instanceof FontInfo) {
       FontInfo info = (FontInfo)value;
       Integer size = getFontSize();
-      setFont(info.getFont(size != null ? size : font.getSize()));
+      Font f = info.getFont(size != null ? size : font.getSize());
+      if (f.canDisplayUpTo(text) == -1) {
+        font = f;
+      }
     }
-    else {
-      setFont(list.getFont());
-    }
-    setText(value == null ? "" : value.toString());
+    setFont(font);
     setForeground(list.isEnabled()
                   ? UIUtil.getListForeground(selected)
                   : UIUtil.getLabelDisabledForeground());

@@ -63,10 +63,10 @@ public class ThrowableResultOfMethodCallIgnoredInspection extends BaseInspection
       while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiTypeCastExpression) {
         parent = parent.getParent();
       }
-      if (canBeThrown(parent)) {
+      if (!TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_THROWABLE)) {
         return;
       }
-      if (!TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_THROWABLE)) {
+      if (canBeThrown(parent)) {
         return;
       }
       final PsiMethod method = expression.resolveMethod();

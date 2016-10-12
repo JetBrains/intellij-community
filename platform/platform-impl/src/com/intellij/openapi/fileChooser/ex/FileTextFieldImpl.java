@@ -211,19 +211,15 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
         result.myCompletionBase = completionBase;
         if (result.myCompletionBase == null) return;
         result.myFieldText = myPathTextField.getText();
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          public void run() {
-            processCompletion(result);
-            SwingUtilities.invokeLater(new Runnable() {
-              public void run() {
-                if (!result.myCompletionBase.equals(getCompletionBase())) return;
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          processCompletion(result);
+          SwingUtilities.invokeLater(() -> {
+            if (!result.myCompletionBase.equals(getCompletionBase())) return;
 
-                int pos = selectCompletionRemoveText(result, selectReplacedText);
+            int pos = selectCompletionRemoveText(result, selectReplacedText);
 
-                showCompletionPopup(result, pos, isExplicitCall);
-              }
-            });
-          }
+            showCompletionPopup(result, pos, isExplicitCall);
+          });
         });
       }
     });
@@ -382,24 +378,15 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     });
 
     myCurrentPopup =
-      builder.setRequestFocus(false).setAdText(getAdText(myCurrentCompletion)).setAutoSelectIfEmpty(false).setResizable(false).setCancelCallback(new Computable<Boolean>() {
-        public Boolean compute() {
+      builder.setRequestFocus(false).setAdText(getAdText(myCurrentCompletion)).setAutoSelectIfEmpty(false).setResizable(false).setCancelCallback(
+        () -> {
           final int caret = myPathTextField.getCaretPosition();
           myPathTextField.setSelectionStart(caret);
           myPathTextField.setSelectionEnd(caret);
           myPathTextField.setFocusTraversalKeysEnabled(true);
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              getField().requestFocus();
-            }
-          });
+          SwingUtilities.invokeLater(() -> getField().requestFocus());
           return Boolean.TRUE;
-        }
-      }).setItemChoosenCallback(new Runnable() {
-        public void run() {
-          processChosenFromCompletion(false);
-        }
-      }).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField}).
+        }).setItemChoosenCallback(() -> processChosenFromCompletion(false)).setCancelKeyEnabled(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField}).
           createPopup();
 
 

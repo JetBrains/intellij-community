@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +80,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
     myMustBeFinal = mustBeFinal;
 
     myWholePanel.add(getPreviewComponent(), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                                                             new Insets(0,5,0,5), 0,0));
+                                                                   JBUI.insets(0, 5), 0, 0));
     myPanel = new InplaceIntroduceParameterUI(project, localVar, expr, method, parametersToRemove, typeSelectorManager,
                                               myOccurrences) {
       @Override
@@ -204,28 +204,21 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
                                       isGenerateDelegate(),
                                       getType(),
                                       parametersToRemove);
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        final Runnable performRefactoring = new Runnable() {
-          public void run() {
-            processor.setPrepareSuccessfulSwingThreadCallback(new Runnable() {
-              @Override
-              public void run() {
-              }
-            });
-            processor.run();
-            normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
-            final PsiParameter parameter = getParameter();
-            if (parameter != null) {
-              InplaceIntroduceParameterPopup.super.saveSettings(parameter);
-            }
-          }
-        };
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          performRefactoring.run();
-        } else {
-          ApplicationManager.getApplication().invokeLater(performRefactoring);
+    final Runnable runnable = () -> {
+      final Runnable performRefactoring = () -> {
+        processor.setPrepareSuccessfulSwingThreadCallback(() -> {
+        });
+        processor.run();
+        normalizeParameterIdxAccordingToRemovedParams(parametersToRemove);
+        final PsiParameter parameter = getParameter();
+        if (parameter != null) {
+          InplaceIntroduceParameterPopup.super.saveSettings(parameter);
         }
+      };
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        performRefactoring.run();
+      } else {
+        ApplicationManager.getApplication().invokeLater(performRefactoring);
       }
     };
     CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), null);

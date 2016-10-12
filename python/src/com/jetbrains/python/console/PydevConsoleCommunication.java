@@ -44,9 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 /**
  * Communication with Xml-rpc with the client.
@@ -68,6 +66,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private static final String CLOSE = "close";
   private static final String EVALUATE = "evaluate";
   private static final String GET_ARRAY = "getArray";
+  private static final String PYDEVD_EXTRA_ENVS = "PYDEVD_EXTRA_ENVS";
 
   /**
    * XML-RPC client for sending messages to the server.
@@ -115,7 +114,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
     //start the server that'll handle input requests
     myWebServer = new MyWebServer(clientPort);
-    
+
     myWebServer.addHandler("$default", this);
     this.myWebServer.start();
 
@@ -210,17 +209,14 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
     final VirtualFile file = StringUtil.isEmpty(path) ? null : LocalFileSystem.getInstance().findFileByPath(path);
     if (file != null) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          AccessToken at = ApplicationManager.getApplication().acquireReadActionLock();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        AccessToken at = ApplicationManager.getApplication().acquireReadActionLock();
 
-          try {
-            FileEditorManager.getInstance(myProject).openFile(file, true);
-          }
-          finally {
-            at.finish();
-          }
+        try {
+          FileEditorManager.getInstance(myProject).openFile(file, true);
+        }
+        finally {
+          at.finish();
         }
       });
 
@@ -417,35 +413,32 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
 
       //busy loop waiting for the answer (or having the console die).
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT / 10e8) + "s timeout");
-          final long startTime = System.nanoTime();
-          while (nextResponse == null) {
-            if (progressIndicator.isCanceled()) {
-              LOG.debug("Canceled");
-              nextResponse = new InterpreterResponse(false, false);
-            }
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+        progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT / 10e8) + "s timeout");
+        final long startTime = System.nanoTime();
+        while (nextResponse == null) {
+          if (progressIndicator.isCanceled()) {
+            LOG.debug("Canceled");
+            nextResponse = new InterpreterResponse(false, false);
+          }
 
-            final long time = System.nanoTime() - startTime;
-            progressIndicator.setFraction(((double)time) / TIMEOUT);
-            if (time > TIMEOUT) {
-              LOG.debug("Timeout exceeded");
-              nextResponse = new InterpreterResponse(false, false);
+          final long time = System.nanoTime() - startTime;
+          progressIndicator.setFraction(((double)time) / TIMEOUT);
+          if (time > TIMEOUT) {
+            LOG.debug("Timeout exceeded");
+            nextResponse = new InterpreterResponse(false, false);
+          }
+          synchronized (lock2) {
+            try {
+              lock2.wait(20);
             }
-            synchronized (lock2) {
-              try {
-                lock2.wait(20);
-              }
-              catch (InterruptedException e) {
-                LOG.error(e);
-              }
+            catch (InterruptedException e) {
+              LOG.error(e);
             }
           }
-          onResponseReceived.fun(nextResponse);
         }
+        onResponseReceived.fun(nextResponse);
       }, "Waiting for REPL response", true, myProject);
     }
   }
@@ -575,7 +568,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   @Nullable
   @Override
-  public XSourcePosition getSourcePositionForName(String name) {
+  public XSourcePosition getSourcePositionForName(String name, String parentType) {
     return null;
   }
 
@@ -589,13 +582,19 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
    * Request that pydevconsole connect (with pydevd) to the specified port
    *
    * @param localPort port for pydevd to connect to.
+   * @param dbgOpts   additional debugger options (that are normally passed via command line) to apply
+   * @param extraEnvs
    * @throws Exception if connection fails
    */
-  public void connectToDebugger(int localPort) throws Exception {
+  public void connectToDebugger(int localPort, @NotNull Map<String, Boolean> dbgOpts, @NotNull Map<String, String> extraEnvs)
+    throws Exception {
     if (waitingForInput) {
       throw new Exception("Can't connect debugger now, waiting for input");
     }
-    Object result = myClient.execute(CONNECT_TO_DEBUGGER, new Object[]{localPort});
+    /* argument needs to be hashtable type for compatability with the RPC library */
+    Hashtable<String, Object> opts = new Hashtable<>(dbgOpts);
+    opts.put(PYDEVD_EXTRA_ENVS, new Hashtable<>(extraEnvs));
+    Object result = myClient.execute(CONNECT_TO_DEBUGGER, new Object[]{localPort, opts});
     Exception exception = null;
     if (result instanceof Vector) {
       Vector resultarray = (Vector)result;
@@ -627,21 +626,21 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public PythonDebugConsoleCommunication getDebugCommunication() {
     return myDebugCommunication;
   }
-  
-  
+
+
   public boolean waitForTerminate() {
     if (myWebServer != null) {
       return myWebServer.waitForTerminate();
     }
-    
+
     return true;
   }
-  
+
   private static final class MyWebServer extends WebServer {
     public MyWebServer(int port) {
       super(port);
     }
-    
+
     @Override
     public synchronized void shutdown() {
       try {
@@ -654,10 +653,10 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       }
       super.shutdown();
     }
-    
+
     public boolean waitForTerminate() {
       if (listener != null) {
-        return new WaitFor(10000){
+        return new WaitFor(10000) {
           @Override
           protected boolean condition() {
             return !listener.isAlive();

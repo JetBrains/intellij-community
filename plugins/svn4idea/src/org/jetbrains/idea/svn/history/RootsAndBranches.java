@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.messages.Topic;
+import com.intellij.util.ui.JBUI;
 import icons.SvnIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,11 +118,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     myPanel = new JPanel(new GridBagLayout());
     createToolbar();
     final GridBagConstraints gb =
-      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.NONE, new Insets(1, 1, 1, 1), 0, 0);
-    gb.insets = new Insets(20, 1, 1, 1);
+      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.NONE, JBUI.insets(1), 0, 0);
+    gb.insets = JBUI.insets(20, 1, 1, 1);
     myPanel.add(new JLabel("Loading..."), gb);
     
-    myPanel.setPreferredSize(new Dimension(200, 60));
+    myPanel.setPreferredSize(JBUI.size(200, 60));
 
     myManager.install(this);
 

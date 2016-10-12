@@ -95,12 +95,7 @@ public final class XValueNodePresentationConfigurator {
       node.applyPresentation(icon, presentation, hasChildren);
     }
     else {
-      Runnable updater = new Runnable() {
-        @Override
-        public void run() {
-          node.applyPresentation(icon, presentation, hasChildren);
-        }
-      };
+      Runnable updater = () -> node.applyPresentation(icon, presentation, hasChildren);
       if (node instanceof XDebuggerTreeNode) {
         ((XDebuggerTreeNode)node).invokeNodeUpdate(updater);
       }

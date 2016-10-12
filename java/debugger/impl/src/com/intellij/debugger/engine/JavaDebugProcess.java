@@ -55,6 +55,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -240,22 +241,22 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Override
-  public void startStepOver() {
+  public void startStepOver(@Nullable XSuspendContext context) {
     myJavaSession.stepOver(false);
   }
 
   @Override
-  public void startStepInto() {
+  public void startStepInto(@Nullable XSuspendContext context) {
     myJavaSession.stepInto(false, null);
   }
 
   @Override
-  public void startForceStepInto() {
+  public void startForceStepInto(@Nullable XSuspendContext context) {
     myJavaSession.stepInto(true, null);
   }
 
   @Override
-  public void startStepOut() {
+  public void startStepOut(@Nullable XSuspendContext context) {
     myJavaSession.stepOut();
   }
 
@@ -271,12 +272,12 @@ public class JavaDebugProcess extends XDebugProcess {
   }
 
   @Override
-  public void resume() {
+  public void resume(@Nullable XSuspendContext context) {
     myJavaSession.resume();
   }
 
   @Override
-  public void runToPosition(@NotNull XSourcePosition position) {
+  public void runToPosition(@NotNull XSourcePosition position, @Nullable XSuspendContext context) {
     myJavaSession.runToCursor(position, false);
   }
 

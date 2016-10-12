@@ -26,9 +26,8 @@ import org.jetbrains.annotations.NotNull;
  * @author Ilya.Kazakevich
  */
 public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PythonUnitTestRunConfiguration> {
-  public PyUnitTestProcessRunner(@NotNull final String workingFolder,
-                                 @NotNull final String scriptName, final int timesToRerunFailedTests) {
+  public PyUnitTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
     super(PythonTestConfigurationType.getInstance().PY_UNITTEST_FACTORY,
-          PythonUnitTestRunConfiguration.class, workingFolder, scriptName, timesToRerunFailedTests);
+          PythonUnitTestRunConfiguration.class, scriptName, timesToRerunFailedTests);
   }
 }

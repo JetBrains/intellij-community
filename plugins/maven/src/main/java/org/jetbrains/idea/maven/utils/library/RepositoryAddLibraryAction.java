@@ -37,12 +37,16 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
 
   @Override
   public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
+    addLibraryToModule(libraryDescription, module);
+  }
+
+  public static void addLibraryToModule(RepositoryLibraryDescription libraryDescription, Module module) {
     RepositoryLibraryPropertiesModel model = new RepositoryLibraryPropertiesModel(
       RepositoryUtils.DefaultVersionId,
       false,
       false);
     RepositoryLibraryPropertiesDialog dialog = new RepositoryLibraryPropertiesDialog(
-      project,
+      module.getProject(),
       model,
       libraryDescription,
       false);
@@ -51,17 +55,12 @@ public class RepositoryAddLibraryAction extends IntentionAndQuickFixAction {
     }
     IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
     final ModifiableRootModel modifiableModel = modifiableModelsProvider.getModuleModifiableModel(module);
-    RepositoryLibrarySupport librarySupport = new RepositoryLibrarySupport(project, libraryDescription, model);
+    RepositoryLibrarySupport librarySupport = new RepositoryLibrarySupport(module.getProject(), libraryDescription, model);
     assert modifiableModel != null;
     librarySupport.addSupport(
-        module,
-        modifiableModel,
-        modifiableModelsProvider);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          modifiableModel.commit();
-        }
-      });
+      module,
+      modifiableModel,
+      modifiableModelsProvider);
+    ApplicationManager.getApplication().runWriteAction(modifiableModel::commit);
   }
 }

@@ -30,8 +30,8 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
-import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 
 /**
  * User: anna
@@ -47,21 +47,20 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
       value = tag.getValue().getText().trim();
     }
     else {
-      value = StringUtil.join(tag.getSubTags(), new Function<XmlTag, String>() {
-        @Override
-        public String fun(XmlTag childTag) {
-          final XmlAttribute valueAttr = childTag.getAttribute(FxmlConstants.FX_VALUE);
-          if (valueAttr != null) {
-            return valueAttr.getValue();
-          }
-          return "";
+      value = StringUtil.join(tag.getSubTags(), childTag -> {
+        final XmlAttribute valueAttr = childTag.getAttribute(FxmlConstants.FX_VALUE);
+        if (valueAttr != null) {
+          return valueAttr.getValue();
         }
+        return "";
       }, ", ");
     }
     final XmlAttribute attribute = XmlElementFactory.getInstance(project).createXmlAttribute(tag.getName(), value);
     final XmlTag parentTag = tag.getParentTag();
-    parentTag.add(attribute);
-    tag.delete();
+    if (parentTag != null) {
+      parentTag.add(attribute);
+      tag.delete();
+    }
   }
 
   @Override
@@ -73,8 +72,8 @@ public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseInte
       }
       final XmlTag parentTag = tag.getParentTag();
       if (parentTag != null &&
-          tag.getDescriptor() instanceof JavaFxPropertyElementDescriptor &&
-          parentTag.getDescriptor() instanceof JavaFxClassBackedElementDescriptor) {
+          tag.getDescriptor() instanceof JavaFxPropertyTagDescriptor &&
+          parentTag.getDescriptor() instanceof JavaFxClassTagDescriptorBase) {
 
         setText("Collapse tag '" + tag.getName() + "' to attribute");
         return true;

@@ -67,5 +67,4 @@ public class EmptyPermanentGraph implements PermanentGraph<Integer> {
   public Condition<Integer> getContainedInBranchCondition(@NotNull Collection<Integer> currentBranchHead) {
     return Conditions.alwaysFalse();
   }
-
 }

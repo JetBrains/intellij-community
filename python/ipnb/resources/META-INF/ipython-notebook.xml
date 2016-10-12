@@ -18,6 +18,7 @@
   <extensions defaultExtensionNs="Pythonid">
     <dialectsTokenSetContributor implementation="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenSetContributor"/>
     <visitorFilter language="IpnbPython" implementationClass="org.jetbrains.plugins.ipnb.IpnbVisitorFilter"/>
+    <pep8ProblemSuppressor implementation="org.jetbrains.plugins.ipnb.IpnbPep8ProblemSuppressor"/>
   </extensions>
   <actions>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbRunCellInplaceAction" id="IpnbRunCellInplaceAction"

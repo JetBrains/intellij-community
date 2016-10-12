@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,33 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class PathManagerTest {
   private static final String TEST_RPOP = "__ij_subst_test__";
   private static final String TEST_VALUE = "__" + new Random().nextInt(1000) + "__";
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     System.setProperty(TEST_RPOP, TEST_VALUE);
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void tearDown() {
     System.clearProperty(TEST_RPOP);
+  }
+
+  @Test
+  public void testResourceRoot() {
+    String jarRoot = PathManager.getResourceRoot(getClass(), "/" + String.class.getName().replace('.', '/') + ".class");
+    assertNotNull(jarRoot);
+    assertTrue(jarRoot, jarRoot.endsWith(".jar"));
+    assertTrue(new File(jarRoot).isFile());
+
+    String dirRoot = PathManager.getResourceRoot(getClass(), "/" + PathManager.class.getName().replace('.', '/') + ".class");
+    assertNotNull(dirRoot);
+    assertFalse(dirRoot, dirRoot.endsWith("/"));
+    assertTrue(new File(dirRoot).isDirectory());
   }
 
   @Test

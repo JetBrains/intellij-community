@@ -18,7 +18,7 @@ package com.intellij.diff.merge
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.TextDiffType.*
-import com.intellij.openapi.diff.DiffBundle
+import com.intellij.idea.ActionsBundle
 
 class MergeTest : MergeTestBase() {
   fun testChangeTypes() {
@@ -500,9 +500,9 @@ class MergeTest : MergeTestBase() {
   }
 
   fun testNonConflictsActions() {
-    val applyAllTitle = DiffBundle.message("merge.dialog.apply.all.non.conflicting.changes.action.name")
-    val applyLeftTitle = DiffBundle.message("merge.dialog.apply.left.non.conflicting.changes.action.name")
-    val applyRightTitle = DiffBundle.message("merge.dialog.apply.right.non.conflicting.changes.action.name")
+    val applyAllTitle = ActionsBundle.actionText("Diff.ApplyNonConflicts")
+    val applyLeftTitle = ActionsBundle.actionText("Diff.ApplyNonConflicts.Left")
+    val applyRightTitle = ActionsBundle.actionText("Diff.ApplyNonConflicts.Right")
 
     val text1 =
         "1 ======\n" +

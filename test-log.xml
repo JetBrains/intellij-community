@@ -25,6 +25,11 @@
     </layout>
   </appender>
 
+  <category name="#com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl">
+    <priority value="TRACE"/>
+    <appender-ref ref="CONSOLE-ALL"/>
+  </category>
+
   <root>
     <priority value="INFO"/>
     <appender-ref ref="CONSOLE-WARN"/>

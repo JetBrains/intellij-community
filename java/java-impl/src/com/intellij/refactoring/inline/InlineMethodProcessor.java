@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -39,6 +40,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -134,6 +136,13 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     for (PsiReference reference : ReferencesSearch.search(myMethod)) {
       usages.add(new UsageInfo(reference.getElement()));
     }
+
+    OverridingMethodsSearch.search(myMethod, false).forEach(method -> {
+      if (AnnotationUtil.isAnnotated(method, Override.class.getName(), false)) {
+        usages.add(new UsageInfo(method));
+      }
+      return true;
+    });
 
     if (mySearchInComments || mySearchForTextOccurrences) {
       final NonCodeUsageInfoFactory infoFactory = new NonCodeUsageInfoFactory(myMethod, myMethod.getName()) {
@@ -302,7 +311,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             final PsiElement element = info.getElement();
             if (element != null) {
               final PsiClass targetContainingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-              if (targetContainingClass != null && !InheritanceUtil.isInheritorOrSelf(targetContainingClass, superClass, true)) {
+              if (targetContainingClass != null &&
+                  (!InheritanceUtil.isInheritorOrSelf(targetContainingClass, superClass, true) || PsiUtil.getEnclosingStaticElement(element, targetContainingClass) != null)) {
                 targetContainingClasses.add(targetContainingClass);
               }
             }
@@ -311,11 +321,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
             LOG.assertTrue(methodCallExpression != null);
             conflicts.putValue(expression, "Inlined method calls " + methodCallExpression.getText() + " which won't be accessed in " +
-                                           StringUtil.join(targetContainingClasses, new Function<PsiClass, String>() {
-                                             public String fun(PsiClass psiClass) {
-                                               return RefactoringUIUtil.getDescription(psiClass, false);
-                                             }
-                                           }, ","));
+                                           StringUtil.join(targetContainingClasses, psiClass -> RefactoringUIUtil.getDescription(psiClass, false), ","));
           }
         }
       }
@@ -353,8 +359,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private static Map<PsiMember, Set<PsiMember>> getInaccessible(HashSet<PsiMember> referencedElements,
                                                                 UsageInfo[] usages,
                                                                 PsiElement elementToInline) {
-    Map<PsiMember, Set<PsiMember>> result = new HashMap<PsiMember, Set<PsiMember>>();
-
+    final Map<PsiMember, Set<PsiMember>> result = new HashMap<PsiMember, Set<PsiMember>>();
+    final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(elementToInline.getProject()).getResolveHelper();
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();
       if (usageElement == null) continue;
@@ -369,7 +375,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           if (PsiTreeUtil.isAncestor(elementToInline, member, false)) continue;
           if (elementToInline instanceof PsiClass && 
               InheritanceUtil.isInheritorOrSelf((PsiClass)elementToInline, member.getContainingClass(), true)) continue;
-          if (!PsiUtil.isAccessible(usage.getProject(), member, usageElement, null)) {
+          PsiElement resolveScope = usageElement instanceof PsiReferenceExpression
+                                    ? ((PsiReferenceExpression)usageElement).advancedResolve(false).getCurrentFileResolveScope()
+                                    : null;
+          if (!resolveHelper.isAccessible(member, member.getModifierList(), usageElement, null, resolveScope)) {
             inaccessibleReferenced.add(member);
           }
         }
@@ -477,6 +486,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                 //no overloads available: ensure broken import are deleted and
                 //unused overloaded imports are deleted by optimize imports helper
                 imports2Delete.add(PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class));
+              }
+            }
+            else if (element instanceof PsiMethod) {
+              PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiMethod) element, false, Override.class.getName());
+              if (annotation != null) {
+                annotation.delete();
               }
             }
             else if (JavaLanguage.INSTANCE != element.getLanguage()) {
@@ -1131,6 +1146,9 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       return true; //TODO: "suspicous" places to review by user!
     }
     else if (initializer instanceof PsiLiteralExpression) {
+      return true;
+    }
+    else if (initializer instanceof PsiPrefixExpression && ((PsiPrefixExpression)initializer).getOperand() instanceof PsiLiteralExpression) {
       return true;
     }
     else if (initializer instanceof PsiArrayAccessExpression) {

@@ -49,12 +49,7 @@ public class ResourceBundleEditorInspectionPass {
   @Nullable
   public static InspectionPassInfo inspect(@NotNull final String key, ResourceBundle resourceBundle) {
     final List<IProperty> properties =
-      ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), new Function<PropertiesFile, IProperty>() {
-        @Override
-        public IProperty fun(PropertiesFile propertiesFile) {
-          return propertiesFile.findPropertyByKey(key);
-        }
-      });
+      ContainerUtil.mapNotNull(resourceBundle.getPropertiesFiles(), propertiesFile -> propertiesFile.findPropertyByKey(key));
 
     if (properties.isEmpty()) {
       return null;
@@ -71,13 +66,10 @@ public class ResourceBundleEditorInspectionPass {
 
     List<Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>> allDescriptors =
       new SmartList<Pair<ResourceBundleEditorProblemDescriptor, HighlightDisplayKey>>();
-    SortedSet<HighlightInfoType> highlightTypes = new TreeSet<HighlightInfoType>(new Comparator<HighlightInfoType>() {
-      @Override
-      public int compare(HighlightInfoType o1, HighlightInfoType o2) {
-        final HighlightSeverity s1 = o1.getSeverity(null);
-        final HighlightSeverity s2 = o2.getSeverity(null);
-        return Comparing.compare(s1, s2);
-      }
+    SortedSet<HighlightInfoType> highlightTypes = new TreeSet<HighlightInfoType>((o1, o2) -> {
+      final HighlightSeverity s1 = o1.getSeverity(null);
+      final HighlightSeverity s2 = o2.getSeverity(null);
+      return Comparing.compare(s1, s2);
     });
 
     for (InspectionToolWrapper tool : propertiesTools) {

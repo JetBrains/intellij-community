@@ -645,6 +645,32 @@ public class StructureImportingTest extends MavenImportingTestCase {
     assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule());
   }
 
+  public void testLanguageLevelFromDefaultCompileExecutionConfiguration() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <executions>" +
+                  "        <execution>" +
+                  "          <id>default-compile</id>" +
+                  "             <configuration>" +
+                  "                <source>1.8</source>" +
+                  "             </configuration>" +
+                  "        </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModules("project");
+    assertEquals(LanguageLevel.JDK_1_8, getLanguageLevelForModule());
+  }
+
   public void testLanguageLevel6() throws Exception {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -865,6 +891,34 @@ public class StructureImportingTest extends MavenImportingTestCase {
     String targetLevel = CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(module);
 
     assertEquals("1.3", targetLevel);
+  }
+
+  public void testSettingTargetLevelFromDefaultCompileExecutionConfiguration() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <executions>" +
+                  "        <execution>" +
+                  "          <id>default-compile</id>" +
+                  "             <configuration>" +
+                  "                <target>1.9</target>" +
+                  "             </configuration>" +
+                  "        </execution>" +
+                  "      </executions>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    assertModules("project");
+    Module module = getModule("project");
+    String targetLevel = CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(module);
+    assertEquals("1.9", targetLevel);
   }
 
   public void testSettingTargetLevelFromParent() throws Exception {

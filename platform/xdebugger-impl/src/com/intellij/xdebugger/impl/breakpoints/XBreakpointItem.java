@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import javax.swing.*;
 
 class XBreakpointItem extends BreakpointItem {
   private final XBreakpoint<?> myBreakpoint;
-  private XLightBreakpointPropertiesPanel<XBreakpointBase<?,?,?>> myPropertiesPanel;
+  private XLightBreakpointPropertiesPanel myPropertiesPanel;
 
   public XBreakpointItem(XBreakpoint<?> breakpoint) {
     myBreakpoint = breakpoint;
@@ -52,6 +52,7 @@ class XBreakpointItem extends BreakpointItem {
     setupGenericRenderer(renderer, false);
   }
 
+  @Override
   public void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
     if (plainView) {
       renderer.setIcon(getIcon());
@@ -65,6 +66,7 @@ class XBreakpointItem extends BreakpointItem {
     }
   }
 
+  @Override
   public String getDisplayText() {
     return XBreakpointUtil.getShortText(myBreakpoint);
   }
@@ -74,6 +76,7 @@ class XBreakpointItem extends BreakpointItem {
     return ((XBreakpointBase)myBreakpoint).getUserDescription();
   }
 
+  @Override
   public Icon getIcon() {
     return ((XBreakpointBase)myBreakpoint).getIcon();
   }
@@ -85,7 +88,7 @@ class XBreakpointItem extends BreakpointItem {
 
   @Override
   public String footerText() {
-    return ((XBreakpointBase)myBreakpoint).getType().getDisplayText(myBreakpoint);
+    return XBreakpointUtil.getDisplayText(myBreakpoint);
   }
 
   @Override
@@ -95,6 +98,7 @@ class XBreakpointItem extends BreakpointItem {
     }
   }
 
+  @Override
   public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     XBreakpointBase breakpoint = (XBreakpointBase)myBreakpoint;
     Project project = breakpoint.getProject();
@@ -104,7 +108,7 @@ class XBreakpointItem extends BreakpointItem {
       myPropertiesPanel = null;
     }
     if (!editorOnly) {
-      myPropertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpointBase<?,?,?>>(project, getManager(), breakpoint, true);
+      myPropertiesPanel = new XLightBreakpointPropertiesPanel(project, getManager(), breakpoint, true);
 
       panel.setPropertiesPanel(myPropertiesPanel.getMainPanel());
     }
@@ -159,6 +163,7 @@ class XBreakpointItem extends BreakpointItem {
   public void removed(Project project) {
     final XBreakpointManagerImpl breakpointManager = getManager();
     new WriteAction() {
+      @Override
       protected void run(@NotNull final Result result) {
         breakpointManager.removeBreakpoint(myBreakpoint);
       }
@@ -195,6 +200,7 @@ class XBreakpointItem extends BreakpointItem {
     }
   }
 
+  @Override
   public void dispose() {
     if (myPropertiesPanel != null) {
       myPropertiesPanel.dispose();

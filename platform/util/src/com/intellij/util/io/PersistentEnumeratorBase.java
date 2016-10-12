@@ -46,31 +46,36 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
 
   private static final int META_DATA_OFFSET = 4;
   protected static final int DATA_START = META_DATA_OFFSET + 16;
+  private static final CacheKey ourFlyweight = new FlyweightKey();
 
   protected final ResizeableMappedFile myStorage;
   private final boolean myAssumeDifferentSerializedBytesMeansObjectsInequality;
   private final AppendableStorageBackedByResizableMappedFile myKeyStorage;
+  protected final KeyDescriptor<Data> myDataDescriptor;
+  protected final File myFile;
+  private final Version myVersion;
+  private final boolean myDoCaching;
+
+  private volatile boolean myDirtyStatusUpdateInProgress;
 
   private boolean myClosed = false;
   private boolean myDirty = false;
-  protected final KeyDescriptor<Data> myDataDescriptor;
-
-  private static final CacheKey ourFlyweight = new FlyweightKey();
-
-  protected final File myFile;
   private boolean myCorrupted = false;
-  private final int myInitialSize;
-  private final Version myVersion;
   private RecordBufferHandler<PersistentEnumeratorBase> myRecordHandler;
-  private volatile boolean myDirtyStatusUpdateInProgress;
   private Flushable myMarkCleanCallback;
-  private final boolean myDoCaching;
 
   public static class Version {
+    private static final int DIRTY_MAGIC = 0xbabe1977;
+    private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafd;
+
     private final int correctlyClosedMagic;
     private final int dirtyMagic;
 
-    public Version(int _correctlyClosedMagic, int _dirtyMagic) {
+    public Version(int version) {
+      this(CORRECTLY_CLOSED_MAGIC + version, DIRTY_MAGIC);
+    }
+
+    private Version(int _correctlyClosedMagic, int _dirtyMagic) {
       correctlyClosedMagic = _correctlyClosedMagic;
       dirtyMagic = _dirtyMagic;
       assert correctlyClosedMagic != dirtyMagic;
@@ -161,7 +166,6 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
                                   boolean doCaching) throws IOException {
     myDataDescriptor = dataDescriptor;
     myFile = file;
-    myInitialSize = initialSize;
     myVersion = version;
     myRecordHandler = (RecordBufferHandler<PersistentEnumeratorBase>)recordBufferHandler;
     myDoCaching = doCaching;
@@ -458,6 +462,7 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
 
   public Data valueOf(int idx) throws IOException {
     try {
+
       lockStorage();
       try {
         int addr = indexToAddr(idx);
@@ -468,6 +473,7 @@ public abstract class PersistentEnumeratorBase<Data> implements Forceable, Close
       finally {
         unlockStorage();
       }
+
     }
     catch (IOException io) {
       markCorrupted();

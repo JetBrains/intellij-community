@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @author egor
  */
 public class DebuggerCopyPastePreprocessor implements CopyPastePreProcessor {
-  public static final Key<Boolean> REMOVE_NEWLINES_ON_PASTE = new Key<Boolean>("REMOVE_NEWLINES_ON_PASTE");
+  public static final Key<Boolean> REMOVE_NEWLINES_ON_PASTE = new Key<>("REMOVE_NEWLINES_ON_PASTE");
 
   @Nullable
   @Override

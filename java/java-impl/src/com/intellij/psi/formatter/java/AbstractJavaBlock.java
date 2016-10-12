@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   private final Indent myIndent;
   protected Indent myChildIndent;
   protected Alignment myChildAlignment;
-  protected boolean myUseChildAttributes = false;
+  protected boolean myUseChildAttributes;
   @NotNull protected final AlignmentStrategy myAlignmentStrategy;
-  private boolean myIsAfterClassKeyword = false;
+  private boolean myIsAfterClassKeyword;
 
   protected Alignment myReservedAlignment;
   protected Alignment myReservedAlignment2;
@@ -427,9 +427,6 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         defaultAlignment = myAlignment;
       }
       return createAlignment(mySettings.ALIGN_MULTILINE_BINARY_OPERATION, defaultAlignment);
-    }
-    if (nodeType == JavaElementType.CLASS || nodeType == JavaElementType.METHOD) {
-      return null;
     }
     return null;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -33,7 +34,7 @@ import java.util.*;
 import java.util.List;
 
 public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
-  public boolean REPORT_PREFIX_EXPRESSIONS = false;
+  public boolean REPORT_PREFIX_EXPRESSIONS;
   public boolean REPORT_POSTFIX_EXPRESSIONS = true;
   public boolean REPORT_REDUNDANT_INITIALIZER = true;
 
@@ -62,17 +63,14 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
     List<DefUseUtil.Info> unusedDefs = DefUseUtil.getUnusedDefs(body, usedVariables);
 
     if (unusedDefs != null && !unusedDefs.isEmpty()) {
-      Collections.sort(unusedDefs, new Comparator<DefUseUtil.Info>() {
-        @Override
-        public int compare(DefUseUtil.Info o1, DefUseUtil.Info o2) {
-          int offset1 = o1.getContext().getTextOffset();
-          int offset2 = o2.getContext().getTextOffset();
+      Collections.sort(unusedDefs, (o1, o2) -> {
+        int offset1 = o1.getContext().getTextOffset();
+        int offset2 = o2.getContext().getTextOffset();
 
-          if (offset1 == offset2) return 0;
-          if (offset1 < offset2) return -1;
+        if (offset1 == offset2) return 0;
+        if (offset1 < offset2) return -1;
 
-          return 1;
-        }
+        return 1;
       });
 
       for (DefUseUtil.Info info : unusedDefs) {
@@ -82,7 +80,7 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
         if (context instanceof PsiDeclarationStatement || context instanceof PsiResourceVariable) {
           if (!info.isRead()) {
             if (!isOnTheFly) {
-              holder.registerProblem(psiVariable.getNameIdentifier(),
+              holder.registerProblem(ObjectUtils.notNull(psiVariable.getNameIdentifier(), psiVariable),
                                      InspectionsBundle.message("inspection.unused.assignment.problem.descriptor1", "<code>#ref</code> #loc"),
                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL);
             }
@@ -91,7 +89,7 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
             if (REPORT_REDUNDANT_INITIALIZER) {
               List<LocalQuickFix> fixes = ContainerUtil.createMaybeSingletonList(
                 isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, psiVariable.getInitializer()) ? createRemoveInitializerFix() : null);
-              holder.registerProblem(psiVariable.getInitializer(),
+              holder.registerProblem(ObjectUtils.notNull(psiVariable.getInitializer(), psiVariable),
                                      InspectionsBundle.message("inspection.unused.assignment.problem.descriptor2",
                                                                "<code>" + psiVariable.getName() + "</code>", "<code>#ref</code> #loc"),
                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL,
@@ -106,7 +104,7 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
             isOnTheFlyOrNoSideEffects(isOnTheFly, psiVariable, assignment.getRExpression()) ? createRemoveAssignmentFix() : null);
           holder.registerProblem(assignment.getLExpression(),
                                  InspectionsBundle.message("inspection.unused.assignment.problem.descriptor3",
-                                                           assignment.getRExpression().getText(), "<code>#ref</code>" + " #loc"), 
+                                                           ObjectUtils.assertNotNull(assignment.getRExpression()).getText(), "<code>#ref</code>" + " #loc"),
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL, fixes.toArray(new LocalQuickFix[fixes.size()])
           );
         }
@@ -121,12 +119,11 @@ public class DefUseInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
 
     body.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitClass(PsiClass aClass) {
-      }
+      @Override public void visitClass(PsiClass aClass) { }
 
       @Override public void visitLocalVariable(PsiLocalVariable variable) {
         if (!usedVariables.contains(variable) && variable.getInitializer() == null && !isOnTheFly) {
-          holder.registerProblem(variable.getNameIdentifier(),
+          holder.registerProblem(ObjectUtils.notNull(variable.getNameIdentifier(), variable),
                                  InspectionsBundle.message("inspection.unused.assignment.problem.descriptor5", "<code>#ref</code> #loc"),
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }

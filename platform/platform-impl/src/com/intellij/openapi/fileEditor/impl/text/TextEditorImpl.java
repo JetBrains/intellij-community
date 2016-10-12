@@ -19,6 +19,11 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -37,13 +42,25 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   protected final Project myProject;
   private final PropertyChangeSupport myChangeSupport;
   @NotNull private final TextEditorComponent myComponent;
-  private final TextEditorProvider myProvider;
+  @NotNull protected final VirtualFile myFile;
+  private final AsyncEditorLoader myAsyncLoader;
 
   TextEditorImpl(@NotNull final Project project, @NotNull final VirtualFile file, final TextEditorProvider provider) {
     myProject = project;
-    myProvider = provider;
+    myFile = file;
     myChangeSupport = new PropertyChangeSupport(this);
     myComponent = createEditorComponent(project, file);
+    myAsyncLoader = new AsyncEditorLoader(this, myComponent, provider);
+    myAsyncLoader.scheduleBackgroundLoading(true);
+  }
+
+  @NotNull
+  protected Runnable loadEditorInBackground() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myFile, scheme, myProject);
+    EditorEx editor = (EditorEx)getEditor();
+    highlighter.setText(editor.getDocument().getImmutableCharSequence());
+    return () -> editor.setHighlighter(highlighter);
   }
 
   @NotNull
@@ -63,6 +80,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   @Override
+  @NotNull
   public JComponent getPreferredFocusedComponent(){
     return getActiveEditor().getContentComponent();
   }
@@ -90,12 +108,12 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   @Override
   @NotNull
   public FileEditorState getState(@NotNull FileEditorStateLevel level) {
-    return myProvider.getStateImpl(myProject, getActiveEditor(), level);
+    return myAsyncLoader.getEditorState(level);
   }
 
   @Override
   public void setState(@NotNull final FileEditorState state) {
-    myProvider.setStateImpl(myProject, getActiveEditor(), (TextEditorState)state);
+    myAsyncLoader.setEditorState((TextEditorState)state);
   }
 
   @Override
@@ -166,6 +184,6 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
   @Override
   public String toString() {
-    return "Editor: "+getComponent().getFile();
+    return "Editor: "+myComponent.getFile();
   }
 }

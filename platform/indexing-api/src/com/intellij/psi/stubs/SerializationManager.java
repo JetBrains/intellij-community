@@ -31,7 +31,7 @@ import java.util.List;
 public abstract class SerializationManager {
 
   protected final List<ObjectStubSerializer> myAllSerializers = new ArrayList<ObjectStubSerializer>();
-  private volatile boolean mySerializersLoaded = false;
+  private volatile boolean mySerializersLoaded;
 
   public static SerializationManager getInstance() {
     return ApplicationManager.getApplication().getComponent(SerializationManager.class);

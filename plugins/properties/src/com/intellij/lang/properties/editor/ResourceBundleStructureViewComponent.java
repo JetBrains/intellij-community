@@ -117,20 +117,10 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
       }
       else {
         return ContainerUtil.toArray(ContainerUtil.flatten(
-          ContainerUtil.mapNotNull(selectedElements, new NullableFunction<ResourceBundleEditorViewElement, List<IProperty>>() {
-            @Nullable
-            @Override
-            public List<IProperty> fun(ResourceBundleEditorViewElement element) {
-              final IProperty[] properties = element.getProperties();
-              return properties == null ? null : ContainerUtil.newArrayList(properties);
-            }
-          })), new ArrayFactory<IProperty>() {
-          @NotNull
-          @Override
-          public IProperty[] create(int count) {
-            return new IProperty[count];
-          }
-        });
+          ContainerUtil.mapNotNull(selectedElements, (NullableFunction<ResourceBundleEditorViewElement, List<IProperty>>)element -> {
+            final IProperty[] properties = element.getProperties();
+            return properties == null ? null : ContainerUtil.newArrayList(properties);
+          })), count -> new IProperty[count]);
       }
     }
     else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {

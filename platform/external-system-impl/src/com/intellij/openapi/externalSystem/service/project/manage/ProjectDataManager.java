@@ -264,32 +264,26 @@ public class ProjectDataManager {
     }
 
     if (services != null && projectData != null) {
-      postImportTasks.add(new Runnable() {
-        @Override
-        public void run() {
-          for (ProjectDataService<?, ?> service : services) {
-            if (service instanceof AbstractProjectDataService) {
-              final long taskStartTime = System.currentTimeMillis();
-              ((AbstractProjectDataService)service).postProcess(toImport, projectData, project, modelsProvider);
-              if(LOG.isDebugEnabled()) {
-                final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
-                LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
-              }
+      postImportTasks.add(() -> {
+        for (ProjectDataService<?, ?> service : services) {
+          if (service instanceof AbstractProjectDataService) {
+            final long taskStartTime = System.currentTimeMillis();
+            ((AbstractProjectDataService)service).postProcess(toImport, projectData, project, modelsProvider);
+            if(LOG.isDebugEnabled()) {
+              final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
+              LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
             }
           }
         }
       });
-      onSuccessImportTasks.add(new Runnable() {
-        @Override
-        public void run() {
-          for (ProjectDataService<?, ?> service : services) {
-            if (service instanceof AbstractProjectDataService) {
-              final long taskStartTime = System.currentTimeMillis();
-              ((AbstractProjectDataService)service).onSuccessImport(project);
-              if(LOG.isDebugEnabled()) {
-                final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
-                LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
-              }
+      onSuccessImportTasks.add(() -> {
+        for (ProjectDataService<?, ?> service : services) {
+          if (service instanceof AbstractProjectDataService) {
+            final long taskStartTime = System.currentTimeMillis();
+            ((AbstractProjectDataService)service).onSuccessImport(project);
+            if(LOG.isDebugEnabled()) {
+              final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
+              LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
             }
           }
         }
@@ -301,12 +295,9 @@ public class ProjectDataManager {
     if (dataNode == null) return;
     if (Boolean.TRUE.equals(dataNode.getUserData(DATA_READY))) return;
 
-    ExternalSystemApiUtil.visit(dataNode, new Consumer<DataNode<?>>() {
-      @Override
-      public void consume(DataNode dataNode) {
-        prepareDataToUse(dataNode);
-        dataNode.putUserData(DATA_READY, Boolean.TRUE);
-      }
+    ExternalSystemApiUtil.visit(dataNode, dataNode1 -> {
+      prepareDataToUse(dataNode1);
+      dataNode1.putUserData(DATA_READY, Boolean.TRUE);
     });
   }
 
@@ -380,12 +371,7 @@ public class ProjectDataManager {
     List<ProjectDataService<?, ?>> services = servicesByKey.get(dataNode.getKey());
     if (services != null) {
       try {
-        dataNode.prepareData(map2Array(services, ClassLoader.class, new Function<ProjectDataService<?, ?>, ClassLoader>() {
-          @Override
-          public ClassLoader fun(ProjectDataService<?, ?> service) {
-            return service.getClass().getClassLoader();
-          }
-        }));
+        dataNode.prepareData(map2Array(services, ClassLoader.class, service -> service.getClass().getClassLoader()));
       }
       catch (Exception e) {
         LOG.debug(e);

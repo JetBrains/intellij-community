@@ -21,8 +21,8 @@ public class JsonSchemaReadTest {
   public void testReadSchemaItself() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/schema.json");
     Assert.assertTrue(file.exists());
-    final JsonSchemaReader reader = new JsonSchemaReader();
-    final JsonSchemaObject read = reader.read(new FileReader(file));
+    final JsonSchemaReader reader = new JsonSchemaReader(null);
+    final JsonSchemaObject read = reader.read(new FileReader(file), null);
 
     Assert.assertEquals("http://json-schema.org/draft-04/schema#", read.getId());
     Assert.assertTrue(read.getDefinitions().containsKey("positiveInteger"));
@@ -61,8 +61,8 @@ public class JsonSchemaReadTest {
   public void testReadSchemaWithCustomTags() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withNotesCustomTag.json");
     Assert.assertTrue(file.exists());
-    final JsonSchemaReader reader = new JsonSchemaReader();
-    final JsonSchemaObject read = reader.read(new FileReader(file));
+    final JsonSchemaReader reader = new JsonSchemaReader(null);
+    final JsonSchemaObject read = reader.read(new FileReader(file), null);
     Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
   }
 
@@ -86,20 +86,17 @@ public class JsonSchemaReadTest {
     final AtomicReference<IOException> error = new AtomicReference<>();
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    final Thread thread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        final JsonSchemaReader reader = new JsonSchemaReader();
-        try {
-          reader.read(new FileReader(file));
-          done.set(true);
-        }
-        catch (IOException e) {
-          error.set(e);
-        }
-        finally {
-          semaphore.up();
-        }
+    final Thread thread = new Thread(() -> {
+      final JsonSchemaReader reader = new JsonSchemaReader(null);
+      try {
+        reader.read(new FileReader(file), null);
+        done.set(true);
+      }
+      catch (IOException e) {
+        error.set(e);
+      }
+      finally {
+        semaphore.up();
       }
     }, getClass().getName() + ": read test json schema " + file.getName());
     thread.setDaemon(true);

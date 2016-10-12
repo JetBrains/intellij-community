@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Nov 13, 2002
- * Time: 3:26:50 PM
- * To change this template use Options | File Templates.
- */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -78,12 +71,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     final PsiClass myClass = (PsiClass)startElement;
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(
-      new Runnable() {
-        @Override
-        public void run() {
-          invokeImpl(myClass);
-        }
-      }
+      () -> invokeImpl(myClass)
     );
     final Editor editor1 = CodeInsightUtil.positionCursorAtLBrace(project, myClass.getContainingFile(), myClass);
     if (editor1 == null) return;
@@ -91,18 +79,10 @@ public class ChangeParameterClassFix extends ExtendsListFix {
     if (!toImplement.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().runWriteAction(
-          new Runnable() {
-            @Override
-            public void run() {
-              Collection<PsiMethodMember> members =
-                ContainerUtil.map2List(toImplement, new Function<CandidateInfo, PsiMethodMember>() {
-                  @Override
-                  public PsiMethodMember fun(final CandidateInfo s) {
-                    return new PsiMethodMember(s);
-                  }
-                });
-              OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, members, false);
-            }
+          () -> {
+            Collection<PsiMethodMember> members =
+              ContainerUtil.map2List(toImplement, s -> new PsiMethodMember(s));
+            OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor1, myClass, members, false);
           });
       }
       else {

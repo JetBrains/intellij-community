@@ -41,11 +41,10 @@ import java.util.List;
 /**
  * @author Eugene Belyaev
  */
-final class Stripe extends JPanel {
+final class Stripe extends JPanel implements UISettingsListener {
   private final int myAnchor;
   private final ArrayList<StripeButton> myButtons = new ArrayList<StripeButton>();
   private final MyKeymapManagerListener myWeakKeymapManagerListener;
-  private final MyUISettingsListener myUISettingsListener;
 
   private Dimension myPrefSize;
   private StripeButton myDragButton;
@@ -64,8 +63,12 @@ final class Stripe extends JPanel {
     myManager = manager;
     myAnchor = anchor;
     myWeakKeymapManagerListener = new MyKeymapManagerListener();
-    myUISettingsListener = new MyUISettingsListener();
     setBorder(new AdaptiveBorder());
+  }
+
+  @Override
+  public void uiSettingsChanged(UISettings source) {
+    updatePresentation();
   }
 
   private static class AdaptiveBorder implements Border {
@@ -149,9 +152,6 @@ final class Stripe extends JPanel {
     super.addNotify();
     updatePresentation();
     KeymapManagerEx.getInstanceEx().addWeakListener(myWeakKeymapManagerListener);
-    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      UISettings.getInstance().addUISettingsListener(myUISettingsListener, myDisposable);
-    }
   }
 
   /**
@@ -494,12 +494,7 @@ final class Stripe extends JPanel {
     myManager.setSideToolAndAnchor(info.getId(), ToolWindowAnchor.get(myAnchor), myLastLayoutData.dragInsertPosition,
                                     myLastLayoutData.dragToSide);
 
-    myManager.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        resetDrop();
-      }
-    });
+    myManager.invokeLater(() -> resetDrop());
   }
 
   public void resetDrop() {
@@ -543,14 +538,6 @@ final class Stripe extends JPanel {
       updatePresentation();
     }
   }
-
-  private final class MyUISettingsListener implements UISettingsListener {
-    @Override
-    public void uiSettingsChanged(UISettings source) {
-      updatePresentation();
-    }
-  }
-
 
   public String toString() {
     String anchor = null;

@@ -35,11 +35,8 @@ public class ReplaceReferenceUsageInfo extends FixableUsageInfo {
   public ReplaceReferenceUsageInfo(PsiElement referenceExpression, PsiClass[] targetClasses) {
     super(referenceExpression);
     myTargetClass = targetClasses[0];
-    myConflict = targetClasses.length > 1 ? referenceExpression.getText() + "can be replaced with any of " + StringUtil.join(targetClasses, new Function<PsiClass, String>() {
-      public String fun(final PsiClass psiClass) {
-        return psiClass.getQualifiedName();
-      }
-    }, ", ") : null;
+    myConflict = targetClasses.length > 1 ? referenceExpression.getText() + "can be replaced with any of " + StringUtil.join(targetClasses,
+                                                                                                                             psiClass -> psiClass.getQualifiedName(), ", ") : null;
   }
 
   public void fixUsage() throws IncorrectOperationException {

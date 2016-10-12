@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,50 +32,47 @@ import java.util.Comparator;
  * @author cdr
  */
 public class SliceTreeBuilder extends AbstractTreeBuilder {
-  public final boolean splitByLeafExpressions;
+  final boolean splitByLeafExpressions;
   public final boolean dataFlowToThis;
-  public volatile boolean analysisInProgress;
+  volatile boolean analysisInProgress;
 
-  public static final Comparator<NodeDescriptor> SLICE_NODE_COMPARATOR = new Comparator<NodeDescriptor>() {
-    @Override
-    public int compare(NodeDescriptor o1, NodeDescriptor o2) {
-      if (!(o1 instanceof SliceNode) || !(o2 instanceof SliceNode)) {
-        return AlphaComparator.INSTANCE.compare(o1, o2);
-      }
-      SliceNode node1 = (SliceNode)o1;
-      SliceNode node2 = (SliceNode)o2;
-      SliceUsage usage1 = node1.getValue();
-      SliceUsage usage2 = node2.getValue();
-
-      PsiElement element1 = usage1.getElement();
-      PsiElement element2 = usage2.getElement();
-
-      PsiFile file1 = element1 == null ? null : element1.getContainingFile();
-      PsiFile file2 = element2 == null ? null : element2.getContainingFile();
-
-      if (file1 == null) return file2 == null ? 0 : 1;
-      if (file2 == null) return -1;
-
-      if (file1 == file2) {
-        return element1.getTextOffset() - element2.getTextOffset();
-      }
-
-      return Comparing.compare(file1.getName(), file2.getName());
+  static final Comparator<NodeDescriptor> SLICE_NODE_COMPARATOR = (o1, o2) -> {
+    if (!(o1 instanceof SliceNode) || !(o2 instanceof SliceNode)) {
+      return AlphaComparator.INSTANCE.compare(o1, o2);
     }
+    SliceNode node1 = (SliceNode)o1;
+    SliceNode node2 = (SliceNode)o2;
+    SliceUsage usage1 = node1.getValue();
+    SliceUsage usage2 = node2.getValue();
+
+    PsiElement element1 = usage1.getElement();
+    PsiElement element2 = usage2.getElement();
+
+    PsiFile file1 = element1 == null ? null : element1.getContainingFile();
+    PsiFile file2 = element2 == null ? null : element2.getContainingFile();
+
+    if (file1 == null) return file2 == null ? 0 : 1;
+    if (file2 == null) return -1;
+
+    if (file1 == file2) {
+      return element1.getTextOffset() - element2.getTextOffset();
+    }
+
+    return Comparing.compare(file1.getName(), file2.getName());
   };
 
-  public SliceTreeBuilder(@NotNull JTree tree,
-                          @NotNull Project project,
-                          boolean dataFlowToThis,
-                          @NotNull SliceNode rootNode,
-                          boolean splitByLeafExpressions) {
+  SliceTreeBuilder(@NotNull JTree tree,
+                   @NotNull Project project,
+                   boolean dataFlowToThis,
+                   @NotNull SliceNode rootNode,
+                   boolean splitByLeafExpressions) {
     super(tree, (DefaultTreeModel)tree.getModel(), new SliceTreeStructure(project, rootNode), SLICE_NODE_COMPARATOR, false);
     this.dataFlowToThis = dataFlowToThis;
     this.splitByLeafExpressions = splitByLeafExpressions;
     initRootNode();
   }
 
-  public SliceNode getRootSliceNode() {
+  SliceNode getRootSliceNode() {
     return (SliceNode)getTreeStructure().getRootElement();
   }
 
@@ -84,40 +81,25 @@ public class SliceTreeBuilder extends AbstractTreeBuilder {
     return false;
   }
 
-  public void switchToGroupedByLeavesNodes() {
+  void switchToGroupedByLeavesNodes() {
     SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
     if(provider == null){
       return;
     }
     analysisInProgress = true;
-    provider.startAnalyzeLeafValues(getTreeStructure(), new Runnable(){
-      @Override
-      public void run() {
-        analysisInProgress = false;
-      }
-    });
+    provider.startAnalyzeLeafValues(getTreeStructure(), () -> analysisInProgress = false);
   }
 
 
-  public void switchToLeafNulls() {
+  void switchToLeafNulls() {
     SliceLanguageSupportProvider provider = getRootSliceNode().getProvider();
     if(provider == null){
       return;
     }
     analysisInProgress = true;
-    provider.startAnalyzeLeafValues(getTreeStructure(), new Runnable(){
-      @Override
-      public void run() {
-        analysisInProgress = false;
-      }
-    });
+    provider.startAnalyzeLeafValues(getTreeStructure(), () -> analysisInProgress = false);
 
     analysisInProgress = true;
-    provider.startAnalyzeNullness(getTreeStructure(), new Runnable(){
-      @Override
-      public void run() {
-        analysisInProgress = false;
-      }
-    });
+    provider.startAnalyzeNullness(getTreeStructure(), () -> analysisInProgress = false);
   }
 }

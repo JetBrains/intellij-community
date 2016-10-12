@@ -140,7 +140,7 @@ public class EnvironmentUtil {
     return flattenEnvironment(getEnvironmentMap());
   }
 
-  public static String[] flattenEnvironment(Map<String, String> environment) {
+  public static String[] flattenEnvironment(@NotNull Map<String, String> environment) {
     String[] array = new String[environment.size()];
     int i = 0;
     for (Map.Entry<String, String> entry : environment.entrySet()) {
@@ -167,7 +167,7 @@ public class EnvironmentUtil {
 
     File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
     try {
-      String[] command = {shell, "-l", "-i", "-c", "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'"};
+      String[] command = {shell, "-l", "-i", "-c", ("'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'")};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
@@ -302,10 +302,15 @@ public class EnvironmentUtil {
   }
 
   private static class StreamGobbler extends BaseOutputReader {
+    private static final Options OPTIONS = new Options() {
+      @Override public SleepingPolicy policy() { return SleepingPolicy.BLOCKING; }
+      @Override public boolean splitToLines() { return false; }
+    };
+
     private final StringBuffer myBuffer;
 
     public StreamGobbler(@NotNull InputStream stream) {
-      super(stream, CharsetToolkit.getDefaultSystemCharset());
+      super(stream, CharsetToolkit.getDefaultSystemCharset(), OPTIONS);
       myBuffer = new StringBuffer();
       start("stdout/stderr streams of shell env loading process");
     }

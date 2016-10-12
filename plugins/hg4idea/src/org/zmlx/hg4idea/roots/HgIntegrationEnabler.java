@@ -37,7 +37,7 @@ public class HgIntegrationEnabler extends VcsIntegrationEnabler<HgVcs> {
   @Override
   protected boolean initOrNotifyError(@NotNull final VirtualFile projectDir) {
     final boolean[] success = new boolean[1];
-    new HgInitCommand(myProject).execute(projectDir, new HgCommandResultHandler() {
+    new HgInitCommand(myProject).executeAsynchronously(projectDir, new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
         VcsNotifier notification = VcsNotifier.getInstance(myProject);

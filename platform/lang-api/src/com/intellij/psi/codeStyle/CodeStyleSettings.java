@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.configurationStore.UnknownElementCollector;
+import com.intellij.configurationStore.UnknownElementWriter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -46,10 +48,9 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
-
   public static final int MAX_RIGHT_MARGIN = 1000;
   
-  private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettings.class.getName());
+  private static final Logger LOG = Logger.getInstance(CodeStyleSettings.class);
 
   private final ClassMap<CustomCodeStyleSettings> myCustomSettings = new ClassMap<CustomCodeStyleSettings>();
 
@@ -57,6 +58,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   @NonNls private static final String FILETYPE = "fileType";
   private CommonCodeStyleSettingsManager myCommonSettingsManager = new CommonCodeStyleSettingsManager(this);
+
+  private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
 
   public CodeStyleSettings() {
     this(true);
@@ -123,6 +126,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public <T extends CustomCodeStyleSettings> T getCustomSettings(@NotNull Class<T> aClass) {
     synchronized (myCustomSettings) {
+      //noinspection unchecked
       return (T)myCustomSettings.get(aClass);
     }
   }
@@ -169,9 +173,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   }
 
 
-  public boolean USE_SAME_INDENTS = false;
+  public boolean USE_SAME_INDENTS;
 
-  public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES = false;
+  public boolean IGNORE_SAME_INDENTS_FOR_LANGUAGES;
 
   public boolean AUTODETECT_INDENTS = true;
 
@@ -224,8 +228,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public final TypeToNameMap LOCAL_VARIABLE_TYPE_TO_NAME = new TypeToNameMap();
 
 //----------------- 'final' modifier settings -------
-  public boolean GENERATE_FINAL_LOCALS = false;
-  public boolean GENERATE_FINAL_PARAMETERS = false;
+  public boolean GENERATE_FINAL_LOCALS;
+  public boolean GENERATE_FINAL_PARAMETERS;
 
 //----------------- visibility -----------------------------
   public String VISIBILITY = "public";
@@ -234,7 +238,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean PARENTHESES_AROUND_METHOD_ARGUMENTS = true;
 
 //----------------- annotations ----------------
-  public boolean USE_EXTERNAL_ANNOTATIONS = false;
+  public boolean USE_EXTERNAL_ANNOTATIONS;
   public boolean INSERT_OVERRIDE_ANNOTATION = true;
 
 //----------------- override -------------------
@@ -243,12 +247,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 //----------------- IMPORTS --------------------
 
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
-  public boolean USE_FQ_CLASS_NAMES = false;
+  public boolean USE_FQ_CLASS_NAMES;
   
   @Deprecated
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
-  public boolean INSERT_INNER_CLASS_IMPORTS = false;
+  public boolean INSERT_INNER_CLASS_IMPORTS;
   public int CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 5;
   public int NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
@@ -276,7 +280,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    *
    * @see #WRAP_ON_TYPING
    */
-  public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
+  public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
 
 
   // ---------------------------------- Javadoc formatting options -------------------------
@@ -292,14 +296,14 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    */
   public boolean JD_ALIGN_EXCEPTION_COMMENTS = true;
 
-  public boolean JD_ADD_BLANK_AFTER_PARM_COMMENTS = false;
-  public boolean JD_ADD_BLANK_AFTER_RETURN = false;
+  public boolean JD_ADD_BLANK_AFTER_PARM_COMMENTS;
+  public boolean JD_ADD_BLANK_AFTER_RETURN;
   public boolean JD_ADD_BLANK_AFTER_DESCRIPTION = true;
   public boolean JD_P_AT_EMPTY_LINES = true;
 
   public boolean JD_KEEP_INVALID_TAGS = true;
   public boolean JD_KEEP_EMPTY_LINES = true;
-  public boolean JD_DO_NOT_WRAP_ONE_LINE_COMMENTS = false;
+  public boolean JD_DO_NOT_WRAP_ONE_LINE_COMMENTS;
 
   public boolean JD_USE_THROWS_NOT_EXCEPTION = true;
   public boolean JD_KEEP_EMPTY_PARAMETER = true;
@@ -309,8 +313,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
   
-  public boolean JD_PRESERVE_LINE_FEEDS = false;
-  public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE = false;
+  public boolean JD_PRESERVE_LINE_FEEDS;
+  public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE;
 
   // ---------------------------------------------------------------------------------------
 
@@ -320,7 +324,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_KEEP_WHITESPACES = false;
+  public boolean XML_KEEP_WHITESPACES;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
@@ -349,32 +353,32 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_ALIGN_TEXT = false;
+  public boolean XML_ALIGN_TEXT;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = false;
+  public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_SPACE_AFTER_TAG_NAME = false;
+  public boolean XML_SPACE_AFTER_TAG_NAME;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_SPACE_INSIDE_EMPTY_TAG = false;
+  public boolean XML_SPACE_INSIDE_EMPTY_TAG;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public boolean XML_KEEP_WHITE_SPACES_INSIDE_CDATA = false;
+  public boolean XML_KEEP_WHITE_SPACES_INSIDE_CDATA;
   /**
    * @deprecated Use XmlCodeStyleSettings.
    */
-  public int XML_WHITE_SPACE_AROUND_CDATA = 0;
+  public int XML_WHITE_SPACE_AROUND_CDATA;
 
   // ---------------------------------------------------------------------------------------
 
   // ---------------------------------- HTML formatting options -------------------------
-  public boolean HTML_KEEP_WHITESPACES = false;
+  public boolean HTML_KEEP_WHITESPACES;
   public int HTML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
   public int HTML_TEXT_WRAP = WRAP_AS_NEEDED;
 
@@ -383,41 +387,42 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public int HTML_KEEP_BLANK_LINES = 2;
 
   public boolean HTML_ALIGN_ATTRIBUTES = true;
-  public boolean HTML_ALIGN_TEXT = false;
+  public boolean HTML_ALIGN_TEXT;
 
-  public boolean HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = false;
-  public boolean HTML_SPACE_AFTER_TAG_NAME = false;
-  public boolean HTML_SPACE_INSIDE_EMPTY_TAG = false;
+  public boolean HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE;
+  public boolean HTML_SPACE_AFTER_TAG_NAME;
+  public boolean HTML_SPACE_INSIDE_EMPTY_TAG;
 
   @NonNls public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";
   @NonNls public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
   @NonNls public String HTML_DO_NOT_INDENT_CHILDREN_OF = "html,body,thead,tbody,tfoot";
-  public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES = 0;
+  public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES;
 
   @NonNls public String HTML_KEEP_WHITESPACES_INSIDE = "span,pre,textarea";
   @NonNls public String HTML_INLINE_ELEMENTS =
     "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var";
   @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
-
+  public QuoteStyle HTML_QUOTE_STYLE = QuoteStyle.Double;
+  public boolean HTML_ENFORCE_QUOTES = false;
   // ---------------------------------------------------------------------------------------
 
 
   // true if <%page import="x.y.z, x.y.t"%>
   // false if <%page import="x.y.z"%>
   //          <%page import="x.y.t"%>
-  public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = false;
+  public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST;
 
   //----------------------------------------------------------------------------------------
 
   // region Formatter control
 
-  public boolean FORMATTER_TAGS_ENABLED = false;
+  public boolean FORMATTER_TAGS_ENABLED;
   public String FORMATTER_ON_TAG = "@formatter:on";
   public String FORMATTER_OFF_TAG = "@formatter:off";
 
-  public volatile boolean FORMATTER_TAGS_ACCEPT_REGEXP = false;
-  private volatile Pattern myFormatterOffPattern = null;
-  private volatile Pattern myFormatterOnPattern = null;
+  public volatile boolean FORMATTER_TAGS_ACCEPT_REGEXP;
+  private volatile Pattern myFormatterOffPattern;
+  private volatile Pattern myFormatterOnPattern;
 
   @Nullable
   public Pattern getFormatterOffPattern() {
@@ -490,66 +495,56 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
       }
     }
-    for (final CustomCodeStyleSettings settings : getCustomSettingsValues()) {
+
+    UnknownElementCollector unknownElementCollector = new UnknownElementCollector();
+    for (CustomCodeStyleSettings settings : getCustomSettingsValues()) {
+      settings.getKnownTagNames().forEach(unknownElementCollector::addKnownName);
       settings.readExternal(element);
-      settings.importLegacySettings();
     }
 
-    final List list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);
+    unknownElementCollector.addKnownName(ADDITIONAL_INDENT_OPTIONS);
+    List<Element> list = element.getChildren(ADDITIONAL_INDENT_OPTIONS);
     if (list != null) {
-      for(Object o:list) {
-        if (o instanceof Element) {
-          final Element additionalIndentElement = (Element)o;
-          final String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
-
-          if (fileTypeId != null && !fileTypeId.isEmpty()) {
-            FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
-            if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
-              target = new TempFileType(fileTypeId);
-            }
-
-            final IndentOptions options = getDefaultIndentOptions(target);
-            options.readExternal(additionalIndentElement);
-            registerAdditionalIndentOptions(target, options);
+      for (Element additionalIndentElement : list) {
+        String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
+        if (!StringUtil.isEmpty(fileTypeId)) {
+          FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
+          if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
+            target = new TempFileType(fileTypeId);
           }
+
+          IndentOptions options = getDefaultIndentOptions(target);
+          options.readExternal(additionalIndentElement);
+          registerAdditionalIndentOptions(target, options);
         }
       }
     }
 
+    unknownElementCollector.addKnownName(CommonCodeStyleSettingsManager.COMMON_SETTINGS_TAG);
     myCommonSettingsManager.readExternal(element);
 
-    if (USE_SAME_INDENTS) IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
-  }
+    myUnknownElementWriter = unknownElementCollector.createWriter(element);
 
+    if (USE_SAME_INDENTS) {
+      IGNORE_SAME_INDENTS_FOR_LANGUAGES = true;
+    }
+  }
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     final CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
-    List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(getCustomSettingsValues());
-    
-    Collections.sort(customSettings, new Comparator<CustomCodeStyleSettings>(){
-      @Override
-      public int compare(final CustomCodeStyleSettings o1, final CustomCodeStyleSettings o2) {
-        return o1.getTagName().compareTo(o2.getTagName());
-      }
-    });
 
-    for (final CustomCodeStyleSettings settings : customSettings) {
-      final CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
+    myUnknownElementWriter.write(element, getCustomSettingsValues(), CustomCodeStyleSettings::getTagName, settings -> {
+      CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
       if (parentCustomSettings == null) {
         throw new WriteExternalException("Custom settings are null for " + settings.getClass());
       }
       settings.writeExternal(element, parentCustomSettings);
-    }
+    });
 
     final FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(new FileType[myAdditionalIndentOptions.keySet().size()]);
-    Arrays.sort(fileTypes, new Comparator<FileType>() {
-      @Override
-      public int compare(final FileType o1, final FileType o2) {
-        return o1.getDefaultExtension().compareTo(o2.getDefaultExtension());
-      }
-    });
+    Arrays.sort(fileTypes, (o1, o2) -> o1.getDefaultExtension().compareTo(o2.getDefaultExtension()));
 
     for (FileType fileType : fileTypes) {
       final IndentOptions indentOptions = myAdditionalIndentOptions.get(fileType);
@@ -563,7 +558,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     
     myCommonSettingsManager.writeExternal(element);
   }
-
 
   private static IndentOptions getDefaultIndentOptions(FileType fileType) {
     final FileTypeIndentOptionsProvider[] providers = Extensions.getExtensions(FileTypeIndentOptionsProvider.EP_NAME);
@@ -665,10 +659,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         }
       }
 
-      boolean committedDocumentNeeded = false;
       for (FileIndentOptionsProvider provider : Extensions.getExtensions(FileIndentOptionsProvider.EP_NAME)) {
         if (!isFullReformat || provider.useOnFullReformat()) {
-          committedDocumentNeeded |= provider instanceof ProviderForCommittedDocument;
           IndentOptions indentOptions = provider.getIndentOptions(this, file);
           if (indentOptions != null) {
             if (providerProcessor != null) {
@@ -681,28 +673,12 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         }
       }
 
-      IndentOptions options = getIndentOptions(file.getFileType());
-      if (committedDocumentNeeded) {
-        markOptionsInaccurateIfDocumentUncommitted(options, file);
-      }
-      return options;
+      return getIndentOptions(file.getFileType());
     }
     else
       return OTHER_INDENT_OPTIONS;
   }
-
-  private static void markOptionsInaccurateIfDocumentUncommitted(@NotNull IndentOptions options, @NotNull PsiFile file) {
-    PsiDocumentManager manager = PsiDocumentManager.getInstance(file.getProject());
-    Document document = manager.getDocument(file);
-    if (document != null && !manager.isCommitted(document)) {
-      options.setRecalculateForCommittedDocument(true);
-    }
-  }
-
-  public static boolean isRecalculateForCommittedDocument(@NotNull IndentOptions options) {
-    return options.isRecalculateForCommittedDocument();
-  }
-
+  
   private static boolean isFileFullyCoveredByRange(@NotNull PsiFile file, @Nullable TextRange formatRange) {
     return
       formatRange != null &&
@@ -1030,4 +1006,15 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
   }
 
+  public enum QuoteStyle {
+    Single("'"),
+    Double("\""),
+    None("");
+
+    public final String quote;
+
+    QuoteStyle(String quote) {
+      this.quote = quote;
+    }
+  }
 }

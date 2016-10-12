@@ -69,11 +69,9 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
                                                                final boolean notIncludedOnly) {
     final Set<Artifact> result = new HashSet<Artifact>(Arrays.asList(context.getArtifactModel().getArtifacts()));
     if (notIncludedOnly) {
-      ArtifactUtil.processPackagingElements(artifact, ARTIFACT_ELEMENT_TYPE, new Processor<ArtifactPackagingElement>() {
-        public boolean process(ArtifactPackagingElement artifactPackagingElement) {
-          result.remove(artifactPackagingElement.findArtifact(context));
-          return true;
-        }
+      ArtifactUtil.processPackagingElements(artifact, ARTIFACT_ELEMENT_TYPE, artifactPackagingElement -> {
+        result.remove(artifactPackagingElement.findArtifact(context));
+        return true;
       }, context, true);
     }
     result.remove(artifact);
@@ -81,11 +79,8 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
     while (iterator.hasNext()) {
       Artifact another = iterator.next();
       final boolean notContainThis =
-          ArtifactUtil.processPackagingElements(another, ARTIFACT_ELEMENT_TYPE, new Processor<ArtifactPackagingElement>() {
-            public boolean process(ArtifactPackagingElement element) {
-              return !artifact.getName().equals(element.getArtifactName());
-            }
-          }, context, true);
+          ArtifactUtil.processPackagingElements(another, ARTIFACT_ELEMENT_TYPE,
+                                                element -> !artifact.getName().equals(element.getArtifactName()), context, true);
       if (!notContainThis) {
         iterator.remove();
       }

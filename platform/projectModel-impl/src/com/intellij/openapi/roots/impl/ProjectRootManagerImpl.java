@@ -240,12 +240,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   }
 
   private void projectJdkChanged() {
-    mergeRootsChangesDuring(new Runnable() {
-      @Override
-      public void run() {
-        myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
-      }
-    });
+    mergeRootsChangesDuring(() -> myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged());
     Sdk sdk = getProjectSdk();
     for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
       extension.projectSdkChanged(sdk);
@@ -349,8 +344,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
     if (myProject.isDisposed()) return;
     BatchSession session = getBatchSession(fileTypes);
-    if (fireEvents) session.beforeRootsChanged();
     try {
+      if (fireEvents) session.beforeRootsChanged();
       runnable.run();
     }
     finally {
@@ -518,12 +513,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     @Override
     public void afterLibraryAdded(final Library newLibrary) {
       incModificationCount();
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (LibraryTable.Listener listener : getListeners()) {
-            listener.afterLibraryAdded(newLibrary);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (LibraryTable.Listener listener : getListeners()) {
+          listener.afterLibraryAdded(newLibrary);
         }
       });
     }
@@ -538,12 +530,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     @Override
     public void afterLibraryRenamed(final Library library) {
       incModificationCount();
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (LibraryTable.Listener listener : getListeners()) {
-            listener.afterLibraryRenamed(library);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (LibraryTable.Listener listener : getListeners()) {
+          listener.afterLibraryRenamed(library);
         }
       });
     }
@@ -551,12 +540,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     @Override
     public void beforeLibraryRemoved(final Library library) {
       incModificationCount();
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (LibraryTable.Listener listener : getListeners()) {
-            listener.beforeLibraryRemoved(library);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (LibraryTable.Listener listener : getListeners()) {
+          listener.beforeLibraryRemoved(library);
         }
       });
     }
@@ -564,12 +550,9 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     @Override
     public void afterLibraryRemoved(final Library library) {
       incModificationCount();
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (LibraryTable.Listener listener : getListeners()) {
-            listener.afterLibraryRemoved(library);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (LibraryTable.Listener listener : getListeners()) {
+          listener.afterLibraryRemoved(library);
         }
       });
     }
@@ -606,36 +589,27 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     @Override
     public void jdkAdded(final Sdk jdk) {
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (ProjectJdkTable.Listener listener : getListeners()) {
-            listener.jdkAdded(jdk);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (ProjectJdkTable.Listener listener : getListeners()) {
+          listener.jdkAdded(jdk);
         }
       });
     }
 
     @Override
     public void jdkRemoved(final Sdk jdk) {
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (ProjectJdkTable.Listener listener : getListeners()) {
-            listener.jdkRemoved(jdk);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (ProjectJdkTable.Listener listener : getListeners()) {
+          listener.jdkRemoved(jdk);
         }
       });
     }
 
     @Override
     public void jdkNameChanged(final Sdk jdk, final String previousName) {
-      mergeRootsChangesDuring(new Runnable() {
-        @Override
-        public void run() {
-          for (ProjectJdkTable.Listener listener : getListeners()) {
-            listener.jdkNameChanged(jdk, previousName);
-          }
+      mergeRootsChangesDuring(() -> {
+        for (ProjectJdkTable.Listener listener : getListeners()) {
+          listener.jdkNameChanged(jdk, previousName);
         }
       });
       String currentName = getProjectSdkName();

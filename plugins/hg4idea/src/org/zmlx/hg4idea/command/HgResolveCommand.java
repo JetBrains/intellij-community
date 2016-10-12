@@ -18,6 +18,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
@@ -44,24 +46,24 @@ public class HgResolveCommand {
     }
     final HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setSilent(true);
-    final HgCommandResult result = executor.executeInCurrentThread(repo, "resolve", Arrays.asList("--list"));
+    final HgCommandResult result = executor.executeInCurrentThread(repo, "resolve", Collections.singletonList("--list"));
     if (result == null) {
       return Collections.emptyMap();
     }
     return handleResult(repo, result);
   }
 
-  public void list(final VirtualFile repo, final Consumer<Map<HgFile, HgResolveStatusEnum>> resultHandler) {
+  public void getListAsynchronously(final VirtualFile repo, final Consumer<Map<HgFile, HgResolveStatusEnum>> resultHandler) {
     if (repo == null) {
-      resultHandler.consume(Collections.<HgFile, HgResolveStatusEnum>emptyMap());
+      resultHandler.consume(Collections.emptyMap());
     }
     final HgCommandExecutor executor = new HgCommandExecutor(myProject);
     executor.setSilent(true);
-    executor.execute(repo, "resolve", Arrays.asList("--list"), new HgCommandResultHandler() {
+    executor.execute(repo, "resolve", Collections.singletonList("--list"), new HgCommandResultHandler() {
       @Override
       public void process(@Nullable HgCommandResult result) {
         if (result == null) {
-          resultHandler.consume(Collections.<HgFile, HgResolveStatusEnum>emptyMap());
+          resultHandler.consume(Collections.emptyMap());
         }
 
         final Map<HgFile, HgResolveStatusEnum> resolveStatus = handleResult(repo, result);
@@ -85,11 +87,11 @@ public class HgResolveCommand {
     return resolveStatus;
   }
 
-  public void markResolved(VirtualFile repo, VirtualFile path) {
-    new HgCommandExecutor(myProject).execute(repo, "resolve", Arrays.asList("--mark", path.getPath()), null);
+  public void markResolved(@NotNull VirtualFile repo, @NotNull VirtualFile path) {
+    markResolved(repo, Collections.singleton(VcsUtil.getFilePath(path)));
   }
 
-  public void markResolved(VirtualFile repo, Collection<FilePath> paths) {
+  public void markResolved(@NotNull VirtualFile repo, @NotNull Collection<FilePath> paths) {
     for (List<String> chunk : VcsFileUtil.chunkPaths(repo, paths)) {
       final List<String> args = new ArrayList<String>();
       args.add("--mark");

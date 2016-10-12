@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -33,13 +34,13 @@ public class SeparatorComponent extends JComponent {
 
   public SeparatorComponent(int aVerticalGap) {
     myVGap = aVerticalGap;
-    setBorder(BorderFactory.createEmptyBorder(myVGap, 0, myVGap, 0));
+    setBorder(JBUI.Borders.empty(myVGap, 0));
   }
 
   public SeparatorComponent(int aVerticalGap, int aHorizontalGap) {
     myVGap = aVerticalGap;
     myHGap = aHorizontalGap;
-    setBorder(BorderFactory.createEmptyBorder(myVGap, 0, myVGap, 0));
+    setBorder(JBUI.Borders.empty(myVGap, 0));
   }
 
   public SeparatorComponent(int aVerticalGap, Color aColor, Color aShadowColor) {
@@ -51,7 +52,7 @@ public class SeparatorComponent extends JComponent {
     myHGap = horizontalGap;
     myColor = aColor;
     myShadow = aShadowColor;
-    setBorder(BorderFactory.createEmptyBorder(myVGap, 0, myVGap, 0));
+    setBorder(JBUI.Borders.empty(myVGap, 0));
   }
 
   public SeparatorComponent(Color color, SeparatorOrientation orientation) {
@@ -87,15 +88,29 @@ public class SeparatorComponent extends JComponent {
 
   @Override
   public Dimension getPreferredSize() {
-    if (myOrientation != SeparatorOrientation.VERTICAL)
+    if (myOrientation != SeparatorOrientation.VERTICAL) {
       return new Dimension(0, myVGap * 2 + 1);
-    else
+    }
+    else {
       return new Dimension(myHGap * 2 + 1, 1 + ((myShadow != null) ? 1 : 0));
+    }
   }
 
   @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
+  }
+
+  @Override
+  public Dimension getMaximumSize() {
+    Dimension size = getPreferredSize();
+    if (myOrientation != SeparatorOrientation.VERTICAL) {
+      size.width = Integer.MAX_VALUE;
+    }
+    else {
+      size.height = Integer.MAX_VALUE;
+    }
+    return size;
   }
 
   /**

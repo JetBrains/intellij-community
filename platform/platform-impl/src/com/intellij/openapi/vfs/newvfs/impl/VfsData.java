@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class VfsData {
   static {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
       @Override
-      public void writeActionFinished(Object action) {
+      public void writeActionFinished(@NotNull Object action) {
         // after top-level write action is finished, all the deletion listeners should have processed the deleted files
         // and their data is considered safe to remove. From this point on accessing a removed file will result in an exception.
         if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {

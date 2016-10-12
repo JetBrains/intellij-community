@@ -3,35 +3,39 @@ package com.siyeh.igtest.controlflow.pointless_null_check;
 public class PointlessNullCheck {
 
     public void testViolations(Object arg) {
-        if (arg != null && arg instanceof String) {
+        if (<warning descr="Unnecessary 'null' check before 'instanceof' expression">arg != null</warning> && arg instanceof String) {
             System.out.println("this should trigger a warning");
         }
 
-        if (null != arg && arg instanceof String) {
+        if (<warning descr="Unnecessary 'null' check before 'instanceof' expression">null != arg</warning> && arg instanceof String) {
             System.out.println("this should trigger a warning");
         }
 
-        if (arg instanceof String && null != arg) {
+        if (arg instanceof String && <warning descr="Unnecessary 'null' check after 'instanceof' expression">null != arg</warning>) {
             System.out.println("this should trigger a warning");
         }
 
-        if (arg instanceof String && arg != null) {
+        if (arg instanceof String && <warning descr="Unnecessary 'null' check after 'instanceof' expression">arg != null</warning>) {
             System.out.println("this should trigger a warning");
         }
 
-        if ((arg instanceof String) && (arg != null)) {
+        if ((arg instanceof String) && (<warning descr="Unnecessary 'null' check after 'instanceof' expression">arg != null</warning>)) {
             System.out.println("this should trigger a warning");
         }
 
-        if (arg == null || !(arg instanceof String)) {
+        if (<warning descr="Unnecessary 'null' check before 'instanceof' expression">arg == null</warning> || !(arg instanceof String)) {
             System.out.println("this should trigger a warning");
         }
 
-        if (((arg) != (null)) && ((arg) instanceof String)) {
+        if ((<warning descr="Unnecessary 'null' check before 'instanceof' expression">(arg) != (null)</warning>) && ((arg) instanceof String)) {
           System.out.println("this should trigger a warning");
         }
-        if (arg != null && (arg instanceof String || arg instanceof Integer)) {
+        if (<warning descr="Unnecessary 'null' check before 'instanceof' expression">arg != null</warning> && (arg instanceof String || arg instanceof Integer)) {
             System.out.println("this should trigger a warning");
+        }
+
+        if (arg instanceof String && arg.equals(arg) && <warning descr="Unnecessary 'null' check after 'instanceof' expression">arg != null</warning>) {
+            System.out.println("warning");
         }
      }
 
@@ -50,7 +54,7 @@ public class PointlessNullCheck {
             System.out.println("this should not trigger a warning");
         }
 
-        if (arg.charAt(5) instanceof String && arg.charAt(5) != null) {
+        if (arg1.substring(5) instanceof String && arg1.substring(5) != null) {
             System.out.println("this should not trigger a warning");
         }
 
@@ -63,6 +67,10 @@ public class PointlessNullCheck {
         }
         if (this.arg1 != null && arg1 instanceof String) {
             System.out.println("this should not trigger a warning");
+        }
+
+        if (arg1 != null && arg1.equals(arg1) && arg1 instanceof String) {
+            System.out.println("no warning");
         }
     }
 }

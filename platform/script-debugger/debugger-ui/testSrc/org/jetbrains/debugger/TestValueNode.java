@@ -28,12 +28,7 @@ public class TestValueNode extends XTestValueNode {
     TestCompositeNode childrenNode = new TestCompositeNode();
     value.computeChildren(childrenNode);
     return childrenNode.loadContent(Conditions.<XValueGroup>alwaysFalse(), Conditions.<VariableView>alwaysFalse())
-      .done(new Consumer<Content>() {
-        @Override
-        public void consume(Content content) {
-          children = content;
-        }
-      });
+      .done(content -> children = content);
   }
 
   @Nullable

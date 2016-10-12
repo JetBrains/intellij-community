@@ -50,12 +50,7 @@ public abstract class AbstractConfigUtils {
   // SDK-dependent entities
   @NonNls protected String STARTER_SCRIPT_FILE_NAME;
 
-  private final Condition<Library> LIB_SEARCH_CONDITION = new Condition<Library>() {
-    @Override
-    public boolean value(Library library) {
-      return isSDKLibrary(library);
-    }
-  };
+  private final Condition<Library> LIB_SEARCH_CONDITION = library -> isSDKLibrary(library);
 
   // Common entities
   @NonNls public static final String UNDEFINED_VERSION = "undefined";

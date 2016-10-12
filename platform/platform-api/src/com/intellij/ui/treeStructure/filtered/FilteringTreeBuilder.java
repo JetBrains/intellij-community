@@ -164,35 +164,29 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
 
     getFilteredStructure().refilter();
     getUi().updateSubtree(getRootNode(), false);
-    final Runnable selectionRunnable = new Runnable() {
-      @Override
-      public void run() {
-        revalidateTree();
+    final Runnable selectionRunnable = () -> {
+      revalidateTree();
 
-        Object toSelect = preferredSelection != null ? preferredSelection : myLastSuccessfulSelect;
+      Object toSelect = preferredSelection != null ? preferredSelection : myLastSuccessfulSelect;
 
-        if (adjustSelection && toSelect != null) {
-          final FilteringTreeStructure.FilteringNode nodeToSelect = getFilteredStructure().getVisibleNodeFor(toSelect);
+      if (adjustSelection && toSelect != null) {
+        final FilteringTreeStructure.FilteringNode nodeToSelect = getFilteredStructure().getVisibleNodeFor(toSelect);
 
-          if (nodeToSelect != null) {
-            select(nodeToSelect, new Runnable() {
-              @Override
-              public void run() {
-                if (getSelectedElements().contains(nodeToSelect)) {
-                  myLastSuccessfulSelect = getOriginalNode(nodeToSelect);
-                }
-                selectionDone.setDone();
-              }
-            });
-          }
-          else {
-            TreeUtil.ensureSelection(myTree);
+        if (nodeToSelect != null) {
+          select(nodeToSelect, () -> {
+            if (getSelectedElements().contains(nodeToSelect)) {
+              myLastSuccessfulSelect = getOriginalNode(nodeToSelect);
+            }
             selectionDone.setDone();
-          }
+          });
         }
         else {
+          TreeUtil.ensureSelection(myTree);
           selectionDone.setDone();
         }
+      }
+      else {
+        selectionDone.setDone();
       }
     };
     if (!ApplicationManager.getApplication().isUnitTestMode()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.SchemeExporter;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -39,19 +35,12 @@ public class CodeStyleSchemeCopyExporter extends SchemeExporter<CodeStyleScheme>
   @Override
   public void exportScheme(@NotNull final CodeStyleScheme scheme, @NotNull OutputStream outputStream) throws Exception {
     assert scheme instanceof CodeStyleSchemeImpl;
-    writeToStream(outputStream, schemeToDom((CodeStyleSchemeImpl)scheme));
+    writeToStream(outputStream, ((CodeStyleSchemeImpl)scheme).writeScheme());
   }
 
   @Override
   public String getExtension() {
     return "xml";
-  }
-
-  private static Element schemeToDom(@NotNull CodeStyleSchemeImpl scheme) throws WriteExternalException {
-    Element newElement = new Element("code_scheme");
-    newElement.setAttribute("name", scheme.getName());
-    scheme.writeExternal(newElement);
-    return newElement;
   }
 
   private static void writeToStream(@NotNull OutputStream outputStream, @NotNull Element element) throws IOException {

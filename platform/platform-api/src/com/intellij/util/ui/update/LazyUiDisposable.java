@@ -57,15 +57,13 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
 
     try {
       findParentDisposable()
-        .done(new Consumer<Disposable>() {
-          public void consume(Disposable parent) {
-            Project project = null;
-            if (ApplicationManager.getApplication() != null) {
-              project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
-            }
-            initialize(parent, myChild, project);
-            Disposer.register(parent, myChild);
+        .done(parent -> {
+          Project project = null;
+          if (ApplicationManager.getApplication() != null) {
+            project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
           }
+          initialize(parent, myChild, project);
+          Disposer.register(parent, myChild);
         });
     }
     finally {

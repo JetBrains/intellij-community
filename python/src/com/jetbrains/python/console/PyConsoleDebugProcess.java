@@ -15,15 +15,20 @@
  */
 package com.jetbrains.python.console;
 
+import com.google.common.collect.Maps;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.project.Project;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.python.debugger.PyDebugProcess;
+import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.ServerSocket;
+import java.util.Map;
 
 /**
  * @author traff
@@ -81,10 +86,28 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
     if (myConsoleDebugProcessHandler.getConsoleProcessHandler() instanceof RemoteProcessControl) {
       portToConnect = getRemoteTunneledPort(myLocalPort,
                                             ((RemoteProcessControl)myConsoleDebugProcessHandler.getConsoleProcessHandler()));
-    } else {
+    }
+    else {
       portToConnect = myLocalPort;
     }
-    consoleCommunication.connectToDebugger(portToConnect);
+    Map<String, Boolean> optionsMap = makeDebugOptionsMap(getSession());
+    Map<String, String> envs = getDebuggerEnvs(getSession());
+    consoleCommunication.connectToDebugger(portToConnect, optionsMap, envs);
+  }
+
+  private static Map<String, String> getDebuggerEnvs(XDebugSession session) {
+    Map<String, String> env = Maps.newHashMap();
+    PyDebugRunner.configureDebugEnvironment(session.getProject(), env);
+    return env;
+  }
+
+  private static Map<String, Boolean> makeDebugOptionsMap(XDebugSession session) {
+    Project project = session.getProject();
+    PyDebuggerOptionsProvider userOpts = PyDebuggerOptionsProvider.getInstance(project);
+    Map<String, Boolean> dbgOpts = Maps.newHashMap();
+    dbgOpts.put("save-signatures", userOpts.isSaveCallSignatures());
+    dbgOpts.put("qt-support", userOpts.isSupportQtDebugging());
+    return dbgOpts;
   }
 
   public void waitForNextConnection() {
@@ -97,12 +120,7 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
     if (!isWaitingForConnection()) {
       setWaitingForConnection(true);
 
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          waitForConnection(getCurrentStateMessage(), getConnectionTitle());
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> waitForConnection(getCurrentStateMessage(), getConnectionTitle()));
     }
   }
 }

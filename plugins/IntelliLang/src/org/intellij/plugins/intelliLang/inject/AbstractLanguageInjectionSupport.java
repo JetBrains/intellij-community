@@ -143,17 +143,15 @@ public abstract class AbstractLanguageInjectionSupport extends LanguageInjection
     builder.setDimensionServiceKey("#org.intellij.plugins.intelliLang.inject.config.ui.BaseInjectionDialog");
     builder.setCenterPanel(panel.getComponent());
     builder.setTitle(EditInjectionSettingsAction.EDIT_INJECTION_TITLE);
-    builder.setOkOperation(new Runnable() {
-      public void run() {
-        try {
-          panel.apply();
-          builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
-        }
-        catch (Exception e) {
-          final Throwable cause = e.getCause();
-          final String message = e.getMessage() + (cause != null? "\n  "+cause.getMessage():"");
-          Messages.showErrorDialog(project, message, "Unable to Save");
-        }
+    builder.setOkOperation(() -> {
+      try {
+        panel.apply();
+        builder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
+      }
+      catch (Exception e) {
+        final Throwable cause = e.getCause();
+        final String message = e.getMessage() + (cause != null? "\n  "+cause.getMessage():"");
+        Messages.showErrorDialog(project, message, "Unable to Save");
       }
     });
     if (builder.show() == DialogWrapper.OK_EXIT_CODE) {

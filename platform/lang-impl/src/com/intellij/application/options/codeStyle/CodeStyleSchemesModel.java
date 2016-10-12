@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public class CodeStyleSchemesModel {
   private final EventDispatcher<CodeStyleSettingsListener> myDispatcher = EventDispatcher.create(CodeStyleSettingsListener.class);
   private final Project myProject;
   private boolean myUsePerProjectSettings;
-  
+
   public static final String PROJECT_SCHEME_NAME = "Project";
 
   public CodeStyleSchemesModel(Project project) {
@@ -97,10 +98,9 @@ public class CodeStyleSchemesModel {
   public void reset() {
     myUsePerProjectSettings = getProjectSettings().USE_PER_PROJECT_SETTINGS;
 
-    CodeStyleScheme[] allSchemes = CodeStyleSchemes.getInstance().getSchemes();
     mySettingsToClone.clear();
     mySchemes.clear();
-    ContainerUtil.addAll(mySchemes, allSchemes);
+    ContainerUtil.addAll(mySchemes, CodeStyleSchemesImpl.getSchemeManager().getAllSchemes());
     myGlobalSelected = CodeStyleSchemes.getInstance().findPreferredScheme(getProjectSettings().PREFERRED_PROJECT_CODE_STYLE);
 
     CodeStyleSettings perProjectSettings = getProjectSettings().PER_PROJECT_SETTINGS;
@@ -124,7 +124,7 @@ public class CodeStyleSchemesModel {
 
   /**
    * Updates 'use per-project settings' value within the current model and optionally at the project settings.
-   * 
+   *
    * @param usePerProjectSettings  defines whether 'use per-project settings' are in use
    * @param commit                 flag that defines if current project settings should be applied as well
    */
@@ -133,8 +133,8 @@ public class CodeStyleSchemesModel {
       final CodeStyleSettingsManager projectSettings = getProjectSettings();
       projectSettings.USE_PER_PROJECT_SETTINGS = usePerProjectSettings;
       projectSettings.PER_PROJECT_SETTINGS = myProjectScheme.getCodeStyleSettings();
-    } 
-    
+    }
+
     if (myUsePerProjectSettings != usePerProjectSettings) {
       myUsePerProjectSettings = usePerProjectSettings;
       myDispatcher.getMulticaster().usePerProjectSettingsOptionChanged();
@@ -154,10 +154,9 @@ public class CodeStyleSchemesModel {
       return true;
     }
     Set<CodeStyleScheme> configuredSchemesSet = new HashSet<CodeStyleScheme>(getSchemes());
-    Set<CodeStyleScheme> savedSchemesSet = new HashSet<CodeStyleScheme>(Arrays.asList(schemes.getSchemes()));
-    return !configuredSchemesSet.equals(savedSchemesSet);
+    return !configuredSchemesSet.equals(new THashSet<>(CodeStyleSchemesImpl.getSchemeManager().getAllSchemes()));
   }
-  
+
   public void apply() {
     CodeStyleSettingsManager projectSettingsManager = getProjectSettings();
     projectSettingsManager.USE_PER_PROJECT_SETTINGS = myUsePerProjectSettings;
@@ -165,7 +164,7 @@ public class CodeStyleSchemesModel {
       myUsePerProjectSettings || myGlobalSelected == null ? null : myGlobalSelected.getName();
     projectSettingsManager.PER_PROJECT_SETTINGS = myProjectScheme.getCodeStyleSettings();
 
-    ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).getSchemeManager().setSchemes(mySchemes, myGlobalSelected, null);
+    CodeStyleSchemesImpl.getSchemeManager().setSchemes(mySchemes, myGlobalSelected, null);
 
     // We want to avoid the situation when 'real code style' differs from the copy stored here (e.g. when 'real code style' changes
     // are 'committed' by pressing 'Apply' button). So, we reset the copies here assuming that this method is called on 'Apply'
@@ -256,15 +255,12 @@ public class CodeStyleSchemesModel {
     List<CodeStyleScheme> schemes = new ArrayList<CodeStyleScheme>();
     schemes.addAll(getSchemes());
     schemes.add(myProjectScheme);
-    Collections.sort(schemes, new Comparator<CodeStyleScheme>() {
-      @Override
-      public int compare(CodeStyleScheme s1, CodeStyleScheme s2) {
-        if (isProjectScheme(s1)) return -1;
-        if (isProjectScheme(s2)) return 1;
-        if (s1.isDefault()) return -1;
-        if (s2.isDefault()) return 1;
-        return s1.getName().compareToIgnoreCase(s2.getName());
-      }
+    Collections.sort(schemes, (s1, s2) -> {
+      if (isProjectScheme(s1)) return -1;
+      if (isProjectScheme(s2)) return 1;
+      if (s1.isDefault()) return -1;
+      if (s2.isDefault()) return 1;
+      return s1.getName().compareToIgnoreCase(s2.getName());
     });
     return schemes;
   }

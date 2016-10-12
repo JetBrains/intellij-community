@@ -23,6 +23,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +45,7 @@ class SwitcherToolWindowsListRenderer extends ColoredListCellRenderer {
     myPinned = pinned;
   }
 
-  protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+  protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
     hide = false;
     setPaintFocusBorder(false);
     if (value instanceof ToolWindow) {

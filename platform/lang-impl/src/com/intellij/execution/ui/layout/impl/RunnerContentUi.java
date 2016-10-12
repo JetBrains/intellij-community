@@ -98,16 +98,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   final MyDragOutDelegate myDragOutDelegate = new MyDragOutDelegate();
 
   JBRunnerTabs myTabs;
-  private final Comparator<TabInfo> myTabsComparator = new Comparator<TabInfo>() {
-    @Override
-    public int compare(@NotNull final TabInfo o1, @NotNull final TabInfo o2) {
-      //noinspection ConstantConditions
-      TabImpl tab1 = getTabFor(o1);
-      TabImpl tab2 = getTabFor(o2);
-      int index1 = tab1 != null ? tab1.getIndex() : -1;
-      int index2 = tab2 != null ? tab2.getIndex() : -1;
-      return index1 - index2;
-    }
+  private final Comparator<TabInfo> myTabsComparator = (o1, o2) -> {
+    //noinspection ConstantConditions
+    TabImpl tab1 = getTabFor(o1);
+    TabImpl tab2 = getTabFor(o2);
+    int index1 = tab1 != null ? tab1.getIndex() : -1;
+    int index2 = tab2 != null ? tab2.getIndex() : -1;
+    return index1 - index2;
   };
   private final Project myProject;
 
@@ -148,12 +145,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   private RunnerContentUi myOriginal;
   private final CopyOnWriteArraySet<Listener> myDockingListeners = new CopyOnWriteArraySet<Listener>();
-  private final Set<RunnerContentUi> myChildren = new TreeSet<RunnerContentUi>(new Comparator<RunnerContentUi>() {
-    @Override
-    public int compare(@NotNull RunnerContentUi o1, @NotNull RunnerContentUi o2) {
-      return o1.myWindow - o2.myWindow;
-    }
-  });
+  private final Set<RunnerContentUi> myChildren = new TreeSet<RunnerContentUi>((o1, o2) -> o1.myWindow - o2.myWindow);
   private int myWindow;
   private boolean myDisposing;
 
@@ -943,13 +935,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       if (name != null && contents.size() > 1 && !usedNames.contains(name)) {
         title = name;
       } else {
-        title = StringUtil.join(contents, new NotNullFunction<Content, String>() {
-          @NotNull
-          @Override
-          public String fun(Content dom) {
-            return dom.getTabName();
-          }
-        },  " | ");
+        title = StringUtil.join(contents, (NotNullFunction<Content, String>)dom -> dom.getTabName(), " | ");
       }
     }
     usedNames.add(title);
@@ -1183,13 +1169,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       contents.add(content);
     }
     Content[] all = contents.toArray(new Content[contents.size()]);
-    Arrays.sort(all, new Comparator<Content>() {
-      @Override
-      public int compare(@NotNull Content content, @NotNull Content content1) {
-        final int i = getStateFor(content).getTab().getDefaultIndex();
-        final int i1 = getStateFor(content1).getTab().getDefaultIndex();
-        return i - i1;
-      }
+    Arrays.sort(all, (content, content1) -> {
+      final int i = getStateFor(content).getTab().getDefaultIndex();
+      final int i1 = getStateFor(content1).getTab().getDefaultIndex();
+      return i - i1;
     });
 
     setStateIsBeingRestored(true, this);
@@ -1455,21 +1438,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
         // [kirillk] this is done later since restoreUiState doesn't work properly in the addNotify call chain
         //todo to investigate and to fix (may cause extra flickering)
         //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            restoreLastUiState().doWhenDone(new Runnable() {
-              @Override
-              public void run() {
-                if (!myWasEverAdded) {
-                  myWasEverAdded = true;
-                  attractOnStartup();
-                  myInitialized.setDone();
-                }
-              }
-            });
+        SwingUtilities.invokeLater(() -> restoreLastUiState().doWhenDone(() -> {
+          if (!myWasEverAdded) {
+            myWasEverAdded = true;
+            attractOnStartup();
+            myInitialized.setDone();
           }
-        });
+        }));
       }
     }
 
@@ -1489,12 +1464,9 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   // [kirillk] this is done later since "startup" attractions should be done gently, only if no explicit calls are done
   private void attractOnStartup() {
     final int currentCount = myAttractionCount;
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (currentCount < myAttractionCount) return;
-        attractByCondition(LayoutViewOptions.STARTUP, false);
-      }
+    SwingUtilities.invokeLater(() -> {
+      if (currentCount < myAttractionCount) return;
+      attractByCondition(LayoutViewOptions.STARTUP, false);
     });
   }
 
@@ -1517,30 +1489,22 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
                                  final LayoutAttractionPolicy defaultPolicy,
                                  final boolean afterInitialized,
                                  final boolean activate) {
-    IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        myInitialized.processOnDone(new Runnable() {
-          @Override
-          public void run() {
-            Content content = findContent(contentId);
-            if (content == null) return;
+    IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(() -> myInitialized.processOnDone(() -> {
+      Content content = findContent(contentId);
+      if (content == null) return;
 
-            final LayoutAttractionPolicy policy = getOrCreatePolicyFor(contentId, policyMap, defaultPolicy);
-            if (activate) {
-              // See IDEA-93683, bounce attraction should not disable further focus attraction
-              if (!(policy instanceof LayoutAttractionPolicy.Bounce)) {
-                myAttractionCount++;
-              }
-              policy.attract(content, myRunnerUi);
-            }
-            else {
-              policy.clearAttraction(content, myRunnerUi);
-            }
-          }
-        }, afterInitialized);
+      final LayoutAttractionPolicy policy = getOrCreatePolicyFor(contentId, policyMap, defaultPolicy);
+      if (activate) {
+        // See IDEA-93683, bounce attraction should not disable further focus attraction
+        if (!(policy instanceof LayoutAttractionPolicy.Bounce)) {
+          myAttractionCount++;
+        }
+        policy.attract(content, myRunnerUi);
       }
-    });
+      else {
+        policy.clearAttraction(content, myRunnerUi);
+      }
+    }, afterInitialized));
   }
 
 
@@ -1631,7 +1595,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Override
-  public ActionCallback select(final Content content, final boolean requestFocus) {
+  public ActionCallback select(@NotNull final Content content, final boolean requestFocus) {
     final GridImpl grid = (GridImpl)findGridFor(content);
     if (grid == null) return ActionCallback.DONE;
 
@@ -1641,12 +1605,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
 
     final ActionCallback result = new ActionCallback();
-    myTabs.select(info, false).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        grid.select(content, requestFocus).notifyWhenDone(result);
-      }
-    });
+    myTabs.select(info, false).doWhenDone(() -> grid.select(content, requestFocus).notifyWhenDone(result));
 
 
     return result;
@@ -1657,19 +1616,13 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     final TabInfo current = myTabs.getSelectedInfo();
     myTabs.getPresentation().setPaintBlocked(true, true);
 
-    select(content, false).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        myTabs.getComponent().validate();
-        toRestore.run().doWhenDone(new Runnable() {
-          @Override
-          public void run() {
-            assert current != null;
-            myTabs.select(current, true);
-            myTabs.getPresentation().setPaintBlocked(false, true);
-          }
-        });
-      }
+    select(content, false).doWhenDone(() -> {
+      myTabs.getComponent().validate();
+      toRestore.run().doWhenDone(() -> {
+        assert current != null;
+        myTabs.select(current, true);
+        myTabs.getPresentation().setPaintBlocked(false, true);
+      });
     });
   }
 

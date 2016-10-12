@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -43,15 +44,17 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   private boolean myContentLoadFailed = false;
   private Charset myCharset;
 
-  public VcsVirtualFile(String path,
-                        VcsFileRevision revision, VirtualFileSystem fileSystem) {
+  public VcsVirtualFile(@NotNull String path,
+                        @Nullable VcsFileRevision revision,
+                        @NotNull VirtualFileSystem fileSystem) {
     super(path, fileSystem);
     myFileRevision = revision;
   }
 
-  public VcsVirtualFile(String path,
-                        byte[] content,
-                        String revision, VirtualFileSystem fileSystem) {
+  public VcsVirtualFile(@NotNull String path,
+                        @NotNull byte[] content,
+                        @Nullable String revision,
+                        @NotNull VirtualFileSystem fileSystem) {
     this(path, null, fileSystem);
     myContent = content;
     setRevision(revision);
@@ -70,7 +73,8 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
 
   private void loadContent() throws IOException {
     if (myContent != null) return;
-    
+    assert myFileRevision != null;
+
     final VcsFileSystem vcsFileSystem = ((VcsFileSystem)getFileSystem());
 
     try {
@@ -122,6 +126,7 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
 
   }
 
+  @Nullable
   public VcsFileRevision getFileRevision() {
     return myFileRevision;
   }

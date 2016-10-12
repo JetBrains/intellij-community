@@ -26,6 +26,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.RadioButtonEnumModel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -119,7 +120,7 @@ public class GitNewResetDialog extends DialogWrapper {
   private static String getTargetText(@NotNull VcsFullCommitDetails commit) {
     String commitMessage = StringUtil.escapeXml(StringUtil.shortenTextWithEllipsis(commit.getSubject(), 20, 0));
     return String.format("<code><b>%s</b> \"%s\"</code> by <code>%s</code>",
-                         commit.getId().toShortString(), commitMessage, commit.getAuthor().getName());
+                         commit.getId().toShortString(), commitMessage, VcsUserUtil.getShortPresentation(commit.getAuthor()));
   }
 
   @NotNull

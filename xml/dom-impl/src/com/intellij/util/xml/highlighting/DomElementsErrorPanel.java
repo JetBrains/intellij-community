@@ -106,20 +106,11 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   }
 
   private void addUpdateRequest() {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-
-      @Override
-      public void run() {
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isOpen() && !myProject.isDisposed()) {
-              updatePanel();
-            }
-          }
-        }, ALARM_PERIOD);
+    ApplicationManager.getApplication().invokeLater(() -> myAlarm.addRequest(() -> {
+      if (myProject.isOpen() && !myProject.isDisposed()) {
+        updatePanel();
       }
-    });
+    }, ALARM_PERIOD));
   }
 
   @Override
@@ -188,21 +179,13 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     }
 
     protected boolean isInspectionCompleted() {
-      return ContainerUtil.and(myDomElements, new Condition<DomElement>() {
-        @Override
-        public boolean value(final DomElement element) {
-          return myAnnotationsManager.getHighlightStatus(element) == DomHighlightStatus.INSPECTIONS_FINISHED;
-        }
-      });
+      return ContainerUtil.and(myDomElements,
+                               element -> myAnnotationsManager.getHighlightStatus(element) == DomHighlightStatus.INSPECTIONS_FINISHED);
     }
 
     protected boolean isErrorAnalyzingFinished() {
-      return ContainerUtil.and(myDomElements, new Condition<DomElement>() {
-        @Override
-        public boolean value(final DomElement element) {
-          return myAnnotationsManager.getHighlightStatus(element).compareTo(DomHighlightStatus.ANNOTATORS_FINISHED) >= 0;
-        }
-      });
+      return ContainerUtil.and(myDomElements,
+                               element -> myAnnotationsManager.getHighlightStatus(element).compareTo(DomHighlightStatus.ANNOTATORS_FINISHED) >= 0);
     }
 
   }

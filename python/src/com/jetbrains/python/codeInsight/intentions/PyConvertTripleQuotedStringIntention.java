@@ -181,11 +181,6 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
 
   @NotNull
   private static List<StringNodeInfo> extractStringNodesInfo(@NotNull PyStringLiteralExpression expression) {
-    return ContainerUtil.map(expression.getStringNodes(), new Function<ASTNode, StringNodeInfo>() {
-      @Override
-      public StringNodeInfo fun(ASTNode node) {
-        return new StringNodeInfo(node);
-      }
-    });
+    return ContainerUtil.map(expression.getStringNodes(), node -> new StringNodeInfo(node));
   }
 }

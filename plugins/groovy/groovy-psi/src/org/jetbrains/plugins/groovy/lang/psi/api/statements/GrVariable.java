@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -33,13 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  */
 public interface GrVariable extends PsiVariable, GrNamedElement {
   GrVariable[] EMPTY_ARRAY = new GrVariable[0];
-  ArrayFactory<GrVariable> ARRAY_FACTORY = new ArrayFactory<GrVariable>() {
-    @NotNull
-    @Override
-    public GrVariable[] create(int count) {
-      return new GrVariable[count];
-    }
-  };
+  ArrayFactory<GrVariable> ARRAY_FACTORY = count -> new GrVariable[count];
 
   @Override
   @NotNull
@@ -64,4 +60,7 @@ public interface GrVariable extends PsiVariable, GrNamedElement {
   GrModifierList getModifierList();
 
   void setInitializerGroovy(@Nullable GrExpression initializer);
+
+  @Override
+  boolean hasModifierProperty(@GrModifier.GrModifierConstant @NonNls @NotNull String name);
 }

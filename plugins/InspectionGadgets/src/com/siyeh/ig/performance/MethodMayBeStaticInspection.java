@@ -43,6 +43,11 @@ public class MethodMayBeStaticInspection extends MethodMayBeStaticInspectionBase
       }
 
       @Override
+      public boolean startInWriteAction() {
+        return false;
+      }
+
+      @Override
       @NotNull
       public String getName() {
         return InspectionGadgetsBundle.message("change.modifier.quickfix", PsiModifier.STATIC);

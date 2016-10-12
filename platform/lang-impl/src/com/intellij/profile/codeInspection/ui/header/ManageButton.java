@@ -18,7 +18,6 @@ package com.intellij.profile.codeInspection.ui.header;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -62,19 +61,27 @@ public class ManageButton extends ComboBoxAction implements DumbAware {
     return group;
   }
 
-  private class ShareWithTeamCheckBoxAction extends CheckboxAction implements DumbAware {
-    public ShareWithTeamCheckBoxAction() {
-      super("Copy to Project");
+  @Override
+  protected boolean shouldShowDisabledActions() {
+    return true;
+  }
+
+  private class ShareWithTeamCheckBoxAction extends AnAction implements DumbAware {
+    @Override
+    public void update(AnActionEvent e) {
+      final boolean isProjectLevel = myBuilder.isProjectLevel();
+      e.getPresentation().setText(isProjectLevel ? "Set as Global" : "Copy to Project");
+      e.getPresentation().setEnabled(myBuilder.canChangeProfileLevel());
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
-      return myBuilder.isProjectLevel();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myBuilder.setIsProjectLevel(state);
+    public void actionPerformed(AnActionEvent e) {
+      if (myBuilder.isProjectLevel()) {
+        myBuilder.setAsGlobal();
+      }
+      else {
+        myBuilder.moveToProject();
+      }
     }
   }
 

@@ -71,11 +71,9 @@ public class CompilerPathsEx extends CompilerPaths {
 
   public static void visitFiles(final Collection<VirtualFile> directories, final FileVisitor visitor) {
     for (final VirtualFile outputDir : directories) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          final String path = outputDir.getPath();
-          visitor.accept(outputDir, path, path);
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        final String path = outputDir.getPath();
+        visitor.accept(outputDir, path, path);
       });
     }
   }

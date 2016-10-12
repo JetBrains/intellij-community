@@ -15,7 +15,10 @@
  */
 package git4idea.push;
 
-import com.intellij.dvcs.push.*;
+import com.intellij.dvcs.push.OutgoingCommitsProvider;
+import com.intellij.dvcs.push.OutgoingResult;
+import com.intellij.dvcs.push.PushSpec;
+import com.intellij.dvcs.push.VcsError;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.vcs.log.VcsFullCommitDetails;

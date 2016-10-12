@@ -90,12 +90,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     if (psiElement().afterLeaf(psiElement().withText(".")).withSuperParent(2, psiElement(PsiNewExpression.class)).accepts(element)) {
       if (((PsiNewExpression)element.getParent().getParent()).getClassReference() == element.getParent()) {
         PsiType[] types = ExpectedTypesGetter.getExpectedTypes(element, false);
-        return new OrFilter(ContainerUtil.map2Array(types, ElementFilter.class, new Function<PsiType, ElementFilter>() {
-          @Override
-          public ElementFilter fun(PsiType type) {
-            return new AssignableFromFilter(type);
-          }
-        }));
+        return new OrFilter(ContainerUtil.map2Array(types, ElementFilter.class, (Function<PsiType, ElementFilter>)type -> new AssignableFromFilter(type)));
       }
     }
 
@@ -184,13 +179,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
         }
 
         for (final ExpectedTypeInfo info : mergedInfos) {
-          BasicExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), new Consumer<LookupElement>() {
-            @Override
-            public void consume(LookupElement lookupElement) {
-              final PsiType psiType = JavaCompletionUtil.getLookupElementType(lookupElement);
-              if (psiType != null && info.getType().isAssignableFrom(psiType)) {
-                result.addElement(decorate(lookupElement, _infos));
-              }
+          BasicExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(params, info), lookupElement -> {
+            final PsiType psiType = JavaCompletionUtil.getLookupElementType(lookupElement);
+            if (psiType != null && info.getType().isAssignableFrom(psiType)) {
+              result.addElement(decorate(lookupElement, _infos));
             }
           }, result.getPrefixMatcher());
           
@@ -224,12 +216,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
   @NotNull
   static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
-    return new Consumer<LookupElement>() {
-      @Override
-      public void consume(final LookupElement lookupElement) {
-        result.addElement(decorate(lookupElement, infos));
-      }
-    };
+    return lookupElement -> result.addElement(decorate(lookupElement, infos));
   }
 
   private static void addExpectedTypeMembers(CompletionParameters params,
@@ -249,6 +236,10 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
+    if (parameters.getPosition() instanceof PsiComment) {
+      return;
+    }
+
     super.fillCompletionVariants(parameters, JavaCompletionSorting.addJavaSorting(parameters, result));
   }
 

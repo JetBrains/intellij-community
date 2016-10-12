@@ -50,16 +50,13 @@ public class HighlightUsagesAction extends AnAction implements DumbAware {
 
     CommandProcessor.getInstance().executeCommand(
       project,
-      new Runnable() {
-        @Override
-        public void run() {
-          PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-          try {
-            HighlightUsagesHandler.invoke(project, editor, psiFile);
-          }
-          catch (IndexNotReadyException ex) {
-            DumbService.getInstance(project).showDumbModeNotification(ActionsBundle.message("action.HighlightUsagesInFile.not.ready"));
-          }
+      () -> {
+        PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+        try {
+          HighlightUsagesHandler.invoke(project, editor, psiFile);
+        }
+        catch (IndexNotReadyException ex) {
+          DumbService.getInstance(project).showDumbModeNotification(ActionsBundle.message("action.HighlightUsagesInFile.not.ready"));
         }
       },
       commandName,

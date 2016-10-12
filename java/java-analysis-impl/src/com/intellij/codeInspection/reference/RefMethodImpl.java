@@ -338,12 +338,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public void accept(@NotNull final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          ((RefJavaVisitor)visitor).visitMethod(RefMethodImpl.this);
-        }
-      });
+      ApplicationManager.getApplication().runReadAction(() -> ((RefJavaVisitor)visitor).visitMethod(RefMethodImpl.this));
     } else {
       super.accept(visitor);
     }
@@ -432,20 +427,17 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public String getName() {
     if (isValid()) {
       final String[] result = new String[1];
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          PsiMethod psiMethod = (PsiMethod) getElement();
-          if (psiMethod instanceof SyntheticElement) {
-            result[0] = psiMethod.getName();
-          }
-          else {
-            result[0] = PsiFormatUtil.formatMethod(psiMethod,
-                                                   PsiSubstitutor.EMPTY,
-                                                   PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                   PsiFormatUtilBase.SHOW_TYPE
-            );
-          }
+      final Runnable runnable = () -> {
+        PsiMethod psiMethod = (PsiMethod) getElement();
+        if (psiMethod instanceof SyntheticElement) {
+          result[0] = psiMethod.getName();
+        }
+        else {
+          result[0] = PsiFormatUtil.formatMethod(psiMethod,
+                                                 PsiSubstitutor.EMPTY,
+                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                 PsiFormatUtilBase.SHOW_TYPE
+          );
         }
       };
 
@@ -460,13 +452,10 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   @Override
   public String getExternalName() {
     final String[] result = new String[1];
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        final PsiMethod psiMethod = (PsiMethod)getElement();
-        LOG.assertTrue(psiMethod != null);
-        result[0] = PsiFormatUtil.getExternalName(psiMethod, true, Integer.MAX_VALUE);
-      }
+    final Runnable runnable = () -> {
+      final PsiMethod psiMethod = (PsiMethod)getElement();
+      LOG.assertTrue(psiMethod != null);
+      result[0] = PsiFormatUtil.getExternalName(psiMethod, true, Integer.MAX_VALUE);
     };
 
     ApplicationManager.getApplication().runReadAction(runnable);

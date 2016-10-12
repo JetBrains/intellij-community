@@ -62,12 +62,10 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     }
 
     public Comparator<VcsFileRevision> getComparator() {
-      return new Comparator<VcsFileRevision>() {
-        public int compare(VcsFileRevision r1, VcsFileRevision r2) {
-          if (!(r1 instanceof CvsFileRevision)) return 1;
-          if (!(r2 instanceof CvsFileRevision)) return -1;
-          return ((CvsFileRevision)r1).getState().compareTo(((CvsFileRevision)r2).getState());
-        }
+      return (r1, r2) -> {
+        if (!(r1 instanceof CvsFileRevision)) return 1;
+        if (!(r2 instanceof CvsFileRevision)) return -1;
+        return ((CvsFileRevision)r1).getState().compareTo(((CvsFileRevision)r2).getState());
       };
     }
   };

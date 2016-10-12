@@ -137,12 +137,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
   @Override
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     final List<TrelloCard> cards = fetchCards(offset + limit, withClosed);
-    return ContainerUtil.map2Array(cards, Task.class, new Function<TrelloCard, Task>() {
-      @Override
-      public Task fun(TrelloCard card) {
-        return new TrelloTask(card, TrelloRepository.this);
-      }
-    });
+    return ContainerUtil.map2Array(cards, Task.class, (Function<TrelloCard, Task>)card -> new TrelloTask(card, TrelloRepository.this));
   }
 
   @Nullable
@@ -302,12 +297,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
     List<TrelloCard> cards = makeRequestAndDeserializeJsonResponse(fetchCardUrl.build(), TrelloUtil.LIST_OF_CARDS_TYPE);
     LOG.debug("Total " + cards.size() + " cards downloaded");
     if (!myIncludeAllCards) {
-      cards = ContainerUtil.filter(cards, new Condition<TrelloCard>() {
-        @Override
-        public boolean value(TrelloCard card) {
-          return card.getIdMembers().contains(myCurrentUser.getId());
-        }
-      });
+      cards = ContainerUtil.filter(cards, card -> card.getIdMembers().contains(myCurrentUser.getId()));
       LOG.debug("Total " + cards.size() + " cards after filtering");
     }
     if (!cards.isEmpty()) {
@@ -325,12 +315,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
         .addParameter("fields", "none");
       final List<TrelloCard> visibleCards = makeRequestAndDeserializeJsonResponse(visibleCardsUrl.build(), TrelloUtil.LIST_OF_CARDS_TYPE);
       LOG.debug("Total " + visibleCards.size() + " visible cards");
-      final Set<String> visibleCardsIDs = ContainerUtil.map2Set(visibleCards, new Function<TrelloCard, String>() {
-        @Override
-        public String fun(TrelloCard card) {
-          return card.getId();
-        }
-      });
+      final Set<String> visibleCardsIDs = ContainerUtil.map2Set(visibleCards, card -> card.getId());
       for (TrelloCard card : cards) {
         card.setVisible(visibleCardsIDs.contains(card.getId()));
       }

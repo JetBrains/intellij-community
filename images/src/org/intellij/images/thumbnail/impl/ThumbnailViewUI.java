@@ -71,17 +71,15 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     private final DeleteProvider deleteProvider;
     private ThumbnailListCellRenderer cellRenderer;
     private JList list;
-    private static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = new Comparator<VirtualFile>() {
-        public int compare(VirtualFile o1, VirtualFile o2) {
-            if (o1.isDirectory() && !o2.isDirectory()) {
-                return -1;
-            }
-            if (o2.isDirectory() && !o1.isDirectory()) {
-                return 1;
-            }
-
-            return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
+    private static final Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = (o1, o2) -> {
+        if (o1.isDirectory() && !o2.isDirectory()) {
+            return -1;
         }
+        if (o2.isDirectory() && !o1.isDirectory()) {
+            return 1;
+        }
+
+        return o1.getPath().toLowerCase().compareTo(o2.getPath().toLowerCase());
     };
 
     public ThumbnailViewUI(ThumbnailViewImpl thumbnailView) {

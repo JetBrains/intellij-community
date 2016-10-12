@@ -19,6 +19,8 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
@@ -89,5 +91,9 @@ public abstract class AbstractTestEvent implements TestEvent {
 
   protected void registerTestProxy(final String proxyId, SMTestProxy testProxy) {
     myExecutionConsole.getTestsMap().put(proxyId, testProxy);
+  }
+
+  protected String decode(String s) {
+    return new String(Base64.decode(s), CharsetToolkit.UTF8_CHARSET);
   }
 }

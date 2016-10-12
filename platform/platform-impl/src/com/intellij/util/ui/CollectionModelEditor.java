@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,10 +48,10 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
     return true;
   }
 
-  @NotNull
   /**
    * Mutable internal list of items (must not be exposed to client)
    */
+  @NotNull
   protected abstract List<T> getItems();
 
   public void reset(@NotNull List<T> originalItems) {

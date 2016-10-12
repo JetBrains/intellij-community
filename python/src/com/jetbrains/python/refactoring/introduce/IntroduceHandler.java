@@ -40,13 +40,13 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
@@ -116,14 +116,14 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     }
     int line = editor.getDocument().getLineNumber(offset);
     for (PsiElement occurrence : occurrences) {
+      PyPsiUtils.assertValid(occurrence);
       if (occurrence.isValid() && editor.getDocument().getLineNumber(occurrence.getTextRange().getStartOffset()) == line) {
         return occurrence;
       }
     }
     for (PsiElement occurrence : occurrences) {
-      if (occurrence.isValid()) {
-        return occurrence;
-      }
+      PyPsiUtils.assertValid(occurrence);
+      return occurrence;
     }
     return null;
   }
@@ -390,11 +390,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           operation.setElement(pyExpression);
           performActionOnElement(operation);
         }
-      }, new Function<PyExpression, String>() {
-        public String fun(PyExpression pyExpression) {
-          return pyExpression.getText();
-        }
-      });
+      }, pyExpression -> pyExpression.getText());
       return true;
     }
     return false;

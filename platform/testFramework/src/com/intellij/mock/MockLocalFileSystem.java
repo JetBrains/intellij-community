@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.mock;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -66,17 +65,6 @@ public class MockLocalFileSystem extends LocalFileSystem {
 
   @Override
   public void refreshFiles(@NotNull Iterable<VirtualFile> files, boolean async, boolean recursive, @Nullable Runnable onFinish) {
-  }
-
-  @Override
-  @NotNull
-  public Set<WatchRequest> addRootsToWatch(@NotNull final Collection<String> rootPaths, final boolean watchRecursively) {
-    throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
-  }
-
-  @Override
-  public void removeWatchedRoots(@NotNull final Collection<WatchRequest> rootsToWatch) {
-    throw new UnsupportedOperationException("Not implemented in " + getClass().getName());
   }
 
   @NotNull

@@ -54,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
@@ -115,8 +116,12 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     myFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        if (element instanceof GrReferenceElement) {
-          for (GroovyResolveResult result : ((GrReferenceElement)element).multiResolve(true)) {
+        if (element instanceof GrReferenceExpression && !((GrReferenceElement)element).isQualified()) {
+          GroovyResolveResult[] results = ((GrReferenceExpression)element).multiResolve(false);
+          if (results.length == 0) {
+            results = ((GrReferenceExpression)element).multiResolve(true);
+          }
+          for (GroovyResolveResult result : results) {
             PsiElement resolved = result.getElement();
             if (resolved instanceof GrParameter && resolved.getContainingFile() == myFile) {
               usedParams.put((GrParameter)resolved, Boolean.TRUE);

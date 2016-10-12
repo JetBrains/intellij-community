@@ -15,6 +15,8 @@
  */
 package com.intellij.usages.actions;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
@@ -25,10 +27,18 @@ import java.util.List;
 /**
  * @author Manuel Stadelmann
  */
-public class RemoveUsageAction extends IncludeExcludeActionBase {
+public class RemoveUsageAction extends AnAction {
+  @Override
+  public void update(AnActionEvent e) {
+    e.getPresentation().setEnabled(getUsages(e).length > 0);
+  }
 
   @Override
-  protected void process(Usage[] usages, UsageView usageView) {
+  public void actionPerformed(AnActionEvent e) {
+    process(getUsages(e), e.getData(UsageView.USAGE_VIEW_KEY));
+  }
+
+  private static void process(Usage[] usages, UsageView usageView) {
     if (usages.length == 0) return;
     Arrays.sort(usages, UsageViewImpl.USAGE_COMPARATOR);
     final Usage nextToSelect = getNextToSelect(usageView, usages[usages.length - 1]);
@@ -42,7 +52,14 @@ public class RemoveUsageAction extends IncludeExcludeActionBase {
     }
   }
 
-  private Usage getNextToSelect(UsageView usageView, Usage toDelete) {
+  private static Usage[] getUsages(AnActionEvent context) {
+    UsageView usageView = context.getData(UsageView.USAGE_VIEW_KEY);
+    if (usageView == null) return Usage.EMPTY_ARRAY;
+    Usage[] usages = context.getData(UsageView.USAGES_KEY);
+    return usages == null ? Usage.EMPTY_ARRAY : usages;
+  }
+
+  private static Usage getNextToSelect(UsageView usageView, Usage toDelete) {
     List<Usage> sortedUsages = usageView.getSortedUsages();
     int curIndex = sortedUsages.indexOf(toDelete);
 

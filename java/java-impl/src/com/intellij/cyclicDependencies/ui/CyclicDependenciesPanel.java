@@ -124,28 +124,26 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
 
     myRightTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            Set<PsiFile> searchIn = getSelectedScope(myRightTree);
-            final PackageNode selectedPackageNode = getSelectedPackage(myRightTree);
-            if (selectedPackageNode == null) {
-              return;
-            }
-            final PackageDependenciesNode nextPackageNode = getNextPackageNode(selectedPackageNode);
-            Set<PsiFile> searchFor = new HashSet<PsiFile>();
-            Set<PackageNode> packNodes = new HashSet<PackageNode>();
-            getPackageNodesHierarchy(selectedPackageNode, packNodes);
-            for (PackageNode packageNode : packNodes) {
-              searchFor.addAll(myBuilder.getDependentFilesInPackage((PsiPackage)packageNode.getPsiElement(),
-                                                                    ((PsiPackage)nextPackageNode.getPsiElement())));
-            }
-            if (searchIn.isEmpty() || searchFor.isEmpty()) {
-              myUsagesPanel.setToInitialPosition();
-            }
-            else {
-              myBuilder.setRootNodeNameInUsageView(AnalysisScopeBundle.message("cyclic.dependencies.usage.view.root.node.text", ((PsiPackage)nextPackageNode.getPsiElement()).getQualifiedName(), ((PsiPackage)selectedPackageNode.getPsiElement()).getQualifiedName()));
-              myUsagesPanel.findUsages(searchIn, searchFor);
-            }
+        SwingUtilities.invokeLater(() -> {
+          Set<PsiFile> searchIn = getSelectedScope(myRightTree);
+          final PackageNode selectedPackageNode = getSelectedPackage(myRightTree);
+          if (selectedPackageNode == null) {
+            return;
+          }
+          final PackageDependenciesNode nextPackageNode = getNextPackageNode(selectedPackageNode);
+          Set<PsiFile> searchFor = new HashSet<PsiFile>();
+          Set<PackageNode> packNodes = new HashSet<PackageNode>();
+          getPackageNodesHierarchy(selectedPackageNode, packNodes);
+          for (PackageNode packageNode : packNodes) {
+            searchFor.addAll(myBuilder.getDependentFilesInPackage((PsiPackage)packageNode.getPsiElement(),
+                                                                  ((PsiPackage)nextPackageNode.getPsiElement())));
+          }
+          if (searchIn.isEmpty() || searchFor.isEmpty()) {
+            myUsagesPanel.setToInitialPosition();
+          }
+          else {
+            myBuilder.setRootNodeNameInUsageView(AnalysisScopeBundle.message("cyclic.dependencies.usage.view.root.node.text", ((PsiPackage)nextPackageNode.getPsiElement()).getQualifiedName(), ((PsiPackage)selectedPackageNode.getPsiElement()).getQualifiedName()));
+            myUsagesPanel.findUsages(searchIn, searchFor);
           }
         });
       }
@@ -515,11 +513,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     public void actionPerformed(AnActionEvent e) {
       DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          new CyclicDependenciesHandler(myProject, myBuilder.getScope()).analyze();
-        }
-      });
+      SwingUtilities.invokeLater(() -> new CyclicDependenciesHandler(myProject, myBuilder.getScope()).analyze());
     }
   }
 

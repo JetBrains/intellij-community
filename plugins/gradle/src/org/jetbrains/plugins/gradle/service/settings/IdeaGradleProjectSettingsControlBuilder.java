@@ -26,14 +26,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.gradle.util.GradleVersion;
@@ -49,7 +47,6 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -212,12 +209,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public void createAndFillControls(PaintAwarePanel content, int indentLevel) {
-    content.setPaintCallback(new Consumer<Graphics>() {
-      @Override
-      public void consume(Graphics graphics) {
-        showBalloonIfNecessary();
-      }
-    });
+    content.setPaintCallback(graphics -> showBalloonIfNecessary());
 
     content.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
@@ -502,12 +494,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     final String gradleJvm = settings.getGradleJvm();
     myGradleJdkComboBox.setProject(project);
 
-    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return (project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s);
-      }
-    });
+    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, s -> (project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s));
 
     myGradleJdkComboBox.refreshData(sdkItem);
   }

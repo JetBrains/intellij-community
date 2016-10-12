@@ -79,14 +79,11 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
   }
 
   public static void checkContainsMethod(final Object rootElement, final AbstractTreeStructure structure) {
-    ProjectViewTestUtil.checkContainsMethod(rootElement, structure, new Function<AbstractTreeNode, VirtualFile[]>() {
-      @Override
-      public VirtualFile[] fun(AbstractTreeNode kid) {
-        if (kid instanceof PackageElementNode) {
-          return ((PackageElementNode)kid).getVirtualFiles();
-        }
-        return null;
+    ProjectViewTestUtil.checkContainsMethod(rootElement, structure, kid -> {
+      if (kid instanceof PackageElementNode) {
+        return ((PackageElementNode)kid).getVirtualFiles();
       }
+      return null;
     });
   }
 

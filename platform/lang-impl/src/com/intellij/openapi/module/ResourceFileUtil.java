@@ -47,13 +47,10 @@ public class ResourceFileUtil {
     final String fileName = index >= 0 ? resourceName.substring(index+1) : resourceName;
 
     final VirtualFile dir = new FilteredQuery<VirtualFile>(
-      DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, false), new Condition<VirtualFile>() {
-      @Override
-      public boolean value(final VirtualFile file) {
+      DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, false), file -> {
         final VirtualFile child = file.findChild(fileName);
         return child != null && scope.contains(child);
-      }
-    }).findFirst();
+      }).findFirst();
     return dir != null ? dir.findChild(fileName) : null;
   }
 }

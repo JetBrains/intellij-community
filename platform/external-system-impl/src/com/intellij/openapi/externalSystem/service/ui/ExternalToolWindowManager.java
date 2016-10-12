@@ -51,13 +51,11 @@ public class ExternalToolWindowManager {
                 if (project.isDisposed()) return;
 
                 ExternalSystemUtil.ensureToolWindowInitialized(project, manager.getSystemId());
-                ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
-                  public void run() {
-                    if (project.isDisposed()) return;
-                    ToolWindow toolWindow = getToolWindow(project, manager.getSystemId());
-                    if (toolWindow != null) {
-                      toolWindow.setAvailable(true, null);
-                    }
+                ToolWindowManager.getInstance(project).invokeLater(() -> {
+                  if (project.isDisposed()) return;
+                  ToolWindow toolWindow1 = getToolWindow(project, manager.getSystemId());
+                  if (toolWindow1 != null) {
+                    toolWindow1.setAvailable(true, null);
                   }
                 });
               }
@@ -72,12 +70,7 @@ public class ExternalToolWindowManager {
           }
           final ToolWindow toolWindow = getToolWindow(project, manager.getSystemId());
           if (toolWindow != null) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                toolWindow.setAvailable(false, null);
-              }
-            });
+            UIUtil.invokeLaterIfNeeded(() -> toolWindow.setAvailable(false, null));
           }
         }
       });

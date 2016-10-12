@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
@@ -29,7 +30,6 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,17 +39,17 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import java.util.*;
 
 /**
- * Author: dmitrylomov
+ * Author: dmitry lomov
  */
 public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.impl.JavaFileManagerImpl");
   private final PsiManagerEx myManager;
-  private volatile Set<String> myNontrivialPackagePrefixes = null;
-  private boolean myDisposed = false;
+  private volatile Set<String> myNontrivialPackagePrefixes;
+  private boolean myDisposed;
   private final PackageIndex myPackageIndex;
 
   public JavaFileManagerImpl(Project project) {
-    myManager = (PsiManagerEx)PsiManager.getInstance(project);
+    myManager = PsiManagerEx.getInstanceEx(project);
     myPackageIndex = PackageIndex.getInstance(myManager.getProject());
     project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
@@ -75,84 +75,70 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   @NotNull
   @Override
   public PsiClass[] findClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
+    List<Pair<PsiClass, VirtualFile>> result = doFindClasses(qName, scope);
+
+    int count = result.size();
+    if (count == 0) return PsiClass.EMPTY_ARRAY;
+    if (count == 1) return new PsiClass[] {result.get(0).getFirst()};
+
+    ContainerUtil.quickSort(result, (o1, o2) -> scope.compare(o2.getSecond(), o1.getSecond()));
+
+    return result.stream().map(p -> p.getFirst()).toArray(PsiClass[]::new);
+  }
+
+  @NotNull
+  private List<Pair<PsiClass, VirtualFile>> doFindClasses(@NotNull String qName, @NotNull final GlobalSearchScope scope) {
     final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
-    if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
-    List<PsiClass> result = new ArrayList<PsiClass>(classes.size());
+    if (classes.isEmpty()) return Collections.emptyList();
+    List<Pair<PsiClass, VirtualFile>> result = new ArrayList<>(classes.size());
     for (PsiClass aClass : classes) {
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
 
-      PsiUtilCore.ensureValid(aClass);
       PsiFile file = aClass.getContainingFile();
       if (file == null) {
         throw new AssertionError("No file for class: " + aClass + " of " + aClass.getClass());
       }
-
+      final boolean valid = file.isValid();
       VirtualFile vFile = file.getVirtualFile();
+      if (!valid) {
+        LOG.error("Invalid file " +
+                  file + "; virtualFile:" + vFile +
+                  (vFile != null && !vFile.isValid() ? " (invalid)" : "") +
+                  "; id=" + (vFile == null ? 0 : ((VirtualFileWithId)vFile).getId()),
+                  new PsiInvalidElementAccessException(aClass));
+        continue;
+      }
       if (!hasAcceptablePackage(vFile)) continue;
 
-      result.add(aClass);
+      result.add(Pair.create(aClass, vFile));
     }
 
-    int count = result.size();
-    if (count == 0) return PsiClass.EMPTY_ARRAY;
-    if (count == 1) return new PsiClass[] {result.get(0)};
-
-    ContainerUtil.quickSort(result, new Comparator<PsiClass>() {
-      @Override
-      public int compare(PsiClass o1, PsiClass o2) {
-        return scope.compare(o2.getContainingFile().getVirtualFile(), o1.getContainingFile().getVirtualFile());
-      }
-    });
-
-    return result.toArray(new PsiClass[count]);
+    return result;
   }
 
   @Override
   @Nullable
   public PsiClass findClass(@NotNull String qName, @NotNull GlobalSearchScope scope) {
     LOG.assertTrue(!myDisposed);
-    return findClassInIndex(qName, scope);
-  }
-
-  @Nullable
-  private PsiClass findClassInIndex(String qName, GlobalSearchScope scope) {
     VirtualFile bestFile = null;
     PsiClass bestClass = null;
-    final Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName.hashCode(), myManager.getProject(), scope);
+    List<Pair<PsiClass, VirtualFile>> result = doFindClasses(qName, scope);
 
-    for (PsiClass aClass : classes) {
-      PsiFile file = aClass.getContainingFile();
-      if (file == null) {
-        LOG.error("aClass=" + aClass + " of class " + aClass.getClass() + "; valid=" + aClass.isValid());
-        continue;
-      }
-      final boolean valid = aClass.isValid();
-      VirtualFile vFile = file.getVirtualFile();
-      if (!valid) {
-        LOG.error("Invalid class " + aClass + "; " +
-                  file + (file.isValid() ? "" : " (invalid)") +
-                  "; virtualFile:" + vFile +
-                  (vFile != null && !vFile.isValid() ? " (invalid)" : "") +
-                  "; id=" + (vFile == null ? 0 : ((VirtualFileWithId)vFile).getId()),
-                  new PsiInvalidElementAccessException(aClass));
-        continue;
-      }
-
-      final String qualifiedName = aClass.getQualifiedName();
-      if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
-
-
-      if (!hasAcceptablePackage(vFile)) continue;
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < result.size(); i++) {
+      Pair<PsiClass, VirtualFile> pair = result.get(i);
+      VirtualFile vFile = pair.getSecond();
       if (bestFile == null || scope.compare(vFile, bestFile) > 0) {
         bestFile = vFile;
-        bestClass = aClass;
+        bestClass = pair.getFirst();
       }
     }
+
     return bestClass;
   }
 
-  private boolean hasAcceptablePackage(final VirtualFile vFile) {
+  private boolean hasAcceptablePackage(@NotNull VirtualFile vFile) {
     if (vFile.getFileType() == JavaClassFileType.INSTANCE) {
       // See IDEADEV-5626
       final VirtualFile root = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getClassRootForFile(vFile);
@@ -172,7 +158,7 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   public Collection<String> getNonTrivialPackagePrefixes() {
     Set<String> names = myNontrivialPackagePrefixes;
     if (names == null) {
-      names = new HashSet<String>();
+      names = new HashSet<>();
       final ProjectRootManager rootManager = ProjectRootManager.getInstance(myManager.getProject());
       final List<VirtualFile> sourceRoots = rootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
       final ProjectFileIndex fileIndex = rootManager.getFileIndex();

@@ -34,22 +34,20 @@ public class CloseAllEditorsAction extends AnAction implements DumbAware {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
-      project, new Runnable(){
-        public void run() {
-          final EditorWindow window = e.getData(EditorWindow.DATA_KEY);
-          if (window != null){
-            final VirtualFile[] files = window.getFiles();
-            for (final VirtualFile file : files) {
-              window.closeFile(file);
-            }
-            return;
+      project, () -> {
+        final EditorWindow window = e.getData(EditorWindow.DATA_KEY);
+        if (window != null){
+          final VirtualFile[] files = window.getFiles();
+          for (final VirtualFile file : files) {
+            window.closeFile(file);
           }
-          FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
-          VirtualFile selectedFile = fileEditorManager.getSelectedFiles()[0];
-          VirtualFile[] openFiles = fileEditorManager.getSiblings(selectedFile);
-          for (final VirtualFile openFile : openFiles) {
-            fileEditorManager.closeFile(openFile);
-          }
+          return;
+        }
+        FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+        VirtualFile selectedFile = fileEditorManager.getSelectedFiles()[0];
+        VirtualFile[] openFiles = fileEditorManager.getSiblings(selectedFile);
+        for (final VirtualFile openFile : openFiles) {
+          fileEditorManager.closeFile(openFile);
         }
       }, IdeBundle.message("command.close.all.editors"), null
     );
