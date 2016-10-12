@@ -41,7 +41,6 @@ except NameError: # version < 2.3 -- didn't have the True/False builtins
 
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface, BaseStdIn, set_result_ipython_value
 from _pydev_bundle.pydev_console_utils import CodeFragment
-from _pydevd_bundle.pydevd_constants import dict_contains
 
 IS_PYTHON_3K = False
 IS_PY24 = False
@@ -363,10 +362,8 @@ def get_ipython_hidden_vars_dict():
         if IPYTHON and hasattr(__builtin__, 'interpreter'):
             pydev_interpreter = get_interpreter().interpreter
             if hasattr(pydev_interpreter, 'ipython') and hasattr(pydev_interpreter.ipython, 'user_ns_hidden'):
-                res_dict = pydev_interpreter.ipython.user_ns_hidden
-                for var in useful_ipython_vars:
-                    if dict_contains(res_dict, var):
-                        del res_dict[var]
+                res_dict = dict([(key, val) for key, val in pydev_interpreter.ipython.user_ns_hidden.items()
+                            if key not in useful_ipython_vars])
                 return res_dict
         return None
     except Exception:
