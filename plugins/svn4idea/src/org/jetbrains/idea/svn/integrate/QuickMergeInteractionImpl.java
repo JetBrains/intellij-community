@@ -80,7 +80,7 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
                                                  @NotNull String mergeTitle,
                                                  @NotNull MergeChecker mergeChecker) {
-    ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, lists, mergeTitle, mergeChecker, true);
+    ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, lists, mergeTitle, mergeChecker, true, true);
     dialog.show();
 
     return new SelectMergeItemsResult() {
@@ -144,7 +144,7 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                @NotNull MergeChecker mergeChecker,
                                                                boolean allListsLoaded) {
-    ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, list, myMergeContext.getTitle(), mergeChecker, false);
+    ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, list, myMergeContext.getTitle(), mergeChecker, false, allListsLoaded);
 
     return dialog.showAndGet() ? dialog.getSelected() : emptyList();
   }

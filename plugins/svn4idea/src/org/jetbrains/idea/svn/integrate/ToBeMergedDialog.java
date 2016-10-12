@@ -102,13 +102,14 @@ public class ToBeMergedDialog extends DialogWrapper {
                           @NotNull List<CommittedChangeList> lists,
                           final String title,
                           @NotNull MergeChecker mergeChecker,
+                          boolean allStatusesCalculated,
                           boolean allListsLoaded) {
     super(mergeContext.getProject(), true);
     myMergeContext = mergeContext;
     myAllListsLoaded = allListsLoaded;
     myStatusMap = synchronizedMap(newHashMap());
     myMergeChecker = mergeChecker;
-    myAllStatusesCalculated = allListsLoaded;
+    myAllStatusesCalculated = allStatusesCalculated;
     setTitle(title);
 
     // Paging is not used - "Load Xxx" buttons load corresponding new elements and add them to the end of the table. Single (first) page is
@@ -121,14 +122,14 @@ public class ToBeMergedDialog extends DialogWrapper {
     setOKButtonText("Merge Selected");
     initUI();
     init();
-    enableMore();
+    enableLoadButtons();
 
     if (!myAllStatusesCalculated) {
       refreshListStatus(lists);
     }
   }
 
-  private void enableMore() {
+  private void enableLoadButtons() {
     myMore100Action.setVisible(!myAllListsLoaded);
     myMore500Action.setVisible(!myAllListsLoaded);
     myMore100Action.setEnabled(!myAllListsLoaded);
@@ -137,8 +138,7 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   public void setAllListsLoaded() {
     myAllListsLoaded = true;
-    myMore100Action.setVisible(false);
-    myMore500Action.setVisible(false);
+    enableLoadButtons();
   }
 
   public long getLastNumber() {
@@ -154,6 +154,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     myRevisionsList.repaint();
     myMore100Action.setEnabled(true);
     myMore500Action.setEnabled(true);
+    // TODO: This is necessary because myMore500Action was hidden in MoreXAction.actionPerformed()
     myMore500Action.setVisible(true);
     refreshListStatus(list);
   }
@@ -443,6 +444,7 @@ public class ToBeMergedDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
+      // TODO: This setVisible() is necessary because MoreXAction shows "Loading..." text when disabled
       myMore500Action.setVisible(false);
       myMore100Action.setEnabled(false);
       myMore500Action.setEnabled(false);
