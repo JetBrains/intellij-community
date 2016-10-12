@@ -19,7 +19,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -171,21 +170,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     final Application application = ApplicationManager.getApplication();
 
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
-      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      if (indicator != null) {
-        indicator.pushState();
-      }
-      AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task");
-      try {
-        task.performInDumbMode(indicator != null ? indicator : new EmptyProgressIndicator());
-      }
-      finally {
-        token.finish();
-        if (indicator != null) {
-          indicator.popState();
-        }
-        Disposer.dispose(task);
-      }
+      runTaskSynchronously(task);
       return;
     }
 
@@ -201,6 +186,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
                               @Nullable TransactionId contextTransaction,
                               @NotNull Throwable trace,
                               @Nullable DumbModePermission schedulerPermission) {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed() && shouldStartModalProgress(schedulerPermission, trace)) {
+      runTaskSynchronously(task);
+      return;
+    }
+
     if (!addTaskToQueue(task)) return;
 
     if (myState.get() != State.RUNNING_DUMB_TASKS) {
@@ -212,6 +202,20 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       else {
         startBackgroundProcess();
       }
+    }
+  }
+
+  private static void runTaskSynchronously(@NotNull DumbModeTask task) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator == null) indicator = new EmptyProgressIndicator();
+
+    indicator.pushState();
+    try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing task")) {
+      task.performInDumbMode(indicator);
+    }
+    finally {
+      indicator.popState();
+      Disposer.dispose(task);
     }
   }
 
@@ -419,14 +423,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void showModalProgress() {
     try {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(
-        () -> ProgressManager.getInstance().run(new Task.Modal(myProject, IdeBundle.message("progress.indexing"), false) {
+      ProgressManager.getInstance().run(new Task.Modal(myProject, IdeBundle.message("progress.indexing"), false) {
 
-          @Override
-          public void run(@NotNull final ProgressIndicator visibleIndicator) {
-            runBackgroundProcess(visibleIndicator, true);
-          }
-        }));
+        @Override
+        public void run(@NotNull final ProgressIndicator visibleIndicator) {
+          runBackgroundProcess(visibleIndicator, true);
+        }
+      });
     }
     finally {
       queueUpdateFinished(true);
