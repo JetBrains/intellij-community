@@ -124,43 +124,6 @@ public class MergeCalculatorTask extends BaseMergeTask {
     return result;
   }
 
-  private static class ShowRevisionSelector extends BaseMergeTask {
-
-    @NotNull private final List<CommittedChangeList> myChangeLists;
-    @NotNull private final MergeChecker myMergeChecker;
-
-    private ShowRevisionSelector(@NotNull QuickMerge mergeProcess,
-                                 @NotNull List<CommittedChangeList> changeLists,
-                                 @NotNull MergeChecker mergeChecker) {
-      super(mergeProcess, "show revisions to merge", Where.AWT);
-
-      myChangeLists = changeLists;
-      myMergeChecker = mergeChecker;
-    }
-
-    @Override
-    public void run() {
-      QuickMergeInteraction.SelectMergeItemsResult result =
-        myInteraction.selectMergeItems(myChangeLists, myMergeContext.getTitle(), myMergeChecker);
-
-      switch (result.getResultCode()) {
-        case cancel:
-          end();
-          break;
-        case all:
-          next(getMergeAllTasks(true));
-          break;
-        default:
-          List<CommittedChangeList> lists = result.getSelectedLists();
-
-          if (!lists.isEmpty()) {
-            runChangeListsMerge(lists, myMergeContext.getTitle());
-          }
-          break;
-      }
-    }
-  }
-
   // true if errors found
   static boolean checkListForPaths(@NotNull String workingCopyRoot, @NotNull String sourceBranch, @NotNull LogHierarchyNode node) {
     // TODO: Such filtering logic is not clear enough so far (and probably not correct for all cases - for instance when we perform merge
