@@ -94,6 +94,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
         gapTop = VERTICAL_GAP * 3
       }
 
+      var isSplitRequired = true
       for ((index, component) in row.components.withIndex()) {
         // MigLayout in any case always creates CC, so, create instance even if it is not required
         val cc = componentConstraints.get(component) ?: CC()
@@ -107,6 +108,7 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
 
         if (!noGrid) {
           if (component === lastComponent) {
+            isSplitRequired = false
             cc.wrap()
           }
 
@@ -121,14 +123,22 @@ internal class MigLayoutBuilder : LayoutBuilderImpl {
             }
           }
           else {
-            if (component === row.components.first()) {
-              if (labeled && !row.labeled) {
+            var isSkippableComponent = true
+            if (component === row.components.first() && labeled) {
+              if (row.labeled) {
+                isSkippableComponent = false
+              }
+              else {
                 cc.skip()
               }
             }
-            if (component === lastComponent) {
-              // set span for last component because cell count in other rows may be greater — but we expect that last component can grow
-              cc.spanX()
+
+            if (isSkippableComponent) {
+              if (isSplitRequired) {
+                isSplitRequired = false
+                cc.split()
+              }
+              cc.horizontal.gapAfter = gapToBoundSize(HORIZONTAL_GAP * 2, true)
             }
           }
 

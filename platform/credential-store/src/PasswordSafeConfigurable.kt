@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.components.RadioButton
 import com.intellij.ui.layout.*
+import com.intellij.util.text.nullize
 import java.awt.Component
 
 class PasswordSafeConfigurable(private val settings: PasswordSafeSettings) : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe", "Passwords", "reference.ide.settings.password.safe") {
@@ -53,7 +54,16 @@ class PasswordSafeConfigurableUi : ConfigurableUi<PasswordSafeSettings> {
     val passwordSafe = PasswordSafe.getInstance() as PasswordSafeImpl
 
     buttonGroup {
-      row { saveOnDisk() }
+      row {
+        saveOnDisk()
+        if (!passwordSafe.isNativeCredentialStoreUsed) {
+          button("Set Master Password") { event ->
+            Messages.showInputDialog(event.source as Component, "Master Password:", "Set Master Password", null)?.trim().nullize()?.let {
+              passwordSafe.setMasterPassword(it)
+            }
+          }
+        }
+      }
       row { rememberPasswordsUntilClosing() }
     }
 
