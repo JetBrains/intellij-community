@@ -35,6 +35,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
@@ -588,4 +589,31 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
        if (myCanceled) throw new ProcessCanceledException();
     }
   }
+
+  public void testDefaultModalityWithNestedProgress() {
+    assertEquals(ModalityState.NON_MODAL, ModalityState.defaultModalityState());
+    ProgressManager.getInstance().run(new Task.Modal(getProject(), "", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          assertFalse(ModalityState.NON_MODAL.equals(ModalityState.defaultModalityState()));
+          assertEquals(ProgressManager.getInstance().getProgressIndicator().getModalityState(), ModalityState.defaultModalityState());
+          ProgressManager.getInstance().runProcess(() -> {
+            assertFalse(ModalityState.NON_MODAL.equals(ModalityState.defaultModalityState()));
+
+            Semaphore semaphore = new Semaphore();
+            semaphore.down();
+            ApplicationManager.getApplication().invokeLater(() -> {
+              semaphore.up();
+            });
+            assertTrue(semaphore.waitFor(1000));
+          }, new ProgressIndicatorBase());
+        }
+        catch (Throwable e) {
+          throw new RuntimeException(e); // ProgressManager doesn't handle errors
+        }
+      }
+    });
+  }
+
 }
