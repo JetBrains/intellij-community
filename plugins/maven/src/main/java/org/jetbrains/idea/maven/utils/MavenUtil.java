@@ -229,11 +229,18 @@ public class MavenUtil {
   }
 
   public static VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
-    return pomFile.getParent().findChild(MavenConstants.PROFILES_XML);
+    if (pomFile == null) return null;
+    VirtualFile parent = pomFile.getParent();
+    if (parent == null) return null;
+    return parent.findChild(MavenConstants.PROFILES_XML);
   }
 
+  @Nullable
   public static File getProfilesXmlIoFile(VirtualFile pomFile) {
-    return new File(pomFile.getParent().getPath(), MavenConstants.PROFILES_XML);
+    if (pomFile == null) return null;
+    VirtualFile parent = pomFile.getParent();
+    if (parent == null) return null;
+    return new File(parent.getPath(), MavenConstants.PROFILES_XML);
   }
 
   public static <T, U> List<T> collectFirsts(List<Pair<T, U>> pairs) {
@@ -287,7 +294,7 @@ public class MavenUtil {
                                                         VirtualFile file,
                                                         @NotNull MavenId projectId,
                                                         MavenId parentId,
-                                                        VirtualFile parentFile,
+                                                        @Nullable VirtualFile parentFile,
                                                         boolean interactive) throws IOException {
     Properties properties = new Properties();
     Properties conditions = new Properties();

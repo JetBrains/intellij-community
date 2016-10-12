@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringHash;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.TokenType;
@@ -65,7 +64,7 @@ public class GeneratedParserUtilBase {
 
   private static final Logger LOG = Logger.getInstance("org.intellij.grammar.parser.GeneratedParserUtilBase");
 
-  private static final int MAX_RECURSION_LEVEL = StringUtil.parseInt(System.getProperty("grammar.kit.gpub.max.level"), 1000);
+  private static final int MAX_RECURSION_LEVEL = parseInt(System.getProperty("grammar.kit.gpub.max.level"), 1000);
   private static final int MAX_VARIANTS_SIZE = 10000;
   private static final int MAX_VARIANTS_TO_DISPLAY = 50;
   private static final int MAX_ERROR_TOKEN_TEXT = 20;
@@ -159,7 +158,7 @@ public class GeneratedParserUtilBase {
 
   public static boolean recursion_guard_(PsiBuilder builder, int level, String funcName) {
     if (level > MAX_RECURSION_LEVEL) {
-      builder.error("Maximum recursion level (" + MAX_RECURSION_LEVEL + ") reached in '" + funcName + "'");
+      builder.mark().error("Maximum recursion level (" + MAX_RECURSION_LEVEL + ") reached in '" + funcName + "'");
       return false;
     }
     return true;
@@ -167,6 +166,7 @@ public class GeneratedParserUtilBase {
 
   public static boolean empty_element_parsed_guard_(PsiBuilder builder, String funcName, int pos) {
     if (pos == current_position_(builder)) {
+      // sometimes this is a correct situation, therefore no explicit marker
       builder.error("Empty element parsed in '" + funcName + "' at offset " + builder.getCurrentOffset());
       return false;
     }
@@ -564,7 +564,7 @@ public class GeneratedParserUtilBase {
     if (state.hooks == null) return;
     PsiBuilder.Marker marker = elementType == null ? null : (PsiBuilder.Marker)builder.getLatestDoneMarker();
     if (elementType != null && marker == null) {
-      builder.error("No expected done marker at offset " + builder.getCurrentOffset());
+      builder.mark().error("No expected done marker at offset " + builder.getCurrentOffset());
     }
     while (state.hooks != null && state.hooks.level >= state.level) {
       if (state.hooks.level == state.level) {
@@ -792,10 +792,8 @@ public class GeneratedParserUtilBase {
     boolean notEmpty = isNotEmpty(expectedText);
     if (!(force || notEmpty || advance)) return false;
 
-    String gotText = builder.eof() ? "unexpected end of file" :
-                           notEmpty ? "got '" + first(notNullize(builder.getTokenText(), "null"), MAX_ERROR_TOKEN_TEXT, true) + "'" :
-                           "'" + first(notNullize(builder.getTokenText(), "null"), MAX_ERROR_TOKEN_TEXT, true) +"' unexpected";
-    String message = expectedText + gotText;
+    String actual = "'" + first(notNullize(builder.getTokenText(), "null"), MAX_ERROR_TOKEN_TEXT, true) + "'";
+    String message = expectedText + (builder.eof() ? "unexpected end of file" : notEmpty ? "got " + actual : actual + " unexpected");
     if (advance) {
       PsiBuilder.Marker mark = builder.mark();
       builder.advanceLexer();
@@ -1190,9 +1188,10 @@ public class GeneratedParserUtilBase {
       while (builder.rawLookup(tokenIdx) == TokenType.WHITE_SPACE) tokenIdx --;
       LighterASTNode doneMarker = builder.rawLookup(tokenIdx) == state.braces[0].getLeftBraceType() ? builder.getLatestDoneMarker() : null;
       if (doneMarker != null && doneMarker.getStartOffset() == builder.rawTokenTypeStart(tokenIdx) && doneMarker.getTokenType() == TokenType.ERROR_ELEMENT) {
-        parenList.add(Pair.create(((PsiBuilder.Marker)doneMarker).precede(), (PsiBuilder.Marker)null));
+        parenList.add(Pair.create(((PsiBuilder.Marker)doneMarker).precede(), null));
       }
     }
+    int c = current_position_(builder);
     while (true) {
       final IElementType tokenType = builder.getTokenType();
       if (checkParens && (tokenType == state.braces[0].getLeftBraceType() || tokenType == state.braces[0].getRightBraceType() && !parenList.isEmpty())) {
@@ -1224,7 +1223,7 @@ public class GeneratedParserUtilBase {
           marker = builder.mark();
           marker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
         }
-        final boolean result = (!parenList.isEmpty() || eatMoreCondition.parse(builder, level + 1)) && parser.parse(builder, level + 1);
+        boolean result = (!parenList.isEmpty() || eatMoreCondition.parse(builder, level + 1)) && parser.parse(builder, level + 1);
         if (result) {
           tokenCount++;
           totalCount++;
@@ -1234,15 +1233,17 @@ public class GeneratedParserUtilBase {
         }
       }
 
-      if (tokenCount >= MAX_CHILDREN_IN_TREE && marker != null) {
+      if (tokenCount >= MAX_CHILDREN_IN_TREE) {
         marker.done(chunkType);
         siblingList.addFirst(Pair.create(marker, 1));
         checkSiblingsRunnable.run();
         marker = null;
         tokenCount = 0;
       }
+      if (!empty_element_parsed_guard_(builder, "parseAsTree", c)) break;
+      c = current_position_(builder);
     }
-    marker.drop();
+    if (marker != null) marker.drop();
     for (Pair<PsiBuilder.Marker, PsiBuilder.Marker> pair : parenList) {
       pair.first.drop();
     }

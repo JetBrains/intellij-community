@@ -31,9 +31,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -77,6 +79,11 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
 
       final PyFile pyFile = (PyFile)element;
       final Project project = element.getProject();
+
+      final VirtualFile vFile = pyFile.getVirtualFile();
+      if (vFile != null && FileIndexFacade.getInstance(project).isInLibraryClasses(vFile)) {
+        return;
+      }
       
       final Boolean showingFlag = project.getUserData(DONT_SHOW_BALLOON);
       if (showingFlag != null && showingFlag.booleanValue()) {

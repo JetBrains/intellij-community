@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -159,21 +158,17 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     final ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     final VirtualFile sourceRoot = index.getSourceRootForFile(virtualFile);
     final VirtualFile folder = virtualFile.getParent();
-    if (sourceRoot != null && folder != null) {
+    if (sourceRoot != null && sourceRoot.isDirectory() && folder != null) {
       String relativePath = VfsUtilCore.getRelativePath(folder, sourceRoot, '/');
       if (relativePath == null) {
-        throw new AssertionError("Null relative path: folder=" + folder + "; root=" + sourceRoot);
+        LOG.error("Null relative path: folder=" + folder + "; root=" + sourceRoot);
+        return null;
       }
-      List<OrderEntry> orderEntries = index.getOrderEntriesForFile(virtualFile);
-      if (orderEntries.isEmpty()) {
-        LOG.error("Inconsistent: " + DirectoryIndex.getInstance(myProject).getInfoForFile(folder).toString());
-      }
-      final String className = virtualFile.getNameWithoutExtension();
-      final VirtualFile[] files = orderEntries.get(0).getFiles(OrderRootType.CLASSES);
-      for (VirtualFile rootFile : files) {
-        final VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
-        if (classFile != null) {
-          final PsiJavaFile javaFile = getPsiFileInRoot(classFile, className);
+      String className = virtualFile.getNameWithoutExtension();
+      for (OrderEntry entry : index.getOrderEntriesForFile(virtualFile)) {
+        for (VirtualFile rootFile : entry.getFiles(OrderRootType.CLASSES)) {
+          VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
+          PsiJavaFile javaFile = classFile == null ? null : getPsiFileInRoot(classFile, className);
           if (javaFile != null) {
             return javaFile.getLanguageLevel();
           }

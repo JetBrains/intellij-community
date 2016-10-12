@@ -289,7 +289,7 @@ public class MavenProject {
     return MavenUtil.findProfilesXmlFile(myFile);
   }
 
-  @NotNull
+  @Nullable
   public File getProfilesXmlIoFile() {
     return MavenUtil.getProfilesXmlIoFile(myFile);
   }
