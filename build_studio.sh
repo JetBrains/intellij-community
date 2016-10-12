@@ -16,33 +16,14 @@ function die() {
 }
 
 function set_java_home() {
-  if [ ! "$JAVA_HOME" ]; then
     case `uname -s` in
         Darwin)
-            export JAVA_HOME=$(/usr/libexec/java_home -v 1.6)
+            export JAVA_HOME=../../prebuilts/studio/jdk/mac/Contents/Home
             ;;
         *)
-            if [[ -s /usr/lib/jvm/java-6-sun ]]; then
-              export JAVA_HOME=/usr/lib/jvm/java-6-sun
-            else
-              die "java 1.6 not found. set JAVA_HOME."
-            fi
+            export JAVA_HOME=../../prebuilts/studio/jdk/linux
             ;;
     esac
-  fi
-}
-
-function set_java8_home() {
-  if [ ! "$JAVA8_HOME" ]; then
-    case `uname -s` in
-        Darwin)
-            export JAVA8_HOME=../../prebuilts/studio/jdk/mac/Contents/Home
-            ;;
-        *)
-            export JAVA8_HOME=../../prebuilts/studio/jdk/linux
-            ;;
-    esac
-  fi
 }
 
 UI_TESTS=
@@ -85,15 +66,14 @@ echo "## UI Tests : $UI_TESTS"
 echo
 
 set_java_home
-set_java8_home
 
 export JDK_16_x64=$JAVA_HOME
-export JDK_18_x64=$JAVA8_HOME
+export JDK_18_x64=$JAVA_HOME
+
+echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-# Temp: Figure out if we can properly default to Java8
-export JAVA_HOME=$JAVA8_HOME
 $ANT "-Dout=$OUT" "-Dbuild=$BNUM" "-Denable.ui.tests=$UI_TESTS" -Dbundle.gradle.plugin=true
 
 # Temp: figure out how to preserve symlinks
