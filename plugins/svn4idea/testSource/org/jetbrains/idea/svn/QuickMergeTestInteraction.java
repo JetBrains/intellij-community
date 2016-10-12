@@ -18,7 +18,9 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.integrate.LocalChangesAction;
 import org.jetbrains.idea.svn.integrate.QuickMergeContentsVariants;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteraction;
@@ -34,10 +36,12 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
 
   private QuickMergeContentsVariants myMergeVariant = QuickMergeContentsVariants.all;
   private final boolean myReintegrateAnswer;
+  @Nullable private final Function.Mono<List<CommittedChangeList>> mySelectedListsProvider;
   @NotNull private final List<Exception> myExceptions;
 
-  public QuickMergeTestInteraction(boolean reintegrate) {
+  public QuickMergeTestInteraction(boolean reintegrate, @Nullable Function.Mono<List<CommittedChangeList>> selectedListsProvider) {
     myReintegrateAnswer = reintegrate;
+    mySelectedListsProvider = selectedListsProvider;
     myExceptions = newArrayList();
   }
 
@@ -70,13 +74,13 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
       @NotNull
       @Override
       public QuickMergeContentsVariants getResultCode() {
-        return QuickMergeContentsVariants.all;
+        return mySelectedListsProvider != null ? QuickMergeContentsVariants.select : QuickMergeContentsVariants.all;
       }
 
       @NotNull
       @Override
       public List<CommittedChangeList> getSelectedLists() {
-        return emptyList();
+        return mySelectedListsProvider != null ? mySelectedListsProvider.fun(lists) : emptyList();
       }
     };
   }
@@ -86,7 +90,7 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                                @NotNull MergeChecker mergeChecker,
                                                                boolean everyThingLoaded) {
-    return emptyList();
+    return mySelectedListsProvider != null ? mySelectedListsProvider.fun(list) : emptyList();
   }
 
   @NotNull

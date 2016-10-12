@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
@@ -41,7 +40,6 @@ import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.integrate.QuickMerge;
 import org.jetbrains.idea.svn.integrate.QuickMergeContentsVariants;
-import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -108,7 +106,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, "edited in branch");
     runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch", myBranchTree.myS1File.getPath());
 
-    waitQuickMerge(myBranchUrl, new QuickMergeTestInteraction(true));
+    waitQuickMerge(myBranchUrl, new QuickMergeTestInteraction(true, null));
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -156,20 +154,15 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     // we should get exactly 2 revisions for selection (copy and change in b2)
     AtomicReference<String> selectionError = new AtomicReference<>();
-    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
-      @NotNull
-      @Override
-      public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                                   @NotNull MergeChecker mergeChecker,
-                                                                   boolean everyThingLoaded) {
-        if (list.size() != 4) {
-          selectionError.set("List size: " + list.size());
-        } else if (list.get(3).getNumber() != numberBefore) {
-          selectionError.set("wrong revision for copy statement: " + list.get(3).getNumber());
-        }
-        return new SmartList<>(list.get(2));  // get a change
+    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true, lists -> {
+      if (lists.size() != 4) {
+        selectionError.set("List size: " + lists.size());
       }
-    };
+      else if (lists.get(3).getNumber() != numberBefore) {
+        selectionError.set("wrong revision for copy statement: " + lists.get(3).getNumber());
+      }
+      return new SmartList<>(lists.get(2));  // get a change
+    });
     testInteraction.setMergeVariant(QuickMergeContentsVariants.showLatest);
 
     waitQuickMerge(myBranchUrl, testInteraction);
@@ -232,20 +225,15 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     // we should get exactly 2 revisions for selection (copy and change in b2)
     AtomicReference<String> selectionError = new AtomicReference<>();
-    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
-      @NotNull
-      @Override
-      public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                                   @NotNull MergeChecker mergeChecker,
-                                                                   boolean everyThingLoaded) {
-        if (list.size() != 2) {
-          selectionError.set("List size: " + list.size());
-        } else if (list.get(1).getNumber() != numberBeforeCopy + 1) {
-          selectionError.set("wrong revision for copy statement: " + list.get(1).getNumber());
-        }
-        return new SmartList<>(list.get(0));  // get a change
+    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true, lists -> {
+      if (lists.size() != 2) {
+        selectionError.set("List size: " + lists.size());
       }
-    };
+      else if (lists.get(1).getNumber() != numberBeforeCopy + 1) {
+        selectionError.set("wrong revision for copy statement: " + lists.get(1).getNumber());
+      }
+      return new SmartList<>(lists.get(0));  // get a change
+    });
     testInteraction.setMergeVariant(QuickMergeContentsVariants.showLatest);
 
     waitQuickMerge(myRepoUrl + "/branches/b2", testInteraction);
@@ -289,29 +277,8 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       Thread.sleep(10);
     }
 
-    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true) {
-      @NotNull
-      @Override
-      public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
-                                                     @NotNull String mergeTitle,
-                                                     @NotNull MergeChecker mergeChecker) {
-        return new SelectMergeItemsResult() {
-          @NotNull
-          @Override
-          public QuickMergeContentsVariants getResultCode() {
-            return QuickMergeContentsVariants.select;
-          }
-
-          @NotNull
-          @Override
-          public List<CommittedChangeList> getSelectedLists() {
-            return lists.stream()
-              .filter(list -> numberBefore + 1 == list.getNumber() || numberBefore + 2 == list.getNumber())
-              .collect(toList());
-          }
-        };
-      }
-    };
+    QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true, lists ->
+      lists.stream().filter(list -> numberBefore + 1 == list.getNumber() || numberBefore + 2 == list.getNumber()).collect(toList()));
     testInteraction.setMergeVariant(QuickMergeContentsVariants.select);
 
     waitQuickMerge(myBranchUrl, testInteraction);
@@ -362,7 +329,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     refreshSvnMappingsSynchronously();
 
-    waitQuickMerge(trunkUrl, new QuickMergeTestInteraction(false));
+    waitQuickMerge(trunkUrl, new QuickMergeTestInteraction(false, null));
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
