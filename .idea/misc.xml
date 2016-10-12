@@ -2,6 +2,11 @@
 <project version="4">
   <component name="EntryPointsManager">
     <entry_points version="2.0" />
+    <list size="3">
+      <item index="0" class="java.lang.String" itemvalue="javax.xml.bind.annotation.XmlAttribute" />
+      <item index="1" class="java.lang.String" itemvalue="javax.xml.bind.annotation.XmlElement" />
+      <item index="2" class="java.lang.String" itemvalue="javax.xml.bind.annotation.XmlValue" />
+    </list>
   </component>
   <component name="FrameworkDetectionExcludesConfiguration">
     <file url="file://$PROJECT_DIR$" />
@@ -59,7 +64,7 @@
     <default-html-doctype>http://www.w3.org/1999/xhtml</default-html-doctype>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="false" assert-keyword="true" jdk-15="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
-     <output url="file://$PROJECT_DIR$/out" />
+    <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="SvnBranchConfigurationManager">
     <option name="mySupportsUserInfoFilter" value="true" />
