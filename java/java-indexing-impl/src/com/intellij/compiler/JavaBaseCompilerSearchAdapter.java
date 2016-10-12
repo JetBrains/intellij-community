@@ -159,17 +159,26 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
       while (true) {
         int lastIndex = internalName.lastIndexOf('$', curLast);
         if (lastIndex > -1 && lastIndex < internalName.length() - 1) {
-          final boolean anonymousSign = Character.isDigit(internalName.charAt(lastIndex + 1));
-          if (anonymousSign) {
+          final int followingIndex = lastIndex + 1;
+          final boolean digit = Character.isDigit(internalName.charAt(followingIndex));
+          if (digit) {
             if (curLast == internalName.length() - 1) {
-              if (matcherBySuperNameAdded) {
+              final int nextNonDigit = getNextNonDigitIndex(internalName, followingIndex);
+              if (nextNonDigit == -1) {
+                if (matcherBySuperNameAdded) {
+                  break;
+                }
+                matcherBySuperNameAdded = true;
+                //anonymous
+                matchers.add(new InternalClassMatcher.BySuperName(baseClass.getName()));
                 break;
+              } else {
+                //declared inside method
+                matchers.add(new InternalClassMatcher.ByName(internalName.substring(nextNonDigit)));
               }
-              matcherBySuperNameAdded = true;
-              matchers.add(new InternalClassMatcher.BySuperName(baseClass.getName()));
-              break;
             }
             else {
+              //declared in anonymous
               matchers.add(new InternalClassMatcher.ByName(StringUtil.getShortName(internalName, '$')));
               break;
             }
@@ -183,6 +192,15 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
       }
     }
     return matchers;
+  }
+
+  private static int getNextNonDigitIndex(String name, int digitIndex) {
+    for (int i = digitIndex + 1; i < name.length(); i++) {
+      if (!Character.isDigit(name.charAt(i))) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private interface InternalClassMatcher {

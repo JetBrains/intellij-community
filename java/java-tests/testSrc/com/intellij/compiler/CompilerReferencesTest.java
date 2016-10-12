@@ -80,17 +80,17 @@ public class CompilerReferencesTest extends AbstractCompilerAwareTest {
   }
 
   public void testHierarchy() {
-    myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/FooImpl.java", getName() + "/Bar.java", getName() + "/Baz.java");
+    myFixture.configureByFiles(getName() + "/Foo.java", getName() + "/FooImpl.java", getName() + "/Bar.java", getName() + "/Baz.java", getName() + "/Test.java");
     rebuildProject();
     CompilerReferenceService.CompilerDirectInheritorInfo<PsiClass> directInheritorInfo = getHierarchyUnderForElementCaret();
 
     Collection<PsiClass> inheritors = directInheritorInfo.getDirectInheritors().collect(Collectors.toList());
-    assertSize(4, inheritors);
+    assertSize(6, inheritors);
     for (PsiClass inheritor : inheritors) {
       if (inheritor instanceof PsiAnonymousClass) {
         assertOneOf(inheritor.getTextOffset(), 58, 42, 94);
       } else {
-        assertOneOf(inheritor.getQualifiedName(), "FooImpl", "FooImpl2");
+        assertOneOf(inheritor.getName(), "FooImpl", "FooImpl2", "FooInsideMethodImpl");
       }
     }
 
