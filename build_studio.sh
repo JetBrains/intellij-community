@@ -36,17 +36,10 @@ function set_java8_home() {
   if [ ! "$JAVA8_HOME" ]; then
     case `uname -s` in
         Darwin)
-            export JAVA8_HOME=$(/usr/libexec/java_home -v 1.8)
+            export JAVA8_HOME=../../prebuilts/studio/jdk/mac/Contents/Home
             ;;
         *)
-            jdk8=`find /usr/lib/jvm/ -maxdepth 1 -name jdk1.8* | sort -V -r | head -n1`
-            if [[ -s "$jdk8" ]]; then
-              export JAVA8_HOME="$jdk8"
-            elif [[ -s "$JAVA_8_HOME" ]]; then
-              export JAVA8_HOME=$JAVA_8_HOME
-            else
-              die "java 1.8 not found. set JAVA8_HOME."
-            fi
+            export JAVA8_HOME=../../prebuilts/studio/jdk/linux
             ;;
     esac
   fi
