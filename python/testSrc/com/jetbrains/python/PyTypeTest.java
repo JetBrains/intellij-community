@@ -886,6 +886,44 @@ public class PyTypeTest extends PyTestCase {
            "  expr, foo = xs\n");
   }
 
+  public void testHomogeneousTupleSubstitution() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        myFixture.copyDirectoryToProject("typing", "");
+
+        doTest("Tuple[int, ...]",
+               "from typing import TypeVar, Tuple\n" +
+               "T = TypeVar('T')\n" +
+               "def foo(i: T) -> Tuple[T, ...]:\n" +
+               "    pass\n" +
+               "expr = foo(5)");
+      }
+    );
+  }
+
+  public void testHeterogeneousTupleSubstitution() {
+    doTest("tuple[int, int]",
+           "def foo(i):\n" +
+           "    \"\"\"\n" +
+           "    :type i: T\n" +
+           "    :rtype: tuple[T, T]\n" +
+           "    \"\"\"\n" +
+           "    pass\n" +
+           "expr = foo(5)");
+  }
+
+  public void testUnknownTupleSubstitution() {
+    doTest("tuple",
+           "def foo(i):\n" +
+           "    \"\"\"\n" +
+           "    :type i: T\n" +
+           "    :rtype: tuple\n" +
+           "    \"\"\"\n" +
+           "    pass\n" +
+           "expr = foo(5)");
+  }
+
   public void testTupleIterationType() {
     doTest("Union[int, str]",
            "xs = (1, 'a')\n" +
