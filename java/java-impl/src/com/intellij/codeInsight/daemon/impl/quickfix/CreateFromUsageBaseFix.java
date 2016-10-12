@@ -43,6 +43,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +69,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       return false;
     }
 
-    List<PsiClass> targetClasses = getTargetClasses(element);
+    List<PsiClass> targetClasses = filterTargetClasses(element, project);
     return !targetClasses.isEmpty();
   }
 
@@ -92,7 +93,8 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       return;
     }
 
-    List<PsiClass> targetClasses = getTargetClasses(element);
+    List<PsiClass> targetClasses = filterTargetClasses(element, project);
+
     if (targetClasses.isEmpty()) return;
 
     if (targetClasses.size() == 1 || ApplicationManager.getApplication().isUnitTestMode()) {
@@ -100,6 +102,10 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     } else {
       chooseTargetClass(targetClasses, editor);
     }
+  }
+
+  protected List<PsiClass> filterTargetClasses(PsiElement element, Project project) {
+    return ContainerUtil.filter(getTargetClasses(element), psiClass -> JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null);
   }
 
   private void doInvoke(Project project, final PsiClass targetClass) {
