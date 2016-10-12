@@ -886,6 +886,22 @@ public class PyTypeTest extends PyTestCase {
            "  expr, foo = xs\n");
   }
 
+  // PY-19826
+  public void testListFromTuple() {
+    doTest("List[Union[str, int]]",
+           "expr = list(('1', 2, 3))");
+  }
+
+  public void testDictFromTuple() {
+    doTest("Dict[Union[str, int], Union[str, int]]",
+           "expr = dict((('1', 1), (2, 2), (3, '3')))");
+  }
+
+  public void testSetFromTuple() {
+    doTest("Set[Union[str, int]]",
+           "expr = set(('1', 2, 3))");
+  }
+
   public void testHomogeneousTupleSubstitution() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,

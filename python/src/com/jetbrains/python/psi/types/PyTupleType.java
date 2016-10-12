@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author yole
  */
-public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType {
+public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType, PyCollectionType {
   private final PyType[] myElementTypes;
   private final boolean myHomogeneous;
 
@@ -47,12 +48,12 @@ public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType 
   public static PyTupleType createHomogeneous(@NotNull PsiElement anchor, @Nullable PyType elementType) {
     PyClass tuple = PyBuiltinCache.getInstance(anchor).getClass(PyNames.TUPLE);
     if (tuple != null) {
-      return new PyTupleType(tuple, new PyType[] {elementType}, true);
+      return new PyTupleType(tuple, new PyType[]{elementType}, true);
     }
     return null;
   }
 
-  PyTupleType(@NotNull PyClass tupleClass, @NotNull PyType[] elementTypes, boolean homogeneous) {
+  public PyTupleType(@NotNull PyClass tupleClass, @NotNull PyType[] elementTypes, boolean homogeneous) {
     super(tupleClass, false);
     myElementTypes = elementTypes;
     myHomogeneous = homogeneous;
@@ -123,5 +124,11 @@ public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType 
     int result = super.hashCode();
     result = 31 * result + (myElementTypes != null ? Arrays.hashCode(myElementTypes) : 0);
     return result;
+  }
+
+  @NotNull
+  @Override
+  public List<PyType> getElementTypes(@NotNull TypeEvalContext context) {
+    return Arrays.asList(myElementTypes);
   }
 }

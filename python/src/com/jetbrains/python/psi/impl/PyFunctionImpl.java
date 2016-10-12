@@ -124,21 +124,21 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public Icon getIcon(int flags) {
     PyPsiUtils.assertValid(this);
     final Property property = getProperty();
-      if (property != null) {
-        if (property.getGetter().valueOrNull() == this) {
-          return PythonIcons.Python.PropertyGetter;
-        }
-        if (property.getSetter().valueOrNull() == this) {
-          return PythonIcons.Python.PropertySetter;
-        }
-        if (property.getDeleter().valueOrNull() == this) {
-          return PythonIcons.Python.PropertyDeleter;
-        }
-        return PlatformIcons.PROPERTY_ICON;
+    if (property != null) {
+      if (property.getGetter().valueOrNull() == this) {
+        return PythonIcons.Python.PropertyGetter;
       }
-      if (getContainingClass() != null) {
-        return PlatformIcons.METHOD_ICON;
+      if (property.getSetter().valueOrNull() == this) {
+        return PythonIcons.Python.PropertySetter;
       }
+      if (property.getDeleter().valueOrNull() == this) {
+        return PythonIcons.Python.PropertyDeleter;
+      }
+      return PlatformIcons.PROPERTY_ICON;
+    }
+    if (getContainingClass() != null) {
+      return PlatformIcons.METHOD_ICON;
+    }
     return PythonIcons.Python.Function;
   }
 
@@ -324,14 +324,18 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       public void visitPyYieldExpression(PyYieldExpression node) {
         final PyExpression expr = node.getExpression();
         final PyType type = expr != null ? context.getType(expr) : null;
+
         if (node.isDelegating()) {
-          if (type instanceof PyCollectionType) {
+          if (type instanceof PyTupleType) {
+            types.addAll(((PyTupleType)type).getElementTypes(context));
+          }
+          else if (type instanceof PyCollectionType) {
             final PyCollectionType collectionType = (PyCollectionType)type;
             // TODO: Select the parameter types that matches T in Iterable[T]
             final List<PyType> elementTypes = collectionType.getElementTypes(context);
             types.add(elementTypes.isEmpty() ? null : elementTypes.get(0));
           }
-          else if (ArrayUtil.contains(type, cache.getListType(), cache.getDictType(), cache.getSetType())) {
+          else if (ArrayUtil.contains(type, cache.getListType(), cache.getDictType(), cache.getSetType(), cache.getTupleType())) {
             types.add(null);
           }
           else {
@@ -605,7 +609,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     if (inlineComment != null && PyTypingTypeProvider.getTypeCommentValue(inlineComment.getText()) != null) {
       return inlineComment;
     }
-    
+
     final PyStatementList statements = getStatementList();
     if (statements.getStatements().length != 0) {
       final PsiComment comment = as(statements.getFirstChild(), PsiComment.class);
@@ -621,7 +625,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   public String getTypeCommentAnnotation() {
     final PyFunctionStub stub = getStub();
     if (stub != null) {
-      return stub.getTypeComment(); 
+      return stub.getTypeComment();
     }
     final PsiComment comment = getTypeComment();
     if (comment != null) {
