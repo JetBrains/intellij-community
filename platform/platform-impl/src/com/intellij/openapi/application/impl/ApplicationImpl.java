@@ -1251,6 +1251,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     }
 
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      if (gatherStatistics) {
+        ActionPauses.WRITE.finished("write action ("+myWriteActionsStack.get(0)+")");
+      }
+
       List<Class> savedStack = new ArrayList<>(myWriteActionsStack);
       myWriteActionsStack.clear();
       myLock.writeUnlock();
@@ -1262,6 +1266,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         myWriteActionsStack.addAll(savedStack);
         myLock.writeLock();
         LOG.assertTrue(stackWasEmpty);
+
+        if (gatherStatistics) {
+          ActionPauses.WRITE.started();
+        }
       }
     });
   }
