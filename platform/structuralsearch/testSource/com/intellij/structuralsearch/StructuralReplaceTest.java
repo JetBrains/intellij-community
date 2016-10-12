@@ -1438,7 +1438,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  replacer.testReplace(in, what, by, options));
   }
 
-  public void _testClassReplacement2() {
+  public void testClassReplacement2() {
     String s40 = "class A {\n" +
                  "  /* special comment*/\n" +
                  "  private List<String> a = new ArrayList();\n" +
@@ -1446,13 +1446,13 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "    int a = 1;" +
                  "  }\n" +
                  "}";
-    String s41 = "class 'Class {\n" +
-                 "  'Stuff2*\n" +
-                 "  'FieldType 'FieldName = 'Init?;\n" +
+    String s41 = "class '_Class {\n" +
+                 "  '_Stuff2*\n" +
+                 "  '_FieldType '_FieldName = '_Init?;\n" +
                  "  static {\n" +
-                 "    'Stmt*;\n" +
+                 "    '_Stmt*;\n" +
                  "  }\n" +
-                 "  'Stuff*\n" +
+                 "  '_Stuff*\n" +
                  "}";
     String s42 = "class $Class$ {\n" +
                  "  $Stuff2$\n" +
@@ -1477,10 +1477,10 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                               "}";
 
     assertEquals("Preserving var modifiers and generic information in type during replacement",
-                 expectedResult15, replacer.testReplace(s40,s41,s42,options, true));
+      expectedResult15, replacer.testReplace(s40,s41,s42,options, true));
 
     String s46 = "class Foo { int xxx; void foo() { assert false; } void yyy() {}}";
-    String s47 = "class 'Class { void 'foo:[regex( foo )](); }";
+    String s47 = "class '_Class { void '_foo:[regex( foo )](); }";
     String s48 = "class $Class$ { void $foo$(int a); }";
     String expectedResult17 = "class Foo { int xxx; void foo(int a) { assert false; } void yyy() {}}";
 
@@ -2123,7 +2123,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String what = "class '_A { void '_b:[regex( test.* )](); }";
     final String by = "class $A$ {\n  @java.lang.Override void $b$();\n}";
     assertEquals("class A extends TestCase {\n" +
-                 "  @Override void testOne(){\n" +
+                 "  @Override void testOne() {\n" +
                  "    System.out.println();\n" +
                  "  }\n" +
                  "}\n", replacer.testReplace(in, what, by, options));
@@ -2131,7 +2131,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String what2 = "void '_a:[regex( test.* )]();";
     final String by2 = "@org.junit.Test void $a$();";
     assertEquals("class A extends TestCase {\n" +
-                 "  @org.junit.Test void testOne(){\n" +
+                 "  @org.junit.Test void testOne() {\n" +
                  "    System.out.println();\n" +
                  "  }\n" +
                  "}\n",

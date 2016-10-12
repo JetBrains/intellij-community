@@ -283,6 +283,10 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   private static void copyMethodBodyIfNotReplaced(PsiMethod original, PsiMethod query, PsiMethod replacement) {
     final PsiCodeBlock originalBody = original.getBody();
     if (originalBody != null && query.getBody() == null && replacement.getBody() == null) {
+      final PsiElement sibling = originalBody.getPrevSibling();
+      if (sibling instanceof PsiWhiteSpace) {
+        replacement.add(sibling);
+      }
       replacement.add(originalBody);
     }
   }
