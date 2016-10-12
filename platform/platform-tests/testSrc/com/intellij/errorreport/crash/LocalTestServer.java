@@ -53,7 +53,8 @@ public class LocalTestServer {
         protected void initChannel(SocketChannel ch) throws Exception {
           ChannelPipeline p = ch.pipeline();
           p.addLast(new HttpServerCodec());
-          p.addLast(new HttpObjectAggregator(8192));
+          p.addLast(new HttpContentDecompressor());
+          p.addLast(new HttpObjectAggregator(32 * 1024)); // big enough to collect a full thread dump
           p.addLast(new ChannelInboundHandlerAdapter() {
             @Override
             public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {

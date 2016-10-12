@@ -36,11 +36,6 @@ public class StubIdeaModule implements IdeaModule, Serializable {
   }
 
   @Override
-  public IdeaModuleIdentifier getIdentifier() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public IdeaJavaLanguageSettings getJavaLanguageSettings() throws UnsupportedMethodException {
     throw new UnsupportedOperationException();
   }

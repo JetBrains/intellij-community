@@ -221,7 +221,7 @@ public class Utils {
   }
 
   protected static boolean isSymlink(File file) throws IOException {
-    return !file.getAbsolutePath().equals(file.getCanonicalPath());
+    return !file.getAbsolutePath().equalsIgnoreCase(file.getCanonicalPath());
   }
 
   protected static String getSymlinkTarget(File file) throws IOException {

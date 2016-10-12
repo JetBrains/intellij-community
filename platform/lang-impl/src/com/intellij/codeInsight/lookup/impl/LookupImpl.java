@@ -58,6 +58,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.accessibility.AccessBridgeUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
@@ -70,7 +71,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -1053,16 +1053,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         if (ScreenReader.isActive()) {
           // Dispatch a "focus gained" event so that screen readers that think the code completion
           // list has the focus get notified that the editor component is the "new" focus owner.
+          //
           // In particular, this is useful with the nvda screen reader, as it seems to ignore
           // caret events coming from the text editor unless it thinks the editor has the focus.
-          //
-          // Note: Using "requestFocus" here would not work for our purpose, as it would *not* result
-          // in firing a FocusEvent since the editor component never lost the focus from a Swing
-          // point of view. The only purpose here is to ensure a "FocusGained" event is sent to
-          // screen readers via the accessibility bridge, hopefully without any visible side
-          // effect on the IDE.
-          FocusEvent event = new FocusEvent(myList, FocusEvent.FOCUS_GAINED, false, null);
-          IdeEventQueue.getInstance().dispatchEvent(event);
+          // See https://github.com/nvaccess/nvda/issues/5989
+          AccessBridgeUtil.sendFocusGainedEvent(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
         }
 
         Disposer.dispose(this);

@@ -15,9 +15,12 @@
  */
 package com.intellij.errorreport.crash;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.util.ExceptionUtil;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +42,7 @@ public abstract class CrashReport {
   public enum Type {
     Crash,
     Exception,
+    Performance,
   }
 
   @NotNull public final String productId;
@@ -87,12 +91,40 @@ public abstract class CrashReport {
     }
   }
 
+  private static class StudioPerformanceWatcherReport extends CrashReport {
+    private final String myFileName;
+    private final List<String> myThreadDump;
+
+    private StudioPerformanceWatcherReport(@NotNull String productId,
+                                           @Nullable String version,
+                                           @NotNull String fileName,
+                                           @NotNull List<String> threadDump) {
+      super(productId, version, Type.Performance);
+      myFileName = fileName;
+      myThreadDump = threadDump;
+    }
+
+    @Override
+    protected void serializeTo(@NotNull MultipartEntityBuilder builder) {
+      String edtStack = ThreadDumper.getEdtStackForCrash(myThreadDump);
+      if (edtStack != null) {
+        builder.addTextBody(KEY_EXCEPTION_INFO, edtStack);
+      }
+
+      builder.addTextBody(myFileName,
+                          Joiner.on('\n').join(myThreadDump),
+                          ContentType.create("text/plain", Charsets.UTF_8));
+    }
+  }
+
   public static class Builder {
     private String myProductId = PRODUCT_ANDROID_STUDIO;
     private String myVersion;
     private Type myType = Type.Exception;
     private String myExceptionInfo = "<unknown>";
     private List<String> myCrashDescriptions;
+    private List<String> myThreadDump;
+    private String myFileName;
 
     private Builder() {
     }
@@ -129,10 +161,19 @@ public abstract class CrashReport {
     }
 
     @NotNull
+    private Builder setThreadDump(@NotNull String fileName, @NotNull List<String> threadDump) {
+      myFileName = fileName;
+      myThreadDump = threadDump;
+      return this;
+    }
+
+    @NotNull
     public CrashReport build() {
       switch (myType) {
         case Crash:
           return new StudioCrashReport(myProductId, myVersion, myCrashDescriptions);
+        case Performance:
+          return new StudioPerformanceWatcherReport(myProductId, myVersion, myFileName, myThreadDump);
         default:
         case Exception:
           return new ExceptionReport(myProductId, myVersion, myExceptionInfo);
@@ -151,6 +192,13 @@ public abstract class CrashReport {
       return new Builder()
         .setType(Type.Crash)
         .setDescriptions(descriptions);
+    }
+
+    @NotNull
+    public static Builder createForPerfReport(@NotNull String fileName, @NotNull List<String> threadDump) {
+      return new Builder()
+        .setType(Type.Performance)
+        .setThreadDump(fileName, threadDump);
     }
   }
 

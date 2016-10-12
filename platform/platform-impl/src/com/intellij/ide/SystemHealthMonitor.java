@@ -27,6 +27,8 @@ import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEve
 import com.google.wireless.android.sdk.stats.AndroidStudioStats.UIActionStats;
 import com.google.wireless.android.sdk.stats.AndroidStudioStats.UIActionStats.InvocationKind;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.diagnostic.IdePerformanceListener;
+import com.intellij.diagnostic.ThreadDump;
 import com.intellij.errorreport.crash.CrashReport;
 import com.intellij.errorreport.crash.GoogleCrash;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -61,7 +63,10 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +98,8 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   @NonNls private static final String BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE = "studio.exb";
   @NonNls private static final String NON_BUNDLED_PLUGINS_EXCEPTION_COUNT_FILE = "studio.exp";
 
+  private final ThreadDumpsDatabase myThreadDumpsDatabase = new ThreadDumpsDatabase(new File(PathManager.getTempPath(), "threads.dmp"));
+
   private static final Object ACTION_INVOCATIONS_LOCK = new Object();
   // Updates to ourActionInvocations need to be done synchronized on ACTION_INVOCATIONS_LOCK to avoid updates during usage reporting.
   private static Map<String, Multiset<InvocationKind>> ourActionInvocations = new HashMap<>();
@@ -119,6 +126,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
       StudioCrashDetection.updateRecordedVersionNumber(ApplicationInfo.getInstance().getStrictVersion());
       startActivityMonitoring();
       trackCrashes(StudioCrashDetection.reapCrashDescriptions());
+      trackPerfWatcherReports(myThreadDumpsDatabase.reapThreadDumps());
 
       Application application = ApplicationManager.getApplication();
       application.getMessageBus().connect(application).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
@@ -127,6 +135,28 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           myProperties.setValue(STUDIO_ACTIVITY_COUNT, Long.toString(ourStudioActionCount.get()));
           StudioCrashDetection.stop();
           reportActionInvocations();
+        }
+      });
+
+      application.getMessageBus().connect(application).subscribe(IdePerformanceListener.TOPIC, new IdePerformanceListener.Adapter() {
+        @Override
+        public void uiFreezeFinished(int lengthInSeconds) {
+          // track how long the IDE was frozen
+          UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
+                                           .setKind(EventKind.STUDIO_PERFORMANCE_STATS)
+                                           .setStudioPerformanceStats(AndroidStudioStats.StudioPerformanceStats.newBuilder()
+                                                                        .setUiFreezeTimeMs(lengthInSeconds * 1000)));
+        }
+
+        @Override
+        public void dumpedThreads(@NotNull File toFile, @NotNull ThreadDump dump) {
+          // We don't want to add additional overhead when the IDE is already slow, so we just note down the file to which the threads
+          // were dumped.
+          try {
+            myThreadDumpsDatabase.appendThreadDump(toFile.toPath());
+          }
+          catch (IOException ignored) { // don't worry about errors during analytics events
+          }
         }
       });
     }
@@ -170,7 +200,35 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     }
   }
 
+  private static void trackPerfWatcherReports(@NotNull List<Path> threadDumps) {
+    if (threadDumps.isEmpty()) {
+      return;
+    }
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      threadDumps.stream()
+        .limit(10) // an arbitrary limit, we don't want to overload the backend with too many of these..
+        .forEach(t -> {
+          List<String> lines;
+          try {
+            lines = java.nio.file.Files.readAllLines(t);
+          }
+          catch (IOException e) {
+            return;
+          }
+
+          GoogleCrash.getInstance().submit(
+            CrashReport.Builder.createForPerfReport(t.getFileName().toString(), lines)
+              .build());
+        });
+    });
+  }
+
   public static void trackCrashes(@NotNull List<String> descriptions) {
+    if (descriptions.isEmpty()) {
+      return;
+    }
+
     CrashReport report = CrashReport.Builder.createForCrashes(descriptions).build();
     GoogleCrash.getInstance().submit(report);
     trackExceptionsAndActivity(0, 0, 0, 0, descriptions.size());
@@ -421,7 +479,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
    * Takes the current stats on action invocations and reports them through the {@link UsageTracker}.
    * Resets invocation counts by clearing the map.
    */
-  private static void reportActionInvocations(){
+  private static void reportActionInvocations() {
     Map<String, Multiset<InvocationKind>> currentInvocations = null;
     synchronized (ACTION_INVOCATIONS_LOCK) {
       currentInvocations = ourActionInvocations;
@@ -429,7 +487,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     }
 
     for (Map.Entry<String, Multiset<InvocationKind>> actionEntry : currentInvocations.entrySet()) {
-      for(Multiset.Entry<InvocationKind> invocationEntry : actionEntry.getValue().entrySet()) {
+      for (Multiset.Entry<InvocationKind> invocationEntry : actionEntry.getValue().entrySet()) {
         UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
                                        .setCategory(EventCategory.STUDIO_UI)
                                        .setKind(EventKind.STUDIO_UI_ACTION_STATS)
@@ -454,6 +512,9 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     }
     if (place.contains("Toolbar")) {
       return InvocationKind.TOOLBAR;
+    }
+    if (event.getInputEvent() instanceof MouseEvent) {
+      return InvocationKind.MOUSE;
     }
     return InvocationKind.UNKNOWN_INVOCATION_KIND;
   }

@@ -200,6 +200,18 @@ def getProperties(String home, String buildNumber) {
             }
           }
 
+          dir("url-assistant") {
+            dir("lib") {
+              jar("url-assistant.jar") {
+                module("url-assistant")
+              }
+              fileset(dir: "${home}/../vendor/google/url-assistant/lib") {
+                include(name: "**/*.jar")
+                include(name: "**/*.jar-NOTICE")
+              }
+            }
+          }
+
           dir("firebase") {
             dir("lib") {
               jar("firebase.jar") {
@@ -357,7 +369,7 @@ def getProperties(String home, String buildNumber) {
     // Patches plugin.xml to replace the "SNAPSHOT" in the version with build number and product-build.txt to replace "PRODUCT_BUILD"
     // with the full build number.
     def updateAswbPlugin() {
-      def aswb = projectBuilder.moduleOutput(findModule("aswb"))
+      def aswb = projectBuilder.moduleOutput(findModule("blaze-aswb-google3"))
 
       def pluginFile = new File(aswb + "/META-INF/plugin.xml")
       if (pluginFile.isFile()) {
@@ -379,14 +391,15 @@ def getProperties(String home, String buildNumber) {
           dir("aswb") {
             dir("lib") {
               jar("aswb.jar") {
+                module("blaze-aswb-google3")
+                module("blaze-base-google3")
                 module("aswb")
-                module("aswb-google3")
-                module("blaze-base-aswb")
-                module("blaze-cpp-aswb")
-                module("blaze-java-aswb")
-                module("blaze-google3-aswb")
+                module("blaze-base")
+                module("blaze-common")
+                module("blaze-cpp")
+                module("blaze-java")
               }
-              fileset(dir: "$home/../vendor/google3/blaze/blaze-base/lib") { include(name: "*.jar") }
+              fileset(dir: "$home/../vendor/google3/blaze/base/lib") { include(name: "*.jar") }
             }
           }
         }

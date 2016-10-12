@@ -66,21 +66,21 @@
     <tipAndTrick file="CompleteStatement.html"/>
     <tipAndTrick file="CamelPrefixesInNavigationPopups.html"/>
     <tipAndTrick file="CtrlShiftI.html" feature-id="codeassists.quickdefinition"/>
-    <tipAndTrick file="CompletionInHTML.html"/>
+    <!--<tipAndTrick file="CompletionInHTML.html"/>-->
     <tipAndTrick file="CopyPasteReference.html"/>
     <tipAndTrick file="MoveUpDown.html"/>
     <tipAndTrick file="SelectRunDebugConfiguration.html"/>
     <tipAndTrick file="CtrlShiftIForLookup.html" feature-id="codeassists.quickdefinition.lookup"/>
     <tipAndTrick file="PropertiesCompletion.html"/>
-    <tipAndTrick file="ShowAppliedStyles.html"/>
-    <tipAndTrick file="ImagesLookup.html"/>
-    <tipAndTrick file="RenameCssSelector.html"/>
+    <!--<tipAndTrick file="ShowAppliedStyles.html"/>-->
+    <!--<tipAndTrick file="ImagesLookup.html"/>-->
+    <!--<tipAndTrick file="RenameCssSelector.html"/>-->
     <tipAndTrick file="NavBar.html"/>
     <tipAndTrick file="ChangesView.html"/>
     <tipAndTrick file="Antivirus.html"/>
-    <tipAndTrick file="MavenQuickOpen.html"/>
+    <!--<tipAndTrick file="MavenQuickOpen.html"/>-->
     <tipAndTrick file="MoveToChangelist.html"/>
-    <tipAndTrick file="EclipseQuickOpen.html"/>
+    <!--<tipAndTrick file="EclipseQuickOpen.html"/>-->
     <tipAndTrick file="ShowUsages.html"/>
     <tipAndTrick file="GoToAction.html"/>
     <tipAndTrick file="GoToInspection.html"/>
@@ -94,7 +94,8 @@
     <tipAndTrick file="QuickFixRightArrow.html"/>
     <tipAndTrick file="NavigateToFilePath.html"/>
     <tipAndTrick file="IssueNavigation.html"/>
-    <tipAndTrick file="ColorEditingInCss.html"/>
+    <!--<tipAndTrick file="ColorEditingInCss.html"/>-->
+    <tipAndTrick file="ColorEditingInAndroid.html"/>
     <tipAndTrick file="CreateTestIntentionAction.html"/>
     <tipAndTrick file="ColumnSelection.html"/>
     <tipAndTrick file="ColorFiles.html"/>
@@ -124,7 +125,7 @@
     <tipAndTrick file="SpeedSearchinLiveTemplates.html"/>
     <tipAndTrick file="EditRegExp.html"/>
 
-    <tipAndTrick file="Emmet.html"/>
+    <!--<tipAndTrick file="Emmet.html"/>-->
     <!--<tipAndTrick file="EscapeCharactersInResourceBundle.html"/>-->
     <tipAndTrick file="LineEndings.html"/>
     <tipAndTrick file="LineEndingsFolder.html"/>

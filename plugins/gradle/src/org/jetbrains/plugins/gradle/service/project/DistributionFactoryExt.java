@@ -55,7 +55,7 @@ public class DistributionFactoryExt extends DistributionFactory {
    */
   public Distribution getWrappedDistribution(File propertiesFile) {
     //noinspection UseOfSystemOutOrSystemErr
-    WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile, System.out);
+    WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
     if (wrapper.getDistribution() != null) {
       return new ZippedDistribution(wrapper.getConfiguration(), myExecutorFactory);
     }

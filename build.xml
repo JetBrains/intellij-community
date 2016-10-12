@@ -37,6 +37,10 @@
     <isset property="enable.ui.tests" />
   </condition>
 
+  <condition property="ui.test.groups" value="${ui.test.groups}" else="">
+    <isset property="ui.test.groups" />
+  </condition>
+
   <property name="tmp.dir" value="${out.dir}/tmp"/>
 
   <target name="cleanup">
@@ -60,6 +64,18 @@
     </java>
   </target>
 
+  <target name="gradleplugin" if="${bundle.gradle.plugin}">
+    <condition property="gradle.wrapper" value="${project.home}/../gradlew.bat" else="${project.home}/../gradlew">
+      <os family="windows" />
+    </condition>
+    <exec executable="${gradle.wrapper}" dir="${project.home}/../" failonerror="true">
+      <env key="JAVA_HOME" value="${java.home}" />
+      <arg value="init" />
+      <arg value="zipOfflineRepo" />
+    </exec>
+    <unzip src="${project.home}/../../out/dist/offline_repo.zip" dest="${project.home}/../../out/studio/repo" />
+  </target>
+
   <macrodef name="call_gant">
     <attribute name="script" />
     <attribute name="target" default="default" />
@@ -73,6 +89,7 @@
         <sysproperty key="product" value="${product.name}" />
         <sysproperty key="productPropertiesPath" value="${productPropertiesPath}" />
         <sysproperty key="studio.ui.tests" value="${studio.ui.tests}" />
+        <sysproperty key="ui.test.groups" value="${ui.test.groups}" />
         <sysproperty key="compile.parallel" value="${compile.parallel}" />
         <sysproperty key="java.awt.headless" value="true"/>
         <sysproperty key="gant.script" value="@{script}"/>
@@ -104,13 +121,6 @@
     <call_gant script="${project.home}/build/scripts/gui_tests.gant"/>
   </target>
 
-  <target name="guiSanityTests" depends="init">
-    <delete>
-      <fileset dir="${project.home}/build" includes="TEST-com.android.tools.idea.tests.gui.*"/>
-    </delete>
-    <call_gant script="${project.home}/build/scripts/gui_sanity_tests.gant"/>
-  </target>
-
   <!-- The build task creates an updater.jar in ${out.dir}. This task bundles the updater and its dependencies into a single jar -->
   <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${project.home}/build/lib/jarjar-1.0.jar"/>
   <target name="fullupdater" depends="build">
@@ -130,5 +140,5 @@
     </jarjar>
     <zip destfile="${out.dir}/sdk-patcher.zip" compress="true" basedir="${out.dir}" includes="sdk-patcher/*"/>
   </target>
-  <target name="all" depends="cleanup,build,fullupdater"/>
+  <target name="all" depends="cleanup,gradleplugin,build,fullupdater"/>
 </project>

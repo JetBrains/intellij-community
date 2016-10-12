@@ -910,7 +910,9 @@ binding.setVariable("bundledJDKs"){
     if (customJdkDir.exists() && customJdkDir.isDirectory()) {
       requireProperty("jdk32.win", "true")
       ant.copy(todir: "${paths.sandbox}/jdk32.win/jre") {
-        fileset(dir: customJdkDir)
+        fileset(dir: customJdkDir) {
+          exclude(name: "**/src.zip")
+        }
       }
     }
   }
@@ -925,21 +927,27 @@ binding.setVariable("bundledJDK64s"){
     if (customJdkDir.exists() && customJdkDir.isDirectory()) {
       requireProperty("jdk64.win", "true")
       ant.copy(todir: "${paths.sandbox}/jdk64.win/jre") {
-        fileset(dir: customJdkDir)
+        fileset(dir: customJdkDir) {
+          exclude(name: "**/src.zip")
+        }
       }
     }
     customJdkDir = new File("${home}/../../prebuilts/studio/jdk/mac")
     if (customJdkDir.exists() && customJdkDir.isDirectory()) {
       requireProperty("jdk.mac", "true")
       ant.copy(todir: "${paths.sandbox}/jdk.mac/jre/jdk") {
-        fileset(dir: customJdkDir, followsymlinks: "false")
+        fileset(dir: customJdkDir, followsymlinks: "false") {
+          exclude(name: "**/src.zip")
+        }
       }
     }
     customJdkDir = new File("${home}/../../prebuilts/studio/jdk/linux")
     if (customJdkDir.exists() && customJdkDir.isDirectory()) {
       requireProperty("jdk.linux", "true")
       ant.copy(todir: "${paths.sandbox}/jdk.linux/jre") {
-        fileset(dir: customJdkDir)
+        fileset(dir: customJdkDir) {
+          exclude(name: "**/src.zip")
+        }
       }
     }
   }

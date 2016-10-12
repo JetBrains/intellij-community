@@ -189,6 +189,9 @@ RESTARTER="$HOME/.@@system_selector@@/system/restart/restarter.sh"
 if [ -x "$RESTARTER" ]; then
   "$RESTARTER"
   "$RM" -f "$RESTARTER"
+  if [ "$BUILDSERVER" ]; then
+    exit 0
+  fi
 fi
 
 exec "$0"

@@ -23,16 +23,15 @@ import org.apache.tools.ant.taskdefs.optional.junit.JUnitTask;
 import org.apache.tools.ant.taskdefs.optional.junit.JUnitTest;
 import org.apache.tools.ant.types.*;
 import org.apache.tools.ant.types.Commandline.Argument;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Custom Ant task for running UI tests.
@@ -43,8 +42,11 @@ import java.util.*;
  */
 public class UiTestTask extends Task {
 
+  private static final String TEST_SUITE_CLASS_NAME = "com.android.tools.idea.tests.gui.GuiTestSuite";
+  private static final String TEST_GROUP_CLASS_NAME = "com.android.tools.idea.tests.gui.framework.TestGroup";
+
   private String classpathFile;
-  private String testSuite;
+  private List<String> testGroups = Collections.emptyList();
   private Path classpath;
   private final List<Argument> jvmArgs = new ArrayList<Argument>();
 
@@ -79,21 +81,18 @@ public class UiTestTask extends Task {
     return jvmArg;
   }
 
+
   /**
-   * Specifies the canonical class name of the test suite, a class annotated with @RunWith(GuiTestSuiteRunner.class).
+   * Takes a comma-delimited list of TestGroup values for groups to run. If empty or unspecified, all are run.
    */
-  public void setTestSuite(String testSuite) {
-    this.testSuite = testSuite;
+  public void setTestGroups(String testGroupsString) {
+    this.testGroups = Arrays.stream(testGroupsString.split(",")).filter(s -> !s.isEmpty()).collect(Collectors.toList());
   }
 
   @Override
   public void execute() throws BuildException {
-    long start = System.currentTimeMillis();
-    Map<String, List<Class<?>>> testGroups = getTestGroups();
-    log("Classpath scanning for test classes took " + (System.currentTimeMillis() - start) + " ms");
-
     try {
-      for (String testGroup : testGroups.keySet()) {
+      for (String testGroup : testGroups.isEmpty() ? getAllTestGroups() : testGroups) {
         JUnitTask task = new JUnitTask();
         task.init();
         task.setProject(getProject());
@@ -107,7 +106,8 @@ public class UiTestTask extends Task {
         task.setPrintsummary((JUnitTask.SummaryAttribute) EnumeratedAttribute.getInstance(JUnitTask.SummaryAttribute.class, "true"));
 
         task.createJvmarg().setValue("-Dclasspath.file=" + classpathFile);
-        task.createJvmarg().setValue("-Dbootstrap.testcase=" + getTestSpec(testGroups.get(testGroup)));
+        task.createJvmarg().setValue("-Dbootstrap.testcase=" + TEST_SUITE_CLASS_NAME);
+        task.createJvmarg().setValue("-Dui.test.group=" + testGroup);
 
         Path testClasspath = task.createClasspath();
         testClasspath.add(classpath);
@@ -141,43 +141,10 @@ public class UiTestTask extends Task {
     }
   }
 
-  /**
-   * Decides how to shard the test classes based on their TestGroup annotations.
-   *
-   * @return a map from test group name to list of test classes.
-   */
-  public Map<String, List<Class<?>>> getTestGroups() {
-    Map<String, List<Class<?>>> result = new HashMap<String, List<Class<?>>>();
-
-    try {
-      ClassLoader classLoader = createRuntimeClassLoader();
-      Class<?> testSuiteRunnerClass = classLoader.loadClass("com.android.tools.idea.tests.gui.framework.GuiTestSuiteRunner");
-      Method getGuiTestClasses = testSuiteRunnerClass.getMethod("getGuiTestClasses", Class.class);
-      Method getTestGroup = testSuiteRunnerClass.getMethod("getTestGroup", Class.class);
-
-      Class<?>[] testClasses = (Class<?>[]) getGuiTestClasses.invoke(null, classLoader.loadClass(testSuite));
-      for (Class<?> testClass : testClasses) {
-        Object testGroup = getTestGroup.invoke(null, testClass);
-        if (testGroup == null) {
-          addToTestGroup(result, "DEFAULT", testClass);
-        } else {
-          addToTestGroup(result, testGroup.toString(), testClass);
-        }
-      }
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    return result;
-  }
-
-  private static boolean addToTestGroup(Map<String, List<Class<?>>> testGroups, @NotNull String groupName, @NotNull Class<?> testClass) {
-    if ("INDIVIDUAL".equals(groupName)) {
-      return addToTestGroup(testGroups, testClass.getSimpleName(), testClass);
-    }
-    if (!testGroups.containsKey(groupName)) {
-      testGroups.put(groupName, new ArrayList<Class<?>>());
-    }
-    return testGroups.get(groupName).add(testClass);
+  private List<String> getAllTestGroups() throws Exception {
+    Class<?> testGroupClass = createRuntimeClassLoader().loadClass(TEST_GROUP_CLASS_NAME);
+    Object[] testGroupValues = (Object[])testGroupClass.getMethod("values").invoke(null);
+    return Arrays.stream(testGroupValues).map(Object::toString).collect(Collectors.toList());
   }
 
   // Create a classloader based on the classpath contents from classpathFile.
@@ -199,17 +166,5 @@ public class UiTestTask extends Task {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  /**
-   * Returns a comma-separated list of test class names, to be passed via -Dbootstrap.testcase to BootstrapUITests.
-   */
-  public String getTestSpec(List<Class<?>> classes) {
-    StringBuilder sb = new StringBuilder();
-    for (Class<?> clazz : classes) {
-      sb.append(clazz.getCanonicalName());
-      sb.append(",");
-    }
-    return sb.toString();
   }
 }

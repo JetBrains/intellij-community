@@ -186,7 +186,7 @@ public abstract class BaseDataReader {
         close();
       }
       catch (IOException e) {
-        LOG.error("Can't close stream", e);
+        LOG.error("Can't close stream in thread " + Thread.currentThread().getName(), e);
       }
     }
   }

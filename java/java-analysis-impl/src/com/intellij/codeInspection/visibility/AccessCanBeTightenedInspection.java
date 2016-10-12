@@ -185,7 +185,7 @@ class AccessCanBeTightenedInspection extends BaseJavaBatchLocalInspectionTool {
         // Android Studio: Certain types of Android SDK classes are required to be public
         // https://code.google.com/p/android/issues/detail?id=218848
         PsiClass cls = memberClass;
-        if (cls == null && member instanceof PsiClass) {
+        if (member instanceof PsiClass) {
           cls = (PsiClass) member;
         }
         while (cls != null) {

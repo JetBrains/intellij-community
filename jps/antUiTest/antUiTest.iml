@@ -8,9 +8,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="util" />
-    <orderEntry type="library" exported="" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="ant" />
     <orderEntry type="module" module-name="uitest-framework" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="library" scope="TEST" name="Guava" level="project" />
+    <orderEntry type="library" scope="TEST" name="truth" level="project" />
   </component>
 </module>

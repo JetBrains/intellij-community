@@ -13,25 +13,25 @@
     <orderEntry type="module-library" exported="">
       <library name="Gradle">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-core-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-model-core-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-model-groovy-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-native-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-tooling-api-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-core-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-model-core-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-model-groovy-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-messaging-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-wrapper-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-base-services-groovy-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-native-3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/messaging/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/wrapper/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/base-services/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/build-init/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/plugins/src/main/groovy" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/ide/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/ide/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-3.1-src.zip!/gradle-3.1/subprojects/messaging/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-3.1-src.zip!/gradle-3.1/subprojects/wrapper/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-3.1-src.zip!/gradle-3.1/subprojects/base-services/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-3.1-src.zip!/gradle-3.1/subprojects/build-init/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-3.1-src.zip!/gradle-3.1/subprojects/plugins/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-3.1-src.zip!/gradle-3.1/subprojects/ide/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-3.1-src.zip!/gradle-3.1/subprojects/ide/src/main/groovy" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -49,24 +49,24 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="GradleToolingExtension">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-build-init-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-ide-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-java-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-jvm-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-base-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-jvm-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-plugins-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-base-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-jvm-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-scala-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-scala-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-reporting-2.14.1.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/gradle-ear-2.14.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-build-init-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-ide-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-java-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-jvm-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-base-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-platform-jvm-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-plugins-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-base-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-testing-jvm-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-scala-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../tooling-extension-api/lib/gradle-language-scala-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-reporting-3.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-ear-3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/tooling-api/src/main/java" />
-          <root url="jar://$MODULE_DIR$/../lib/gradle-2.14.1-src.zip!/gradle-2.14.1/subprojects/ear/src/main/groovy" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-3.1-src.zip!/gradle-3.1/subprojects/tooling-api/src/main/java" />
+          <root url="jar://$MODULE_DIR$/../lib/gradle-3.1-src.zip!/gradle-3.1/subprojects/ear/src/main/groovy" />
         </SOURCES>
       </library>
     </orderEntry>
