@@ -29,7 +29,7 @@ class FooClass {
     <error descr="Cannot cast 'Closure<Integer>' to 'Class'">(Class) { int a, int b -> a + b }</error>
     (Class) o
     <error descr="Cannot cast 'Matcher' to 'Class'">(Class) "aaa" =~ /aaa/</error>
-    <error descr="Cannot cast 'ArrayList' to 'Class'">(Class) []</error>
+    <error descr="Cannot cast 'List' to 'Class'">(Class) []</error>
     <error descr="Cannot cast 'String' to 'Class'">(Class) "java.util.List"</error>
     (Class) List
   }
@@ -108,7 +108,7 @@ class FooClass {
       case 17: <warning descr="Cannot return 'Closure<Integer>' from method returning 'Class'">return</warning> { int a, int b -> a + b }
       case 18: <warning descr="Cannot return 'Object' from method returning 'Class'">return</warning> o
       case 19: <warning descr="Cannot return 'Matcher' from method returning 'Class'">return</warning> "aaa" =~ /aaa/
-      case 20: <warning descr="Cannot return 'ArrayList' from method returning 'Class'">return</warning> []
+      case 20: <warning descr="Cannot return 'List' from method returning 'Class'">return</warning> []
       case 21: return "java.util.List"
       case 22: return List
       default: return null

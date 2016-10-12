@@ -1461,6 +1461,16 @@ public class ExpressionGenerator extends Generator {
         return new PsiArrayType(iterable);
       }
     }
+    if (type instanceof PsiClassType) {
+      PsiClass resolved = ((PsiClassType)type).resolve();
+      if (resolved != null && CommonClassNames.JAVA_UTIL_LIST.equals(resolved.getQualifiedName())) {
+        JavaPsiFacade facade = JavaPsiFacade.getInstance(listOrMap.getProject());
+        PsiClass arrayList = facade.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST, listOrMap.getResolveScope());
+        if (arrayList != null) {
+          return facade.getElementFactory().createType(arrayList, ((PsiClassType)type).getParameters());
+        }
+      }
+    }
     return type;
   }
 
@@ -1544,7 +1554,7 @@ public class ExpressionGenerator extends Generator {
     LOG.assertTrue(type instanceof GrRangeType);
     final PsiClass resolved = ((GrRangeType)type).resolve();
     builder.append("new ");
-    if (resolved == null) {
+    if (resolved == null || resolved.getQualifiedName() == GroovyCommonClassNames.GROOVY_LANG_RANGE) {
       builder.append(GroovyCommonClassNames.GROOVY_LANG_OBJECT_RANGE);
     }
     else {

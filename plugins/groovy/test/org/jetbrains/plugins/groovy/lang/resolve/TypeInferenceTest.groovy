@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
@@ -31,6 +32,7 @@ import static com.intellij.psi.CommonClassNames.*
 /**
  * @author ven
  */
+@CompileStatic
 class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testTryFinallyFlow() {
@@ -170,10 +172,6 @@ class TypeInferenceTest extends TypeInferenceTestBase {
 
   void testImplicitCallMethod() {
     assertEquals("java.lang.String", ((GrExpression)configureByFile("A.groovy")).type.canonicalText)
-  }
-
-  void testTupleWithNullInIt() {
-    assertTypeEquals("java.util.ArrayList", "A.groovy")
   }
 
   void testImplicitlyReturnedMethodCall() {
@@ -708,7 +706,15 @@ def foo(List list) {
   while(true)
     lis<caret>t = [list]
 }
-''', 'java.util.ArrayList<java.util.List>')
+''', 'java.util.List<java.util.List>')
+  }
+
+  void 'test list literal type'() {
+    doExprTest '[]', 'java.util.List'
+    doExprTest '[null]', 'java.util.List'
+    doExprTest '["foo", "bar"]', 'java.util.List<java.lang.String>'
+    doExprTest '["${foo}", "${bar}"]', 'java.util.List<groovy.lang.GString>'
+    doExprTest '[1, "a"]', 'java.util.List<java.io.Serializable>'
   }
 
   void 'test map literal type'() {
@@ -720,5 +726,11 @@ def foo(List list) {
     doExprTest "[foo: null]", "java.util.LinkedHashMap<java.lang.String, null>"
     doExprTest "[(null): 'foo', bar: null]", "java.util.LinkedHashMap<java.lang.String, java.lang.String>"
     doExprTest "[foo: 'bar', 2: 'goo']", "java.util.LinkedHashMap<java.io.Serializable, java.lang.String>"
+  }
+
+  void 'test range literal type'() {
+    doExprTest "1..10", "groovy.lang.IntRange"
+    doExprTest "'a'..'z'", "groovy.lang.Range<java.lang.String>"
+    doExprTest "'b'..1", "groovy.lang.Range<java.io.Serializable>"
   }
 }
