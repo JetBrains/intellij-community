@@ -70,7 +70,7 @@ import java.util.TreeMap;
 /**
  * @author ven
  */
-public class CoverageLineMarkerRenderer implements LineMarkerRendererEx, ActiveGutterRenderer {
+public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMarkerRendererWithErrorStripe {
   private static final int THICKNESS = 8;
   private final TextAttributesKey myKey;
   private final String myClassName;
