@@ -97,7 +97,12 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.full.coverage"), CodeInsightColors.LINE_FULL_COVERAGE),
     new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.partial.coverage"),
                                                  CodeInsightColors.LINE_PARTIAL_COVERAGE),
-    new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.none.coverage"), CodeInsightColors.LINE_NONE_COVERAGE)
+    new AttributesDescriptor(OptionsBundle.message("options.java.color.descriptor.none.coverage"), CodeInsightColors.LINE_NONE_COVERAGE),
+    
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.default"), EditorColors.BREADCRUMBS_DEFAULT),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.hovered"), EditorColors.BREADCRUMBS_HOVERED),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.current"), EditorColors.BREADCRUMBS_CURRENT),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.breadcrumbs.inactive"), EditorColors.BREADCRUMBS_INACTIVE)
   };
 
   private static final ColorDescriptor[] COLOR_DESCRIPTORS = {
