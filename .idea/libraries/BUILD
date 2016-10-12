@@ -368,8 +368,8 @@ java_library(
 
 java_library(
     name = "Snappy-Java",
-    runtime_deps = ["//tools:idea/lib/snappy-in-java-0.3.1"],
-    exports = ["//tools:idea/lib/snappy-in-java-0.3.1"],
+    runtime_deps = ["//tools:idea/lib/snappy-in-java-0.5.1"],
+    exports = ["//tools:idea/lib/snappy-in-java-0.5.1"],
     visibility = ["//visibility:public"],
     tags = ["managed"],
 )
