@@ -303,7 +303,7 @@ public class PyTypeChecker {
     }
     else if (type instanceof PyTupleType) {
       final PyTupleType tuple = (PyTupleType)type;
-      final int n = tuple.getElementCount();
+      final int n = tuple.isHomogeneous() ? 1 : tuple.getElementCount();
       for (int i = 0; i < n; i++) {
         collectGenerics(tuple.getElementType(i), context, collected, visited);
       }
@@ -349,13 +349,19 @@ public class PyTypeChecker {
       }
       else if (type instanceof PyTupleType) {
         final PyTupleType tuple = (PyTupleType)type;
-        final int n = tuple.getElementCount();
-        final List<PyType> results = new ArrayList<>();
-        for (int i = 0; i < n; i++) {
-          final PyType subst = substitute(tuple.getElementType(i), substitutions, context);
-          results.add(subst);
+
+        if (tuple.isHomogeneous()) {
+          return PyTupleType.createHomogeneous(tuple.getPyClass(), substitute(tuple.getElementType(0), substitutions, context));
+        } else {
+          final int elementCount = tuple.getElementCount();
+          final PyType[] elementTypes = new PyType[elementCount];
+
+          for (int i = 0; i < elementCount; i++) {
+            elementTypes[i] = substitute(tuple.getElementType(i), substitutions, context);
+          }
+
+          return PyTupleType.create(tuple.getPyClass(), elementTypes);
         }
-        return new PyTupleType((PyTupleType)type, results.toArray(new PyType[results.size()]));
       }
       else if (type instanceof PyCallableType) {
         final PyCallableType callable = (PyCallableType)type;
@@ -465,7 +471,7 @@ public class PyTypeChecker {
     if (callSite instanceof PyCallExpression) {
       final PyCallExpression callExpr = (PyCallExpression)callSite;
       final PyCallExpression.PyMarkedCallee callee = callExpr.resolveCallee(resolveContext);
-      return callee != null ? Collections.singletonList(callee.getCallable()) : Collections.<PyCallable>emptyList();
+      return callee != null ? Collections.singletonList(callee.getCallable()) : Collections.emptyList();
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
       final List<PyCallable> results = new ArrayList<>();
@@ -484,7 +490,7 @@ public class PyTypeChecker {
         }
         resolvedToUnknownResult = true;
       }
-      return resolvedToUnknownResult ? Collections.<PyCallable>emptyList() : results;
+      return resolvedToUnknownResult ? Collections.emptyList() : results;
     }
     else {
       return Collections.emptyList();
