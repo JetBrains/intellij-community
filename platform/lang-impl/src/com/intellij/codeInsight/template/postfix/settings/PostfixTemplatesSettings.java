@@ -37,12 +37,7 @@ import java.util.Set;
 @State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"))
 public class PostfixTemplatesSettings implements PersistentStateComponent<Element>, ExportableComponent {
 
-  public static final Factory<Set<String>> SET_FACTORY = new Factory<Set<String>>() {
-    @Override
-    public Set<String> create() {
-      return ContainerUtil.newHashSet();
-    }
-  };
+  public static final Factory<Set<String>> SET_FACTORY = () -> ContainerUtil.newHashSet();
   private Map<String, Set<String>> myLangToDisabledTemplates = ContainerUtil.newHashMap();
 
   private boolean postfixTemplatesEnabled = true;

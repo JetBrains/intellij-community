@@ -54,12 +54,7 @@ public class BackspaceHandler extends EditorActionHandler {
                              final int hideOffset,
                              final Caret caret) {
     final Editor editor = lookup.getEditor();
-    if (!lookup.performGuardedChange(new Runnable() {
-      @Override
-      public void run() {
-        handler.execute(editor, caret, dataContext);
-      }
-    })) {
+    if (!lookup.performGuardedChange(() -> handler.execute(editor, caret, dataContext))) {
       return;
     }
 

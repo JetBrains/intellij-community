@@ -25,6 +25,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.execution.filters.LineNumbersMapping;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class CompoundPositionManager extends PositionManagerEx implements MultiRequestPositionManager{
   private static final Logger LOG = Logger.getInstance(CompoundPositionManager.class);
@@ -63,9 +65,15 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     T process(PositionManager positionManager) throws NoDataException;
   }
 
-  private <T> T iterate(Processor<T> processor, T defaultValue) {
+  private <T> T iterate(Processor<T> processor, T defaultValue, SourcePosition position) {
     for (PositionManager positionManager : myPositionManagers) {
       try {
+        if (position != null) {
+          Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
+          if (types != null && !types.contains(position.getFile().getFileType())) {
+            continue;
+          }
+        }
         return processor.process(positionManager);
       }
       catch (NoDataException | ProcessCanceledException ignored) {}
@@ -87,7 +95,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       SourcePosition res1 = positionManager.getSourcePosition(location);
       mySourcePositionCache.put(location, res1);
       return res1;
-    }, null);
+    }, null, null);
   }
 
   private static boolean checkCacheEntry(SourcePosition position, Location location) {
@@ -103,7 +111,7 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
   @Override
   @NotNull
   public List<ReferenceType> getAllClasses(@NotNull final SourcePosition classPosition) {
-    return iterate(positionManager -> positionManager.getAllClasses(classPosition), Collections.<ReferenceType>emptyList());
+    return iterate(positionManager -> positionManager.getAllClasses(classPosition), Collections.emptyList(), classPosition);
   }
 
   @Override
@@ -121,12 +129,12 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
     }
 
     final SourcePosition finalPosition = position;
-    return iterate(positionManager -> positionManager.locationsOfLine(type, finalPosition), Collections.<Location>emptyList());
+    return iterate(positionManager -> positionManager.locationsOfLine(type, finalPosition), Collections.emptyList(), position);
   }
 
   @Override
   public ClassPrepareRequest createPrepareRequest(@NotNull final ClassPrepareRequestor requestor, @NotNull final SourcePosition position) {
-    return iterate(positionManager -> positionManager.createPrepareRequest(requestor, position), null);
+    return iterate(positionManager -> positionManager.createPrepareRequest(requestor, position), null, position);
   }
 
   @NotNull
@@ -139,11 +147,11 @@ public class CompoundPositionManager extends PositionManagerEx implements MultiR
       else {
         ClassPrepareRequest prepareRequest = positionManager.createPrepareRequest(requestor, position);
         if (prepareRequest == null) {
-          return Collections.<ClassPrepareRequest>emptyList();
+          return Collections.emptyList();
         }
         return Collections.singletonList(prepareRequest);
       }
-    }, Collections.<ClassPrepareRequest>emptyList());
+    }, Collections.emptyList(), position);
   }
 
   @Nullable

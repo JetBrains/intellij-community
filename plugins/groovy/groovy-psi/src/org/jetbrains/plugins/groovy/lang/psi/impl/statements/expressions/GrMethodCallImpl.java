@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -37,29 +37,25 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeC
  * @author Maxim.Medvedev
  */
 public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements GrMethodCall {
-  private static final Function<GrMethodCall, PsiType> METHOD_CALL_TYPES_CALCULATOR = new Function<GrMethodCall, PsiType>() {
-    @Override
-    @Nullable
-    public PsiType fun(GrMethodCall callExpression) {
-      GroovyResolveResult[] resolveResults;
+  private static final Function<GrMethodCall, PsiType> METHOD_CALL_TYPES_CALCULATOR = callExpression -> {
+    GroovyResolveResult[] resolveResults;
 
-      GrExpression invokedExpression = callExpression.getInvokedExpression();
-      if (invokedExpression instanceof GrReferenceExpression) {
-        resolveResults = ((GrReferenceExpression)invokedExpression).multiResolve(false);
-      }
-      else {
-        resolveResults = GroovyResolveResult.EMPTY_ARRAY;
-      }
-
-      for (GrCallExpressionTypeCalculator typeCalculator : GrCallExpressionTypeCalculator.EP_NAME.getExtensions()) {
-          PsiType res = typeCalculator.calculateReturnType(callExpression, resolveResults);
-        if (res != null) {
-          return res;
-        }
-      }
-
-      return null;
+    GrExpression invokedExpression = callExpression.getInvokedExpression();
+    if (invokedExpression instanceof GrReferenceExpression) {
+      resolveResults = ((GrReferenceExpression)invokedExpression).multiResolve(false);
     }
+    else {
+      resolveResults = GroovyResolveResult.EMPTY_ARRAY;
+    }
+
+    for (GrCallExpressionTypeCalculator typeCalculator : GrCallExpressionTypeCalculator.EP_NAME.getExtensions()) {
+        PsiType res = typeCalculator.calculateReturnType(callExpression, resolveResults);
+      if (res != null) {
+        return res;
+      }
+    }
+
+    return null;
   };
 
   public GrMethodCallImpl(@NotNull ASTNode node) {
@@ -82,28 +78,6 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
       if (cur instanceof GrExpression) return (GrExpression)cur;
     }
     throw new IncorrectOperationException("invoked expression must not be null");
-  }
-
-  @Override
-  public PsiMethod resolveMethod() {
-    final GrExpression methodExpr = getInvokedExpression();
-    if (methodExpr instanceof GrReferenceExpression) {
-      final PsiElement resolved = ((GrReferenceExpression) methodExpr).resolve();
-      return resolved instanceof PsiMethod ? (PsiMethod) resolved : null;
-    }
-
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public GroovyResolveResult advancedResolve() {
-    final GrExpression methodExpr = getInvokedExpression();
-    if (methodExpr instanceof GrReferenceExpression) {
-      return ((GrReferenceExpression) methodExpr).advancedResolve();
-    }
-
-    return GroovyResolveResult.EMPTY_RESULT;
   }
 
   @Override
@@ -130,5 +104,11 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   @Override
   public ItemPresentation getPresentation() {
     return ItemPresentationProviders.getItemPresentation(this);
+  }
+
+  @NotNull
+  @Override
+  public GrArgumentList getArgumentList() {
+    return findNotNullChildByClass(GrArgumentList.class);
   }
 }

@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PyPostfixUtils {
@@ -89,6 +90,22 @@ public class PyPostfixUtils {
         PyExpressionStatement exprStatement = PsiTreeUtil.getNonStrictParentOfType(context, PyExpressionStatement.class);
         PyExpression expression = exprStatement != null ? PsiTreeUtil.getChildOfType(exprStatement, PyExpression.class) : null;
         return ContainerUtil.<PsiElement>createMaybeSingletonList(expression);
+      }
+    };
+  }
+
+  public static PostfixTemplateExpressionSelector currentStatementSelector() {
+    return new PostfixTemplateExpressionSelectorBase(null) {
+      @Override
+      protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
+        PsiElement elementAtCaret = PsiUtilCore.getElementAtOffset(context.getContainingFile(), offset - 1);
+        while (elementAtCaret != null) {
+          if (elementAtCaret instanceof PyStatement) {
+            return Collections.singletonList(elementAtCaret);
+          }
+          elementAtCaret = elementAtCaret.getParent();
+        }
+        return Collections.emptyList();
       }
     };
   }

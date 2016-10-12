@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,13 +42,13 @@ import java.util.Map;
  */
 public class QueueProcessor<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.QueueProcessor");
-  public static enum ThreadToUse {
+  public enum ThreadToUse {
     AWT,
     POOLED
   }
 
   private final PairConsumer<T, Runnable> myProcessor;
-  private final Deque<T> myQueue = new ArrayDeque<T>();
+  private final Deque<T> myQueue = new ArrayDeque<>();
   private final Runnable myContinuationContext = new Runnable() {
     @Override
     public void run() {
@@ -69,7 +69,7 @@ public class QueueProcessor<T> {
 
   private final ThreadToUse myThreadToUse;
   private final Condition<?> myDeathCondition;
-  private final Map<MyOverrideEquals, ModalityState> myModalityState = new HashMap<MyOverrideEquals, ModalityState>();
+  private final Map<MyOverrideEquals, ModalityState> myModalityState = new HashMap<>();
 
   /**
    * Constructs a QueueProcessor, which will autostart as soon as the first element is added to it.
@@ -91,27 +91,19 @@ public class QueueProcessor<T> {
 
   @NotNull
   public static QueueProcessor<Runnable> createRunnableQueueProcessor() {
-    return new QueueProcessor<Runnable>(new RunnableConsumer());
+    return new QueueProcessor<>(new RunnableConsumer());
   }
 
   @NotNull
   public static QueueProcessor<Runnable> createRunnableQueueProcessor(ThreadToUse threadToUse) {
-    return new QueueProcessor<Runnable>(wrappingProcessor(new RunnableConsumer()), true, threadToUse, Conditions.FALSE);
+    return new QueueProcessor<>(wrappingProcessor(new RunnableConsumer()), true, threadToUse, Conditions.FALSE);
   }
 
   @NotNull
   private static <T> PairConsumer<T, Runnable> wrappingProcessor(@NotNull final Consumer<T> processor) {
-    return new PairConsumer<T, Runnable>() {
-      @Override
-      public void consume(final T item, Runnable runnable) {
-        runSafely(new Runnable() {
-          @Override
-          public void run() {
-            processor.consume(item);
-          }
-        });
-        runnable.run();
-      }
+    return (item, runnable) -> {
+      runSafely(() -> processor.consume(item));
+      runnable.run();
     };
   }
 
@@ -205,17 +197,9 @@ public class QueueProcessor<T> {
     }
     isProcessing = true;
     final T item = myQueue.removeFirst();
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (myDeathCondition.value(null)) return;
-        runSafely(new Runnable() {
-          @Override
-          public void run() {
-            myProcessor.consume(item, myContinuationContext);
-          }
-        });
-      }
+    final Runnable runnable = () -> {
+      if (myDeathCondition.value(null)) return;
+      runSafely(() -> myProcessor.consume(item, myContinuationContext));
     };
     final Application application = ApplicationManager.getApplication();
     if (myThreadToUse == ThreadToUse.AWT) {

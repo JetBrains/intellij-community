@@ -20,10 +20,12 @@ import org.apache.maven.project.MavenProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MavenExecutionResult {
+  private File myPomFile;
   private final MavenProject myMavenProject;
   private final List<Exception> myExceptions;
   private final DependencyResolutionResult myDependencyResolutionResult;
@@ -32,10 +34,22 @@ public class MavenExecutionResult {
     this(mavenProject, null, exceptions);
   }
 
+  public MavenExecutionResult(List<Exception> exceptions) {
+    this(null, null, exceptions);
+  }
+
+  public MavenExecutionResult(@Nullable File pomFile, List<Exception> exceptions) {
+    this(null, null, exceptions);
+    myPomFile = pomFile;
+  }
+
   public MavenExecutionResult(@Nullable MavenProject mavenProject,
                               @Nullable DependencyResolutionResult dependencyResolutionResult,
                               List<Exception> exceptions) {
     myMavenProject = mavenProject;
+    if (mavenProject != null) {
+      myPomFile = mavenProject.getFile();
+    }
     myExceptions = exceptions == null ? new ArrayList<Exception>() : exceptions;
     myDependencyResolutionResult = dependencyResolutionResult;
     if(myDependencyResolutionResult != null && myDependencyResolutionResult.getCollectionErrors() != null) {
@@ -60,5 +74,10 @@ public class MavenExecutionResult {
 
   public boolean hasExceptions() {
     return !myExceptions.isEmpty();
+  }
+
+  @Nullable
+  public File getPomFile() {
+    return myMavenProject != null ? myMavenProject.getFile() : myPomFile;
   }
 }

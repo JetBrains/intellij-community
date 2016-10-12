@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.xdebugger.impl.actions.handlers;
 
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,10 +24,12 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
 */
 public class XDebuggerMuteBreakpointsHandler extends XDebuggerToggleActionHandler {
+  @Override
   protected boolean isEnabled(@Nullable final XDebugSession session, final AnActionEvent event) {
     return true;
   }
 
+  @Override
   protected boolean isSelected(@Nullable final XDebugSession session, final AnActionEvent event) {
     if (session != null) {
       return session.areBreakpointsMuted();
@@ -41,6 +43,7 @@ public class XDebuggerMuteBreakpointsHandler extends XDebuggerToggleActionHandle
     return false;
   }
 
+  @Override
   protected void setSelected(@Nullable final XDebugSession session, final AnActionEvent event, final boolean state) {
     if (session != null) {
       session.setBreakpointMuted(state);

@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
@@ -86,11 +85,7 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     actionGroup.addSeparator();
 
     RestoreDefault restoreDefault = new RestoreDefault(myPropertyTable);
-    // Don't register ACTION_DELETE on Mac; on Mac, the default delete key is VK_DELETE rather than VK_BACK_SPACE
-    // which means users end up accidentally restoring to default when trying to edit inside property editors.
-    if (!SystemInfo.isMac) {
-      restoreDefault.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), myPropertyTable);
-    }
+    restoreDefault.registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_DELETE).getShortcutSet(), myPropertyTable);
     actionGroup.add(restoreDefault);
 
     actionGroup.add(new ShowExpert(myPropertyTable));

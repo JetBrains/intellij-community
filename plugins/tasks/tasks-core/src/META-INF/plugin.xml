@@ -99,6 +99,7 @@
   <extensionPoints>
     <extensionPoint name="repositoryType" interface="com.intellij.tasks.TaskRepositoryType"/>
     <extensionPoint area="IDEA_PROJECT" name="contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider"/>
+    <extensionPoint name="dialogPanelProvider" interface="com.intellij.tasks.ui.TaskDialogPanelProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -106,6 +107,7 @@
     <projectConfigurable groupId="tools" instance="com.intellij.tasks.config.TaskConfigurable" id="tasks" displayName="Tasks" nonDefaultProject="true">
       <configurable instance="com.intellij.tasks.config.TaskRepositoriesConfigurable" displayName="Servers" id="tasks.servers"/>
     </projectConfigurable>
+    <tasks.dialogPanelProvider implementation="com.intellij.tasks.actions.vcs.VcsTaskDialogPanelProvider"/>
 
     <editChangelistSupport implementation="com.intellij.tasks.impl.TaskChangelistSupport"/>
 

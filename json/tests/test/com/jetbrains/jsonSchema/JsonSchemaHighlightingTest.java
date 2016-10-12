@@ -11,13 +11,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -193,6 +196,20 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   @SuppressWarnings("Duplicates")
+  public void testOneOfSelectError() throws Exception {
+    final List<String> subSchemas = new ArrayList<String>();
+    subSchemas.add("{\"type\": \"string\",\n" +
+                   "          \"enum\": [\n" +
+                   "            \"off\", \"warn\", \"error\"\n" +
+                   "          ]}");
+    subSchemas.add("{\"type\": \"integer\"}");
+    final String schema = schema("{\"oneOf\": [" + StringUtil.join(subSchemas, ", ") + "]}");
+    testImpl(schema, "{\"prop\": \"off\"}");
+    testImpl(schema, "{\"prop\": 12}");
+    testImpl(schema, "{\"prop\": <warning descr=\"Value should be one of: [\\\"off\\\", \\\"warn\\\", \\\"error\\\"]\">\"wrong\"</warning>}");
+  }
+
+  @SuppressWarnings("Duplicates")
   public void testAnyOf() throws Exception {
     final List<String> subSchemas = new ArrayList<String>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -285,8 +302,13 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(file.getVirtualFile(), true, false);
   }
 
-  public static void registerProvider(Project project, @NotNull String schema) {
-    JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(schema));
+  public static void registerProvider(Project project, @NotNull String schema) throws IOException {
+    File dir = PlatformTestCase.createTempDir("json_schema_test", true);
+    File child = new File(dir, "schema.json");
+    child.createNewFile();
+    FileUtil.writeToFile(child, schema);
+    VirtualFile schemaFile = getVirtualFile(child);
+    JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(schemaFile));
     AreaPicoContainer container = Extensions.getArea(project).getPicoContainer();
     String key = JsonSchemaService.class.getName();
     container.unregisterComponent(key);

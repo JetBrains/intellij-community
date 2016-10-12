@@ -71,12 +71,7 @@ public class FoldLinesLikeThis extends DumbAwareAction {
       @Override
       public void reset() {
         super.reset();
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            addRule(selection);
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(() -> addRule(selection));
       }
     });
     final ConsoleView consoleView = e.getData(LangDataKeys.CONSOLE_VIEW);

@@ -32,7 +32,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.ToggleActionButton;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +46,8 @@ public class TransferableFileEditorStateSupport {
   @NotNull private static final Key<Map<String, Map<String, String>>> TRANSFERABLE_FILE_EDITOR_STATE =
     Key.create("Diff.TransferableFileEditorState");
 
-  private static final Condition<BinaryEditorHolder> IS_SUPPORTED = new Condition<BinaryEditorHolder>() {
-    @Override
-    public boolean value(BinaryEditorHolder holder) {
-      return getEditorState(holder.getEditor()) != null;
-    }
+  private static final Condition<BinaryEditorHolder> IS_SUPPORTED = holder -> {
+    return getEditorState(holder.getEditor()) != null;
   };
 
   @NotNull private final DiffSettingsHolder.DiffSettings mySettings;
@@ -143,12 +139,7 @@ public class TransferableFileEditorStateSupport {
     private boolean myDuringUpdate = false;
 
     public MySynchronizer(@NotNull List<BinaryEditorHolder> editors) {
-      myEditors = ContainerUtil.map(editors, new Function<BinaryEditorHolder, FileEditor>() {
-        @Override
-        public FileEditor fun(BinaryEditorHolder holder) {
-          return holder.getEditor();
-        }
-      });
+      myEditors = ContainerUtil.map(editors, holder -> holder.getEditor());
     }
 
     public void install(@NotNull Disposable disposable) {
@@ -207,7 +198,6 @@ public class TransferableFileEditorStateSupport {
     public ToggleSynchronousEditorStatesAction(@NotNull TransferableFileEditorStateSupport support) {
       super("Synchronize Editors Settings", AllIcons.Actions.SyncPanels);
       mySupport = support;
-      setEnabledInModalContext(true);
     }
 
     @Override

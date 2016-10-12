@@ -31,6 +31,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -40,12 +43,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.indices.MavenIndex;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.indices.MavenRepositoriesConfigurable;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
@@ -71,7 +71,7 @@ import java.util.Set;
  * @author Vladislav.Soroka
  * @since 10/29/13
  */
-public class ImportMavenRepositoriesTask implements Runnable {
+public class ImportMavenRepositoriesTask extends ReadTask {
 
   private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP = "Unindexed maven repositories gradle detection";
   @NotNull
@@ -85,7 +85,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
   }
 
   @Override
-  public void run() {
+  public void computeInReadAction(@NotNull ProgressIndicator indicator) {
     if(myProject.isDisposed()) return;
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
@@ -139,74 +139,70 @@ public class ImportMavenRepositoriesTask implements Runnable {
     // register imported maven repository URLs but do not force to download the index
     // the index can be downloaded and/or updated later using Maven Configuration UI (Settings -> Build, Execution, Deployment -> Build tools -> Maven -> Repositories)
     MavenRepositoriesHolder.getInstance(myProject).update(mavenRemoteRepositories);
-    MavenProjectIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(new Consumer<List<MavenIndex>>() {
-      @Override
-      public void consume(List<MavenIndex> indexes) {
-        if (myProject.isDisposed()) return;
+    MavenProjectIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(indexes -> {
+      if (myProject.isDisposed()) return;
 
-        final List<String> repositoriesWithEmptyIndex = ContainerUtil.mapNotNull(indexes, new Function<MavenIndex, String>() {
+      final List<String> repositoriesWithEmptyIndex = ContainerUtil.mapNotNull(indexes, index -> index.getUpdateTimestamp() == -1 &&
+                                                                                             MavenRepositoriesHolder.getInstance(myProject).contains(index.getRepositoryPathOrUrl())
+             ? index.getRepositoryPathOrUrl() : null);
+
+      if (!repositoriesWithEmptyIndex.isEmpty()) {
+        final NotificationData notificationData = new NotificationData(
+          GradleBundle.message("gradle.integrations.maven.notification.not_updated_repository.title"),
+          "\n<br>" + GradleBundle.message("gradle.integrations.maven.notification.not_updated_repository.text", StringUtil.join(repositoriesWithEmptyIndex, "<br>")),
+          NotificationCategory.WARNING,
+          NotificationSource.PROJECT_SYNC);
+        notificationData.setBalloonNotification(true);
+        notificationData.setBalloonGroup(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP);
+        notificationData.setListener("#open", new NotificationListener.Adapter() {
           @Override
-          public String fun(MavenIndex index) {
-            return index.getUpdateTimestamp() == -1 &&
-                   MavenRepositoriesHolder.getInstance(myProject).contains(index.getRepositoryPathOrUrl())
-                   ? index.getRepositoryPathOrUrl() : null;
+          protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenRepositoriesConfigurable.class);
           }
         });
 
-        if (!repositoriesWithEmptyIndex.isEmpty()) {
-          final NotificationData notificationData = new NotificationData(
-            GradleBundle.message("gradle.integrations.maven.notification.not_updated_repository.title"),
-            "\n<br>" + GradleBundle.message("gradle.integrations.maven.notification.not_updated_repository.text", StringUtil.join(repositoriesWithEmptyIndex, "<br>")),
-            NotificationCategory.WARNING,
-            NotificationSource.PROJECT_SYNC);
-          notificationData.setBalloonNotification(true);
-          notificationData.setBalloonGroup(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP);
-          notificationData.setListener("#open", new NotificationListener.Adapter() {
-            @Override
-            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-              ShowSettingsUtil.getInstance().showSettingsDialog(myProject, MavenRepositoriesConfigurable.class);
+        notificationData.setListener("#disable", new NotificationListener.Adapter() {
+          @Override
+          protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+            final int result =
+              Messages.showYesNoDialog(myProject,
+                                       "Notification will be disabled for all projects.\n\n" +
+                                       "Settings | Appearance & Behavior | Notifications | " +
+                                       UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP +
+                                       "\ncan be used to configure the notification.",
+                                       "Unindexed Maven Repositories Gradle Detection",
+                                       "Disable Notification", CommonBundle.getCancelButtonText(),
+                                       Messages.getWarningIcon());
+            if (result == Messages.YES) {
+              NotificationsConfigurationImpl.getInstanceImpl().changeSettings(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP,
+                                                                              NotificationDisplayType.NONE, false, false);
+
+              notification.hideBalloon();
             }
-          });
+          }
+        });
 
-          notificationData.setListener("#disable", new NotificationListener.Adapter() {
-            @Override
-            protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-              final int result =
-                Messages.showYesNoDialog(myProject,
-                                         "Notification will be disabled for all projects.\n\n" +
-                                         "Settings | Appearance & Behavior | Notifications | " +
-                                         UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP +
-                                         "\ncan be used to configure the notification.",
-                                         "Unindexed Maven Repositories Gradle Detection",
-                                         "Disable Notification", CommonBundle.getCancelButtonText(),
-                                         Messages.getWarningIcon());
-              if (result == Messages.YES) {
-                NotificationsConfigurationImpl.getInstanceImpl().changeSettings(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP,
-                                                                                NotificationDisplayType.NONE, false, false);
-
-                notification.hideBalloon();
-              }
-            }
-          });
-
-          ExternalSystemNotificationManager.getInstance(myProject).showNotification(GradleConstants.SYSTEM_ID, notificationData);
-        }
+        ExternalSystemNotificationManager.getInstance(myProject).showNotification(GradleConstants.SYSTEM_ID, notificationData);
       }
     });
+  }
+
+  @Override
+  public void onCanceled(@NotNull ProgressIndicator indicator) {
+    if (!myProject.isDisposed()) {
+      ProgressIndicatorUtils.scheduleWithWriteActionPriority(this);
+    }
   }
 
   @NotNull
   private static Collection<? extends GrClosableBlock> findClosableBlocks(@NotNull final PsiElement element,
                                                                           @NotNull final String... blockNames) {
     List<GrMethodCall> methodCalls = PsiTreeUtil.getChildrenOfTypeAsList(element, GrMethodCall.class);
-    return ContainerUtil.mapNotNull(methodCalls, new Function<GrMethodCall, GrClosableBlock>() {
-      @Override
-      public GrClosableBlock fun(GrMethodCall call) {
-        if (call == null || call.getClosureArguments().length != 1) return null;
+    return ContainerUtil.mapNotNull(methodCalls, call -> {
+      if (call == null || call.getClosureArguments().length != 1) return null;
 
-        GrExpression expression = call.getInvokedExpression();
-        return ArrayUtil.contains(expression.getText(), blockNames) ? call.getClosureArguments()[0] : null;
-      }
+      GrExpression expression = call.getInvokedExpression();
+      return ArrayUtil.contains(expression.getText(), blockNames) ? call.getClosureArguments()[0] : null;
     });
   }
 

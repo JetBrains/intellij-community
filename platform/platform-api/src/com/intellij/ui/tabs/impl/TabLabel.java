@@ -32,6 +32,7 @@ import com.intellij.ui.tabs.impl.table.TableLayout;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
@@ -69,7 +70,7 @@ public class TabLabel extends JPanel implements Accessible {
 
     // Allow focus so that user can TAB into the selected TabLabel and then
     // navigate through the other tabs using the LEFT/RIGHT keys.
-    setFocusable(true);
+    setFocusable(ScreenReader.isActive());
     setOpaque(false);
     setLayout(new BorderLayout());
 
@@ -107,52 +108,49 @@ public class TabLabel extends JPanel implements Accessible {
       }
     });
 
-    // Navigate to the previous/next tab when LEFT/RIGHT is pressed.
-    addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-          int index = myTabs.getIndexOf(myInfo);
-          if (index >= 0) {
-            e.consume();
-            // Select the previous tab, then set the focus its TabLabel.
-            TabInfo previous = myTabs.findEnabledBackward(index, true);
-            if (previous != null) {
-              myTabs.select(previous, false).doWhenDone(() -> {
-                myTabs.getSelectedLabel().requestFocusInWindow();
-              });
+    if (isFocusable()) {
+      // Navigate to the previous/next tab when LEFT/RIGHT is pressed.
+      addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent e) {
+          if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            int index = myTabs.getIndexOf(myInfo);
+            if (index > 0) {
+              e.consume();
+              // Select the previous tab, then set the focus its TabLabel.
+              TabInfo previous = myTabs.findEnabledBackward(index, true);
+              if (previous != null) {
+                myTabs.select(previous, false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
+              }
             }
           }
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
-          int index = myTabs.getIndexOf(myInfo);
-          if (index >= 0) {
-            e.consume();
-            // Select the previous tab, then set the focus its TabLabel.
-            TabInfo next = myTabs.findEnabledForward(index, true);
-            if (next != null) {
+          else if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            int index = myTabs.getIndexOf(myInfo);
+            if (index < myTabs.getTabCount() - 1) {
+              e.consume();
               // Select the next tab, then set the focus its TabLabel.
-              myTabs.select(next, false).doWhenDone(() -> {
-                myTabs.getSelectedLabel().requestFocusInWindow();
-              });
+              TabInfo next = myTabs.findEnabledForward(index, true);
+              if (next != null) {
+                myTabs.select(next, false).doWhenDone(() -> myTabs.getSelectedLabel().requestFocusInWindow());
+              }
             }
           }
         }
-      }
-    });
+      });
 
-    // Repaint when we gain/lost focus so that the focus cue is displayed.
-    addFocusListener(new FocusListener() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        repaint();
-      }
+      // Repaint when we gain/lost focus so that the focus cue is displayed.
+      addFocusListener(new FocusListener() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          repaint();
+        }
 
-      @Override
-      public void focusLost(FocusEvent e) {
-        repaint();
-      }
-    });
+        @Override
+        public void focusLost(FocusEvent e) {
+          repaint();
+        }
+      });
+    }
   }
 
   @Override
@@ -317,12 +315,7 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   private void doPaint(final Graphics g) {
-    doTranslate(new PairConsumer<Integer, Integer>() {
-      @Override
-      public void consume(Integer x, Integer y) {
-        g.translate(x, y);
-      }
-    });
+    doTranslate((x, y) -> g.translate(x, y));
 
     final Composite oldComposite = ((Graphics2D)g).getComposite();
     //if (myTabs instanceof JBEditorTabs && !myTabs.isSingleRow() && myTabs.getSelectedInfo() != myInfo) {
@@ -331,12 +324,7 @@ public class TabLabel extends JPanel implements Accessible {
     super.paint(g);
     ((Graphics2D)g).setComposite(oldComposite);
 
-    doTranslate(new PairConsumer<Integer, Integer>() {
-      @Override
-      public void consume(Integer x, Integer y) {
-        g.translate(-x, -y);
-      }
-    });
+    doTranslate((x2, y2) -> g.translate(-x2, -y2));
   }
 
   protected int getNonSelectedOffset() {
@@ -406,15 +394,13 @@ public class TabLabel extends JPanel implements Accessible {
 
 
   public void setText(final SimpleColoredText text) {
-    myLabel.change(new Runnable() {
-      public void run() {
-        myLabel.clear();
-        myLabel.setIcon(hasIcons() ? myIcon : null);
+    myLabel.change(() -> {
+      myLabel.clear();
+      myLabel.setIcon(hasIcons() ? myIcon : null);
 
-        if (text != null) {
-          SimpleColoredText derive = myTabs.useBoldLabels() ? text.derive(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, true) : text;
-          derive.appendToComponent(myLabel);
-        }
+      if (text != null) {
+        SimpleColoredText derive = myTabs.useBoldLabels() ? text.derive(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, true) : text;
+        derive.appendToComponent(myLabel);
       }
     }, false);
 

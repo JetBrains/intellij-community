@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
 
     ApplicationListener applicationListener = new ApplicationAdapter() {
       @Override
-      public void writeActionStarted(final Object action) {
+      public void writeActionStarted(@NotNull final Object action) {
         if (processor != null) {
           final Project project = processor.getCurrentCommandProject();
           if (project == myProject) {
@@ -96,7 +96,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       }
 
       @Override
-      public void writeActionFinished(final Object action) {
+      public void writeActionFinished(@NotNull final Object action) {
         if (processor != null) {
           final Project project = processor.getCurrentCommandProject();
           if (project == myProject) {
@@ -109,12 +109,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public void disablePostprocessFormattingInside(@NotNull final Runnable runnable) {
-    disablePostprocessFormattingInside(new NullableComputable<Object>() {
-      @Override
-      public Object compute() {
-        runnable.run();
-        return null;
-      }
+    disablePostprocessFormattingInside((NullableComputable<Object>)() -> {
+      runnable.run();
+      return null;
     });
   }
 
@@ -130,12 +127,9 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public void postponeFormattingInside(@NotNull final Runnable runnable) {
-    postponeFormattingInside(new NullableComputable<Object>() {
-      @Override
-      public Object compute() {
-        runnable.run();
-        return null;
-      }
+    postponeFormattingInside((NullableComputable<Object>)() -> {
+      runnable.run();
+      return null;
     });
   }
 
@@ -163,12 +157,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         doPostponedFormatting();
       }
       else {
-        application.runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            doPostponedFormatting();
-          }
-        });
+        application.runWriteAction(() -> doPostponedFormatting());
       }
     }
   }
@@ -223,22 +212,19 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   public void doPostponedFormatting() {
-    atomic(new Runnable() {
-      @Override
-      public void run() {
-        if (isDisabled()) return;
-        try {
-          FileViewProvider[] viewProviders = getContext().myUpdatedProviders.toArray(new FileViewProvider[getContext().myUpdatedProviders.size()]);
-          for (final FileViewProvider viewProvider : viewProviders) {
-            doPostponedFormatting(viewProvider);
-          }
+    atomic(() -> {
+      if (isDisabled()) return;
+      try {
+        FileViewProvider[] viewProviders = getContext().myUpdatedProviders.toArray(new FileViewProvider[getContext().myUpdatedProviders.size()]);
+        for (final FileViewProvider viewProvider : viewProviders) {
+          doPostponedFormatting(viewProvider);
         }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-        finally {
-          LOG.assertTrue(getContext().myReformatElements.isEmpty(), getContext().myReformatElements);
-        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      finally {
+        LOG.assertTrue(getContext().myReformatElements.isEmpty(), getContext().myReformatElements);
       }
     });
   }
@@ -252,24 +238,16 @@ public class PostprocessReformattingAspect implements PomModelAspect {
   }
 
   private void postponedFormattingImpl(@NotNull final FileViewProvider viewProvider, final boolean check) {
-    atomic(new Runnable() {
-      @Override
-      public void run() {
-        if (isDisabled() || check && !getContext().myUpdatedProviders.contains(viewProvider)) return;
+    atomic(() -> {
+      if (isDisabled() || check && !getContext().myUpdatedProviders.contains(viewProvider)) return;
 
-        try {
-          disablePostprocessFormattingInside(new Runnable() {
-            @Override
-            public void run() {
-              doPostponedFormattingInner(viewProvider);
-            }
-          });
-        }
-        finally {
-          getContext().myUpdatedProviders.remove(viewProvider);
-          getContext().myReformatElements.remove(viewProvider);
-          viewProvider.putUserData(REFORMAT_ORIGINATOR, null);
-        }
+      try {
+        disablePostprocessFormattingInside(() -> doPostponedFormattingInner(viewProvider));
+      }
+      finally {
+        getContext().myUpdatedProviders.remove(viewProvider);
+        getContext().myReformatElements.remove(viewProvider);
+        viewProvider.putUserData(REFORMAT_ORIGINATOR, null);
       }
     });
   }

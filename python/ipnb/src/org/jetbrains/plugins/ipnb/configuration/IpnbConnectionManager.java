@@ -33,6 +33,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -269,15 +270,12 @@ public final class IpnbConnectionManager implements ProjectComponent {
       showWarning(fileEditor, "Please check Python Interpreter in Settings->Python Interpreter", null);
       return false;
     }
-    try {
-      final PyPackage ipythonPackage = PyPackageManager.getInstance(sdk).findPackage("ipython", false);
-      final PyPackage jupyterPackage = PyPackageManager.getInstance(sdk).findPackage("jupyter", false);
-      if (ipythonPackage == null && jupyterPackage == null) {
-        showWarning(fileEditor, "Add Jupyter to the interpreter of the current project.", null);
-        return false;
-      }
-    }
-    catch (ExecutionException ignored) {
+    final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+    final PyPackage ipythonPackage = packages != null ? PyPackageUtil.findPackage(packages, "ipython") : null;
+    final PyPackage jupyterPackage = packages != null ? PyPackageUtil.findPackage(packages, "jupyter") : null;
+    if (ipythonPackage == null && jupyterPackage == null) {
+      showWarning(fileEditor, "Add Jupyter to the interpreter of the current project.", null);
+      return false;
     }
 
     String url = showDialogUrl(initUrl);

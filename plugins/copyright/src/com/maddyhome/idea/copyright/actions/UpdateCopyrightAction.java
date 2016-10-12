@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,9 +64,9 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     }
   }
 
-  private static boolean isEnabled(AnActionEvent event) {
-    final DataContext context = event.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(context);
+  private static boolean isEnabled(AnActionEvent e) {
+    final DataContext context = e.getDataContext();
+    final Project project = e.getProject();
     if (project == null) {
       return false;
     }
@@ -160,12 +160,9 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
           final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, UpdateCopyrightProcessor.TITLE, true);
           progressTask.setMinIterationTime(200);
           progressTask.setTask(new UpdateCopyrightSequentialTask(preparations, progressTask));
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            @Override
-            public void run() {
-              CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
-              ProgressManager.getInstance().run(progressTask);
-            }
+          CommandProcessor.getInstance().executeCommand(project, () -> {
+            CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
+            ProgressManager.getInstance().run(progressTask);
           }, getTemplatePresentation().getText(), null);
         }
       }

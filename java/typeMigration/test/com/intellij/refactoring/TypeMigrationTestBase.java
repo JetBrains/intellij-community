@@ -168,11 +168,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     final UsageInfo[] usages = pr.findUsages();
     final String report = pr.getLabeler().getMigrationReport();
 
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        pr.performRefactoring(usages);
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> pr.performRefactoring(usages));
 
 
     String itemName = className + ".items";
@@ -219,17 +215,6 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   private static class TestTypeMigrationProcessor extends TypeMigrationProcessor {
     public TestTypeMigrationProcessor(final Project project, final PsiElement root, final PsiType migrationType, final TypeMigrationRules rules) {
       super(project, new PsiElement[] {root}, Functions.<PsiElement, PsiType>constant(migrationType), rules);
-    }
-
-    @NotNull
-    @Override
-    public UsageInfo[] findUsages() {
-      return super.findUsages();
-    }
-
-    @Override
-    public void performRefactoring(@NotNull final UsageInfo[] usages) {
-      super.performRefactoring(usages);
     }
   }
 }

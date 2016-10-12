@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,14 +75,14 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-server -Xms256m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=240m")
-binding.setVariable("mem64", "-Xms256m -Xmx1280m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=240m")
+binding.setVariable("mem32", "-server -Xms256m -Xmx750m -XX:ReservedCodeCacheSize=240m")
+binding.setVariable("mem64", "-Xms256m -Xmx1280m -XX:ReservedCodeCacheSize=240m")
 binding.setVariable("common_vmoptions", "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 -ea " +
                                         "-Djna.nosys=true -Djna.boot.library.path=  -Djna.debug_load=true -Djna.debug_load.jna=true " +
                                         "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
                                         "-XX:-OmitStackTraceInFastThrow")
 
-binding.setVariable("vmOptions", { "$common_vmoptions".trim() })
+binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:MaxJavaStackTraceDepth=-1' : ''}".trim() })
 binding.setVariable("vmOptions32", { "$mem32 ${vmOptions()}".trim() })
 binding.setVariable("vmOptions64", { "$mem64 ${vmOptions()}".trim() })
 binding.setVariable("configNotice", {
@@ -508,7 +508,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     archs += "<string>${it}</string>"
   }
   archs +="</array>\n"
-  
+
   String urlSchemes = ""
   if (args.urlSchemes != null) {
     urlSchemes += """
@@ -548,11 +548,12 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     replacefilter(token: "@@vmoptions@@", value: vmOptions)
     replacefilter(token: "@@main_class_name@@", value: args.main_class_name)
     replacefilter(token: "@@idea_properties@@", value: coreProperties)
+    replacefilter(token: "@@idea.paths.selector@@", value: args.system_selector)
     replacefilter(token: "@@class_path@@", value: classPath)
     replacefilter(token: "@@help_id@@", value: helpId)
     replacefilter(token: "@@url_schemes@@", value: urlSchemes)
     replacefilter(token: "@@archs@@", value: archs)
-    replacefilter(token: "@@min_osx@@", value: ifNull(args.min_osx, "10.6"))
+    replacefilter(token: "@@min_osx@@", value: ifNull(args.min_osx, "10.8"))
   }
 
   if (executable != "idea") {
@@ -568,6 +569,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
   }
 
   ant.fixcrlf(srcdir: "$path/bin", includes: "*.sh", eol: "unix")
+  ant.fixcrlf(srcdir: "$path/bin", includes: "*.py", eol: "unix")
 })
 
 binding.setVariable("winScripts", { String target, String home, String name, Map args ->
@@ -768,6 +770,7 @@ binding.setVariable("zipSources", { String home, String targetDir ->
         include(name: "**/*.$it")
       }
       exclude(name: "**/testData/**")
+      exclude(name: "out/**")
     }
   }
 
@@ -893,6 +896,7 @@ binding.setVariable("signExecutableFiles", { String binDir ->
   getChildren(fileBinDir).each {
     fileName = it.getName()
     if (fileName.endsWith(".exe")) {
+      projectBuilder.stage("Signing: $fileName")
       executeExternalAnt(["dirName": binDir, "fileName": fileName], "$home/build/signBuild.xml")
     }
   }
@@ -915,6 +919,9 @@ binding.setVariable("bundledJDKs"){
 }
 
 binding.setVariable("bundledJDK64s"){
+  // JetBrains JDK:
+  //bundledJDK(true)
+
   if (new File("${home}/../../prebuilts/studio/jdk").exists()) {
     def customJdkDir = new File("${home}/../../prebuilts/studio/jdk/win64")
     if (customJdkDir.exists() && customJdkDir.isDirectory()) {
@@ -946,12 +953,42 @@ binding.setVariable("bundledJDK64s"){
   }
 }
 
+private bundledJDK(boolean win64) {
+  requireProperty("artifact.linux.no.jdk", "true")
+  requireProperty("artifact.mac.no.jdk", "true")
+  requireProperty("jdk.oracle.win", "jdk8u")
+  requireProperty("jdk.win",   "openjdk.1.8")
+  requireProperty("jdk.mac",   "openjdk.1.8")
+  requireProperty("jdk.linux", "openjdk.1.8")
+
+  if (new File("${home}/build/jdk").exists()) {
+    def jdkDir = new File("${home}/build/jdk/win")
+    if (p("jdk.oracle.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
+      setProperty("winJDK", getPathToBundledJDK(jdkDir, p("jdk.oracle.win"), (win64 ? "x64.tar.gz": "x86.tar.gz")))
+      extractRedistJre(winJDK, "${paths.sandbox}/jdk.oracle.win/jre")
+    }
+    if (p("jdk.win") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
+      setProperty("winCustomJDKx32", getPathToBundledJDK(jdkDir, p("jdk.win"), (win64 ? "x64.tar.gz": "x32.tar.gz")))
+      extractRedistJre(winCustomJDKx32, "${paths.sandbox}/jdk.win")
+    }
+    jdkDir = new File("${home}/build/jdk/mac")
+    if (p("jdk.mac") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
+      setProperty("macCustomJDK", getPathToBundledJDK(jdkDir, p("jdk.mac"), ".tar.gz"))
+    }
+    jdkDir = new File("${home}/build/jdk/linux")
+    if (p("jdk.linux") != "false" && (jdkDir.exists() && jdkDir.isDirectory())) {
+      setProperty("linuxJDK", getPathToBundledJDK(jdkDir, p("jdk.linux"), ".tar.gz"))
+      extractRedistJre(linuxJDK, "${paths.sandbox}/jdk.linux")
+    }
+  }
+}
+
 binding.setVariable("getPathToBundledJDK", { File jdkDir, String prefix, String ext ->
   def JdkFileName = ""
   getChildren(jdkDir).each {
     if (it.getName().startsWith(prefix) && it.getName().endsWith(ext)) {
       JdkFileName = it.getAbsolutePath()
-      if (ext == ".tar.gz") {
+      if (ext.endsWith(".tar.gz")) {
         def OriginalJdkFileName = JdkFileName.substring(0, JdkFileName.length() - 3)
         JdkFileName = JdkFileName.substring(0, JdkFileName.length() - 7) + "_${buildNumber}.tar"
         if (new File(JdkFileName).exists()) { ant.delete(file: JdkFileName) }
@@ -1148,12 +1185,17 @@ binding.setVariable("buildTarGz", { String tarRoot, String tarPath, List paths, 
 
 binding.setVariable("extractRedistJre", { String jdk_file_name, String destination  ->
   def jre_redist = "${destination}"
-  ant.mkdir(dir: jre_redist)
-  if (jdk_file_name.endsWith(".tar")) {
-    ant.untar(dest: jre_redist, src: "${jdk_file_name}")
-  }
-  else {
-    ant.unzip(dest: jre_redist, src: "${jdk_file_name}")
+  def jdkArchive = new File(jdk_file_name)
+  if (jdkArchive.exists()) {
+    ant.mkdir(dir: jre_redist)
+    if (jdk_file_name.endsWith(".tar")) {
+      ant.untar(dest: jre_redist, src: "${jdk_file_name}")
+    }
+    else {
+      ant.unzip(dest: jre_redist, src: "${jdk_file_name}")
+    }
+  } else {
+     projectBuilder.error("${jdk_file_name} doesn't exist.")
   }
 })
 
@@ -1174,6 +1216,7 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
     def paths = getProperty("paths")
     def launcherPropertiesTemp = "${paths.sandbox}/launcher.properties"
     copyAndPatchFile(launcherProperties, launcherPropertiesTemp, ["PRODUCT_PATHS_SELECTOR": pathsSelector,
+                                                                  "product_uc" : p("component.names.product").toLowerCase(),
                                                                   "IDE-NAME": p("component.names.product").toUpperCase()])
     launcherProperties = launcherPropertiesTemp
   }
@@ -1215,6 +1258,9 @@ binding.setVariable("layoutUpdater", { String target ->
     jar("patcher-partial.jar") {
       module("updater-ui")
       module("updater")
+      manifest {
+        attribute(name: "Main-Class", value: "com.intellij.updater.Bootstrap")
+      }
     }
   }
 })

@@ -40,5 +40,5 @@ grammar {
         SVG.Core.attrib,
         SVG.XLink.attrib,
         SVG.External.attrib,
-        attribute type { ContentType.datatype }
+        attribute type { ContentType.datatype }?
 }

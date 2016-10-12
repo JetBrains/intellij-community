@@ -22,6 +22,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -54,11 +55,9 @@ public class CommandLineProcessor {
 
   public static void openFileOrProject(final String name) {
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        if (name != null) {
-          doOpenFileOrProject(name);
-        }
+    SwingUtilities.invokeLater(() -> {
+      if (name != null) {
+        doOpenFileOrProject(name);
       }
     });
   }
@@ -101,6 +100,7 @@ public class CommandLineProcessor {
       return null;
     }
     else {
+      NonProjectFileWritingAccessProvider.allowWriting(virtualFile);
       Project project = findBestProject(virtualFile, projects);
       if (line == -1) {
         new OpenFileDescriptor(project, virtualFile).navigate(true);
@@ -151,12 +151,7 @@ public class CommandLineProcessor {
         try {
           final String url = URLDecoder.decode(command, "UTF-8");
           JetBrainsProtocolHandler.processJetBrainsLauncherParameters(url);
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              JBProtocolCommand.handleCurrentCommand();
-            }
-          }, ModalityState.any());
+          ApplicationManager.getApplication().invokeLater(() -> JBProtocolCommand.handleCurrentCommand(), ModalityState.any());
         }
         catch (UnsupportedEncodingException e) {
           LOG.error(e);

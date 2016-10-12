@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -31,12 +30,13 @@ public abstract class BaseDataReader {
   private static final Logger LOG = Logger.getInstance(BaseDataReader.class);
 
   protected final SleepingPolicy mySleepingPolicy;
+  protected final Object mySleepMonitor = new Object();
   protected volatile boolean isStopped;
 
   private Future<?> myFinishedFuture;
 
   public BaseDataReader(SleepingPolicy sleepingPolicy) {
-    mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy: SleepingPolicy.SIMPLE;
+    mySleepingPolicy = sleepingPolicy != null ? sleepingPolicy : SleepingPolicy.SIMPLE;
   }
 
   /** @deprecated use {@link #start(String)} instead (to be removed in IDEA 17) */
@@ -55,7 +55,7 @@ public abstract class BaseDataReader {
         public void run() {
           String oldThreadName = Thread.currentThread().getName();
           if (!StringUtil.isEmptyOrSpaces(presentableName)) {
-            Thread.currentThread().setName(StringUtil.first("BaseDataReader: " + presentableName, 120, true));
+            Thread.currentThread().setName("BaseDataReader: " + presentableName);
           }
           try {
             doRun();
@@ -66,6 +66,36 @@ public abstract class BaseDataReader {
         }
       });
     }
+  }
+
+  /**
+   * Please don't override this method as the BseOSProcessProcessHandler assumes that it can be two reading modes: blocking and non-blocking.
+   * Implement {@link #readAvailableBlocking} and {@link #readAvailableNonBlocking} instead.
+   * 
+   * 
+   * If the process handler assumes that reader handles the blocking mode, while it doesn't, it will result into premature stream close.
+   * 
+   * @return true in case any data was read
+   * @throws IOException if an exception during IO happened
+   */
+  protected boolean readAvailable() throws IOException {
+    return mySleepingPolicy == SleepingPolicy.BLOCKING ? readAvailableBlocking() : readAvailableNonBlocking();
+  }
+
+  /**
+   * 
+   * Non-blocking read returns the control back to the process handler when there is no data to read.
+   * 
+   */
+  protected boolean readAvailableNonBlocking() throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Reader in a blocking mode blocks on IO read operation until data is received. It exits the method only after stream is closed.
+   */
+  protected boolean readAvailableBlocking() throws IOException {
+    throw new UnsupportedOperationException();
   }
 
   @NotNull
@@ -138,7 +168,10 @@ public abstract class BaseDataReader {
         if (!stopSignalled) {
           // if process stopped, there is no sense to sleep, 
           // just check if there is unread output in the stream
-          TimeoutUtil.sleep(mySleepingPolicy.getTimeToSleep(read));
+
+          synchronized (mySleepMonitor) {
+            mySleepMonitor.wait(mySleepingPolicy.getTimeToSleep(read));
+          }
         }
       }
     }
@@ -157,12 +190,18 @@ public abstract class BaseDataReader {
       }
     }
   }
+  
+  private void resumeReading() {
+    synchronized (mySleepMonitor) {
+      mySleepMonitor.notifyAll();
+    }
+  }
 
-  protected abstract boolean readAvailable() throws IOException;
   protected abstract void close() throws IOException;
 
   public void stop() {
     isStopped = true;
+    resumeReading();
   }
 
   public void waitFor() throws InterruptedException {

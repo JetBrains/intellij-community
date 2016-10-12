@@ -1102,7 +1102,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     }
 
     @Override
-    public boolean savePassword(String realm, String password, SVNAuthentication auth, SVNProperties authParameters) throws SVNException {
+    public boolean savePassword(String realm, char[] password, SVNAuthentication auth, SVNProperties authParameters) throws SVNException {
       final boolean saved = myDelegate.savePassword(realm, password, auth, authParameters);
       if (saved) {
         myListener.getMulticaster().actualSaveWillBeTried(ProviderType.persistent, auth.getURL(), realm, auth.getKind()
@@ -1112,12 +1112,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     }
 
     @Override
-    public String readPassword(String realm, String userName, SVNProperties authParameters) throws SVNException {
+    public char[] readPassword(String realm, String userName, SVNProperties authParameters) throws SVNException {
       return myDelegate.readPassword(realm, userName, authParameters);
     }
 
     @Override
-    public boolean savePassphrase(String realm, String passphrase, SVNAuthentication auth, SVNProperties authParameters, boolean force)
+    public boolean savePassphrase(String realm, char[] passphrase, SVNAuthentication auth, SVNProperties authParameters, boolean force)
       throws SVNException {
       final boolean saved = myDelegate.savePassphrase(realm, passphrase, auth, authParameters, force);
       if (saved) {
@@ -1128,7 +1128,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     }
 
     @Override
-    public String readPassphrase(String realm, SVNProperties authParameters) throws SVNException {
+    public char[] readPassphrase(String realm, SVNProperties authParameters) throws SVNException {
       return myDelegate.readPassphrase(realm, authParameters);
     }
   }
@@ -1165,7 +1165,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     }
 
     @Override
-    public String getKeyringPassword(final String keyringName) throws SVNException {
+    public char[] getKeyringPassword(final String keyringName) throws SVNException {
       final String message = keyringName != null ? SvnBundle.message("gnome.keyring.prompt.named", keyringName)
                                                  : SvnBundle.message("gnome.keyring.prompt.nameless");
       final Ref<String> result = Ref.create();
@@ -1175,7 +1175,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
           result.set(Messages.showPasswordDialog(myProject, message, SvnBundle.message("subversion.name"), Messages.getQuestionIcon()));
         }
       });
-      return result.get();
+      return !result.isNull() ? result.get().toCharArray() : null;
     }
   }
 

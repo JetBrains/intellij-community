@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,10 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.JdkScope;
 import com.intellij.openapi.module.impl.scopes.LibraryRuntimeClasspathScope;
+import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,12 +146,7 @@ public class LibraryScopeCache {
       }
     }
 
-    Comparator<Module> comparator = new Comparator<Module>() {
-      @Override
-      public int compare(@NotNull Module o1, @NotNull Module o2) {
-        return o1.getName().compareTo(o2.getName());
-      }
-    };
+    Comparator<Module> comparator = (o1, o2) -> o1.getName().compareTo(o2.getName());
     Collections.sort(modulesLibraryUsedIn, comparator);
     List<Module> uniquesList = ContainerUtil.removeDuplicatesFromSorted(modulesLibraryUsedIn, comparator);
     Module[] uniques = uniquesList.toArray(new Module[uniquesList.size()]);
@@ -195,12 +193,30 @@ public class LibraryScopeCache {
     return scope;
   }
 
-  private GlobalSearchScope calcLibraryUseScope(List<OrderEntry> entries) {
+  @NotNull
+  private GlobalSearchScope calcLibraryUseScope(@NotNull List<OrderEntry> entries) {
+    Set<Module> modulesWithLibrary = new THashSet<>(entries.size());
+    Set<Module> modulesWithSdk = new THashSet<>(entries.size());
+    for (OrderEntry entry : entries) {
+      (entry instanceof JdkOrderEntry ? modulesWithSdk : modulesWithLibrary).add(entry.getOwnerModule());
+    }
+    modulesWithSdk.removeAll(modulesWithLibrary);
+
+    // optimisation: if the library attached to all modules (often the case with JDK) then replace the 'union of all modules' scope with just 'project'
+    if (modulesWithSdk.size() + modulesWithLibrary.size() == ModuleManager.getInstance(myProject).getModules().length) {
+      return GlobalSearchScope.allScope(myProject);
+    }
+
     List<GlobalSearchScope> united = ContainerUtil.newArrayList();
     united.add(getLibrariesOnlyScope());
-    for (OrderEntry entry : entries) {
-      united.add(GlobalSearchScope.moduleWithDependentsScope(entry.getOwnerModule()));
+    if (!modulesWithSdk.isEmpty()) {
+      united.add(new ModulesScope(modulesWithSdk, myProject));
     }
+
+    for (Module module : modulesWithLibrary) {
+      united.add(GlobalSearchScope.moduleWithDependentsScope(module));
+    }
+
     return GlobalSearchScope.union(united.toArray(new GlobalSearchScope[united.size()]));
   }
 

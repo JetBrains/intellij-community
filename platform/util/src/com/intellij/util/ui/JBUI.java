@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 
 /**
@@ -33,26 +36,31 @@ import java.awt.*;
 public class JBUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.JBUI");
 
-  private static float SCALE_FACTOR = calculateScaleFactor();
+  private static float scaleFactor = 1.0f;
 
-  private static float calculateScaleFactor() {
-    float s = PlatformScalingUtil.getInstance().getSystemScaleFactor();
-    LOG.info("UI scale factor: " + s);
-    return s;
+  static {
+    calculateScaleFactor();
+  }
+
+  private static void calculateScaleFactor() {
+    scaleFactor = PlatformScalingUtil.getInstance().getSystemScaleFactor();
+    LOG.info("UI scale factor: " + scaleFactor);
   }
 
   public static void setScaleFactor(float scale) {
     scale = PlatformScalingUtil.getInstance().normalizeScaleFactor(scale);
     LOG.info("UI scale factor changed: " + scale);
-    SCALE_FACTOR = scale;
+    scaleFactor = scale;
     IconLoader.setScale(scale);
   }
 
   public static int scale(int i) {
-    return scaleEx(SCALE_FACTOR, i);
+    return scaleEx(scaleFactor, i);
   }
 
-  public static float scale(float f) { return scaleEx(SCALE_FACTOR, f); }
+  public static float scale(float f) {
+    return scaleEx(scaleFactor, f);
+  }
 
   public static int scaleEx(float scaleFactor, int i) {
     return Math.round(scaleFactor * i);
@@ -63,9 +71,9 @@ public class JBUI {
   }
 
   public static int scaleFontSize(int fontSize) {
-    if (SCALE_FACTOR == 1.25f) return scaleEx(1.34f, fontSize);
-    if (SCALE_FACTOR == 1.75f) return scaleEx(1.67f, fontSize);
-    return scaleEx(SCALE_FACTOR, fontSize);
+    if (scaleFactor == 1.25f) return scaleEx(1.34f, fontSize);
+    if (scaleFactor == 1.75f) return scaleEx(1.67f, fontSize);
+    return scaleEx(scaleFactor, fontSize);
   }
 
   public static JBDimension size(int width, int height) {
@@ -77,7 +85,15 @@ public class JBUI {
   }
 
   public static JBDimension size(Dimension size) {
-    return size instanceof JBDimension ? ((JBDimension)size) : new JBDimension(size.width, size.height);
+    if (size instanceof JBDimension) {
+      final JBDimension jbSize = (JBDimension)size;
+      if (jbSize.originalScale == scale(1f)) {
+        return jbSize;
+      }
+      final JBDimension newSize = new JBDimension((int)(jbSize.width / jbSize.originalScale), (int)(jbSize.height / jbSize.originalScale));
+      return size instanceof UIResource ? newSize.asUIResource() : newSize;
+    }
+    return new JBDimension(size.width, size.height);
   }
 
   public static JBInsets insets(int top, int left, int bottom, int right) {
@@ -125,7 +141,7 @@ public class JBUI {
   }
 
   public static boolean isHiDPI() {
-    return SCALE_FACTOR > 1.0f;
+    return scaleFactor > 1.0f;
   }
 
   public static class Fonts {
@@ -189,6 +205,10 @@ public class JBUI {
 
     public static Border customLine(Color color, int thickness) {
       return customLine(color, thickness, thickness, thickness, thickness);
+    }
+
+    public static Border customLine(Color color) {
+      return customLine(color, 1);
     }
 
     public static Border merge(@Nullable Border source, @NotNull Border extra, boolean extraIsOutside) {

@@ -41,11 +41,7 @@ public class LibrariesValidationComponentImpl implements LibrariesValidationComp
     myLibrariesValidator = new FacetLibrariesValidatorImpl(requiredLibraries, description, new LibrariesValidatorContextImpl(myModule),
                                                            myErrorPanel.getValidatorsManager());
     myErrorPanel.getValidatorsManager().registerValidator(myLibrariesValidator);
-    myErrorPanel.addListener(new Runnable() {
-      public void run() {
-        myDispatcher.getMulticaster().valididyChanged(myErrorPanel.isOk());
-      }
-    });
+    myErrorPanel.addListener(() -> myDispatcher.getMulticaster().valididyChanged(myErrorPanel.isOk()));
   }
 
   public JComponent getComponent() {

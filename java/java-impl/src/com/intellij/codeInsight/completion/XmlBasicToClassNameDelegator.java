@@ -46,17 +46,14 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
 
     if (empty && JavaClassReferenceCompletionContributor.findJavaClassReference(file, parameters.getOffset()) != null ||
         parameters.isExtendedCompletion()) {
-      CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, new Consumer<CompletionResult>() {
-        @Override
-        public void consume(final CompletionResult completionResult) {
-          LookupElement lookupElement = completionResult.getLookupElement();
-          JavaPsiClassReferenceElement classElement = lookupElement.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
-          if (classElement != null) {
-            classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-          }
-          lookupElement.putUserData(XmlCompletionContributor.WORD_COMPLETION_COMPATIBLE, Boolean.TRUE); //todo think of a less dirty interaction
-          result.passResult(completionResult);
+      CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, completionResult -> {
+        LookupElement lookupElement = completionResult.getLookupElement();
+        JavaPsiClassReferenceElement classElement = lookupElement.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
+        if (classElement != null) {
+          classElement.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
         }
+        lookupElement.putUserData(XmlCompletionContributor.WORD_COMPLETION_COMPATIBLE, Boolean.TRUE); //todo think of a less dirty interaction
+        result.passResult(completionResult);
       });
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.slicer;
 
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
@@ -24,19 +24,16 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usages.TextChunk;
+import com.intellij.util.BitUtil;
 import com.intellij.util.FontUtil;
-import com.intellij.util.Processor;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.List;
 
 /**
  * @author cdr
  */
-public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
-
+class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
   @Override
   public void customizeCellRendererFor(@NotNull SliceUsage sliceUsage) {
     boolean isForcedLeaf = sliceUsage instanceof JavaSliceDereferenceUsage;
@@ -44,14 +41,6 @@ public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
     JavaSliceUsage javaSliceUsage = sliceUsage instanceof JavaSliceUsage ? (JavaSliceUsage)sliceUsage : null;
 
     TextChunk[] text = sliceUsage.getText();
-    final List<TextRange> usageRanges = new SmartList<TextRange>();
-    sliceUsage.processRangeMarkers(new Processor<Segment>() {
-      @Override
-      public boolean process(Segment segment) {
-        usageRanges.add(TextRange.create(segment));
-        return true;
-      }
-    });
     boolean isInsideContainer = javaSliceUsage != null && javaSliceUsage.indexNesting != 0;
     for (int i = 0, length = text.length; i < length; i++) {
       TextChunk textChunk = text[i];
@@ -59,7 +48,7 @@ public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
       if (isForcedLeaf) {
         attributes = attributes.derive(attributes.getStyle(), JBColor.LIGHT_GRAY, attributes.getBgColor(), attributes.getWaveColor());
       }
-      boolean inUsage = (attributes.getFontStyle() & Font.BOLD) != 0;
+      boolean inUsage = BitUtil.isSet(attributes.getFontStyle(), Font.BOLD);
       if (isInsideContainer && inUsage) {
         //Color darker = Color.BLACK;//attributes.getBgColor() == null ? Color.BLACK : attributes.getBgColor().darker();
         //attributes = attributes.derive(SimpleTextAttributes.STYLE_OPAQUE, attributes.getFgColor(), UIUtil.getTreeBackground().brighter(), attributes.getWaveColor());
@@ -102,6 +91,14 @@ public class SliceUsageCellRenderer extends SliceUsageCellRendererBase {
     if (location != null) {
       SimpleTextAttributes attributes = SimpleTextAttributes.GRAY_ATTRIBUTES;
       append(" in " + location, attributes);
+    }
+
+    Language language = element == null ? JavaLanguage.INSTANCE : element.getLanguage();
+    if (language != JavaLanguage.INSTANCE) {
+      SliceLanguageSupportProvider foreignSlicing = LanguageSlicing.getProvider(element);
+      if (foreignSlicing == null) {
+        append(" (in " + language.getDisplayName()+" file - stopped here)", SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
+      }
     }
   }
 }

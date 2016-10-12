@@ -32,13 +32,8 @@ public class InferenceFromSourceUtil {
   static boolean shouldInferFromSource(@NotNull final PsiMethod method) {
     if (method instanceof SyntheticElement || method instanceof LightElement) return false;
 
-    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<Boolean>() {
-      @Nullable
-      @Override
-      public Result<Boolean> compute() {
-        return Result.create(calcShouldInferFromSource(method), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(method, () -> CachedValueProvider.Result
+      .create(calcShouldInferFromSource(method), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
 
   private static boolean calcShouldInferFromSource(@NotNull PsiMethod method) {

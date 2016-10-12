@@ -28,7 +28,7 @@
     <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" />
 
     <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"/>
-    <extensionPoint name="repositoryLibrary" interface="org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription"/>
+    <extensionPoint name="mavenCoordinates" beanClass="org.jetbrains.idea.maven.utils.library.RepositoryLibraryBean"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>

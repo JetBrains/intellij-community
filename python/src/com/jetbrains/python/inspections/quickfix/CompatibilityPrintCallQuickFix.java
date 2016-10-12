@@ -53,12 +53,7 @@ public class CompatibilityPrintCallQuickFix implements LocalQuickFix {
     final PyFile file = (PyFile)expression.getContainingFile();
     final PyExpression[] target = PsiTreeUtil.getChildrenOfType(expression, PyExpression.class);
     if (target != null) {
-      stringBuilder.append(StringUtil.join(target, new Function<PyExpression, String>() {
-        @Override
-        public String fun(PyExpression o) {
-          return o.getText();
-        }
-      }, ", "));
+      stringBuilder.append(StringUtil.join(target, o -> o.getText(), ", "));
     }
     stringBuilder.append(")");
     expression.replace(elementGenerator.createFromText(LanguageLevel.forElement(expression), PyExpression.class,

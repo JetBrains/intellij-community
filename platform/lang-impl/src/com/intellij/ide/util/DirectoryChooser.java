@@ -134,12 +134,7 @@ public class DirectoryChooser extends DialogWrapper {
     toolbarComponent.setBorder(null);
     panel.add(toolbarComponent, BorderLayout.NORTH);
 
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        enableButtons();
-      }
-    };
+    final Runnable runnable = () -> enableButtons();
     myView.onSelectionChange(runnable);
     final JComponent component = myView.getComponent();
     final JScrollPane jScrollPane = ScrollPaneFactory.createScrollPane(component);

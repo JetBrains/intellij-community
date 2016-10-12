@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 package com.intellij.navigation
+
 import com.intellij.ide.actions.GotoFileItemProvider
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
+import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 /**
@@ -40,6 +47,21 @@ class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
       assert ChooseByNameTest.calcPopupElements(popup, path + ':0') == [psiFile]
       popup.close(false)
     }
+  }
+
+  public void "test prefer same-named classes visible in current module"() {
+    int moduleCount = 10
+    def modules = (0..moduleCount-1).collect {
+      PsiTestUtil.addModule(project, StdModuleTypes.JAVA, "mod$it", myFixture.tempDirFixture.findOrCreateDir("mod$it"))
+    }
+    ModuleRootModificationUtil.addDependency(myFixture.module, modules[2])
+    (0..moduleCount-1).each { myFixture.addFileToProject("mod$it/Foo.java", "class Foo {}") }
+
+    def place = myFixture.addClass("class A {}")
+    def popup = ReadAction.compute { ChooseByNamePopup.createPopup(project, new GotoClassModel2(project), place) }
+    def resultModules = ChooseByNameTest.calcPopupElements(popup, 'Foo').collect { ModuleUtilCore.findModuleForPsiElement(it).name }
+    assert resultModules[0] == 'mod2'
+    popup.close(false)
   }
 
   @Override

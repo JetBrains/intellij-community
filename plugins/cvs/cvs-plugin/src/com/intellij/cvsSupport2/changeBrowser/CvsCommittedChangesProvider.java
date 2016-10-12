@@ -163,13 +163,11 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     final CvsChangeListsBuilder builder = new CvsChangeListsBuilder(module, connectionSettings, myProject, vcsRoot);
 
     final Ref<CvsChangeList> result = new Ref<CvsChangeList>();
-    final LoadHistoryOperation operation = new LoadHistoryOperation(connectionSettings, new Consumer<LogInformationWrapper>() {
-      public void consume(LogInformationWrapper wrapper) {
-        final List<Revision> revisions = wrapper.getRevisions();
-        if (revisions.isEmpty()) return;
-        final RevisionWrapper revision = new RevisionWrapper(wrapper.getFile(), revisions.get(0), null);
-        result.set(builder.addRevision(revision));
-      }
+    final LoadHistoryOperation operation = new LoadHistoryOperation(connectionSettings, wrapper -> {
+      final List<Revision> revisions = wrapper.getRevisions();
+      if (revisions.isEmpty()) return;
+      final RevisionWrapper revision = new RevisionWrapper(wrapper.getFile(), revisions.get(0), null);
+      result.set(builder.addRevision(revision));
     }, cvsLocation.getModuleName(), number.asString());
     final CvsResult executionResult = operation.run(myProject);
 
@@ -189,18 +187,15 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     final Date dateTo = new Date(t + CvsChangeList.SUITABLE_DIFF);
 
     final LoadHistoryOperation operation2 =
-      new LoadHistoryOperation(rootConnectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
-        @Override
-        public void consume(LogInformationWrapper wrapper) {
-          final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
-          if (wrappers != null) {
-            for (RevisionWrapper revisionWrapper : wrappers) {
-              if (result.get().containsFileRevision(revisionWrapper)) {
-                // otherwise a new change list will be created because the old change list already contains this file.
-                continue;
-              }
-              builder.addRevision(revisionWrapper);
+      new LoadHistoryOperation(rootConnectionSettings, module, dateFrom, dateTo, wrapper -> {
+        final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
+        if (wrappers != null) {
+          for (RevisionWrapper revisionWrapper : wrappers) {
+            if (result.get().containsFileRevision(revisionWrapper)) {
+              // otherwise a new change list will be created because the old change list already contains this file.
+              continue;
             }
+            builder.addRevision(revisionWrapper);
           }
         }
       });
@@ -252,17 +247,15 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       final ChangeBrowserSettings.Filter filter = settings.createFilter();
       final Set<CvsChangeList> controlSet = new HashSet<CvsChangeList>();
       final LoadHistoryOperation operation =
-        new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
-          public void consume(LogInformationWrapper wrapper) {
-            final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
-            if (wrappers != null) {
-              for (RevisionWrapper revisionWrapper : wrappers) {
-                final CvsChangeList changeList = builder.addRevision(revisionWrapper);
-                if (controlSet.contains(changeList)) continue;
-                controlSet.add(changeList);
-                if (filter.accepts(changeList)) {
-                  consumer.consume(changeList);
-                }
+        new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, wrapper -> {
+          final List<RevisionWrapper> wrappers = builder.revisionWrappersFromLog(wrapper);
+          if (wrappers != null) {
+            for (RevisionWrapper revisionWrapper : wrappers) {
+              final CvsChangeList changeList = builder.addRevision(revisionWrapper);
+              if (controlSet.contains(changeList)) continue;
+              controlSet.add(changeList);
+              if (filter.accepts(changeList)) {
+                consumer.consume(changeList);
               }
             }
           }
@@ -297,12 +290,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
       dateFrom = calendar.getTime();
     }
     final LoadHistoryOperation operation =
-      new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, new Consumer<LogInformationWrapper>() {
-        @Override
-        public void consume(LogInformationWrapper logInformationWrapper) {
-          builder.add(logInformationWrapper);
-        }
-      });
+      new LoadHistoryOperation(connectionSettings, module, dateFrom, dateTo, logInformationWrapper -> builder.add(logInformationWrapper));
     final CvsResult executionResult = operation.run(myProject);
 
     if (executionResult.isCanceled()) {

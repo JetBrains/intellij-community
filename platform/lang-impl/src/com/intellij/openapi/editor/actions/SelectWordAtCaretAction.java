@@ -30,6 +30,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
@@ -53,13 +54,19 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
 
     @Override
     public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      SelectionModel selectionModel = editor.getSelectionModel();
+      Document document = editor.getDocument();
+
+      if (EditorUtil.isPasswordEditor(editor)) {
+        selectionModel.setSelection(0, document.getTextLength());
+        return;
+      }
+
       int lineNumber = editor.getCaretModel().getLogicalPosition().line;
       int caretOffset = editor.getCaretModel().getOffset();
-      Document document = editor.getDocument();
       if (lineNumber >= document.getLineCount()) {
         return;
       }
-      CharSequence text = document.getCharsSequence();
 
       boolean camel = editor.getSettings().isCamelWords();
       List<TextRange> ranges = new ArrayList<TextRange>();
@@ -68,14 +75,13 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       if (caretOffset == textLength) caretOffset--;
       if (caretOffset < 0) return;
 
-      SelectWordUtil.addWordSelection(camel, text, caretOffset, ranges);
+      SelectWordUtil.addWordOrLexemeSelection(camel, editor, caretOffset, ranges);
 
       if (ranges.isEmpty()) return;
 
-      SelectionModel selectionModel = editor.getSelectionModel();
       final TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
 
-      TextRange minimumRange = new TextRange(0, editor.getDocument().getTextLength());
+      TextRange minimumRange = new TextRange(0, document.getTextLength());
       for (TextRange range : ranges) {
         if (range.contains(selectionRange) && !range.equals(selectionRange)) {
           if (minimumRange.contains(range)) {
@@ -132,7 +138,7 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
         int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t\n");
         HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(nonWhitespaceOffset);
         if (BraceMatchingUtil.isRBraceToken(iterator, chars, file.getFileType())) {
-          if (((EditorEx)editor).calcColumnNumber(iterator.getStart(), doc.getLineNumber(iterator.getStart())) == guide.indentLevel) {
+          if (editor.offsetToLogicalPosition(iterator.getStart()).column == guide.indentLevel) {
             endOffset = iterator.getEnd();
             endOffset = CharArrayUtil.shiftForward(chars, endOffset, " \t");
             if (endOffset < chars.length() && chars.charAt(endOffset) == '\n') endOffset++;

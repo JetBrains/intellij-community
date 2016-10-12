@@ -316,6 +316,7 @@ Page custom uninstallOldVersionDialog
 Var productDir
 Var control_fields
 Var max_fields
+Var runProductAfterInstall
 
 !ifdef LICENSE_FILE
 !insertmacro MUI_PAGE_LICENSE "$(myLicenseData)"
@@ -348,7 +349,13 @@ InstallDir "$PROGRAMFILES\${MANUFACTURER}\${PRODUCT_WITH_VER}"
 BrandingText " "
 
 Function PageFinishRun
-!insertmacro UAC_AsUser_ExecShell "" "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" ""
+  StrCmp $runProductAfterInstall "64" runExe64 runExe32
+runExe64:
+  !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE_64}" "" "$INSTDIR\bin" ""
+  goto done
+runExe32:
+  !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
+done:
 FunctionEnd
 
 ;------------------------------------------------------------------------------
@@ -686,11 +693,13 @@ Section "IDEA Files" CopyIdeaFiles
 ; create shortcuts
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 2" "State"
   StrCmp $R2 1 "" exe_64
+  StrCpy $runProductAfterInstall "32"
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
 exe_64:
   !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
   StrCmp $R2 1 "" skip_desktop_shortcut
+  StrCpy $runProductAfterInstall "64"
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}(64).lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
 

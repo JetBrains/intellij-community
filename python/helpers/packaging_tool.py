@@ -122,6 +122,11 @@ def do_pyvenv(path, system_site_packages):
         import venv
     except ImportError:
         error("Standard Python 'venv' module not found", ERROR_EXCEPTION)
+    # In Python >= 3.4 venv.create() has a new parameter with_pip=False
+    # that allows to automatically install setuptools and pip with the module
+    # ensurepip. Unfortunately, we cannot use this parameter and have to
+    # bootstrap these packages ourselves, since some distributions of CPython
+    # on Ubuntu don't include ensurepip.
     venv.create(path, system_site_packages=system_site_packages)
 
 

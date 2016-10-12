@@ -275,15 +275,12 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     myEventDispatcher.queueDeploymentsChanged(this);
     DeploymentLogManagerImpl logManager = myLogManagers.get(deploymentName);
     final LoggingHandlerImpl loggingHandler = logManager == null ? null : logManager.getMainLoggingHandler();
-    final Consumer<String> logConsumer = new Consumer<String>() {
-      @Override
-      public void consume(String message) {
-        if (loggingHandler == null) {
-          LOG.info(message);
-        }
-        else {
-          loggingHandler.printlnSystemMessage(message);
-        }
+    final Consumer<String> logConsumer = message -> {
+      if (loggingHandler == null) {
+        LOG.info(message);
+      }
+      else {
+        loggingHandler.printlnSystemMessage(message);
       }
     };
 
@@ -435,15 +432,13 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
                                                                                              @NotNull DeploymentRuntime runtime) {
       try {
         final D debugInfo = debugConnector.getConnectionData((R)runtime);
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          public void run() {
-            try {
-              debugConnector.getLauncher().startDebugSession(debugInfo, myDeploymentTask.getExecutionEnvironment(), myServer);
-            }
-            catch (ExecutionException e) {
-              myLoggingHandler.print("Cannot start debugger: " + e.getMessage() + "\n");
-              LOG.info(e);
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          try {
+            debugConnector.getLauncher().startDebugSession(debugInfo, myDeploymentTask.getExecutionEnvironment(), myServer);
+          }
+          catch (ExecutionException e) {
+            myLoggingHandler.print("Cannot start debugger: " + e.getMessage() + "\n");
+            LOG.info(e);
           }
         });
       }

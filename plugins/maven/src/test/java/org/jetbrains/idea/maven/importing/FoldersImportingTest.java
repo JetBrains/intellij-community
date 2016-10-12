@@ -96,15 +96,13 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
-                                                                  getModule("project"),
-                                                                  new IdeModifiableModelsProviderImpl(myProject));
-        adapter.addSourceFolder(dir1.getPath(), JavaSourceRootType.SOURCE);
-        adapter.addExcludedFolder(dir2.getPath());
-        adapter.getRootModel().commit();
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
+                                                                getModule("project"),
+                                                                new IdeModifiableModelsProviderImpl(myProject));
+      adapter.addSourceFolder(dir1.getPath(), JavaSourceRootType.SOURCE);
+      adapter.addExcludedFolder(dir2.getPath());
+      adapter.getRootModel().commit();
     });
 
 
@@ -1049,22 +1047,19 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   " </plugins>" +
                   "</build>");
 
-    final Runnable testAssertions = new Runnable() {
-      @Override
-      public void run() {
-        assertSources("project",
-                      "anno",
-                      "src/main/java",
-                      "target/generated-sources/annotations",
-                      "target/generated-sources/foo",
-                      "target/generated-sources/test-annotations");
+    final Runnable testAssertions = () -> {
+      assertSources("project",
+                    "anno",
+                    "src/main/java",
+                    "target/generated-sources/annotations",
+                    "target/generated-sources/foo",
+                    "target/generated-sources/test-annotations");
 
-        assertResources("project", "src/main/resources");
-        assertTestSources("project",
-                          "src/test/java",
-                          "target/generated-test-sources/foo");
-        assertTestResources("project", "src/test/resources");
-      }
+      assertResources("project", "src/main/resources");
+      assertTestSources("project",
+                        "src/test/java",
+                        "target/generated-test-sources/foo");
+      assertTestResources("project", "src/test/resources");
     };
 
     testAssertions.run();

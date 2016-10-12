@@ -25,16 +25,24 @@ public class OctalLiteralFixesTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(new OctalLiteralInspection());
   }
 
-  public void testConvertOctalToDecimal1() {
-    doTest("ConvertToDecimal1", InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
+  public void testConvertToDecimal1() {
+    doTest(InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
   }
 
-  public void testConvertOctalToDecimal2() {
-    doTest("ConvertToDecimal2", InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
+  public void testConvertToDecimal2() {
+    doTest(InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
+  }
+
+  public void testConvertOctalToDecimalLong() {
+    doTest(InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix"));
   }
 
   public void testRemoveLeadingZero() {
-    doTest("RemoveLeadingZero", InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix"));
+    doTest(InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix"));
+  }
+
+  public void testRemoveLeadingZeroLong() {
+    doTest(InspectionGadgetsBundle.message("remove.leading.zero.to.make.decimal.quickfix"));
   }
 
   @Override

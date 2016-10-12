@@ -186,3 +186,17 @@ class C {
 
   class SchedulingElement extends AbstractSchedulingElement<SchedulingElement>{}
 }
+class UsingConstant {
+
+  final int YES = 1;
+
+  void foo() {
+    int <warning descr="Local variable 'yes' is redundant">yes</warning> = YES;
+    System.out.println(yes);
+  }
+
+  void bar() {
+    int yes = YES;
+    yes++;
+  }
+}

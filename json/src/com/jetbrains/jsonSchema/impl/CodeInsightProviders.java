@@ -18,6 +18,7 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,4 +33,6 @@ public interface CodeInsightProviders {
 
   @NotNull
   DocumentationProvider getDocumentationProvider();
+
+  boolean iterateSchemaObjects(@NotNull Processor<JsonSchemaObject> consumer);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ import java.util.List;
 public class LazyParseablePsiElement extends LazyParseableElement implements PsiElement, NavigationItem {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseablePsiElement");
 
-  public LazyParseablePsiElement(@NotNull IElementType type, CharSequence buffer) {
+  public LazyParseablePsiElement(@NotNull IElementType type, @Nullable CharSequence buffer) {
     super(type, buffer);
     setPsi(this);
   }

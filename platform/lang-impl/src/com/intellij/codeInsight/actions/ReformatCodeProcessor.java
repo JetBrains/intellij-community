@@ -110,48 +110,45 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
-    return new FutureTask<Boolean>(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
-        try {
-          Collection<TextRange> ranges = getRangesToFormat(processChangedTextOnly, file);
+    return new FutureTask<Boolean>(() -> {
+      FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
+      try {
+        Collection<TextRange> ranges = getRangesToFormat(processChangedTextOnly, file);
 
-          CharSequence before = null;
-          Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
-          if (getInfoCollector() != null) {
-            LOG.assertTrue(document != null);
-            before = document.getImmutableCharSequence();
-          }
-
-          CaretVisualPositionKeeper caretPositionKeeper = new CaretVisualPositionKeeper(document);
-
-          if (processChangedTextOnly) {
-            CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, ranges);
-          }
-          else {
-            CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
-          }
-
-          caretPositionKeeper.restoreOriginalLocation();
-
-          if (before != null) {
-            prepareUserNotificationMessage(document, before);
-          }
-
-          return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
+        CharSequence before = null;
+        Document document = PsiDocumentManager.getInstance(myProject).getDocument(file);
+        if (getInfoCollector() != null) {
+          LOG.assertTrue(document != null);
+          before = document.getImmutableCharSequence();
         }
-        catch (FilesTooBigForDiffException e) {
-          handleFileTooBigException(LOG, e, file);
-          return false;
-        } 
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-          return false;
+
+        CaretVisualPositionKeeper caretPositionKeeper = new CaretVisualPositionKeeper(document);
+
+        if (processChangedTextOnly) {
+          CodeStyleManager.getInstance(myProject).reformatTextWithContext(file, ranges);
         }
-        finally {
-          myRanges.clear();
+        else {
+          CodeStyleManager.getInstance(myProject).reformatText(file, ranges);
         }
+
+        caretPositionKeeper.restoreOriginalLocation();
+
+        if (before != null) {
+          prepareUserNotificationMessage(document, before);
+        }
+
+        return !FormattingProgressTask.FORMATTING_CANCELLED_FLAG.get();
+      }
+      catch (FilesTooBigForDiffException e) {
+        handleFileTooBigException(LOG, e, file);
+        return false;
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return false;
+      }
+      finally {
+        myRanges.clear();
       }
     });
   }

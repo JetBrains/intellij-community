@@ -236,19 +236,6 @@ public class VfsUtil extends VfsUtilCore {
     return virtualFile;
   }
 
-  /**
-   * Converts VsfUrl info java.net.URL.
-   *
-   * @param vfsUrl VFS url (as constructed by VfsFile.getUrl())
-   * @return converted URL or null if error has occured
-   * @deprecated Use {@link VfsUtilCore#convertToURL(String)} instead. To be removed in IDEA 16.
-   */
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @Nullable
-  public static URL convertToURL(@NotNull String vfsUrl) {
-    return VfsUtilCore.convertToURL(vfsUrl);
-  }
-
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
     StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
     VirtualFile curDir = toDir;
@@ -460,6 +447,8 @@ public class VfsUtil extends VfsUtilCore {
       VirtualFile parent = createDirectoryIfMissing(path.substring(0, pos));
       if (parent == null) return null;
       final String dirName = path.substring(pos + 1);
+      VirtualFile child = parent.findChild(dirName);
+      if (child != null && child.isDirectory()) return child;
       return parent.createChildDirectory(LocalFileSystem.getInstance(), dirName);
     }
     return file;
@@ -473,12 +462,9 @@ public class VfsUtil extends VfsUtilCore {
   @NotNull
   public static List<VirtualFile> collectChildrenRecursively(@NotNull final VirtualFile root) {
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
-    processFilesRecursively(root, new Processor<VirtualFile>() {
-      @Override
-      public boolean process(final VirtualFile t) {
-        result.add(t);
-        return true;
-      }
+    processFilesRecursively(root, t -> {
+      result.add(t);
+      return true;
     });
     return result;
   }
@@ -580,7 +566,7 @@ public class VfsUtil extends VfsUtilCore {
 
   @NotNull
   public static List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
-    List<VirtualFile> list = ContainerUtil.filter(Condition.NOT_NULL, files);
+    List<VirtualFile> list = ContainerUtil.filter(files, Condition.NOT_NULL);
     if (list.isEmpty()) {
       return Collections.emptyList();
     }
@@ -602,6 +588,19 @@ public class VfsUtil extends VfsUtilCore {
     return list;
   }
 
+  /**
+   * Refreshes the VFS information of the given files from the local file system.
+   * <p/>
+   * This refresh is performed without help of the FileWatcher,
+   * which means that all given files will be refreshed even if the FileWatcher didn't report any changes in them.
+   * This method is slower, but more reliable, and should be preferred
+   * when it is essential to make sure all the given VirtualFiles are actually refreshed from disk.
+   * <p/>
+   * NB: when invoking synchronous refresh from a thread other than the event dispatch thread, the current thread must
+   * NOT be in a read action.
+   *
+   * @see VirtualFile#refresh(boolean, boolean)
+   */
   public static void markDirtyAndRefresh(boolean async, boolean recursive, boolean reloadChildren, @NotNull VirtualFile... files) {
     List<VirtualFile> list = markDirty(recursive, reloadChildren, files);
     if (list.isEmpty()) return;

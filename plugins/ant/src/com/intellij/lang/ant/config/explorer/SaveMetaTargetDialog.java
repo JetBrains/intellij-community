@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -82,12 +83,12 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     final JPanel panel = new JPanel(new GridBagLayout());
     final JLabel nameLabel = new JLabel(AntBundle.message("save.meta.data.name.label"));
     panel.add(nameLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST,
-                                                GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+                                                GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     myTfName = new JTextField(myInitialEvent.getPresentableName());
     nameLabel.setLabelFor(myTfName);
     myTfName.selectAll();
     panel.add(myTfName, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST,
-                                               GridBagConstraints.HORIZONTAL, new Insets(4, 0, 0, 0), 0, 0));
+                                               GridBagConstraints.HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
     final DefaultListModel dataModel = new DefaultListModel();
     myTargetList = new JBList(dataModel);
@@ -98,17 +99,17 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     panel.add(new JLabel(AntBundle.message("save.meta.data.targets.label")), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1,
                                                                                                     0.0, 0.0, GridBagConstraints.NORTHWEST,
                                                                                                     GridBagConstraints.NONE,
-                                                                                                    new Insets(6, 0, 0, 0), 0, 0));
+                                                                                                    JBUI.insetsTop(6), 0, 0));
     panel.add(ScrollPaneFactory.createScrollPane(myTargetList), new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 2, 1.0, 1.0,
-                                                                    GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
-                                                                    new Insets(4, 0, 0, 0), 0, 0));
+                                                                                       GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                                                       JBUI.insetsTop(4), 0, 0));
 
     final JButton upButton = new JButton(AntBundle.message("button.move.up"));
     panel.add(upButton, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                                               new Insets(6, 6, 0, 0), 0, 0));
+                                               JBUI.insets(6, 6, 0, 0), 0, 0));
     final JButton downButton = new JButton(AntBundle.message("button.move.down"));
     panel.add(downButton, new GridBagConstraints(1, 4, 1, GridBagConstraints.REMAINDER, 0.0, 1.0, GridBagConstraints.NORTHWEST,
-                                                 GridBagConstraints.HORIZONTAL, new Insets(0, 6, 0, 0), 0, 0));
+                                                 GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(6), 0, 0));
 
     class UpdateAction implements ActionListener {
       public void actionPerformed(ActionEvent e) {

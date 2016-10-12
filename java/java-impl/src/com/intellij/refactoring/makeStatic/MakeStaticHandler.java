@@ -101,18 +101,11 @@ public class MakeStaticHandler implements RefactoringActionHandler {
 
       final boolean[] hasMethodReferenceOnInstance = new boolean[] {false};
       if (member instanceof PsiMethod) {
-        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-          @Override
-          public void run() {
-            hasMethodReferenceOnInstance[0] = !MethodReferencesSearch.search((PsiMethod)member).forEach(new Processor<PsiReference>() {
-              @Override
-              public boolean process(PsiReference reference) {
-                final PsiElement element = reference.getElement();
-                return !(element instanceof PsiMethodReferenceExpression);
-              }
-            });
-          }
-        }, "Search for method references", true, project)) return;
+        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+          (Runnable)() -> hasMethodReferenceOnInstance[0] = !MethodReferencesSearch.search((PsiMethod)member).forEach(reference -> {
+            final PsiElement element = reference.getElement();
+            return !(element instanceof PsiMethodReferenceExpression);
+          }), "Search for method references", true, project)) return;
       }
 
       if (classRefsInMember.length > 0 || hasMethodReferenceOnInstance[0]) {

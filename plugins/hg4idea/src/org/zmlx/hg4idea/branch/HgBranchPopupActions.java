@@ -25,6 +25,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -47,7 +49,6 @@ import org.zmlx.hg4idea.command.HgBookmarkCommand;
 import org.zmlx.hg4idea.command.HgBranchCreateCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
-import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.provider.commit.HgCloseBranchExecutor;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
@@ -116,22 +117,23 @@ public class HgBranchPopupActions {
       if (name == null) {
         return;
       }
-      createNewBranch(name);
+      new Task.Backgroundable(myProject, "Creating " + StringUtil.pluralize("Branch", myRepositories.size()) + "...") {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          createNewBranchInCurrentThread(name);
+        }
+      }.queue();
     }
 
-    public void createNewBranch(@NotNull final String name) {
+    public void createNewBranchInCurrentThread(@NotNull final String name) {
       for (final HgRepository repository : myRepositories) {
         try {
-          new HgBranchCreateCommand(myProject, repository.getRoot(), name).execute(new HgCommandResultHandler() {
-            @Override
-            public void process(@Nullable HgCommandResult result) {
-              repository.update();
-              if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
-                new HgCommandResultNotifier(myProject)
-                  .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
-              }
-            }
-          });
+          HgCommandResult result = new HgBranchCreateCommand(myProject, repository.getRoot(), name).executeInCurrentThread();
+          repository.update();
+          if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
+            new HgCommandResultNotifier(myProject)
+              .notifyError(result, "Creation failed", "Branch creation [" + name + "] failed");
+          }
         }
         catch (HgCommandException exception) {
           HgErrorUtil.handleException(myProject, "Can't create new branch: ", exception);
@@ -219,7 +221,7 @@ public class HgBranchPopupActions {
       if (bookmarkDialog.showAndGet()) {
         final String name = bookmarkDialog.getName();
         if (!StringUtil.isEmptyOrSpaces(name)) {
-          HgBookmarkCommand.createBookmark(myRepositories, name, bookmarkDialog.isActive());
+          HgBookmarkCommand.createBookmarkAsynchronously(myRepositories, name, bookmarkDialog.isActive());
         }
       }
     }
@@ -304,14 +306,11 @@ public class HgBranchPopupActions {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
-        for (HgRepository repository : myRepositories) {
-          try {
-            new HgBookmarkCommand(myProject, repository.getRoot(), myBranchName).deleteBookmark();
+        HgUtil.executeOnPooledThread(() -> {
+          for (HgRepository repository : myRepositories) {
+            HgBookmarkCommand.deleteBookmarkSynchronously(myProject, repository.getRoot(), myBranchName);
           }
-          catch (HgCommandException exception) {
-            HgErrorUtil.handleException(myProject, exception);
-          }
-        }
+        }, myProject);
       }
     }
   }

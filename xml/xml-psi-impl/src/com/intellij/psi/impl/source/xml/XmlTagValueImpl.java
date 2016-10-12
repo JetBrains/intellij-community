@@ -36,9 +36,9 @@ public class XmlTagValueImpl implements XmlTagValue{
 
   private final XmlTag myTag;
   private final XmlTagChild[] myElements;
-  private volatile XmlText[] myTextElements = null;
-  private volatile String myText = null;
-  private volatile String myTrimmedText = null;
+  private volatile XmlText[] myTextElements;
+  private volatile String myText;
+  private volatile String myTrimmedText;
 
   public XmlTagValueImpl(@NotNull XmlTagChild[] bodyElements, @NotNull XmlTag tag) {
     myTag = tag;
@@ -163,7 +163,7 @@ public class XmlTagValueImpl implements XmlTagValue{
     final List<XmlTagChild> bodyElements = new ArrayList<XmlTagChild>();
 
     tag.processElements(new PsiElementProcessor() {
-      boolean insideBody = false;
+      boolean insideBody;
       @Override
       public boolean execute(@NotNull PsiElement element) {
         final ASTNode treeElement = element.getNode();

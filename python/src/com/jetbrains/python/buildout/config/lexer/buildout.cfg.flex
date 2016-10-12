@@ -15,15 +15,8 @@ import com.jetbrains.python.buildout.config.BuildoutCfgTokenTypes;
 %function advance
 %type IElementType
 
-%eof{ return;
-%eof}
-
-
-
-CRLF= \n|\r|\r\n
+CRLF=\R
 SPACE=[\ \t]
-NOTSPACE=[^\ \t]
-WHITESPACE_CHAR=[\ \n\r\t\f]
 VALUE_CHARACTER=[^\n\r\f]
 LBRACKET="["
 RBRACKET="]"

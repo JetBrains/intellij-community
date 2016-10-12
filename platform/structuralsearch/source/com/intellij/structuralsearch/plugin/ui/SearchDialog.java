@@ -169,36 +169,26 @@ public class SearchDialog extends DialogWrapper {
 
   private void initiateValidation() {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-
-      @Override
-      public void run() {
-        try {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            @Override
-            public void run() {
-              final boolean valid = isValid();
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  if (!valid) {
-                    getOKAction().setEnabled(false);
-                  }
-                  else {
-                    getOKAction().setEnabled(true);
-                    reportMessage(null, null);
-                  }
-                }
-              });
+    myAlarm.addRequest(() -> {
+      try {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          final boolean valid = isValid();
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!valid) {
+              getOKAction().setEnabled(false);
+            }
+            else {
+              getOKAction().setEnabled(true);
+              reportMessage(null, null);
             }
           });
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (RuntimeException e) {
-          Logger.getInstance(SearchDialog.class).error(e);
-        }
+        });
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (RuntimeException e) {
+        Logger.getInstance(SearchDialog.class).error(e);
       }
     }, 500);
   }
@@ -219,12 +209,7 @@ public class SearchDialog extends DialogWrapper {
         types.add(fileType);
       }
     }
-    Collections.sort(types, new Comparator<FileType>() {
-      @Override
-      public int compare(FileType o1, FileType o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
+    Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
     final DefaultComboBoxModel comboBoxModel = new DefaultComboBoxModel(types.toArray(new FileType[types.size()]));
     comboBoxModel.setSelectedItem(ourFtSearchVariant);
@@ -323,12 +308,7 @@ public class SearchDialog extends DialogWrapper {
     if (fileType instanceof LanguageFileType) {
       Language language = ((LanguageFileType)fileType).getLanguage();
       Language[] languageDialects = LanguageUtil.getLanguageDialects(language);
-      Arrays.sort(languageDialects, new Comparator<Language>() {
-        @Override
-        public int compare(Language o1, Language o2) {
-          return o1.getDisplayName().compareTo(o2.getDisplayName());
-        }
-      });
+      Arrays.sort(languageDialects, (o1, o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
       Language[] variants = new Language[languageDialects.length + 1];
       variants[0] = null;
       System.arraycopy(languageDialects, 0, variants, 1, languageDialects.length);
@@ -505,13 +485,7 @@ public class SearchDialog extends DialogWrapper {
     final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
     labelPanel.add(new JLabel(SSRBundle.message("search.template")));
 
-    labelPanel.add(UIUtil.createCompleteMatchInfo(new Producer<Configuration>() {
-      @Nullable
-      @Override
-      public Configuration produce() {
-        return model.getConfig();
-      }
-    }));
+    labelPanel.add(UIUtil.createCompleteMatchInfo(() -> model.getConfig()));
     result.add(BorderLayout.NORTH, labelPanel);
 
     return result;
@@ -870,15 +844,12 @@ public class SearchDialog extends DialogWrapper {
   }
 
   protected void reportMessage(@NonNls final String messageId, final Editor editor, final Object... params) {
-    com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        final String message = messageId != null ? SSRBundle.message(messageId, params) : "";
-        status.setText(message);
-        status.setToolTipText(message);
-        status.revalidate();
-        statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
-      }
+    com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
+      final String message = messageId != null ? SSRBundle.message(messageId, params) : "";
+      status.setText(message);
+      status.setToolTipText(message);
+      status.revalidate();
+      statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
     });
   }
 

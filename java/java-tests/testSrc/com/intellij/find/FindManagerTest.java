@@ -273,12 +273,18 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setGlobal(true);
     findModel.setMultipleFiles(true);
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiClass baseClass = facade.findClass("A", GlobalSearchScope.allScope(getProject()));
-    final PsiClass implClass = facade.findClass("AImpl", GlobalSearchScope.allScope(getProject()));
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
+    final PsiClass baseClass = facade.findClass("A", scope);
+    final PsiClass implClass = facade.findClass("AImpl", scope);
     findModel.setCustomScope(new LocalSearchScope(new PsiElement[]{baseClass, implClass}));
 
     List<UsageInfo> usages = findUsages(findModel);
     assertEquals(2, usages.size());
+
+    final PsiClass aClass = facade.findClass("B", scope);
+    findModel.setCustomScope(new LocalSearchScope(aClass));
+
+    assertSize(1, findUsages(findModel));
   }
 
   public void testDollars() throws Exception {
@@ -904,17 +910,15 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     final Ref<FindResult> result = new Ref<>();
     final CountDownLatch progressStarted = new CountDownLatch(1);
     final ProgressIndicatorBase progressIndicatorBase = new ProgressIndicatorBase();
-    final Thread thread = new Thread(() -> {
-      ProgressManager.getInstance().runProcess(() -> {
-        try {
-          progressStarted.countDown();
-          result.set(myFindManager.findString(text, 0, findModel, new LightVirtualFile("foo.java")));
-        }
-        catch (ProcessCanceledException ex) {
-          result.set(new FindResultImpl());
-        }
-      }, progressIndicatorBase);
-    }, "runAsyncTest");
+    final Thread thread = new Thread(() -> ProgressManager.getInstance().runProcess(() -> {
+      try {
+        progressStarted.countDown();
+        result.set(myFindManager.findString(text, 0, findModel, new LightVirtualFile("foo.java")));
+      }
+      catch (ProcessCanceledException ex) {
+        result.set(new FindResultImpl());
+      }
+    }, progressIndicatorBase), "runAsyncTest");
     thread.start();
 
     progressStarted.await();

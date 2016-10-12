@@ -18,6 +18,9 @@ package com.intellij.openapi.editor.colors.ex;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
+import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.openapi.editor.colors.impl.AbstractColorsScheme.NAME_ATTR;
 
 @State(
   name = "DefaultColorSchemesManager",
@@ -51,25 +56,24 @@ public class DefaultColorSchemesManager implements PersistentStateComponent<Elem
 
   @Override
   public void loadState(Element state) {
-    int index = 0;
-    int count = mySchemes.size();
     for (Element schemeElement : state.getChildren(SCHEME_ELEMENT)) {
-      if (index < count) {
-        // update a scheme that is already loaded
-        DefaultColorsScheme oldScheme = mySchemes.get(index++);
-        oldScheme.readExternal(schemeElement);
+      boolean isUpdated = false;
+      Attribute nameAttr = schemeElement.getAttribute(NAME_ATTR);
+      if (nameAttr != null) {
+        for (DefaultColorsScheme oldScheme : mySchemes) {
+          if (StringUtil.equals(nameAttr.getValue(), oldScheme.getName())) {
+            oldScheme.readExternal(schemeElement);
+            isUpdated = true;
+          }
+        }
       }
-      else {
-        assert index == 0 : "config file modified: scheme added";
+      if (!isUpdated) {
         DefaultColorsScheme newScheme = new DefaultColorsScheme();
         newScheme.readExternal(schemeElement);
         mySchemes.add(newScheme);
       }
     }
-    assert index == count : "config file modified: scheme removed";
-    while (index < count--) {
-      mySchemes.remove(index);
-    }
+    mySchemes.add(EmptyColorScheme.INSTANCE);
   }
 
   @NotNull

@@ -57,7 +57,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.DisposeAwareRunnable;
-import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -104,6 +103,8 @@ public class MavenUtil {
   public static final String M2_CONF_FILE = "m2.conf";
   public static final String REPOSITORY_DIR = "repository";
   public static final String LIB_DIR = "lib";
+  public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
+  public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
 
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
@@ -166,15 +167,12 @@ public class MavenUtil {
     else {
       final Semaphore semaphore = new Semaphore();
       semaphore.down();
-      DumbService.getInstance(p).smartInvokeLater(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            r.run();
-          }
-          finally {
-            semaphore.up();
-          }
+      DumbService.getInstance(p).smartInvokeLater(() -> {
+        try {
+          r.run();
+        }
+        finally {
+          semaphore.up();
         }
       }, state);
       semaphore.waitFor();
@@ -182,11 +180,7 @@ public class MavenUtil {
   }
 
   public static void invokeAndWaitWriteAction(Project p, final Runnable r) {
-    invokeAndWait(p, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(r);
-      }
-    });
+    invokeAndWait(p, () -> ApplicationManager.getApplication().runWriteAction(r));
   }
 
   public static void runDumbAware(final Project project, final Runnable r) {
@@ -259,19 +253,11 @@ public class MavenUtil {
   }
 
   public static List<String> collectPaths(List<VirtualFile> files) {
-    return ContainerUtil.map(files, new Function<VirtualFile, String>() {
-      public String fun(VirtualFile file) {
-        return file.getPath();
-      }
-    });
+    return ContainerUtil.map(files, file -> file.getPath());
   }
 
   public static List<VirtualFile> collectFiles(Collection<MavenProject> projects) {
-    return ContainerUtil.map(projects, new Function<MavenProject, VirtualFile>() {
-      public VirtualFile fun(MavenProject project) {
-        return project.getFile();
-      }
-    });
+    return ContainerUtil.map(projects, project -> project.getFile());
   }
 
   public static <T> boolean equalAsSets(final Collection<T> collection1, final Collection<T> collection2) {
@@ -283,11 +269,7 @@ public class MavenUtil {
   }
 
   public static <T, U> List<Pair<T, U>> mapToList(Map<T, U> map) {
-    return ContainerUtil.map2List(map.entrySet(), new Function<Map.Entry<T, U>, Pair<T, U>>() {
-      public Pair<T, U> fun(Map.Entry<T, U> tuEntry) {
-        return Pair.create(tuEntry.getKey(), tuEntry.getValue());
-      }
-    });
+    return ContainerUtil.map2List(map.entrySet(), tuEntry -> Pair.create(tuEntry.getKey(), tuEntry.getValue()));
   }
 
   public static String formatHtmlImage(URL url) {
@@ -451,19 +433,17 @@ public class MavenUtil {
                                                  final MavenTask task) {
     final MavenProgressIndicator indicator = new MavenProgressIndicator();
 
-    Runnable runnable = new Runnable() {
-      public void run() {
-        if (project.isDisposed()) return;
+    Runnable runnable = () -> {
+      if (project.isDisposed()) return;
 
-        try {
-          task.run(indicator);
-        }
-        catch (MavenProcessCanceledException ignore) {
-          indicator.cancel();
-        }
-        catch (ProcessCanceledException ignore) {
-          indicator.cancel();
-        }
+      try {
+        task.run(indicator);
+      }
+      catch (MavenProcessCanceledException ignore) {
+        indicator.cancel();
+      }
+      catch (ProcessCanceledException ignore) {
+        indicator.cancel();
       }
     };
 
@@ -489,16 +469,14 @@ public class MavenUtil {
           }
         }
       };
-      invokeLater(project, new Runnable() {
-        public void run() {
-          if (future.isDone()) return;
-          new Task.Backgroundable(project, title, cancellable) {
-            public void run(@NotNull ProgressIndicator i) {
-              indicator.setIndicator(i);
-              handler.waitFor();
-            }
-          }.queue();
-        }
+      invokeLater(project, () -> {
+        if (future.isDone()) return;
+        new Task.Backgroundable(project, title, cancellable) {
+          public void run(@NotNull ProgressIndicator i) {
+            indicator.setIndicator(i);
+            handler.waitFor();
+          }
+        }.queue();
       });
       return handler;
     }
@@ -602,12 +580,7 @@ public class MavenUtil {
     }
 
     if (list.length > 1) {
-      Arrays.sort(list, new Comparator<String>() {
-        @Override
-        public int compare(String o1, String o2) {
-          return StringUtil.compareVersionNumbers(o2, o1);
-        }
-      });
+      Arrays.sort(list, (o1, o2) -> StringUtil.compareVersionNumbers(o2, o1));
     }
 
     final File file = new File(brewDir, list[0] + "/libexec");
@@ -961,8 +934,8 @@ public class MavenUtil {
     return module.getName() + ":" + packaging + (exploded ? " exploded" : "");
   }
 
-  public static String getEjbClientArtifactName(Module module) {
-    return module.getName() + ":ejb-client";
+  public static String getEjbClientArtifactName(Module module, boolean exploded) {
+    return module.getName() + ":ejb" + (exploded ? CLIENT_EXPLODED_ARTIFACT_SUFFIX : CLIENT_ARTIFACT_SUFFIX);
   }
 
   public static String getIdeaVersionToPassToMavenProcess() {

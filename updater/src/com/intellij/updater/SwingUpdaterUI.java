@@ -6,13 +6,12 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@SuppressWarnings({"UndesirableClassUsage","UseJBColor"}) // Plain Swing
 public abstract class SwingUpdaterUI implements UpdaterUI {
 
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
@@ -46,97 +45,83 @@ public abstract class SwingUpdaterUI implements UpdaterUI {
 
     final Map<String, ValidationResult.Option> result = new HashMap<String, ValidationResult.Option>();
     try {
-      SwingUtilities.invokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          boolean proceed = true;
-          for (ValidationResult result : validationResults) {
-            if (result.options.contains(ValidationResult.Option.NONE)) {
-              proceed = false;
-              break;
-            }
+      SwingUtilities.invokeAndWait(() -> {
+        boolean proceed = true;
+        for (ValidationResult result1 : validationResults) {
+          if (result1.options.contains(ValidationResult.Option.NONE)) {
+            proceed = false;
+            break;
           }
-
-          Component parent = getParentComponent();
-          final JDialog dialog = parent instanceof Frame ? new JDialog((Frame)parent, TITLE, true)
-                                 : new JDialog((Dialog)parent, TITLE, true);
-          dialog.setLayout(new BorderLayout());
-          dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-
-          JPanel buttonsPanel = new JPanel();
-          buttonsPanel.setBorder(BUTTONS_BORDER);
-          buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
-          buttonsPanel.add(Box.createHorizontalGlue());
-
-          JButton cancelButton = new JButton(CANCEL_BUTTON_TITLE);
-          cancelButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-              isCancelled.set(true);
-              notifyCancelled();
-              dialog.setVisible(false);
-            }
-          });
-          buttonsPanel.add(cancelButton);
-
-          if (proceed) {
-            JButton proceedButton = new JButton(PROCEED_BUTTON_TITLE);
-            proceedButton.addActionListener(new ActionListener() {
-              @Override
-              public void actionPerformed(ActionEvent e) {
-                dialog.setVisible(false);
-              }
-            });
-            buttonsPanel.add(proceedButton);
-            dialog.getRootPane().setDefaultButton(proceedButton);
-          } else {
-            dialog.getRootPane().setDefaultButton(cancelButton);
-          }
-
-          JTable table = new JTable();
-
-          table.setCellSelectionEnabled(true);
-          table.setDefaultEditor(ValidationResult.Option.class, new MyCellEditor());
-          table.setDefaultRenderer(Object.class, new MyCellRenderer());
-          MyTableModel model = new MyTableModel(validationResults);
-          table.setModel(model);
-
-          for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
-            TableColumn each = table.getColumnModel().getColumn(i);
-            each.setPreferredWidth(MyTableModel.getColumnWidth(i, new Dimension(600, 400).width));
-          }
-
-          String message = "<html>Some conflicts were found in the installation area.<br><br>";
-
-          if (proceed) {
-            message += "Please select desired solutions from the " + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] +
-                       " column and press " + PROCEED_BUTTON_TITLE + ".<br>" +
-                       "If you do not want to proceed with the update, please press " + CANCEL_BUTTON_TITLE + ".</html>";
-          } else {
-            message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
-                       "Press " + CANCEL_BUTTON_TITLE + " to exit.</html>";
-          }
-
-          JLabel label = new JLabel(message);
-          label.setBorder(LABEL_BORDER);
-          dialog.add(label, BorderLayout.NORTH);
-          dialog.add(new JScrollPane(table), BorderLayout.CENTER);
-          dialog.add(buttonsPanel, BorderLayout.SOUTH);
-
-          dialog.getRootPane().setBorder(FRAME_BORDER);
-
-          dialog.setSize(new Dimension(600, 400));
-          dialog.setLocationRelativeTo(null);
-          dialog.setVisible(true);
-
-          result.putAll(model.getResult());
         }
+
+        Component parent = getParentComponent();
+        final JDialog dialog = parent instanceof Frame ? new JDialog((Frame)parent, TITLE, true)
+                               : new JDialog((Dialog)parent, TITLE, true);
+        dialog.setLayout(new BorderLayout());
+        dialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setBorder(BUTTONS_BORDER);
+        buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+        buttonsPanel.add(Box.createHorizontalGlue());
+
+        JButton cancelButton = new JButton(CANCEL_BUTTON_TITLE);
+        cancelButton.addActionListener(e -> {
+          isCancelled.set(true);
+          notifyCancelled();
+          dialog.setVisible(false);
+        });
+        buttonsPanel.add(cancelButton);
+
+        if (proceed) {
+          JButton proceedButton = new JButton(PROCEED_BUTTON_TITLE);
+          proceedButton.addActionListener(e -> dialog.setVisible(false));
+          buttonsPanel.add(proceedButton);
+          dialog.getRootPane().setDefaultButton(proceedButton);
+        } else {
+          dialog.getRootPane().setDefaultButton(cancelButton);
+        }
+
+        JTable table = new JTable();
+
+        table.setCellSelectionEnabled(true);
+        table.setDefaultEditor(ValidationResult.Option.class, new MyCellEditor());
+        table.setDefaultRenderer(Object.class, new MyCellRenderer());
+        MyTableModel model = new MyTableModel(validationResults);
+        table.setModel(model);
+
+        for (int i = 0; i < table.getColumnModel().getColumnCount(); i++) {
+          TableColumn each = table.getColumnModel().getColumn(i);
+          each.setPreferredWidth(MyTableModel.getColumnWidth(i, new Dimension(600, 400).width));
+        }
+
+        String message = "<html>Some conflicts were found in the installation area.<br><br>";
+
+        if (proceed) {
+          message += "Please select desired solutions from the " + MyTableModel.COLUMNS[MyTableModel.OPTIONS_COLUMN_INDEX] +
+                     " column and press " + PROCEED_BUTTON_TITLE + ".<br>" +
+                     "If you do not want to proceed with the update, please press " + CANCEL_BUTTON_TITLE + ".</html>";
+        } else {
+          message += "Some of the conflicts below do not have a solution, so the patch cannot be applied.<br>" +
+                     "Press " + CANCEL_BUTTON_TITLE + " to exit.</html>";
+        }
+
+        JLabel label = new JLabel(message);
+        label.setBorder(LABEL_BORDER);
+        dialog.add(label, BorderLayout.NORTH);
+        dialog.add(new JScrollPane(table), BorderLayout.CENTER);
+        dialog.add(buttonsPanel, BorderLayout.SOUTH);
+
+        dialog.getRootPane().setBorder(FRAME_BORDER);
+
+        dialog.setSize(new Dimension(600, 400));
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+
+        result.putAll(model.getResult());
       });
     }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
+    catch (InterruptedException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
     checkCancelled();

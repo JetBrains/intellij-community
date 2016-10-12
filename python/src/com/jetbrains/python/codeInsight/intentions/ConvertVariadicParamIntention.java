@@ -83,7 +83,7 @@ public class ConvertVariadicParamIntention extends BaseIntentionAction {
               }
               for (PySubscriptionExpression subscription : subscriptions) {
                 final PyExpression expression = subscription.getIndexExpression();
-                if (!PyNames.isIdentifierString(PythonStringUtil.getStringValue(expression)))
+                if (expression == null || !PyNames.isIdentifierString(PythonStringUtil.getStringValue(expression)))
                   return false;
               }
             }

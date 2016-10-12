@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 package com.intellij.ide.highlighter;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.XmlCharsetDetector;
@@ -32,7 +34,11 @@ public abstract class XmlLikeFileType extends LanguageFileType {
   }
   @Override
   public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {
-    String charset = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
+    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessed = LoadTextUtil.guessFromContent(file, content, content.length);
+    String charset =
+      guessed != null && guessed.first != null
+      ? guessed.first.name()
+      : XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     return charset == null ? CharsetToolkit.UTF8 : charset;
   }
 

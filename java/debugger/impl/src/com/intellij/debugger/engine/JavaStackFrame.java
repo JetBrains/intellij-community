@@ -242,7 +242,7 @@ public class JavaStackFrame extends XStackFrame {
   }
 
   private static final Pair<Set<String>, Set<TextWithImports>> EMPTY_USED_VARS =
-    Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+    Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
 
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext,
@@ -282,12 +282,7 @@ public class JavaStackFrame extends XStackFrame {
         final SourcePosition sourcePosition = debuggerContext.getSourcePosition();
         final Map<String, LocalVariableProxyImpl> visibleVariables =
           ContainerUtil.map2Map(getVisibleVariables(),
-                                new Function<LocalVariableProxyImpl, Pair<String, LocalVariableProxyImpl>>() {
-                                  @Override
-                                  public Pair<String, LocalVariableProxyImpl> fun(LocalVariableProxyImpl var) {
-                                    return Pair.create(var.name(), var);
-                                  }
-                                });
+                                var -> Pair.create(var.name(), var));
 
         Pair<Set<String>, Set<TextWithImports>> usedVars = EMPTY_USED_VARS;
         if (sourcePosition != null) {
@@ -579,17 +574,17 @@ public class JavaStackFrame extends XStackFrame {
   private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(Set<String> visibleVars, @NotNull SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
-      return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+      return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
     }
     final PsiFile positionFile = position.getFile();
     if (!positionFile.isValid() || !positionFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
-      return Pair.create(visibleVars, Collections.<TextWithImports>emptySet());
+      return Pair.create(visibleVars, Collections.emptySet());
     }
 
     final VirtualFile vFile = positionFile.getVirtualFile();
     final Document doc = vFile != null ? FileDocumentManager.getInstance().getDocument(vFile) : null;
     if (doc == null || doc.getLineCount() == 0 || line > (doc.getLineCount() - 1)) {
-      return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+      return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
     }
 
     final TextRange limit = calculateLimitRange(positionFile, doc, line);
@@ -631,7 +626,7 @@ public class JavaStackFrame extends XStackFrame {
 
         //noinspection unchecked
         if (element instanceof PsiCompiledElement) {
-          return Pair.create(visibleVars, Collections.<TextWithImports>emptySet());
+          return Pair.create(visibleVars, Collections.emptySet());
         }
         else {
           VariablesCollector collector = new VariablesCollector(visibleVars, adjustRange(element, lineRange));
@@ -640,7 +635,7 @@ public class JavaStackFrame extends XStackFrame {
         }
       }
     }
-    return Pair.create(Collections.<String>emptySet(), Collections.<TextWithImports>emptySet());
+    return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
   }
 
   private static TextRange calculateLimitRange(final PsiFile file, final Document doc, final int line) {

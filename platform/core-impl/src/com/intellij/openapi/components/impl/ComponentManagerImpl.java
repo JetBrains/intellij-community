@@ -37,7 +37,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   private MessageBus myMessageBus;
 
-  private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>();
+  private final Map<String, BaseComponent> myNameToComponent = new THashMap<String, BaseComponent>(); // contents guarded by this
 
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private int myComponentConfigCount;
@@ -100,10 +100,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     if (componentsRegistered != null) {
       componentsRegistered.run();
     }
-
-    if (indicator != null) {
-      indicator.setIndeterminate(false);
-    }
     createComponents(indicator);
     myComponentsCreated = true;
   }
@@ -113,7 +109,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected final double getPercentageOfComponentsLoaded() {
-    return ((double)myInstantiatedComponentCount) / myComponentConfigCount;
+    return (double)myInstantiatedComponentCount / myComponentConfigCount;
   }
 
   protected void createComponents(@Nullable ProgressIndicator indicator) {
@@ -143,7 +139,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myComponentsCreated;
   }
 
-  protected synchronized final void disposeComponents() {
+  protected final synchronized void disposeComponents() {
     assert !myDisposeCompleted : "Already disposed!";
     myDisposed = true;
 
@@ -180,9 +176,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
       return (T)((ComponentConfigComponentAdapter)adapter).myInitializedComponentInstance;
     }
-    else {
-      return (T)adapter.getComponentInstance(getPicoContainer());
-    }
+    return (T)adapter.getComponentInstance(getPicoContainer());
   }
 
   @Override
@@ -273,10 +267,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   }
 
   protected boolean isComponentSuitable(@Nullable Map<String, String> options) {
-    return options == null || (isComponentSuitableForOs(options.get("os")) && (!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal()));
+    return options == null ||
+           isComponentSuitableForOs(options.get("os")) &&
+           (!Boolean.parseBoolean(options.get("internal")) || ApplicationManager.getApplication().isInternal());
   }
 
-  public static boolean isComponentSuitableForOs(@Nullable String os) {
+  static boolean isComponentSuitableForOs(@Nullable String os) {
     if (StringUtil.isEmpty(os)) {
       return true;
     }
@@ -382,7 +378,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private ComponentConfigComponentAdapter getComponentAdapter(@NotNull Class<?> componentImplementation) {
     for (ComponentAdapter componentAdapter : ((DefaultPicoContainer)getPicoContainer()).getComponentAdapters()) {
       if (componentAdapter instanceof ComponentConfigComponentAdapter && componentAdapter.getComponentImplementation() == componentImplementation) {
-        return ((ComponentConfigComponentAdapter)componentAdapter);
+        return (ComponentConfigComponentAdapter)componentAdapter;
       }
     }
     return null;
@@ -465,7 +461,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myNameToComponent.get(name);
   }
 
-  private final class ComponentConfigComponentAdapter extends ConstructorInjectionComponentAdapter {
+  private final class ComponentConfigComponentAdapter extends CachingConstructorInjectionComponentAdapter {
     private final PluginId myPluginId;
     private volatile Object myInitializedComponentInstance;
     private boolean myInitializing;

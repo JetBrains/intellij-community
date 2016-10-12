@@ -54,36 +54,29 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
     final Project project = targetClass.getProject();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (project.isDisposed()) {
-          return;
-        }
-        
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
-        
-        final PsiNewExpression newExpression = getNewExpression();
-        if (newExpression == null) {
-          return;
-        }
-
-        final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
-        final PsiClass[] psiClass = new PsiClass[1];
-        CommandProcessor.getInstance().executeCommand(newExpression.getProject(), new Runnable() {
-          @Override
-          public void run() {
-            psiClass[0] = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null);
-          }
-        }, getText(), getText());
-
-        new WriteCommandAction(project, getText(), getText()) {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            setupClassFromNewExpression(psiClass[0], newExpression);
-          }
-        }.execute();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (project.isDisposed()) {
+        return;
       }
+
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+      final PsiNewExpression newExpression = getNewExpression();
+      if (newExpression == null) {
+        return;
+      }
+
+      final PsiJavaCodeReferenceElement referenceElement = getReferenceElement(newExpression);
+      final PsiClass[] psiClass = new PsiClass[1];
+      CommandProcessor.getInstance().executeCommand(newExpression.getProject(), () ->
+        psiClass[0] = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null), getText(), getText());
+
+      new WriteCommandAction(project, getText(), getText()) {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          setupClassFromNewExpression(psiClass[0], newExpression);
+        }
+      }.execute();
     });
   }
 
@@ -119,22 +112,19 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       final Editor editor = positionCursor(project, aClass.getContainingFile(), aClass);
       if (editor == null) return;
       final RangeMarker textRange = editor.getDocument().createRangeMarker(aClass.getTextRange());
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          new WriteCommandAction(project, getText(), getText()) {
-            @Override
-            protected void run(@NotNull Result result) throws Throwable {
-              try {
-                editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-              }
-              finally {
-                textRange.dispose();
-              }
+      final Runnable runnable = () -> {
+        new WriteCommandAction(project, getText(), getText()) {
+          @Override
+          protected void run(@NotNull Result result) throws Throwable {
+            try {
+              editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
             }
-          }.execute();
-          startTemplate(editor, template, project, null, getText());
-        }
+            finally {
+              textRange.dispose();
+            }
+          }
+        }.execute();
+        startTemplate(editor, template, project, null, getText());
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         runnable.run();

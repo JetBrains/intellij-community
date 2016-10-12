@@ -57,29 +57,23 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
     }
 
     if (c == '@' && file instanceof GroovyFile) {
-      autoPopupMemberLookup(project, editor, new Condition<PsiFile>() {
-        @Override
-        public boolean value(final PsiFile file) {
-          int offset = editor.getCaretModel().getOffset();
+      autoPopupMemberLookup(project, editor, file12 -> {
+        int offset = editor.getCaretModel().getOffset();
 
-          PsiElement lastElement = file.findElementAt(offset - 1);
-          if (lastElement == null) return false;
+        PsiElement lastElement = file12.findElementAt(offset - 1);
+        if (lastElement == null) return false;
 
-          final PsiElement prevSibling = PsiTreeUtil.prevVisibleLeaf(lastElement);
-          return prevSibling != null && ".".equals(prevSibling.getText());
-        }
+        final PsiElement prevSibling = PsiTreeUtil.prevVisibleLeaf(lastElement);
+        return prevSibling != null && ".".equals(prevSibling.getText());
       });
     }
 
     if (c == '&' && file instanceof GroovyFile) {
-      autoPopupMemberLookup(project, editor, new Condition<PsiFile>() {
-        @Override
-        public boolean value(final PsiFile file) {
-          int offset = editor.getCaretModel().getOffset();
+      autoPopupMemberLookup(project, editor, file1 -> {
+        int offset = editor.getCaretModel().getOffset();
 
-          PsiElement lastElement = file.findElementAt(offset - 1);
-          return lastElement != null && ".&".equals(lastElement.getText());
-        }
+        PsiElement lastElement = file1.findElementAt(offset - 1);
+        return lastElement != null && ".&".equals(lastElement.getText());
       });
     }
 

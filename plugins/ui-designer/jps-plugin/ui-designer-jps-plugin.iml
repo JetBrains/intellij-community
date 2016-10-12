@@ -6,7 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
-    <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="jps-model-api" />
@@ -19,4 +19,3 @@
     <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
   </component>
 </module>
-

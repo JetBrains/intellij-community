@@ -119,15 +119,15 @@ public class MessageBusImpl implements MessageBus {
   /**
    * Notifies current bus that a child bus is created. Has two responsibilities:
    * <ul>
-   *   <li>stores given child bus in {@link #myChildBuses} collection</li>
-   *   <li>
-   *     calculates {@link #myOrderRef} for the given child bus
-   *   </li>
+   * <li>stores given child bus in {@link #myChildBuses} collection</li>
+   * <li>
+   * calculates {@link #myOrderRef} for the given child bus
+   * </li>
    * </ul>
    * <p/>
    * Thread-safe.
    *
-   * @param childBus            newly created child bus
+   * @param childBus newly created child bus
    */
   private void onChildBusCreated(final MessageBusImpl childBus) {
     LOG.assertTrue(childBus.myParentBus == this);
@@ -266,14 +266,17 @@ public class MessageBusImpl implements MessageBus {
     if (myParentBus != null) {
       myParentBus.onChildBusDisposed(this);
       myParentBus = null;
-    } else {
+    }
+    else {
       asRoot().myWaitingBuses.remove();
     }
     myDisposed = true;
   }
 
   private void checkNotDisposed() {
-    if (myDisposed) LOG.error("Already disposed: " + this);
+    if (myDisposed) {
+      LOG.error("Already disposed: " + this);
+    }
   }
 
   private void calcSubscribers(Topic topic, List<MessageBusConnectionImpl> result) {
@@ -325,9 +328,11 @@ public class MessageBusImpl implements MessageBus {
     if (newCount > 0) {
       checkNotDisposed();
       map.put(this, newCount);
-    } else if (newCount == 0) {
+    }
+    else if (newCount == 0) {
       map.remove(this);
-    } else {
+    }
+    else {
       LOG.error("Negative job count: " + this);
     }
   }
@@ -433,7 +438,7 @@ public class MessageBusImpl implements MessageBus {
      * Holds the counts of pending messages for all message buses in the hierarchy
      * This field is null for non-root buses
      * The map's keys are sorted by {@link #myOrderRef}
-     *
+     * <p>
      * Used to avoid traversing the whole hierarchy when there are no messages to be sent in most of it
      */
     private final ThreadLocal<SortedMap<MessageBusImpl, Integer>> myWaitingBuses = new ThreadLocal<SortedMap<MessageBusImpl, Integer>>();

@@ -128,7 +128,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
         }
     });
     assertTrue("Warning should be done, since one of the files has CRLFs and no related attributes",
-               GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit, files).shouldWarn());
+               GitCrlfProblemsDetector.detect(myProject, myGit, files).shouldWarn());
   }
 
   private void gitattributes(String content) throws IOException {
@@ -140,7 +140,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
   }
 
   private GitCrlfProblemsDetector detect(VirtualFile file) {
-    return GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit, Collections.singleton(file));
+    return GitCrlfProblemsDetector.detect(myProject, myGit, Collections.singleton(file));
   }
 
   private void createCrlfFile(String relPath) throws IOException {

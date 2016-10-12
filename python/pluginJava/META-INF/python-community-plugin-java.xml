@@ -25,10 +25,4 @@
       <implementation-class>com.jetbrains.python.facet.PythonSdkTableListener</implementation-class>
     </component>
   </application-components>
-
-  <module-components>
-    <component>
-      <implementation-class>com.jetbrains.python.facet.PythonFacetListener</implementation-class>
-    </component>
-  </module-components>
 </idea-plugin>

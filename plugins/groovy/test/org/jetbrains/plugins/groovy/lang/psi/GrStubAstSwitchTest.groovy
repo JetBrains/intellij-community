@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,27 @@
  * limitations under the License.
  */
 package org.jetbrains.plugins.groovy.lang.psi
+
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.util.InheritanceUtil
+import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrAnonymousClassDefinitionImpl
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex
+
 /**
  * Created by Max Medvedev on 12/4/13
  */
+@CompileStatic
 class GrStubAstSwitchTest extends LightGroovyTestCase {
-  @Override
-  protected String getBasePath() {
-    null
-  }
 
   void testDontLoadContentWhenProcessingImports() {
-    GroovyFileImpl file = (GroovyFileImpl) myFixture.addFileToProject("A.groovy", """
+    GroovyFileImpl file = (GroovyFileImpl)myFixture.addFileToProject("A.groovy", """
 import java.util.concurrent.ConcurrentHashMap
 
 class MyMap extends ConcurrentHashMap {}
@@ -127,7 +134,7 @@ class B {
     PsiClass clazzB = file.classes[1]
     assert !file.contentsLoaded
 
-    assert clazzB.methods.find {it.name =='foo'}
+    assert clazzB.methods.find { it.name == 'foo' }
     assert !file.contentsLoaded
   }
 
@@ -227,9 +234,39 @@ class X {
     assert !file.contentsLoaded
     PsiClass clazz = file.classes[0]
     assert !file.contentsLoaded
-    
+
     assert clazz.findMethodsByName('foo', false).size() == 2
     assert !file.contentsLoaded
   }
 
+  void "test do not load content for anonymous class' baseClassType"() {
+    def file = myFixture.tempDirFixture.createFile('A.groovy', '''\
+class A {
+  def field = new Runnable() {
+    void run() {}
+  }
+}
+''')
+    def psiFile = PsiManager.getInstance(getProject()).findFile(file) as PsiFileImpl
+    assert psiFile.stub
+    assert !psiFile.contentsLoaded
+
+    final Collection<GrAnonymousClassDefinition> classes = StubIndex.getElements(
+      GrAnonymousClassIndex.KEY, "Runnable", getProject(), GlobalSearchScope.allScope(project), GrAnonymousClassDefinition
+    );
+    assert classes.size() == 1;
+
+    def definition = classes.first()
+    assert (definition as GrAnonymousClassDefinitionImpl).stub
+    assert psiFile.stub
+    assert !psiFile.contentsLoaded
+
+    definition.baseClassType
+    assert psiFile.stub
+    assert !psiFile.contentsLoaded
+
+    assert InheritanceUtil.isInheritor(definition, Runnable.name)
+    assert psiFile.stub
+    assert !psiFile.contentsLoaded
+  }
 }

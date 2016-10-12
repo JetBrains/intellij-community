@@ -23,13 +23,10 @@ public class RemoteServersViewImpl extends RemoteServersView {
   public void showServerConnection(@NotNull final ServerConnection<?> connection) {
     final ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(getToolWindowId(connection));
     if (toolWindow != null) {
-      toolWindow.activate(new Runnable() {
-        @Override
-        public void run() {
-          ServersToolWindowContent content = getServersViewComponent(toolWindow);
-          if (content != null) {
-            content.select(connection);
-          }
+      toolWindow.activate(() -> {
+        ServersToolWindowContent content = getServersViewComponent(toolWindow);
+        if (content != null) {
+          content.select(connection);
         }
       });
     }
@@ -45,13 +42,10 @@ public class RemoteServersViewImpl extends RemoteServersView {
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     final ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId(connection));
     if (toolWindow != null) {
-      toolWindowManager.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ServersToolWindowContent component = getServersViewComponent(toolWindow);
-          if (component != null) {
-            component.select(connection, deploymentName);
-          }
+      toolWindowManager.invokeLater(() -> {
+        ServersToolWindowContent component = getServersViewComponent(toolWindow);
+        if (component != null) {
+          component.select(connection, deploymentName);
         }
       });
     }

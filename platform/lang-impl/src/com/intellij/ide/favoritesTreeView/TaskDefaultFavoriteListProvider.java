@@ -207,12 +207,7 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
       }
     };
     action.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, content);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        popup.showInCenterOf(tree);
-      }
-    }, ModalityState.NON_MODAL, project.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> popup.showInCenterOf(tree), ModalityState.NON_MODAL, project.getDisposed());
   }
 
   //private Operation getCustomEditOperation() {

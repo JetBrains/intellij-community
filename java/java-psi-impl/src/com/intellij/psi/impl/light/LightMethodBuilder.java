@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.light;
 
-import com.intellij.psi.OriginInfoAwareElement;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
@@ -53,7 +52,7 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   private PsiClass myContainingClass;
   private boolean myConstructor;
   private String myMethodKind = "LightMethodBuilder";
-  private String myOriginInfo = null;
+  private String myOriginInfo;
 
   public LightMethodBuilder(PsiClass constructedClass, Language language) {
     this(constructedClass.getManager(), language, constructedClass.getName());

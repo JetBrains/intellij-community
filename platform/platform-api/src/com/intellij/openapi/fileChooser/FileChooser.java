@@ -145,11 +145,6 @@ public class FileChooser {
                                 @Nullable final VirtualFile toSelect,
                                 @NotNull final Consumer<VirtualFile> callback) {
     LOG.assertTrue(!descriptor.isChooseMultiple());
-    chooseFiles(descriptor, project, parent, toSelect, new Consumer<List<VirtualFile>>() {
-      @Override
-      public void consume(List<VirtualFile> files) {
-        callback.consume(files.get(0));
-      }
-    });
+    chooseFiles(descriptor, project, parent, toSelect, files -> callback.consume(files.get(0)));
   }
 }

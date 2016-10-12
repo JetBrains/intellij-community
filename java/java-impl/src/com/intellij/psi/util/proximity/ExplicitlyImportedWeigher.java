@@ -24,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
@@ -58,9 +59,11 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
         if (importList == null) return Collections.emptyList();
 
         List<String> importedNames = ContainerUtil.newArrayList();
-        for (final PsiImportStatement importStatement : importList.getImportStatements()) {
-          ContainerUtil.addIfNotNull(importedNames, importStatement.getQualifiedName());
+        for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
+          PsiJavaCodeReferenceElement reference = statement.getImportReference();
+          ContainerUtil.addIfNotNull(importedNames, reference == null ? null : reference.getQualifiedName());
         }
+
         return importedNames;
       }
     });
@@ -126,6 +129,11 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
 
     }
     if (element instanceof PsiMember) {
+      String qname = PsiUtil.getMemberQualifiedName((PsiMember)element);
+      if (qname != null && PLACE_IMPORTED_NAMES.getValue(location).contains(qname)) {
+        return 400;
+      }
+
       final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
       if (placePackage != null) {
         Module elementModule = ModuleUtilCore.findModuleForPsiElement(element);
@@ -138,11 +146,6 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
   }
 
   private static boolean containsImport(List<String> importedNames, final String pkg) {
-    return ContainerUtil.or(importedNames, new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return s.startsWith(pkg + '.') || s.equals(pkg);
-      }
-    });
+    return ContainerUtil.or(importedNames, s -> s.startsWith(pkg + '.') || s.equals(pkg));
   }
 }

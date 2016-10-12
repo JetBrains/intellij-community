@@ -27,7 +27,7 @@ public interface GitSSHHandler {
   /**
    * The prefix of the ssh script name
    */
-  @NonNls String GIT_SSH_PREFIX = "git-ssh-";
+  @NonNls String GIT_SSH_PREFIX = "intellij-git-ssh";
   /**
    * Name of environment variable for SSH handler access token
    */

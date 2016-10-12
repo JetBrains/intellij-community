@@ -67,7 +67,7 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
       LanguageFileType substFileType = substituteFileType(((LanguageFileType)fileType).getLanguage(), vFile, project);
       if (substFileType != null) {
         EditorHighlighterProvider provider = FileTypeEditorHighlighterProviders.INSTANCE.forFileType(substFileType);
-        EditorHighlighter editorHighlighter = provider.getEditorHighlighter(project, fileType, vFile, settings);
+        EditorHighlighter editorHighlighter = provider.getEditorHighlighter(project, substFileType, vFile, settings);
         boolean isPlain = editorHighlighter.getClass() == LexerEditorHighlighter.class &&
                           ((LexerEditorHighlighter) editorHighlighter).isPlain();
         if (!isPlain) {

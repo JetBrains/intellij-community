@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class LambdaUtil {
   }
 
   @Nullable
-  public static PsiMethod getFunctionalInterfaceMethod(PsiClassType.ClassResolveResult result) {
+  public static PsiMethod getFunctionalInterfaceMethod(@NotNull PsiClassType.ClassResolveResult result) {
     return getFunctionalInterfaceMethod(result.getElement());
   }
 
@@ -682,13 +682,11 @@ public class LambdaUtil {
   @Nullable
   public static PsiType getLambdaParameterFromType(PsiType functionalInterfaceType, int parameterIndex) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
-    if (resolveResult != null) {
-      final PsiMethod method = getFunctionalInterfaceMethod(functionalInterfaceType);
-      if (method != null) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        if (parameterIndex < parameters.length) {
-          return getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
-        }
+    final PsiMethod method = getFunctionalInterfaceMethod(functionalInterfaceType);
+    if (method != null) {
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameterIndex < parameters.length) {
+        return getSubstitutor(method, resolveResult).substitute(parameters[parameterIndex].getType());
       }
     }
     return null;
@@ -878,10 +876,7 @@ public class LambdaUtil {
 
     private boolean check(PsiTypeParameter check) {
       final PsiTypeParameterListOwner owner = check.getOwner();
-      if (owner == myMethod) {
-        return true;
-      }
-      else if (owner == myClass) {
+      if (owner == myMethod || owner == myClass) {
         return true;
       }
       return false;

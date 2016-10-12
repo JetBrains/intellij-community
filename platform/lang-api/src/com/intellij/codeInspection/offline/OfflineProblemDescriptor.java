@@ -23,9 +23,12 @@ package com.intellij.codeInspection.offline;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -112,7 +115,7 @@ public class OfflineProblemDescriptor {
     if (refElement instanceof RefElement) {
       final PsiElement element = ((RefElement)refElement).getElement();
       if (element != null && element.isValid()) {
-        PsiDocumentManager.getInstance(element.getProject()).commitAllDocuments();
+        UIUtil.invokeLaterIfNeeded(() -> PsiDocumentManager.getInstance(element.getProject()).commitAllDocuments());
       }
     }
     return refElement;
@@ -178,6 +181,10 @@ public class OfflineProblemDescriptor {
 
   @Override
   public String toString() {
-    return myDescription;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myFQName;
+    } else {
+      return myDescription;
+    }
   }
 }

@@ -109,12 +109,8 @@ public class ExternalSystemTaskActivator {
   }
 
   private boolean doExecuteCompileTasks(boolean myBefore, @NotNull CompileContext context) {
-    final List<String> modules = ContainerUtil.map(context.getCompileScope().getAffectedModules(), new Function<Module, String>() {
-      @Override
-      public String fun(Module module) {
-        return ExternalSystemApiUtil.getExternalProjectPath(module);
-      }
-    });
+    final List<String> modules = ContainerUtil.map(context.getCompileScope().getAffectedModules(),
+                                                   module -> ExternalSystemApiUtil.getExternalProjectPath(module));
 
     final Collection<Phase> phases = ContainerUtil.newArrayList();
     if (myBefore) {
@@ -152,12 +148,7 @@ public class ExternalSystemTaskActivator {
             ExternalSystemUtil.findConfigurationType(key);
           if (configurationType == null) return null;
           return ContainerUtil.map2Map(RunManager.getInstance(myProject).getConfigurationSettingsList(configurationType),
-                                       new Function<RunnerAndConfigurationSettings, Pair<String, RunnerAndConfigurationSettings>>() {
-                                         @Override
-                                         public Pair<String, RunnerAndConfigurationSettings> fun(RunnerAndConfigurationSettings configurationSettings) {
-                                           return Pair.create(configurationSettings.getName(), configurationSettings);
-                                         }
-                                       });
+                                       configurationSettings -> Pair.create(configurationSettings.getName(), configurationSettings));
         }
       };
 
@@ -209,12 +200,7 @@ public class ExternalSystemTaskActivator {
                                       @NotNull ExternalProjectsStateProvider.TasksActivation activation) {
     final AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(myProject, activation.systemId);
     final String rootProjectPath = getRootProjectPath(systemSettings, activation.projectPath);
-    final List<String> rootPath = ContainerUtil.mapNotNull(modules, new Function<String, String>() {
-      @Override
-      public String fun(String path) {
-        return getRootProjectPath(systemSettings, path);
-      }
-    });
+    final List<String> rootPath = ContainerUtil.mapNotNull(modules, path -> getRootProjectPath(systemSettings, path));
     return rootPath.contains(rootProjectPath);
   }
 
@@ -267,12 +253,8 @@ public class ExternalSystemTaskActivator {
 
   public void addTasks(@NotNull Collection<TaskData> tasks, @NotNull final Phase phase) {
     if (tasks.isEmpty()) return;
-    addTasks(ContainerUtil.map(tasks, new Function<TaskData, TaskActivationEntry>() {
-      @Override
-      public TaskActivationEntry fun(TaskData data) {
-        return new TaskActivationEntry(data.getOwner(), phase, data.getLinkedExternalProjectPath(), data.getName());
-      }
-    }));
+    addTasks(ContainerUtil.map(tasks,
+                               data -> new TaskActivationEntry(data.getOwner(), phase, data.getLinkedExternalProjectPath(), data.getName())));
     fireTasksChanged();
   }
 
@@ -290,12 +272,7 @@ public class ExternalSystemTaskActivator {
 
   public void removeTasks(@NotNull Collection<TaskData> tasks, @NotNull final Phase phase) {
     if (tasks.isEmpty()) return;
-    removeTasks(ContainerUtil.map(tasks, new Function<TaskData, TaskActivationEntry>() {
-      @Override
-      public TaskActivationEntry fun(TaskData data) {
-        return new TaskActivationEntry(data.getOwner(), phase, data.getLinkedExternalProjectPath(), data.getName());
-      }
-    }));
+    removeTasks(ContainerUtil.map(tasks, data -> new TaskActivationEntry(data.getOwner(), phase, data.getLinkedExternalProjectPath(), data.getName())));
   }
 
   public void removeTasks(@NotNull Collection<TaskActivationEntry> entries) {

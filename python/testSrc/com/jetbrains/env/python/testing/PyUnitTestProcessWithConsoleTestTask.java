@@ -31,15 +31,14 @@ abstract class PyUnitTestProcessWithConsoleTestTask extends PyProcessWithConsole
   @NotNull
   private final String myScriptName;
 
-  PyUnitTestProcessWithConsoleTestTask(@NotNull final String relativePathToFolder, @NotNull final String scriptName) {
-    super(SdkCreationType.EMPTY_SDK);
-    setWorkingFolder(PyEnvTestCase.norm(getTestDataPath() + relativePathToFolder));
+  PyUnitTestProcessWithConsoleTestTask(@NotNull final String relativePathToTestData, @NotNull final String scriptName) {
+    super(relativePathToTestData, SdkCreationType.EMPTY_SDK);
     myScriptName = scriptName;
   }
 
   @NotNull
   @Override
   protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
-    return new PyUnitTestProcessRunner(getWorkingFolder(), myScriptName, 0);
+    return new PyUnitTestProcessRunner(myScriptName, 0);
   }
 }

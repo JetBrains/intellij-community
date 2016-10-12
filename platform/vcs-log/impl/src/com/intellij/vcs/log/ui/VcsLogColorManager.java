@@ -22,5 +22,4 @@ public interface VcsLogColorManager {
    * Tells if there are several repositories currently shown in the log.
    */
   boolean isMultipleRoots();
-
 }

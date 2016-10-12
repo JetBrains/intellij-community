@@ -22,9 +22,11 @@ import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.TreePath;
@@ -299,6 +301,11 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     return myWideSelection;
   }
 
+  public static boolean isWideSelection(@NotNull JTree tree) {
+    TreeUI ui = tree.getUI();
+    return ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection();
+  }
+
   @Override
   protected void paintRow(final Graphics g,
                           final Rectangle clipBounds,
@@ -340,7 +347,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       }
       else {
         if (selected && (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
-          Color bg = UIUtil.getTreeSelectionBackground(tree.hasFocus() || Boolean.TRUE.equals(tree.getClientProperty(TREE_TABLE_TREE_KEY)));
+          Color bg = getSelectionBackground(tree, true);
 
           if (myWideSelectionCondition.value(row)) {
             rowGraphics.setColor(bg);
@@ -392,7 +399,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
       if (tr.getSelectionModel().isRowSelected(row) && myWideSelectionCondition.value(row)) {
           final Rectangle bounds = tr.getRowBounds(row);
-          Color color = UIUtil.getTreeSelectionBackground(tr.hasFocus());
+          Color color = getSelectionBackground(tr, false);
           if (color != null) {
             g.setColor(color);
             g.fillRect(0, bounds.y, tr.getWidth(), bounds.height);
@@ -434,5 +441,18 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     }
 
     super.paintExpandControl(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+  }
+
+  @Nullable
+  private static Color getSelectionBackground(@NotNull JTree tree, boolean checkProperty) {
+    Object property = tree.getClientProperty(TREE_TABLE_TREE_KEY);
+    if (property instanceof JTable) {
+      return ((JTable)property).getSelectionBackground();
+    }
+    boolean selection = tree.hasFocus();
+    if (!selection && checkProperty) {
+      selection = Boolean.TRUE.equals(property);
+    }
+    return UIUtil.getTreeSelectionBackground(selection);
   }
 }

@@ -71,12 +71,9 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
           continue;
         }
         final String text = action.getText();
-        createActionLabel(text, new Runnable() {
-          @Override
-          public void run() {
-            PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-            ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
-          }
+        createActionLabel(text, () -> {
+          PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+          ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
         });
       }
     }

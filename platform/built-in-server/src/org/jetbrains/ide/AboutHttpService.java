@@ -16,16 +16,12 @@
 package org.jetbrains.ide;
 
 import com.google.gson.stream.JsonWriter;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.ide.IdeAboutInfoUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PlatformUtils;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -83,25 +79,10 @@ public class AboutHttpService extends RestService {
   }
 
   public static void getAbout(@NotNull OutputStream out, @Nullable QueryStringDecoder urlDecoder) throws IOException {
-    BuildNumber build = ApplicationInfo.getInstance().getBuild();
-
     JsonWriter writer = createJsonWriter(out);
     writer.beginObject();
 
-    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-    String appName = appInfo.getFullApplicationName();
-    if (!PlatformUtils.isIdeaUltimate()) {
-      String productName = ApplicationNamesInfo.getInstance().getProductName();
-      appName = appName.replace(productName + " (" + productName + ")", productName);
-      appName = StringUtil.trimStart(appName, "JetBrains ");
-    }
-
-    writer.name("name").value(appName);
-    writer.name("productName").value(ApplicationNamesInfo.getInstance().getProductName());
-    writer.name("baselineVersion").value(build.getBaselineVersion());
-    if (build.getBuildNumber() != Integer.MAX_VALUE) {
-      writer.name("buildNumber").value(build.getBuildNumber());
-    }
+    IdeAboutInfoUtil.writeAboutJson(writer);
 
     if (urlDecoder != null && getBooleanParameter("registeredFileTypes", urlDecoder)) {
       writer.name("registeredFileTypes").beginArray();
@@ -116,6 +97,7 @@ public class AboutHttpService extends RestService {
     }
 
     if (urlDecoder != null && getBooleanParameter("more", urlDecoder)) {
+      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
       writer.name("vendor").value(appInfo.getCompanyName());
       writer.name("isEAP").value(appInfo.isEAP());
       writer.name("productCode").value(appInfo.getBuild().getProductCode());

@@ -38,8 +38,9 @@ public class PsiMultiReference implements PsiPolyVariantReference {
   public static final Comparator<PsiReference> COMPARATOR = new Comparator<PsiReference>() {
     @Override
     public int compare(final PsiReference ref1, final PsiReference ref2) {
-      if (ref1.isSoft() && !ref2.isSoft()) return 1;
-      if (!ref1.isSoft() && ref2.isSoft()) return -1;
+      boolean soft1 = ref1.isSoft();
+      boolean soft2 = ref2.isSoft();
+      if (soft1 != soft2) return soft1 ? 1 : -1;
 
       boolean resolves1 = resolves(ref1);
       boolean resolves2 = resolves(ref2);

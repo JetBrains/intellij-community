@@ -65,7 +65,7 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
   }
 
   @Override
-  public final void contextAction() throws Exception {
+  public final void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
     SuspendManager suspendManager = myDebuggerContext.getDebugProcess().getSuspendManager();
     boolean isSuspendedByContext;
     try {
@@ -77,14 +77,14 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     }
     if (isSuspendedByContext) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Context thread " + getSuspendContext().getThread());
+        LOG.debug("Context thread " + suspendContext.getThread());
         LOG.debug("Debug thread" + getThread());
       }
-      threadAction();
+      threadAction(suspendContext);
     }
     else {
       // no suspend context currently available
-      SuspendContextImpl suspendContextForThread = myCustomThread != null ? getSuspendContext() :
+      SuspendContextImpl suspendContextForThread = myCustomThread != null ? suspendContext :
                                                    SuspendManagerUtil.findContextByThread(suspendManager, getThread());
       if (suspendContextForThread != null) {
         suspendContextForThread.postponeCommand(this);
@@ -95,5 +95,16 @@ public abstract class DebuggerContextCommandImpl extends SuspendContextCommandIm
     }
   }
 
-  abstract public void threadAction();
+  /**
+   * @deprecated override {@link #threadAction(SuspendContextImpl)}
+   */
+  @Deprecated
+  public void threadAction() {
+    throw new AbstractMethodError();
+  }
+
+  public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+    //noinspection deprecation
+    threadAction();
+  }
 }

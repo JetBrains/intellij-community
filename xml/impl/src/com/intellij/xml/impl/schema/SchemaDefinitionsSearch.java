@@ -53,7 +53,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
   public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<PsiElement> consumer) {
     if (queryParameters instanceof XmlTagImpl) {
       final XmlTagImpl xml = (XmlTagImpl) queryParameters;
-      if (isTypeElement(xml)) {
+      if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> isTypeElement(xml))) {
         final Collection<SchemaTypeInfo> infos = ApplicationManager.getApplication().runReadAction(new Computable<Collection<SchemaTypeInfo>>() {
 
           @Override
@@ -101,26 +101,23 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
             }
             if (! targetFiles.isEmpty()) {
               for (final XmlFile targetFile : targetFiles) {
-                ApplicationManager.getApplication().runReadAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    final String prefixByURI = XmlUtil.findNamespacePrefixByURI(targetFile, info.getNamespaceUri());
-                    if (prefixByURI == null) return;
-                    final PsiElementProcessor processor = new PsiElementProcessor() {
-                      @Override
-                      public boolean execute(@NotNull PsiElement element) {
-                        if (element instanceof XmlTagImpl) {
-                          if (isCertainTypeElement((XmlTagImpl)element, info.getTagName(), prefixByURI) ||
-                              isElementWithEmbeddedType((XmlTagImpl)element, info.getTagName(), prefixByURI)) {
-                            consumer.process(element);
-                            return false;
-                          }
+                ApplicationManager.getApplication().runReadAction(() -> {
+                  final String prefixByURI = XmlUtil.findNamespacePrefixByURI(targetFile, info.getNamespaceUri());
+                  if (prefixByURI == null) return;
+                  final PsiElementProcessor processor = new PsiElementProcessor() {
+                    @Override
+                    public boolean execute(@NotNull PsiElement element) {
+                      if (element instanceof XmlTagImpl) {
+                        if (isCertainTypeElement((XmlTagImpl)element, info.getTagName(), prefixByURI) ||
+                            isElementWithEmbeddedType((XmlTagImpl)element, info.getTagName(), prefixByURI)) {
+                          consumer.process(element);
+                          return false;
                         }
-                        return true;
                       }
-                    };
-                    XmlUtil.processXmlElements(targetFile, processor, true);
-                  }
+                      return true;
+                    }
+                  };
+                  XmlUtil.processXmlElements(targetFile, processor, true);
                 });
               }
             }

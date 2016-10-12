@@ -44,6 +44,8 @@ bool need64BitJRE = false;
 #define BITS_STR "32-bit"
 #endif
 
+void TrimLine(char* line);
+
 std::string EncodeWideACP(const std::wstring &str)
 {
   int cbANSI = WideCharToMultiByte(CP_ACP, 0, str.c_str(), str.size(), NULL, 0, NULL, NULL);
@@ -143,6 +145,34 @@ bool FindJVMInEnvVar(const char* envVarName, bool& result)
   return false;
 }
 
+bool FindJVMInSettings() {
+  TCHAR buffer[_MAX_PATH];
+  TCHAR copy[_MAX_PATH];
+
+  GetModuleFileName(NULL, buffer, _MAX_PATH);
+  std::wstring module(buffer);
+
+  if (LoadString(hInst, IDS_VM_OPTIONS_PATH, buffer, _MAX_PATH)) {
+    ExpandEnvironmentStrings(buffer, copy, _MAX_PATH - 1);
+    std::wstring path(copy);
+    path += L"\\config" + module.substr(module.find_last_of('\\')) + L".jdk";
+    FILE *f = _tfopen(path.c_str(), _T("rt"));
+    if (!f) return false;
+
+    char line[_MAX_PATH];
+    if (!fgets(line, _MAX_PATH, f)) {
+      fclose(f);
+      return false;
+    }
+
+    TrimLine(line);
+    fclose(f);
+
+    return FindValidJVM(line);
+  }
+  return false;
+}
+
 bool FindJVMInRegistryKey(const char* key, bool wow64_32)
 {
   HKEY hKey;
@@ -223,6 +253,8 @@ bool LocateJVM()
   {
     return result;
   }
+
+  if (FindJVMInSettings()) return true;
 
   std::vector<std::string> jrePaths;
   if(need64BitJRE) jrePaths.push_back(GetAdjacentDir("jre64"));
@@ -375,6 +407,19 @@ bool AddClassPathOptions(std::vector<std::string>& vmOptionLines)
   return true;
 }
 
+std::string getVMOption(int resource){
+  TCHAR buffer[_MAX_PATH];
+  TCHAR copy[_MAX_PATH];
+  std::string vmOption = "";
+  if (LoadString(hInst, resource, buffer, _MAX_PATH))
+  {
+    ExpandEnvironmentStrings(buffer, copy, _MAX_PATH);
+    std::wstring module(copy);
+    vmOption = std::string(module.begin(), module.end());
+  }
+  return vmOption;
+}
+
 void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
 {
   std::string vmOptions = LoadStdString(IDS_VM_OPTIONS);
@@ -386,6 +431,11 @@ void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
     while (pos < vmOptions.size() && vmOptions[pos] == ' ') pos++;
     vmOptions = vmOptions.substr(pos);
   }
+
+  std::string errorFile = getVMOption(IDS_VM_OPTION_ERRORFILE);
+  std::string heapDumpPath = getVMOption(IDS_VM_OPTION_HEAPDUMPPATH);
+  if (errorFile != "") vmOptionLines.push_back(errorFile);
+  if (heapDumpPath != "") vmOptionLines.push_back(heapDumpPath);
 
   char propertiesFile[_MAX_PATH];
   if (GetEnvironmentVariableA(LoadStdString(IDS_PROPS_ENV_VAR).c_str(), propertiesFile, _MAX_PATH))

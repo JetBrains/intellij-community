@@ -1,22 +1,21 @@
 package com.jetbrains.edu.coursecreator.projectView;
 
-import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.EduNames;
-import com.jetbrains.edu.coursecreator.CCProjectService;
+import com.intellij.psi.PsiFile;
+import com.jetbrains.edu.coursecreator.CCUtils;
+import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.projectView.StudyTreeStructureProvider;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
-public class CCTreeStructureProvider implements TreeStructureProvider, DumbAware {
+public class CCTreeStructureProvider extends StudyTreeStructureProvider {
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
@@ -25,45 +24,41 @@ public class CCTreeStructureProvider implements TreeStructureProvider, DumbAware
     if (!needModify(parent)) {
       return children;
     }
-    Collection<AbstractTreeNode> nodes = new ArrayList<AbstractTreeNode>();
+    Collection<AbstractTreeNode> modifiedChildren = super.modify(parent, children, settings);
+
     for (AbstractTreeNode node : children) {
       Project project = node.getProject();
-      if (project != null) {
-        if (node.getValue() instanceof PsiDirectory) {
-          PsiDirectory directory = (PsiDirectory)node.getValue();
-          nodes.add(new CCDirectoryNode(project, directory, settings));
+      if (project == null) {
+        continue;
+      }
+      if (node.getValue() instanceof PsiDirectory) {
+        String name = ((PsiDirectory)node.getValue()).getName();
+        if ("zip".equals(FileUtilRt.getExtension(name))) {
+          modifiedChildren.add(node);
           continue;
         }
-        if (node instanceof PsiFileNode) {
-          PsiFileNode fileNode = (PsiFileNode)node;
-          VirtualFile virtualFile = fileNode.getVirtualFile();
-          if (virtualFile == null) {
-            continue;
-          }
-          if (CCProjectService.getInstance(project).isTaskFile(virtualFile)
-              || virtualFile.getName().contains(EduNames.WINDOWS_POSTFIX)) {
-            continue;
-          }
+      }
+      if (node instanceof PsiFileNode) {
+        PsiFileNode fileNode = (PsiFileNode)node;
+        VirtualFile virtualFile = fileNode.getVirtualFile();
+        if (virtualFile == null) {
+          continue;
         }
-        nodes.add(node);
+        if (StudyUtils.getTaskFile(project, virtualFile) != null || StudyUtils.isTaskDescriptionFile(virtualFile.getName())) {
+          continue;
+        }
+        PsiFile psiFile = ((PsiFileNode)node).getValue();
+        modifiedChildren.add(new CCStudentInvisibleFileNode(project, psiFile, settings));
       }
     }
-    return nodes;
+    return modifiedChildren;
   }
 
-  private static boolean needModify(@NotNull final AbstractTreeNode parent) {
+  protected boolean needModify(@NotNull final AbstractTreeNode parent) {
     Project project = parent.getProject();
-    if (project != null) {
-      if (CCProjectService.getInstance(project).getCourse() == null) {
-        return false;
-      }
+    if (project == null) {
+      return false;
     }
-    return true;
-  }
-
-  @Nullable
-  @Override
-  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-    return null;
+    return CCUtils.isCourseCreator(project);
   }
 }

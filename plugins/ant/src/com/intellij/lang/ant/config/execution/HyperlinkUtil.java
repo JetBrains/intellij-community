@@ -100,19 +100,17 @@ final class HyperlinkUtil {
   private static PlaceInfo makePlaceInfo(final String className, final String fileName, final int line, final Project project, final int lparenthIndex, final int rparenthIndex){
     final PlaceInfo[] info = new PlaceInfo[1];
     ApplicationManager.getApplication().runReadAction(
-      new Runnable(){
-        public void run(){
-          PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
-          if (aClass == null) return;
-          PsiFile file = aClass.getContainingFile();
-          String fileName1 = fileName.replace(File.separatorChar, '/');
-          int slashIndex = fileName1.lastIndexOf('/');
-          String shortFileName = slashIndex < 0 ? fileName : fileName.substring(slashIndex + 1);
-          final String name = file.getName();
-          if (name == null) return;
-          if (!name.equalsIgnoreCase(shortFileName)) return;
-          info[0] = new PlaceInfo(file.getVirtualFile(), line, 1, lparenthIndex, rparenthIndex);
-        }
+      () -> {
+        PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+        if (aClass == null) return;
+        PsiFile file = aClass.getContainingFile();
+        String fileName1 = fileName.replace(File.separatorChar, '/');
+        int slashIndex = fileName1.lastIndexOf('/');
+        String shortFileName = slashIndex < 0 ? fileName : fileName.substring(slashIndex + 1);
+        final String name = file.getName();
+        if (name == null) return;
+        if (!name.equalsIgnoreCase(shortFileName)) return;
+        info[0] = new PlaceInfo(file.getVirtualFile(), line, 1, lparenthIndex, rparenthIndex);
       }
     );
     return info[0];
@@ -149,15 +147,13 @@ final class HyperlinkUtil {
     final PsiFile[] psiFile = new PsiFile[1];
 
     final PsiManager psiManager = PsiManager.getInstance(project);
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        PsiClass psiClass =
-          JavaPsiFacade.getInstance(psiManager.getProject()).findClass(possibleTestClassName, GlobalSearchScope.allScope(project));
-        if (psiClass == null) return;
-        PsiElement parent = psiClass.getParent();
-        if (parent instanceof PsiFile) {
-          psiFile[0] = (PsiFile)parent;
-        }
+    ApplicationManager.getApplication().runReadAction(() -> {
+      PsiClass psiClass =
+        JavaPsiFacade.getInstance(psiManager.getProject()).findClass(possibleTestClassName, GlobalSearchScope.allScope(project));
+      if (psiClass == null) return;
+      PsiElement parent = psiClass.getParent();
+      if (parent instanceof PsiFile) {
+        psiFile[0] = (PsiFile)parent;
       }
     });
 

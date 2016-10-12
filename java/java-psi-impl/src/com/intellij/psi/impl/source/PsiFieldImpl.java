@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -42,16 +41,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, Queryable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiFieldImpl");
-
-  private volatile SoftReference<PsiType> myCachedType = null;
-  private volatile Object myCachedInitializerValue = null; // PsiExpression on constant value for literal
+  private volatile SoftReference<PsiType> myCachedType;
+  private volatile Object myCachedInitializerValue; // PsiExpression on constant value for literal
 
   public PsiFieldImpl(final PsiFieldStub stub) {
     this(stub, JavaStubElementTypes.FIELD);
@@ -125,26 +119,25 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   @NotNull
+  @SuppressWarnings("Duplicates")
   public PsiType getType() {
-    final PsiFieldStub stub = getStub();
+    PsiFieldStub stub = getStub();
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
-      if (type != null) return type;
-
-      String typeText = TypeInfo.createTypeText(stub.getType(true));
-      try {
+      if (type == null) {
+        String typeText = TypeInfo.createTypeText(stub.getType(false));
+        assert typeText != null : stub;
         type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
+        type = JavaSharedImplUtil.applyAnnotations(type, getModifierList());
         myCachedType = new SoftReference<PsiType>(type);
-        return type;
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
+      return type;
     }
 
     myCachedType = null;
-    return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
+    PsiTypeElement typeElement = getTypeElement();
+    assert typeElement != null : Arrays.toString(getChildren());
+    return JavaSharedImplUtil.getType(typeElement, getNameIdentifier());
   }
 
   @Override
@@ -396,7 +389,8 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return true;
   }
 
-  public String toString(){
+  @Override
+  public String toString() {
     return "PsiField:" + getName();
   }
 
@@ -442,5 +436,4 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   protected boolean isVisibilitySupported() {
     return true;
   }
-
 }

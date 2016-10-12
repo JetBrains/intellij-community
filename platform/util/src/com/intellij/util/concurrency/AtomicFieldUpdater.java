@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.util.BitUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.misc.Unsafe;
@@ -34,7 +35,7 @@ import java.lang.reflect.Modifier;
  * - removed access check in getAndSet() hot path for performance
  * - new methods "forFieldXXX" added that search by field type instead of field name, which is useful in scrambled classes
  */
-public class AtomicFieldUpdater<T,V> {
+public class AtomicFieldUpdater<ContainingClass, FieldType> {
   private static final Unsafe unsafe;
   static {
     unsafe = ReflectionUtil.getStaticFieldValue(Unsafe.class, Unsafe.class, "theUnsafe");
@@ -65,7 +66,7 @@ public class AtomicFieldUpdater<T,V> {
     return new AtomicFieldUpdater<T, Integer>(ownerClass, int.class);
   }
 
-  private AtomicFieldUpdater(@NotNull Class<T> ownerClass, @NotNull Class<V> fieldType) {
+  private AtomicFieldUpdater(@NotNull Class<ContainingClass> ownerClass, @NotNull Class<FieldType> fieldType) {
     Field found = getTheOnlyVolatileFieldOfClass(ownerClass, fieldType);
     offset = unsafe.objectFieldOffset(found);
   }
@@ -91,30 +92,30 @@ public class AtomicFieldUpdater<T,V> {
       throw new IllegalArgumentException("No (non-static, non-final) field of "+fieldType+" found in the "+ownerClass);
     }
     found.setAccessible(true);
-    if ((found.getModifiers() & Modifier.VOLATILE) == 0) {
-      throw new IllegalArgumentException("Field "+found+" in the "+ownerClass+" must be volatile");
+    if (!BitUtil.isSet(found.getModifiers(), Modifier.VOLATILE)) {
+      throw new IllegalArgumentException("Field " + found + " in the " + ownerClass + " must be volatile");
     }
     return found;
   }
 
-  public boolean compareAndSet(@NotNull T owner, V expected, V newValue) {
+  public boolean compareAndSet(@NotNull ContainingClass owner, FieldType expected, FieldType newValue) {
     return unsafe.compareAndSwapObject(owner, offset, expected, newValue);
   }
 
-  public boolean compareAndSetLong(@NotNull T owner, long expected, long newValue) {
+  public boolean compareAndSetLong(@NotNull ContainingClass owner, long expected, long newValue) {
     return unsafe.compareAndSwapLong(owner, offset, expected, newValue);
   }
 
-  public boolean compareAndSetInt(@NotNull T owner, int expected, int newValue) {
+  public boolean compareAndSetInt(@NotNull ContainingClass owner, int expected, int newValue) {
     return unsafe.compareAndSwapInt(owner, offset, expected, newValue);
   }
 
-  public void set(@NotNull T owner, V newValue) {
+  public void set(@NotNull ContainingClass owner, FieldType newValue) {
     unsafe.putObjectVolatile(owner, offset, newValue);
   }
 
-  public V get(@NotNull T owner) {
+  public FieldType get(@NotNull ContainingClass owner) {
     //noinspection unchecked
-    return (V)unsafe.getObjectVolatile(owner, offset);
+    return (FieldType)unsafe.getObjectVolatile(owner, offset);
   }
 }

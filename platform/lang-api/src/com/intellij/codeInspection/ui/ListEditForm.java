@@ -37,23 +37,20 @@ public class ListEditForm {
         public void run(AnActionButton button) {
           final ListWrappingTableModel tableModel = table.getModel();
           tableModel.addRow();
-          EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              final int lastRowIndex = tableModel.getRowCount() - 1;
-              final Rectangle rectangle =
-                table.getCellRect(lastRowIndex, 0, true);
-              table.scrollRectToVisible(rectangle);
-              table.editCellAt(lastRowIndex, 0);
-              final ListSelectionModel selectionModel =
-                table.getSelectionModel();
-              selectionModel.setSelectionInterval(lastRowIndex, lastRowIndex);
-              final TableCellEditor editor = table.getCellEditor();
-              final Component component =
-                editor.getTableCellEditorComponent(table,
-                                                   null, true, lastRowIndex, 0);
-              component.requestFocus();
-            }
+          EventQueue.invokeLater(() -> {
+            final int lastRowIndex = tableModel.getRowCount() - 1;
+            final Rectangle rectangle =
+              table.getCellRect(lastRowIndex, 0, true);
+            table.scrollRectToVisible(rectangle);
+            table.editCellAt(lastRowIndex, 0);
+            final ListSelectionModel selectionModel =
+              table.getSelectionModel();
+            selectionModel.setSelectionInterval(lastRowIndex, lastRowIndex);
+            final TableCellEditor editor = table.getCellEditor();
+            final Component component =
+              editor.getTableCellEditorComponent(table,
+                                                 null, true, lastRowIndex, 0);
+            component.requestFocus();
           });
         }
       }).setRemoveAction(new AnActionButtonRunnable() {

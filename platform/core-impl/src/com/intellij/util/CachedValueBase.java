@@ -35,7 +35,7 @@ import java.util.List;
  */
 public abstract class CachedValueBase<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.CachedValueImpl");
-  private volatile SoftReference<Data<T>> myData = null;
+  private volatile SoftReference<Data<T>> myData;
 
   private Data<T> computeData(@Nullable CachedValueProvider.Result<T> result) {
     T value = result == null ? null : result.getValue();

@@ -295,6 +295,10 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
     PsiClassType superType;
     PsiClass superClass = aClass.getSuperClass();
+    if (superClass == null) {
+      //java.lang.Object was not found
+      return null;
+    }
     PsiClassType[] interfaceTypes = aClass.getImplementsListTypes();
     if (interfaceTypes.length > 0 && !InlineToAnonymousClassHandler.isRedundantImplements(superClass, interfaceTypes [0])) {
       superType = interfaceTypes [0];
@@ -305,10 +309,6 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         superType = classTypes [0];
       }
       else {
-        if (superClass == null) {
-          //java.lang.Object was not found
-          return null;
-        }
         superType = factory.createType(superClass);
       }
     }

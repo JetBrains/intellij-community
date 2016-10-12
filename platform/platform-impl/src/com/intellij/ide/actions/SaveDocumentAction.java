@@ -1,17 +1,16 @@
 package com.intellij.ide.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.DumbAwareAction;
 
 /**
  * @author yole
  */
-public class SaveDocumentAction extends AnAction {
+public class SaveDocumentAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Document doc = getDocument(e);

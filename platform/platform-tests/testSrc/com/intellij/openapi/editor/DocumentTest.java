@@ -82,48 +82,13 @@ public class DocumentTest extends LightPlatformTestCase {
 
     final Document doc = new DocumentImpl("xxx");
 
-    mustThrow(new Runnable(){
-      @Override
-      public void run() {
-        doc.insertString(1,"x");
-      }
-    });
-    mustThrow(new Runnable(){
-      @Override
-      public void run() {
-        doc.deleteString(1, 2);
-      }
-    });
-    mustThrow(new Runnable(){
-      @Override
-      public void run() {
-        doc.replaceString(1, 2, "s");
-      }
-    });
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        doc.insertString(1,"s");
-      }
-    });
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        doc.deleteString(1,2);
-      }
-    });
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        doc.replaceString(1,2,"xxx");
-      }
-    });
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      @Override
-      public void run() {
-        doc.setText("sss");
-      }
-    });
+    mustThrow(() -> doc.insertString(1, "x"));
+    mustThrow(() -> doc.deleteString(1, 2));
+    mustThrow(() -> doc.replaceString(1, 2, "s"));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.insertString(1, "s"));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.deleteString(1, 2));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.replaceString(1, 2, "xxx"));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> doc.setText("sss"));
 
     DocumentImpl console = new DocumentImpl("xxxx", true);
     // need no stinking command
@@ -136,16 +101,13 @@ public class DocumentTest extends LightPlatformTestCase {
   }
   
   public void testEmptyDocumentLineCount() {
-    WriteCommandAction.runWriteCommandAction(ourProject, new Runnable() {
-      @Override
-      public void run() {
-        DocumentImpl document = new DocumentImpl("");
-        assertEquals(0, document.getLineCount());
-        document.insertString(0, "a");
-        assertEquals(1, document.getLineCount());
-        document.deleteString(0, 1);
-        assertEquals(0, document.getLineCount());
-      }
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
+      DocumentImpl document = new DocumentImpl("");
+      assertEquals(0, document.getLineCount());
+      document.insertString(0, "a");
+      assertEquals(1, document.getLineCount());
+      document.deleteString(0, 1);
+      assertEquals(0, document.getLineCount());
     });
   }
 

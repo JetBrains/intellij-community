@@ -53,7 +53,12 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
       parser.parse(input, this);
     }
     catch (Exception e) {
-      throw new SchemeImportException(e);
+      if (e.getCause() instanceof NonEclipseXmlFileException) {
+        throw new SchemeImportException("The input file is not a valid Eclipse XML profile.");
+      }
+      else {
+        throw new SchemeImportException(e);
+      }
     }
   }
 
@@ -79,7 +84,13 @@ public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXm
       // Ignore
     }
     else {
-      throw new SAXException("Unknown XML element: " + qName);
+      throw new SAXException(new NonEclipseXmlFileException("Unknown XML element: " + qName));
+    }
+  }
+  
+  private static class NonEclipseXmlFileException extends Exception {
+    public NonEclipseXmlFileException(String message) {
+      super(message);
     }
   }
 

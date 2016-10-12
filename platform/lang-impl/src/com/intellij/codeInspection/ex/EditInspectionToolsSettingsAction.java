@@ -23,6 +23,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -36,6 +37,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Consumer;
 
 /**
  * User: anna
@@ -91,6 +93,13 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
                                          final InspectionProfile inspectionProfile,
                                          final boolean canChooseDifferentProfile,
                                          final String selectedToolShortName) {
+    return editSettings(project, inspectionProfile, canChooseDifferentProfile, c -> c.selectInspectionTool(selectedToolShortName));
+  }
+
+  public static boolean editSettings(final Project project,
+                                     final InspectionProfile inspectionProfile,
+                                     final boolean canChooseDifferentProfile,
+                                     final Consumer<ErrorsConfigurable> configurableAction) {
     final ShowSettingsUtil settingsUtil = ShowSettingsUtil.getInstance();
     final ErrorsConfigurable errorsConfigurable;
     if (!canChooseDifferentProfile) {
@@ -100,19 +109,10 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
     else {
       errorsConfigurable = ErrorsConfigurable.SERVICE.createConfigurable(project);
     }
-    return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
-      @Override
-      public void run() {
-        errorsConfigurable.selectProfile(inspectionProfile);
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            errorsConfigurable.selectInspectionTool(selectedToolShortName);
-          }
-        });
-      }
+    return settingsUtil.editConfigurable(project, errorsConfigurable, () -> {
+      errorsConfigurable.selectProfile(inspectionProfile);
+      ApplicationManager.getApplication().invokeLater(() -> configurableAction.accept(errorsConfigurable));
     });
-
   }
 
   @Override

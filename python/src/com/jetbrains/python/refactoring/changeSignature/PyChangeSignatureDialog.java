@@ -221,11 +221,9 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
   @Override
   protected ValidationInfo doValidate() {
     final String message = validateAndCommitData();
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        getRefactorAction().setEnabled(message == null);
-        getPreviewAction().setEnabled(message == null);
-      }
+    SwingUtilities.invokeLater(() -> {
+      getRefactorAction().setEnabled(message == null);
+      getPreviewAction().setEnabled(message == null);
     });
     if (message != null) return new ValidationInfo(message);
     return super.doValidate();

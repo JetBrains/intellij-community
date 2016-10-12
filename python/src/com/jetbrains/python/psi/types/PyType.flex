@@ -8,16 +8,13 @@ import static com.jetbrains.python.psi.types.PyTypeTokenTypes.*;
 %%
 
 
-%class PyTypeLexer
+%class _PyTypeLexer
 %implements FlexLexer
 %unicode
 %public
 
 %function advance
 %type PyElementType
-
-%eof{ return;
-%eof}
 
 
 %%

@@ -36,6 +36,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -73,25 +74,17 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
 
   private static boolean findClassInheritors(final PsiClass element) {
     final Collection<PsiElement> inheritors = new ArrayList<PsiElement>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final PsiClass inheritor = ClassInheritorsSearch.search(element).findFirst();
-            if (inheritor != null) {
-              inheritors.add(inheritor);
-            } else {
-              final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(element).findFirst();
-              if (functionalExpression != null) {
-                inheritors.add(functionalExpression);
-              }
-            }
-          }
-        });
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
+      final PsiClass inheritor = ClassInheritorsSearch.search(element).findFirst();
+      if (inheritor != null) {
+        inheritors.add(inheritor);
+      } else {
+        final PsiFunctionalExpression functionalExpression = FunctionalExpressionSearch.search(element).findFirst();
+        if (functionalExpression != null) {
+          inheritors.add(functionalExpression);
+        }
       }
-    }, "Searching for class \"" + element.getQualifiedName() + "\" inheritors ...", true, element.getProject())) return false;
+    }), "Searching for class \"" + element.getQualifiedName() + "\" inheritors ...", true, element.getProject())) return false;
     return inheritors.isEmpty();
   }
 
@@ -122,17 +115,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     }
 
     final Ref<String> errorMessage = new Ref<String>();
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            errorMessage.set(getCannotInlineMessage(psiClass));
-          }
-        });
-      }
-    }, "Check if inline is possible...", true, project)) return;
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> errorMessage.set(getCannotInlineMessage(psiClass))), "Check if inline is possible...", true, project)) return;
     if (errorMessage.get() != null) {
       CommonRefactoringUtil.showErrorHint(project, editor, errorMessage.get(), RefactoringBundle.message("inline.to.anonymous.refactoring"), null);
       return;
@@ -256,7 +239,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       }
       else if (method.findSuperMethods().length == 0) {
         if (!ReferencesSearch.search(method).forEach(new AllowedUsagesProcessor(psiClass))) {
-          return "Class cannot be inlined because it has usages of methods not inherited from its superclass or interface";
+          return "Class cannot be inlined because there are usages of its methods not inherited from its superclass or interface";
         }
       }
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -307,7 +290,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     return getCannotInlineDueToUsagesMessage(psiClass);
   }
 
-  static boolean isRedundantImplements(final PsiClass superClass, final PsiClassType interfaceType) {
+  static boolean isRedundantImplements(@NotNull final PsiClass superClass, final PsiClassType interfaceType) {
     boolean redundantImplements = false;
     PsiClassType[] superClassInterfaces = superClass.getImplementsListTypes();
     for(PsiClassType superClassInterface: superClassInterfaces) {

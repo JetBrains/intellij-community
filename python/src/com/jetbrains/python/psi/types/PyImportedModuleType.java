@@ -67,12 +67,7 @@ public class PyImportedModuleType implements PyType {
         final List<PsiElement> importedSubmodules = PyModuleType.collectImportedSubmodules((PsiFileSystemItem)resolved, location);
         if (importedSubmodules != null) {
           final Set<PsiElement> imported = Sets.newHashSet(importedSubmodules);
-          elements = ContainerUtil.filter(elements, new Condition<PsiElement>() {
-            @Override
-            public boolean value(PsiElement element) {
-              return imported.contains(element);
-            }
-          });
+          elements = ContainerUtil.filter(elements, element -> imported.contains(element));
         }
       }
       return ResolveImportUtil.rateResults(elements);

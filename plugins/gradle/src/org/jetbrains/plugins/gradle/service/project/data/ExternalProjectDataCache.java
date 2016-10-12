@@ -82,13 +82,10 @@ public class ExternalProjectDataCache {
       LOG.debug("Can not find data for project at: " + projectRootDir);
       LOG.debug("Existing imported projects paths: " + ContainerUtil.map(
         myExternalRootProjects.entrySet(),
-        new Function<Map.Entry<Pair<ProjectSystemId, File>, ExternalProject>, Object>() {
-          @Override
-          public Object fun(Map.Entry<Pair<ProjectSystemId, File>, ExternalProject> entry) {
-            //noinspection ConstantConditions
-            if (!(entry.getValue() instanceof ExternalProject)) return null;
-            return Pair.create(entry.getKey(), entry.getValue().getProjectDir());
-          }
+        (Function<Map.Entry<Pair<ProjectSystemId, File>, ExternalProject>, Object>)entry -> {
+          //noinspection ConstantConditions
+          if (!(entry.getValue() instanceof ExternalProject)) return null;
+          return Pair.create(entry.getKey(), entry.getValue().getProjectDir());
         }));
     }
     return externalProject;

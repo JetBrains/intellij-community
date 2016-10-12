@@ -444,14 +444,11 @@ public class EditorTestUtil {
   public static FoldRegion addFoldRegion(@NotNull Editor editor, final int startOffset, final int endOffset, final String placeholder, final boolean collapse) {
     final FoldingModel foldingModel = editor.getFoldingModel();
     final Ref<FoldRegion> ref = new Ref<FoldRegion>();
-    foldingModel.runBatchFoldingOperation(new Runnable() {
-      @Override
-      public void run() {
-        FoldRegion region = foldingModel.addFoldRegion(startOffset, endOffset, placeholder);
-        assertNotNull(region);
-        region.setExpanded(!collapse);
-        ref.set(region);
-      }
+    foldingModel.runBatchFoldingOperation(() -> {
+      FoldRegion region = foldingModel.addFoldRegion(startOffset, endOffset, placeholder);
+      assertNotNull(region);
+      region.setExpanded(!collapse);
+      ref.set(region);
     });
     return ref.get();
   }

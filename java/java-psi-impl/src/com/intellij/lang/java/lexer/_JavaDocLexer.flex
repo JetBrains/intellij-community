@@ -25,8 +25,7 @@ import com.intellij.psi.tree.IElementType;
 
   public void goTo(int offset) {
     zzCurrentPos = zzMarkedPos = zzStartRead = offset;
-    zzPushbackPos = 0;
-    zzAtEOF = offset < zzEndRead;
+    zzAtEOF = false;
   }
 %}
 
@@ -35,8 +34,6 @@ import com.intellij.psi.tree.IElementType;
 %unicode
 %function advance
 %type IElementType
-%eof{ return;
-%eof}
 
 %state COMMENT_DATA_START
 %state COMMENT_DATA

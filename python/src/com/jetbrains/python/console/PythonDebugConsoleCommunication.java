@@ -15,8 +15,10 @@
  */
 package com.jetbrains.python.console;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.Function;
 import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
@@ -26,12 +28,16 @@ import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.List;
 
 /**
  * @author traff
  */
 public class PythonDebugConsoleCommunication extends AbstractConsoleCommunication {
+  private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.console.pydev.PythonDebugConsoleCommunication");
   private final PyDebugProcess myDebugProcess;
 
   private final StringBuilder myExpression = new StringBuilder();
@@ -55,7 +61,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
 
   @Override
   public boolean isWaitingForInput() {
-    return false;
+    return waitingForInput;
   }
 
   @Override
@@ -78,24 +84,41 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
   }
 
   public void execInterpreter(ConsoleCodeFragment code, final Function<InterpreterResponse, Object> callback) {
-    myExpression.append(code.getText());
-    exec(new ConsoleCodeFragment(myExpression.toString(), false), new PyDebugCallback<Pair<String, Boolean>>() {
-      @Override
-      public void ok(Pair<String, Boolean> executed) {
-        boolean more = executed.second;
-
-        if (!more) {
-          myExpression.setLength(0);
+    if (waitingForInput) {
+      final OutputStream processInput = myDebugProcess.getProcessHandler().getProcessInput();
+      if (processInput != null) {
+        try {
+          final Charset defaultCharset = EncodingProjectManager.getInstance(myDebugProcess.getProject()).getDefaultCharset();
+          processInput.write((code.getText()).getBytes(defaultCharset));
+          processInput.flush();
         }
-        callback.fun(new InterpreterResponse(more, isWaitingForInput()));
+        catch (IOException e) {
+          LOG.error(e.getMessage());
+        }
       }
+      waitingForInput = false;
+    }
+    else {
 
-      @Override
-      public void error(PyDebuggerException exception) {
-        myExpression.setLength(0);
-        callback.fun(new InterpreterResponse(false, isWaitingForInput()));
-      }
-    });
+      myExpression.append(code.getText());
+      exec(new ConsoleCodeFragment(myExpression.toString(), false), new PyDebugCallback<Pair<String, Boolean>>() {
+        @Override
+        public void ok(Pair<String, Boolean> executed) {
+          boolean more = executed.second;
+
+          if (!more) {
+            myExpression.setLength(0);
+          }
+          callback.fun(new InterpreterResponse(more, isWaitingForInput()));
+        }
+
+        @Override
+        public void error(PyDebuggerException exception) {
+          myExpression.setLength(0);
+          callback.fun(new InterpreterResponse(false, isWaitingForInput()));
+        }
+      });
+    }
   }
 
   @Override

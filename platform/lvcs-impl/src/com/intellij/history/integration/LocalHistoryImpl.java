@@ -64,12 +64,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
   public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode() && ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-    myShutdownTask = new Runnable() {
-      @Override
-      public void run() {
-        disposeComponent();
-      }
-    };
+    myShutdownTask = () -> disposeComponent();
     ShutDownTracker.getInstance().registerShutdownTask(myShutdownTask);
 
     initHistory();
@@ -99,12 +94,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     fm.addVirtualFileManagerListener(myEventDispatcher);
 
     if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          validateStorage();
-        }
-      });
+      ApplicationManager.getApplication().executeOnPooledThread(() -> validateStorage());
     }
   }
 

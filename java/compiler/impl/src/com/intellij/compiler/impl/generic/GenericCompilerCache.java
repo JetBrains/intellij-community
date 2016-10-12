@@ -88,12 +88,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   }
 
   public void processSources(final int targetId, final Processor<Key> processor) throws IOException {
-    myPersistentMap.processKeysWithExistingMapping(new Processor<KeyAndTargetData<Key>>() {
-      @Override
-      public boolean process(KeyAndTargetData<Key> data) {
-        return targetId == data.myTarget ? processor.process(data.myKey) : true;
-      }
-    });
+    myPersistentMap.processKeysWithExistingMapping(data -> targetId == data.myTarget ? processor.process(data.myKey) : true);
   }
 
   public void putState(int targetId, @NotNull Key key, @NotNull SourceState sourceState, @NotNull OutputState outputState) throws IOException {

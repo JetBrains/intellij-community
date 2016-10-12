@@ -37,26 +37,18 @@ import java.util.Arrays;
 
 public class GroovyConsoleUtil {
 
-  public static final Condition<Module> APPLICABLE_MODULE = new Condition<Module>() {
-    @Override
-    public boolean value(Module module) {
-      return GroovyFacetUtil.isSuitableModule(module);
-    }
-  };
+  public static final Condition<Module> APPLICABLE_MODULE = module -> GroovyFacetUtil.isSuitableModule(module);
 
-  private static final Function<Module, String> MODULE_VERSION = new Function<Module, String>() {
-    @Override
-    public String fun(@NotNull Module module) {
-      final String moduleGroovyHomePath = LibrariesUtil.getGroovyHomePath(module);
-      boolean bundled = moduleGroovyHomePath == null || !hasGroovyAll(module);
-      final String homePathToUse = bundled
-                                   ? GroovyFacetUtil.getBundledGroovyJar().getParentFile().getParent()
-                                   : moduleGroovyHomePath;
-      final String version = GroovyConfigUtils.getInstance().getSDKVersion(homePathToUse);
-      return version == AbstractConfigUtils.UNDEFINED_VERSION
-             ? ""
-             : (bundled ? "Bundled " : "") + "Groovy " + version;
-    }
+  private static final Function<Module, String> MODULE_VERSION = module -> {
+    final String moduleGroovyHomePath = LibrariesUtil.getGroovyHomePath(module);
+    boolean bundled = moduleGroovyHomePath == null || !hasGroovyAll(module);
+    final String homePathToUse = bundled
+                                 ? GroovyFacetUtil.getBundledGroovyJar().getParentFile().getParent()
+                                 : moduleGroovyHomePath;
+    final String version = GroovyConfigUtils.getInstance().getSDKVersion(homePathToUse);
+    return version == AbstractConfigUtils.UNDEFINED_VERSION
+           ? ""
+           : (bundled ? "Bundled " : "") + "Groovy " + version;
   };
 
   static boolean hasGroovyAll(Module module) {

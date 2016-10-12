@@ -383,6 +383,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
     doTest();
   }
 
+  public void testInferenceVariablesErasure() throws Exception {
+    doTest();
+  }
+
   public void testUncheckedWarningConvertingToInferenceVariable() throws Exception {
     doTest();
   }
@@ -465,6 +469,10 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   }
 
   public void testCreateFreshVariablesOnlyForWildcardPlacesDuringReturnTypeProcessing() throws Exception {
+    doTest();
+  }
+
+  public void testCapturedConversionDuringDirectSuperCheck() throws Exception {
     doTest();
   }
 

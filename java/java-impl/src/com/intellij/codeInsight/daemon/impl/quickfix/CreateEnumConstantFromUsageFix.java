@@ -60,12 +60,7 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
       final PsiMethod constructor = constructors[0];
       final PsiParameter[] parameters = constructor.getParameterList().getParameters();
       if (parameters.length > 0) {
-        final String params = StringUtil.join(parameters, new Function<PsiParameter, String>() {
-          @Override
-          public String fun(PsiParameter psiParameter) {
-            return psiParameter.getName();
-          }
-        }, ",");
+        final String params = StringUtil.join(parameters, psiParameter -> psiParameter.getName(), ",");
         enumConstant = (PsiEnumConstant)enumConstant.replace(elementFactory.createEnumConstantFromText(name + "(" + params + ")", null));
         final TemplateBuilderImpl builder = new TemplateBuilderImpl(enumConstant);
 
@@ -108,14 +103,42 @@ public class CreateEnumConstantFromUsageFix extends CreateVarFromUsageFix implem
     if (enumClass != null) {
       return Collections.singletonList(enumClass);
     }
-    ExpectedTypeInfo[] typeInfos = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
+
+    if (myReferenceExpression.isQualified()) {
+      final PsiClass aClass = getTargetClassByExpectedTypes(myReferenceExpression.getQualifierExpression());
+      if (aClass != null) {
+        return Collections.singletonList(aClass);
+      }
+    }
+    else {
+      final PsiClass targetClass = getTargetClassByExpectedTypes(myReferenceExpression);
+      if (targetClass != null) {
+        final PsiFile containingFile = myReferenceExpression.getContainingFile();
+        if (containingFile instanceof PsiJavaFile) {
+          final PsiImportList importList = ((PsiJavaFile)containingFile).getImportList();
+          if (importList != null) {
+            for (PsiImportStaticStatement statement : importList.getImportStaticStatements()) {
+              if (statement.isOnDemand() && targetClass.equals(statement.resolveTargetClass())) {
+                return Collections.singletonList(targetClass);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return Collections.emptyList();
+  }
+
+  private static PsiClass getTargetClassByExpectedTypes(PsiExpression expression) {
+    ExpectedTypeInfo[] typeInfos = CreateFromUsageUtils.guessExpectedTypes(expression, false);
     for (final ExpectedTypeInfo typeInfo : typeInfos) {
       final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(typeInfo.getType());
       if (psiClass != null && psiClass.isEnum()) {
-        return Collections.singletonList(psiClass);
+        return psiClass;
       }
     }
-    return Collections.emptyList();
+    return null;
   }
 
   @Override

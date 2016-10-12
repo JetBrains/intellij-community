@@ -149,12 +149,9 @@ public class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
       return true;
     }
-    boolean accepted = askUser && CertificateManager.showAcceptDialog(new Callable<DialogWrapper>() {
-      @Override
-      public DialogWrapper call() throws Exception {
-        // TODO may be another kind of warning, if default trust store is missing
-        return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint);
-      }
+    boolean accepted = askUser && CertificateManager.showAcceptDialog(() -> {
+      // TODO may be another kind of warning, if default trust store is missing
+      return CertificateWarningDialog.createUntrustedCertificateWarning(endPoint);
     });
     if (accepted) {
       LOG.info("Certificate was accepted by user");

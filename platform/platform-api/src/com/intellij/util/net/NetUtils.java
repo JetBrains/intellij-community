@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.util.net;
 
-import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,33 +34,17 @@ public class NetUtils {
   private NetUtils() { }
 
   public static boolean canConnectToSocket(String host, int port) {
-    return canConnectToSocket(host, port, false);
-  }
-
-  public static boolean canConnectToSocketOpenedByJavaProcess(String host, int port) {
-    return canConnectToSocket(host, port, Patches.SUN_BUG_ID_7179799);
-  }
-
-  private static boolean canConnectToSocket(String host, int port, boolean alwaysTryToConnectDirectly) {
     if (isLocalhost(host)) {
-      if (!canBindToLocalSocket(host, port)) {
-        return true;
-      }
-      return alwaysTryToConnectDirectly && canConnectToRemoteSocket(host, port);
+      return !canBindToLocalSocket(host, port);
     }
     else {
       return canConnectToRemoteSocket(host, port);
     }
   }
 
+  @Deprecated
   public static InetAddress getLoopbackAddress() {
-    try {
-      //  todo use JDK 7 InetAddress.getLoopbackAddress()
-      return InetAddress.getByName(null);
-    }
-    catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
+    return InetAddress.getLoopbackAddress();
   }
 
   public static boolean isLocalhost(@NotNull String host) {
@@ -230,6 +213,6 @@ public class NetUtils {
   }
 
   public static boolean isSniEnabled() {
-    return SystemInfo.isJavaVersionAtLeast("1.7") && SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true);
+    return SystemProperties.getBooleanProperty("jsse.enableSNIExtension", true);
   }
 }

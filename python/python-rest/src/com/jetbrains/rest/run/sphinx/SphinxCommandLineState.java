@@ -36,13 +36,10 @@ public class SphinxCommandLineState extends RestCommandLineState {
 
   @Override
   protected Runnable getAfterTask() {
-    return new Runnable() {
-      @Override
-      public void run() {
-        VirtualFile virtualFile = findOutput();
-        if (virtualFile != null)
-          LocalFileSystem.getInstance().refreshFiles(Collections.singleton(virtualFile), false, true, null);
-      }
+    return () -> {
+      VirtualFile virtualFile = findOutput();
+      if (virtualFile != null)
+        LocalFileSystem.getInstance().refreshFiles(Collections.singleton(virtualFile), false, true, null);
     };
   }
 

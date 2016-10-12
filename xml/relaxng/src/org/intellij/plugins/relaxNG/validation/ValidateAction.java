@@ -125,50 +125,32 @@ public class ValidateAction extends AnAction {
 
     final MessageViewHelper helper = new MessageViewHelper(project, CONTENT_NAME, KEY);
 
-    helper.openMessageView(new Runnable() {
-      @Override
-      public void run() {
-        doRun(project, instanceFile, schemaFile);
-      }
-    });
+    helper.openMessageView(() -> doRun(project, instanceFile, schemaFile));
 
-    final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          @Override
-          public void run() {
-            final MessageViewHelper.ErrorHandler eh = helper.new ErrorHandler();
+    final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(
+      () -> ApplicationManager.getApplication().runReadAction(() -> {
+        final MessageViewHelper.ErrorHandler eh = helper.new ErrorHandler();
 
-            instanceFile.putUserData(IN_PROGRESS_KEY, Boolean.TRUE);
-            try {
-              doValidation(instanceFile, schemaFile, eh);
-            } finally {
-              instanceFile.putUserData(IN_PROGRESS_KEY, null);
-            }
+        instanceFile.putUserData(IN_PROGRESS_KEY, Boolean.TRUE);
+        try {
+          doValidation(instanceFile, schemaFile, eh);
+        } finally {
+          instanceFile.putUserData(IN_PROGRESS_KEY, null);
+        }
 
-            SwingUtilities.invokeLater(
-              new Runnable() {
-                  @Override
-                  public void run() {
-                    if (!eh.hadErrorOrWarning()) {
-                      SwingUtilities.invokeLater(
-                          new Runnable() {
-                            @Override
-                            public void run() {
-                              helper.close();
-                              WindowManager.getInstance().getStatusBar(project).setInfo("No errors detected");
-                            }
-                          }
-                      );
-                    }
-                  }
+        SwingUtilities.invokeLater(
+          () -> {
+            if (!eh.hadErrorOrWarning()) {
+              SwingUtilities.invokeLater(
+                () -> {
+                  helper.close();
+                  WindowManager.getInstance().getStatusBar(project).setInfo("No errors detected");
                 }
-            );
+              );
+            }
           }
-        });
-      }
-    });
+        );
+      }));
 
     helper.setProcessController(new NewErrorTreeViewPanel.ProcessController() {
       @Override

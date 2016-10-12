@@ -50,21 +50,19 @@ public class SshSharedConnection {
     myConnectionSettings = connectionSettings;
     myLock = new Object();
 
-    myConnectionFactory = new ThrowableComputable<Connection, AuthenticationException>() {
-      public Connection compute() throws AuthenticationException {
-        try {
-          SshLogger.debug("connection factory called");
-          return SshConnectionUtils.openConnection(connectionSettings, authentication);
-        }
-        catch (AuthenticationException e) {
-          // todo +-
-          myValid.set(false);
-          throw e;
-        } catch (IOException e) {
-          // todo +-
-          myValid.set(false);
-          throw new AuthenticationException(e.getMessage(), e);
-        }
+    myConnectionFactory = () -> {
+      try {
+        SshLogger.debug("connection factory called");
+        return SshConnectionUtils.openConnection(connectionSettings, authentication);
+      }
+      catch (AuthenticationException e) {
+        // todo +-
+        myValid.set(false);
+        throw e;
+      } catch (IOException e) {
+        // todo +-
+        myValid.set(false);
+        throw new AuthenticationException(e.getMessage(), e);
       }
     };
     myQueue = new LinkedList<Cell>();
@@ -146,31 +144,27 @@ public class SshSharedConnection {
       myRepository = repository;
       mySessions = new LinkedList<IConnection>();
 
-      myCloseListener = new Consumer<SshSessionConnection>() {
-            public void consume(final SshSessionConnection sshSessionConnection) {
-              synchronized (myLock) {
-                final boolean removed = mySessions.remove(sshSessionConnection);
-                SshLogger.debug("shared connection: session closed notification, removed: " + removed);
-                myTs = System.currentTimeMillis();
-              }
-            }
-          };
+      myCloseListener = sshSessionConnection -> {
+        synchronized (myLock) {
+          final boolean removed = mySessions.remove(sshSessionConnection);
+          SshLogger.debug("shared connection: session closed notification, removed: " + removed);
+          myTs = System.currentTimeMillis();
+        }
+      };
 
-      mySessionProvider = new ThrowableComputable<Session, AuthenticationException>() {
-        public Session compute() throws AuthenticationException {
-          final Connection connection;
-          synchronized (myLock) {
-            connection = myConnectionLifeCycle.getConnection();
-          }
-          SshLogger.debug("shared connection: opening session");
-          try {
-            final Session session = connection.openSession();
-            session.execCommand("cvs server");
-            return session;
-          }
-          catch (IOException e) {
-            throw new AuthenticationException(e.getMessage(), e);
-          }
+      mySessionProvider = () -> {
+        final Connection connection;
+        synchronized (myLock) {
+          connection = myConnectionLifeCycle.getConnection();
+        }
+        SshLogger.debug("shared connection: opening session");
+        try {
+          final Session session = connection.openSession();
+          session.execCommand("cvs server");
+          return session;
+        }
+        catch (IOException e) {
+          throw new AuthenticationException(e.getMessage(), e);
         }
       };
     }

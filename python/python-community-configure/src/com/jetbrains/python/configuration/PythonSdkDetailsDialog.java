@@ -155,6 +155,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
           updateOkButton();
         }
       })
+      .setRemoveActionUpdater(e -> !(getSelectedSdk() instanceof PyDetectedSdk))
       .addExtraAction(new ToggleVirtualEnvFilterButton())
       .addExtraAction(new ShowPathButton());
 
@@ -226,6 +227,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       mySdkSettingsWereModified.run();
     }
     for (SdkModificator modificator : myModifiedModificators) {
+      /* This should always be true barring bug elsewhere, log error on else? */
       if (modificator.isWritable()) {
         modificator.commitChanges();
       }
@@ -274,19 +276,11 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
   private void addSdk(AnActionButton button) {
     PythonSdkDetailsStep
       .show(myProject, myProjectSdksModel.getSdks(), null, myMainPanel, button.getPreferredPopupPoint().getScreenPoint(),
-            new NullableConsumer<Sdk>() {
-              @Override
-              public void consume(Sdk sdk) {
-                addCreatedSdk(sdk, true);
-              }
-            });
+            sdk -> addCreatedSdk(sdk, true));
   }
 
   private void addCreatedSdk(@Nullable final Sdk sdk, boolean newVirtualEnv) {
     if (sdk != null) {
-      final PySdkService sdkService = PySdkService.getInstance();
-      sdkService.restoreSdk(sdk);
-
       boolean isVirtualEnv = PythonSdkType.isVirtualEnv(sdk);
       if (isVirtualEnv && !newVirtualEnv) {
         AddVEnvOptionsDialog dialog = new AddVEnvOptionsDialog(myMainPanel);
@@ -334,14 +328,11 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
 
   private void editSdk(final Sdk currentSdk) {
     final SdkModificator modificator = myModificators.get(currentSdk);
-    final EditSdkDialog dialog = new EditSdkDialog(myProject, modificator, new NullableFunction<String, String>() {
-      @Override
-      public String fun(String s) {
-        if (isDuplicateSdkName(s, currentSdk)) {
-          return PyBundle.message("sdk.details.dialog.error.duplicate.name");
-        }
-        return null;
+    final EditSdkDialog dialog = new EditSdkDialog(myProject, modificator, s -> {
+      if (isDuplicateSdkName(s, currentSdk)) {
+        return PyBundle.message("sdk.details.dialog.error.duplicate.name");
       }
+      return null;
     });
     if (dialog.showAndGet()) {
       mySdkList.repaint();
@@ -398,14 +389,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     final Sdk currentSdk = getSelectedSdk();
     if (currentSdk != null) {
       final Sdk sdk = myProjectSdksModel.findSdk(currentSdk);
-      final PySdkService sdkService = PySdkService.getInstance();
-      sdkService.removeSdk(currentSdk);
-      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, new Runnable() {
-        @Override
-        public void run() {
-          SdkConfigurationUtil.removeSdk(sdk);
-        }
-      });
+      DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> SdkConfigurationUtil.removeSdk(sdk));
 
       myProjectSdksModel.removeSdk(sdk);
       myProjectSdksModel.removeSdk(currentSdk);
@@ -538,6 +522,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
           setSelectedRoots(added);
         }
       });
+
+      super.addToolbarButtons(toolbarDecorator);
     }
 
     @Override

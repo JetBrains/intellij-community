@@ -327,12 +327,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
           langItems.add(langItem);
         }
       }
-      Collections.sort(langItems, new Comparator<JMenuItem>() {
-        @Override
-        public int compare(JMenuItem item1, JMenuItem item2) {
-          return item1.getText().compareToIgnoreCase(item2.getText());
-        }
-      });
+      Collections.sort(langItems, (item1, item2) -> item1.getText().compareToIgnoreCase(item2.getText()));
       for (JMenuItem langItem : langItems) {
         parentMenu.add(langItem);
       }

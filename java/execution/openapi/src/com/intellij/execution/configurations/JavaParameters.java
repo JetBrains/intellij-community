@@ -97,15 +97,11 @@ public class JavaParameters extends SimpleJavaParameters {
 
   @Nullable
   private static NotNullFunction<OrderEntry, VirtualFile[]> computeRootProvider(@MagicConstant(valuesFromClass = JavaParameters.class) int classPathType, final Sdk jdk) {
-    return (classPathType & JDK_ONLY) == 0 ? null : new NotNullFunction<OrderEntry, VirtualFile[]>() {
-      @NotNull
-      @Override
-      public VirtualFile[] fun(OrderEntry orderEntry) {
-          if (orderEntry instanceof JdkOrderEntry) {
-            return jdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-          }
-          return orderEntry.getFiles(OrderRootType.CLASSES);
+    return (classPathType & JDK_ONLY) == 0 ? null : (NotNullFunction<OrderEntry, VirtualFile[]>)orderEntry -> {
+        if (orderEntry instanceof JdkOrderEntry) {
+          return jdk.getRootProvider().getFiles(OrderRootType.CLASSES);
         }
+        return orderEntry.getFiles(OrderRootType.CLASSES);
       };
   }
 
@@ -150,15 +146,12 @@ public class JavaParameters extends SimpleJavaParameters {
     if (productionOnly) {
       enumerator = enumerator.productionOnly();
     }
-    enumerator.forEachModule(new Processor<Module>() {
-      @Override
-      public boolean process(Module module) {
-        Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk != null && sdk.getSdkType().equals(moduleSdk.getSdkType())) {
-          sdksFromDependencies.add(sdk);
-        }
-        return true;
+    enumerator.forEachModule(module1 -> {
+      Sdk sdk = ModuleRootManager.getInstance(module1).getSdk();
+      if (sdk != null && sdk.getSdkType().equals(moduleSdk.getSdkType())) {
+        sdksFromDependencies.add(sdk);
       }
+      return true;
     });
     return findLatestVersion(moduleSdk, sdksFromDependencies);
   }

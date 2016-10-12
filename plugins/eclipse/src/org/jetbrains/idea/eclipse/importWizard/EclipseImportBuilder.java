@@ -19,8 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -112,24 +111,18 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     ProgressManager.getInstance().run(new Task.Modal(getCurrentProject(), EclipseBundle.message("eclipse.import.scanning"), true) {
       public void run(@NotNull ProgressIndicator indicator) {
         final ArrayList<String> roots = new ArrayList<String>();
-        EclipseProjectFinder.findModuleRoots(roots, path, new Processor<String>() {
-          @Override
-          public boolean process(String path) {
-            final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            if (progressIndicator != null) {
-              if (progressIndicator.isCanceled()) return false;
-              progressIndicator.setText2(path);
-            }
-            return true;
+        EclipseProjectFinder.findModuleRoots(roots, path, path12 -> {
+          final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+          if (progressIndicator != null) {
+            if (progressIndicator.isCanceled()) return false;
+            progressIndicator.setText2(path12);
           }
+          return true;
         });
-        Collections.sort(roots, new Comparator<String>() {
-          @Override
-          public int compare(String path1, String path2) {
-            final String projectName1 = EclipseProjectFinder.findProjectName(path1);
-            final String projectName2 = EclipseProjectFinder.findProjectName(path2);
-            return projectName1 != null && projectName2 != null ? projectName1.compareToIgnoreCase(projectName2) : 0;
-          }
+        Collections.sort(roots, (path1, path2) -> {
+          final String projectName1 = EclipseProjectFinder.findProjectName(path1);
+          final String projectName2 = EclipseProjectFinder.findProjectName(path2);
+          return projectName1 != null && projectName2 != null ? projectName1.compareToIgnoreCase(projectName2) : 0;
         });
         getParameters().workspace = roots;
         getParameters().root = path;
@@ -180,23 +173,21 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     final List<String> projectsToConvert = getParameters().projectsToConvert;
     final boolean oneProjectToConvert = projectsToConvert.size() == 1;
     final String separator = oneProjectToConvert ? "<br>" : ", ";
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        try {
-          for (String path : projectsToConvert) {
-            File classPathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-            if (classPathFile.exists()) {
-              EclipseClasspathReader.collectVariables(variables, JDOMUtil.load(classPathFile), path);
-            }
-            collectUnknownNatures(path, naturesNames, separator);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        for (String path : projectsToConvert) {
+          File classPathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
+          if (classPathFile.exists()) {
+            EclipseClasspathReader.collectVariables(variables, JDOMUtil.load(classPathFile), path);
           }
+          collectUnknownNatures(path, naturesNames, separator);
         }
-        catch (IOException e) {
-          refEx.set(e);
-        }
-        catch (JDOMException e) {
-          refEx.set(e);
-        }
+      }
+      catch (IOException e) {
+        refEx.set(e);
+      }
+      catch (JDOMException e) {
+        refEx.set(e);
       }
     }, EclipseBundle.message("eclipse.import.converting"), false, currentProject);
 
@@ -209,28 +200,18 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       return false;
     }
 
-    final Runnable runnable = new Runnable() {
-      public void run() {
-        if (!naturesNames.isEmpty()) {
-          final String title = "Unknown Natures Detected";
-          final String naturesByProject;
-          if (oneProjectToConvert) {
-            naturesByProject = naturesNames.values().iterator().next();
-          }
-          else {
-            naturesByProject = StringUtil.join(naturesNames.keySet(), new Function<String, String>() {
-              @Override
-              public String fun(String projectPath) {
-                return projectPath + "(" + naturesNames.get(projectPath) + ")";
-              }
-            }, "<br>");
-          }
-          Notifications.Bus.notify(new Notification(title, title, "Imported projects contain unknown natures:<br>" + naturesByProject + "<br>" +
-                                                                  "Some settings may be lost after import.", NotificationType.WARNING));
-        }
+    if (!naturesNames.isEmpty()) {
+      final String title = "Unknown Natures Detected";
+      final String naturesByProject;
+      if (oneProjectToConvert) {
+        naturesByProject = naturesNames.values().iterator().next();
       }
-    };
-    ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL);
+      else {
+        naturesByProject = StringUtil.join(naturesNames.keySet(), projectPath -> projectPath + "(" + naturesNames.get(projectPath) + ")", "<br>");
+      }
+      Notifications.Bus.notify(new Notification(title, title, "Imported projects contain unknown natures:<br>" + naturesByProject + "<br>" +
+                                                              "Some settings may be lost after import.", NotificationType.WARNING));
+    }
 
     return true;
   }
@@ -267,13 +248,9 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         }
       }
       if (!files.isEmpty()) {
-        final int resultCode = Messages.showYesNoCancelDialog(ApplicationInfoEx.getInstanceEx().getFullApplicationName() +
+        final int resultCode = Messages.showYesNoCancelDialog(ApplicationNamesInfo.getInstance().getFullProductName() +
                                                               " module files found:\n" +
-                                                              StringUtil.join(files,new Function<File, String>() {
-                                                                public String fun(File file) {
-                                                                  return file.getPath();
-                                                                }
-                                                              }, "\n") +
+                                                              StringUtil.join(files, file -> file.getPath(), "\n") +
                                                               ".\n Would you like to reuse them?", "Module Files Found",
                                                               Messages.getQuestionIcon());
         if (resultCode != Messages.YES) {
@@ -330,19 +307,11 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
         ClasspathStorage.setStorageType(rootModel,
                                         getParameters().linkConverted ? JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID : ClassPathStorageUtil.DEFAULT_STORAGE);
         if (model != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              rootModel.commit();
-            }
-          });
+          ApplicationManager.getApplication().runWriteAction(() -> rootModel.commit());
         }
       }
       if (model == null) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            ModifiableModelCommitter.multiCommit(rootModels, moduleModel);
-          }
-        });
+        ApplicationManager.getApplication().runWriteAction(() -> ModifiableModelCommitter.multiCommit(rootModels, moduleModel));
       }
     }
     catch (Exception e) {
@@ -419,33 +388,25 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     if (module2NatureNames.size() == 0) {
       return;
     }
-    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-      @Override
-      public void run() {
-        DumbService.getInstance(project).smartInvokeLater(new Runnable() {
-          @Override
-          public void run() {
-            for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
-              final String importerNatureName = importer.getNatureName();
-              final List<Module> modulesToImport = new ArrayList<Module>();
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> DumbService.getInstance(project).smartInvokeLater(() -> {
+      for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
+        final String importerNatureName = importer.getNatureName();
+        final List<Module> modulesToImport = new ArrayList<Module>();
 
-              for (Map.Entry<Module, Set<String>> entry : module2NatureNames.entrySet()) {
-                final Module module = entry.getKey();
-                final Set<String> natureNames = entry.getValue();
+        for (Map.Entry<Module, Set<String>> entry : module2NatureNames.entrySet()) {
+          final Module module = entry.getKey();
+          final Set<String> natureNames = entry.getValue();
 
-                if (natureNames.contains(importerNatureName)) {
-                  modulesToImport.add(module);
-                }
-              }
-
-              if (modulesToImport.size() > 0) {
-                importer.doImport(project, modulesToImport);
-              }
-            }
+          if (natureNames.contains(importerNatureName)) {
+            modulesToImport.add(module);
           }
-        });
+        }
+
+        if (modulesToImport.size() > 0) {
+          importer.doImport(project, modulesToImport);
+        }
       }
-    });
+    }));
   }
 
   private static void createEclipseLibrary(final Project project, final Collection<String> libraries, final String libraryName) {
@@ -466,18 +427,16 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       if (file != null) {
         final VirtualFile pluginsDir = file.findChild("plugins");
         if (pluginsDir != null) {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            public void run() {
-              final LibraryTable table =
-                LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(LibraryTablesRegistrar.APPLICATION_LEVEL, project);
-              assert table != null;
-              final LibraryTable.ModifiableModel tableModel = table.getModifiableModel();
-              final Library library = tableModel.createLibrary(libraryName);
-              final Library.ModifiableModel libraryModel = library.getModifiableModel();
-              libraryModel.addJarDirectory(pluginsDir, true);
-              libraryModel.commit();
-              tableModel.commit();
-            }
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            final LibraryTable table =
+              LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(LibraryTablesRegistrar.APPLICATION_LEVEL, project);
+            assert table != null;
+            final LibraryTable.ModifiableModel tableModel = table.getModifiableModel();
+            final Library library = tableModel.createLibrary(libraryName);
+            final Library.ModifiableModel libraryModel = library.getModifiableModel();
+            libraryModel.addJarDirectory(pluginsDir, true);
+            libraryModel.commit();
+            tableModel.commit();
           });
           libraries.remove(libraryName);
         }

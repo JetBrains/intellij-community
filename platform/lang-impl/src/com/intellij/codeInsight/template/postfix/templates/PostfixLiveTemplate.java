@@ -39,6 +39,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -220,16 +222,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   private static void expandTemplate(@NotNull final PostfixTemplate template,
                                      @NotNull final Editor editor,
                                      @NotNull final PsiElement context) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().executeCommand(context.getProject(), new Runnable() {
-          public void run() {
-            template.expand(context, editor);
-          }
-        }, "Expand postfix template", POSTFIX_TEMPLATE_ID);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(context.getProject(), () -> template.expand(context, editor), "Expand postfix template", POSTFIX_TEMPLATE_ID));
   }
 
 
@@ -238,19 +231,12 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     final int currentOffset = editor.getCaretModel().getOffset();
     final int newOffset = currentOffset - key.length();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
-          public void run() {
-            Document document = editor.getDocument();
-            document.deleteString(newOffset, currentOffset);
-            editor.getCaretModel().moveToOffset(newOffset);
-            PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-          }
-        });
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+      Document document = editor.getDocument();
+      document.deleteString(newOffset, currentOffset);
+      editor.getCaretModel().moveToOffset(newOffset);
+      PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
+    }));
     return newOffset;
   }
 
@@ -278,18 +264,18 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
     final PsiElement context = CustomTemplateCallback.getContext(copyFile, positiveOffset(newOffset));
     final Document finalCopyDocument = copyDocument;
-    return new Condition<PostfixTemplate>() {
-      @Override
-      public boolean value(PostfixTemplate template) {
-        return template != null && template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
-      }
-    };
+    return template -> template != null && template.isEnabled(provider) && template.isApplicable(context, finalCopyDocument, newOffset);
   }
 
   @NotNull
   public static PsiFile copyFile(@NotNull PsiFile file, @NotNull StringBuilder fileContentWithoutKey) {
     final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(file.getProject());
     PsiFile copy = psiFileFactory.createFileFromText(file.getName(), file.getFileType(), fileContentWithoutKey);
+
+    if (copy instanceof PsiFileImpl) {
+      ((PsiFileImpl) copy).setOriginalFile(TemplateLanguageUtil.getBaseFile(file));
+    }
+
     VirtualFile vFile = copy.getVirtualFile();
     if (vFile != null) {
       vFile.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);

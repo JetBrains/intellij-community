@@ -25,7 +25,9 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class PsiNameValuePairPattern extends PsiElementPattern<PsiNameValuePair, PsiNameValuePairPattern> {
-  protected PsiNameValuePairPattern() {
+  static final PsiNameValuePairPattern NAME_VALUE_PAIR_PATTERN = new PsiNameValuePairPattern();
+
+  private PsiNameValuePairPattern() {
     super(PsiNameValuePair.class);
   }
 

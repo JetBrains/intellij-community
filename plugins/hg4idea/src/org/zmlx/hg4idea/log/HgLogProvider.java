@@ -222,7 +222,7 @@ public class HgLogProvider implements VcsLogProvider {
     if (filterCollection.getUserFilter() != null) {
       filterParameters.add("-r");
       String authorFilter =
-        StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.INSTANCE), "|");
+        StringUtil.join(ContainerUtil.map(filterCollection.getUserFilter().getUserNames(root), UserNameRegex.EXTENDED_INSTANCE), "|");
       filterParameters.add("user('re:" + authorFilter + "')");
     }
 

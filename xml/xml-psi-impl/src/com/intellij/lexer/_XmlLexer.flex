@@ -64,6 +64,7 @@ import com.intellij.psi.xml.*;
 %state DOCTYPE
 %xstate CDATA
 %state C_COMMENT_START
+/* this state should be last, number of states should be less than 16 */
 %state C_COMMENT_END
 
 ALPHA=[:letter:]

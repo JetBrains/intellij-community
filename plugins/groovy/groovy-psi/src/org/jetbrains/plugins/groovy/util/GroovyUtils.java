@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,16 @@
 
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -41,11 +39,20 @@ public abstract class GroovyUtils {
   }
 
   @Nullable
-  public static GrTypeDefinition getPublicClass(@Nullable VirtualFile virtualFile, PsiManager manager) {
+  public static GrTypeDefinition getPublicClass(@NotNull Project project, @NotNull VirtualFile file) {
+    return getPublicClass(file, PsiManager.getInstance(project));
+  }
+
+  @Nullable
+  public static GrTypeDefinition getPublicClass(@Nullable VirtualFile virtualFile, @NotNull PsiManager manager) {
     if (virtualFile == null) return null;
 
-    PsiFile psiFile = manager.findFile(virtualFile);
-    if ((psiFile instanceof GroovyFile)) {
+    PsiElement psiFile = manager.findFile(virtualFile);
+    if (psiFile instanceof PsiCompiledFile) {
+      psiFile = psiFile.getNavigationElement();
+    }
+
+    if (psiFile instanceof GroovyFile) {
       return getClassDefinition((GroovyFile)psiFile);
     }
 

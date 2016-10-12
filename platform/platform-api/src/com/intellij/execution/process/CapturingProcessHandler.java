@@ -63,15 +63,24 @@ public class CapturingProcessHandler extends OSProcessHandler {
     return new CapturingProcessAdapter(processOutput);
   }
 
+  @NotNull
   public ProcessOutput runProcess() {
     startNotify();
     if (waitFor()) {
-      myOutput.setExitCode(getProcess().exitValue());
+      setErrorCodeIfNotYetSet();
     }
     else {
       LOG.info("runProcess: exit value unavailable");
     }
     return myOutput;
+  }
+
+  private void setErrorCodeIfNotYetSet() {
+    // if exit code was set on processTerminated, no need to rewrite it
+    // WinPtyProcess returns -2 if pty is already closed
+    if (myOutput.hasErrorExitCode()) {
+      myOutput.setExitCode(getProcess().exitValue());
+    }
   }
 
   /**
@@ -96,7 +105,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
     else {
       startNotify();
       if (waitFor(timeoutInMilliseconds)) {
-        myOutput.setExitCode(getProcess().exitValue());
+        setErrorCodeIfNotYetSet();
       }
       else {
         if (destroyOnTimeout) {
@@ -115,21 +124,51 @@ public class CapturingProcessHandler extends OSProcessHandler {
 
   @NotNull
   public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator) {
+    return runProcessWithProgressIndicator(indicator, Integer.MAX_VALUE);
+  }
+
+  @NotNull
+  public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds) {
+    return runProcessWithProgressIndicator(indicator, timeoutInMilliseconds, true);
+  }
+
+  @NotNull
+  public ProcessOutput runProcessWithProgressIndicator(@NotNull ProgressIndicator indicator, int timeoutInMilliseconds, boolean destroyOnTimeout) {
+    final int WAIT_INTERVAL = 100;
+    int waitingTime = 0;
+    boolean setExitCode = true;
+
     startNotify();
-    while (!waitFor(100)) {
-      if (indicator.isCanceled()) {
-        if (!isProcessTerminating() && !isProcessTerminated()) {
+    while (!waitFor(WAIT_INTERVAL)) {
+      waitingTime += WAIT_INTERVAL;
+
+      boolean timeout = waitingTime >= timeoutInMilliseconds;
+      boolean canceled = indicator.isCanceled();
+
+      if (canceled || timeout) {
+        boolean destroying = canceled || destroyOnTimeout;
+        setExitCode = destroying;
+
+        if (destroying && !isProcessTerminating() && !isProcessTerminated()) {
           destroyProcess();
         }
-        myOutput.setCancelled();
+
+        if (canceled) {
+          myOutput.setCancelled();
+        }
+        else {
+          myOutput.setTimeout();
+        }
         break;
       }
     }
-    if (waitFor()) {
-      myOutput.setExitCode(getProcess().exitValue());
-    }
-    else {
-      LOG.info("runProcess: exit value unavailable");
+    if (setExitCode) {
+      if (waitFor()) {
+        setErrorCodeIfNotYetSet();
+      }
+      else {
+        LOG.info("runProcess: exit value unavailable");
+      }
     }
     return myOutput;
   }

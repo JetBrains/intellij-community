@@ -188,11 +188,7 @@ public class TestAll implements Test {
       int oldCount = testCaseLoader.getClasses().size();
       File classRootFile = new File(FileUtil.toSystemDependentName(classRoot));
       ClassFinder classFinder = new ClassFinder(classRootFile, packageRoot, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-      Collection<String> classes = classFinder.getClasses();
-      for (String c : classes) {
-        System.out.println("Class: " + c);
-      }
-      testCaseLoader.loadTestCases(classRootFile.getName(), classes);
+      testCaseLoader.loadTestCases(classRootFile.getName(), classFinder.getClasses());
       int newCount = testCaseLoader.getClasses().size();
       if (newCount != oldCount) {
         System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classRoot);
@@ -359,7 +355,6 @@ public class TestAll implements Test {
       }
     }
 
-    System.out.println("Running " + testCaseClass.getName());
     log("\nRunning " + testCaseClass.getName());
     Test test = getTest(testCaseClass);
     if (test == null) return;

@@ -25,4 +25,6 @@ public interface WizardDelegate {
   void doPreviousAction();
 
   void doFinishAction();
+
+  boolean canProceed();
 }

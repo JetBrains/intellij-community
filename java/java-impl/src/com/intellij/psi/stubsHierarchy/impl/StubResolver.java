@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.psi.stubsHierarchy.impl;
 import com.intellij.psi.impl.java.stubs.hierarchy.IndexTree;
 import com.intellij.psi.stubsHierarchy.stubs.Import;
 import com.intellij.psi.stubsHierarchy.stubs.UnitInfo;
+import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -58,12 +59,12 @@ public class StubResolver {
   @NotNull
   private Set<Symbol> findIdent(Symbol startScope, UnitInfo info, int name, int kind) {
     Set<Symbol> result = new HashSet<Symbol>();
-    if ((kind & IndexTree.CLASS) != 0) {
+    if (BitUtil.isSet(kind, IndexTree.CLASS)) {
       findType(startScope, name, result);
       findGlobalType(info, name, result);
     }
 
-    if ((kind & IndexTree.PACKAGE) != 0) {
+    if (BitUtil.isSet(kind, IndexTree.PACKAGE)) {
       Symbol.PackageSymbol pkg = mySymbols.getPackage(myNameEnvironment.qualifiedName(null, name, false));
       if (pkg != null)
         result.add(pkg);
@@ -92,12 +93,12 @@ public class StubResolver {
     if (fullname == null) {
       return;
     }
-    if ((kind & IndexTree.PACKAGE) != 0) {
+    if (BitUtil.isSet(kind, IndexTree.PACKAGE)) {
       Symbol.PackageSymbol pkg = mySymbols.getPackage(fullname);
       if (pkg != null)
         symbols.add(pkg);
     }
-    if ((kind & IndexTree.CLASS) != 0) {
+    if (BitUtil.isSet(kind, IndexTree.CLASS)) {
       Collections.addAll(symbols, loadClass(fullname));
     }
   }

@@ -16,12 +16,13 @@
 package git4idea.rebase;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import git4idea.DialogManager;
 import git4idea.commands.GitHandler;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +109,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   public int editCommits(final String path) {
     ensureOpen();
     final Ref<Boolean> isSuccess = new Ref<Boolean>();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
       public void run() {
         try {
           myEditorCancelled = false;
@@ -165,7 +166,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
         }
         isSuccess.set(false);
       }
-    });
+    }, ModalityState.defaultModalityState());
     return (isSuccess.isNull() || !isSuccess.get().booleanValue()) ? GitRebaseEditorMain.ERROR_EXIT_CODE : 0;
   }
 

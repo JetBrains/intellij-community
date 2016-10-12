@@ -1,7 +1,4 @@
 abstract class C<T> {
-    abstract void foo(T t);
-
-    @Override
     void foo(T t) {
 
     }

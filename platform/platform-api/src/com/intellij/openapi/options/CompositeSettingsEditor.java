@@ -113,11 +113,9 @@ public abstract class CompositeSettingsEditor<Settings> extends SettingsEditor<S
       if (myIsInSync || myIsDisposed) return;
       myChangedEditors.add(editor);
       mySyncAlarm.cancelAllRequests();
-      mySyncAlarm.addRequest(new Runnable() {
-        public void run() {
-          if (!myIsDisposed) {
-            sync();
-          }
+      mySyncAlarm.addRequest(() -> {
+        if (!myIsDisposed) {
+          sync();
         }
       }, 300);
     }

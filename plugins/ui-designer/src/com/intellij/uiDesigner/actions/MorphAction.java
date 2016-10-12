@@ -45,7 +45,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,24 +61,16 @@ public class MorphAction extends AbstractGuiEditorAction {
   }
 
   protected void actionPerformed(final GuiEditor editor, final List<RadComponent> selection, final AnActionEvent e) {
-    Processor<ComponentItem> processor = new Processor<ComponentItem>() {
-      public boolean process(final ComponentItem selectedValue) {
-        SwingUtilities.invokeLater(new Runnable() {
-          public void run() {
-            Runnable runnable = new Runnable() {
-              public void run() {
-                for(RadComponent c: selection) {
-                  if (!morphComponent(editor, c, selectedValue)) break;
-                }
-                editor.refreshAndSave(true);
-              }
-            };
-            CommandProcessor.getInstance().executeCommand(editor.getProject(), runnable, UIDesignerBundle.message("morph.component.command"), null);
-            editor.getGlassLayer().requestFocus();
-          }
-        });
-        return true;
-      }
+    Processor<ComponentItem> processor = selectedValue -> {
+      Runnable runnable = () -> {
+        for(RadComponent c: selection) {
+          if (!morphComponent(editor, c, selectedValue)) break;
+        }
+        editor.refreshAndSave(true);
+      };
+      CommandProcessor.getInstance().executeCommand(editor.getProject(), runnable, UIDesignerBundle.message("morph.component.command"), null);
+      editor.getGlassLayer().requestFocus();
+      return true;
     };
 
     PaletteListPopupStep step = new PaletteListPopupStep(editor, myLastMorphComponent, processor,

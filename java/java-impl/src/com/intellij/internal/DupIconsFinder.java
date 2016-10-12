@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import java.util.Map;
 public class DupIconsFinder {
 
   private static final MultiMap<Integer, String> hashes = new MultiMap<Integer, String>();
-  private static int totalClusters = 0;
-  private static int totalDups = 0;
+  private static int totalClusters;
+  private static int totalDups;
 
   public static void main(String[] args) throws Exception {
     File root = new File("/Users/max/images/icons");

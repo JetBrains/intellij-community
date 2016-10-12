@@ -157,6 +157,13 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.xml");
   }
 
+  public void testInnerClassSmartCompletion() throws Throwable {
+    myFixture.addClass("package foo; public class Foo { public static class Fubar extends Foo {} }");
+    myFixture.configureByFile(getTestName(false) + ".xml");
+    myFixture.complete(CompletionType.SMART);
+    myFixture.checkResultByFile(getTestName(false) + "_after.xml");
+  }
+
   public void testResolveExtensionsFromDependentDescriptor() throws Throwable {
     addPluginXml("xxx", """
         <id>com.intellij.xxx</id>
@@ -241,7 +248,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     configureLanguageAttributeTest()
     myFixture.testHighlighting("languageAttribute.xml", "MyLanguageAttributeEPBean.java")
   }
-  
+
   public void testLanguageAttributeCompletion() {
     configureLanguageAttributeTest()
     myFixture.allowTreeAccessForFile(myFixture.copyFileToProject("MyLanguageAttributeEPBean.java"));
@@ -253,7 +260,7 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     assertLookupElement(lookupElements[1], "MyAnonymousLanguageWithNameFromBundleID", "MyLanguage")
     assertLookupElement(lookupElements[2], "MyLanguageID", "MyLanguage")
   }
-  
+
   private static void assertLookupElement(LookupElement element, String lookupString, String typeText) {
     def presentation = new LookupElementPresentation()
     element.renderElement(presentation)
@@ -285,6 +292,9 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testIconAttribute() {
+    myFixture.addClass("package com.intellij.openapi.actionSystem; public class AnAction { }");
+    myFixture.addClass("package foo; public class FooAction extends com.intellij.openapi.actionSystem.AnAction { }");
+
     myFixture.addClass("package icons; " +
                        "public class MyIcons {" +
                        "  public static final javax.swing.Icon MyCustomIcon = null; " +
@@ -299,6 +309,33 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   public void testPluginWithModules() throws Throwable {
     myFixture.testHighlighting("pluginWithModules.xml");
+  }
+
+  public void testPluginWith99InUntilBuild()  {
+    myFixture.testHighlighting("pluginWith99InUntilBuild.xml");
+  }
+
+  public void testPluginWith9999InUntilBuild()  {
+    myFixture.testHighlighting("pluginWith9999InUntilBuild.xml");
+  }
+
+  public void testPluginWith10000InUntilBuild()  {
+    myFixture.testHighlighting("pluginWith10000InUntilBuild.xml");
+  }
+
+  public void testPluginWithStarInUntilBuild()  {
+    myFixture.testHighlighting("pluginWithStarInUntilBuild.xml");
+  }
+
+  public void testPluginWithBranchNumberInUntilBuild()  {
+    myFixture.testHighlighting("pluginWithBranchNumberInUntilBuild.xml");
+  }
+
+  public void testReplaceBigNumberInUntilBuildWithStarQuickFix() {
+    myFixture.enableInspections(PluginXmlDomInspection.class)
+    myFixture.configureByFile("pluginWithBigNumberInUntilBuild_before.xml")
+    myFixture.launchAction(myFixture.findSingleIntention("Change 'until-build'"))
+    myFixture.checkResultByFile("pluginWithBigNumberInUntilBuild_after.xml")
   }
 
   public void testPluginWithXInclude() throws Throwable {

@@ -39,12 +39,7 @@ public class RenameProjectAction extends DumbAwareAction {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     LOG.assertTrue(project instanceof ProjectEx);
     final Module[] modules = ModuleManager.getInstance(project).getModules();
-    final Module module = ContainerUtil.find(modules, new Condition<Module>() {
-      @Override
-      public boolean value(Module module) {
-        return project.getName().equals(module.getName());
-      }
-    });
+    final Module module = ContainerUtil.find(modules, module1 -> project.getName().equals(module1.getName()));
     Messages.showInputDialog(project, RefactoringBundle.message("enter.new.project.name"), RefactoringBundle.message("rename.project"),
                              Messages.getQuestionIcon(),
                              project.getName(),

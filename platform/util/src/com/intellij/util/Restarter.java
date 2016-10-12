@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,15 +41,7 @@ public class Restarter {
   }
 
   private static int getRestartCode() {
-    String s = System.getProperty("jb.restart.code");
-    if (s != null) {
-      try {
-        return Integer.parseInt(s);
-      }
-      catch (NumberFormatException ignore) {
-      }
-    }
-    return 0;
+    return SystemProperties.getIntProperty("jb.restart.code", 0);
   }
 
   public static boolean isSupported() {
@@ -87,7 +79,7 @@ public class Restarter {
     if (beforeRestart.length == 0) return;
 
     File restartDir = new File(getRestarterDir());
-    String systemPath = System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/system/restart";
+    String systemPath = new File(System.getProperty("user.home") + "/." + System.getProperty("idea.paths.selector") + "/system/restart").getPath();
     if (! systemPath.equals(restartDir.getPath())){
       throw new IOException("idea.system.path was changed. Restart is not supported.");
     }
@@ -122,7 +114,7 @@ public class Restarter {
     final int pid = kernel32.GetCurrentProcessId();
     final IntByReference argc = new IntByReference();
     Pointer argv_ptr = shell32.CommandLineToArgvW(kernel32.GetCommandLineW(), argc);
-    final String[] argv = argv_ptr.getStringArray(0, argc.getValue(), true);
+    final String[] argv = getRestartArgv(argv_ptr.getWideStringArray(0, argc.getValue()));
     kernel32.LocalFree(argv_ptr);
 
     // See https://blogs.msdn.microsoft.com/oldnewthing/20060515-07/?p=31203
@@ -143,7 +135,7 @@ public class Restarter {
       public void consume(List<String> commands) {
         Collections.addAll(commands, String.valueOf(pid), String.valueOf(beforeRestart.length));
         Collections.addAll(commands, beforeRestart);
-        Collections.addAll(commands, String.valueOf(argc.getValue()));
+        Collections.addAll(commands, String.valueOf(argv.length));
         Collections.addAll(commands, argv);
       }
     });
@@ -167,6 +159,24 @@ public class Restarter {
         Collections.addAll(commands, beforeRestart);
       }
     });
+  }
+
+  private static String[] getRestartArgv(String[] argv) {
+    int countArgs = argv.length;
+    for (int i = argv.length-1; i >=0; i--) {
+      if (argv[i].endsWith("com.intellij.idea.Main") ||
+          argv[i].endsWith(".exe")) {
+        countArgs = i + 1;
+        if (argv[i].endsWith(".exe") && argv[i].indexOf(File.separator) < 0) {
+          //absolute path
+          argv[i] = new File(PathManager.getBinPath(), argv[i]).getPath();
+        }
+        break;
+      }
+    }
+    String[] restartArg = new String[countArgs];
+    System.arraycopy(argv, 0, restartArg, 0, countArgs);
+    return restartArg;
   }
 
   private static void doScheduleRestart(File restarterFile, Consumer<List<String>> argumentsBuilder) throws IOException {

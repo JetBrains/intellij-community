@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.WeakHashMap;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +67,10 @@ import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.PixelGrabber;
 import java.beans.PropertyChangeListener;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -107,27 +111,10 @@ public class UIUtil {
      */
     if (!(SystemInfo.isLinux && Registry.is("linux.jdk.accessibility.atkwrapper.block"))) return;
 
-    String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
-
-    Properties properties = new Properties();
-    try {
-      File propsFile = new File(System.getProperty("java.home") + File.separator + "lib" + File.separator + "accessibility.properties");
-      FileInputStream in = new FileInputStream(propsFile);
-      properties.load(in);
-      in.close();
-    } catch (Exception ignore) {
-    }
-    if (!properties.isEmpty()) {
-      String classNames = System.getProperty("javax.accessibility.assistive_technologies");
-      if (classNames == null) {
-        // If the system property is not set, Toolkit will try to use the properties file.
-        classNames = properties.getProperty("assistive_technologies", null);
-        if (classNames != null && classNames.contains(ATK_WRAPPER)) {
-          // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
-          System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
-          LOG.info(ATK_WRAPPER + " is blocked, see IDEA-149219");
-        }
-      }
+    if (ScreenReader.isEnabled(ScreenReader.ATK_WRAPPER)) {
+      // Replace AtkWrapper with a dummy Object. It'll be instantiated & GC'ed right away, a NOP.
+      System.setProperty("javax.accessibility.assistive_technologies", "java.lang.Object");
+      LOG.info(ScreenReader.ATK_WRAPPER + " is blocked, see IDEA-149219");
     }
   }
 
@@ -267,7 +254,16 @@ public class UIUtil {
       return color;
     }
   });
-  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+
+  public static final Color SIDE_PANEL_BACKGROUND = new JBColor(new NotNullProducer<Color>() {
+    final JBColor myDefaultValue = new JBColor(new Color(0xE6EBF0), new Color(0x3E434C));
+    @NotNull
+    @Override
+    public Color produce() {
+      Color color = UIManager.getColor("SidePanel.background");
+      return color == null ? myDefaultValue : color;
+    }
+  });
 
   public static final Color AQUA_SEPARATOR_FOREGROUND_COLOR = new JBColor(Gray._190, Gray.x51);
   public static final Color AQUA_SEPARATOR_BACKGROUND_COLOR = new JBColor(Gray._240, Gray.x51);
@@ -305,7 +301,9 @@ public class UIUtil {
     }
   };
 
-  private static volatile Pair<String, Integer> ourSystemFontData = null;
+  private static volatile Pair<String, Integer> ourSystemFontData;
+
+  public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
@@ -365,9 +363,9 @@ public class UIUtil {
       return isRetina;
     }
 
-    /**
-     * Could be quite easily implemented with [NSScreen backingScaleFactor]
-     * and JNA
+    /*
+      Could be quite easily implemented with [NSScreen backingScaleFactor]
+      and JNA
      */
     //private static boolean isAppleRetina (Graphics2D g2d) {
     //  return false;
@@ -669,28 +667,19 @@ public class UIUtil {
     setEnabled(component, enabled, recursively, false);
   }
 
-  public static void setEnabled(Component component, boolean enabled, boolean recursively, boolean visibleOnly) {
-    component.setEnabled(enabled);
-    if (component instanceof JComboBox && isUnderAquaLookAndFeel()) {
-      // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
-      // Disabling these children results in ugly UI: WEB-10733
-      return;
-    }
-    if (component instanceof JLabel) {
-      Color color = enabled ? getLabelForeground() : getLabelDisabledForeground();
-      if (color != null) {
-        component.setForeground(color);
-      }
-    }
-    if (recursively && enabled == component.isEnabled()) {
-      if (component instanceof Container) {
-        final Container container = (Container)component;
-        final int subComponentCount = container.getComponentCount();
-        for (int i = 0; i < subComponentCount; i++) {
-          Component child = container.getComponent(i);
-          if (visibleOnly && !child.isVisible()) continue;
-          setEnabled(child, enabled, recursively, visibleOnly);
+  public static void setEnabled(Component component, boolean enabled, boolean recursively, final boolean visibleOnly) {
+    JBIterable<Component> all = recursively ? uiTraverser(component).expandAndFilter(
+      visibleOnly ? new Condition<Component>() {
+        @Override
+        public boolean value(Component c) {
+          return c.isVisible();
         }
+      } : Conditions.<Component>alwaysTrue()).traverse() : JBIterable.of(component);
+    Color fg = enabled ? getLabelForeground() : getLabelDisabledForeground();
+    for (Component c : all) {
+      c.setEnabled(enabled);
+      if (fg != null && c instanceof JLabel) {
+        c.setForeground(fg);
       }
     }
   }
@@ -1126,6 +1115,10 @@ public class UIUtil {
 
   public static Color getPanelBackground() {
     return UIManager.getColor("Panel.background");
+  }
+
+  public static Color getEditorPaneBackground() {
+    return UIManager.getColor("EditorPane.background");
   }
 
   public static Color getTreeBackground() {
@@ -1838,6 +1831,10 @@ public class UIUtil {
   }
 
   public static void drawImage(Graphics g, Image image, int x, int y, ImageObserver observer) {
+    drawImage(g, image, x, y, -1, -1, observer);
+  }
+
+  public static void drawImage(Graphics g, Image image, int x, int y, int width, int height, ImageObserver observer) {
     if (image instanceof JBHiDPIScaledImage) {
       final Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(observer), image.getHeight(observer));
       newG.scale(0.5, 0.5);
@@ -1845,11 +1842,20 @@ public class UIUtil {
       if (img == null) {
         img = image;
       }
-      newG.drawImage(img, 0, 0, observer);
+      if (width == -1 && height == -1) {
+        newG.drawImage(img, 0, 0, observer);
+      }
+      else {
+        newG.drawImage(img, 0, 0, width * 2, height * 2, 0, 0, width * 2, height * 2, observer);
+      }
       //newG.scale(1, 1);
       newG.dispose();
-    } else {
+    }
+    else if (width == -1 && height == -1) {
       g.drawImage(image, x, y, observer);
+    }
+    else {
+      g.drawImage(image, x, y, x + width, y + height, 0, 0, width, height, observer);
     }
   }
 
@@ -1931,9 +1937,9 @@ public class UIUtil {
     AWTEvent event = eventQueue.peekEvent();
     if (event == null) return false;
     try {
-      AWTEvent event1 = eventQueue.getNextEvent();
-      if (event1 instanceof InvocationEvent) {
-        ((InvocationEvent)event1).dispatch();
+      event = eventQueue.getNextEvent();
+      if (event instanceof InvocationEvent) {
+        eventQueue.getClass().getDeclaredMethod("dispatchEvent", AWTEvent.class).invoke(eventQueue, event);
       }
     }
     catch (Exception e) {
@@ -1980,6 +1986,14 @@ public class UIUtil {
         Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
       }
     });
+  }
+
+  public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
+    component.addPropertyChangeListener("ancestor", listener);
+  }
+
+  public static void removeParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
+    component.removePropertyChangeListener("ancestor", listener);
   }
 
   public static void drawVDottedLine(Graphics2D g, int lineX, int startY, int endY, @Nullable final Color bgColor, final Color fgColor) {
@@ -2087,14 +2101,9 @@ public class UIUtil {
     return null;
   }
 
-  public static <T extends JComponent> T findParentByClass(@NotNull Component c, Class<T> cls) {
-    for (Component component = c; component != null; component = component.getParent()) {
-      if (cls.isAssignableFrom(component.getClass())) {
-        @SuppressWarnings({"unchecked"}) final T t = (T)component;
-        return t;
-      }
-    }
-    return null;
+  @Deprecated
+  public static <T extends Component> T findParentByClass(@NotNull Component c, Class<T> cls) {
+    return getParentOfType(cls, c);
   }
 
   @Language("HTML")
@@ -2334,43 +2343,26 @@ public class UIUtil {
   }
 
   public static void removeScrollBorder(final Component c) {
-    new AwtVisitor(c) {
-      @Override
-      public boolean visit(final Component component) {
-        if (component instanceof JScrollPane) {
-          if (!hasNonPrimitiveParents(c, component)) {
-            final JScrollPane scrollPane = (JScrollPane)component;
-            Integer keepBorderSides = getClientProperty(scrollPane, KEEP_BORDER_SIDES);
-            if (keepBorderSides != null) {
-              if (scrollPane.getBorder() instanceof LineBorder) {
-                Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
-                scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
-              }
-              else {
-                scrollPane.setBorder(new SideBorder(getBoundsColor(), keepBorderSides.intValue()));
-              }
-            }
-            else {
-              scrollPane.setBorder(new SideBorder(getBoundsColor(), SideBorder.NONE));
-            }
-          }
+    for (JScrollPane scrollPane : uiTraverser(c).filter(JScrollPane.class)) {
+      if (!uiParents(scrollPane, true)
+        .takeWhile(Conditions.notEqualTo(c))
+        .filter(Conditions.not(Conditions.instanceOf(JPanel.class, JLayeredPane.class)))
+        .isEmpty()) continue;
+
+      Integer keepBorderSides = getClientProperty(scrollPane, KEEP_BORDER_SIDES);
+      if (keepBorderSides != null) {
+        if (scrollPane.getBorder() instanceof LineBorder) {
+          Color color = ((LineBorder)scrollPane.getBorder()).getLineColor();
+          scrollPane.setBorder(new SideBorder(color, keepBorderSides.intValue()));
         }
-        return false;
+        else {
+          scrollPane.setBorder(new SideBorder(getBoundsColor(), keepBorderSides.intValue()));
+        }
       }
-    };
-  }
-
-  public static boolean hasNonPrimitiveParents(Component stopParent, Component c) {
-    Component eachParent = c.getParent();
-    while (true) {
-      if (eachParent == null || eachParent == stopParent) return false;
-      if (!isPrimitive(eachParent)) return true;
-      eachParent = eachParent.getParent();
+      else {
+        scrollPane.setBorder(new SideBorder(getBoundsColor(), SideBorder.NONE));
+      }
     }
-  }
-
-  public static boolean isPrimitive(Component c) {
-    return c instanceof JPanel || c instanceof JLayeredPane;
   }
 
   public static Point getCenterPoint(Dimension container, Dimension child) {
@@ -2553,9 +2545,36 @@ public class UIUtil {
     }
   }
 
+  private static String systemLaFClassName;
+
+  public static String getSystemLookAndFeelClassName() {
+    if (systemLaFClassName != null) {
+      return systemLaFClassName;
+    }
+    else if (SystemInfo.isLinux) {
+      // Normally, GTK LaF is considered "system" when:
+      // 1) Gnome session is run
+      // 2) gtk lib is available
+      // Here we weaken the requirements to only 2) and force GTK LaF
+      // installation in order to let it properly scale default font
+      // based on Xft.dpi value.
+      try {
+        String name = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
+        Class cls = Class.forName(name);
+        LookAndFeel laf = (LookAndFeel)cls.newInstance();
+        if (laf.isSupportedLookAndFeel()) { // if gtk lib is available
+          return systemLaFClassName = name;
+        }
+      }
+      catch (Exception ignore) {
+      }
+    }
+    return systemLaFClassName = UIManager.getSystemLookAndFeelClassName();
+  }
+
   public static void initDefaultLAF() {
     try {
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+      UIManager.setLookAndFeel(getSystemLookAndFeelClassName());
       initSystemFontData();
     }
     catch (Exception ignore) {}
@@ -2564,16 +2583,36 @@ public class UIUtil {
   public static void initSystemFontData() {
     if (ourSystemFontData != null) return;
 
+    // With JB Linux JDK the label font comes properly scaled based on Xft.dpi settings.
     Font font = getLabelFont();
-    if (SystemInfo.isWindows) {
+
+    Float forcedScale = null;
+    if (Registry.is("ide.ui.scale.override")) {
+      forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
+    }
+    else if (SystemInfo.isLinux && !SystemInfo.isJetbrainsJvm) {
+      // With Oracle JDK: derive scale from X server DPI
+      float scale = getScreenScale();
+      if (scale > 1f) {
+        forcedScale = Float.valueOf(scale);
+      }
+      // Or otherwise leave the detected font. It's undetermined if it's scaled or not.
+      // If it is (likely with GTK DE), then the UI scale will be derived from it,
+      // if it's not, then IDEA will start unscaled. This lets the users of GTK DEs
+      // not to bother about X server DPI settings. Users of other DEs (like KDE)
+      // will have to set X server DPI to meet their display.
+    }
+    else if (SystemInfo.isWindows) {
       //noinspection HardCodedStringLiteral
       Font winFont = (Font)Toolkit.getDefaultToolkit().getDesktopProperty("win.messagebox.font");
-      if (winFont != null) font = winFont;
+      if (winFont != null) {
+        font = winFont; // comes scaled
+      }
     }
-    else if (SystemInfo.isLinux && JBUI.isHiDPI()) {
-      // We don't expect the default GUI font to be scaled on Linux and do it ourselves.
-      // TODO: this is valid until HIDPI support comes to J2D/Swing on Linux.
-      font = JBFont.create(font);
+    if (forcedScale != null) {
+      // With forced scale, we derive font from a hard-coded value as we cannot be sure
+      // the system font comes unscaled.
+      font = font.deriveFont(DEF_SYSTEM_FONT_SIZE * forcedScale.floatValue());
     }
     ourSystemFontData = Pair.create(font.getName(), font.getSize());
   }
@@ -2581,6 +2620,22 @@ public class UIUtil {
   @Nullable
   public static Pair<String, Integer> getSystemFontData() {
     return ourSystemFontData;
+  }
+
+  private static float getScreenScale() {
+    int dpi = 96;
+    try {
+      dpi = Toolkit.getDefaultToolkit().getScreenResolution();
+    } catch (HeadlessException e) {
+    }
+    float scale = 1f;
+    if (dpi < 120) scale = 1f;
+    else if (dpi < 144) scale = 1.25f;
+    else if (dpi < 168) scale = 1.5f;
+    else if (dpi < 192) scale = 1.75f;
+    else scale = 2f;
+
+    return scale;
   }
 
   public static void addKeyboardShortcut(final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {
@@ -2733,34 +2788,37 @@ public class UIUtil {
     return child == parent;
   }
 
+  /**
+   * Searches above in the component hierarchy starting from the specified component.
+   * Note that the initial component is also checked.
+   *
+   * @param type      expected class
+   * @param component initial component
+   * @return a component of the specified type, or {@code null} if the search is failed
+   * @see SwingUtilities#getAncestorOfClass
+   */
   @Nullable
-  public static <T> T getParentOfType(Class<? extends T> cls, Component c) {
-    Component eachParent = c;
-    while (eachParent != null) {
-      if (cls.isAssignableFrom(eachParent.getClass())) {
-        @SuppressWarnings({"unchecked"}) final T t = (T)eachParent;
-        return t;
+  public static <T> T getParentOfType(@NotNull Class<? extends T> type, Component component) {
+    while (component != null) {
+      if (type.isInstance(component)) {
+        //noinspection unchecked
+        return (T)component;
       }
-
-      eachParent = eachParent.getParent();
+      component = component.getParent();
     }
-
     return null;
   }
 
   @NotNull
-  public static JBIterable<Component> getParents(@Nullable Component c) {
-    return JBIterable.generate(c, new Function.Mono<Component>() {
-      @Override
-      public Component fun(Component c) {
-        return c.getParent();
-      }
-    });
+  public static JBIterable<Component> uiParents(@Nullable Component c, boolean strict) {
+    return strict ? JBIterable.generate(c, COMPONENT_PARENT).skip(1) : JBIterable.generate(c, COMPONENT_PARENT);
   }
 
   @NotNull
-  public static JBTreeTraverser<Component> uiTraverser() {
-    return new JBTreeTraverser<Component>(COMPONENT_CHILDREN);
+  public static JBIterable<Component> uiChildren(@Nullable Component component) {
+    if (!(component instanceof Container)) return JBIterable.empty();
+    Container container = (Container)component;
+    return JBIterable.of(container.getComponents());
   }
 
   @NotNull
@@ -2770,19 +2828,20 @@ public class UIUtil {
 
   public static final Key<Iterable<? extends Component>> NOT_IN_HIERARCHY_COMPONENTS = Key.create("NOT_IN_HIERARCHY_COMPONENTS");
 
-  private static final Function<Component, Iterable<Component>> COMPONENT_CHILDREN = new Function<Component, Iterable<Component>>() {
-    @NotNull
+  private static final Function<Component, JBIterable<Component>> COMPONENT_CHILDREN = new Function<Component, JBIterable<Component>>() {
     @Override
     public JBIterable<Component> fun(@NotNull Component c) {
       JBIterable<Component> result;
       if (c instanceof JMenu) {
         result = JBIterable.of(((JMenu)c).getMenuComponents());
       }
-      else if (c instanceof Container) {
-        result = JBIterable.of(((Container)c).getComponents());
+      else if (c instanceof JComboBox && isUnderAquaLookAndFeel()) {
+        // On Mac JComboBox instances have children: com.apple.laf.AquaComboBoxButton and javax.swing.CellRendererPane.
+        // Disabling these children results in ugly UI: WEB-10733
+        result = JBIterable.empty();
       }
       else {
-        result = JBIterable.empty();
+        result = uiChildren(c);
       }
       if (c instanceof JComponent) {
         JComponent jc = (JComponent)c;
@@ -2798,6 +2857,14 @@ public class UIUtil {
       return result;
     }
   };
+
+  private static final Function.Mono<Component> COMPONENT_PARENT = new Function.Mono<Component>() {
+    @Override
+    public Component fun(Component c) {
+      return c.getParent();
+    }
+  };
+
 
   public static void scrollListToVisibleIfNeeded(@NotNull final JList list) {
     SwingUtilities.invokeLater(new Runnable() {
@@ -2934,6 +3001,7 @@ public class UIUtil {
       final int[] maxWidth = {0};
       final int[] height = {0};
       final int[] maxBulletWidth = {0};
+      GraphicsUtil.setupAntialiasing(g, true, true);
       ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {
@@ -3236,7 +3304,7 @@ public class UIUtil {
     // Evaluate the value depending on our current theme
     if (lcdContrastValue == 0) {
       if (SystemInfo.isMacIntel64) {
-        lcdContrastValue = isUnderDarcula() ? 140 : 200;
+        lcdContrastValue = isUnderDarcula() ? 140 : 230;
       } else {
         Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
 
@@ -3467,7 +3535,7 @@ public class UIUtil {
     return null;
   }
 
-  private static Map<String, String> ourRealFontFamilies = null;
+  private static Map<String, String> ourRealFontFamilies;
 
   //Experimental, seems to be reliable under MacOS X only
 
@@ -3646,5 +3714,38 @@ public class UIUtil {
       if ("mini".equals(property)) return ComponentStyle.MINI;
     }
     return ComponentStyle.REGULAR;
+  }
+
+  /**
+   * KeyEvents for specified keystrokes would be redispatched to target component
+   */
+  public static void redirectKeystrokes(@NotNull Disposable disposable,
+                                        @NotNull final JComponent source,
+                                        @NotNull final JComponent target,
+                                        @NotNull final KeyStroke... keyStrokes) {
+    final KeyAdapter keyAdapter = new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        KeyStroke keyStrokeForEvent = KeyStroke.getKeyStrokeForEvent(e);
+        for (KeyStroke stroke : keyStrokes) {
+          if (!stroke.isOnKeyRelease() && stroke.equals(keyStrokeForEvent)) target.dispatchEvent(e);
+        }
+      }
+
+      @Override
+      public void keyReleased(KeyEvent e) {
+        KeyStroke keyStrokeForEvent = KeyStroke.getKeyStrokeForEvent(e);
+        for (KeyStroke stroke : keyStrokes) {
+          if (stroke.isOnKeyRelease() && stroke.equals(keyStrokeForEvent)) target.dispatchEvent(e);
+        }
+      }
+    };
+    source.addKeyListener(keyAdapter);
+    Disposer.register(disposable, new Disposable() {
+      @Override
+      public void dispose() {
+        source.removeKeyListener(keyAdapter);
+      }
+    });
   }
 }

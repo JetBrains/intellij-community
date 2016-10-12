@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   private final String newClassName;
   private final String delegateFieldName;
   private final boolean requiresBackpointer;
-  private boolean delegationRequired = false;
+  private boolean delegationRequired;
   private final ExtractEnumProcessor myExtractEnumProcessor;
   private final PsiClass myClass;
   private boolean extractInnerClass;
@@ -141,7 +141,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     myClass = new WriteCommandAction<PsiClass>(myProject, getCommandName()){
       @Override
       protected void run(@NotNull Result<PsiClass> result) throws Throwable {
-        result.setResult(buildClass());
+        result.setResult(buildClass(false));
       }
     }.execute().getResultObject();
     myExtractEnumProcessor = new ExtractEnumProcessor(myProject, this.enumConstants, myClass);
@@ -163,11 +163,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
                                                 myClass.getContainingFile().getContainingDirectory().getVirtualFile())) {
       conflicts.putValue(sourceClass, "Extracted class won't be accessible in " + RefactoringUIUtil.getDescription(sourceClass, true));
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        myClass.delete();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myClass.delete());
     final Project project = sourceClass.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass existingClass =
@@ -272,7 +268,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   protected void performRefactoring(@NotNull UsageInfo[] usageInfos) {
-    final PsiClass psiClass = buildClass();
+    final PsiClass psiClass = buildClass(true);
     if (psiClass == null) return;
     if (delegationRequired) {
       buildDelegate();
@@ -661,7 +657,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
 
-  private PsiClass buildClass() {
+  private PsiClass buildClass(boolean normalizeDeclaration) {
     final PsiManager manager = sourceClass.getManager();
     final Project project = sourceClass.getProject();
     final ExtractedClassBuilder extractedClassBuilder = new ExtractedClassBuilder();
@@ -691,7 +687,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       extractedClassBuilder.setFieldsNeedingSetters(visitor.getFieldsNeedingSetter());
     }
 
-    final String classString = extractedClassBuilder.buildBeanClass();
+    final String classString = extractedClassBuilder.buildBeanClass(normalizeDeclaration);
     if (extractInnerClass) {
       final PsiFileFactory factory = PsiFileFactory.getInstance(project);
       final PsiJavaFile newFile = (PsiJavaFile)factory.createFileFromText(newClassName + ".java", JavaFileType.INSTANCE, classString);
@@ -903,11 +899,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     protected abstract boolean hasGetterOrSetter(final PsiMethod[] getters);
 
     protected boolean isProhibitedReference(PsiExpression expression) {
-      return BackpointerUtil.isBackpointerReference(expression, new Condition<PsiField>() {
-        public boolean value(final PsiField field) {
-          return NecessaryAccessorsVisitor.this.isProhibitedReference(field);
-        }
-      });
+      return BackpointerUtil.isBackpointerReference(expression, field -> NecessaryAccessorsVisitor.this.isProhibitedReference(field));
     }
 
     protected abstract boolean isProhibitedReference(PsiField field);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,11 +65,12 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   public DarculaLaf() {
     try {
-      if (SystemInfo.isWindows || SystemInfo.isLinux) {
-        base = new IdeaLaf();
-      } else {
+      if (SystemInfo.isMac) {
         final String name = UIManager.getSystemLookAndFeelClassName();
         base = (BasicLookAndFeel)Class.forName(name).newInstance();
+      }
+      else {
+        base = new IdeaLaf();
       }
     }
     catch (Exception e) {
@@ -149,7 +150,7 @@ public class DarculaLaf extends BasicLookAndFeel {
 
   private static void applySystemFonts(UIDefaults defaults) {
     try {
-      String fqn = UIManager.getSystemLookAndFeelClassName();
+      String fqn = UIUtil.getSystemLookAndFeelClassName();
       Object systemLookAndFeel = Class.forName(fqn).newInstance();
       final Method superMethod = BasicLookAndFeel.class.getDeclaredMethod("getDefaults");
       superMethod.setAccessible(true);
@@ -430,24 +431,16 @@ public class DarculaLaf extends BasicLookAndFeel {
       Disposer.register(application, myDisposable);
     }
     myMnemonicAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myDisposable);
-    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
-      @Override
-      public boolean dispatch(AWTEvent e) {
-        if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
-          myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
-          myMnemonicAlarm.cancelAllRequests();
-          final Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
-          if (focusOwner != null) {
-            myMnemonicAlarm.addRequest(new Runnable() {
-              @Override
-              public void run() {
-                repaintMnemonics(focusOwner, myAltPressed);
-              }
-            }, 10);
-          }
+    IdeEventQueue.getInstance().addDispatcher(e -> {
+      if (e instanceof KeyEvent && ((KeyEvent)e).getKeyCode() == KeyEvent.VK_ALT) {
+        myAltPressed = e.getID() == KeyEvent.KEY_PRESSED;
+        myMnemonicAlarm.cancelAllRequests();
+        final Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+        if (focusOwner != null) {
+          myMnemonicAlarm.addRequest(() -> repaintMnemonics(focusOwner, myAltPressed), 10);
         }
-        return false;
       }
+      return false;
     }, myDisposable);
   }
 

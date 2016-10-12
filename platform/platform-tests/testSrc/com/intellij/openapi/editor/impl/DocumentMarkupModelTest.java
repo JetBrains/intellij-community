@@ -60,11 +60,6 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
     assertNull(attributes.getForegroundColor());
   }
 
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
-  }
-
   public static class TestAnnotator implements Annotator {
     @Override
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {

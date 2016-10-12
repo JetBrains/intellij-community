@@ -75,40 +75,29 @@ public class ActionCommand extends TypeCommand {
 
         final KeyStroke finalStroke = stroke;
 
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-          @Override
-          public void run() {
-            final Ref<AnActionListener> listener = new Ref<AnActionListener>();
-            listener.set(new AnActionListener.Adapter() {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+          final Ref<AnActionListener> listener = new Ref<AnActionListener>();
+          listener.set(new AnActionListener.Adapter() {
 
-              @Override
-              public void beforeActionPerformed(final AnAction action, DataContext dataContext, AnActionEvent event) {
-                SwingUtilities.invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    if (context.isDisposed()) {
-                      am.removeAnActionListener(listener.get());
-                      return;
-                    }
+            @Override
+            public void beforeActionPerformed(final AnAction action, DataContext dataContext, AnActionEvent event) {
+              SwingUtilities.invokeLater(() -> {
+                if (context.isDisposed()) {
+                  am.removeAnActionListener(listener.get());
+                  return;
+                }
 
-                    if (targetAction.equals(action)) {
-                      context.message("Performed action: " + actionName, context.getCurrentLine());
-                      am.removeAnActionListener(listener.get());
-                      result.setDone();
-                    }
-                  }
-                });
-              }
-            });
-            am.addAnActionListener(listener.get());
+                if (targetAction.equals(action)) {
+                  context.message("Performed action: " + actionName, context.getCurrentLine());
+                  am.removeAnActionListener(listener.get());
+                  result.setDone();
+                }
+              });
+            }
+          });
+          am.addAnActionListener(listener.get());
 
-            context.runPooledThread(new Runnable() {
-              @Override
-              public void run() {
-                type(context.getRobot(), finalStroke);
-              }
-            });
-          }
+          context.runPooledThread(() -> type(context.getRobot(), finalStroke));
         });
 
         return result;
@@ -120,11 +109,8 @@ public class ActionCommand extends TypeCommand {
     final ActionCallback result = new ActionCallback();
 
     context.getRobot().delay(Registry.intValue("actionSystem.playback.delay"));
-    SwingUtilities.invokeLater(new Runnable() {
-      public void run() {
-        am.tryToExecute(targetAction, input, null, null, false).doWhenProcessed(result.createSetDoneRunnable());
-      }
-    });
+    SwingUtilities.invokeLater(
+      () -> am.tryToExecute(targetAction, input, null, null, false).doWhenProcessed(result.createSetDoneRunnable()));
 
     return result;
   }

@@ -202,7 +202,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
             return true;
           }
           final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)type;
-          final PsiType upperBound = capturedWildcardType.getUpperBound();
+          final PsiType upperBound = capturedWildcardType.getUpperBound(false);
           if (iterationType.equals(upperBound)) {
             return false;
           }

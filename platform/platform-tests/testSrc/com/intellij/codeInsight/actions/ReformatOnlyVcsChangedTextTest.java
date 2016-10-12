@@ -356,12 +356,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   private void assertFormattedRangesEqualsTo(@NotNull PsiFile file, ChangedLines... expected) {
     ChangedLines[] formatted = myMockCodeStyleManager.getFormattedLinesFor(file);
 
-    Comparator<ChangedLines> cmp = new Comparator<ChangedLines>() {
-      @Override
-      public int compare(ChangedLines o1, ChangedLines o2) {
-        return o1.from < o2.from ? -1 : 1;
-      }
-    };
+    Comparator<ChangedLines> cmp = (o1, o2) -> o1.from < o2.from ? -1 : 1;
     Arrays.sort(expected, cmp);
     Arrays.sort(formatted, cmp);
 

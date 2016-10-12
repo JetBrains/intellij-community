@@ -99,12 +99,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
       if (flag) {
 //        setWaitCursor();
         // invokeLater is called to update state of button before long tree building operation
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            changeView(myTypeName);
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> changeView(myTypeName));
       }
     }
 
@@ -117,8 +112,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
 
   protected static class BaseOnThisMethodAction extends BaseOnThisElementAction {
     public BaseOnThisMethodAction() {
-      super(IdeBundle.message("action.base.on.this.method"), IdeActions.ACTION_CALL_HIERARCHY, CALL_HIERARCHY_BROWSER_DATA_KEY,
-            LanguageCallHierarchy.INSTANCE);
+      super(IdeBundle.message("action.base.on.this.method"), CALL_HIERARCHY_BROWSER_DATA_KEY, LanguageCallHierarchy.INSTANCE);
     }
   }
 

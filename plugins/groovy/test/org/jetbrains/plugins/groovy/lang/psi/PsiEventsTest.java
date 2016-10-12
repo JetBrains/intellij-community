@@ -28,18 +28,10 @@ public class PsiEventsTest extends PsiTestCase {
     final Document doc = docManager.getDocument(file);
     assertNotNull(doc);
     CommandProcessor.getInstance().executeCommand(myProject,
-      new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              doc.insertString(3, " ");
-              docManager.commitDocument(doc);
-            }
-          });
-        }
-      },
+                                                  () -> ApplicationManager.getApplication().runWriteAction(() -> {
+                                                    doc.insertString(3, " ");
+                                                    docManager.commitDocument(doc);
+                                                  }),
       "file text set",
       this
     );

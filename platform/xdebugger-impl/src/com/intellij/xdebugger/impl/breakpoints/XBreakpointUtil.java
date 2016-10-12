@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,17 +52,14 @@ public class XBreakpointUtil {
   private XBreakpointUtil() {
   }
 
-  public static <B extends XBreakpoint<?>> String getShortText(B breakpoint) {
-    return StringUtil.shortenTextWithEllipsis(StringUtil.notNullize(getType(breakpoint).getShortText(breakpoint)), 70, 5);
-  }
-
-  public static <B extends XBreakpoint<?>> String getDisplayText(@NotNull B breakpoint) {
-    return getType(breakpoint).getDisplayText(breakpoint);
-  }
-
-  public static <B extends XBreakpoint<?>> XBreakpointType<B, ?> getType(@NotNull B breakpoint) {
+  public static <B extends XBreakpoint> String getShortText(B breakpoint) {
     //noinspection unchecked
-    return (XBreakpointType<B, ?>)breakpoint.getType();
+    return StringUtil.shortenTextWithEllipsis(StringUtil.notNullize(breakpoint.getType().getShortText(breakpoint)), 70, 5);
+  }
+
+  public static <B extends XBreakpoint> String getDisplayText(@NotNull B breakpoint) {
+    //noinspection unchecked
+    return breakpoint.getType().getDisplayText(breakpoint);
   }
 
   @Nullable
@@ -103,23 +100,18 @@ public class XBreakpointUtil {
   }
 
   public static List<BreakpointPanelProvider> collectPanelProviders() {
-    List<BreakpointPanelProvider> panelProviders = new ArrayList<BreakpointPanelProvider>();
+    List<BreakpointPanelProvider> panelProviders = new ArrayList<>();
     for (DebuggerSupport debuggerSupport : DebuggerSupport.getDebuggerSupports()) {
       panelProviders.add(debuggerSupport.getBreakpointPanelProvider());
     }
-    Collections.sort(panelProviders, new Comparator<BreakpointPanelProvider>() {
-      @Override
-      public int compare(BreakpointPanelProvider o1, BreakpointPanelProvider o2) {
-        return o2.getPriority() - o1.getPriority();
-      }
-    });
+    Collections.sort(panelProviders, (o1, o2) -> o2.getPriority() - o1.getPriority());
     return panelProviders;
   }
 
   @Nullable
   public static DebuggerSupport getDebuggerSupport(Project project, BreakpointItem breakpointItem) {
     DebuggerSupport[] debuggerSupports = DebuggerSupport.getDebuggerSupports();
-    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
+    List<BreakpointItem> items = new ArrayList<>();
     for (DebuggerSupport support : debuggerSupports) {
       support.getBreakpointPanelProvider().provideBreakpointItems(project, items);
       if (items.contains(breakpointItem)) {
@@ -136,11 +128,11 @@ public class XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @NotNull
-  public static Promise<XLineBreakpoint> toggleLineBreakpoint(@NotNull Project project,
-                                                              @NotNull XSourcePosition position,
-                                                              @Nullable Editor editor,
-                                                              boolean temporary,
-                                                              boolean moveCarret) {
+  public static Promise toggleLineBreakpoint(@NotNull Project project,
+                                             @NotNull XSourcePosition position,
+                                             @Nullable Editor editor,
+                                             boolean temporary,
+                                             boolean moveCarret) {
     int lineStart = position.getLine();
     VirtualFile file = position.getFile();
     // for folded text check each line and find out type with the biggest priority

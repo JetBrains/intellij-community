@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionAdapter;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -29,7 +29,6 @@ import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerInstanceTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeWithHistoryPanel;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,16 +60,16 @@ public class XInspectDialog extends DialogWrapper {
     if (instanceEvaluator != null && myRebuildOnSessionEvents && session != null) {
       Pair<XInstanceEvaluator, String> initialItem = Pair.create(instanceEvaluator, name);
       XDebuggerInstanceTreeCreator creator = new XDebuggerInstanceTreeCreator(project, editorsProvider, sourcePosition, markers, session);
-      myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XInstanceEvaluator, String>>(initialItem, creator, project, myDisposable);
+      myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<>(initialItem, creator, project, myDisposable);
     }
     else {
       Pair<XValue, String> initialItem = Pair.create(value, name);
       XDebuggerTreeCreator creator = new XDebuggerTreeCreator(project, editorsProvider, sourcePosition, markers);
-      myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<Pair<XValue, String>>(initialItem, creator, project, myDisposable);
+      myDebuggerTreePanel = new DebuggerTreeWithHistoryPanel<>(initialItem, creator, project, myDisposable);
     }
 
     if (session != null) {
-      session.addSessionListener(new XDebugSessionAdapter() {
+      session.addSessionListener(new XDebugSessionListener() {
         @Override
         public void sessionPaused() {
           if (myRebuildOnSessionEvents) {

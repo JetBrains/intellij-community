@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public abstract class JpsLoaderBase {
   private static Element tryLoadRootElement(File file) throws IOException, JDOMException {
     for (int i = 0; i < MAX_ATTEMPTS - 1; i++) {
       try {
-        return JDOMUtil.loadDocument(file).getRootElement();
+        return JDOMUtil.load(file);
       }
       catch (Exception e) {
         LOG.info("Loading attempt #" + i + " failed", e);
@@ -95,6 +95,6 @@ public abstract class JpsLoaderBase {
       }
       catch (InterruptedException ignored) { }
     }
-    return JDOMUtil.loadDocument(file).getRootElement();
+    return JDOMUtil.load(file);
   }
 }

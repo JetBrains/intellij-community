@@ -23,7 +23,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.tools.binary.ThreesideBinaryDiffViewer;
 import com.intellij.diff.tools.holders.BinaryEditorHolder;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.util.List;
 
 public class BinaryMergeTool implements MergeTool {
@@ -111,12 +109,7 @@ public class BinaryMergeTool implements MergeTool {
       components.statusPanel = init.statusPanel;
       components.toolbarActions = init.toolbarActions;
 
-      components.closeHandler = new BooleanGetter() {
-        @Override
-        public boolean get() {
-          return MergeUtil.showExitWithoutApplyingChangesDialog(BinaryMergeViewer.this, myMergeRequest, myMergeContext);
-        }
-      };
+      components.closeHandler = () -> MergeUtil.showExitWithoutApplyingChangesDialog(this, myMergeRequest, myMergeContext);
 
       return components;
     }
@@ -125,18 +118,7 @@ public class BinaryMergeTool implements MergeTool {
     @Override
     public Action getResolveAction(@NotNull final MergeResult result) {
       if (result == MergeResult.RESOLVED) return null;
-
-      String caption = MergeUtil.getResolveActionTitle(result, myMergeRequest, myMergeContext);
-      return new AbstractAction(caption) {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (result == MergeResult.CANCEL &&
-              !MergeUtil.showExitWithoutApplyingChangesDialog(BinaryMergeViewer.this, myMergeRequest, myMergeContext)) {
-            return;
-          }
-          myMergeContext.finishMerge(result);
-        }
-      };
+      return MergeUtil.createSimpleResolveAction(result, myMergeRequest, myMergeContext, this);
     }
 
     @Override

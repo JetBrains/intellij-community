@@ -42,7 +42,7 @@ public abstract class HgChangesetsCommand {
     this.command = command;
   }
 
-  public List<HgRevisionNumber> execute(VirtualFile repo) {
+  public List<HgRevisionNumber> executeInCurrentThread(VirtualFile repo) {
     return getRevisions(repo);
   }
 
@@ -55,7 +55,7 @@ public abstract class HgChangesetsCommand {
 
     addArguments(args);
 
-    HgCommandResult result = executeCommand(repo, args);
+    HgCommandResult result = executeCommandInCurrentThread(repo, args);
 
     if (result == null) {
       return Collections.emptyList();
@@ -83,7 +83,7 @@ public abstract class HgChangesetsCommand {
   }
 
   @Nullable
-  protected HgCommandResult executeCommand(VirtualFile repo, List<String> args) {
+  protected HgCommandResult executeCommandInCurrentThread(VirtualFile repo, List<String> args) {
     final HgCommandExecutor executor = new HgCommandExecutor(project);
     executor.setSilent(isSilentCommand());
     return executor.executeInCurrentThread(repo, command, args);

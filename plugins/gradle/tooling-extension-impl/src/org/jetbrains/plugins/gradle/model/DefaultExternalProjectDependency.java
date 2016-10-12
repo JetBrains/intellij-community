@@ -63,6 +63,10 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
 
   public void setConfigurationName(String configurationName) {
     myConfigurationName = configurationName;
+    // have to differentiate(using different DefaultExternalDependencyId) project dependencies on different configurations
+    if(!Dependency.DEFAULT_CONFIGURATION.equals(configurationName)){
+      setClassifier(configurationName);
+    }
   }
 
   @Override

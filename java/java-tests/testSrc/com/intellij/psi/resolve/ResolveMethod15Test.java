@@ -1,6 +1,7 @@
 package com.intellij.psi.resolve;
 
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -242,6 +243,8 @@ public class ResolveMethod15Test extends Resolve15TestCase {
     assertTrue(!((PsiMethod) element).isVarArgs());
   }
   public void testFilterFixedVsVarargs9() throws Exception {
+    RecursionManager.assertOnRecursionPrevention(myTestRootDisposable);
+
     final PsiReference ref = configureByFile();
     assertThat(ref, instanceOf(PsiReferenceExpression.class));
     final PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
@@ -485,6 +488,8 @@ public class ResolveMethod15Test extends Resolve15TestCase {
   }
 
   public void testInheritance4() throws Exception{
+    RecursionManager.assertOnRecursionPrevention(myTestRootDisposable);
+
     PsiReference ref = configureByFile();
     PsiElement target = ref.resolve();
     assertThat(target, instanceOf(PsiMethod.class));

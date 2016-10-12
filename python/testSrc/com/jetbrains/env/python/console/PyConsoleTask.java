@@ -62,7 +62,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   private Ref<RunContentDescriptor> myContentDescriptorRef = Ref.create();
 
   public PyConsoleTask() {
-    setWorkingFolder(getTestDataPath());
+    super(null);
   }
 
   public PythonConsoleView getConsoleView() {
@@ -151,7 +151,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     setProcessCanTerminate(false);
 
     PydevConsoleRunner consoleRunner =
-      new PydevConsoleRunner(project, sdk, PyConsoleType.PYTHON, getWorkingFolder(), Maps.<String, String>newHashMap(), PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
+      new PydevConsoleRunner(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.<String, String>newHashMap(), PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
                              new String[]{}) {
         @Override
         protected void showConsole(Executor defaultExecutor, @NotNull RunContentDescriptor contentDescriptor) {
@@ -296,12 +296,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     private int myLen = 0;
 
     public void start() {
-      myThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-          doJob();
-        }
-      },"py console printer");
+      myThread = new Thread(() -> doJob(), "py console printer");
       myThread.setDaemon(true);
       myThread.start();
     }
@@ -388,12 +383,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   protected void execNoWait(final String command) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myConsoleView.executeCode(command, null);
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> myConsoleView.executeCode(command, null));
   }
 
   protected void interrupt() {

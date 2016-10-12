@@ -69,17 +69,14 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
                                            @NotNull final ContentRootPanel.ActionCallback callback) {
     final IconActionComponent iconComponent = new IconActionComponent(AllIcons.Modules.SetPackagePrefix,
                                                                       AllIcons.Modules.SetPackagePrefixRollover,
-                                                                      ProjectBundle.message("module.paths.edit.properties.tooltip"), new Runnable() {
-      @Override
-      public void run() {
-        JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
-        assert properties != null;
-        SourceRootPropertiesDialog dialog = new SourceRootPropertiesDialog(parentComponent, properties);
-        if (dialog.showAndGet()) {
-          callback.onSourceRootPropertiesChanged(folder);
-        }
-      }
-    });
+                                                                      ProjectBundle.message("module.paths.edit.properties.tooltip"), () -> {
+                                                                        JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+                                                                        assert properties != null;
+                                                                        SourceRootPropertiesDialog dialog = new SourceRootPropertiesDialog(parentComponent, properties);
+                                                                        if (dialog.showAndGet()) {
+                                                                          callback.onSourceRootPropertiesChanged(folder);
+                                                                        }
+                                                                      });
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setOpaque(false);
     panel.add(iconComponent, BorderLayout.CENTER);

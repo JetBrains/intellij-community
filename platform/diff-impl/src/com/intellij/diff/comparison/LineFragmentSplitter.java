@@ -38,7 +38,7 @@ class LineFragmentSplitter {
   @NotNull private final FairDiffIterable myIterable;
   @NotNull private final ProgressIndicator myIndicator;
 
-  @NotNull private final List<WordBlock> myResult = new ArrayList<WordBlock>();
+  @NotNull private final List<WordBlock> myResult = new ArrayList<>();
 
   public LineFragmentSplitter(@NotNull CharSequence text1,
                               @NotNull CharSequence text2,

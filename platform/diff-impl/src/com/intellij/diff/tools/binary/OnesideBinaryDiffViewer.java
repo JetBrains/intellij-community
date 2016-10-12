@@ -39,7 +39,7 @@ import static java.util.Collections.singletonList;
 public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolder> {
   public static final Logger LOG = Logger.getInstance(OnesideBinaryDiffViewer.class);
 
-  private final TransferableFileEditorStateSupport myTransferableStateSupport;
+  @NotNull private final TransferableFileEditorStateSupport myTransferableStateSupport;
 
   public OnesideBinaryDiffViewer(@NotNull DiffContext context, @NotNull DiffRequest request) {
     super(context, (ContentDiffRequest)request, BinaryEditorHolder.BinaryEditorHolderFactory.INSTANCE);
@@ -61,7 +61,7 @@ public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolde
 
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> group = new ArrayList<AnAction>();
+    List<AnAction> group = new ArrayList<>();
     group.add(myTransferableStateSupport.createToggleAction());
     group.addAll(super.createToolbarActions());
     return group;
@@ -80,12 +80,9 @@ public class OnesideBinaryDiffViewer extends OnesideDiffViewer<BinaryEditorHolde
 
   @NotNull
   private Runnable applyNotification(@Nullable final JComponent notification) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        clearDiffPresentation();
-        if (notification != null) myPanel.addNotification(notification);
-      }
+    return () -> {
+      clearDiffPresentation();
+      if (notification != null) myPanel.addNotification(notification);
     };
   }
 

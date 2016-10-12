@@ -41,6 +41,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
@@ -56,10 +57,16 @@ import com.intellij.openapi.project.ProjectManagerAdapter;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.platform.PlatformProjectViewOpener;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.projectImport.ProjectAttachProcessor;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.treeStructure.Tree;
@@ -68,6 +75,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.inspections.PyPep8Inspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +85,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -89,6 +98,7 @@ public class PyCharmEduInitialConfigurator {
 
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V1 = "PyCharmEDU.InitialConfiguration.V1";
+  @NonNls private static final String CONFIGURED_V2 = "PyCharmEDU.InitialConfiguration.V2";
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
@@ -135,6 +145,12 @@ public class PyCharmEduInitialConfigurator {
                                        FileTypeManager fileTypeManager,
                                        final ProjectManagerEx projectManager) {
     final UISettings uiSettings = UISettings.getInstance();
+    if (!propertiesComponent.getBoolean(CONFIGURED_V2)) {
+      EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+      editorSettings.setEnsureNewLineAtEOF(true);
+
+      propertiesComponent.setValue(CONFIGURED_V2, true);
+    }
     if (!propertiesComponent.getBoolean(CONFIGURED_V1)) {
       patchMainMenu();
       uiSettings.SHOW_NAVIGATION_BAR = false;
@@ -163,17 +179,7 @@ public class PyCharmEduInitialConfigurator {
       uiSettings.SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES = true;
       uiSettings.SHOW_MEMORY_INDICATOR = false;
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class");
-            }
-          });
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().setIgnoredFilesList(ignoredFilesList + ";*$py.class")));
       PyCodeInsightSettings.getInstance().SHOW_IMPORT_POPUP = false;
     }
     final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
@@ -185,15 +191,12 @@ public class PyCharmEduInitialConfigurator {
         @Override
         public void welcomeScreenDisplayed() {
 
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-                GeneralSettings.getInstance().setShowTipsOnStartup(false);
-                propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
+              GeneralSettings.getInstance().setShowTipsOnStartup(false);
+              propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
 
-                patchKeymap();
-              }
+              patchKeymap();
             }
           });
         }
@@ -214,7 +217,11 @@ public class PyCharmEduInitialConfigurator {
           @Override
           public void run() {
             if (project.isDisposed()) return;
+            updateInspectionsProfile();
+            openProjectStructure();
+          }
 
+          private void openProjectStructure() {
             ToolWindowManager.getInstance(project).invokeLater(new Runnable() {
               int count = 0;
 
@@ -225,11 +232,23 @@ public class PyCharmEduInitialConfigurator {
                   return;
                 }
                 ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Project");
-                if (toolWindow !=null && toolWindow.getType() != ToolWindowType.SLIDING) {
+                if (toolWindow != null && toolWindow.getType() != ToolWindowType.SLIDING) {
                   toolWindow.activate(null);
                 }
               }
             });
+          }
+
+          private void updateInspectionsProfile() {
+            final String[] codes = new String[]{"W29", "E501"};
+            final VirtualFile baseDir = project.getBaseDir();
+            final PsiDirectory directory = PsiManager.getInstance(project).findDirectory(baseDir);
+            if (directory != null) {
+              InspectionProjectProfileManager.getInstance(project).getInspectionProfile().modifyToolSettings(
+                Key.<PyPep8Inspection>create(PyPep8Inspection.INSPECTION_SHORT_NAME), directory,
+                inspection -> Collections.addAll(inspection.ignoredErrors, codes)
+              );
+            }
           }
         });
       }
@@ -258,7 +277,7 @@ public class PyCharmEduInitialConfigurator {
 
   private static void hideActionFromMainMenu(@NotNull final DefaultMutableTreeNode root,
                                              @NotNull final CustomActionsSchema schema, DefaultMutableTreeNode mainMenu){
-    final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Code", "Window", "Run");
+    final HashSet<String> menuItems = ContainerUtil.newHashSet("Tools", "VCS", "Refactor", "Window", "Run");
     hideActions(schema, root, mainMenu, menuItems);
   }
 
@@ -313,6 +332,11 @@ public class PyCharmEduInitialConfigurator {
       if ("org.intellij.lang.regexp.intention.CheckRegExpIntentionAction".equals(ep.className)) {
         rootArea.getExtensionPoint(IntentionManager.EP_INTENTION_ACTIONS).unregisterExtension(ep);
       }
+    }
+
+    final ExtensionPoint<ProjectAttachProcessor> point = Extensions.getRootArea().getExtensionPoint(ProjectAttachProcessor.EP_NAME);
+    for (ProjectAttachProcessor attachProcessor : Extensions.getExtensions(ProjectAttachProcessor.EP_NAME)) {
+      point.unregisterExtension(attachProcessor);
     }
   }
 

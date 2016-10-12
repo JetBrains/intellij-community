@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,10 @@ import com.intellij.pom.event.PomModelEvent;
 import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.pom.xml.XmlChangeSet;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -160,7 +163,7 @@ public final class DomManagerImpl extends DomManager {
   }
 
   private PsiFile getCachedPsiFile(VirtualFile file) {
-    return ((PsiManagerEx)PsiManager.getInstance(myProject)).getFileManager().getCachedPsiFile(file);
+    return PsiManagerEx.getInstanceEx(myProject).getFileManager().getCachedPsiFile(file);
   }
 
   private List<DomEvent> calcDomChangeEvents(final VirtualFile file) {
@@ -424,12 +427,7 @@ public final class DomManagerImpl extends DomManager {
 
   @Override
   public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
-    return createStableValue(provider, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return t.isValid();
-      }
-    });
+    return createStableValue(provider, t -> t.isValid());
   }
 
   @Override

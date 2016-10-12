@@ -94,56 +94,52 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
       return null;
     }
 
-    return new Runnable() {
-      public void run() {
-        final PackageAnnotator.Annotator annotator = new PackageAnnotator.Annotator() {
-          public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
-            myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
-          }
+    return () -> {
+      final PackageAnnotator.Annotator annotator = new PackageAnnotator.Annotator() {
+        public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
+          myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
+        }
 
-          public void annotatePackage(String packageQualifiedName,
-                                      PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
-                                      boolean flatten) {
-            if (flatten) {
-              myFlattenPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
-            }
-            else {
-              annotatePackage(packageQualifiedName, packageCoverageInfo);
-            }
+        public void annotatePackage(String packageQualifiedName,
+                                    PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
+                                    boolean flatten) {
+          if (flatten) {
+            myFlattenPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
           }
-
-          public void annotateSourceDirectory(VirtualFile dir,
-                                              PackageAnnotator.PackageCoverageInfo dirCoverageInfo,
-                                              Module module) {
-            myDirCoverageInfos.put(dir, dirCoverageInfo);
+          else {
+            annotatePackage(packageQualifiedName, packageCoverageInfo);
           }
+        }
 
-          public void annotateTestDirectory(VirtualFile virtualFile,
-                                            PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
+        public void annotateSourceDirectory(VirtualFile dir,
+                                            PackageAnnotator.PackageCoverageInfo dirCoverageInfo,
                                             Module module) {
-            myTestDirCoverageInfos.put(virtualFile, packageCoverageInfo);
-          }
+          myDirCoverageInfos.put(dir, dirCoverageInfo);
+        }
 
-          public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
-            myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
-          }
-        };
-        for (PsiPackage aPackage : packages) {
-          new PackageAnnotator(aPackage).annotate(suite, annotator);
+        public void annotateTestDirectory(VirtualFile virtualFile,
+                                          PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
+                                          Module module) {
+          myTestDirCoverageInfos.put(virtualFile, packageCoverageInfo);
         }
-        for (final PsiClass aClass : classes) {
-          Runnable runnable = new Runnable() {
-            public void run() {
-              final String packageName = ((PsiClassOwner)aClass.getContainingFile()).getPackageName();
-              final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
-              if (psiPackage == null) return;
-              new PackageAnnotator(psiPackage).annotateFilteredClass(aClass, suite, annotator);
-            }
-          };
-          ApplicationManager.getApplication().runReadAction(runnable);
+
+        public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+          myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
         }
-        dataManager.triggerPresentationUpdate();
+      };
+      for (PsiPackage aPackage : packages) {
+        new PackageAnnotator(aPackage).annotate(suite, annotator);
       }
+      for (final PsiClass aClass : classes) {
+        Runnable runnable = () -> {
+          final String packageName = ((PsiClassOwner)aClass.getContainingFile()).getPackageName();
+          final PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
+          if (psiPackage == null) return;
+          new PackageAnnotator(psiPackage).annotateFilteredClass(aClass, suite, annotator);
+        };
+        ApplicationManager.getApplication().runReadAction(runnable);
+      }
+      dataManager.triggerPresentationUpdate();
     };
   }
 

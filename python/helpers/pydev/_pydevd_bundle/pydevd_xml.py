@@ -153,13 +153,22 @@ def get_type(o):
     #no match return default
     return (type_object, type_name, pydevd_resolver.defaultResolver)
 
+
+def return_values_from_dict_to_xml(return_dict):
+    res = ""
+    for name in dict_keys(return_dict):
+        val = return_dict[name]
+        res += var_to_xml(val, name, return_value=True)
+    return res
+
+
 def frame_vars_to_xml(frame_f_locals):
     """ dumps frame variables to XML
     <var name="var_name" scope="local" type="type" value="value"/>
     """
     xml = ""
 
-    keys = frame_f_locals.keys()
+    keys = dict_keys(frame_f_locals)
     if hasattr(keys, 'sort'):
         keys.sort() #Python 3.0 does not have it
     else:
@@ -168,7 +177,10 @@ def frame_vars_to_xml(frame_f_locals):
     for k in keys:
         try:
             v = frame_f_locals[k]
-            xml += var_to_xml(v, str(k))
+            if k == RETURN_VALUES_DICT:
+                xml += return_values_from_dict_to_xml(v)
+            else:
+                xml += var_to_xml(v, str(k))
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
@@ -176,7 +188,10 @@ def frame_vars_to_xml(frame_f_locals):
     return xml
 
 
-def var_to_xml(val, name, doTrim=True, additionalInXml=''):
+def get_type_qualifier(type):
+    return getattr(type, "__module__", "")
+
+def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False):
     """ single variable or dictionary to xml representation """
 
     is_exception_on_eval = isinstance(val, ExceptionOnEvaluate)
@@ -187,6 +202,8 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
         v = val
 
     _type, typeName, resolver = get_type(v)
+    type_qualifier = get_type_qualifier(_type)
+
 
     do_not_call_value_str = False
     if isinstance(resolver, pydevd_resolver.djangoFormResolver.__class__):
@@ -233,7 +250,18 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
         name = quote(name, '/>_= ') #TODO: Fix PY-5834 without using quote
     except:
         pass
-    xml = '<var name="%s" type="%s"' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
+
+    if return_value:
+        xmlRetVal = ' isRetVal="True"'
+    else:
+        xmlRetVal = ''
+
+    xml = '<var name="%s" type="%s" ' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
+
+    if type_qualifier:
+        xmlQualifier = ' qualifier="%s" ' % make_valid_xml_value(type_qualifier)
+    else:
+        xmlQualifier = ''
 
     if value:
         #cannot be too big... communication may not handle it.
@@ -264,5 +292,5 @@ def var_to_xml(val, name, doTrim=True, additionalInXml=''):
         else:
             xmlCont = ''
 
-    return ''.join((xml, xmlValue, xmlCont, additionalInXml, ' />\n'))
+    return ''.join((xml, xmlQualifier, xmlValue, xmlCont, xmlRetVal, additionalInXml, ' />\n'))
 

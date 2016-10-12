@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ package com.intellij.extapi.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -61,6 +63,10 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
 
   @Override
   public PsiManagerEx getManager() {
+    Project project = ProjectCoreUtil.theOnlyOpenProject();
+    if (project != null) {
+      return PsiManagerEx.getInstanceEx(project);
+    }
     PsiElement parent = this;
 
     while (parent instanceof ASTDelegatePsiElement) {
@@ -350,7 +356,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   }
 
   public void deleteChildInternal(@NotNull ASTNode child) {
-    CodeEditUtil.removeChild(getNode(), child);
+    ((CompositeElement)getNode()).deleteChildInternal(child);
   }
 
   @Override

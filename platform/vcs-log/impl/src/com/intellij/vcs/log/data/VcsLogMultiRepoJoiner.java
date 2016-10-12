@@ -55,5 +55,4 @@ public class VcsLogMultiRepoJoiner<CommitId, Commit extends GraphCommit<CommitId
     assert lastCommit != null;
     return lastCommit;
   }
-
 }

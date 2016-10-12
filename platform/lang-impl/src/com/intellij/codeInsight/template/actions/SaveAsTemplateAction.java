@@ -145,12 +145,7 @@ public class SaveAsTemplateAction extends AnAction {
     }
 
     final LiveTemplatesConfigurable configurable = new LiveTemplatesConfigurable();
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
-      @Override
-      public void run() {
-        configurable.getTemplateListPanel().addTemplate(template);
-      }
-    });
+    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.getTemplateListPanel().addTemplate(template));
   }
 
   @Override

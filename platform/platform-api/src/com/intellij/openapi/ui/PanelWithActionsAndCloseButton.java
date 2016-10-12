@@ -18,6 +18,7 @@ package com.intellij.openapi.ui;
 import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.content.*;
+import com.intellij.util.ContentsUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -108,6 +109,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
       if (myContentManager != null) {
         Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
         if (content != null) {
+          ContentsUtil.closeContentTab(myContentManager, content);
           if (content instanceof TabbedContent && ((TabbedContent)content).getTabs().size() > 1) {
             final TabbedContent tabbedContent = (TabbedContent)content;
             final JComponent component = content.getComponent();

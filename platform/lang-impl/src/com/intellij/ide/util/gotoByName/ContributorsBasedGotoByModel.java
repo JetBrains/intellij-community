@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
@@ -44,9 +44,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
@@ -103,14 +101,11 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
             final TIntHashSet filter = new TIntHashSet(1000);
             myContributorToItsSymbolsMap.put(contributor, filter);
             if (contributor instanceof ChooseByNameContributorEx) {
-              ((ChooseByNameContributorEx)contributor).processNames(new Processor<String>() {
-                @Override
-                public boolean process(String s) {
-                  if (nameProcessor.process(s)) {
-                    filter.add(s.hashCode());
-                  }
-                  return true;
+              ((ChooseByNameContributorEx)contributor).processNames(s -> {
+                if (nameProcessor.process(s)) {
+                  filter.add(s.hashCode());
                 }
+                return true;
               }, FindSymbolParameters.searchScopeFor(myProject, checkBoxState), getIdFilter(checkBoxState));
             } else {
               String[] names = contributor.getNames(myProject, checkBoxState);
@@ -166,7 +161,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   public String[] getNames(final boolean checkBoxState) {
     final THashSet<String> allNames = ContainerUtil.newTroveSet();
 
-    processNames(new CommonProcessors.CollectProcessor<String>(Collections.synchronizedCollection(allNames)), checkBoxState);
+    Collection<String> result = Collections.synchronizedCollection(allNames);
+    processNames(Processors.cancelableCollectProcessor(result), checkBoxState);
     if (LOG.isDebugEnabled()) {
       LOG.debug("getNames(): (got "+allNames.size()+" elements)");
     }
@@ -192,64 +188,58 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     long elementByNameStarted = System.currentTimeMillis();
     final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
 
-    Processor<ChooseByNameContributor> processor = new Processor<ChooseByNameContributor>() {
-      @Override
-      public boolean process(@NotNull ChooseByNameContributor contributor) {
-        if (myProject.isDisposed()) {
-          return true;
-        }
-        TIntHashSet filter = myContributorToItsSymbolsMap.get(contributor);
-        if (filter != null && !filter.contains(name.hashCode())) return true;
-        try {
-          boolean searchInLibraries = parameters.getSearchScope().isSearchInLibraries();
-          long contributorStarted = System.currentTimeMillis();
-
-          if (contributor instanceof ChooseByNameContributorEx) {
-            ((ChooseByNameContributorEx)contributor).processElementsWithName(name, new Processor<NavigationItem>() {
-              @Override
-              public boolean process(NavigationItem item) {
-                canceled.checkCanceled();
-                if (acceptItem(item)) items.add(item);
-                return true;
-              }
-            }, parameters);
-
-            if (LOG.isDebugEnabled()) {
-              LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + ",");
-            }
-          } else {
-            NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
-            for (NavigationItem item : itemsByName) {
-              canceled.checkCanceled();
-              if (item == null) {
-                PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
-                if (pluginId != null) {
-                  LOG.error(new PluginException("null item from contributor " + contributor + " for name " + name, pluginId));
-                }
-                else {
-                  LOG.error("null item from contributor " + contributor + " for name " + name);
-                }
-                continue;
-              }
-
-              if (acceptItem(item)) {
-                items.add(item);
-              }
-            }
-
-            if (LOG.isDebugEnabled()) {
-              LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + "," + itemsByName.length);
-            }
-          }
-        }
-        catch (ProcessCanceledException ex) {
-          // index corruption detected, ignore
-        }
-        catch (Exception ex) {
-          LOG.error(ex);
-        }
+    Processor<ChooseByNameContributor> processor = contributor -> {
+      if (myProject.isDisposed()) {
         return true;
       }
+      TIntHashSet filter = myContributorToItsSymbolsMap.get(contributor);
+      if (filter != null && !filter.contains(name.hashCode())) return true;
+      try {
+        boolean searchInLibraries = parameters.getSearchScope().isSearchInLibraries();
+        long contributorStarted = System.currentTimeMillis();
+
+        if (contributor instanceof ChooseByNameContributorEx) {
+          ((ChooseByNameContributorEx)contributor).processElementsWithName(name, item -> {
+            canceled.checkCanceled();
+            if (acceptItem(item)) items.add(item);
+            return true;
+          }, parameters);
+
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + ",");
+          }
+        } else {
+          NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
+          for (NavigationItem item : itemsByName) {
+            canceled.checkCanceled();
+            if (item == null) {
+              PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
+              if (pluginId != null) {
+                LOG.error(new PluginException("null item from contributor " + contributor + " for name " + name, pluginId));
+              }
+              else {
+                LOG.error("null item from contributor " + contributor + " for name " + name);
+              }
+              continue;
+            }
+
+            if (acceptItem(item)) {
+              items.add(item);
+            }
+          }
+
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + "," + itemsByName.length);
+          }
+        }
+      }
+      catch (ProcessCanceledException ex) {
+        // index corruption detected, ignore
+      }
+      catch (Exception ex) {
+        LOG.error(ex);
+      }
+      return true;
     };
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, true, processor)) {
       canceled.cancel();

@@ -6,8 +6,8 @@ public enum TestEnum {
       public void m() {
       }// 22
    },
-   E3("-"),
-   E4("+") {
+   E3("-", TestEnum.Type.ODD),
+   E4("+", TestEnum.Type.EVEN) {
       public void m() {
       }// 27
    };
@@ -15,14 +15,19 @@ public enum TestEnum {
    private String s;
 
    public void m() {
-   }// 30
+   }// 32
 
    private TestEnum() {
-      this("?");// 34
+      this("?", (TestEnum.Type)null);// 36
    }
 
-   private TestEnum(@Deprecated String var3) {
-      this.s = var3;// 35
+   private TestEnum(@Deprecated String var3, TestEnum.Type var4) {
+      this.s = var3;// 37
+   }
+
+   private static enum Type {
+      ODD,
+      EVEN;
    }
 }
 
@@ -46,10 +51,11 @@ class 'pkg/TestEnum' {
    method '<init> (Ljava/lang/String;I)V' {
       3      20
       5      20
-      8      21
+      6      20
+      9      21
    }
 
-   method '<init> (Ljava/lang/String;ILjava/lang/String;)V' {
+   method '<init> (Ljava/lang/String;ILjava/lang/String;Lpkg/TestEnum$Type;)V' {
       8      24
       b      25
    }
@@ -58,6 +64,6 @@ class 'pkg/TestEnum' {
 Lines mapping:
 22 <-> 7
 27 <-> 12
-30 <-> 18
-34 <-> 21
-35 <-> 25
+32 <-> 18
+36 <-> 21
+37 <-> 25

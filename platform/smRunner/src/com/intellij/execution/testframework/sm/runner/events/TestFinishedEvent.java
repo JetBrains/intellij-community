@@ -32,24 +32,24 @@ public class TestFinishedEvent extends TreeNodeEvent {
     this(testFinished.getTestName(), TreeNodeEvent.getNodeId(testFinished), duration, outputFile);
   }
 
-  public TestFinishedEvent(@Nullable String name, int id, long duration) {
+  public TestFinishedEvent(@Nullable String name, @Nullable String id, long duration) {
     this(name, id, duration, null);
   }
 
-  public TestFinishedEvent(@Nullable String name, int id, long duration, String outputFile) {
+  public TestFinishedEvent(@Nullable String name, @Nullable String id, long duration, String outputFile) {
     super(name, id);
     myDuration = duration;
     myOutputFile = outputFile;
   }
 
   public TestFinishedEvent(@NotNull String name, long duration) {
-    this(name, -1, duration);
+    this(name, null, duration);
   }
 
   /** @deprecated use {@link #TestFinishedEvent(String, long)} (to be removed in IDEA 16) */
   @SuppressWarnings("unused")
   public TestFinishedEvent(@NotNull String name, int duration) {
-    this(name, -1, duration);
+    this(name, null, duration);
   }
 
   public long getDuration() {

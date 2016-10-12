@@ -54,15 +54,11 @@ public class DescriptorTree {
   public void addChild(NodeDescriptor parent, NodeDescriptor child) {
     List<NodeDescriptor> children;
 
-    if(parent == null) {
+    if (parent == null) {
       children = myRootChildren;
     }
     else {
-      children = myChildrenMap.get(parent);
-      if(children == null) {
-        children = new ArrayList<>();
-        myChildrenMap.put(parent, children);
-      }
+      children = myChildrenMap.computeIfAbsent(parent, c -> new ArrayList<>());
     }
     children.add(child);
     if (myInitial && child instanceof LocalVariableDescriptorImpl) {
@@ -76,7 +72,7 @@ public class DescriptorTree {
     }
 
     List<NodeDescriptor> children = myChildrenMap.get(parent);
-    return children != null ? children : Collections.<NodeDescriptor>emptyList();
+    return children != null ? children : Collections.emptyList();
   }
 
   public void dfst(DFSTWalker walker) {

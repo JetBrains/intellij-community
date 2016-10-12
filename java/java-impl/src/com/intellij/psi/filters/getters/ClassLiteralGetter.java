@@ -70,12 +70,7 @@ public class ClassLiteralGetter {
       return;
     }
 
-    CodeInsightUtil.processSubTypes(classParameter, context, true, matcher, new Consumer<PsiType>() {
-      @Override
-      public void consume(PsiType type) {
-        addClassLiteralLookupElement(type, result, context);
-      }
-    });
+    CodeInsightUtil.processSubTypes(classParameter, context, true, matcher, type -> addClassLiteralLookupElement(type, result, context));
   }
 
   private static void addClassLiteralLookupElement(@Nullable final PsiType type, final Consumer<LookupElement> resultSet, final PsiFile context) {

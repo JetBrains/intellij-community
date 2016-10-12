@@ -85,14 +85,11 @@ public class RangeBlinker {
       removeHighlights();
     }
     stopBlinking();
-    myBlinkingAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (myTimeToLive > 0 || show) {
-          myTimeToLive--;
-          show = !show;
-          startBlinking();
-        }
+    myBlinkingAlarm.addRequest(() -> {
+      if (myTimeToLive > 0 || show) {
+        myTimeToLive--;
+        show = !show;
+        startBlinking();
       }
     }, 400);
   }

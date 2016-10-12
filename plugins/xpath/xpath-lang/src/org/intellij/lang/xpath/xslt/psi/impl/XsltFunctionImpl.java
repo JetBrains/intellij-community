@@ -44,13 +44,9 @@ import javax.xml.namespace.QName;
 * Date: 11.01.11
 */
 public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, ItemPresentation {
-  private static final NotNullFunction<XmlTag,Parameter> PARAM_MAPPER = new NotNullFunction<XmlTag, Parameter>() {
-    @NotNull
-    @Override
-    public Parameter fun(XmlTag param) {
-      final XPathType type = XsltCodeInsightUtil.getDeclaredType(param);
-      return new Parameter(type != null ? type : XPath2Type.SEQUENCE, Parameter.Kind.REQUIRED);
-    }
+  private static final NotNullFunction<XmlTag,Parameter> PARAM_MAPPER = param -> {
+    final XPathType type = XsltCodeInsightUtil.getDeclaredType(param);
+    return new Parameter(type != null ? type : XPath2Type.SEQUENCE, Parameter.Kind.REQUIRED);
   };
 
   protected XsltFunctionImpl(XmlTag target) {

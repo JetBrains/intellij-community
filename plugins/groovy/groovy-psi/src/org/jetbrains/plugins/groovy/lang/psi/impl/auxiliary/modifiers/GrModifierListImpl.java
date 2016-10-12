@@ -64,13 +64,7 @@ import java.util.Map;
 public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> implements GrModifierList, StubBasedPsiElement<GrModifierListStub> {
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
   public static final Map<String, IElementType> NAME_TO_MODIFIER_ELEMENT_TYPE = ContainerUtil.newHashMap();
-  private static final ArrayFactory<GrAnnotation> ARRAY_FACTORY = new ArrayFactory<GrAnnotation>() {
-    @NotNull
-    @Override
-    public GrAnnotation[] create(int count) {
-      return new GrAnnotation[count];
-    }
-  };
+  private static final ArrayFactory<GrAnnotation> ARRAY_FACTORY = count -> new GrAnnotation[count];
 
   private static final TObjectIntHashMap<String> PRIORITY = new TObjectIntHashMap<String>(16);
 
@@ -373,13 +367,9 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   @Override
   @NotNull
   public GrAnnotation[] getAnnotations() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<GrAnnotation[]>() {
-      @Nullable
-      @Override
-      public Result<GrAnnotation[]> compute() {
-        return Result.create(GrAnnotationCollector.getResolvedAnnotations(GrModifierListImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-      }
-    });
+    return CachedValuesManager.getCachedValue(this,
+                                              () -> CachedValueProvider.Result
+                                                .create(GrAnnotationCollector.getResolvedAnnotations(GrModifierListImpl.this), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
   }
 
   @Override

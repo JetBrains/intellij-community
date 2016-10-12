@@ -2,7 +2,8 @@
 <body>
 Reports any calls to specific methods where the result of that call is ignored.
 Both methods specified in the inspection's settings and methods annotated with
-<b>org.jetbrains.annotations.Contract(pure=true)</b> are checked.
+<b>org.jetbrains.annotations.Contract(pure=true)</b> and <b>javax.annotation.CheckReturnValue</b> are checked.
+Methods in a class or package annotated with <b>javax.annotation.CheckReturnValue</b> are also checked.
 For many methods, ignoring the result is perfectly
 legitimate, but for some methods it is almost certainly an error. Examples of methods where ignoring
 the result of a call is likely to be an error include <b>java.io.inputStream.read()</b>,

@@ -274,68 +274,64 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   public void coverageGathered(@NotNull final CoverageSuite suite) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
-        if (myCurrentSuitesBundle != null) {
-          final String message = CodeInsightBundle.message("display.coverage.prompt", suite.getPresentableName());
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProject.isDisposed()) return;
+      if (myCurrentSuitesBundle != null) {
+        final String message = CodeInsightBundle.message("display.coverage.prompt", suite.getPresentableName());
 
-          final CoverageOptionsProvider coverageOptionsProvider = CoverageOptionsProvider.getInstance(myProject);
-          final DialogWrapper.DoNotAskOption doNotAskOption = new DialogWrapper.DoNotAskOption() {
-            @Override
-            public boolean isToBeShown() {
-              return coverageOptionsProvider.getOptionToReplace() == 3;
-            }
-
-            @Override
-            public void setToBeShown(boolean value, int exitCode) {
-              coverageOptionsProvider.setOptionsToReplace(value ? 3 : exitCode);
-            }
-
-            @Override
-            public boolean canBeHidden() {
-              return true;
-            }
-
-            @Override
-            public boolean shouldSaveOptionsOnCancel() {
-              return true;
-            }
-
-            @NotNull
-            @Override
-            public String getDoNotShowMessage() {
-              return CommonBundle.message("dialog.options.do.not.show");
-            }
-          };
-          final String[] options = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine() ?
-                                   new String[] {REPLACE_ACTIVE_SUITES, ADD_TO_ACTIVE_SUITES, DO_NOT_APPLY_COLLECTED_COVERAGE} :
-                                   new String[] {REPLACE_ACTIVE_SUITES, DO_NOT_APPLY_COLLECTED_COVERAGE};
-          final int answer = doNotAskOption.isToBeShown() ? Messages.showDialog(message, CodeInsightBundle.message("code.coverage"),
-                                                                                options, 1, Messages.getQuestionIcon(),
-                                                                                doNotAskOption) : coverageOptionsProvider.getOptionToReplace();
-          if (answer == DialogWrapper.OK_EXIT_CODE) {
-            chooseSuitesBundle(new CoverageSuitesBundle(suite));
+        final CoverageOptionsProvider coverageOptionsProvider = CoverageOptionsProvider.getInstance(myProject);
+        final DialogWrapper.DoNotAskOption doNotAskOption = new DialogWrapper.DoNotAskOption() {
+          @Override
+          public boolean isToBeShown() {
+            return coverageOptionsProvider.getOptionToReplace() == 3;
           }
-          else if (answer == 1) {
-            chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
+
+          @Override
+          public void setToBeShown(boolean value, int exitCode) {
+            coverageOptionsProvider.setOptionsToReplace(value ? 3 : exitCode);
           }
-        }
-        else {
+
+          @Override
+          public boolean canBeHidden() {
+            return true;
+          }
+
+          @Override
+          public boolean shouldSaveOptionsOnCancel() {
+            return true;
+          }
+
+          @NotNull
+          @Override
+          public String getDoNotShowMessage() {
+            return CommonBundle.message("dialog.options.do.not.show");
+          }
+        };
+        final String[] options = myCurrentSuitesBundle.getCoverageEngine() == suite.getCoverageEngine() ?
+                                 new String[] {REPLACE_ACTIVE_SUITES, ADD_TO_ACTIVE_SUITES, DO_NOT_APPLY_COLLECTED_COVERAGE} :
+                                 new String[] {REPLACE_ACTIVE_SUITES, DO_NOT_APPLY_COLLECTED_COVERAGE};
+        final int answer = doNotAskOption.isToBeShown() ? Messages.showDialog(message, CodeInsightBundle.message("code.coverage"),
+                                                                              options, 1, Messages.getQuestionIcon(),
+                                                                              doNotAskOption) : coverageOptionsProvider.getOptionToReplace();
+        if (answer == DialogWrapper.OK_EXIT_CODE) {
           chooseSuitesBundle(new CoverageSuitesBundle(suite));
         }
+        else if (answer == 1) {
+          chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
+        }
+      }
+      else {
+        chooseSuitesBundle(new CoverageSuitesBundle(suite));
       }
     });
   }
 
   public void triggerPresentationUpdate() {
     renewInformationInEditors();
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
-        ProjectView.getInstance(myProject).refresh();
-        CoverageViewManager.getInstance(myProject).setReady(true);
-      }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myProject.isDisposed()) return;
+      ProjectView.getInstance(myProject).refresh();
+      CoverageViewManager.getInstance(myProject).setReady(true);
     });
   }
 
@@ -385,13 +381,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   private void applyInformationToEditor(FileEditor[] editors, final VirtualFile file) {
-    final PsiFile psiFile = doInReadActionIfProjectOpen(new Computable<PsiFile>() {
-      @Nullable
-      @Override
-      public PsiFile compute() {
-        return PsiManager.getInstance(myProject).findFile(file);
-      }
-    });
+    final PsiFile psiFile = doInReadActionIfProjectOpen(() -> PsiManager.getInstance(myProject).findFile(file));
     if (psiFile != null && myCurrentSuitesBundle != null && psiFile.isPhysical()) {
       final CoverageEngine engine = myCurrentSuitesBundle.getCoverageEngine();
       if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) {
@@ -672,14 +662,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
           myAnnotators.put(editor, finalAnnotator);
         }
 
-        final Runnable request = new Runnable() {
-          @Override
-          public void run() {
-            if (myProject.isDisposed()) return;
-            if (myCurrentSuitesBundle != null) {
-              if (engine.acceptedByFilters(psiFile, myCurrentSuitesBundle)) {
-                finalAnnotator.showCoverageInformation(myCurrentSuitesBundle);
-              }
+        final Runnable request = () -> {
+          if (myProject.isDisposed()) return;
+          if (myCurrentSuitesBundle != null) {
+            if (engine.acceptedByFilters(psiFile, myCurrentSuitesBundle)) {
+              finalAnnotator.showCoverageInformation(myCurrentSuitesBundle);
             }
           }
         };

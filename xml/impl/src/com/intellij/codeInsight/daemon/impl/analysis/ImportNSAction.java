@@ -60,37 +60,33 @@ public class ImportNSAction implements QuestionAction {
     list.setSelectedIndex(0);
     final int offset = myElement.getTextOffset();
     final RangeMarker marker = myEditor.getDocument().createRangeMarker(offset, offset);
-    final Runnable runnable = new Runnable() {
+    final Runnable runnable = () -> {
+      final String namespace = (String)list.getSelectedValue();
+      if (namespace != null) {
+          final Project project = myFile.getProject();
+          new WriteCommandAction.Simple(project, myFile) {
 
-      @Override
-      public void run() {
-        final String namespace = (String)list.getSelectedValue();
-        if (namespace != null) {
-            final Project project = myFile.getProject();
-            new WriteCommandAction.Simple(project, myFile) {
-
-              @Override
-              protected void run() throws Throwable {
-                final XmlNamespaceHelper extension = XmlNamespaceHelper.getHelper(myFile);
-                final String prefix = extension.getNamespacePrefix(myElement);
-                extension.insertNamespaceDeclaration(myFile,
-                                                     myEditor,
-                                                     Collections.singleton(namespace),
-                                                     prefix,
-                                                     new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
-                    @Override
-                    public void run(final String s) throws IncorrectOperationException {
-                      PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
-                      PsiElement element = myFile.findElementAt(marker.getStartOffset());
-                      if (element != null) {
-                        extension.qualifyWithPrefix(s, element, myEditor.getDocument());
-                      }
+            @Override
+            protected void run() throws Throwable {
+              final XmlNamespaceHelper extension = XmlNamespaceHelper.getHelper(myFile);
+              final String prefix = extension.getNamespacePrefix(myElement);
+              extension.insertNamespaceDeclaration(myFile,
+                                                   myEditor,
+                                                   Collections.singleton(namespace),
+                                                   prefix,
+                                                   new XmlNamespaceHelper.Runner<String, IncorrectOperationException>() {
+                  @Override
+                  public void run(final String s) throws IncorrectOperationException {
+                    PsiDocumentManager.getInstance(myFile.getProject()).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+                    PsiElement element = myFile.findElementAt(marker.getStartOffset());
+                    if (element != null) {
+                      extension.qualifyWithPrefix(s, element, myEditor.getDocument());
                     }
                   }
-                );
-              }
-            }.execute();
-        }
+                }
+              );
+            }
+          }.execute();
       }
     };
     if (list.getModel().getSize() == 1) {

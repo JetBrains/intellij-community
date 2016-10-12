@@ -63,13 +63,11 @@ public final class XsltImplicitUsagesProvider implements ImplicitUsageProvider {
         final String prefix = attr.getLocalName();
         final SchemaPrefix target = new SchemaPrefix(attr, TextRange.from("xmlns:".length(), prefix.length()), prefix);
         final Query<PsiReference> q = ReferencesSearch.search(target, new LocalSearchScope(attr.getParent()));
-        return !q.forEach(new Processor<PsiReference>() {
-            public boolean process(PsiReference psiReference) {
-                if (psiReference.getElement() == attr) {
-                    return true;
-                }
-                return false;
+        return !q.forEach(psiReference -> {
+            if (psiReference.getElement() == attr) {
+                return true;
             }
+            return false;
         });
     }
 

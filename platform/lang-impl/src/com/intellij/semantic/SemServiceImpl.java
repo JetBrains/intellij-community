@@ -64,24 +64,18 @@ public class SemServiceImpl extends SemService{
       }
     });
 
-    ((PsiManagerEx)psiManager).registerRunnableToRunOnChange(new Runnable() {
-      @Override
-      public void run() {
-        if (!isInsideAtomicChange()) {
-          clearCache();
-        }
+    ((PsiManagerEx)psiManager).registerRunnableToRunOnChange(() -> {
+      if (!isInsideAtomicChange()) {
+        clearCache();
       }
     });
 
 
-    LowMemoryWatcher.register(new Runnable() {
-      @Override
-      public void run() {
-        if (myCreatingSem.get() == 0) {
-          clearCache();
-        }
-        //System.out.println("SemService cache flushed");
+    LowMemoryWatcher.register(() -> {
+      if (myCreatingSem.get() == 0) {
+        clearCache();
       }
+      //System.out.println("SemService cache flushed");
     }, project);
   }
 
@@ -93,14 +87,11 @@ public class SemServiceImpl extends SemService{
       public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key,
                                                                                           final ElementPattern<? extends V> place,
                                                                                           final NullableFunction<V, T> provider) {
-        map.putValue(key, new NullableFunction<PsiElement, SemElement>() {
-          @Override
-          public SemElement fun(PsiElement element) {
-            if (place.accepts(element)) {
-              return provider.fun((V)element);
-            }
-            return null;
+        map.putValue(key, element -> {
+          if (place.accepts(element)) {
+            return provider.fun((V)element);
           }
+          return null;
         });
       }
     };

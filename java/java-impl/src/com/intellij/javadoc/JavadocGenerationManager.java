@@ -24,17 +24,14 @@ import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "JavadocGenerationManager")
 public final class JavadocGenerationManager implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.javadoc.JavadocGenerationManager");
-  private final JavadocConfiguration myConfiguration;
+  private final JavadocConfiguration myConfiguration = new JavadocConfiguration();
   private final Project myProject;
 
   public static JavadocGenerationManager getInstance(@NotNull Project project) {
@@ -43,31 +40,19 @@ public final class JavadocGenerationManager implements PersistentStateComponent<
 
   JavadocGenerationManager(Project project) {
     myProject = project;
-    myConfiguration = new JavadocConfiguration();
   }
 
   @Override
   public Element getState() {
-    final Element state = new Element("state");
-    try {
-      myConfiguration.writeExternal(state);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-    }
-    return state;
+    return XmlSerializer.serialize(myConfiguration, JavadocConfiguration.FILTER);
   }
 
   @Override
   public void loadState(Element state) {
-    try {
-      myConfiguration.readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-    }
+    XmlSerializer.deserializeInto(myConfiguration, state);
   }
 
+  @NotNull
   public JavadocConfiguration getConfiguration() {
     return myConfiguration;
   }

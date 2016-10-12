@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * @author Yura Cangea
- */
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -46,9 +43,14 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
         attrs = getFallbackAttributes(key.getFallbackAttributeKey());
         if (attrs != null && !attrs.isFallbackEnabled()) return attrs;
       }
-      attrs = key.getDefaultAttributes();
+      attrs = getKeyDefaults(key);
     }
     return attrs;
+  }
+
+  @Nullable
+  protected TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
+    return key.getDefaultAttributes();
   }
 
   @Nullable
@@ -88,6 +90,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
     EditorColorsSchemeImpl newScheme = new EditorColorsSchemeImpl(this);
     copyTo(newScheme);
     newScheme.setName(DEFAULT_SCHEME_NAME);
+    newScheme.setDefaultMetaInfo(this);
     return newScheme;
   }
 }

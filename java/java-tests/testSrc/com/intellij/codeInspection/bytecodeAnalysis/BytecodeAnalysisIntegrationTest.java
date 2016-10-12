@@ -82,7 +82,6 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   private void setUpLibraries() {
     String libDir = PathManagerEx.getCommunityHomePath() + "/lib";
     PsiTestUtil.addLibrary(myModule, "velocity", libDir, new String[]{"/velocity.jar!/"}, ArrayUtil.EMPTY_STRING_ARRAY);
-    //PsiTestUtil.addLibrary(myModule, "velocity", libDir, "velocity.jar");
   }
 
   private void setUpExternalUpAnnotations() {

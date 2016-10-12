@@ -206,8 +206,8 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
     }
     else {
       if (adjustedElseBranch instanceof PsiStatement && adjustedThenBranch instanceof PsiStatement) {
-        final EquivalenceChecker.Decision decision = EquivalenceChecker.statementsAreEquivalentDecision((PsiStatement)adjustedElseBranch,
-                                                                                                        (PsiStatement)adjustedThenBranch);
+        final EquivalenceChecker.Decision decision = EquivalenceChecker.getCanonicalPsiEquivalence().statementsAreEquivalentDecision((PsiStatement)adjustedElseBranch,
+                                                                                                                                     (PsiStatement)adjustedThenBranch);
         maybePutMethodCall = decision.getLeftDiff();
         maybeGetMethodCall = decision.getRightDiff();
       }
@@ -222,8 +222,8 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
       final PsiMethodCallExpression getMethodCall = (PsiMethodCallExpression)maybeGetMethodCall;
       final PsiExpression putQualifier = putMethodCall.getMethodExpression().getQualifierExpression();
       final PsiExpression getQualifier = getMethodCall == null ? null : getMethodCall.getMethodExpression().getQualifierExpression();
-      if ((getMethodCall == null || EquivalenceChecker.expressionsAreEquivalent(putQualifier, getQualifier)) &&
-          EquivalenceChecker.expressionsAreEquivalent(putQualifier, containsQualifier) &&
+      if ((getMethodCall == null || EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(putQualifier, getQualifier)) &&
+          EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(putQualifier, containsQualifier) &&
           isJavaUtilMapMethodWithName(putMethodCall, "put") &&
           (getMethodCall == null || isJavaUtilMapMethodWithName(getMethodCall, "get"))) {
 
@@ -245,8 +245,8 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
         }
         PsiExpression putKeyArgument = putArguments[0];
 
-        if (EquivalenceChecker.expressionsAreEquivalent(containsKey, putKeyArgument) &&
-            (getArgument == null || EquivalenceChecker.expressionsAreEquivalent(getArgument, putKeyArgument))) {
+        if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(containsKey, putKeyArgument) &&
+            (getArgument == null || EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(getArgument, putKeyArgument))) {
           holder.registerProblem(context, QuickFixBundle.message("java.8.collections.api.inspection.description"),
                                  new ReplaceWithMapPutIfAbsentFix(putMethodCall));
         }

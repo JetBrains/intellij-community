@@ -35,7 +35,6 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -697,6 +696,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return isNegated;
     }
     if (canBeNaN(dfaLeft) && canBeNaN(dfaRight)) {
+      if (dfaLeft == dfaRight &&
+          dfaLeft instanceof DfaVariableValue &&
+          !(((DfaVariableValue)dfaLeft).getVariableType() instanceof PsiPrimitiveType)) {
+        return !isNegated;
+      }
+
       applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
       return true;
     }
@@ -810,9 +815,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       Object value = ((DfaConstValue)dfa).getValue();
       if (value instanceof Double && ((Double)value).isNaN()) return true;
       if (value instanceof Float && ((Float)value).isNaN()) return true;
-    }
-    else if (dfa instanceof DfaBoxedValue){
-      return isNaN(((DfaBoxedValue)dfa).getWrappedValue());
     }
     return false;
   }
@@ -991,12 +993,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushVariable(@NotNull final DfaVariableValue variable) {
-    List<DfaValue> updatedStack = ContainerUtil.map(myStack, new Function<DfaValue, DfaValue>() {
-      @Override
-      public DfaValue fun(DfaValue value) {
-        return handleFlush(variable, value);
-      }
-    });
+    List<DfaValue> updatedStack = ContainerUtil.map(myStack, value -> handleFlush(variable, value));
     myStack.clear();
     for (DfaValue value : updatedStack) {
       myStack.push(value);

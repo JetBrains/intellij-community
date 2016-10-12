@@ -239,9 +239,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
       if (v>100) break;
     }
     final String text = imports + "\n class X {{\n" + usages + "}}";
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      getEditor().getDocument().setText(text);
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> getEditor().getDocument().setText(text));
 
     List<HighlightInfo> errors = DaemonAnalyzerTestCase.filter(doHighlighting(), HighlightSeverity.WARNING);
     assertEmpty(errors);

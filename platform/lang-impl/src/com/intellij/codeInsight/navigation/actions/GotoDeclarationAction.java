@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.navigation.actions;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
@@ -28,22 +29,25 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -51,13 +55,11 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -84,16 +86,13 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     DumbService.getInstance(project).setAlternativeResolveEnabled(true);
     try {
       int offset = editor.getCaretModel().getOffset();
-      PsiElement[] elements = findAllTargetElements(project, editor, offset);
+      PsiElement[] elements = underModalProgress(project, "Resolving Reference...", () -> findAllTargetElements(project, editor, offset));
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
 
       if (elements.length != 1) {
         if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
-          if (element != null) {
-            ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
-            RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
-            showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
+          if (startFindUsages(editor, element)) {
             return;
           }
         }
@@ -102,6 +101,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       }
 
       PsiElement element = elements[0];
+      if (element == findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset()) &&
+          startFindUsages(editor, element)) {
+        return;
+      }
+
       PsiElement navElement = element.getNavigationElement();
       navElement = TargetElementUtil.getInstance().getGotoDeclarationTarget(element, navElement);
       if (navElement != null) {
@@ -116,9 +120,34 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
+  private static boolean startFindUsages(@NotNull Editor editor, PsiElement element) {
+    if (element != null) {
+      ShowUsagesAction showUsages = (ShowUsagesAction)ActionManager.getInstance().getAction(ShowUsagesAction.ID);
+      RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+      showUsages.startFindUsages(element, popupPosition, editor, ShowUsagesAction.USAGES_PAGE_SIZE);
+      return true;
+    }
+    return false;
+  }
+
+  public static <T> T underModalProgress(@NotNull Project project,
+                                         @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
+                                         @NotNull Computable<T> computable) throws ProcessCanceledException {
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      DumbService.getInstance(project).setAlternativeResolveEnabled(true);
+      try {
+        return ApplicationManager.getApplication().runReadAction(computable);
+      }
+      finally {
+        DumbService.getInstance(project).setAlternativeResolveEnabled(false);
+      }
+    }, progressTitle, true, project);
+  }
+
   public static PsiNameIdentifierOwner findElementToShowUsagesOf(@NotNull Editor editor, int offset) {
     PsiElement elementAt = TargetElementUtil.getInstance().findTargetElement(editor, TargetElementUtil.ELEMENT_NAME_ACCEPTED, offset);
     if (elementAt instanceof PsiNameIdentifierOwner) {
+      LOG.assertTrue(elementAt.isValid(), elementAt);
       return (PsiNameIdentifierOwner)elementAt;
     }
     return null;
@@ -169,8 +198,10 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     final PsiReference reference = TargetElementUtil.findReference(editor, offset);
 
     if (elements == null || elements.length == 0) {
-      final Collection<PsiElement> candidates = suggestCandidates(reference);
-      elements = PsiUtilCore.toPsiElementArray(candidates);
+      elements = reference == null ? PsiElement.EMPTY_ARRAY
+                                   : PsiUtilCore.toPsiElementArray(
+                                     underModalProgress(reference.getElement().getProject(), "Resolving Reference...",
+                                                        () -> suggestCandidates(reference)));
     }
 
     if (elements.length == 1) {
@@ -213,12 +244,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   @Nullable
+  @TestOnly
   public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
     final PsiElement[] targets = findAllTargetElements(project, editor, offset);
     return targets.length == 1 ? targets[0] : null;
   }
 
   @NotNull
+  @VisibleForTesting
   public static PsiElement[] findAllTargetElements(Project project, Editor editor, int offset) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return PsiElement.EMPTY_ARRAY;
@@ -230,14 +263,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Nullable
   public static PsiElement[] findTargetElementsNoVS(Project project, Editor editor, int offset, boolean lookupAccepted) {
-    final Document document = editor.getDocument();
+    Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
-
-    if (file instanceof PsiCompiledFile) {
-      PsiFile decompiled = ((PsiCompiledFile)file).getDecompiledPsiFile();
-      if (decompiled != null) file = decompiled;
-    }
 
     PsiElement elementAt = file.findElementAt(TargetElementUtil.adjustOffset(file, document, offset));
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {
@@ -278,31 +306,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
   @Override
   public void update(final AnActionEvent event) {
-    InputEvent inputEvent = event.getInputEvent();
-    if (inputEvent instanceof MouseEvent) {
-      Component component = inputEvent.getComponent();
-      if (component != null) {
-        Point point = ((MouseEvent)inputEvent).getPoint();
-        Component componentAt = SwingUtilities.getDeepestComponentAt(component, point.x, point.y);
-        Project project = event.getProject();
-        if (project == null) {
-          event.getPresentation().setEnabled(false);
-          return;
-        }
-
-        Editor editor = getBaseEditor(event.getDataContext(), project);
-        if (componentAt instanceof EditorGutterComponentEx) {
-          event.getPresentation().setEnabled(false);
-          return;
-        }
-        else if (editor != null && componentAt == editor.getContentComponent()) {
-          LogicalPosition pos = editor.xyToLogicalPosition(SwingUtilities.convertPoint(component, point, componentAt));
-          if (EditorUtil.inVirtualSpace(editor, pos)) {
-            event.getPresentation().setEnabled(false);
-            return;
-          }
-        }
-      }
+    if (event.getProject() == null ||
+        event.getData(EditorGutter.KEY) != null ||
+        Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
+      event.getPresentation().setEnabled(false);
+      return;
     }
 
     for (GotoDeclarationHandler handler : Extensions.getExtensions(GotoDeclarationHandler.EP_NAME)) {

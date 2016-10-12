@@ -144,6 +144,12 @@ public class JBTabsPaneImpl implements TabbedPane, SwingConstants {
     myTabs.select(getTabAt(index), false);
   }
 
+  @Override
+  public Component getTabComponentAt(int index) {
+    final TabInfo tabInfo = myTabs.getTabAt(index);
+    return myTabs.getTabLabel(tabInfo);
+  }
+
   public void removeTabAt(int index) {
     myTabs.removeTab(getTabAt(index));
   }

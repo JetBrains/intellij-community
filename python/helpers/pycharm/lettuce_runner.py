@@ -64,8 +64,6 @@ class _LettuceRunner(_bdd_utils.BddRunner):
             for feature_file in self.__runner.loader.find_feature_files():
                 feature = core.Feature.from_file(feature_file)
                 assert isinstance(feature, core.Feature), feature
-                # TODO: cut out due to https://github.com/gabrielfalcao/lettuce/issues/451  Fix when this issue fixed
-                feature.scenarios = filter(lambda s: not s.outlines, feature.scenarios)
                 if feature.scenarios:
                     features.append(feature)
 
@@ -120,6 +118,14 @@ class _LettuceRunner(_bdd_utils.BddRunner):
         lettuce.after.each_feature(
             lambda f: self._feature_or_scenario(False, f.name, f.described_at))
 
+        try:
+            lettuce.before.each_outline(lambda s, o: self.__outline(True, s, o))
+            lettuce.after.each_outline(lambda s, o: self.__outline(False, s, o))
+        except AttributeError:
+            import sys
+            sys.stderr.write("WARNING: your lettuce version is outdated and does not support outline hooks. "
+                             "Outline scenarios may not work. Consider upgrade to latest lettuce (0.22 at least)")
+
         lettuce.before.each_scenario(
             lambda s: self.__scenario(True, s))
         lettuce.after.each_scenario(
@@ -133,16 +139,19 @@ class _LettuceRunner(_bdd_utils.BddRunner):
         lettuce.before.each_step(lambda s: self.__step(True, s))
         lettuce.after.each_step(lambda s: self.__step(False, s))
 
+    def __outline(self, is_started, scenario, outline):
+        """
+        report outline is started or finished
+        """
+        outline_description = ["{0}: {1}".format(k, v) for k, v in outline.items()]
+        self._feature_or_scenario(is_started, "Outline {0}".format(outline_description), scenario.described_at)
+
     def __scenario(self, is_started, scenario):
         """
         Reports scenario launched
         :type scenario core.Scenario
         :param scenario: scenario
         """
-        if scenario.outlines:
-            scenario.steps = []  # Clear to prevent running. TODO: Fix when this issue fixed
-            scenario.background = None  # TODO: undocumented
-            return
         self._feature_or_scenario(is_started, scenario.name, scenario.described_at)
 
 

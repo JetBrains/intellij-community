@@ -219,12 +219,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
         .setShowShadow(isRealPopup() && !isForceHideShadow())
         .setCancelKeyEnabled(false)
         .setCancelOnClickOutside(myCancelOnClickOutside)
-        .setCancelCallback(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            onPopupCancel();
-            return true;
-          }
+        .setCancelCallback(() -> {
+          onPopupCancel();
+          return true;
         })
         .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
         .createPopup();
@@ -422,7 +419,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public Point getLocationOn(JComponent c) {
     Point location;
-    if (isRealPopup()) {
+    if (isRealPopup() && !myPopup.isDisposed()) {
       location = myPopup.getLocationOnScreen();
       SwingUtilities.convertPointFromScreen(location, c);
     }

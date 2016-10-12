@@ -40,7 +40,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.usageView.UsageInfo;
@@ -89,14 +88,16 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
 
-    PsiType myReturnType = myReturnTypePointer.getType();
-    return myMethod.isValid()
-        && myMethod.getManager().isInProject(myMethod)
-        && myReturnType != null
-        && myReturnType.isValid()
-        && !TypeConversionUtil.isNullType(myReturnType)
-        && myMethod.getReturnType() != null
-        && !Comparing.equal(myReturnType, myMethod.getReturnType());
+    final PsiType myReturnType = myReturnTypePointer.getType();
+    if (myMethod.isValid() &&
+        myMethod.getManager().isInProject(myMethod) &&
+        myReturnType != null &&
+        myReturnType.isValid() &&
+        !TypeConversionUtil.isNullType(myReturnType)) {
+      final PsiType returnType = myMethod.getReturnType();
+      if (returnType != null && returnType.isValid() && !Comparing.equal(myReturnType, returnType)) return true;
+    }
+    return false;
   }
 
   @Override

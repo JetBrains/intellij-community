@@ -63,12 +63,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
       final VirtualFile baseDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(projectDir.getParent());
       PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(baseDir, newProject);
       newProject.save();
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          Disposer.dispose(newProject);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> Disposer.dispose(newProject));
     }
     final String[] files = projectDir.list();
     if (files != null) {
@@ -185,12 +180,7 @@ public class ModuleAttachProcessor extends ProjectAttachProcessor {
         result.add(module);
       }
     }
-    Collections.sort(result, new Comparator<Module>() {
-      @Override
-      public int compare(Module module, Module module2) {
-        return module.getName().compareTo(module2.getName());
-      }
-    });
+    Collections.sort(result, (module, module2) -> module.getName().compareTo(module2.getName()));
     if (primaryModule != null) {
       result.add(0, primaryModule);
     }

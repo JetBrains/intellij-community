@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl.utils;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -64,7 +65,7 @@ public class BoolUtils {
     return null;
   }
 
-  public static boolean isNegation(GrExpression exp) {
+  public static boolean isNegation(@Nullable PsiElement exp) {
     if (!(exp instanceof GrUnaryExpression)) {
       return false;
     }

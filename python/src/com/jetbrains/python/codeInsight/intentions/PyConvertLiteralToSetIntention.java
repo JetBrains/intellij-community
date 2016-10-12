@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PySetLiteralExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,16 +31,11 @@ public class PyConvertLiteralToSetIntention extends PyBaseConvertCollectionLiter
   }
 
   @Override
-  protected boolean isAvailableForCollection(PySequenceExpression literal) {
-    return LanguageLevel.forElement(literal).isAtLeast(LanguageLevel.PYTHON27) && !isInTargetPosition(literal);
+  protected boolean isAvailableForCollection(@NotNull PySequenceExpression literal) {
+    return !literal.isEmpty() && LanguageLevel.forElement(literal).isAtLeast(LanguageLevel.PYTHON27) && !isInTargetPosition(literal);
   }
 
-  private static boolean isInTargetPosition(@NotNull final PySequenceExpression sequenceLiteral) {
-    return ContainerUtil.exists(sequenceLiteral.getElements(), new Condition<PyExpression>() {
-      @Override
-      public boolean value(PyExpression expression) {
-        return expression instanceof PyTargetExpression;
-      }
-    });
+  private static boolean isInTargetPosition(@NotNull PySequenceExpression sequenceLiteral) {
+    return ContainerUtil.exists(sequenceLiteral.getElements(), expression -> expression instanceof PyTargetExpression);
   }
 }

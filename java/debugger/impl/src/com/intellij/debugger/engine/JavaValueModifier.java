@@ -91,12 +91,10 @@ public abstract class JavaValueModifier extends XValueModifier {
   //}
   //
   protected static void update(final DebuggerContextImpl context) {
-    DebuggerInvocationUtil.swingInvokeLater(context.getProject(), new Runnable() {
-      public void run() {
-        final DebuggerSession session = context.getDebuggerSession();
-        if (session != null) {
-          session.refresh(false);
-        }
+    DebuggerInvocationUtil.swingInvokeLater(context.getProject(), () -> {
+      final DebuggerSession session = context.getDebuggerSession();
+      if (session != null) {
+        session.refresh(false);
       }
     });
     //node.setState(context);

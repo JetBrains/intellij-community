@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
 public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.Abstract
-  implements OptionsContainingConfigurable, Configurable.NoMargin, Configurable.NoScroll {
+  implements OptionsContainingConfigurable, Configurable.NoMargin, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
 
   private CodeStyleSchemesPanel myRootSchemesPanel;
   private CodeStyleSchemesModel myModel;
@@ -206,18 +207,15 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
     final List<CodeStyleSettingsProvider> providers =
       Arrays.asList(Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME));
-    Collections.sort(providers, new Comparator<CodeStyleSettingsProvider>() {
-      @Override
-      public int compare(CodeStyleSettingsProvider p1, CodeStyleSettingsProvider p2) {
-        if (!p1.getPriority().equals(p2.getPriority())) {
-          return p1.getPriority().compareTo(p2.getPriority());
-        }
-        String name1 = p1.getConfigurableDisplayName();
-        if (name1 == null) name1 = "";
-        String name2 = p2.getConfigurableDisplayName();
-        if (name2 == null) name2 = "";
-        return name1.compareToIgnoreCase(name2);
+    Collections.sort(providers, (p1, p2) -> {
+      if (!p1.getPriority().equals(p2.getPriority())) {
+        return p1.getPriority().compareTo(p2.getPriority());
       }
+      String name1 = p1.getConfigurableDisplayName();
+      if (name1 == null) name1 = "";
+      String name2 = p2.getConfigurableDisplayName();
+      if (name2 == null) name2 = "";
+      return name1.compareToIgnoreCase(name2);
     });
 
     for (final CodeStyleSettingsProvider provider : providers) {
@@ -321,6 +319,19 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       result.addAll(panel.processListOptions());
     }
     return result;
+  }
+
+  @Override
+  public boolean isProjectLevel() {
+    return myModel != null && myModel.isUsePerProjectSettings();
+  }
+
+  @Nullable
+  public SearchableConfigurable findSubConfigurable(final String name) {
+    if (myPanels == null) {
+      buildConfigurables();
+    }
+    return myPanels.stream().filter(panel -> panel.getDisplayName().equals(name)).findFirst().orElse(null);
   }
 
   private class CodeStyleConfigurableWrapper implements SearchableConfigurable, NoMargin, NoScroll, OptionsContainingConfigurable {

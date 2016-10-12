@@ -21,15 +21,20 @@ package com.intellij.lang.properties.projectView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.ValidateableNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
+import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -37,14 +42,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+import java.util.*;
+import java.util.stream.Stream;
 
-public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implements ValidateableNode{
+public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implements ValidateableNode, DropTargetNode {
   public ResourceBundleNode(Project project, ResourceBundle resourceBundle, final ViewSettings settings) {
     super(project, resourceBundle, settings);
   }
@@ -117,5 +126,63 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
   @Override
   public boolean isValid() {
     return getValue().getDefaultPropertiesFile().getContainingFile().isValid();
+  }
+
+  @Override
+  public boolean canDrop(TreeNode[] sourceNodes) {
+    for (TreeNode node : sourceNodes) {
+      if (extractPropertiesFileFromNode(node) == null) return false;
+    }
+    return true;
+  }
+
+  @Override
+  public void drop(TreeNode[] sourceNodes, DataContext dataContext) {
+    MultiMap<ResourceBundle, PropertiesFile> bundleGrouping = new MultiMap<>();
+    for (TreeNode sourceNode : sourceNodes) {
+      final PropertiesFile propertiesFile = extractPropertiesFileFromNode(sourceNode);
+      if (propertiesFile == null) return;
+      bundleGrouping.putValue(propertiesFile.getResourceBundle(), propertiesFile);
+    }
+    final ResourceBundle resourceBundle = getValue();
+    bundleGrouping.remove(resourceBundle);
+
+    final ResourceBundleManager resourceBundleManager = ResourceBundleManager.getInstance(myProject);
+    final List<PropertiesFile> toAddInResourceBundle = new ArrayList<>();
+
+    for (Map.Entry<ResourceBundle, Collection<PropertiesFile>> entry : bundleGrouping.entrySet()) {
+      toAddInResourceBundle.addAll(entry.getValue());
+      final ResourceBundle currentBundle = entry.getKey();
+      final Collection<PropertiesFile> propertiesFilesToMove = entry.getValue();
+      if (currentBundle.getPropertiesFiles().size() - propertiesFilesToMove.size() > 0) {
+        final String currentBundleBaseName = currentBundle.getBaseName();
+        final ArrayList<PropertiesFile> files = new ArrayList<>(currentBundle.getPropertiesFiles());
+        files.removeAll(propertiesFilesToMove);
+        resourceBundleManager.dissociateResourceBundle(currentBundle);
+        resourceBundleManager.combineToResourceBundle(files, currentBundleBaseName);
+      }
+    }
+
+    toAddInResourceBundle.addAll(resourceBundle.getPropertiesFiles());
+    final String baseName = resourceBundle.getBaseName();
+    resourceBundleManager.dissociateResourceBundle(resourceBundle);
+    resourceBundleManager.combineToResourceBundle(toAddInResourceBundle, baseName);
+
+    ProjectView.getInstance(myProject).refresh();
+  }
+
+  @Override
+  public void dropExternalFiles(PsiFileSystemItem[] sourceFileArray, DataContext dataContext) {
+  }
+
+  @Nullable
+  private static PropertiesFile extractPropertiesFileFromNode(TreeNode node) {
+    if (!(node instanceof DefaultMutableTreeNode)) return null;
+    final Object userObject = ((DefaultMutableTreeNode) node).getUserObject();
+    if (!(userObject instanceof PsiFileNode)) return null;
+    final PsiFile file = ((PsiFileNode)userObject).getValue();
+    final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(file);
+    if (propertiesFile == null || !file.getManager().isInProject(file) || !file.isValid()) return null;
+    return propertiesFile;
   }
 }

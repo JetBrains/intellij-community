@@ -32,7 +32,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -70,7 +70,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
 
     final DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-    codeAnalyzer.autoImportReferenceAtCursor(editor, file); //let autoimport complete
+    letAutoImportComplete(editor, file, codeAnalyzer);
 
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
@@ -96,6 +96,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (!intentions.isEmpty()) {
       IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);
     }
+  }
+
+  private static void letAutoImportComplete(@NotNull Editor editor, @NotNull PsiFile file, DaemonCodeAnalyzerImpl codeAnalyzer) {
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> codeAnalyzer.autoImportReferenceAtCursor(editor, file));
   }
 
   @Override
@@ -174,40 +178,26 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
-    final Pair<PsiFile, Editor> pair = hostEditor != null ? chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
-      @Override
-      public boolean process(PsiFile psiFile, Editor editor) {
-        return availableFor(psiFile, editor, action);
-      }
-    }) : Pair.<PsiFile, Editor>create(hostFile, null);
+    final Pair<PsiFile, Editor> pair = hostEditor != null ? chooseBetweenHostAndInjected(hostFile, hostEditor,
+                                                                                         (psiFile, editor) -> availableFor(psiFile, editor, action)) : Pair.<PsiFile, Editor>create(hostFile, null);
     if (pair == null) return false;
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        try {
-          action.invoke(project, pair.second, pair.first);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-        if (hostEditor != null) {
-          DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(hostEditor);
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      Runnable r = () -> action.invoke(project, pair.second, pair.first);
+      try {
+        if (action.startInWriteAction()) {
+          WriteAction.run(r::run);
+        } else {
+          r.run();
         }
       }
-    };
-
-    if (action.startInWriteAction()) {
-      final Runnable _runnable = runnable;
-      runnable = new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(_runnable);
-        }
-      };
-    }
-
-    CommandProcessor.getInstance().executeCommand(project, runnable, text, null);
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+      if (hostEditor != null) {
+        DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(hostEditor);
+      }
+    }, text, null);
     return true;
   }
 }

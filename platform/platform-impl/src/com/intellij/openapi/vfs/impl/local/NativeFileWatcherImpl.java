@@ -16,11 +16,8 @@
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
-import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.ide.actions.ShowFilePathAction;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -33,21 +30,21 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
 import com.intellij.openapi.vfs.local.PluggableFileWatcher;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.BaseDataReader;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.text.Normalizer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -65,13 +62,12 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final String EXIT_COMMAND = "EXIT";
   private static final int MAX_PROCESS_LAUNCH_ATTEMPT_COUNT = 10;
 
-  private ManagingFS myManagingFS;
   private FileWatcherNotificationSink myNotificationSink;
   private File myExecutable;
 
   private volatile MyProcessHandler myProcessHandler;
-  private volatile int myStartAttemptCount = 0;
-  private volatile boolean myIsShuttingDown = false;
+  private volatile int myStartAttemptCount;
+  private volatile boolean myIsShuttingDown;
   private final AtomicInteger mySettingRoots = new AtomicInteger(0);
   private volatile List<String> myRecursiveWatchRoots = Collections.emptyList();
   private volatile List<String> myFlatWatchRoots = Collections.emptyList();
@@ -80,7 +76,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   @Override
   public void initialize(@NotNull ManagingFS managingFS, @NotNull FileWatcherNotificationSink notificationSink) {
-    myManagingFS = managingFS;
     myNotificationSink = notificationSink;
 
     boolean disabled = isDisabled();
@@ -93,12 +88,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       notifyOnFailure(ApplicationBundle.message("watcher.exe.not.found"), null);
     }
     else if (!myExecutable.canExecute()) {
-      notifyOnFailure(ApplicationBundle.message("watcher.exe.not.exe", myExecutable), new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          ShowFilePathAction.openFile(myExecutable);
-        }
-      });
+      String message = ApplicationBundle.message("watcher.exe.not.exe", myExecutable);
+      notifyOnFailure(message, (notification, event) -> ShowFilePathAction.openFile(myExecutable));
     }
     else {
       try {
@@ -205,7 +196,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     ProcessBuilder processBuilder = new ProcessBuilder(myExecutable.getAbsolutePath());
     Process process = processBuilder.start();
     myProcessHandler = new MyProcessHandler(process, myExecutable.getName());
-    myProcessHandler.addProcessListener(new MyProcessAdapter());
     myProcessHandler.startNotify();
 
     if (restart) {
@@ -285,10 +275,21 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private static class MyProcessHandler extends OSProcessHandler {
-    private static final Charset CHARSET = SystemInfo.isWindows | SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : null;
+  private static final Charset CHARSET = SystemInfo.isWindows | SystemInfo.isMac ? CharsetToolkit.UTF8_CHARSET : null;
 
+  private static final BaseOutputReader.Options READER_OPTIONS = new BaseOutputReader.Options() {
+    @Override public BaseDataReader.SleepingPolicy policy() { return BaseDataReader.SleepingPolicy.BLOCKING; }
+    @Override public boolean sendIncompleteLines() { return false; }
+    @Override public boolean withSeparators() { return false; }
+  };
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private enum WatcherOp { GIVEUP, RESET, UNWATCHEABLE, REMAP, MESSAGE, CREATE, DELETE, STATS, CHANGE, DIRTY, RECDIRTY }
+
+  private class MyProcessHandler extends OSProcessHandler {
     private final BufferedWriter myWriter;
+    private WatcherOp myLastOp;
+    private final List<String> myLines = ContainerUtil.newArrayList();
 
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     private MyProcessHandler(@NotNull Process process, @NotNull String commandLine) {
@@ -296,7 +297,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       myWriter = new BufferedWriter(writer(process.getOutputStream()));
     }
 
-    private static OutputStreamWriter writer(OutputStream stream) {
+    private OutputStreamWriter writer(OutputStream stream) {
       return CHARSET != null ? new OutputStreamWriter(stream, CHARSET) :  new OutputStreamWriter(stream);
     }
 
@@ -306,24 +307,17 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       myWriter.flush();
     }
 
+    @NotNull
     @Override
-    protected boolean useNonBlockingRead() {
-      return false;
+    protected BaseOutputReader.Options readerOptions() {
+      return READER_OPTIONS;
     }
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  private enum WatcherOp {
-    GIVEUP, RESET, UNWATCHEABLE, REMAP, MESSAGE, CREATE, DELETE, STATS, CHANGE, DIRTY, RECDIRTY
-  }
-
-  private class MyProcessAdapter extends ProcessAdapter {
-    private WatcherOp myLastOp = null;
-    private final List<String> myLines = ContainerUtil.newArrayList();
 
     @Override
-    public void processTerminated(ProcessEvent event) {
-      String message = "Watcher terminated with exit code " + event.getExitCode();
+    protected void notifyProcessTerminated(int exitCode) {
+      super.notifyProcessTerminated(exitCode);
+
+      String message = "Watcher terminated with exit code " + exitCode;
       if (myIsShuttingDown) LOG.info(message); else LOG.warn(message);
 
       myProcessHandler = null;
@@ -338,15 +332,14 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     @Override
-    public void onTextAvailable(ProcessEvent event, Key outputType) {
+    public void notifyTextAvailable(String line, Key outputType) {
       if (outputType == ProcessOutputTypes.STDERR) {
-        LOG.warn(event.getText().trim());
+        LOG.warn(line);
       }
       if (outputType != ProcessOutputTypes.STDOUT) {
         return;
       }
 
-      String line = event.getText().trim();
       if (LOG.isTraceEnabled()) LOG.trace(">> " + line);
 
       if (myLastOp == null) {
@@ -355,7 +348,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
           watcherOp = WatcherOp.valueOf(line);
         }
         catch (IllegalArgumentException e) {
-          LOG.error("Illegal watcher command: " + line);
+          String message = "Illegal watcher command: '" + line + "'";
+          if (line.length() <= 20) message += " " + Arrays.toString(line.chars().toArray());
+          LOG.error(message);
           return;
         }
 
@@ -364,7 +359,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
           myIsShuttingDown = true;
         }
         else if (watcherOp == WatcherOp.RESET) {
-          reset();
+          myNotificationSink.notifyReset(null);
         }
         else {
           myLastOp = watcherOp;
@@ -397,12 +392,6 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       }
     }
 
-    private void reset() {
-      for (VirtualFile root : myManagingFS.getLocalRoots()) {
-        myNotificationSink.notifyDirtyPathRecursive(root.getPresentableUrl());
-      }
-    }
-
     private void processRemap() {
       Set<Pair<String, String>> pairs = ContainerUtil.newHashSet();
       for (int i = 0; i < myLines.size() - 1; i += 2) {
@@ -417,10 +406,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
     private void processChange(String path, WatcherOp op) {
       if (SystemInfo.isWindows && op == WatcherOp.RECDIRTY) {
-        VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
-        if (root != null) {
-          myNotificationSink.notifyDirtyPathRecursive(path);
-        }
+        myNotificationSink.notifyReset(path);
         return;
       }
 
@@ -458,7 +444,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  private boolean isRepetition(String path) {
+  protected boolean isRepetition(String path) {
     // collapse subsequent change file change notifications that happen once we copy large file,
     // this allows reduction of path checks at least 20% for Windows
     synchronized (myLastChangedPaths) {

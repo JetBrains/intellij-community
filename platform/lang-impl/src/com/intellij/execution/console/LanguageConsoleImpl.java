@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -45,6 +46,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -134,12 +136,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     myBusConnection = getProject().getMessageBus().connect();
     // action shortcuts are not yet registered
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        installEditorFactoryListener();
-      }
-    }, getProject().getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> installEditorFactoryListener(), getProject().getDisposed());
   }
 
   @Override
@@ -189,6 +186,10 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
   private void setHistoryScrollBarVisible(boolean visible) {
     JScrollBar prev = myHistoryViewer.getScrollPane().getHorizontalScrollBar();
+    if (Registry.is("ide.scroll.new.layout")) {
+      prev.setEnabled(visible);
+      return;
+    }
     JScrollBar next;
     if (visible) {
       next = ((EmptyScrollBar)prev).original;
@@ -333,12 +334,8 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     String result = addTextRangeToHistory(textRange, editor, preserveMarkup);
     if (erase) {
-      DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-        @Override
-        public void run() {
-          editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-        }
-      });
+      DocumentUtil.writeInRunUndoTransparentAction(
+        () -> editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset()));
     }
     // always scroll to end on user input
     scrollToEnd();
@@ -515,12 +512,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   public void setInputText(@NotNull final String query) {
-    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        myConsoleEditor.getDocument().setText(StringUtil.convertLineSeparators(query));
-      }
-    });
+    DocumentUtil.writeInRunUndoTransparentAction(() -> myConsoleEditor.getDocument().setText(StringUtil.convertLineSeparators(query)));
   }
 
   boolean isHistoryViewerForceAdditionalColumnsUsage() {
@@ -626,6 +618,23 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       }
       final Dimension historySize = history.getContentSize();
       final Dimension inputSize = input.getContentSize();
+
+      // deal with width
+      if (isHistoryViewerForceAdditionalColumnsUsage()) {
+        history.getSoftWrapModel().forceAdditionalColumnsUsage();
+
+        int minAdditionalColumns = 2;
+        // calculate content size without additional columns except minimal amount
+        int historySpaceWidth = EditorUtil.getPlainSpaceWidth(history);
+        historySize.width += historySpaceWidth * (minAdditionalColumns - history.getSettings().getAdditionalColumnsCount());
+        // calculate content size without additional columns except minimal amount
+        int inputSpaceWidth = EditorUtil.getPlainSpaceWidth(input);
+        inputSize.width += inputSpaceWidth * (minAdditionalColumns - input.getSettings().getAdditionalColumnsCount());
+        // calculate additional columns according to the corresponding width
+        int max = Math.max(historySize.width, inputSize.width);
+        history.getSettings().setAdditionalColumnsCount(minAdditionalColumns + (max - historySize.width) / historySpaceWidth);
+        input.getSettings().setAdditionalColumnsCount(minAdditionalColumns + (max - inputSize.width) / inputSpaceWidth);
+      }
 
       int newInputHeight;
       // deal with height, WEB-11122 we cannot trust editor width - it could be 0 in case of soft wrap even if editor has text

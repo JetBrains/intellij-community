@@ -195,7 +195,8 @@ public abstract class JBPopupFactory {
                                                    @NotNull ActionGroup actionGroup,
                                                    @NotNull DataContext dataContext,
                                                    ActionSelectionAid selectionAidMethod,
-                                                   boolean showDisabledActions, @Nullable final String actionPlace);
+                                                   boolean showDisabledActions,
+                                                   @Nullable String actionPlace);
 
   /**
    * Creates a popup allowing to choose one of the actions from the specified action group.
@@ -229,6 +230,17 @@ public abstract class JBPopupFactory {
                                                    @Nullable Runnable disposeCallback,
                                                    int maxRowCount,
                                                    @Nullable Condition<AnAction> preselectActionCondition);
+
+  @NotNull
+  public abstract ListPopup createActionGroupPopup(@Nls(capitalization = Nls.Capitalization.Title) String title,
+                                                   @NotNull ActionGroup actionGroup,
+                                                   @NotNull DataContext dataContext,
+                                                   ActionSelectionAid selectionAidMethod,
+                                                   boolean showDisabledActions,
+                                                   @Nullable Runnable disposeCallback,
+                                                   int maxRowCount,
+                                                   @Nullable Condition<AnAction> preselectActionCondition,
+                                                   @Nullable String actionPlace);
 
   /**
    * @deprecated use {@link #createListPopup(ListPopupStep)} instead (<code>step</code> must be a ListPopupStep in any case)

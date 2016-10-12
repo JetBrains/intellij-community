@@ -43,7 +43,7 @@ public abstract class AbstractWordSelectioner extends ExtendWordSelectionHandler
     else {
       ranges = ContainerUtil.newArrayList();
     }
-    SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, cursorOffset, ranges);
+    SelectWordUtil.addWordOrLexemeSelection(editor.getSettings().isCamelWords(), editor, cursorOffset, ranges);
     return ranges;
   }
 }

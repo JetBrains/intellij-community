@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.util.BitUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,15 +30,15 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub {
+  private static final byte ENUM_CONST = 0x01;
+  private static final byte DEPRECATED = 0x02;
+  private static final byte DEPRECATED_ANNOTATION = 0x04;
+  private static final byte HAS_DOC_COMMENT = 0x08;
+
   private final StringRef myName;
   private final TypeInfo myType;
   private final StringRef myInitializer;
   private final byte myFlags;
-
-  private static final int ENUM_CONST = 0x01;
-  private static final int DEPRECATED = 0x02;
-  private static final int DEPRECATED_ANNOTATION = 0x04;
-  private static final int HAS_DOC_COMMENT = 0x08;
 
   public PsiFieldStubImpl(StubElement parent, String name, @NotNull TypeInfo type, @Nullable String initializer, byte flags) {
     this(parent, StringRef.fromString(name), type, StringRef.fromString(initializer), flags);
@@ -51,6 +52,10 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     myFlags = flags;
   }
 
+  public byte getFlags() {
+    return myFlags;
+  }
+
   @Override
   @NotNull
   public TypeInfo getType(boolean doResolve) {
@@ -62,32 +67,28 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     return StringRef.toString(myInitializer);
   }
 
-  public byte getFlags() {
-    return myFlags;
-  }
-
   @Override
   public boolean isEnumConstant() {
     return isEnumConst(myFlags);
   }
 
   private static boolean isEnumConst(final byte flags) {
-    return (flags & ENUM_CONST) != 0;
+    return BitUtil.isSet(flags, ENUM_CONST);
   }
 
   @Override
   public boolean isDeprecated() {
-    return (myFlags & DEPRECATED) != 0;
+    return BitUtil.isSet(myFlags, DEPRECATED);
   }
 
   @Override
   public boolean hasDeprecatedAnnotation() {
-    return (myFlags & DEPRECATED_ANNOTATION) != 0;
+    return BitUtil.isSet(myFlags, DEPRECATED_ANNOTATION);
   }
 
   @Override
   public boolean hasDocComment() {
-    return (myFlags & HAS_DOC_COMMENT) != 0;
+    return BitUtil.isSet(myFlags, HAS_DOC_COMMENT);
   }
 
   @Override
@@ -104,7 +105,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
     return flags;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("PsiFieldStub[");
@@ -122,7 +123,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
       builder.append('=').append(myInitializer);
     }
 
-    builder.append("]");
+    builder.append(']');
     return builder.toString();
   }
 }

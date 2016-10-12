@@ -286,13 +286,7 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   @Override
   public final <T extends DomElement> T createStableCopy() {
-    return myManager.createStableValue(new Factory<T>() {
-      @Override
-      @Nullable
-      public T create() {
-        return (T)myManager.getFileElement(myFile);
-      }
-    });
+    return myManager.createStableValue(() -> (T)myManager.getFileElement(myFile));
   }
 
   @Override

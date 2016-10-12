@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.jetbrains.java.decompiler.code;
 import org.jetbrains.java.decompiler.code.interpreter.Util;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.struct.StructContext;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.io.DataOutputStream;
@@ -157,7 +157,7 @@ public int getOffset(int index) {
     StringBuilder buf = new StringBuilder();
 
     for (int i = 0; i < collinstr.size(); i++) {
-    buf.append(InterpreterUtil.getIndentString(indent));
+    buf.append(TextUtil.getIndentString(indent));
       buf.append(collinstr.getKey(i).intValue());
       buf.append(": ");
       buf.append(collinstr.get(i).toString());
@@ -186,34 +186,31 @@ public int getOffset(int index) {
 
   public void sortHandlers(final StructContext context) {
 
-    Collections.sort(exceptionTable.getHandlers(), new Comparator<ExceptionHandler>() {
+    Collections.sort(exceptionTable.getHandlers(), (handler0, handler1) -> {
 
-      public int compare(ExceptionHandler handler0, ExceptionHandler handler1) {
-
-        if (handler0.to == handler1.to) {
-          if (handler0.exceptionClass == null) {
-            return 1;
-          }
-          else {
-            if (handler1.exceptionClass == null) {
-              return -1;
-            }
-            else if (handler0.exceptionClass.equals(handler1.exceptionClass)) {
-              return (handler0.from > handler1.from) ? -1 : 1; // invalid code
-            }
-            else {
-              if (Util.instanceOf(context, handler0.exceptionClass, handler1.exceptionClass)) {
-                return -1;
-              }
-              else {
-                return 1;
-              }
-            }
-          }
+      if (handler0.to == handler1.to) {
+        if (handler0.exceptionClass == null) {
+          return 1;
         }
         else {
-          return (handler0.to > handler1.to) ? 1 : -1;
+          if (handler1.exceptionClass == null) {
+            return -1;
+          }
+          else if (handler0.exceptionClass.equals(handler1.exceptionClass)) {
+            return (handler0.from > handler1.from) ? -1 : 1; // invalid code
+          }
+          else {
+            if (Util.instanceOf(context, handler0.exceptionClass, handler1.exceptionClass)) {
+              return -1;
+            }
+            else {
+              return 1;
+            }
+          }
         }
+      }
+      else {
+        return (handler0.to > handler1.to) ? 1 : -1;
       }
     });
   }

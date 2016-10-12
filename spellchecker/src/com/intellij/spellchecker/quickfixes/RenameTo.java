@@ -37,7 +37,6 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 
@@ -78,53 +77,51 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
   @SuppressWarnings({"SSBasedInspection"})
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    Runnable fix = new Runnable() {
-      public void run() {
-        DictionarySuggestionProvider provider = findProvider();
-        if (provider != null) {
-          provider.setActive(true);
-        }
+    DictionarySuggestionProvider provider = findProvider();
+    if (provider != null) {
+      provider.setActive(true);
+    }
 
-        Editor editor = getEditorFromFocus();
-        HashMap<String, Object> map = new HashMap<String, Object>();
-        PsiElement psiElement = descriptor.getPsiElement();
-        if (psiElement == null) return;
-        PsiFile containingFile = psiElement.getContainingFile();
-        if (editor == null) {
-          editor = InjectedLanguageUtil.openEditorFor(containingFile, project);
-        }
+    Editor editor = getEditorFromFocus();
+    HashMap<String, Object> map = new HashMap<String, Object>();
+    PsiElement psiElement = descriptor.getPsiElement();
+    if (psiElement == null) return;
+    PsiFile containingFile = psiElement.getContainingFile();
+    if (editor == null) {
+      editor = InjectedLanguageUtil.openEditorFor(containingFile, project);
+    }
 
-        if (editor == null) return;
+    if (editor == null) return;
 
-        if (editor instanceof EditorWindow) {
-          map.put(CommonDataKeys.EDITOR.getName(), editor);
-          map.put(CommonDataKeys.PSI_ELEMENT.getName(), psiElement);
-        } else if (ApplicationManager.getApplication().isUnitTestMode()) { // TextEditorComponent / FiledEditorManagerImpl give away the data in real life
-          map.put(
-            CommonDataKeys.PSI_ELEMENT.getName(),
-            new TextEditorPsiDataProvider().getData(CommonDataKeys.PSI_ELEMENT.getName(), editor, editor.getCaretModel().getCurrentCaret())
-          );
-        }
+    if (editor instanceof EditorWindow) {
+      map.put(CommonDataKeys.EDITOR.getName(), editor);
+      map.put(CommonDataKeys.PSI_ELEMENT.getName(), psiElement);
+    } else if (ApplicationManager.getApplication().isUnitTestMode()) { // TextEditorComponent / FiledEditorManagerImpl give away the data in real life
+      map.put(
+        CommonDataKeys.PSI_ELEMENT.getName(),
+        new TextEditorPsiDataProvider().getData(CommonDataKeys.PSI_ELEMENT.getName(), editor, editor.getCaretModel().getCurrentCaret())
+      );
+    }
 
-        final Boolean selectAll = editor.getUserData(RenameHandlerRegistry.SELECT_ALL);
-        try {
-          editor.putUserData(RenameHandlerRegistry.SELECT_ALL, true);
-          DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext(editor.getComponent()));
-          AnAction action = new RenameElementAction();
-          AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", dataContext);
-          action.actionPerformed(event);
-          if (provider != null) {
-            provider.setActive(false);
-          }
-        }
-        finally {
-          editor.putUserData(RenameHandlerRegistry.SELECT_ALL, selectAll);
-        }
+    final Boolean selectAll = editor.getUserData(RenameHandlerRegistry.SELECT_ALL);
+    try {
+      editor.putUserData(RenameHandlerRegistry.SELECT_ALL, true);
+      DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext(editor.getComponent()));
+      AnAction action = new RenameElementAction();
+      AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", dataContext);
+      action.actionPerformed(event);
+      if (provider != null) {
+        provider.setActive(false);
       }
-    };
-    
-    if (ApplicationManager.getApplication().isUnitTestMode()) fix.run();
-    else SwingUtilities.invokeLater(fix); // TODO [shkate] this is hard to test!
+    }
+    finally {
+      editor.putUserData(RenameHandlerRegistry.SELECT_ALL, selectAll);
+    }
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 
   @Nullable

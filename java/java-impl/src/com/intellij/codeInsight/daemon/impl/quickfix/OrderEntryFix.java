@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,8 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     PsiFile fromFile = element.getContainingFile();
     List<PsiClass> result = new ArrayList<PsiClass>();
     for (PsiClass psiClass : classes) {
-      if (dependencyValidationManager.getViolatorDependencyRule(fromFile, psiClass.getContainingFile()) == null) {
+      PsiFile containingFile = psiClass.getContainingFile();
+      if (containingFile != null && dependencyValidationManager.getViolatorDependencyRule(fromFile, containingFile) == null) {
         result.add(psiClass);
       }
     }
@@ -189,14 +190,11 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
                                  @Nullable @NonNls final String className) {
     final Project project = currentModule.getProject();
     if (editor != null && reference != null && className != null) {
-      DumbService.getInstance(project).withAlternativeResolveEnabled(new Runnable() {
-        @Override
-        public void run() {
-          GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
-          PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
-          if (aClass != null) {
-            new AddImportAction(project, reference, editor, aClass).execute();
-          }
+      DumbService.getInstance(project).withAlternativeResolveEnabled(() -> {
+        GlobalSearchScope scope = GlobalSearchScope.moduleWithLibrariesScope(currentModule);
+        PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(className, scope);
+        if (aClass != null) {
+          new AddImportAction(project, reference, editor, aClass).execute();
         }
       });
     }
@@ -216,12 +214,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
   @NotNull
   public static List<String> refreshAndConvertToUrls(@NotNull List<String> jarPaths) {
-    return ContainerUtil.map(jarPaths, new Function<String, String>() {
-        @Override
-        public String fun(String path) {
-          return refreshAndConvertToUrl(path);
-        }
-      });
+    return ContainerUtil.map(jarPaths, path -> refreshAndConvertToUrl(path));
   }
 
   @NotNull

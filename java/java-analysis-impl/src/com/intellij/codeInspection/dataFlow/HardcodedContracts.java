@@ -145,6 +145,8 @@ public class HardcodedContracts {
       return Collections.singletonList(new MethodContract(createConstraintArray(paramCount), THROW_EXCEPTION));
     }
 
+    if (paramCount == 0) return Collections.emptyList();
+
     int checkedParam = testng ? 0 : paramCount - 1;
     MethodContract.ValueConstraint[] constraints = createConstraintArray(paramCount);
     if ("assertTrue".equals(methodName)) {

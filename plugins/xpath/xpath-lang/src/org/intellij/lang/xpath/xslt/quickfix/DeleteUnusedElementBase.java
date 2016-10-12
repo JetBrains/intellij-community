@@ -15,37 +15,38 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
-import org.intellij.lang.xpath.xslt.psi.XsltVariable;
-
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.intellij.lang.xpath.xslt.psi.XsltVariable;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class DeleteUnusedElementBase<T extends XsltVariable> implements LocalQuickFix {
+public abstract class DeleteUnusedElementBase<T extends XsltVariable> extends LocalQuickFixOnPsiElement {
     private final String myName;
-    private final T myElement;
 
     protected DeleteUnusedElementBase(String name, T element) {
+        super(element);
         myName = name;
-        myElement = element;
     }
 
     @NotNull
     public String getFamilyName() {
-        return "Delete Unused Element";
+        return "Delete unused element";
     }
 
     @NotNull
-    public String getName() {
+    public String getText() {
         return "Delete unused " + getType() + " '" + myName + "'";
     }
 
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
         try {
-            deleteElement(myElement);
+            //noinspection unchecked
+            deleteElement((T)startElement);
         } catch (IncorrectOperationException e) {
             Logger.getInstance(getClass().getName()).error(e);
         }

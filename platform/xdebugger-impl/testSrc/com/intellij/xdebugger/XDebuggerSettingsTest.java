@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import org.jdom.Element;
 
 /**
@@ -34,7 +35,7 @@ public class XDebuggerSettingsTest extends PlatformLiteFixture {
     registerExtensionPoint(XDebuggerSettings.EXTENSION_POINT, XDebuggerSettings.class);
     registerExtension(XDebuggerSettings.EXTENSION_POINT, new MyDebuggerSettings());
     getApplication().registerService(XDebuggerUtil.class, XDebuggerUtilImpl.class);
-    getApplication().registerService(com.intellij.xdebugger.settings.XDebuggerSettingsManager.class, XDebuggerSettingManagerImpl.class);
+    getApplication().registerService(XDebuggerSettingsManager.class, XDebuggerSettingManagerImpl.class);
   }
 
   public void testSerialize() throws Exception {

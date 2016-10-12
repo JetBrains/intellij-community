@@ -221,17 +221,14 @@ public class HectorComponent extends JPanel {
     final JBPopup hector = JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)
       .setRequestFocus(true)
       .setMovable(true)
-      .setCancelCallback(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          for (HectorComponentPanel additionalPanel : myAdditionalPanels) {
-            if (!additionalPanel.canClose()) {
-              return Boolean.FALSE;
-            }
+      .setCancelCallback(() -> {
+        for (HectorComponentPanel additionalPanel : myAdditionalPanels) {
+          if (!additionalPanel.canClose()) {
+            return Boolean.FALSE;
           }
-          onClose();
-          return Boolean.TRUE;
         }
+        onClose();
+        return Boolean.TRUE;
       })
       .createPopup();
     Disposer.register(myFile.getProject(), new Disposable() {

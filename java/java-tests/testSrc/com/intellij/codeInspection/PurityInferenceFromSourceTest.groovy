@@ -92,6 +92,18 @@ int random() { return 2; }
 """
   }
 
+  public void "test field array assignment as local var"() {
+    assertPure false, """
+int[] randomArray() {
+  int[] local = i;
+  local[0] = random();
+  return local;
+}
+int random() { return 2; }
+  int[] i = new int[0];
+"""
+  }
+
   public void "test use explicit pure contract"() {
     assertPure true, """
 int method() {

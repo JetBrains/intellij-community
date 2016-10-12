@@ -133,12 +133,7 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
   public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
     myTasksInProgress.put(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
     if (myAlarm.getActiveRequestCount() <= 0) {
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          update();
-        }
-      }, TOO_LONG_EXECUTION_MS);
+      myAlarm.addRequest(() -> update(), TOO_LONG_EXECUTION_MS);
     }
   }
 
@@ -209,12 +204,7 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
 
     if (!newState.isEmpty()) {
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
-        @Override
-        public void run() {
-          update(); 
-        }
-      }, delay);
+      myAlarm.addRequest(() -> update(), delay);
     }
   }
 }

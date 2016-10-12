@@ -66,12 +66,8 @@ public class XmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl imple
   private static final UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object> myAttlistDeclCache = new UserDataCache<CachedValue<XmlAttlistDecl[]>,XmlElement, Object>() {
     @Override
     protected final CachedValue<XmlAttlistDecl[]> compute(final XmlElement owner, Object o) {
-      return CachedValuesManager.getManager(owner.getProject()).createCachedValue(new CachedValueProvider<XmlAttlistDecl[]>() {
-        @Override
-        public Result<XmlAttlistDecl[]> compute() {
-          return new Result<XmlAttlistDecl[]>(doCollectAttlistDeclarations(owner),owner);
-        }
-      });
+      return CachedValuesManager.getManager(owner.getProject()).createCachedValue(
+        () -> new CachedValueProvider.Result<XmlAttlistDecl[]>(doCollectAttlistDeclarations(owner), owner));
     }
   };
 

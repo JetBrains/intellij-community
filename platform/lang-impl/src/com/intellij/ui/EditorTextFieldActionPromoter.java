@@ -41,17 +41,14 @@ public class EditorTextFieldActionPromoter implements ActionPromoter {
    * <code>'expand/reduce selection by word'</code> editor action and <code>'change dialog width'</code> non-editor action
    * and we want to use the first one.
    */
-  private static final Comparator<AnAction> ACTIONS_COMPARATOR = new Comparator<AnAction>() {
-    @Override
-    public int compare(AnAction o1, AnAction o2) {
-      boolean textFieldAction1 = o1 instanceof TextComponentEditorAction;
-      boolean textFieldAction2 = o2 instanceof TextComponentEditorAction;
-      boolean plainEditorAction1 = o1 instanceof EditorAction && !textFieldAction1;
-      boolean plainEditorAction2 = o2 instanceof EditorAction && !textFieldAction2;
-      if (textFieldAction1 && plainEditorAction2) return -1;
-      if (textFieldAction2 && plainEditorAction1) return 1;
-      return 0;
-    }
+  private static final Comparator<AnAction> ACTIONS_COMPARATOR = (o1, o2) -> {
+    boolean textFieldAction1 = o1 instanceof TextComponentEditorAction;
+    boolean textFieldAction2 = o2 instanceof TextComponentEditorAction;
+    boolean plainEditorAction1 = o1 instanceof EditorAction && !textFieldAction1;
+    boolean plainEditorAction2 = o2 instanceof EditorAction && !textFieldAction2;
+    if (textFieldAction1 && plainEditorAction2) return -1;
+    if (textFieldAction2 && plainEditorAction1) return 1;
+    return 0;
   };
 
   @Override

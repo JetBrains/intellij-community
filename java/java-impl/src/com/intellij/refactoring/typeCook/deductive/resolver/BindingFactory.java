@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -481,7 +481,7 @@ public class BindingFactory {
 
         if (type != null) {
           class Verifier extends PsiExtendedTypeVisitor<Void> {
-            boolean myFlag = false;
+            boolean myFlag;
 
             @Override public Void visitTypeVariable(final PsiTypeVariable var) {
               if (var.getIndex() == index) {
@@ -565,7 +565,7 @@ public class BindingFactory {
 
     public int getWidth() {
       class MyProcecure implements TObjectProcedure<PsiType> {
-        int width = 0;
+        int width;
         public boolean execute(PsiType type) {
           if (substitute(type)  != null) width++;
           return true;

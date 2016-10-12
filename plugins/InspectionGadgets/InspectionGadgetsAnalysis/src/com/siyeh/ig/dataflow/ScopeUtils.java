@@ -133,7 +133,7 @@ class ScopeUtils {
           return element;
         }
       }
-      if (element == null || element instanceof PsiLoopStatement || element instanceof PsiClass) {
+      if (element == null || element instanceof PsiLoopStatement || element instanceof PsiClass || element instanceof PsiLambdaExpression) {
         while (result != null && !(result instanceof PsiCodeBlock)) {
           result = result.getParent();
         }

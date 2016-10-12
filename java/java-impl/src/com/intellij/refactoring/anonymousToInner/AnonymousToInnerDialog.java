@@ -87,18 +87,16 @@ class AnonymousToInnerDialog extends DialogWrapper{
     String name = myAnonClass.getBaseClassReference().getReferenceName();
     PsiType[] typeParameters = myAnonClass.getBaseClassReference().getTypeParameters();
 
-    final String typeParamsList = StringUtil.join(typeParameters, new Function<PsiType, String>() {
-      public String fun(PsiType psiType) {
-        PsiType type = psiType;
-        if (psiType instanceof PsiClassType) {
-          type = TypeConversionUtil.erasure(psiType);
-        }
-        if (type == null || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return "";
-        if (type instanceof PsiArrayType) {
-          type = type.getDeepComponentType();
-        }
-        return StringUtil.getShortName(type.getPresentableText());
+    final String typeParamsList = StringUtil.join(typeParameters, psiType -> {
+      PsiType type = psiType;
+      if (psiType instanceof PsiClassType) {
+        type = TypeConversionUtil.erasure(psiType);
       }
+      if (type == null || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return "";
+      if (type instanceof PsiArrayType) {
+        type = type.getDeepComponentType();
+      }
+      return StringUtil.getShortName(type.getPresentableText());
     }, "") + name;
 
     if (!typeParamsList.equals(name)) {

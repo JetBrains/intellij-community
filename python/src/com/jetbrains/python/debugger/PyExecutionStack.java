@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.jetbrains.python.debugger;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -32,6 +34,12 @@ public class PyExecutionStack extends XExecutionStack {
 
   public PyExecutionStack(@NotNull final PyDebugProcess debugProcess, @NotNull final PyThreadInfo threadInfo) {
     super(threadInfo.getName());
+    myDebugProcess = debugProcess;
+    myThreadInfo = threadInfo;
+  }
+
+  public PyExecutionStack(@NotNull final PyDebugProcess debugProcess, @NotNull final PyThreadInfo threadInfo, final @Nullable Icon icon) {
+    super(threadInfo.getName(), icon);
     myDebugProcess = debugProcess;
     myThreadInfo = threadInfo;
   }
@@ -86,5 +94,9 @@ public class PyExecutionStack extends XExecutionStack {
   @Override
   public int hashCode() {
     return myThreadInfo != null ? myThreadInfo.hashCode() : 0;
+  }
+
+  public String getThreadId() {
+    return myThreadInfo.getId();
   }
 }

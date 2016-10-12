@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,16 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
-class ConvertOctalLiteralToDecimalFix
-  extends InspectionGadgetsFix {
+class ConvertOctalLiteralToDecimalFix extends InspectionGadgetsFix {
+
     @Override
     @NotNull
     public String getFamilyName() {
@@ -34,24 +36,21 @@ class ConvertOctalLiteralToDecimalFix
   @Override
   @NotNull
   public String getName() {
-    return InspectionGadgetsBundle.message(
-      "convert.octal.literal.to.decimal.literal.quickfix");
+    return InspectionGadgetsBundle.message("convert.octal.literal.to.decimal.literal.quickfix");
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor)
-    throws IncorrectOperationException {
+  protected void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    if (!(element instanceof PsiLiteralExpression)) return;
-
-    final Object value = ((PsiLiteralExpression)element).getValue();
-    if (value == null) return;
-
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    final PsiElementFactory factory = psiFacade.getElementFactory();
-    final PsiExpression decimalNumber =
-      factory.createExpressionFromText(value.toString(),
-                                       element);
-    element.replace(decimalNumber);
+    if (!(element instanceof PsiLiteralExpression)) {
+      return;
+    }
+    final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
+    final Object value = literalExpression.getValue();
+    if (value == null) {
+      return;
+    }
+    final String decimalText = value + (PsiType.LONG.equals(literalExpression.getType()) ? "L" : "");
+    PsiReplacementUtil.replaceExpression(literalExpression, decimalText);
   }
 }

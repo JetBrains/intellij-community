@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger;
 
+import com.google.common.collect.Lists;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,11 +29,14 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.intellij.xdebugger.frame.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class PyStackFrame extends XStackFrame {
@@ -116,27 +120,65 @@ public class PyStackFrame extends XStackFrame {
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     if (node.isObsolete()) return;
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          XValueChildrenList values = myDebugProcess.loadFrame();
-          if (!node.isObsolete()) {
-            addChildren(node, values);
-          }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        XValueChildrenList values = myDebugProcess.loadFrame();
+        if (!node.isObsolete()) {
+          addChildren(node, values);
         }
-        catch (PyDebuggerException e) {
-          if (!node.isObsolete()) {
-            node.setErrorMessage("Unable to display frame variables");
-          }
-          LOG.warn(e);
+      }
+      catch (PyDebuggerException e) {
+        if (!node.isObsolete()) {
+          node.setErrorMessage("Unable to display frame variables");
         }
+        LOG.warn(e);
       }
     });
   }
 
   protected void addChildren(@NotNull final XCompositeNode node, @Nullable final XValueChildrenList children) {
-    node.addChildren(children != null ? children : XValueChildrenList.EMPTY, true);
+    if (children == null) {
+      node.addChildren(XValueChildrenList.EMPTY, true);
+      return;
+    }
+
+    XValueChildrenList filteredChildren = new XValueChildrenList();
+    final HashMap<String, XValue> returnedValues = new HashMap<>();
+    for (int i = 0; i < children.size(); i++) {
+      XValue value = children.getValue(i);
+      String name = children.getName(i);
+      if ((value instanceof PyDebugValue) && ((PyDebugValue)value).isReturnedVal()) {
+        returnedValues.put(name, value);
+      }
+      else {
+        filteredChildren.add(name, value);
+      }
+    }
+    node.addChildren(filteredChildren, returnedValues.isEmpty());
+    if (!returnedValues.isEmpty()) {
+      addReturnedValuesGroup(node, returnedValues);
+    }
+  }
+
+  private static void addReturnedValuesGroup(@NotNull final XCompositeNode node, Map<String, XValue> returnedValues) {
+    final ArrayList<XValueGroup> group = Lists.newArrayList();
+    group.add(new XValueGroup("Return Values") {
+      @Override
+      public void computeChildren(@NotNull XCompositeNode node) {
+        XValueChildrenList list = new XValueChildrenList();
+        for (Map.Entry<String, XValue> entry : returnedValues.entrySet()) {
+          list.add(entry.getKey() + "()", entry.getValue());
+        }
+        node.addChildren(list, true);
+      }
+
+      @Nullable
+      @Override
+      public Icon getIcon() {
+        return AllIcons.Debugger.WatchLastReturnValue;
+      }
+    });
+    node.addChildren(XValueChildrenList.topGroups(group), true);
   }
 
   public String getThreadId() {

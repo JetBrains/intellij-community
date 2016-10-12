@@ -28,11 +28,14 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,12 +68,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
                                 boolean everywhere,
                                 @NotNull ProgressIndicator cancelled,
                                 @NotNull final Processor<Object> consumer) {
-    return filterElements(pattern, everywhere, new Processor<MatchedValue>() {
-      @Override
-      public boolean process(MatchedValue value) {
-        return consumer.process(value);
-      }
-    });
+    return filterElements(pattern, everywhere, consumer::process);
   }
 
   public boolean filterElements(String pattern, boolean everywhere, Processor<MatchedValue> consumer) {
@@ -86,25 +84,20 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   }
 
   private boolean processAbbreviations(final String pattern, Processor<MatchedValue> consumer, DataContext context) {
-    List<String> actions = AbbreviationManager.getInstance().findActions(pattern);
-    if (actions.isEmpty()) return true;
-    List<ActionWrapper> wrappers = ContainerUtil.newArrayListWithCapacity(actions.size());
-    for (String actionId : actions) {
-      AnAction action = myActionManager.getAction(actionId);
-      wrappers.add(new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context));
-    }
-    return ContainerUtil.process(ContainerUtil.map(wrappers, new Function<ActionWrapper, MatchedValue>() {
-      @Override
-      public MatchedValue fun(@NotNull ActionWrapper w) {
-        return new MatchedValue(w, pattern) {
+    List<String> actionIds = AbbreviationManager.getInstance().findActions(pattern);
+    JBIterable<MatchedValue> wrappers = JBIterable.from(actionIds)
+      .transform(actionId -> {
+        AnAction action = myActionManager.getAction(actionId);
+        ActionWrapper wrapper = new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context);
+        return new MatchedValue(wrapper, pattern) {
           @Nullable
           @Override
           public String getValueText() {
             return pattern;
           }
         };
-      }
-    }), consumer);
+      });
+    return processItems(pattern, wrappers, consumer);
   }
 
   private static boolean processTopHits(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
@@ -119,14 +112,8 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       }
       provider.consumeTopHits(pattern, collector, project);
     }
-    final Collection<Object> result = collector.getResult();
-    final List<Comparable> c = new ArrayList<Comparable>();
-    for (Object o : result) {
-      if (o instanceof Comparable) {
-        c.add((Comparable)o);
-      }
-    }
-    return processItems(pattern, c, consumer);
+    Collection<Object> result = collector.getResult();
+    return processItems(pattern, JBIterable.from(result).filter(Comparable.class), consumer);
   }
 
   private boolean processOptions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
@@ -173,49 +160,45 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
         }
       }
     }
-    return processItems(pattern, options, consumer);
+    return processItems(pattern, JBIterable.from(options), consumer);
   }
 
   private boolean processActions(String pattern, boolean everywhere, Processor<MatchedValue> consumer, DataContext dataContext) {
-    List<AnAction> actions = ContainerUtil.newArrayList();
+    JBIterable<AnAction> actions;
     if (everywhere) {
-      for (String id : ((ActionManagerImpl)myActionManager).getActionIds()) {
-        ProgressManager.checkCanceled();
-        ContainerUtil.addIfNotNull(actions, myActionManager.getAction(id));
-      }
-    } else {
-      actions.addAll(myModel.myActionGroups.keySet());
+      Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
+      actions = JBIterable.from(ids).transform(myActionManager::getAction).filter(Condition.NOT_NULL);
     }
-
-    List<ActionWrapper> actionWrappers = ContainerUtil.newArrayList();
-    for (AnAction action : actions) {
-      ProgressManager.checkCanceled();
-      MatchMode mode = myModel.actionMatches(pattern, action);
-      if (mode != MatchMode.NONE) {
-        actionWrappers.add(new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext));
-      }
+    else {
+      actions = JBIterable.from(myModel.myActionGroups.keySet());
     }
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    JBIterable<ActionWrapper> actionWrappers = actions.transform(action -> {
+      MatchMode mode = myModel.actionMatches(pattern, matcher, action);
+      if (mode == MatchMode.NONE) return null;
+      return new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext);
+    }).filter(Condition.NOT_NULL);
     return processItems(pattern, actionWrappers, consumer);
   }
 
   private boolean processIntentions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
-    List<ActionWrapper> intentions = ContainerUtil.newArrayList();
-    for (String intentionText : myModel.myIntentions.keySet()) {
-      final ApplyIntentionAction intentionAction = myModel.myIntentions.get(intentionText);
-      if (myModel.actionMatches(pattern, intentionAction) != MatchMode.NONE) {
-        intentions.add(new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext));
-      }
-    }
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    JBIterable<ActionWrapper> intentions = JBIterable.from(myModel.myIntentions.keySet())
+      .transform(intentionText -> {
+        ApplyIntentionAction intentionAction = myModel.myIntentions.get(intentionText);
+        if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) return null;
+        return new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext);
+      })
+      .filter(Condition.NOT_NULL);
     return processItems(pattern, intentions, consumer);
   }
 
-  private static boolean processItems(final String pattern, Collection<? extends Comparable> items, Processor<MatchedValue> consumer) {
-    List<MatchedValue> matched = ContainerUtil.map(items, new Function<Comparable, MatchedValue>() {
-      @Override
-      public MatchedValue fun(Comparable comparable) {
-        return new MatchedValue(comparable, pattern);
-      }
-    });
+  private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
+    ArrayList<MatchedValue> matched = ContainerUtil.newArrayList();
+    items.transform(o -> {
+      ProgressManager.checkCanceled();
+      return o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern);
+    }).addAllTo(matched);
     Collections.sort(matched);
     return ContainerUtil.process(matched, consumer);
   }

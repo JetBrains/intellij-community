@@ -169,9 +169,8 @@ public class Change {
     return revisionHashCode(getBeforeRevision()) * 27 + revisionHashCode(getAfterRevision());
   }
 
-  private static int revisionHashCode(ContentRevision rev) {
-    if (rev == null) return 0;
-    return rev.getFile().getIOFile().getPath().hashCode();
+  private static int revisionHashCode(@Nullable ContentRevision rev) {
+    return rev != null ? rev.getFile().hashCode() : 0;
   }
 
   public boolean affectsFile(File ioFile) {

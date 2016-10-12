@@ -37,13 +37,23 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class ContentUtilEx extends ContentsUtil {
-  public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select) {
+
+  public static void addTabbedContent(@NotNull ContentManager manager,
+                                      @NotNull JComponent contentComponent,
+                                      @NotNull String groupPrefix,
+                                      @NotNull String tabName,
+                                      boolean select) {
     addTabbedContent(manager, contentComponent, groupPrefix, tabName, select, null);
   }
 
-  public static void addTabbedContent(ContentManager manager, JComponent contentComponent, String groupPrefix, String tabName, boolean select, @Nullable Disposable childDisposable) {
+  public static void addTabbedContent(@NotNull ContentManager manager,
+                                      @NotNull JComponent contentComponent,
+                                      @NotNull String groupPrefix,
+                                      @NotNull String tabName,
+                                      boolean select,
+                                      @Nullable Disposable childDisposable) {
     if (PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupPrefix)) {
-      final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, groupPrefix + ": " + tabName, true);
+      final Content content = ContentFactory.SERVICE.getInstance().createContent(contentComponent, getFullName(groupPrefix, tabName), true);
       content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
       content.putUserData(Content.TAB_GROUP_NAME_KEY, groupPrefix);
 
@@ -56,24 +66,22 @@ public class ContentUtilEx extends ContentsUtil {
         }
       }
       addContent(manager, content, select);
+
+      registerDisposable(content, childDisposable, contentComponent);
+
       return;
     }
 
-    TabbedContent tabbedContent = null;
-    for (Content content : manager.getContents()) {
-      if (content instanceof TabbedContent && content.getTabName().startsWith(groupPrefix + ": ")) {
-        tabbedContent = (TabbedContent)content;
-        break;
-      }
-    }
+    TabbedContent tabbedContent = findTabbedContent(manager, groupPrefix);
 
     if (tabbedContent == null) {
       final Disposable disposable = Disposer.newDisposable();
       tabbedContent = new TabbedContentImpl(contentComponent, tabName, true, groupPrefix);
       ContentsUtil.addOrReplaceContent(manager, tabbedContent, select);
       Disposer.register(tabbedContent, disposable);
-    } else {
-      for (Pair<String, JComponent> tab : new ArrayList<Pair<String, JComponent>>(tabbedContent.getTabs())) {
+    }
+    else {
+      for (Pair<String, JComponent> tab : new ArrayList<>(tabbedContent.getTabs())) {
         if (Comparing.equal(tab.second, contentComponent)) {
           tabbedContent.removeContent(tab.second);
         }
@@ -84,9 +92,51 @@ public class ContentUtilEx extends ContentsUtil {
       tabbedContent.addContent(contentComponent, tabName, true);
     }
 
+    registerDisposable(tabbedContent, childDisposable, contentComponent);
+  }
+
+  private static void registerDisposable(@NotNull Content content,
+                                         @Nullable Disposable childDisposable,
+                                         @NotNull JComponent contentComponent) {
     if (childDisposable != null) {
-      Disposer.register(tabbedContent, childDisposable);
+      Disposer.register(content, childDisposable);
+      assert contentComponent.getClientProperty(DISPOSABLE_KEY) == null;
+      contentComponent.putClientProperty(DISPOSABLE_KEY, childDisposable);
+      Disposer.register(childDisposable, () -> contentComponent.putClientProperty(DISPOSABLE_KEY, null));
     }
+    else {
+      Object disposableByKey = contentComponent.getClientProperty(DISPOSABLE_KEY);
+      if (disposableByKey != null && disposableByKey instanceof Disposable) {
+        Disposer.register(content, (Disposable)disposableByKey);
+      }
+    }
+  }
+
+  @Nullable
+  public static TabbedContent findTabbedContent(@NotNull ContentManager manager, @NotNull String groupPrefix) {
+    TabbedContent tabbedContent = null;
+    for (Content content : manager.getContents()) {
+      if (content instanceof TabbedContent && content.getTabName().startsWith(getFullPrefix(groupPrefix))) {
+        tabbedContent = (TabbedContent)content;
+        break;
+      }
+    }
+    return tabbedContent;
+  }
+
+  public static boolean isContentTab(@NotNull Content content, @NotNull String groupPrefix) {
+    return (content instanceof TabbedContent && content.getTabName().startsWith(getFullPrefix(groupPrefix))) ||
+           groupPrefix.equals(content.getUserData(Content.TAB_GROUP_NAME_KEY));
+  }
+
+  @NotNull
+  public static String getFullName(@NotNull String groupPrefix, @NotNull String tabName) {
+    return getFullPrefix(groupPrefix) + tabName;
+  }
+
+  @NotNull
+  private static String getFullPrefix(@NotNull String groupPrefix) {
+    return groupPrefix + ": ";
   }
 
   /**
@@ -137,7 +187,7 @@ public class ContentUtilEx extends ContentsUtil {
   public static int getSelectedTab(@NotNull TabbedContent content) {
     final JComponent current = content.getComponent();
     int index = 0;
-    for (Pair<String,JComponent> tab : content.getTabs()) {
+    for (Pair<String, JComponent> tab : content.getTabs()) {
       if (tab.second == current) {
         return index;
       }

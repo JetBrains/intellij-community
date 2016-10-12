@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,16 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.Processors;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DefaultFileNavigationContributor implements ChooseByNameContributorEx, DumbAware {
 
@@ -40,12 +43,9 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
     if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
       final THashSet<String> names = new THashSet<String>(1000);
       IdFilter filter = IdFilter.getProjectIdFilter(project, includeNonProjectItems);
-      processNames(new Processor<String>() {
-        @Override
-        public boolean process(String s) {
-          names.add(s);
-          return true;
-        }
+      processNames(s -> {
+        names.add(s);
+        return true;
       }, FindSymbolParameters.searchScopeFor(project, includeNonProjectItems), filter);
       if (IdFilter.LOG.isDebugEnabled()) {
         IdFilter.LOG.debug("All names retrieved2:" + names.size());
@@ -59,21 +59,17 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
   @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
-    CommonProcessors.CollectProcessor<NavigationItem> processor = new CommonProcessors.CollectProcessor<NavigationItem>();
+    List<NavigationItem> result = new ArrayList<>();
+    Processor<NavigationItem> processor = Processors.cancelableCollectProcessor(result);
     processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
 
-    return processor.toArray(new NavigationItem[processor.getResults().size()]);
+    return result.isEmpty() ? NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY : result.toArray(new NavigationItem[result.size()]);
   }
 
   @Override
   public void processNames(@NotNull final Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     long started = System.currentTimeMillis();
-    FileBasedIndex.getInstance().processAllKeys(FilenameIndex.NAME, new Processor<String>() {
-      @Override
-      public boolean process(String s) {
-        return processor.process(s);
-      }
-    }, scope, filter);
+    FileBasedIndex.getInstance().processAllKeys(FilenameIndex.NAME, s -> processor.process(s), scope, filter);
     if (IdFilter.LOG.isDebugEnabled()) {
       IdFilter.LOG.debug("All names retrieved:" + (System.currentTimeMillis() - started));
     }
@@ -84,14 +80,11 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
                                       @NotNull final Processor<NavigationItem> _processor,
                                       @NotNull FindSymbolParameters parameters) {
     final boolean globalSearch = parameters.getSearchScope().isSearchInLibraries();
-    final Processor<PsiFileSystemItem> processor = new Processor<PsiFileSystemItem>() {
-      @Override
-      public boolean process(PsiFileSystemItem item) {
-        if (!globalSearch && ProjectUtil.isProjectOrWorkspaceFile(item.getVirtualFile())) {
-          return true;
-        }
-        return _processor.process(item);
+    final Processor<PsiFileSystemItem> processor = item -> {
+      if (!globalSearch && ProjectUtil.isProjectOrWorkspaceFile(item.getVirtualFile())) {
+        return true;
       }
+      return _processor.process(item);
     };
     
     String completePattern = parameters.getCompletePattern();

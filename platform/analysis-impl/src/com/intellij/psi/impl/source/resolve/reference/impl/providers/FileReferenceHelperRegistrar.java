@@ -59,24 +59,14 @@ public class FileReferenceHelperRegistrar {
     final VirtualFile file = psiFileSystemItem.getVirtualFile();
     if (file == null) return null;
     final Project project = psiFileSystemItem.getProject();
-    return ContainerUtil.find(getHelpers(), new Condition<FileReferenceHelper>() {
-      @Override
-      public boolean value(final FileReferenceHelper fileReferenceHelper) {
-        return fileReferenceHelper.isMine(project, file);
-      }
-    });
+    return ContainerUtil.find(getHelpers(), fileReferenceHelper -> fileReferenceHelper.isMine(project, file));
   }
 
   public static <T extends PsiFileSystemItem> List<FileReferenceHelper> getHelpers(@NotNull final T psiFileSystemItem) {
     final VirtualFile file = psiFileSystemItem.getVirtualFile();
     if (file == null) return null;
     final Project project = psiFileSystemItem.getProject();
-    return ContainerUtil.findAll(getHelpers(), new Condition<FileReferenceHelper>() {
-      @Override
-      public boolean value(final FileReferenceHelper fileReferenceHelper) {
-        return fileReferenceHelper.isMine(project, file);
-      }
-    });
+    return ContainerUtil.findAll(getHelpers(), fileReferenceHelper -> fileReferenceHelper.isMine(project, file));
   }
 
   public static boolean areElementsEquivalent(@NotNull final PsiFileSystemItem element1, @NotNull final PsiFileSystemItem element2) {

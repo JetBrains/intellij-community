@@ -87,12 +87,8 @@ class Html5SectionsProcessor {
   private static final String[] HEADER_ELEMENTS = {"h1", "h2", "h3", "h4", "h5", "h6"};
   private static final String HGROUP_ELEMENT = "hgroup";
 
-  private final Collection<SectionHolder> myRootSectionHolders = new SortedList<SectionHolder>(new Comparator<SectionHolder>() {
-    @Override
-    public int compare(final SectionHolder first, final SectionHolder second) {
-      return first.getTag().getTextRange().getStartOffset() - second.getTag().getTextRange().getStartOffset();
-    }
-  });
+  private final Collection<SectionHolder> myRootSectionHolders = new SortedList<SectionHolder>(
+    (first, second) -> first.getTag().getTextRange().getStartOffset() - second.getTag().getTextRange().getStartOffset());
 
   private SectionHolder myCurrentOutlinee = null;
   private Section myCurrentSection = null;
@@ -217,15 +213,12 @@ class Html5SectionsProcessor {
   }
 
   private static Computable<Collection<StructureViewTreeElement>> createChildrenComputable(final Collection<Section> children) {
-    return new Computable<Collection<StructureViewTreeElement>>() {
-      @Override
-      public Collection<StructureViewTreeElement> compute() {
-        final Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
-        for (Section section : children) {
-          result.add(createHtml5SectionTreeElement(section));
-        }
-        return result;
+    return () -> {
+      final Collection<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
+      for (Section section : children) {
+        result.add(createHtml5SectionTreeElement(section));
       }
+      return result;
     };
   }
 

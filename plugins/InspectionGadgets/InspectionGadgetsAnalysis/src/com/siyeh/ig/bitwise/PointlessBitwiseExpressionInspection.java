@@ -122,7 +122,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
           }
         }
       }
-      else if (EquivalenceChecker.expressionsAreEquivalent(previousOperand, operand)) {
+      else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(previousOperand, operand)) {
         if (tokenType.equals(JavaTokenType.OR) || tokenType.equals(JavaTokenType.AND)) {
           return getText(expression, previousOperand, operand, operand.getText());
         }
@@ -241,7 +241,8 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     private boolean booleanExpressionIsPointless(PsiExpression[] operands) {
       PsiExpression previousExpression = null;
       for (PsiExpression operand : operands) {
-        if (isZero(operand) || isAllOnes(operand) || EquivalenceChecker.expressionsAreEquivalent(previousExpression, operand)) {
+        if (isZero(operand) || isAllOnes(operand) || EquivalenceChecker.getCanonicalPsiEquivalence()
+          .expressionsAreEquivalent(previousExpression, operand)) {
           return true;
         }
         previousExpression = operand;

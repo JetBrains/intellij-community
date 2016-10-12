@@ -63,11 +63,14 @@ public class ClientPropertiesProperty extends ReadOnlyProperty {
 
   @NotNull @Override
   public Property[] getChildren(final RadComponent component) {
+    if (component == null) {
+      return EMPTY_ARRAY;
+    }
     ClientPropertiesManager manager = ClientPropertiesManager.getInstance(component.getProject());
     ClientPropertiesManager.ClientProperty[] props = manager.getClientProperties(component.getComponentClass());
     Property[] result = new Property[props.length];
-    for(int i=0; i<props.length; i++) {
-      result [i] = new ClientPropertyProperty(this, props [i].getName(), props [i].getValueClass());
+    for (int i = 0; i < props.length; i++) {
+      result[i] = new ClientPropertyProperty(this, props[i].getName(), props[i].getValueClass());
     }
     return result;
   }

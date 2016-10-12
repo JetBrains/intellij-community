@@ -19,9 +19,10 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * User: anna
@@ -79,6 +80,10 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
+  public void testEnumConstantValue() throws Exception {
+    doTest("TOP_LEFT");
+  }
+
   public void testConstants() throws Exception {
     doTest("NEGATIVE_INFINITY");
   }
@@ -132,50 +137,53 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testPrimitiveSubtags() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertDoesntContain(myFixture.getLookupElementStrings(), "geomBoundsInvalid");
   }
 
   public void testDefaultPropertyWrappedField() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "image", "Image");
   }
 
   public void testInfinity() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "Infinity", "-Infinity", "NaN", "-NaN");
   }
 
   public void testNoInfinity() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertDoesntContain(myFixture.getLookupElementStrings(), "Infinity");
   }
 
   public void testBooleanValues() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "true", "false");
   }
 
   public void testBooleanValuesNonStatic() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "true", "false");
   }
 
   public void testPropertyNameWithoutField() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     assertContainsElements(myFixture.getLookupElementStrings(), "disable");
   }
 
+  public void testPropertyTagSubclass() throws Exception {
+    configureAndComplete();
+    assertContainsElements(myFixture.getLookupElementStrings(), "Color", "ImagePattern", "LinearGradient", "RadialGradient");
+    assertDoesntContain(myFixture.getLookupElementStrings(), "Paint");
+  }
+
+  public void testNullFxId() throws Exception {
+    configureAndComplete();
+    assertDoesntContain(myFixture.getLookupElementStrings(), "null");
+  }
+
   public void testSubclassesAndDefaultProperty() throws Exception {
-    myFixture.configureByFiles(getTestName(true) + ".fxml");
-    complete();
+    configureAndComplete();
     final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
     assertNotNull(lookupElementStrings);
     final String buttonVariant = "Button";
@@ -211,6 +219,82 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testAllowPropertyTypeClass() throws Exception {
     doTest("ColumnConstraints");
+  }
+
+  public void testEventHandlerMethod() throws Exception {
+    configureAndComplete(getTestName(false) + ".java", getTestName(false) + "Super.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "onMyKeyTyped", "onSuperKeyTyped");
+  }
+
+  public void testEventHandlerMethodTypeParam() throws Exception {
+    configureAndComplete(getTestName(false) + ".java", getTestName(false) + "Super.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "onMyKeyTyped", "onSuperKeyTyped");
+  }
+
+  public void testRawCollectionItem() throws Exception {
+    configureAndComplete();
+    assertDoesntContain(myFixture.getLookupElementStrings(), "T", "Object", "java.lang.Object");
+  }
+
+  public void testFxIdExactOptionsLabel() throws Exception {
+    configureAndComplete("FxIdExactOptionsController.java", "FxIdExactOptionsModel.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "parentPrivateLabel", "parentPublicLabel", "privateLabel", "publicLabel", "parentControl", "control", "grandLabel");
+  }
+
+  public void testFxIdExactOptionsDefine() throws Exception {
+    configureAndComplete("FxIdExactOptionsController.java", "FxIdExactOptionsModel.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "parentModel", "model");
+  }
+
+  public void testFxIdGuessedOptionsRoot() throws Exception {
+    configureAndComplete("FxIdGuessedOptionsController.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "pane", "box", "model");
+  }
+
+  public void testFxIdGuessedOptionsNode() throws Exception {
+    configureAndComplete("FxIdGuessedOptionsController.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "pane", "node", "box", "model");
+  }
+
+  public void testFxIdGuessedOptionsDefine() throws Exception {
+    configureAndComplete("FxIdGuessedOptionsController.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "pane", "node", "box", "model", "text", "target");
+  }
+
+  public void testFxIdGuessedOptionsNested() throws Exception {
+    configureAndComplete("FxIdGuessedOptionsController.java");
+    assertSameElements(myFixture.getLookupElementStrings(),"pane", "node", "box", "model", "text", "target");
+  }
+
+  public void testInheritedConstant() throws Exception {
+    configureAndComplete("InheritedConstantData.java", "InheritedConstantSuperData.java");
+    assertSameElements(myFixture.getLookupElementStrings(), "MY_TEXT", "SUPER_TEXT");
+  }
+
+  public void testMultipleStylesheetsAttribute() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
+  }
+
+  public void testMultipleStylesheetsTag() throws Exception {
+    myFixture.addFileToProject("mystyle.css", ".myStyle {}");
+    myFixture.addFileToProject("very/deeply/located/small.css", ".small {}");
+    doTest();
+  }
+
+  private void configureAndComplete(final String... extraFiles) {
+    final String fxmlFileName = getTestName(true) + ".fxml";
+    if (extraFiles.length != 0) {
+      final List<String> files = new ArrayList<>();
+      files.add(fxmlFileName);
+      Collections.addAll(files, extraFiles);
+      myFixture.configureByFiles(ArrayUtil.toStringArray(files));
+    }
+    else {
+      myFixture.configureByFiles(fxmlFileName);
+    }
+    complete();
   }
 
   public void testOnlyCssAsStylesheets() throws Exception {

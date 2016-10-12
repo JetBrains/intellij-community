@@ -58,7 +58,6 @@ public abstract class AbstractBlock implements ASTBlock {
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-
       List<Block> list = buildChildren();
       if (list.isEmpty()) {
         list = buildInjectedBlocks();

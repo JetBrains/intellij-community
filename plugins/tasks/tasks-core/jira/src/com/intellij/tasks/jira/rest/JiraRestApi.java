@@ -56,12 +56,7 @@ public abstract class JiraRestApi extends JiraRemoteApi {
     GetMethod method = getMultipleIssuesSearchMethod(jql, max);
     String response = myRepository.executeMethod(method);
     List<JiraIssue> issues = parseIssues(response);
-    return ContainerUtil.map(issues, new Function<JiraIssue, Task>() {
-      @Override
-      public JiraRestTask fun(JiraIssue issue) {
-        return new JiraRestTask(issue, myRepository);
-      }
-    });
+    return ContainerUtil.map(issues, issue -> new JiraRestTask(issue, myRepository));
   }
 
   @Override

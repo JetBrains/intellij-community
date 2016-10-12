@@ -900,27 +900,24 @@ public class AbstractTreeUi {
       }
     }
 
-    promise.done(new Consumer<Boolean>() {
-      @Override
-      public void consume(final Boolean changes) {
-        if (!changes) {
-          return;
-        }
+    promise.done(changes -> {
+      if (!changes) {
+        return;
+      }
 
-        invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.update: on done result") {
-          @Override
-          public void perform() {
-            Object element = nodeDescriptor.getElement();
-            DefaultMutableTreeNode node = getNodeForElement(element, false);
-            if (node != null) {
-              TreePath path = getPathFor(node);
-              if (myTree.isVisible(path)) {
-                updateNodeImageAndPosition(node, false, true);
-              }
+      invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.update: on done result") {
+        @Override
+        public void perform() {
+          Object element = nodeDescriptor.getElement();
+          DefaultMutableTreeNode node = getNodeForElement(element, false);
+          if (node != null) {
+            TreePath path = getPathFor(node);
+            if (myTree.isVisible(path)) {
+              updateNodeImageAndPosition(node, false, true);
             }
           }
-        });
-      }
+        }
+      });
     });
     return promise;
   }
@@ -1133,18 +1130,15 @@ public class AbstractTreeUi {
     final Object prevElement = getElementFromDescriptor(descriptor);
     if (prevElement == null) return;
     update(descriptor, false)
-      .done(new Consumer<Boolean>() {
-        @Override
-        public void consume(Boolean changes) {
-          if (!isValid(descriptor)) {
-            if (isInStructure(prevElement)) {
-              getUpdater().addSubtreeToUpdateByElement(getTreeStructure().getParentElement(prevElement));
-              return;
-            }
+      .done(changes -> {
+        if (!isValid(descriptor)) {
+          if (isInStructure(prevElement)) {
+            getUpdater().addSubtreeToUpdateByElement(getTreeStructure().getParentElement(prevElement));
+            return;
           }
-          if (changes) {
-            updateNodeImageAndPosition(node, false, changes);
-          }
+        }
+        if (changes) {
+          updateNodeImageAndPosition(node, false, changes);
         }
       });
   }
@@ -2009,12 +2003,7 @@ public class AbstractTreeUi {
   public boolean isReady(boolean attempt) {
     if (attempt && myStateLock.isLocked()) return false;
 
-    Boolean ready = checkValue(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return Boolean.valueOf(isIdle() && !hasPendingWork() && !isNodeActionsPending());
-      }
-    }, attempt);
+    Boolean ready = checkValue(() -> Boolean.valueOf(isIdle() && !hasPendingWork() && !isNodeActionsPending()), attempt);
 
     return ready != null && ready.booleanValue();
   }
@@ -2255,12 +2244,9 @@ public class AbstractTreeUi {
       final ActionCallback update = new ActionCallback();
       if (needToUpdate) {
         update(childDescr, false)
-          .done(new Consumer<Boolean>() {
-            @Override
-            public void consume(Boolean changes) {
-              loadedChildren.putDescriptor(child, childDescr, changes);
-              update.setDone();
-            }
+          .done(changes -> {
+            loadedChildren.putDescriptor(child, childDescr, changes);
+            update.setDone();
           });
       }
       else {
@@ -3022,118 +3008,107 @@ public class AbstractTreeUi {
     final AsyncPromise<Void> result = new AsyncPromise<Void>();
     final Ref<NodeDescriptor> childDesc = new Ref<NodeDescriptor>(childDescriptor);
 
-    update.done(new Consumer<Boolean>() {
-      @Override
-      public void consume(Boolean isChanged) {
-        final AtomicBoolean changes = new AtomicBoolean(isChanged);
-        final AtomicBoolean forceRemapping = new AtomicBoolean();
-        final Ref<Object> newElement = new Ref<Object>(getElementFromDescriptor(childDesc.get()));
+    update.done(isChanged -> {
+      final AtomicBoolean changes = new AtomicBoolean(isChanged);
+      final AtomicBoolean forceRemapping = new AtomicBoolean();
+      final Ref<Object> newElement = new Ref<Object>(getElementFromDescriptor(childDesc.get()));
 
-        final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getBuilder().getTreeStructureElement(childDesc.get()));
-        Promise<Boolean> promise;
-        if (index == null) {
-          promise = Promise.resolve(false);
-        }
-        else {
-          final Object elementFromMap = elementToIndexMap.getKey(index);
-          if (elementFromMap != newElement.get() && elementFromMap.equals(newElement.get())) {
-            if (isInStructure(elementFromMap) && isInStructure(newElement.get())) {
-              final AsyncPromise<Boolean> updateIndexDone = new AsyncPromise<Boolean>();
-              promise = updateIndexDone;
-              if (parentNode.getUserObject() instanceof NodeDescriptor) {
-                final NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
-                childDesc.set(getTreeStructure().createDescriptor(elementFromMap, parentDescriptor));
-                NodeDescriptor oldDesc = getDescriptorFrom(childNode);
-                if (oldDesc != null) {
-                  childDesc.get().applyFrom(oldDesc);
-                }
-
-                childNode.setUserObject(childDesc.get());
-                newElement.set(elementFromMap);
-                forceRemapping.set(true);
-                update(childDesc.get(), false)
-                  .done(new Consumer<Boolean>() {
-                    @Override
-                    public void consume(Boolean isChanged) {
-                      changes.set(isChanged);
-                      updateIndexDone.setResult(isChanged);
-                    }
-                  });
+      final Integer index = newElement.get() == null ? null : elementToIndexMap.getValue(getBuilder().getTreeStructureElement(childDesc.get()));
+      Promise<Boolean> promise;
+      if (index == null) {
+        promise = Promise.resolve(false);
+      }
+      else {
+        final Object elementFromMap = elementToIndexMap.getKey(index);
+        if (elementFromMap != newElement.get() && elementFromMap.equals(newElement.get())) {
+          if (isInStructure(elementFromMap) && isInStructure(newElement.get())) {
+            final AsyncPromise<Boolean> updateIndexDone = new AsyncPromise<Boolean>();
+            promise = updateIndexDone;
+            if (parentNode.getUserObject() instanceof NodeDescriptor) {
+              final NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
+              childDesc.set(getTreeStructure().createDescriptor(elementFromMap, parentDescriptor));
+              NodeDescriptor oldDesc = getDescriptorFrom(childNode);
+              if (oldDesc != null) {
+                childDesc.get().applyFrom(oldDesc);
               }
-              // todo why we don't process promise here?
+
+              childNode.setUserObject(childDesc.get());
+              newElement.set(elementFromMap);
+              forceRemapping.set(true);
+              update(childDesc.get(), false)
+                .done(isChanged1 -> {
+                  changes.set(isChanged1);
+                  updateIndexDone.setResult(isChanged1);
+                });
             }
-            else {
-              promise = Promise.resolve(changes.get());
-            }
+            // todo why we don't process promise here?
           }
           else {
             promise = Promise.resolve(changes.get());
           }
-
-          promise
-            .done(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating after update") {
-              @Override
-              public void perform() {
-                if (childDesc.get().getIndex() != index.intValue()) {
-                  changes.set(true);
-                }
-                childDesc.get().setIndex(index.intValue());
-              }
-            });
+        }
+        else {
+          promise = Promise.resolve(changes.get());
         }
 
         promise
-          .done(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating") {
+          .done(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating after update") {
             @Override
             public void perform() {
-              if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {
-                removeMapping(oldElement, childNode, newElement.get());
-                Object newE = newElement.get();
-                if (newE != null) {
-                  createMapping(newE, childNode);
-                }
-                NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
-                if (parentDescriptor != null) {
-                  parentDescriptor.setChildrenSortingStamp(-1);
+              if (childDesc.get().getIndex() != index.intValue()) {
+                changes.set(true);
               }
+              childDesc.get().setIndex(index.intValue());
             }
+          });
+      }
 
-            if (index == null) {
-              int selectedIndex = -1;
-              if (TreeBuilderUtil.isNodeOrChildSelected(myTree, childNode)) {
-                selectedIndex = parentNode.getIndex(childNode);
+      promise
+        .done(new TreeConsumer<Boolean>("AbstractTreeUi.processExistingNode: on done index updating") {
+          @Override
+          public void perform() {
+            if (!oldElement.equals(newElement.get()) || forceRemapping.get()) {
+              removeMapping(oldElement, childNode, newElement.get());
+              Object newE = newElement.get();
+              if (newE != null) {
+                createMapping(newE, childNode);
               }
-
-              if (childNode.getParent() instanceof DefaultMutableTreeNode) {
-                final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)childNode.getParent();
-                if (myTree.isExpanded(new TreePath(parent.getPath()))) {
-                  if (parent.getChildCount() == 1 && parent.getChildAt(0) == childNode) {
-                    insertLoadingNode(parent, false);
-                  }
-                }
-              }
-
-              Object disposedElement = getElementFor(childNode);
-
-              removeNodeFromParent(childNode, selectedIndex >= 0);
-              disposeNode(childNode);
-
-              adjustSelectionOnChildRemove(parentNode, selectedIndex, disposedElement);
-              result.setResult(null);
-            }
-            else {
-              elementToIndexMap.remove(getBuilder().getTreeStructureElement(childDesc.get()));
-              updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true)
-                .doWhenDone(new Runnable() {
-                  @Override
-                  public void run() {
-                    result.setResult(null);
-                  }
-                });
+              NodeDescriptor parentDescriptor = getDescriptorFrom(parentNode);
+              if (parentDescriptor != null) {
+                parentDescriptor.setChildrenSortingStamp(-1);
             }
           }
-        });
-      }
+
+          if (index == null) {
+            int selectedIndex = -1;
+            if (TreeBuilderUtil.isNodeOrChildSelected(myTree, childNode)) {
+              selectedIndex = parentNode.getIndex(childNode);
+            }
+
+            if (childNode.getParent() instanceof DefaultMutableTreeNode) {
+              final DefaultMutableTreeNode parent = (DefaultMutableTreeNode)childNode.getParent();
+              if (myTree.isExpanded(new TreePath(parent.getPath()))) {
+                if (parent.getChildCount() == 1 && parent.getChildAt(0) == childNode) {
+                  insertLoadingNode(parent, false);
+                }
+              }
+            }
+
+            Object disposedElement = getElementFor(childNode);
+
+            removeNodeFromParent(childNode, selectedIndex >= 0);
+            disposeNode(childNode);
+
+            adjustSelectionOnChildRemove(parentNode, selectedIndex, disposedElement);
+            result.setResult(null);
+          }
+          else {
+            elementToIndexMap.remove(getBuilder().getTreeStructureElement(childDesc.get()));
+            updateNodeChildren(childNode, pass, null, false, canSmartExpand, forceUpdate, true, true)
+              .doWhenDone(() -> result.setResult(null));
+          }
+        }
+      });
     });
     return result;
   }
@@ -3192,12 +3167,7 @@ public class AbstractTreeUi {
 
   @NotNull
   public Condition getExpiredElementCondition(final Object element) {
-    return new Condition() {
-      @Override
-      public boolean value(final Object o) {
-        return isInStructure(element);
-      }
-    };
+    return o -> isInStructure(element);
   }
 
   private void addSelectionPath(@NotNull final TreePath path,

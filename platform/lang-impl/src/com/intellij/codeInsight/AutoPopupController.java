@@ -31,6 +31,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionId;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
@@ -85,19 +87,18 @@ public class AutoPopupController implements Disposable {
       }
     }, this);
 
-    IdeEventQueue.getInstance().addActivityListener(new Runnable() {
-      @Override
-      public void run() {
-        cancelAllRequest();
-      }
-    }, this);
+    IdeEventQueue.getInstance().addActivityListener(() -> cancelAllRequest(), this);
   }
 
   public void autoPopupMemberLookup(final Editor editor, @Nullable final Condition<PsiFile> condition){
-    scheduleAutoPopup(editor, condition);
+    autoPopupMemberLookup(editor, CompletionType.BASIC, condition);
   }
 
-  public void scheduleAutoPopup(final Editor editor, @Nullable final Condition<PsiFile> condition) {
+  public void autoPopupMemberLookup(final Editor editor, CompletionType completionType, @Nullable final Condition<PsiFile> condition){
+    scheduleAutoPopup(editor, completionType, condition);
+  }
+
+  public void scheduleAutoPopup(final Editor editor, CompletionType completionType, @Nullable final Condition<PsiFile> condition) {
     if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
       return;
     }
@@ -123,33 +124,25 @@ public class AutoPopupController implements Disposable {
     CompletionServiceImpl.setCompletionPhase(phase);
     phase.ignoreCurrentDocumentChange();
 
-    CompletionAutoPopupHandler.runLaterWithCommitted(myProject, editor.getDocument(), new Runnable() {
-      @Override
-      public void run() {
-        if (phase.checkExpired()) return;
+    runTransactionWithEverythingCommitted(myProject, () -> {
+      if (phase.checkExpired()) return;
 
-        PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-        if (file != null && condition != null && !condition.value(file)) {
-          CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-          return;
-        }
-
-        CompletionAutoPopupHandler.invokeCompletion(CompletionType.BASIC, true, myProject, editor, 0, false);
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
+      if (file != null && condition != null && !condition.value(file)) {
+        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+        return;
       }
+
+      CompletionAutoPopupHandler.invokeCompletion(completionType, true, myProject, editor, 0, false);
     });
   }
 
   public void scheduleAutoPopup(final Editor editor) {
-    scheduleAutoPopup(editor, null);
+    scheduleAutoPopup(editor, CompletionType.BASIC, null);
   }
 
   private void addRequest(final Runnable request, final int delay) {
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        myAlarm.addRequest(request, delay);
-      }
-    };
+    Runnable runnable = () -> myAlarm.addRequest(request, delay);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       runnable.run();
     } else {
@@ -179,12 +172,8 @@ public class AutoPopupController implements Disposable {
       }
 
       final PsiFile file1 = file;
-      final Runnable request = new Runnable(){
-        @Override
-        public void run(){
-          if (myProject.isDisposed() || DumbService.isDumb(myProject)) return;
-          documentManager.commitAllDocuments();
-          if (editor.isDisposed() || !editor.getComponent().isShowing()) return;
+      Runnable request = () -> {
+        if (!myProject.isDisposed() && !DumbService.isDumb(myProject) && !editor.isDisposed() && editor.getComponent().isShowing()) {
           int lbraceOffset = editor.getCaretModel().getOffset() - 1;
           try {
             ShowParameterInfoHandler.invoke(myProject, editor, file1, lbraceOffset, highlightedMethod, false);
@@ -194,11 +183,26 @@ public class AutoPopupController implements Disposable {
         }
       };
 
-      addRequest(request, settings.PARAMETER_INFO_DELAY);
+      addRequest(() -> documentManager.performLaterWhenAllCommitted(request), settings.PARAMETER_INFO_DELAY);
     }
   }
 
   @Override
   public void dispose() {
+  }
+
+  public static void runTransactionWithEverythingCommitted(@NotNull final Project project, @NotNull final Runnable runnable) {
+    TransactionGuard guard = TransactionGuard.getInstance();
+    TransactionId id = guard.getContextTransaction();
+    final PsiDocumentManager pdm = PsiDocumentManager.getInstance(project);
+    pdm.performLaterWhenAllCommitted(() -> guard.submitTransaction(project, id, () -> {
+      if (pdm.hasUncommitedDocuments()) {
+        // no luck, will try later
+        runTransactionWithEverythingCommitted(project, runnable);
+      }
+      else {
+        runnable.run();
+      }
+    }));
   }
 }

@@ -86,13 +86,7 @@ public final class LanguageConsoleBuilder {
   }
 
   public LanguageConsoleBuilder processHandler(@NotNull final ProcessHandler processHandler) {
-    executionEnabled = new Condition<LanguageConsoleView>() {
-
-      @Override
-      public boolean value(LanguageConsoleView console) {
-        return !processHandler.isProcessTerminated();
-      }
-    };
+    executionEnabled = console -> !processHandler.isProcessTerminated();
     return this;
   }
 
@@ -178,7 +172,14 @@ public final class LanguageConsoleBuilder {
 
   @NotNull
   public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
-    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(new MyHelper(project, language.getDisplayName() + " Console", language, psiFileFactory), gutterContentProvider);
+    return build(project, language, null);
+  }
+
+  @NotNull
+  public LanguageConsoleView build(@NotNull Project project, @NotNull Language language, @Nullable VirtualFile virtualFileToReuse) {
+    final VirtualFile virtualFile =
+      virtualFileToReuse != null ? virtualFileToReuse : new LightVirtualFile(language.getDisplayName() + " Console", language, "");
+    GutteredLanguageConsole consoleView = new GutteredLanguageConsole(new MyHelper(project, virtualFile, psiFileFactory), gutterContentProvider);
     if (oneLineInput) {
       consoleView.getConsoleEditor().setOneLineMode(true);
     }
@@ -204,8 +205,10 @@ public final class LanguageConsoleBuilder {
 
     GutteredLanguageConsole console;
 
-    public MyHelper(@NotNull  Project project, @NotNull String title, @NotNull Language language, @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
-      super(project, new LightVirtualFile(title, language, ""));
+    public MyHelper(@NotNull Project project,
+                    @NotNull VirtualFile virtualFile,
+                    @Nullable PairFunction<VirtualFile, Project, PsiFile> psiFileFactory) {
+      super(project, virtualFile);
       this.psiFileFactory = psiFileFactory;
     }
 

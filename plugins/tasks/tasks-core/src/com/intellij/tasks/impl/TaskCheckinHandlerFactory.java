@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -28,13 +29,8 @@ import com.intellij.tasks.context.WorkingContextManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Date;
 
-/**
- * @author Dmitry Avdeev
- *         Date: 12/29/11
- */
 public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
 
   @NotNull
@@ -44,27 +40,17 @@ public class TaskCheckinHandlerFactory extends CheckinHandlerFactory {
       @Override
       public void checkinSuccessful() {
         final String message = panel.getCommitMessage();
-        if (message != null) {
-          final Project project = panel.getProject();
-          final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
-          if (manager.getState().saveContextOnCommit) {
-            Task task = findTaskInRepositories(message, manager);
-            if (task == null) {
-              task = manager.createLocalTask(message);
-            }
-            final LocalTask localTask = manager.addTask(task);
-            localTask.setUpdated(new Date());
-
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (!project.isDisposed()) {
-                  WorkingContextManager.getInstance(project).saveContext(localTask);
-                }
-              }
-            });
+        final Project project = panel.getProject();
+        final TaskManagerImpl manager = (TaskManagerImpl)TaskManager.getManager(project);
+        if (manager.getState().saveContextOnCommit) {
+          Task task = findTaskInRepositories(message, manager);
+          if (task == null) {
+            task = manager.createLocalTask(message);
           }
+          final LocalTask localTask = manager.addTask(task);
+          localTask.setUpdated(new Date());
+
+          ApplicationManager.getApplication().invokeLater(() -> WorkingContextManager.getInstance(project).saveContext(localTask), project.getDisposed());
         }
       }
     };

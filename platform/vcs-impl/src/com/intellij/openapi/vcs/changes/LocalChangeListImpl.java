@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -25,8 +24,8 @@ public class LocalChangeListImpl extends LocalChangeList {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeList");
 
   private final Project myProject;
-  private Collection<Change> myChanges = new HashSet<Change>();
-  private Collection<Change> myReadChangesCache = null;
+  private Set<Change> myChanges = ContainerUtil.newHashSet();
+  private Set<Change> myReadChangesCache = null;
   private String myId;
   @NotNull private String myName;
   private String myComment = "";
@@ -53,14 +52,15 @@ public class LocalChangeListImpl extends LocalChangeList {
     setNameImpl(origin.myName);
   }
 
-  public Collection<Change> getChanges() {
+  @NotNull
+  public Set<Change> getChanges() {
     createReadChangesCache();
     return myReadChangesCache;
   }
 
   private void createReadChangesCache() {
     if (myReadChangesCache == null) {
-      myReadChangesCache = Collections.unmodifiableCollection(new HashSet<Change>(myChanges));
+      myReadChangesCache = Collections.unmodifiableSet(ContainerUtil.newHashSet(myChanges));
     }
   }
 
@@ -135,14 +135,12 @@ public class LocalChangeListImpl extends LocalChangeList {
     LOG.debug("List: " + myName + ". addChange: " + change);
   }
 
-  Change removeChange(Change change) {
-    for (Change localChange : myChanges) {
-      if (localChange.equals(change)) {
-        myChanges.remove(localChange);
-        LOG.debug("List: " + myName + ". removeChange: " + change);
-        myReadChangesCache = null;
-        return localChange;
-      }
+  @Nullable
+  Change removeChange(@Nullable Change change) {
+    if (myChanges.remove(change)) {
+      LOG.debug("List: " + myName + ". removeChange: " + change);
+      myReadChangesCache = null;
+      return change;
     }
     return null;
   }
@@ -184,7 +182,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     });
   }
 
-  boolean processChange(@NotNull final Change change) {
+  boolean processChange(@NotNull Change change) {
     LOG.debug("[process change] for '" + myName + "' isDefault: " + myIsDefault + " change: " +
               ChangesUtil.getFilePath(change).getPath());
     if (myIsDefault) {
@@ -193,13 +191,7 @@ public class LocalChangeListImpl extends LocalChangeList {
       return true;
     }
 
-    boolean foundSameChange = ContainerUtil.exists(myChangesBeforeUpdate, new Condition<Change>() {
-      @Override
-      public boolean value(Change oldChange) {
-        return Comparing.equal(change, oldChange);
-      }
-    });
-    if (foundSameChange) {
+    if (myChangesBeforeUpdate.contains(change)) {
       LOG.debug("[process change] adding because equal to old: " + ChangesUtil.getFilePath(change).getPath());
       addChange(change);
       return true;
@@ -275,7 +267,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     copy.myData = myData;
 
     if (myChanges != null) {
-      copy.myChanges = new HashSet<Change>(myChanges);
+      copy.myChanges = ContainerUtil.newHashSet(myChanges);
     }
 
     if (myChangesBeforeUpdate != null) {
@@ -283,7 +275,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     }
 
     if (myReadChangesCache != null) {
-      copy.myReadChangesCache = new HashSet<Change>(myReadChangesCache);
+      copy.myReadChangesCache = ContainerUtil.newHashSet(myReadChangesCache);
     }
 
     return copy;

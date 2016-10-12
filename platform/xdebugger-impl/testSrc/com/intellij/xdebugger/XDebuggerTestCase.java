@@ -18,7 +18,6 @@ package com.intellij.xdebugger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
@@ -59,12 +58,7 @@ public abstract class XDebuggerTestCase extends PlatformTestCase {
 
   static void removeBreakPoint(final XBreakpointManagerImpl breakpointManager,
                                final XBreakpoint<?> breakpoint) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        breakpointManager.removeBreakpoint(breakpoint);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> breakpointManager.removeBreakpoint(breakpoint));
   }
 
   @Override
@@ -89,11 +83,6 @@ public abstract class XDebuggerTestCase extends PlatformTestCase {
   public static class MyLineBreakpointType extends XLineBreakpointType<MyBreakpointProperties> {
     public MyLineBreakpointType() {
       super("testLine", "239");
-    }
-
-    @Override
-    public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull Project project) {
-      return false;
     }
 
     @Override

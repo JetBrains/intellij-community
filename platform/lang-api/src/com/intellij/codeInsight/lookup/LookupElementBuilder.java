@@ -372,6 +372,11 @@ public final class LookupElementBuilder extends LookupElement {
     return myLookupString;
   }
 
+  @Nullable
+  public InsertHandler<LookupElement> getInsertHandler() {
+    return myInsertHandler;
+  }
+
   @NotNull
   @Override
   public Object getObject() {

@@ -88,13 +88,7 @@ public abstract class ApplicationActionBase<T extends CloudApplicationRuntime> e
         return;
       }
 
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-
-        @Override
-        public void run() {
-          myContent.select(connection, deployment.getName(), myLogName);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> myContent.select(connection, deployment.getName(), myLogName));
     }
 
     private Deployment findDeployment(ServerConnection<?> connection) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.PathManager;
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
@@ -31,9 +32,9 @@ import java.io.*;
  *         Date: Feb 12, 2008
  */
 public class ID<K, V> {
-  private static final TIntObjectHashMap<ID> ourRegistry = new TIntObjectHashMap<ID>();
+  private static final ConcurrentIntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
   private static final TObjectIntHashMap<String> ourNameToIdRegistry = new TObjectIntHashMap<String>();
-  public static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
+  static final int MAX_NUMBER_OF_INDICES = Short.MAX_VALUE;
 
   private final String myName;
   private final short myUniqueId;
@@ -42,23 +43,37 @@ public class ID<K, V> {
     final File indices = getEnumFile();
     try {
       final BufferedReader reader = new BufferedReader(new FileReader(indices));
+      TObjectIntHashMap<String> nameToIdRegistry = new TObjectIntHashMap<String>();
       try {
         int cnt = 0;
         do {
             cnt++;
             final String name = reader.readLine();
             if (name == null) break;
-            ourNameToIdRegistry.put(name, cnt);
+            nameToIdRegistry.put(name, cnt);
           }
           while (true);
       }
       finally {
         reader.close();
       }
+
+      synchronized (ourNameToIdRegistry) {
+        ourNameToIdRegistry.ensureCapacity(nameToIdRegistry.size());
+        nameToIdRegistry.forEachEntry(new TObjectIntProcedure<String>() {
+          @Override
+          public boolean execute(String name, int index) {
+            ourNameToIdRegistry.put(name, index);
+            return true;
+          }
+        });
+      }
     }
     catch (IOException e) {
-      ourNameToIdRegistry.clear();
-      writeEnumFile();
+      synchronized (ourNameToIdRegistry) {
+        ourNameToIdRegistry.clear();
+        writeEnumFile();
+      }
     }
   }
 
@@ -76,18 +91,24 @@ public class ID<K, V> {
   }
 
   private static short stringToId(String name) {
-    if (ourNameToIdRegistry.containsKey(name)) {
-      return (short)ourNameToIdRegistry.get(name);
+    synchronized (ourNameToIdRegistry) {
+      if (ourNameToIdRegistry.containsKey(name)) {
+        return (short)ourNameToIdRegistry.get(name);
+      }
+
+      int n = ourNameToIdRegistry.size() + 1;
+      assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded";
+
+      ourNameToIdRegistry.put(name, n);
+      writeEnumFile();
+      return (short)n;
     }
+  }
 
-    int n = ourNameToIdRegistry.size() + 1;
-    assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded";
-
-    ourNameToIdRegistry.put(name, n);
-
-    writeEnumFile();
-
-    return (short)n;
+  public static void reinitializeDiskStorage() {
+    synchronized (ourNameToIdRegistry) {
+      writeEnumFile();
+    }
   }
 
   private static void writeEnumFile() {
@@ -119,7 +140,7 @@ public class ID<K, V> {
     }
   }
 
-  public static <K, V> ID<K, V> create(@NonNls String name) {
+  public static <K, V> ID<K, V> create(@NonNls @NotNull String name) {
     final ID<K, V> found = findByName(name);
     return found != null ? found : new ID<K, V>(name);
   }

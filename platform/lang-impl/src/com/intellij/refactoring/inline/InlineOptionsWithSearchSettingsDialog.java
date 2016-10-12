@@ -19,6 +19,7 @@ package com.intellij.refactoring.inline;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -63,6 +64,7 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     }
   }
 
+  @NotNull
   @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());

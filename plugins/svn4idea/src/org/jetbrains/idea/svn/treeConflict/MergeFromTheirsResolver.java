@@ -244,13 +244,13 @@ public class MergeFromTheirsResolver {
     }
 
     @Override
-    public void apply(@NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroups,
+    public void apply(@NotNull List<FilePatch> remaining, @NotNull MultiMap<VirtualFile, TextFilePatchInProgress> patchGroupsToApply,
                       @Nullable LocalChangeList localList,
                       @Nullable String fileName,
                       @Nullable TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
       final List<FilePatch> patches;
       try {
-        patches = ApplyPatchSaveToFileExecutor.patchGroupsToOneGroup(patchGroups, myBaseDir);
+        patches = ApplyPatchSaveToFileExecutor.patchGroupsToOneGroup(patchGroupsToApply, myBaseDir);
       }
       catch (IOException e) {
         myInner.handleException(e, true);
@@ -307,7 +307,7 @@ public class MergeFromTheirsResolver {
       final Project project = myVcs.getProject();
       final List<FilePatch> patches;
       try {
-        patches = IdeaTextPatchBuilder.buildPatch(project, myTheirsChanges, myBaseForPatch.getPath(), false);
+        patches = IdeaTextPatchBuilder.buildPatch(project, myTheirsChanges, ObjectUtils.assertNotNull(myBaseForPatch).getPath(), false);
         myTextPatches = ObjectsConvertor.convert(patches, new Convertor<FilePatch, TextFilePatch>() {
           @Override
           public TextFilePatch convert(FilePatch o) {

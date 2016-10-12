@@ -73,12 +73,7 @@ public class MasterDetailsStateService implements PersistentStateComponent<Maste
   public States getState() {
     States states = new States();
     states.myStates.addAll(myStates.values());
-    Collections.sort(states.getStates(), new Comparator<ComponentState>() {
-      @Override
-      public int compare(ComponentState o1, ComponentState o2) {
-        return o1.myKey.compareTo(o2.myKey);
-      }
-    });
+    Collections.sort(states.getStates(), (o1, o2) -> o1.myKey.compareTo(o2.myKey));
     return states;
   }
 

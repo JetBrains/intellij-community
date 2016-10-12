@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.Processor;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,14 +34,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int DEFAULT_PAGE_SIZE = 32768;
 
   static {
-    int pageSize;
-    try {
-      String property = System.getProperty("idea.btree.page.size");
-      pageSize = property != null ? Integer.parseInt(property, 10):DEFAULT_PAGE_SIZE;
-    } catch (NumberFormatException ex) {
-      pageSize = DEFAULT_PAGE_SIZE;
-    }
-    PAGE_SIZE = pageSize;
+    PAGE_SIZE = SystemProperties.getIntProperty("idea.btree.page.size", DEFAULT_PAGE_SIZE);
   }
 
   private static final int RECORD_SIZE = 4;
@@ -65,10 +59,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private final boolean myInlineKeysNoMapping;
   private boolean myExternalKeysNoMapping;
 
-  private static final int DIRTY_MAGIC = 0xbabe1977;
-  private static final int VERSION = 7 + IntToIntBtree.version();
-  private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafd + VERSION + PAGE_SIZE;
-  @NotNull private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
+  static final int VERSION = 7 + IntToIntBtree.version() + PAGE_SIZE;
   private static final int KEY_SHIFT = 1;
 
   public PersistentBTreeEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
@@ -79,6 +70,14 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
                                    @NotNull KeyDescriptor<Data> dataDescriptor,
                                    int initialSize,
                                    @Nullable PagedFileStorage.StorageLockContext lockContext) throws IOException {
+    this(file, dataDescriptor, initialSize, lockContext, 0);
+  }
+
+  public PersistentBTreeEnumerator(@NotNull File file,
+                                   @NotNull KeyDescriptor<Data> dataDescriptor,
+                                   int initialSize,
+                                   @Nullable PagedFileStorage.StorageLockContext lockContext,
+                                   int version) throws IOException {
     super(file,
           new ResizeableMappedFile(
             file,
@@ -90,7 +89,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
           ),
           dataDescriptor,
           initialSize,
-          ourVersion,
+          new Version(VERSION + version),
           new RecordBufferHandler(),
           false
     );

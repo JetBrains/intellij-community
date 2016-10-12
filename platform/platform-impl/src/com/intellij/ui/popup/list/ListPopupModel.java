@@ -146,4 +146,9 @@ public class ListPopupModel extends AbstractListModel {
     return myFullMatchIndex != -1 ? myFullMatchIndex : myStartsWithIndex;
   }
 
+  public void updateOriginalList() {
+    myOriginalList.clear();
+    myOriginalList.addAll(myStep.getValues());
+    refilter();
+  }
 }

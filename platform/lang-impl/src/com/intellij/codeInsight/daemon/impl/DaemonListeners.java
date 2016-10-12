@@ -142,7 +142,6 @@ public class DaemonListeners implements Disposable {
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
                          @NotNull FileStatusManager fileStatusManager) {
-    Disposer.register(project, this);
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
     myPsiDocumentManager = psiDocumentManager;
@@ -408,14 +407,14 @@ public class DaemonListeners implements Disposable {
     private boolean myDaemonWasRunning;
 
     @Override
-    public void beforeWriteActionStart(Object action) {
+    public void beforeWriteActionStart(@NotNull Object action) {
       myDaemonWasRunning = myDaemonCodeAnalyzer.isRunning();
       if (!myDaemonWasRunning) return; // we'll restart in writeActionFinished()
       stopDaemon(true, "Write action start");
     }
 
     @Override
-    public void writeActionFinished(Object action) {
+    public void writeActionFinished(@NotNull Object action) {
       stopDaemon(true, "Write action finish");
     }
   }

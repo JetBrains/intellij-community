@@ -28,12 +28,15 @@ import com.intellij.openapi.actionSystem.impl.InplaceActionButtonLook;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,13 +48,16 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, FocusListener {
+public class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, FocusListener {
   private final JTextArea myTextArea;
+  private final JLabel myInfoLabel;
 
   public SearchTextArea(boolean search) {
-    myTextArea = new JTextArea();
-    setBorder(JBUI.Borders.empty(6, 6, 6, 8));
-    setLayout(new BorderLayout(JBUI.scale(4), 0));
+    this(new JTextArea(), search);
+  }
+
+  public SearchTextArea(@NotNull JTextArea textArea,boolean search) {
+    myTextArea = textArea;
     myTextArea.addPropertyChangeListener("background", this);
     myTextArea.addFocusListener(this);
     myTextArea.setBorder(null);
@@ -68,10 +74,15 @@ class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, F
     ActionButton button =
       new ActionButton(historyAction, historyAction.getTemplatePresentation(), ActionPlaces.UNKNOWN, new Dimension(JBUI.scale(16), JBUI.scale(16)));
     button.setLook(new InplaceActionButtonLook());
-    JPanel p = new NonOpaquePanel(new BorderLayout());
-    p.add(button, BorderLayout.NORTH);
-    add(p, BorderLayout.WEST);
-    add(scrollPane, BorderLayout.CENTER);
+
+    myInfoLabel = new JBLabel(UIUtil.ComponentStyle.SMALL);
+    myInfoLabel.setForeground(JBColor.GRAY);
+
+    setBorder(JBUI.Borders.empty(6, 6, 6, 8));
+    setLayout(new MigLayout("flowx, ins 0, gapx " + JBUI.scale(4) + "px"));
+    add(button, "ay top, gaptop " + JBUI.scale(2) + "px");
+    add(scrollPane, "growx, pushx");
+    add(myInfoLabel, "ay top, gaptop " + JBUI.scale(2) + "px, gapright " + JBUI.scale(6) + "px");
   }
 
   @NotNull
@@ -97,6 +108,10 @@ class SearchTextArea extends NonOpaquePanel implements PropertyChangeListener, F
   @Override
   public void focusLost(FocusEvent e) {
     repaint();
+  }
+
+  public void setInfoText(String info) {
+    myInfoLabel.setText(info);
   }
 
   @Override

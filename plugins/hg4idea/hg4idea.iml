@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="vcs-log-impl" />
     <orderEntry type="module" module-name="dvcs-api" />
     <orderEntry type="module" module-name="lang-impl" />
+    <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
   </component>
 </module>

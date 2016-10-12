@@ -88,6 +88,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
+        if (getRefManager().getProject().isDisposed()) return false;
 
         final PsiFile file = myID.getContainingFile();
         //no need to check resolve in offline mode

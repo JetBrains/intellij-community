@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/sh
 #
 # This script updates your IntelliJ IDEA CE installation from the latest compiled classes. This way you can easily
 # upgrade your working IDEA to the latest changes.
@@ -13,12 +13,12 @@ if [ ! -f "$WORK_IDEA_HOME/bin/inspect.sh" -a -f "$WORK_IDEA_HOME/Contents/bin/i
   WORK_IDEA_HOME="$WORK_IDEA_HOME/Contents"
 fi
 if [ ! -f "$WORK_IDEA_HOME/bin/inspect.sh" ]; then
-  echo "WORK_IDEA_HOME must be defined and point to build you're updating."
+  echo "WORK_IDEA_HOME must be defined and point to the installation you're updating."
   exit 1
 fi
 
 if [ ! -f "$DEV_IDEA_HOME/build/update.sh" ]; then
-  echo "DEV_IDEA_HOME must be defined and point to source base you're updating from."
+  echo "DEV_IDEA_HOME must be defined and point to the source base you're updating from."
   exit 1
 fi
 

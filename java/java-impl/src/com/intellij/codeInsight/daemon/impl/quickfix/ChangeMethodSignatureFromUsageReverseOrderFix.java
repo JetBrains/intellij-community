@@ -55,6 +55,7 @@ public class ChangeMethodSignatureFromUsageReverseOrderFix extends ChangeMethodS
           if (myNewParametersInfo.length != result.size()) return true;
           for (int i = 0, size = result.size(); i < size; i++) {
             ParameterInfoImpl info = result.get(i);
+            info.setName(myNewParametersInfo[i].getName());
             if (!myNewParametersInfo[i].equals(info)) return true;
           }
         }

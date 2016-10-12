@@ -111,7 +111,8 @@ public class ProjectNameStep extends ModuleWizardStep {
     }
 
     final boolean shouldPromptCreation = myNamePathComponent.isPathChangedByUser();
-    if (!ProjectWizardUtil.createDirectoryIfNotExists(IdeBundle.message("directory.project.file.directory",myWizardContext.getPresentationName()), projectFileDirectory, shouldPromptCreation)) {
+    String prefix = IdeBundle.message("directory.project.file.directory", myWizardContext.getPresentationName());
+    if (!ProjectWizardUtil.createDirectoryIfNotExists(prefix, projectFileDirectory, shouldPromptCreation)) {
       return false;
     }
 

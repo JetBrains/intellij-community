@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implements PsiArrayAccessExpression, Constants {
@@ -46,7 +47,9 @@ public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implement
   public PsiType getType() {
     PsiType arrayType = getArrayExpression().getType();
     if (!(arrayType instanceof PsiArrayType)) return null;
-    return ((PsiArrayType)arrayType).getComponentType();
+    final PsiType componentType = ((PsiArrayType)arrayType).getComponentType();
+    if (PsiUtil.isAccessedForWriting(this)) return componentType;
+    return PsiUtil.captureToplevelWildcards(componentType, this);
   }
 
   @Override

@@ -74,13 +74,11 @@ public class RenameHandlerRegistry {
     final Map<String, RenameHandler> availableHandlers = new TreeMap<String, RenameHandler>();
     for (RenameHandler renameHandler : Extensions.getExtensions(RenameHandler.EP_NAME)) {
       if (renameHandler.isRenaming(dataContext)) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
         availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
       }
     }
     for (RenameHandler renameHandler : myHandlers) {
       if (renameHandler.isRenaming(dataContext)) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) return renameHandler;
         availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
       }
     }
@@ -94,6 +92,7 @@ public class RenameHandlerRegistry {
     }
     if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
     if (availableHandlers.size() > 1) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return availableHandlers.values().iterator().next();
       final String[] strings = ArrayUtil.toStringArray(availableHandlers.keySet());
       final HandlersChooser chooser = new HandlersChooser(CommonDataKeys.PROJECT.getData(dataContext), strings);
       if (chooser.showAndGet()) {

@@ -28,30 +28,37 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> implements PsiClassReferenceListStub {
+  @NotNull
   private final PsiReferenceList.Role myRole;
   private final StringRef[] myNames;
   private PsiClassType[] myTypes;
 
-  public PsiClassReferenceListStubImpl(final JavaClassReferenceListElementType type, final StubElement parent, final String[] names, final PsiReferenceList.Role role) {
-    super(parent, type);
-    myNames = StringRef.createArray(names.length);
+  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, final StubElement parent, @NotNull String[] names, @NotNull PsiReferenceList.Role role) {
+    this(type, parent, toStringRefs(names), role);
+  }
+
+  @NotNull
+  private static StringRef[] toStringRefs(String[] names) {
+    StringRef[] myNames = StringRef.createArray(names.length);
     for (int i = 0; i < names.length; i++) {
       myNames[i] = StringRef.fromString(names[i]);
     }
-    myRole = role;
+    return myNames;
   }
 
-  public PsiClassReferenceListStubImpl(final JavaClassReferenceListElementType type, final StubElement parent, final StringRef[] names, final PsiReferenceList.Role role) {
+  public PsiClassReferenceListStubImpl(@NotNull JavaClassReferenceListElementType type, final StubElement parent, @NotNull StringRef[] names, @NotNull PsiReferenceList.Role role) {
     super(parent, type);
     myNames = names;
     myRole = role;
   }
 
+  @NotNull
   @Override
   public PsiClassType[] getReferencedTypes() {
     if (myTypes != null) return myTypes;
@@ -104,6 +111,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     return types;
   }
 
+  @NotNull
   @Override
   public String[] getReferencedNames() {
     String[] names = ArrayUtil.newStringArray(myNames.length);
@@ -113,6 +121,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     return names;
   }
 
+  @NotNull
   @Override
   public PsiReferenceList.Role getRole() {
     return myRole;

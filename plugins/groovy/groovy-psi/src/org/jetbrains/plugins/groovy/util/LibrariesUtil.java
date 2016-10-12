@@ -238,12 +238,7 @@ public class LibrariesUtil {
 
   public static File[] getFilesInDirectoryByPattern(String dirPath, final Pattern pattern) {
     File distDir = new File(dirPath);
-    File[] files = distDir.listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return pattern.matcher(name).matches();
-      }
-    });
+    File[] files = distDir.listFiles((dir, name) -> pattern.matcher(name).matches());
     return files != null ? files : new File[0];
   }
 }

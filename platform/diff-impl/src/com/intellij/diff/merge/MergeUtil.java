@@ -33,9 +33,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.util.List;
 
 public class MergeUtil {
+  @NotNull
+  public static Action createSimpleResolveAction(@NotNull MergeResult result,
+                                                 @NotNull MergeRequest request,
+                                                 @NotNull MergeContext context,
+                                                 @NotNull MergeViewer viewer) {
+    String caption = getResolveActionTitle(result, request, context);
+    return new AbstractAction(caption) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (result == MergeResult.CANCEL && !showExitWithoutApplyingChangesDialog(viewer, request, context)) {
+          return;
+        }
+        context.finishMerge(result);
+      }
+    };
+  }
+
   @NotNull
   public static String getResolveActionTitle(@NotNull MergeResult result, @NotNull MergeRequest request, @NotNull MergeContext context) {
     Function<MergeResult, String> getter = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS);

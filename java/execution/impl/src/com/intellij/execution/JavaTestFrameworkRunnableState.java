@@ -44,7 +44,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,11 +67,31 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfiguration<JavaRunConfigurationModule> & CommonJavaRunConfigurationParameters & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState {
+public abstract class JavaTestFrameworkRunnableState<T extends
+  ModuleBasedConfiguration<JavaRunConfigurationModule>
+  & CommonJavaRunConfigurationParameters
+  & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
   private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
   protected ServerSocket myServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
+
+  private RemoteConnectionCreator remoteConnectionCreator;
+
+  public void setRemoteConnectionCreator(RemoteConnectionCreator remoteConnectionCreator) {
+    this.remoteConnectionCreator = remoteConnectionCreator;
+  }
+
+  @Nullable
+  @Override
+  public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+    return remoteConnectionCreator == null ? null : remoteConnectionCreator.createRemoteConnection(environment);
+  }
+
+  @Override
+  public boolean isPollConnection() {
+    return remoteConnectionCreator != null && remoteConnectionCreator.isPollConnection();
+  }
 
   public JavaTestFrameworkRunnableState(ExecutionEnvironment environment) {
     super(environment);
@@ -116,6 +135,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     final OSProcessHandler handler = createHandler(executor);
+    
     consoleView.attachToProcess(handler);
     final AbstractTestProxy root = viewer.getRoot();
     if (root instanceof TestProxyRoot) {
@@ -132,12 +152,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
       @Override
       public void processTerminated(ProcessEvent event) {
-        Runnable runnable = new Runnable() {
-          public void run() {
-            root.flush();
-            deleteTempFiles();
-            clear();
-          }
+        Runnable runnable = () -> {
+          root.flush();
+          deleteTempFiles();
+          clear();
         };
         UIUtil.invokeLaterIfNeeded(runnable);
         handler.removeProcessListener(this);
@@ -146,12 +164,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends ModuleBasedConfig
 
     AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(consoleView);
     LOG.assertTrue(rerunFailedTestsAction != null);
-    rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
-      @Override
-      public TestFrameworkRunningModel get() {
-        return viewer;
-      }
-    });
+    rerunFailedTestsAction.setModelProvider(() -> viewer);
 
     final DefaultExecutionResult result = new DefaultExecutionResult(consoleView, handler);
     result.setRestartActions(rerunFailedTestsAction);

@@ -55,12 +55,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implements GrAnnotation, StubBasedPsiElement<GrAnnotationStub> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl");
 
-  private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR = new PairFunction<Project, String, PsiAnnotation>() {
-    @Override
-    public PsiAnnotation fun(Project project, String text) {
-      return GroovyPsiElementFactory.getInstance(project).createAnnotationFromText(text);
-    }
-  };
+  private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR =
+    (project, text) -> GroovyPsiElementFactory.getInstance(project).createAnnotationFromText(text);
 
   public GrAnnotationImpl(@NotNull ASTNode node) {
     super(node);

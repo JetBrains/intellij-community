@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,33 +39,25 @@ public class BrowserSelector {
   }
 
   public BrowserSelector(final boolean allowDefaultBrowser) {
-    this(new Condition<WebBrowser>() {
-      @Override
-      public boolean value(WebBrowser browser) {
-        return allowDefaultBrowser || browser != null;
-      }
-    });
+    this(browser -> allowDefaultBrowser || browser != null);
   }
 
   public BrowserSelector(@NotNull final Condition<WebBrowser> browserCondition) {
     myModel = createBrowsersComboModel(browserCondition);
     myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox(myModel));
-    myBrowserComboWithBrowse.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        WebBrowserManager browserManager = WebBrowserManager.getInstance();
-        long modificationCount = browserManager.getModificationCount();
-        ShowSettingsUtil.getInstance().editConfigurable(myBrowserComboWithBrowse, new BrowserSettings());
+    myBrowserComboWithBrowse.addActionListener(e -> {
+      WebBrowserManager browserManager = WebBrowserManager.getInstance();
+      long modificationCount = browserManager.getModificationCount();
+      ShowSettingsUtil.getInstance().editConfigurable(myBrowserComboWithBrowse, new BrowserSettings());
 
-        WebBrowser selectedItem = getSelected();
-        if (modificationCount != browserManager.getModificationCount()) {
-          myModel = createBrowsersComboModel(browserCondition);
-          //noinspection unchecked
-          myBrowserComboWithBrowse.getComboBox().setModel(myModel);
-        }
-        if (selectedItem != null) {
-          setSelected(selectedItem);
-        }
+      WebBrowser selectedItem = getSelected();
+      if (modificationCount != browserManager.getModificationCount()) {
+        myModel = createBrowsersComboModel(browserCondition);
+        //noinspection unchecked
+        myBrowserComboWithBrowse.getComboBox().setModel(myModel);
+      }
+      if (selectedItem != null) {
+        setSelected(selectedItem);
       }
     });
 

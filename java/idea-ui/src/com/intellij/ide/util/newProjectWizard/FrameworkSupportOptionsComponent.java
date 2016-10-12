@@ -98,13 +98,7 @@ public class FrameworkSupportOptionsComponent {
 
     final CustomLibraryDescription description = myConfigurable.createLibraryDescription();
     if (description != null) {
-      myLibraryOptionsPanel = new LibraryOptionsPanel(description, new NotNullComputable<String>() {
-        @NotNull
-        @Override
-        public String compute() {
-          return myModel.getBaseDirectoryForLibrariesPath();
-        }
-      }, createLibraryVersionFilter(), container, !myConfigurable.isOnlyLibraryAdded()) {
+      myLibraryOptionsPanel = new LibraryOptionsPanel(description, () -> myModel.getBaseDirectoryForLibrariesPath(), createLibraryVersionFilter(), container, !myConfigurable.isOnlyLibraryAdded()) {
         @Override
         protected void onVersionChanged(@Nullable String version) {
           if (myFrameworkVersionComponent == null) {

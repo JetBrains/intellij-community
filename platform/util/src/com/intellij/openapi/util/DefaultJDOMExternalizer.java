@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.BitUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -98,6 +99,9 @@ public class DefaultJDOMExternalizer {
         else if (type.equals(String.class)) {
           value = filterXMLCharacters((String)field.get(data));
         }
+        else if (type.isEnum()) {
+          value = field.get(data).toString();
+        }
         else if (type.equals(Color.class)) {
           Color color = (Color)field.get(data);
           if (color != null) {
@@ -172,9 +176,9 @@ public class DefaultJDOMExternalizer {
         Field field = data.getClass().getField(fieldName);
         Class type = field.getType();
         int modifiers = field.getModifiers();
-        if ((modifiers & Modifier.PUBLIC) == 0 || (modifiers & Modifier.STATIC) != 0) continue;
+        if (!BitUtil.isSet(modifiers, Modifier.PUBLIC) || BitUtil.isSet(modifiers, Modifier.STATIC)) continue;
         field.setAccessible(true); // class might be non-public
-        if ((modifiers & Modifier.FINAL) != 0) {
+        if (BitUtil.isSet(modifiers, Modifier.FINAL)) {
           // read external contents of final field
           Object value = field.get(data);
           if (JDOMExternalizable.class.isInstance(value)) {
@@ -255,6 +259,14 @@ public class DefaultJDOMExternalizer {
             }
           }
         }
+        else if (type.isEnum()) {
+          for (Object enumValue : type.getEnumConstants()) {
+            if (enumValue.toString().equals(value)) {
+              field.set(data, enumValue);
+              break;
+            }
+          }
+        }
         else if (type.equals(String.class)) {
           field.set(data, value);
         }
@@ -263,14 +275,13 @@ public class DefaultJDOMExternalizer {
           field.set(data, color);
         }
         else if (ReflectionUtil.isAssignable(JDOMExternalizable.class, type)) {
-          final List children = e.getChildren("value");
+          final List<Element> children = e.getChildren("value");
           if (!children.isEmpty()) {
             // compatibility with Selena's serialization which writes an empty tag for a bean which has a default value
             JDOMExternalizable object = null;
-            for (final Object o1 : children) {
-              Element el = (Element)o1;
+            for (Element element : children) {
               object = (JDOMExternalizable)type.newInstance();
-              object.readExternal(el);
+              object.readExternal(element);
             }
 
             field.set(data, object);

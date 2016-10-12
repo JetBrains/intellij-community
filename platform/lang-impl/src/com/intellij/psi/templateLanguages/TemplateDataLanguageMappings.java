@@ -23,12 +23,15 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -54,8 +57,20 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
     return getTemplateableLanguages();
   }
 
+  @Nullable
+  @Override
+  public Language getMapping(@Nullable VirtualFile file) {
+    final Language t = getMappingInner(file, getMappings(), myPropertyPusher.getFileDataKey());
+    return t == null || t == Language.ANY ? getDefaultMapping(file) : t;
+  }
+
   @Override
   public Language getDefaultMapping(@Nullable VirtualFile file) {
+    return getDefaultMappingForFile(file);
+  }
+
+  @Nullable
+  public static Language getDefaultMappingForFile(@Nullable VirtualFile file) {
     return file == null? null : TemplateDataLanguagePatterns.getInstance().getTemplateDataLanguageByFileName(file);
   }
 
@@ -71,4 +86,11 @@ public class TemplateDataLanguageMappings extends LanguagePerFileMappings<Langua
     });
   }
 
+  private final FilePropertyPusher<Language> myPropertyPusher = new TemplateDataLanguagePusher();
+
+  @NotNull
+  @Override
+  protected FilePropertyPusher<Language> getFilePropertyPusher() {
+    return myPropertyPusher;
+  }
 }

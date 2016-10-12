@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,20 @@
  */
 package org.jetbrains.plugins.groovy.inspections
 
+import com.intellij.testFramework.LightProjectDescriptor
+import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection
+
 /**
  * @author Max Medvedev
  */
+@CompileStatic
 public class GrMethodMayBeStaticTest extends LightGroovyTestCase {
-  final String basePath = null
+
+  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final GrMethodMayBeStaticInspection inspection = new GrMethodMayBeStaticInspection()
 
   void testSimple() {
     doTest('''\
@@ -68,10 +75,19 @@ class A {
 ''')
   }
 
+  void 'test abstract method with code block no error'() {
+    doTest '''
+abstract class A {
+  abstract foo() <error descr="Abstract methods must not have body">{
+    1 + 2
+  }</error>
+}
+'''
+  }
+
   private void doTest(final String text) {
     myFixture.configureByText('_.groovy', text)
-
-    myFixture.enableInspections(GrMethodMayBeStaticInspection)
+    myFixture.enableInspections(inspection)
     myFixture.checkHighlighting(true, false, false)
   }
 
@@ -140,5 +156,24 @@ class Bar {
   }
 }
 ''')
+  }
+
+  void 'test trait methods'() {
+    doTest '''\
+trait A {
+  def foo() {1}
+  abstract bar()
+}
+'''
+  }
+
+  void 'test trait methods with'() {
+    inspection.myIgnoreTraitMethods = false
+    doTest '''\
+trait A {
+  def <warning descr="Method may be static">foo</warning>() {1}
+  abstract bar()
+}
+'''
   }
 }

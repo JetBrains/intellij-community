@@ -59,10 +59,8 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
     final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
     assertNotNull(propertiesFile);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      public void run() {
-        propertiesFile.addProperty("kkk", "vvv");
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      propertiesFile.addProperty("kkk", "vvv");
     });
 
     final IProperty property = propertiesFile.findPropertyByKey("kkk");
@@ -75,20 +73,16 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
     final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
     assertNotNull(propertiesFile);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      public void run() {
-        propertiesFile.addProperty("kkk", "vvv");
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      propertiesFile.addProperty("kkk", "vvv");
     });
 
     final IProperty property = propertiesFile.findPropertyByKey("kkk");
     assertNotNull(property);
     assertEquals("vvv", property.getValue());
 
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      public void run() {
-        propertiesFile.addProperty("kkk2", "vvv");
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      propertiesFile.addProperty("kkk2", "vvv");
     });
 
     final IProperty property2 = propertiesFile.findPropertyByKey("kkk2");
@@ -101,13 +95,11 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
     final PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
     assertNotNull(propertiesFile);
 
-    WriteCommandAction.runWriteCommandAction(getProject(), new Runnable() {
-      public void run() {
-        propertiesFile.addProperty("d", "vvv");
-        propertiesFile.addProperty("a", "vvv");
-        propertiesFile.addProperty("l", "vvv");
-        propertiesFile.addProperty("v", "vvv");
-      }
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      propertiesFile.addProperty("d", "vvv");
+      propertiesFile.addProperty("a", "vvv");
+      propertiesFile.addProperty("l", "vvv");
+      propertiesFile.addProperty("v", "vvv");
     });
     assertTrue(propertiesFile.isAlphaSorted());
     assertTrue(PropertiesImplUtil.getPropertiesFile(psiFile).isAlphaSorted());
@@ -116,10 +108,5 @@ public class XmlPropertiesTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("properties") + "/testData/xml/";
-  }
-
-  @Override
-  protected boolean isWriteActionRequired() {
-    return false;
   }
 }

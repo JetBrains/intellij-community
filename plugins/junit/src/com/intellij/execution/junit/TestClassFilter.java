@@ -57,8 +57,8 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        if (aClass.getQualifiedName() != null && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
-            (aClass.isInheritor(myBase, true) || JUnitUtil.isTestClass(aClass))) {
+        if (aClass.getQualifiedName() != null  &&
+            (aClass.isInheritor(myBase, true) && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) || JUnitUtil.isTestClass(aClass))) {
           final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
           final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
           if (virtualFile == null) return false;

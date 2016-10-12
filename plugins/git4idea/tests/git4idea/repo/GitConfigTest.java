@@ -64,7 +64,7 @@ public class GitConfigTest extends GitPlatformTest {
     git("branch --track a#branch origin/a#branch");
 
     File gitDir = new File(myProjectPath, ".git");
-    GitConfig config = GitConfig.read(myPlatformFacade, new File(gitDir, "config"));
+    GitConfig config = GitConfig.read(new File(gitDir, "config"));
     VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gitDir);
     GitRepositoryReader reader = new GitRepositoryReader(GitRepositoryFiles.getInstance(dir));
     GitBranchState state = reader.readState(config.parseRemotes());
@@ -114,12 +114,12 @@ public class GitConfigTest extends GitPlatformTest {
 
   private void assertSingleRemoteInConfig() {
     File gitDir = new File(myProjectPath, ".git");
-    Collection<GitRemote> remotes = GitConfig.read(myPlatformFacade, new File(gitDir, "config")).parseRemotes();
+    Collection<GitRemote> remotes = GitConfig.read(new File(gitDir, "config")).parseRemotes();
     assertSingleRemote(remotes);
   }
 
   private void doTestRemotes(String testName, File configFile, File resultFile) throws IOException {
-    GitConfig config = GitConfig.read(myPlatformFacade, configFile);
+    GitConfig config = GitConfig.read(configFile);
     VcsTestUtil.assertEqualCollections(testName, config.parseRemotes(), readRemoteResults(resultFile));
   }
 
@@ -141,7 +141,7 @@ public class GitConfigTest extends GitPlatformTest {
     });
 
     VcsTestUtil.assertEqualCollections(testName,
-                                       GitConfig.read(myPlatformFacade, configFile).parseTrackInfos(localBranches, remoteBranches),
+                                       GitConfig.read(configFile).parseTrackInfos(localBranches, remoteBranches),
                                        expectedInfos);
   }
 

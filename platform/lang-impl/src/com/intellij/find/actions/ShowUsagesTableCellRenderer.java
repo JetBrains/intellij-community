@@ -81,7 +81,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       textChunks.append(">...");
       return textComponentSpanningWholeRow(textChunks, panelBackground, panelForeground, column, list);
     }
-    else if (usage == ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
+    if (usage == ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
       textChunks.append("...<");
       textChunks.append(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScope), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       textChunks.append(">...");
@@ -108,7 +108,7 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
       appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
       return panel;
     }
-    else if (usage != ShowUsagesAction.MORE_USAGES_SEPARATOR && usage != ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
+    if (usage != ShowUsagesAction.MORE_USAGES_SEPARATOR && usage != ShowUsagesAction.USAGES_OUTSIDE_SCOPE_SEPARATOR) {
       UsagePresentation presentation = usage.getPresentation();
       TextChunk[] text = presentation.getText();
 

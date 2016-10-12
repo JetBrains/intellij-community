@@ -24,5 +24,4 @@ public class GraphCommitCell {
   public Collection<VcsRef> getRefsToThisCommit() {
     return myRefsToThisCommit;
   }
-
 }

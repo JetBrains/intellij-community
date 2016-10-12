@@ -20,7 +20,7 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -48,7 +48,8 @@ class HeavyTestFixtureBuilderImpl implements TestFixtureBuilder<IdeaProjectTestF
   private <M extends ModuleFixtureBuilder> M createModuleBuilder(Class<M> key) {
     Class<? extends ModuleFixtureBuilder> implClass = myProviders.get(key);
     Assert.assertNotNull(key.toString(), implClass);
-    final ConstructorInjectionComponentAdapter adapter = new ConstructorInjectionComponentAdapter(implClass, implClass, null, true);
+    final CachingConstructorInjectionComponentAdapter
+      adapter = new CachingConstructorInjectionComponentAdapter(implClass, implClass, null, true);
     return (M)adapter.getComponentInstance(myContainer);
   }
 

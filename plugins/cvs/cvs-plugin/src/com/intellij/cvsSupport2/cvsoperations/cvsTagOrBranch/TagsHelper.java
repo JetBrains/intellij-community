@@ -175,13 +175,7 @@ public class TagsHelper {
   private static Collection<String> collectSortedRevisionsNames(Collection<CvsRevisionNumber> revisions) {
     if (revisions == null) return new ArrayList<String>();
     final ArrayList<CvsRevisionNumber> list = new ArrayList<CvsRevisionNumber>(revisions);
-    Collections.sort(list, new Comparator<CvsRevisionNumber>() {
-      @Override
-      public int compare(CvsRevisionNumber o, CvsRevisionNumber o1) {
-        return o.compareTo(o1);
-      }
-
-    });
+    Collections.sort(list, (o, o1) -> o.compareTo(o1));
     final ArrayList<String> result = new ArrayList<String>();
     for (final CvsRevisionNumber aList : list) {
       result.add(aList.toString());

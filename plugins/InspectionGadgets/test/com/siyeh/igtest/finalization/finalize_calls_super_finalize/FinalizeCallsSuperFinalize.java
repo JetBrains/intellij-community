@@ -30,3 +30,11 @@ public class FinalizeCallsSuperFinalize
         }
     }
 }
+class A {
+    public void finalize(int random) {}
+}
+class B extends A {
+    protected void <warning descr="'finalize()' does not call 'super.finalize()'">finalize</warning>() throws Throwable {
+        super.finalize(1);
+    }
+}

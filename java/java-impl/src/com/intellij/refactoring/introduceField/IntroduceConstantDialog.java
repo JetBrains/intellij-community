@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,11 @@ class IntroduceConstantDialog extends DialogWrapper {
     myVisibilityPanel.add(myVPanel, BorderLayout.CENTER);
     init();
 
-    myVPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
+    String initialVisibility = JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY;
+    if (initialVisibility == null) {
+      initialVisibility = PsiModifier.PUBLIC;
+    }
+    myVPanel.setVisibility(initialVisibility);
     myIntroduceEnumConstantCb.setEnabled(isSuitableForEnumConstant());
     updateVisibilityPanel();
     updateButtons();
@@ -381,7 +385,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     }
     else {
       UIUtil.setEnabled(myVisibilityPanel, true, true);
-      // exclude all modifiers not visible from all occurences
+      // exclude all modifiers not visible from all occurrences
       final Set<String> visible = new THashSet<String>();
       visible.add(PsiModifier.PRIVATE);
       visible.add(PsiModifier.PROTECTED);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +126,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   @Override
-  public void addVariableSegment (@NotNull String name) {
+  public void addVariableSegment(@NotNull String name) {
     mySegments.add(new Segment(name, myTemplateText.length()));
   }
 
@@ -244,7 +245,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     return isDeactivated;
   }
 
-  public TemplateContext getTemplateContext() {
+  @NotNull public TemplateContext getTemplateContext() {
     return myTemplateContext;
   }
 
@@ -269,6 +270,18 @@ public class TemplateImpl extends Template implements SchemeElement {
       }
     }
     return -1;
+  }
+
+  public IntArrayList getVariableSegmentNumbers(String variableName) {
+    IntArrayList result = new IntArrayList();
+    parseSegments();
+    for (int i = 0; i < mySegments.size(); i++) {
+      Segment segment = mySegments.get(i);
+      if (segment.name.equals(variableName)) {
+        result.add(i);
+      }
+    }
+    return result;
   }
 
   @NotNull
@@ -460,7 +473,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   public boolean contextsEqual(TemplateImpl defaultTemplate) {
-    return getTemplateContext().getDifference(defaultTemplate.getTemplateContext()).isEmpty();
+    return getTemplateContext().getDifference(defaultTemplate.getTemplateContext()) == null;
   }
 
   public void applyOptions(final Map<TemplateOptionalProcessor, Boolean> context) {

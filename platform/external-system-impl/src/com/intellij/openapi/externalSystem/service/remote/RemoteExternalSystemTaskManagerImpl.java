@@ -49,14 +49,10 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
                            @NotNull final List<String> scriptParameters,
                            @Nullable final String debuggerSetup) throws RemoteException, ExternalSystemException
   {
-    execute(id, new Producer<Object>() {
-      @Nullable
-      @Override
-      public Object produce() {
-        myDelegate.executeTasks(
-          id, taskNames, projectPath, settings, vmOptions, scriptParameters, debuggerSetup, getNotificationListener());
-        return null;
-      }
+    execute(id, () -> {
+      myDelegate.executeTasks(
+        id, taskNames, projectPath, settings, vmOptions, scriptParameters, debuggerSetup, getNotificationListener());
+      return null;
     });
   }
 

@@ -153,12 +153,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   @Override
   public PsiFile[] getFiles() {
     final List<PropertiesFile> files = getValue().getPropertiesFiles();
-    return ContainerUtil.map2Array(files, new PsiFile[files.size()], new Function<PropertiesFile, PsiFile>() {
-      @Override
-      public PsiFile fun(PropertiesFile propertiesFile) {
-        return propertiesFile.getContainingFile();
-      }
-    });
+    return ContainerUtil.map2Array(files, new PsiFile[files.size()], propertiesFile -> propertiesFile.getContainingFile());
   }
 
   public void navigate(boolean requestFocus) {

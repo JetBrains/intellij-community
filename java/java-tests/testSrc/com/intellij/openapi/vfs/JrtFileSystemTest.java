@@ -55,6 +55,7 @@ public class JrtFileSystemTest extends BareTestFixtureTestCase {
     Files.copy(myTestData.resolve("jrt-fs.jar"), myTempDir.getRoot().toPath().resolve("jrt-fs.jar"));
     Path lib = Files.createDirectory(myTempDir.getRoot().toPath().resolve("lib"));
     Files.copy(myTestData.resolve("image1"), lib.resolve("modules"));
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myTempDir.getRoot());
 
     String url = VirtualFileManager.constructUrl(JrtFileSystem.PROTOCOL, myTempDir.getRoot() + JrtFileSystem.SEPARATOR);
     myRoot = VirtualFileManager.getInstance().findFileByUrl(url);

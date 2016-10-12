@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +91,7 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(createToolbar(), BorderLayout.NORTH);
 
-    panel.add(getFileList(), BorderLayout.CENTER);
+    panel.add(ScrollPaneFactory.createScrollPane(getFileList()), BorderLayout.CENTER);
 
     if (myShowDoNotAskOption) {
       myDoNotShowCheckbox = new JCheckBox(CommonBundle.message("dialog.options.do.not.ask"));

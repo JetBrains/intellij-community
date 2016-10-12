@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -39,30 +38,34 @@ public class LocalHistoryEventDispatcher extends VirtualFileAdapter implements V
     myGateway = gw;
   }
 
-  public void beforeRefreshStart(boolean asynchonous) {
+  @Override
+  public void beforeRefreshStart(boolean asynchronous) {
     beginChangeSet();
   }
 
-  public void afterRefreshFinish(boolean asynchonous) {
+  @Override
+  public void afterRefreshFinish(boolean asynchronous) {
     endChangeSet(LocalHistoryBundle.message("system.label.external.change"));
   }
 
+  @Override
   public void commandStarted(CommandEvent e) {
     beginChangeSet();
   }
 
-  public void beforeCommandFinished(CommandEvent e) {
-  }
+  @Override
+  public void beforeCommandFinished(CommandEvent e) { }
 
+  @Override
   public void commandFinished(CommandEvent e) {
     endChangeSet(e.getCommandName());
   }
 
-  public void undoTransparentActionStarted() {
-  }
+  @Override
+  public void undoTransparentActionStarted() { }
 
-  public void undoTransparentActionFinished() {
-  }
+  @Override
+  public void undoTransparentActionFinished() { }
 
   public void startAction() {
     myGateway.registerUnsavedDocuments(myVcs);

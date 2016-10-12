@@ -140,46 +140,28 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
     });
 
     final JBList list = new JBList(new ResourceModules().getModuleNames());
-    final NotNullFunction<Object, JComponent> modulesRenderer = new NotNullFunction<Object, JComponent>() {
-      @NotNull
-      @Override
-      public JComponent fun(Object dom) {
-        return new JLabel(dom instanceof Module ? ((Module)dom).getName() : dom.toString(), PlatformIcons.SOURCE_FOLDERS_ICON, SwingConstants.LEFT);
-      }
-    };
+    final NotNullFunction<Object, JComponent> modulesRenderer =
+      dom -> new JLabel(dom instanceof Module ? ((Module)dom).getName() : dom.toString(), PlatformIcons.SOURCE_FOLDERS_ICON, SwingConstants.LEFT);
     list.installCellRenderer(modulesRenderer);
     final JPanel modulesPanel = ToolbarDecorator.createDecorator(list)
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
           final Module[] all = ModuleManager.getInstance(myProject).getModules();
-          Arrays.sort(all, new Comparator<Module>() {
-            @Override
-            public int compare(Module o1, Module o2) {
-              return o1.getName().compareTo(o2.getName());
-            }
-          });
+          Arrays.sort(all, (o1, o2) -> o1.getName().compareTo(o2.getName()));
           final JBList modules = new JBList(all);
           modules.installCellRenderer(modulesRenderer);
           JBPopupFactory.getInstance().createListPopupBuilder(modules)
             .setTitle("Add Resource Module")
-            .setFilteringEnabled(new Function<Object, String>() {
-              @Override
-              public String fun(Object o) {
-                return ((Module)o).getName();
+            .setFilteringEnabled(o -> ((Module)o).getName())
+            .setItemChoosenCallback(() -> {
+              final Object value = modules.getSelectedValue();
+              if (value instanceof Module && !myResourceModules.contains((Module)value)) {
+                myResourceModules.add((Module)value);
+                ((DefaultListModel)list.getModel()).addElement(((Module)value).getName());
               }
-            })
-            .setItemChoosenCallback(new Runnable() {
-              @Override
-              public void run() {
-                final Object value = modules.getSelectedValue();
-                if (value instanceof Module && !myResourceModules.contains((Module)value)) {
-                  myResourceModules.add((Module)value);
-                  ((DefaultListModel)list.getModel()).addElement(((Module)value).getName());
-                }
-                ((DefaultTreeModel)myTree.getModel()).reload();
-                TreeUtil.expandAll(myTree);
-              }
+              ((DefaultTreeModel)myTree.getModel()).reload();
+              TreeUtil.expandAll(myTree);
             }).createPopup().show(button.getPreferredPopupPoint());
         }
       })
@@ -235,12 +217,9 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
                 .setResizable(true)
                 .setMovable(true)
                 .setRequestFocus(false)
-                .setCancelCallback(new Computable<Boolean>() {
-                  @Override
-                  public Boolean compute() {
-                    myTree.removeTreeSelectionListener(listener);
-                    return true;
-                  }
+                .setCancelCallback(() -> {
+                  myTree.removeTreeSelectionListener(listener);
+                  return true;
                 })
                 .setTitle("Image Preview")
                 .createPopup();

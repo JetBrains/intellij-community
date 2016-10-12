@@ -26,5 +26,4 @@ public interface PrintElement {
   int getColorId();
 
   boolean isSelected();
-
 }

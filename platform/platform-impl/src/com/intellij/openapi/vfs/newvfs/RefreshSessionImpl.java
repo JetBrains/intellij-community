@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
@@ -26,7 +24,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -51,25 +48,23 @@ public class RefreshSessionImpl extends RefreshSession {
   private final boolean myIsRecursive;
   private final Runnable myFinishRunnable;
   private final ModalityState myModalityState;
-  private final Semaphore mySemaphore = new Semaphore();
-
-  private List<VirtualFile> myWorkQueue = new ArrayList<VirtualFile>();
-  private List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
-  private volatile boolean iHaveEventsToFire;
-  private volatile RefreshWorker myWorker = null;
-  private volatile boolean myCancelled = false;
   private final DumbModePermission myDumbModePermission;
   private final Throwable myStartTrace;
+  private final Semaphore mySemaphore = new Semaphore();
 
-  public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable) {
-    this(async, recursive, finishRunnable, ModalityState.NON_MODAL);
-  }
+  private List<VirtualFile> myWorkQueue = new ArrayList<>();
+  private List<VFileEvent> myEvents = new ArrayList<>();
+  private volatile boolean iHaveEventsToFire;
+  private volatile RefreshWorker myWorker;
+  private volatile boolean myCancelled;
+  private final TransactionId myTransaction;
 
   public RefreshSessionImpl(boolean async, boolean recursive, @Nullable Runnable finishRunnable, @NotNull ModalityState modalityState) {
     myIsAsync = async;
     myIsRecursive = recursive;
     myFinishRunnable = finishRunnable;
     myModalityState = modalityState;
+    myTransaction = ((TransactionGuardImpl)TransactionGuard.getInstance()).getModalityTransaction(modalityState);
     LOG.assertTrue(modalityState == ModalityState.NON_MODAL || modalityState != ModalityState.any(), "Refresh session should have a specific modality");
 
     if (modalityState == ModalityState.NON_MODAL) {
@@ -122,47 +117,47 @@ public class RefreshSessionImpl extends RefreshSession {
 
   public void scan() {
     List<VirtualFile> workQueue = myWorkQueue;
-    myWorkQueue = new ArrayList<VirtualFile>();
+    myWorkQueue = new ArrayList<>();
     boolean haveEventsToFire = myFinishRunnable != null || !myEvents.isEmpty();
 
     if (!workQueue.isEmpty()) {
-      final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-      final FileWatcher watcher;
-      if (fileSystem instanceof LocalFileSystemImpl) {
-        LocalFileSystemImpl fs = (LocalFileSystemImpl)fileSystem;
-        fs.markSuspiciousFilesDirty(workQueue);
-        watcher = fs.getFileWatcher();
-      }
-      else {
-        watcher = null;
+      LocalFileSystem fs = LocalFileSystem.getInstance();
+      if (fs instanceof LocalFileSystemImpl) {
+        ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
       }
 
       long t = 0;
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("scanning " + workQueue);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("scanning " + workQueue);
         t = System.currentTimeMillis();
       }
 
-      for (VirtualFile file : workQueue) {
-        if (myCancelled) break;
+      int count = 0;
+      refresh: do {
+        if (LOG.isTraceEnabled()) LOG.trace("try=" + count);
 
-        NewVirtualFile nvf = (NewVirtualFile)file;
-        if (!myIsRecursive && (!myIsAsync || (watcher != null && !watcher.isWatched(nvf)))) {
-          // we're unable to definitely refresh synchronously by means of file watcher.
-          nvf.markDirty();
+        for (VirtualFile file : workQueue) {
+          if (myCancelled) break refresh;
+
+          NewVirtualFile nvf = (NewVirtualFile)file;
+          if (!myIsRecursive && !myIsAsync) {
+            nvf.markDirty();  // always scan when non-recursive AND synchronous - needed e.g. when refreshing project files on open
+          }
+
+          RefreshWorker worker = new RefreshWorker(nvf, myIsRecursive);
+          myWorker = worker;
+          worker.scan();
+          haveEventsToFire |= myEvents.addAll(worker.getEvents());
         }
 
-        RefreshWorker worker = myWorker = new RefreshWorker(nvf, myIsRecursive);
-        worker.scan();
-        List<VFileEvent> events = worker.getEvents();
-        if (myEvents.addAll(events)) {
-          haveEventsToFire = true;
-        }
+        count++;
+        if (LOG.isTraceEnabled()) LOG.trace("events=" + myEvents.size());
       }
+      while (myIsRecursive && count < 3 && workQueue.stream().anyMatch(f -> ((NewVirtualFile)f).isDirty()));
 
       if (t != 0) {
         t = System.currentTimeMillis() - t;
-        LOG.debug((myCancelled ? "cancelled, " : "done, ") + t + " ms, events " + myEvents);
+        LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, events " + myEvents);
       }
     }
 
@@ -170,7 +165,7 @@ public class RefreshSessionImpl extends RefreshSession {
     iHaveEventsToFire = haveEventsToFire;
   }
 
-  public void cancel() {
+  void cancel() {
     myCancelled = true;
 
     RefreshWorker worker = myWorker;
@@ -179,42 +174,27 @@ public class RefreshSessionImpl extends RefreshSession {
     }
   }
 
-  public void fireEvents(final boolean hasWriteAction) {
-    AccessToken token = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace);
-    try {
-      if (!iHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) return;
+  void fireEvents() {
+    if (!iHaveEventsToFire || ApplicationManager.getApplication().isDisposed()) {
+      mySemaphore.up();
+      return;
+    }
 
-      Runnable runnable = new Runnable() {
-        public void run() {
-          if (hasWriteAction) {
-            fireEventsInWriteAction();
-          }
-          else {
-            ApplicationManager.getApplication().runWriteAction(new Runnable() {
-              @Override
-              public void run() {
-                fireEventsInWriteAction();
-              }
-            });
-          }
-        }
-      };
-
+    //noinspection unused
+    try (AccessToken dumb  = myStartTrace == null ? null : DumbServiceImpl.forceDumbModeStartTrace(myStartTrace);
+         AccessToken write = WriteAction.start()) {
       if (myDumbModePermission != null) {
-        DumbService.allowStartingDumbModeInside(myDumbModePermission, runnable);
+        DumbService.allowStartingDumbModeInside(myDumbModePermission, this::fireEventsInWriteAction);
       } else {
-        runnable.run();
+        fireEventsInWriteAction();
       }
     }
     finally {
-      if (token != null) {
-        token.finish();
-      }
       mySemaphore.up();
     }
   }
 
-  protected void fireEventsInWriteAction() {
+  private void fireEventsInWriteAction() {
     final VirtualFileManagerEx manager = (VirtualFileManagerEx)VirtualFileManager.getInstance();
 
     manager.fireBeforeRefreshStart(myIsAsync);
@@ -241,15 +221,20 @@ public class RefreshSessionImpl extends RefreshSession {
   }
 
   private List<VFileEvent> mergeEventsAndReset() {
-    Set<VFileEvent> mergedEvents = new LinkedHashSet<VFileEvent>(myEvents);
-    List<VFileEvent> events = new ArrayList<VFileEvent>(mergedEvents);
-    myEvents = new ArrayList<VFileEvent>();
+    Set<VFileEvent> mergedEvents = new LinkedHashSet<>(myEvents);
+    List<VFileEvent> events = new ArrayList<>(mergedEvents);
+    myEvents = new ArrayList<>();
     return events;
   }
 
   @NotNull
-  public ModalityState getModalityState() {
+  ModalityState getModalityState() {
     return myModalityState;
+  }
+
+  @Nullable
+  TransactionId getTransaction() {
+    return myTransaction;
   }
 
   @Override

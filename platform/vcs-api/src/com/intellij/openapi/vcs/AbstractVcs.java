@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -23,7 +22,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.VcsCacheableAnnotationProvider;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ChangeListEditHandler;
+import com.intellij.openapi.vcs.changes.ChangeProvider;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.RevisionSelector;
@@ -285,13 +287,16 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return false;
   }
 
-  public static boolean fileInVcsByFileStatus(final Project project, final FilePath path) {
-    final VirtualFile virtualFile = path.getVirtualFile();
-    if (virtualFile != null) {
-      final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
-      return fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.ADDED && fileStatus != FileStatus.IGNORED;
-    }
-    return true;
+  public static boolean fileInVcsByFileStatus(@NotNull Project project, @NotNull FilePath path) {
+    VirtualFile file = path.getVirtualFile();
+
+    return file == null || fileInVcsByFileStatus(project, file);
+  }
+
+  public static boolean fileInVcsByFileStatus(@NotNull Project project, @NotNull VirtualFile file) {
+    FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
+
+    return status != FileStatus.UNKNOWN && status != FileStatus.ADDED && status != FileStatus.IGNORED;
   }
 
   /**
@@ -463,14 +468,6 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
    */
   @Nullable
   public MergeProvider getMergeProvider() {
-    return null;
-  }
-
-  /**
-   * List of actions that would be added to local changes browser if there are any changes for this VCS
-   */
-  @Nullable
-  public List<AnAction> getAdditionalActionsForLocalChange() {
     return null;
   }
 

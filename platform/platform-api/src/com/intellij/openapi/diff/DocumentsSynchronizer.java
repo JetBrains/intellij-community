@@ -29,12 +29,12 @@ import java.beans.PropertyChangeListener;
 
 abstract class DocumentsSynchronizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.DocumentsSynchonizer");
-  private Document myOriginal = null;
-  private Document myCopy = null;
+  private Document myOriginal;
+  private Document myCopy;
   private final Project myProject;
 
-  private volatile boolean myDuringModification = false;
-  private int myAssignedCount = 0;
+  private volatile boolean myDuringModification;
+  private int myAssignedCount;
 
   private final DocumentAdapter myOriginalListener = new DocumentAdapter() {
     @Override
@@ -77,17 +77,9 @@ abstract class DocumentsSynchronizer {
     LOG.assertTrue(!myDuringModification);
     try {
       myDuringModification = true;
-      CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-        @Override
-        public void run() {
-          LOG.assertTrue(endOffset <= document.getTextLength());
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              document.replaceString(startOffset, endOffset, newText);
-            }
-          });
-        }
+      CommandProcessor.getInstance().executeCommand(myProject, () -> {
+        LOG.assertTrue(endOffset <= document.getTextLength());
+        ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(startOffset, endOffset, newText));
       }, DiffBundle.message("save.merge.result.command.name"), document);
     }
     finally {

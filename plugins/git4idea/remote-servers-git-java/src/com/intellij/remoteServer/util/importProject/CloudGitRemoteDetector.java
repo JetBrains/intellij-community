@@ -247,12 +247,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
       if (targetModule == null) {
         AddModuleWizard wizard = new AddModuleWizard(myProject, myRepositoryRoot.getPath(), new ImportFromSourcesProvider());
-        wizard.navigateToStep(new Function<Step, Boolean>() {
-          @Override
-          public Boolean fun(Step step) {
-            return step instanceof RootsDetectionStep;
-          }
-        });
+        wizard.navigateToStep(step -> step instanceof RootsDetectionStep);
         if (wizard.getStepCount() > 0 && !wizard.showAndGet()) {
           return;
         }

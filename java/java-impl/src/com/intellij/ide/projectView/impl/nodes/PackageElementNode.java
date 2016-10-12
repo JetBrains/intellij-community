@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,16 +108,16 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
 
   @Override
   protected void update(final PresentationData presentation) {
-    if (getValue() != null && getValue().getPackage().isValid()) {
-      updateValidData(presentation);
+    PackageElement value = getValue();
+    if (value != null && value.getPackage().isValid() && (value.getModule() == null || !value.getModule().isDisposed())) {
+      updateValidData(presentation, value);
     }
     else {
       setValue(null);
     }
   }
 
-  private void updateValidData(final PresentationData presentation) {
-    final PackageElement value = getValue();
+  private void updateValidData(PresentationData presentation, PackageElement value) {
     final PsiPackage aPackage = value.getPackage();
 
     if (!getSettings().isFlattenPackages()

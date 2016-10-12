@@ -64,8 +64,4 @@ public class ShortenFQNamesProcessor implements TemplateOptionalProcessor {
     template.setToShortenLongNames(value);
   }
 
-  @Override
-  public boolean isVisible(Template template) {
-    return true;
-  }
 }

@@ -84,7 +84,7 @@ public abstract class ExtractInfoHelperBase implements ExtractInfoHelper {
     for (ParameterInfo info : infos) {
       int position = info.getPosition();
       assert position < argNames.length;
-      argNames[position] = info.passAsParameter() ? info.getOldName() : "";
+      argNames[position] = info.passAsParameter ? info.getOriginalName() : "";
     }
     return argNames;
 

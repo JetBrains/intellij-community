@@ -21,10 +21,7 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -154,13 +151,10 @@ public class ContentEntryTreeEditor {
       myDescriptor.setTitle(FileUtil.toSystemDependentName(path));
     }
 
-    final Runnable init = new Runnable() {
-      @Override
-      public void run() {
-        //noinspection ConstantConditions
-        myFileSystemTree.updateTree();
-        myFileSystemTree.select(file, null);
-      }
+    final Runnable init = () -> {
+      //noinspection ConstantConditions
+      myFileSystemTree.updateTree();
+      myFileSystemTree.select(file, null);
     };
 
     myFileSystemTree = new FileSystemTreeImpl(myProject, myDescriptor, myTree, getContentEntryCellRenderer(), init, null) {
@@ -184,6 +178,11 @@ public class ContentEntryTreeEditor {
 
   public ContentEntryEditor getContentEntryEditor() {
     return myContentEntryEditor;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 
   public JComponent createComponent() {
@@ -282,6 +281,10 @@ public class ContentEntryTreeEditor {
     @Override
     @Nullable
     public Object getData(@NonNls final String dataId) {
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        return myFileSystemTree.getSelectedFiles();
+      }
+
       if (FileSystemTree.DATA_KEY.is(dataId)) {
         return myFileSystemTree;
       }

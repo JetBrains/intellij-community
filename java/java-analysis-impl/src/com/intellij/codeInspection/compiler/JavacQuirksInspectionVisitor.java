@@ -31,6 +31,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -82,12 +83,16 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
     super.visitAssignmentExpression(assignment);
     final PsiType lType = assignment.getLExpression().getType();
+    if (lType == null) return;
+    final PsiExpression rExpression = assignment.getRExpression();
+    if (rExpression == null) return;
     PsiJavaToken operationSign = assignment.getOperationSign();
+    checkIntersectionType(lType, rExpression.getType(), operationSign);
+
     IElementType eqOpSign = operationSign.getTokenType();
     IElementType opSign = TypeConversionUtil.convertEQtoOperation(eqOpSign);
     if (opSign == null) return;
-    final PsiExpression rExpression = assignment.getRExpression();
-    if (rExpression == null) return;
+
     if (JavaSdkVersion.JDK_1_6.equals(JavaVersionService.getInstance().getJavaSdkVersion(assignment)) &&
         PsiType.getJavaLangObject(assignment.getManager(), assignment.getResolveScope()).equals(lType)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
@@ -97,6 +102,34 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
 
       myHolder.registerProblem(assignment, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new ReplaceAssignmentOperatorWithAssignmentFix(operationSign.getText()));
+    }
+  }
+
+  @Override
+  public void visitVariable(PsiVariable variable) {
+    super.visitVariable(variable);
+    final PsiExpression initializer = variable.getInitializer();
+    if (initializer != null) {
+      final PsiElement assignmentToken = PsiTreeUtil.skipSiblingsBackward(initializer, PsiWhiteSpace.class);
+      if (assignmentToken != null) {
+        checkIntersectionType(variable.getType(), initializer.getType(), assignmentToken);
+      }
+    }
+  }
+
+  private void checkIntersectionType(@NotNull PsiType lType, @Nullable PsiType rType, @NotNull PsiElement elementToHighlight) {
+    if (rType instanceof PsiIntersectionType && TypeConversionUtil.isAssignable(lType, rType)) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(lType);
+      if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
+        final PsiType[] conjuncts = ((PsiIntersectionType)rType).getConjuncts();
+        for (PsiType conjunct : conjuncts) {
+          if (!TypeConversionUtil.isAssignable(conjunct, lType)) {
+            final String descriptionTemplate =
+              "Though assignment is formal correct, it could lead to ClassCastException at runtime. Expected: '" + lType.getPresentableText() + "', actual: '" + rType.getPresentableText() + "'";
+            myHolder.registerProblem(elementToHighlight, descriptionTemplate);
+          }
+        }
+      }
     }
   }
 

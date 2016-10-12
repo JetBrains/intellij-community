@@ -65,24 +65,22 @@ public final class ShowJavadocAction extends AnAction {
     tabbedPane.addTab(UIDesignerBundle.message("tab.setter"), component2);
 
     documentationManager.fetchDocInfo(getter, component1);
-    documentationManager.queueFetchDocInfo(setter, component2).doWhenProcessed(new Runnable() {
-      public void run() {
-        final JBPopup hint =
-          JBPopupFactory.getInstance().createComponentPopupBuilder(tabbedPane.getComponent(), component1)
-            .setDimensionServiceKey(aClass.getProject(), DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
-            .setResizable(true)
-            .setMovable(true)
-            .setRequestFocus(true)
-            .setTitle(UIDesignerBundle.message("property.javadoc.title", introspectedProperty.getName()))
-            .createPopup();
-        component1.setHint(hint);
-        component2.setHint(hint);
-        Disposer.register(hint, component1);
-        Disposer.register(hint, component2);
-        Disposer.register(hint, disposable);
-        hint.show(new RelativePoint(inspector, new Point(0,0)));
-        //component1.requestFocus();
-      }
+    documentationManager.queueFetchDocInfo(setter, component2).doWhenProcessed(() -> {
+      final JBPopup hint =
+        JBPopupFactory.getInstance().createComponentPopupBuilder(tabbedPane.getComponent(), component1)
+          .setDimensionServiceKey(aClass.getProject(), DocumentationManager.JAVADOC_LOCATION_AND_SIZE, false)
+          .setResizable(true)
+          .setMovable(true)
+          .setRequestFocus(true)
+          .setTitle(UIDesignerBundle.message("property.javadoc.title", introspectedProperty.getName()))
+          .createPopup();
+      component1.setHint(hint);
+      component2.setHint(hint);
+      Disposer.register(hint, component1);
+      Disposer.register(hint, component2);
+      Disposer.register(hint, disposable);
+      hint.show(new RelativePoint(inspector, new Point(0,0)));
+      //component1.requestFocus();
     });
   }
 

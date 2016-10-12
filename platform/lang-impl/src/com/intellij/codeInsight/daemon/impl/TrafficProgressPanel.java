@@ -29,7 +29,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.AwtVisitor;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -201,26 +201,19 @@ class TrafficProgressPanel extends JPanel {
   }
 
   private void resetProgressBars(final boolean enabled, @Nullable final Boolean completed) {
-    new AwtVisitor(myPassStatuses) {
-      @Override
-      public boolean visit(Component component) {
-        if (component instanceof JProgressBar) {
-          JProgressBar progress = (JProgressBar)component;
-          progress.setEnabled(enabled);
-          if (completed != null) {
-            if (completed) {
-              progress.setValue(TrafficLightRenderer.MAX);
-              myProgressToText.get(progress).setText(MAX_TEXT);
-            }
-            else {
-              progress.setValue(0);
-              myProgressToText.get(progress).setText(MIN_TEXT);
-            }
-          }
+    for (JProgressBar progress : UIUtil.uiTraverser(myPassStatuses).traverse().filter(JProgressBar.class)) {
+      progress.setEnabled(enabled);
+      if (completed != null) {
+        if (completed) {
+          progress.setValue(TrafficLightRenderer.MAX);
+          myProgressToText.get(progress).setText(MAX_TEXT);
         }
-        return false;
+        else {
+          progress.setValue(0);
+          myProgressToText.get(progress).setText(MIN_TEXT);
+        }
       }
-    };
+    }
   }
 
   private void rebuildPassesProgress(@NotNull TrafficLightRenderer.DaemonCodeAnalyzerStatus status) {

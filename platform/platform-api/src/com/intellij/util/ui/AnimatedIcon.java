@@ -18,6 +18,8 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 
 import javax.swing.*;
 import java.awt.*;
@@ -74,6 +76,20 @@ public class AnimatedIcon extends JComponent implements Disposable {
     }
 
     setOpaque(false);
+
+    new UiNotifyConnector(this, new Activatable() {
+      @Override
+      public void showNotify() {
+        if (myRunning) {
+          ensureAnimation(true);
+        }
+      }
+
+      @Override
+      public void hideNotify() {
+        ensureAnimation(false);
+      }
+    });
   }
 
   public void setPaintPassiveIcon(boolean paintPassive) {
@@ -90,20 +106,6 @@ public class AnimatedIcon extends JComponent implements Disposable {
     }
 
     return changes;
-  }
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    if (myRunning) {
-      ensureAnimation(true);
-    }
-  }
-
-  @Override
-  public void removeNotify() {
-    super.removeNotify();
-    ensureAnimation(false);
   }
 
   public void resume() {

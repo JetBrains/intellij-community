@@ -86,14 +86,11 @@ public class RngXmlValidationTest extends HighlightingTestBase {
   @Override
   protected void init() {
     super.init();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final ExternalResourceManager mgr = ExternalResourceManager.getInstance();
-        mgr.addResource("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"));
-        mgr.addResource("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"));
-        //mgr.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("validation/relaxng.rng"));
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final ExternalResourceManager mgr = ExternalResourceManager.getInstance();
+      mgr.addResource("urn:test:simple.rng", toAbsolutePath("validation/simple.rng"));
+      mgr.addResource("urn:test:simple.rnc", toAbsolutePath("validation/simple.rnc"));
+      //mgr.addResource("http://www.w3.org/1999/XSL/Transform", toAbsolutePath("validation/relaxng.rng"));
     });
   }
 

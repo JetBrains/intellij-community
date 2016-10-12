@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@SuppressWarnings({"UndesirableClassUsage", "UseJBColor", "UseDPIAwareInsets", "SSBasedInspection"}) // Plain Swing
 public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
   private static final int RESULT_REQUIRES_RESTART = 42;
 
@@ -65,12 +66,7 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
     myConsolePane.setBorder(BUTTONS_BORDER);
     myConsolePane.setVisible(false);
 
-    myCancelButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        doCancel();
-      }
-    });
+    myCancelButton.addActionListener(e -> doCancel());
 
     myFrame = new JFrame();
     myFrame.setTitle(TITLE);
@@ -112,12 +108,7 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
 
     myFrame.setVisible(true);
 
-    myQueue.add(new UpdateRequest() {
-      @Override
-      public void perform() {
-        doPerform();
-      }
-    });
+    myQueue.add(this::doPerform);
 
     startRequestDispatching();
   }
@@ -135,35 +126,29 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
   }
 
   private void startRequestDispatching() {
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        while (true) {
-          try {
-            Thread.sleep(100);
-          }
-          catch (InterruptedException e) {
-            Runner.printStackTrace(e);
-            return;
-          }
-
-          final List<UpdateRequest> pendingRequests = new ArrayList<UpdateRequest>();
-          UpdateRequest request;
-          while ((request = myQueue.poll()) != null) {
-            pendingRequests.add(request);
-          }
-
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              for (UpdateRequest each : pendingRequests) {
-                each.perform();
-              }
-            }
-          });
+    new Thread(() -> {
+      while (true) {
+        try {
+          Thread.sleep(100);
         }
+        catch (InterruptedException e) {
+          Runner.printStackTrace(e);
+          return;
+        }
+
+        final List<UpdateRequest> pendingRequests = new ArrayList<UpdateRequest>();
+        UpdateRequest request;
+        while ((request = myQueue.poll()) != null) {
+          pendingRequests.add(request);
+        }
+
+        SwingUtilities.invokeLater(() -> {
+          for (UpdateRequest each : pendingRequests) {
+            each.perform();
+          }
+        });
       }
-    },"swing updater dispatch").start();
+    }, "swing updater dispatch").start();
   }
 
   private void doCancel() {
@@ -184,33 +169,30 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
   private void doPerform() {
     isRunning.set(true);
 
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myApplied = myOperation.execute(StandaloneSwingUpdaterUI.this);
-        }
-        catch (OperationCancelledException ignore) {
-          Runner.printStackTrace(ignore);
-        }
-        catch(Throwable e) {
-          Runner.printStackTrace(e);
-          showError(e);
-        }
-        finally {
-          isRunning.set(false);
+    new Thread(() -> {
+      try {
+        myApplied = myOperation.execute(this);
+      }
+      catch (OperationCancelledException ignore) {
+        Runner.printStackTrace(ignore);
+      }
+      catch(Throwable e) {
+        Runner.printStackTrace(e);
+        showError(e);
+      }
+      finally {
+        isRunning.set(false);
 
-          if (hasError.get()) {
-            startProcess("Failed to apply patch");
-            setProgress(100);
-            myCancelButton.setText(EXIT_BUTTON_TITLE);
-            myCancelButton.setEnabled(true);
-          } else {
-            exit();
-          }
+        if (hasError.get()) {
+          startProcess("Failed to apply patch");
+          setProgress(100);
+          myCancelButton.setText(EXIT_BUTTON_TITLE);
+          myCancelButton.setEnabled(true);
+        } else {
+          exit();
         }
       }
-    },"swing updater").start();
+    }, "swing updater").start();
   }
 
   @Override
@@ -230,35 +212,24 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
 
   @Override
   public void startProcess(final String title) {
-    myQueue.add(new UpdateRequest() {
-      @Override
-      public void perform() {
-        myProcessStatus.setText(title);
-        myProcessProgress.setIndeterminate(false);
-        myProcessProgress.setValue(0);
-      }
+    myQueue.add(() -> {
+      myProcessStatus.setText(title);
+      myProcessProgress.setIndeterminate(false);
+      myProcessProgress.setValue(0);
     });
   }
 
   @Override
   public void setProgress(final int percentage) {
-    myQueue.add(new UpdateRequest() {
-      @Override
-      public void perform() {
-        myProcessProgress.setIndeterminate(false);
-        myProcessProgress.setValue(percentage);
-      }
+    myQueue.add(() -> {
+      myProcessProgress.setIndeterminate(false);
+      myProcessProgress.setValue(percentage);
     });
   }
 
   @Override
   public void setProgressIndeterminate() {
-    myQueue.add(new UpdateRequest() {
-      @Override
-      public void perform() {
-        myProcessProgress.setIndeterminate(true);
-      }
-    });
+    myQueue.add(() -> myProcessProgress.setIndeterminate(true));
   }
 
   @Override
@@ -269,24 +240,21 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
   public void showError(final Throwable e) {
     hasError.set(true);
 
-    myQueue.add(new UpdateRequest() {
-      @Override
-      public void perform() {
-        StringWriter w = new StringWriter();
-        if (!myConsolePane.isVisible()) {
-          w.write("Temp. directory: ");
-          w.write(System.getProperty("java.io.tmpdir"));
-          w.write("\n\n");
-        }
-        e.printStackTrace(new PrintWriter(w));
-        w.append("\n");
-        myConsole.append(w.getBuffer().toString());
-        if (!myConsolePane.isVisible()) {
-          myConsole.setCaretPosition(0);
-          myConsolePane.setVisible(true);
-          myConsolePane.setPreferredSize(new Dimension(10, 200));
-          myFrame.pack();
-        }
+    myQueue.add(() -> {
+      StringWriter w = new StringWriter();
+      if (!myConsolePane.isVisible()) {
+        w.write("Temp. directory: ");
+        w.write(System.getProperty("java.io.tmpdir"));
+        w.write("\n\n");
+      }
+      e.printStackTrace(new PrintWriter(w));
+      w.append("\n");
+      myConsole.append(w.getBuffer().toString());
+      if (!myConsolePane.isVisible()) {
+        myConsole.setCaretPosition(0);
+        myConsolePane.setVisible(true);
+        myConsolePane.setPreferredSize(new Dimension(10, 200));
+        myFrame.pack();
       }
     });
   }
@@ -305,11 +273,27 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
   }
 
   public static void main(String[] args) {
-    new StandaloneSwingUpdaterUI(new InstallOperation() {
-      @Override
-      public boolean execute(UpdaterUI ui) throws OperationCancelledException {
-        ui.startProcess("Process1");
+    new StandaloneSwingUpdaterUI(ui -> {
+      ui.startProcess("Process1");
+      ui.checkCancelled();
+      for (int i = 0; i < 200; i++) {
+        ui.setStatus("i = " + i);
         ui.checkCancelled();
+        try {
+          Thread.sleep(10);
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+        ui.setProgress((i + 1) * 100 / 200);
+      }
+
+      ui.showError(new Throwable());
+
+      ui.startProcess("Process3");
+      ui.checkCancelled();
+      ui.setProgressIndeterminate();
+      try {
         for (int i = 0; i < 200; i++) {
           ui.setStatus("i = " + i);
           ui.checkCancelled();
@@ -320,59 +304,40 @@ public class StandaloneSwingUpdaterUI extends SwingUpdaterUI {
             throw new RuntimeException(e);
           }
           ui.setProgress((i + 1) * 100 / 200);
-        }
-
-        ui.showError(new Throwable());
-
-        ui.startProcess("Process3");
-        ui.checkCancelled();
-        ui.setProgressIndeterminate();
-        try {
-          for (int i = 0; i < 200; i++) {
-            ui.setStatus("i = " + i);
-            ui.checkCancelled();
-            try {
-              Thread.sleep(10);
-            }
-            catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-            ui.setProgress((i + 1) * 100 / 200);
-            if (i == 100) {
-              List<ValidationResult> vr = new ArrayList<ValidationResult>();
-              vr.add(new ValidationResult(ValidationResult.Kind.ERROR,
-                                          "foo/bar", null,
-                                          ValidationResult.Action.CREATE,
-                                          "Hello",
-                                          ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
-              vr.add(new ValidationResult(ValidationResult.Kind.CONFLICT,
-                                          "foo/bar/baz", null,
-                                          ValidationResult.Action.DELETE,
-                                          "World",
-                                          ValidationResult.Option.DELETE, ValidationResult.Option.KEEP));
-              vr.add(new ValidationResult(ValidationResult.Kind.INFO,
-                                          "xxx", null,
-                                          ValidationResult.Action.NO_ACTION,
-                                          "bla-bla", ValidationResult.Option.IGNORE));
-              ui.askUser(vr);
-            }
+          if (i == 100) {
+            List<ValidationResult> vr = new ArrayList<ValidationResult>();
+            vr.add(new ValidationResult(ValidationResult.Kind.ERROR,
+                                        "foo/bar", null,
+                                        ValidationResult.Action.CREATE,
+                                        "Hello",
+                                        ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
+            vr.add(new ValidationResult(ValidationResult.Kind.CONFLICT,
+                                        "foo/bar/baz", null,
+                                        ValidationResult.Action.DELETE,
+                                        "World",
+                                        ValidationResult.Option.DELETE, ValidationResult.Option.KEEP));
+            vr.add(new ValidationResult(ValidationResult.Kind.INFO,
+                                        "xxx", null,
+                                        ValidationResult.Action.NO_ACTION,
+                                        "bla-bla", ValidationResult.Option.IGNORE));
+            ui.askUser(vr);
           }
         }
-        finally {
-          ui.startProcess("Process2");
-          for (int i = 0; i < 200; i++) {
-            ui.setStatus("i = " + i);
-            try {
-              Thread.sleep(10);
-            }
-            catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-            ui.setProgress((i + 1) * 100 / 200);
-          }
-        }
-        return true;
       }
+      finally {
+        ui.startProcess("Process2");
+        for (int i = 0; i < 200; i++) {
+          ui.setStatus("i = " + i);
+          try {
+            Thread.sleep(10);
+          }
+          catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+          ui.setProgress((i + 1) * 100 / 200);
+        }
+      }
+      return true;
     });
   }
 }

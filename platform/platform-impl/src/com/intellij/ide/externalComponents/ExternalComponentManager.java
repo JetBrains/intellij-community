@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,19 @@
  */
 package com.intellij.ide.externalComponents;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Registry for {@link SdkComponentSource}s, used for integrating with the {@link UpdateChecker}.
+ * Registry for {@link ExternalComponentSource}s, used for integrating with the {@link UpdateChecker}.
+ * Keeps track of the external components and component sources that can be updated.
  */
 public abstract class ExternalComponentManager {
+  @NotNull
   public static ExternalComponentManager getInstance() {
-    return ApplicationManager.getApplication().getComponent(ExternalComponentManager.class);
+    return ServiceManager.getService(ExternalComponentManager.class);
   }
 
   @NotNull
@@ -33,8 +35,14 @@ public abstract class ExternalComponentManager {
 
   public abstract void registerComponentSource(@NotNull ExternalComponentSource site);
 
+  /**
+   * Finds an installed component that could be updated by the given component.
+   *
+   * @param update The potential update.
+   * @param source The source for the update.
+   * @return A component from the same source for which the given component is an update, or null if no such component is found.
+   */
   @Nullable
   public abstract UpdatableExternalComponent findExistingComponentMatching(@NotNull UpdatableExternalComponent update,
                                                                            @NotNull ExternalComponentSource source);
-
 }

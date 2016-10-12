@@ -62,11 +62,15 @@ public class PropertiesRootBlock extends AbstractBlock {
             if (propertyNode.getElementType() instanceof PropertyStubElementType) {
               collectPropertyBlock(propertyNode, result);
             }
-            else if (PropertiesTokenTypes.END_OF_LINE_COMMENT.equals(propertyNode.getElementType())) {
+            else if (PropertiesTokenTypes.END_OF_LINE_COMMENT.equals(propertyNode.getElementType()) ||
+                     PropertiesTokenTypes.BAD_CHARACTER.equals(propertyNode.getElementType())) {
               result.add(new PropertyBlock(propertyNode, null));
             }
             propertyNode = propertyNode.getTreeNext();
           }
+        }
+        else if (PropertiesTokenTypes.BAD_CHARACTER.equals(child.getElementType())) {
+          result.add(new PropertyBlock(child, null));
         }
       }
       if (PropertiesTokenTypes.END_OF_LINE_COMMENT.equals(child.getElementType())) {

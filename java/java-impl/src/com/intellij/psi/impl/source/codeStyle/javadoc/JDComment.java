@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-/**
- * @author max
- */
 
 /**
  * @author Dmitry Skavish
@@ -71,7 +67,7 @@ public class JDComment {
 
     if (!isNull(myDescription)) {
       sb.append(prefix);
-      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix));
+      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix, false));
 
       if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_DESCRIPTION) {
         sb.append(prefix);

@@ -70,12 +70,7 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
       fireNotifications();
     }
     else if (first) {
-      StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
-        @Override
-        public void run() {
-          fireNotifications();
-        }
-      });
+      StartupManager.getInstance(myProject).registerPostStartupActivity(() -> fireNotifications());
     }
   }
 
@@ -100,12 +95,7 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
                                                   public void hyperlinkUpdate(@NotNull Notification notification,
                                                                               @NotNull HyperlinkEvent event) {
                                                     final List<ConfigurationErrorDescription> validDescriptions =
-                                                      ContainerUtil.findAll(descriptions, new Condition<ConfigurationErrorDescription>() {
-                                                        @Override
-                                                        public boolean value(ConfigurationErrorDescription errorDescription) {
-                                                          return errorDescription.isValid();
-                                                        }
-                                                      });
+                                                      ContainerUtil.findAll(descriptions, errorDescription -> errorDescription.isValid());
                                                     RemoveInvalidElementsDialog
                                                       .showDialog(myProject, CommonBundle.getErrorTitle(), type, invalidElements,
                                                                   validDescriptions);

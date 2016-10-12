@@ -19,11 +19,20 @@ import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * An additional interface to be implemented by {@link IElementType} instances to allow customizing how leaf AST elements are created
+ * for tokens of this type. By default, plain LeafElement instances would be created. Implementing this interface only makes sense
+ * if you want to override some methods in LeafElement.
+ *
+ * @see ICompositeElementType
  * @author peter
  */
 public interface ILeafElementType {
 
+  /**
+   * Invoked by {@link com.intellij.lang.PsiBuilder} to create a leaf AST node based of this type.
+   * @return a LeafElement object with the given text
+   */
   @NotNull
-  ASTNode createLeafNode(CharSequence leafText);
+  ASTNode createLeafNode(@NotNull CharSequence leafText);
 
 }

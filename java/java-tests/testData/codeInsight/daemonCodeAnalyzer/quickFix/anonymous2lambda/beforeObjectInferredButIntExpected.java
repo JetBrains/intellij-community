@@ -1,4 +1,4 @@
-// "Replace with lambda" "false"
+// "Replace with lambda" "true"
 import java.util.function.Function;
 
 class Test {

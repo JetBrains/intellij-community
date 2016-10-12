@@ -50,26 +50,12 @@ import java.util.Date;
 
 public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.featureStatistics.actions.ShowFeatureUsageStatisticsDialog");
-  private static final Comparator<FeatureDescriptor> DISPLAY_NAME_COMPARATOR = new Comparator<FeatureDescriptor>() {
-    public int compare(FeatureDescriptor fd1, FeatureDescriptor fd2) {
-      return fd1.getDisplayName().compareTo(fd2.getDisplayName());
-    }
-  };
-  private static final Comparator<FeatureDescriptor> GROUP_NAME_COMPARATOR = new Comparator<FeatureDescriptor>() {
-    public int compare(FeatureDescriptor fd1, FeatureDescriptor fd2) {
-      return getGroupName(fd1).compareTo(getGroupName(fd2));
-    }
-  };
-  private static final Comparator<FeatureDescriptor> USAGE_COUNT_COMPARATOR = new Comparator<FeatureDescriptor>() {
-    public int compare(FeatureDescriptor fd1, FeatureDescriptor fd2) {
-      return fd1.getUsageCount() - fd2.getUsageCount();
-    }
-  };
-  private static final Comparator<FeatureDescriptor> LAST_USED_COMPARATOR = new Comparator<FeatureDescriptor>() {
-    public int compare(FeatureDescriptor fd1, FeatureDescriptor fd2) {
-      return new Date(fd2.getLastTimeUsed()).compareTo(new Date(fd1.getLastTimeUsed()));
-    }
-  };
+  private static final Comparator<FeatureDescriptor> DISPLAY_NAME_COMPARATOR =
+    (fd1, fd2) -> fd1.getDisplayName().compareTo(fd2.getDisplayName());
+  private static final Comparator<FeatureDescriptor> GROUP_NAME_COMPARATOR = (fd1, fd2) -> getGroupName(fd1).compareTo(getGroupName(fd2));
+  private static final Comparator<FeatureDescriptor> USAGE_COUNT_COMPARATOR = (fd1, fd2) -> fd1.getUsageCount() - fd2.getUsageCount();
+  private static final Comparator<FeatureDescriptor> LAST_USED_COMPARATOR =
+    (fd1, fd2) -> new Date(fd2.getLastTimeUsed()).compareTo(new Date(fd1.getLastTimeUsed()));
 
   private static final ColumnInfo<FeatureDescriptor, String> DISPLAY_NAME = new ColumnInfo<FeatureDescriptor, String>(FeatureStatisticsBundle.message("feature.statistics.column.feature")) {
     public String valueOf(FeatureDescriptor featureDescriptor) {

@@ -346,15 +346,12 @@ public class GroovyIntroduceParameterUtil {
       final GrVariable var = settings.getVar();
       LOG.assertTrue(var != null);
       final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
-      ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference psiReference) {
-          final PsiElement element = psiReference.getElement();
-          if (element != null) {
-            list.add(element);
-          }
-          return true;
+      ReferencesSearch.search(var, new LocalSearchScope(scope)).forEach(psiReference -> {
+        final PsiElement element = psiReference.getElement();
+        if (element != null) {
+          list.add(element);
         }
+        return true;
       });
       return list.toArray(new PsiElement[list.size()]);
     }

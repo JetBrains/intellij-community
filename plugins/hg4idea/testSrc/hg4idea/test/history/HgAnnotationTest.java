@@ -15,7 +15,6 @@
  */
 package hg4idea.test.history;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.vcsUtil.VcsUtil;
@@ -37,11 +36,10 @@ public class HgAnnotationTest extends HgPlatformTest {
   static final String dName = "d.txt";
 
   @Override
-  protected void setUp() throws Exception {
+  public void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    File hgrc = new File(new File(myRepository.getPath(), ".hg"), "hgrc");
-    FileUtil.appendToFile(hgrc, "[extensions]\n" +
+    appendToHgrc(myRepository, "[extensions]\n" +
                                 "largefiles=!\n");
     touch(aName, "a1");
     myRepository.refresh(false, true);

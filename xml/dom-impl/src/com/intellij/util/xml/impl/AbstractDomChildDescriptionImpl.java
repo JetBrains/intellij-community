@@ -115,15 +115,11 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
     final DomManager domManager = parent.getManager();
     for (int i = 0; i < list.size(); i++) {
       final int i1 = i;
-      result.add(domManager.createStableValue(new Factory<DomElement>() {
-        @Override
-        @Nullable
-        public DomElement create() {
-          if (!parent.isValid()) return null;
+      result.add(domManager.createStableValue((Factory<DomElement>)() -> {
+        if (!parent.isValid()) return null;
 
-          final List<? extends DomElement> domElements = getValues(parent);
-          return domElements.size() > i1 ? domElements.get(i1) : null;
-        }
+        final List<? extends DomElement> domElements = getValues(parent);
+        return domElements.size() > i1 ? domElements.get(i1) : null;
       }));
     }
     return result;

@@ -171,19 +171,11 @@ public class PluginInstaller {
       if (depends.size() > 0) { // has something to install prior installing the plugin
         final boolean[] proceed = new boolean[1];
         try {
-          GuiUtils.runOrInvokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
-              String deps = StringUtil.join(depends, new Function<PluginNode, String>() {
-                @Override
-                public String fun(PluginNode node) {
-                  return node.getName();
-                }
-              }, ", ");
-              String message = IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), deps);
-              proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
-            }
+          GuiUtils.runOrInvokeAndWait(() -> {
+            String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
+            String deps = StringUtil.join(depends, node -> node.getName(), ", ");
+            String message = IdeBundle.message("plugin.manager.dependencies.detected.message", depends.size(), deps);
+            proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
           });
         }
         catch (Exception e) {
@@ -197,19 +189,11 @@ public class PluginInstaller {
       if (optionalDeps.size() > 0) {
         final boolean[] proceed = new boolean[1];
         try {
-          GuiUtils.runOrInvokeAndWait(new Runnable() {
-            @Override
-            public void run() {
-              String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
-              String deps = StringUtil.join(optionalDeps, new Function<PluginNode, String>() {
-                @Override
-                public String fun(PluginNode node) {
-                  return node.getName();
-                }
-              }, ", ");
-              String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(), deps);
-              proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
-            }
+          GuiUtils.runOrInvokeAndWait(() -> {
+            String title = IdeBundle.message("plugin.manager.dependencies.detected.title");
+            String deps = StringUtil.join(optionalDeps, node -> node.getName(), ", ");
+            String message = IdeBundle.message("plugin.manager.optional.dependencies.detected.message", optionalDeps.size(), deps);
+            proceed[0] = Messages.showYesNoDialog(message, title, Messages.getWarningIcon()) == Messages.YES;
           });
         }
         catch (Exception e) {

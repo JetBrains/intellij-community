@@ -16,6 +16,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
+    <fileTypeFactory implementation="com.jetbrains.jsonSchema.JsonSchemaFileTypeFactory"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <psi.treeChangePreprocessor implementation="com.intellij.json.psi.impl.JsonTreeChangePreprocessor"/>
@@ -66,6 +67,7 @@
                          instance="com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurable" nonDefaultProject="true"/>
     <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
                     serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
+    <applicationService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaFileTypeManager"/>
     <annotator language="JSON" implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaAnnotator"/>
     <completion.contributor order="last, before JsonSchemaCompletionContributor" language="JSON" implementationClass="com.jetbrains.jsonSchema.ide.JsonSchemaCompletionContributor"/>
     <lang.documentationProvider language="JSON"
@@ -73,10 +75,15 @@
     <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
     <editorNotificationProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
+
+    <fileBasedIndex implementation="com.jetbrains.jsonSchema.extension.schema.JsonSchemaFileIndex"/>
+    <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.extension.schema.JsonSchemaReferenceContributor"/>
+    <indexedRootsProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider"/>
+    <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonBySchemaObjectReferenceContributor"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaImportedProviderFactory"/>
-    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaSelfProviderFactory"/>
+    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
   </extensions>
 
   <extensionPoints>

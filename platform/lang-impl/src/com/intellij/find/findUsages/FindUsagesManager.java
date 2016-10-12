@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -47,13 +49,16 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.*;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -61,10 +66,9 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,7 +189,7 @@ public class FindUsagesManager {
     for (FindUsagesHandlerFactory factory : Extensions.getExtensions(FindUsagesHandlerFactory.EP_NAME, myProject)) {
       if (factory.canFindUsages(element)) {
         Class<? extends FindUsagesHandlerFactory> aClass = factory.getClass();
-        FindUsagesHandlerFactory copy = (FindUsagesHandlerFactory)new ConstructorInjectionComponentAdapter(aClass.getName(), aClass)
+        FindUsagesHandlerFactory copy = (FindUsagesHandlerFactory)new CachingConstructorInjectionComponentAdapter(aClass.getName(), aClass)
           .getComponentInstance(myProject.getPicoContainer());
         final FindUsagesHandler handler = copy.createFindUsagesHandler(element, forHighlightUsages);
         if (handler == FindUsagesHandler.NULL_HANDLER) return null;
@@ -280,24 +284,17 @@ public class FindUsagesManager {
                                                      @NotNull final Processor<Usage> processor,
                                                      @NotNull final FindUsagesOptions findUsagesOptions,
                                                      @NotNull final Runnable onComplete) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final ProgressIndicatorBase indicator = new ProgressIndicatorBase();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    Task.Backgroundable task = new Task.Backgroundable(handler.getProject(), "Finding Usages") {
       @Override
-      public void run() {
-        try {
-          ProgressManager.getInstance().runProcess(new Runnable() {
-            @Override
-            public void run() {
-              final UsageSearcher usageSearcher = createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
-              usageSearcher.generate(processor);
-            }
-          }, indicator);
-        }
-        finally {
-          onComplete.run();
-        }
+      public void run(@NotNull ProgressIndicator indicator) {
+        final UsageSearcher usageSearcher = createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
+        usageSearcher.generate(processor);
       }
-    });
+    };
+
+    ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, onComplete);
 
     return indicator;
   }
@@ -332,82 +329,68 @@ public class FindUsagesManager {
                                                    @NotNull FindUsagesOptions options,
                                                    final PsiFile scopeFile) {
     final FindUsagesOptions optionsClone = options.clone();
-    return new UsageSearcher() {
-      @Override
-      public void generate(@NotNull final Processor<Usage> processor) {
-        Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
-          @Override
-          public Project compute() {
-            return scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject();
-          }
-        });
-        dropResolveCacheRegularly(ProgressManager.getInstance().getProgressIndicator(), project);
-        
-        if (scopeFile != null) {
-          optionsClone.searchScope = new LocalSearchScope(scopeFile);
+    return processor -> {
+      Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
+        @Override
+        public Project compute() {
+          return scopeFile != null ? scopeFile.getProject() : primaryElements[0].getProject();
         }
-        final Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<UsageInfo>(new Processor<UsageInfo>() {
-          @Override
-          public boolean process(final UsageInfo usageInfo) {
-            Usage usage = ApplicationManager.getApplication().runReadAction(new Computable<Usage>() {
-              @Override
-              public Usage compute() {
-                return UsageInfoToUsageConverter.convert(primaryElements, usageInfo);
-              }
-            });
-            return processor.process(usage);
-          }
-        });
-        final Iterable<PsiElement> elements = ContainerUtil.concat(primaryElements, secondaryElements);
+      });
+      dropResolveCacheRegularly(ProgressManager.getInstance().getProgressIndicator(), project);
 
-        optionsClone.fastTrack = new SearchRequestCollector(new SearchSession());
-        if (optionsClone.searchScope instanceof GlobalSearchScope) {
-          // we will search in project scope always but warn if some usage is out of scope
-          optionsClone.searchScope = optionsClone.searchScope.union(GlobalSearchScope.projectScope(project));
-        }
-        try {
-          for (final PsiElement element : elements) {
-            ApplicationManager.getApplication().runReadAction(new Runnable() {
-              @Override
-              public void run() {
-                LOG.assertTrue(element.isValid());
-              }
-            });
-            handler.processElementUsages(element, usageInfoProcessor, optionsClone);
-            for (CustomUsageSearcher searcher : Extensions.getExtensions(CustomUsageSearcher.EP_NAME)) {
-              try {
-                searcher.processElementUsages(element, processor, optionsClone);
-              }
-              catch (IndexNotReadyException e) {
-                DumbService.getInstance(element.getProject()).showDumbModeNotification("Find usages is not available during indexing");
-              }
-              catch (ProcessCanceledException e) {
-                throw e;
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
+      if (scopeFile != null) {
+        optionsClone.searchScope = new LocalSearchScope(scopeFile);
+      }
+      final Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<>(usageInfo -> {
+        Usage usage = ApplicationManager.getApplication().runReadAction(new Computable<Usage>() {
+          @Override
+          public Usage compute() {
+            return UsageInfoToUsageConverter.convert(primaryElements, usageInfo);
+          }
+        });
+        return processor.process(usage);
+      });
+      final Iterable<PsiElement> elements = ContainerUtil.concat(primaryElements, secondaryElements);
+
+      optionsClone.fastTrack = new SearchRequestCollector(new SearchSession());
+      if (optionsClone.searchScope instanceof GlobalSearchScope) {
+        // we will search in project scope always but warn if some usage is out of scope
+        optionsClone.searchScope = optionsClone.searchScope.union(GlobalSearchScope.projectScope(project));
+      }
+      try {
+        for (final PsiElement element : elements) {
+          ApplicationManager.getApplication().runReadAction(() -> PsiUtilCore.ensureValid(element));
+          handler.processElementUsages(element, usageInfoProcessor, optionsClone);
+          for (CustomUsageSearcher searcher : Extensions.getExtensions(CustomUsageSearcher.EP_NAME)) {
+            try {
+              searcher.processElementUsages(element, processor, optionsClone);
+            }
+            catch (IndexNotReadyException e) {
+              DumbService.getInstance(element.getProject()).showDumbModeNotification("Find usages is not available during indexing");
+            }
+            catch (ProcessCanceledException e) {
+              throw e;
+            }
+            catch (Exception e) {
+              LOG.error(e);
             }
           }
+        }
 
-          PsiSearchHelper.SERVICE.getInstance(project)
-            .processRequests(optionsClone.fastTrack, new Processor<PsiReference>() {
+        PsiSearchHelper.SERVICE.getInstance(project)
+          .processRequests(optionsClone.fastTrack, ref -> {
+            UsageInfo info = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
               @Override
-              public boolean process(final PsiReference ref) {
-                UsageInfo info = ApplicationManager.getApplication().runReadAction(new Computable<UsageInfo>() {
-                  @Override
-                  public UsageInfo compute() {
-                    if (!ref.getElement().isValid()) return null;
-                    return new UsageInfo(ref);
-                  }
-                });
-                return info == null || usageInfoProcessor.process(info);
+              public UsageInfo compute() {
+                if (!ref.getElement().isValid()) return null;
+                return new UsageInfo(ref);
               }
             });
-        }
-        finally {
-          optionsClone.fastTrack = null;
-        }
+            return info == null || usageInfoProcessor.process(info);
+          });
+      }
+      finally {
+        optionsClone.fastTrack = null;
       }
     };
   }
@@ -416,12 +399,7 @@ public class FindUsagesManager {
   private static PsiElement2UsageTargetAdapter[] convertToUsageTargets(@NotNull Iterable<PsiElement> elementsToSearch,
                                                                        @NotNull final FindUsagesOptions findUsagesOptions) {
     final List<PsiElement2UsageTargetAdapter> targets = ContainerUtil.map(elementsToSearch,
-                                                                          new Function<PsiElement, PsiElement2UsageTargetAdapter>() {
-                                                                            @Override
-                                                                            public PsiElement2UsageTargetAdapter fun(PsiElement element) {
-                                                                              return convertToUsageTarget(element, findUsagesOptions);
-                                                                            }
-                                                                          });
+                                                                          element -> convertToUsageTarget(element, findUsagesOptions));
     return targets.toArray(new PsiElement2UsageTargetAdapter[targets.size()]);
   }
 
@@ -435,12 +413,8 @@ public class FindUsagesManager {
     }
     Iterable<PsiElement> allElements = ContainerUtil.concat(primaryElements, secondaryElements);
     final PsiElement2UsageTargetAdapter[] targets = convertToUsageTargets(allElements, findUsagesOptions);
-    myAnotherManager.searchAndShowUsages(targets, new Factory<UsageSearcher>() {
-      @Override
-      public UsageSearcher create() {
-        return createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null);
-      }
-    }, !toSkipUsagePanelWhenOneUsage, true, createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()), null);
+    myAnotherManager.searchAndShowUsages(targets,
+                                         () -> createUsageSearcher(primaryElements, secondaryElements, handler, findUsagesOptions, null), !toSkipUsagePanelWhenOneUsage, true, createPresentation(primaryElements[0], findUsagesOptions, shouldOpenInNewTab()), null);
     myHistory.add(targets[0]);
   }
 
@@ -570,41 +544,38 @@ public class FindUsagesManager {
 
     final FileSearchScope direction = dir;
 
-    final AtomicReference<Usage> foundUsage = new AtomicReference<Usage>();
-    usageSearcher.generate(new Processor<Usage>() {
-      @Override
-      public boolean process(Usage usage) {
-        usagesWereFound.set(true);
-        if (direction == FileSearchScope.FROM_START) {
-          foundUsage.compareAndSet(null, usage);
+    final AtomicReference<Usage> foundUsage = new AtomicReference<>();
+    usageSearcher.generate(usage -> {
+      usagesWereFound.set(true);
+      if (direction == FileSearchScope.FROM_START) {
+        foundUsage.compareAndSet(null, usage);
+        return false;
+      }
+      if (direction == FileSearchScope.FROM_END) {
+        foundUsage.set(usage);
+      }
+      else if (direction == FileSearchScope.AFTER_CARET) {
+        if (Comparing.compare(usage.getLocation(), currentLocation) > 0) {
+          foundUsage.set(usage);
           return false;
         }
-        if (direction == FileSearchScope.FROM_END) {
-          foundUsage.set(usage);
-        }
-        else if (direction == FileSearchScope.AFTER_CARET) {
-          if (Comparing.compare(usage.getLocation(), currentLocation) > 0) {
-            foundUsage.set(usage);
-            return false;
-          }
-        }
-        else if (direction == FileSearchScope.BEFORE_CARET) {
-          if (Comparing.compare(usage.getLocation(), currentLocation) >= 0) {
-            return false;
-          }
-          while (true) {
-            Usage found = foundUsage.get();
-            if (found == null) {
-              if (foundUsage.compareAndSet(null, usage)) break;
-            }
-            else {
-              if (Comparing.compare(found.getLocation(), usage.getLocation()) < 0 && foundUsage.compareAndSet(found, usage)) break;
-            }
-          }
-        }
-
-        return true;
       }
+      else if (direction == FileSearchScope.BEFORE_CARET) {
+        if (Comparing.compare(usage.getLocation(), currentLocation) >= 0) {
+          return false;
+        }
+        while (true) {
+          Usage found = foundUsage.get();
+          if (found == null) {
+            if (foundUsage.compareAndSet(null, usage)) break;
+          }
+          else {
+            if (Comparing.compare(found.getLocation(), usage.getLocation()) < 0 && foundUsage.compareAndSet(found, usage)) break;
+          }
+        }
+      }
+
+      return true;
     });
 
     fileEditor.putUserData(KEY_START_USAGE_AGAIN, null);

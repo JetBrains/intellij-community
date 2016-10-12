@@ -59,12 +59,7 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
           .append("Module ").append('\'').append(module.getName()).append('\'')
           .append(" has no ").append(name).append(" SDK.");
         if (!actions.isEmpty()) content.append("<br/>");
-        content.append(StringUtil.join(actions.keySet(), new Function<String, String>() {
-          @Override
-          public String fun(String actionName) {
-            return String.format("<a href='%s'>%s</a>", actionName, actionName);
-          }
-        }, " "));
+        content.append(StringUtil.join(actions.keySet(), actionName -> String.format("<a href='%s'>%s</a>", actionName, actionName), " "));
         content.append("</body></html>");
 
         new Notification(

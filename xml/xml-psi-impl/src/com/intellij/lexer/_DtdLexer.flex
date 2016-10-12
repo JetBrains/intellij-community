@@ -22,8 +22,6 @@ import com.intellij.psi.xml.*;
 %implements FlexLexer
 %function advance
 %type IElementType
-%eof{  return;
-%eof}
 
 %state DECL
 %state DECL_ATTR

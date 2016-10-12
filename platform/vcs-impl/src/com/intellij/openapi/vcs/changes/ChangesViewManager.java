@@ -22,42 +22,41 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.ContextHelpAction;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
+import com.intellij.openapi.vcs.changes.ui.ChangesDnDSupport;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.Alarm;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.FunctionUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,58 +69,59 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, ProjectComponent {
-  private static final int UNVERSIONED_MAX_SIZE = 50;
-  private boolean SHOW_FLATTEN_MODE = true;
-  private boolean SHOW_IGNORED_MODE = false;
+import static java.util.stream.Collectors.toList;
 
-  private final ChangesListView myView;
+@State(
+  name = "ChangesViewManager",
+  storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE)
+)
+public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
+
+  @NotNull private final ChangesListView myView;
   private JPanel myProgressLabel;
 
   private final Alarm myRepaintAlarm;
 
   private boolean myDisposed = false;
 
-  private final ChangeListListener myListener = new MyChangeListListener();
-  private final Project myProject;
-  private final ChangesViewContentManager myContentManager;
+  @NotNull private final ChangeListListener myListener = new MyChangeListListener();
+  @NotNull private final Project myProject;
+  @NotNull private final ChangesViewContentManager myContentManager;
 
-  @NonNls private static final String ATT_FLATTENED_VIEW = "flattened_view";
-  @NonNls private static final String ATT_SHOW_IGNORED = "show_ignored";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
-  private Splitter mySplitter;
-  private MessageBusConnection myConnection;
-  private ChangesViewManager.ToggleDetailsAction myToggleDetailsAction;
+  @NotNull private ChangesViewManager.State myState = new ChangesViewManager.State();
+
+  private JBSplitter mySplitter;
 
   private boolean myDetailsOn;
-  private final MyChangeProcessor myDiffDetails;
+  @NotNull private final MyChangeProcessor myDiffDetails;
 
-  private final TreeSelectionListener myTsl;
+  @NotNull private final TreeSelectionListener myTsl;
   private Content myContent;
-  private static final String DETAILS_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
-  public static ChangesViewI getInstance(Project project) {
+  @NotNull
+  public static ChangesViewI getInstance(@NotNull Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewI.class);
   }
 
-  public ChangesViewManager(Project project, ChangesViewContentManager contentManager, final VcsChangeDetailsManager vcsChangeDetailsManager) {
+  public ChangesViewManager(@NotNull Project project, @NotNull ChangesViewContentManager contentManager) {
     myProject = project;
     myContentManager = contentManager;
     myView = new ChangesListView(project);
-
-    Disposer.register(project, myView);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myDiffDetails = new MyChangeProcessor(myProject);
     myTsl = new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
         if (LOG.isDebugEnabled()) {
-          String message = "selection changed. selected:  " + toStringPaths(myView.getSelectionPaths());
+          TreePath[] paths = myView.getSelectionPaths();
+          String joinedPaths = paths != null ? StringUtil.join(paths, FunctionUtil.string(), ", ") : null;
+          String message = "selection changed. selected:  " + joinedPaths;
+
           if (LOG.isTraceEnabled()) {
             LOG.trace(message + " from: " + DebugUtil.currentStackTrace());
           }
@@ -135,19 +135,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
             changeDetails();
           }
         });
-      }
-
-      private String toStringPaths(TreePath[] paths) {
-        if (paths == null) return "null";
-        if (paths.length == 0) return "empty";
-        final StringBuilder sb = new StringBuilder();
-        for (TreePath path : paths) {
-          if (sb.length() > 0) {
-            sb.append(", ");
-          }
-          sb.append(path.toString());
-        }
-        return sb.toString();
       }
     };
   }
@@ -166,8 +153,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     myContentManager.addContent(myContent);
 
     scheduleRefresh();
-    myConnection = myProject.getMessageBus().connect(myProject);
-    myConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, new Runnable() {
+    myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, new Runnable() {
       public void run() {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -182,10 +168,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   public void projectClosed() {
-    PropertiesComponent.getInstance().setValue(DETAILS_SPLITTER_PROPORTION, String.valueOf(mySplitter.getProportion()));
     Disposer.dispose(myDiffDetails);
     myView.removeTreeSelectionListener(myTsl);
-    myConnection.disconnect();
     myDisposed = true;
     myRepaintAlarm.cancelAllRequests();
   }
@@ -198,8 +182,6 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   private JComponent createChangeViewComponent() {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
 
-    DefaultActionGroup group = (DefaultActionGroup) ActionManager.getInstance().getAction("ChangesViewToolbar");
-
     EmptyAction.registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), panel);
     EmptyAction.registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), panel);
     EmptyAction.registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), panel);
@@ -208,10 +190,11 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), panel);
     EmptyAction.registerWithShortcutSet("ChangesView.Diff", CommonShortcuts.getDiff(), panel);
 
-    JPanel toolbarPanel = new JPanel(new BorderLayout());
+    DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewToolbar");
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
     toolbar.setTargetComponent(myView);
     JComponent toolbarComponent = toolbar.getComponent();
+    JPanel toolbarPanel = new JPanel(new BorderLayout());
     toolbarPanel.add(toolbarComponent, BorderLayout.WEST);
 
     DefaultActionGroup visualActionsGroup = new DefaultActionGroup();
@@ -225,33 +208,22 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     visualActionsGroup.add(new ToggleShowIgnoredAction());
     visualActionsGroup.add(new IgnoredSettingsAction());
-    myToggleDetailsAction = new ToggleDetailsAction();
-    visualActionsGroup.add(myToggleDetailsAction);
+    visualActionsGroup.add(new ToggleDetailsAction());
     visualActionsGroup.add(new ContextHelpAction(ChangesListView.ourHelpId));
     toolbarPanel.add(
       ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, visualActionsGroup, false).getComponent(), BorderLayout.CENTER);
 
 
-    DefaultActionGroup menuGroup = (DefaultActionGroup) ActionManager.getInstance().getAction("ChangesViewPopupMenu");
-    myView.setMenuActions(menuGroup);
+    myView.setMenuActions((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
 
-    myView.setShowFlatten(SHOW_FLATTEN_MODE);
+    myView.setShowFlatten(myState.myShowFlatten);
 
     myProgressLabel = new JPanel(new BorderLayout());
 
     panel.setToolbar(toolbarPanel);
 
     final JPanel content = new JPanel(new BorderLayout());
-    String value = PropertiesComponent.getInstance().getValue(DETAILS_SPLITTER_PROPORTION);
-    float f = 0.5f;
-    if (! StringUtil.isEmptyOrSpaces(value)) {
-      try {
-        f = Float.parseFloat(value);
-      } catch (NumberFormatException e) {
-        //
-      }
-    }
-    mySplitter = new Splitter(false, f);
+    mySplitter = new JBSplitter(false, "ChangesViewManager.DETAILS_SPLITTER_PROPORTION", 0.5f);
     mySplitter.setHonorComponentsMinimumSize(false);
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
     final JPanel wrapper = new JPanel(new BorderLayout());
@@ -261,7 +233,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     content.add(myProgressLabel, BorderLayout.SOUTH);
     panel.setContent(content);
 
-    myView.installDndSupport(ChangeListManagerImpl.getInstanceImpl(myProject));
+    ChangesDnDSupport.install(myProject, myView);
     myView.addTreeSelectionListener(myTsl);
     return panel;
   }
@@ -283,7 +255,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     }
   }
 
-  private void setChangeDetailsPanel(@Nullable final JComponent component) {
+  private void setChangeDetailsPanel(@Nullable JComponent component) {
     mySplitter.setSecondComponent(component);
     mySplitter.getFirstComponent().setBorder(component == null ? null : IdeBorderFactory.createBorder(SideBorder.RIGHT));
     mySplitter.revalidate();
@@ -295,7 +267,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     return SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
   }
 
-  private void updateProgressComponent(final Factory<JComponent> progress) {
+  private void updateProgressComponent(@NotNull final Factory<JComponent> progress) {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -307,7 +279,8 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       }
     });
   }
-  public void updateProgressText(final String text, final boolean isError) {
+
+  public void updateProgressText(String text, boolean isError) {
     updateProgressComponent(createTextStatusFactory(text, isError));
   }
 
@@ -321,6 +294,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     });
   }
 
+  @NotNull
   public static Factory<JComponent> createTextStatusFactory(final String text, final boolean isError) {
     return new Factory<JComponent>() {
       @Override
@@ -335,7 +309,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   @Override
   public void scheduleRefresh() {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    if (myProject == null || myProject.isDisposed()) { return; }
+    if (myProject.isDisposed()) return;
     int was = myRepaintAlarm.cancelAllRequests();
     if (LOG.isDebugEnabled()) {
       LOG.debug("schedule refresh, was " + was);
@@ -350,51 +324,44 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   private void refreshView() {
-    if (myDisposed || ! myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
-    if (! ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
+    if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
 
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
-    final Couple<Integer> unv = changeListManager.getUnversionedFilesSize();
-    final boolean manyUnversioned = unv.getFirst() > UNVERSIONED_MAX_SIZE;
-    final Trinity<List<VirtualFile>, Integer, Integer> unversionedPair =
-      new Trinity<List<VirtualFile>, Integer, Integer>(manyUnversioned ? Collections.<VirtualFile>emptyList() : changeListManager.getUnversionedFiles(), unv.getFirst(),
-                                                       unv.getSecond());
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("refresh view, unversioned collections size: " + unversionedPair.getFirst().size() + " unv size passed: " +
-                unversionedPair.getSecond() + " dirs: " + unversionedPair.getThird());
-    }
-    myView.updateModel(changeListManager.getChangeListsCopy(), unversionedPair,
-                       changeListManager.getDeletedFiles(),
-                       changeListManager.getModifiedWithoutEditing(),
-                       changeListManager.getSwitchedFilesMap(),
-                       changeListManager.getSwitchedRoots(),
-                       SHOW_IGNORED_MODE ? changeListManager.getIgnoredFiles() : null, changeListManager.getLockedFolders(),
-                       changeListManager.getLogicallyLockedFolders());
+    myView.updateModel(
+      new TreeModelBuilder(myProject, myView.isShowFlatten())
+        .set(changeListManager.getChangeListsCopy(), changeListManager.getDeletedFiles(), changeListManager.getModifiedWithoutEditing(),
+             changeListManager.getSwitchedFilesMap(), changeListManager.getSwitchedRoots(),
+             myState.myShowIgnored ? changeListManager.getIgnoredFiles() : null, changeListManager.getLockedFolders(),
+             changeListManager.getLogicallyLockedFolders())
+        .setUnversioned(changeListManager.getUnversionedFiles(), changeListManager.getUnversionedFilesSize())
+        .build()
+    );
 
     changeDetails();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    SHOW_FLATTEN_MODE = Boolean.valueOf(element.getAttributeValue(ATT_FLATTENED_VIEW)).booleanValue();
-    SHOW_IGNORED_MODE = Boolean.valueOf(element.getAttributeValue(ATT_SHOW_IGNORED)).booleanValue();
+  @NotNull
+  @Override
+  public ChangesViewManager.State getState() {
+    return myState;
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute(ATT_FLATTENED_VIEW, String.valueOf(SHOW_FLATTEN_MODE));
-    element.setAttribute(ATT_SHOW_IGNORED, String.valueOf(SHOW_IGNORED_MODE));
+  @Override
+  public void loadState(@NotNull ChangesViewManager.State state) {
+    myState = state;
   }
 
   @Override
   public void setShowFlattenMode(boolean state) {
-    SHOW_FLATTEN_MODE = state;
-    myView.setShowFlatten(SHOW_FLATTEN_MODE);
+    myState.myShowFlatten = state;
+    myView.setShowFlatten(state);
     refreshView();
   }
 
   @Override
-  public void selectFile(final VirtualFile vFile) {
+  public void selectFile(@Nullable VirtualFile vFile) {
     if (vFile == null) return;
     Change change = ChangeListManager.getInstance(myProject).getChange(vFile);
     Object objectToFind = change != null ? change : vFile;
@@ -407,31 +374,35 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
   }
 
   @Override
-  public void refreshChangesViewNodeAsync(final VirtualFile file) {
+  public void refreshChangesViewNodeAsync(@NotNull final VirtualFile file) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        if (myProject.isDisposed()) return;
         refreshChangesViewNode(file);
       }
-    });
+    }, myProject.getDisposed());
   }
 
-  private void refreshChangesViewNode(final VirtualFile file) {
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-    Object userObject;
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    if (changeListManager.isUnversioned(file)) {
-      userObject = file;
-    }
-    else {
-      userObject = changeListManager.getChange(file);
-    }
+  private void refreshChangesViewNode(@NotNull VirtualFile file) {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    Object userObject = changeListManager.isUnversioned(file) ? file : changeListManager.getChange(file);
+
     if (userObject != null) {
-      final DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
+      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
+      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, userObject);
+
       if (node != null) {
         myView.getModel().nodeChanged(node);
       }
     }
+  }
+
+  public static class State {
+
+    @Attribute("flattened_view")
+    public boolean myShowFlatten = true;
+
+    @Attribute("show_ignored")
+    public boolean myShowIgnored;
   }
 
   private class MyChangeListListener extends ChangeListAdapter {
@@ -462,10 +433,13 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
       VcsException updateException = changeListManager.getUpdateException();
       setBusy(false);
       if (updateException == null) {
-        updateProgressText("", false);
-        final Factory<JComponent> additionalUpdateInfo = changeListManager.getAdditionalUpdateInfo();
+        Factory<JComponent> additionalUpdateInfo = changeListManager.getAdditionalUpdateInfo();
+
         if (additionalUpdateInfo != null) {
           updateProgressComponent(additionalUpdateInfo);
+        }
+        else {
+          updateProgressText("", false);
         }
       }
       else {
@@ -501,7 +475,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return !SHOW_FLATTEN_MODE;
+      return !myState.myShowFlatten;
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
@@ -517,11 +491,11 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     }
 
     public boolean isSelected(AnActionEvent e) {
-      return SHOW_IGNORED_MODE;
+      return myState.myShowIgnored;
     }
 
     public void setSelected(AnActionEvent e, boolean state) {
-      SHOW_IGNORED_MODE = state;
+      myState.myShowIgnored = state;
       refreshView();
     }
   }
@@ -565,15 +539,15 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
     @NotNull
     @Override
     protected List<Change> getSelectedChanges() {
-      Change[] changes = myView.getSelectedChanges();
-      if (changes.length == 0) changes = myView.getChanges();
-      return Arrays.asList(changes);
+      List<Change> result = myView.getSelectedChanges().collect(toList());
+      if (result.isEmpty()) result = myView.getChanges().collect(toList());
+      return result;
     }
 
     @NotNull
     @Override
     protected List<Change> getAllChanges() {
-      return Arrays.asList(myView.getChanges());
+      return myView.getChanges().collect(toList());
     }
 
     @Override

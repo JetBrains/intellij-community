@@ -70,19 +70,13 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
     CachedValue<ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>> data = project.getUserData(key);
     if (data == null) {
       project.putUserData(key, data = CachedValuesManager.getManager(project).createCachedValue(
-        new CachedValueProvider<ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>>() {
-          @Nullable
-          @Override
-          public Result<ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>> compute() {
-            return new Result<ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>>(
-              ContainerUtil.<String, UniqueNameBuilder<VirtualFile>>createConcurrentSoftValueMap(),
-              PsiModificationTracker.MODIFICATION_COUNT,
-              //ProjectRootModificationTracker.getInstance(project),
-              //VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
-              FileEditorManagerImpl.OPEN_FILE_SET_MODIFICATION_COUNT
-            );
-          }
-        }, false));
+        () -> new CachedValueProvider.Result<ConcurrentMap<String, UniqueNameBuilder<VirtualFile>>>(
+          ContainerUtil.<String, UniqueNameBuilder<VirtualFile>>createConcurrentSoftValueMap(),
+          PsiModificationTracker.MODIFICATION_COUNT,
+          //ProjectRootModificationTracker.getInstance(project),
+          //VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
+          FileEditorManagerImpl.OPEN_FILE_SET_MODIFICATION_COUNT
+        ), false));
     }
 
     final ConcurrentMap<String, UniqueNameBuilder<VirtualFile>> valueMap = data.getValue();
@@ -125,9 +119,11 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
         setOfFilesWithTheSameName.add(openFile);
       }
     }
-    for (VirtualFile recentlyEditedFile : EditorHistoryManager.getInstance(project).getFiles()) {
-      if (recentlyEditedFile.getName().equals(fileName)) {
-        setOfFilesWithTheSameName.add(recentlyEditedFile);
+    if (!skipNonOpenedFiles) {
+      for (VirtualFile recentlyEditedFile : EditorHistoryManager.getInstance(project).getFiles()) {
+        if (recentlyEditedFile.getName().equals(fileName)) {
+          setOfFilesWithTheSameName.add(recentlyEditedFile);
+        }
       }
     }
 

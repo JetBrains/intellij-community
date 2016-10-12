@@ -187,14 +187,11 @@ public class SheetController {
   }
 
   void requestFocus() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        if (myFocusedComponent != null) {
-          myFocusedComponent.requestFocus();
-        } else {
-          LOG.debug("My focused component is null for the next message: " + messageTextPane.getText());
-        }
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      if (myFocusedComponent != null) {
+        myFocusedComponent.requestFocus();
+      } else {
+        LOG.debug("My focused component is null for the next message: " + messageTextPane.getText());
       }
     });
   }
@@ -378,7 +375,7 @@ public class SheetController {
 
   @Language("HTML")
   private static String handleBreaks(@Language("HTML") final String message) {
-    return  message == null ? "" : message.replaceAll("(\r\n|\n)", "<br/>");
+    return message == null ? "" : message.replaceAll("(\r\n|\n)", "<br/>");
   }
 
   private void shiftButtonsToTheBottom(int shiftDistance) {

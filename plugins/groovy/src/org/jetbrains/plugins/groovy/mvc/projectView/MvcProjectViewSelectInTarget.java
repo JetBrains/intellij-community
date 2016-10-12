@@ -51,13 +51,10 @@ public class MvcProjectViewSelectInTarget extends SelectInTargetBase implements 
       return;
     }
 
-    final Runnable select = new Runnable() {
-      @Override
-      public void run() {
-        final MvcProjectViewPane view = MvcProjectViewPane.getView(project, framework);
-        if (view != null) {
-          view.selectFile(file, requestFocus);
-        }
+    final Runnable select = () -> {
+      final MvcProjectViewPane view = MvcProjectViewPane.getView(project, framework);
+      if (view != null) {
+        view.selectFile(file, requestFocus);
       }
     };
 

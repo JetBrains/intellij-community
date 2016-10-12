@@ -76,7 +76,8 @@ public class IdeMouseEventDispatcherTest extends LightPlatformTestCase {
 
   public void testActionTriggering() throws Exception {
     assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_PRESSED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
-    assertTrue(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
+    MouseEvent mouseEvent = new MouseEvent(myEventSource, MouseEvent.MOUSE_RELEASED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2);
+    assertTrue(!myDispatcher.dispatchMouseEvent(mouseEvent) && mouseEvent.isConsumed());
     assertFalse(myDispatcher.dispatchMouseEvent(new MouseEvent(myEventSource, MouseEvent.MOUSE_CLICKED, 0, 0, 0, 0, 1, false, MouseEvent.BUTTON2)));
     assertEquals(1, myActionExecutionCount);
   }

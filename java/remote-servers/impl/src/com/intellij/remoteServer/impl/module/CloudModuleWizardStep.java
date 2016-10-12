@@ -60,13 +60,7 @@ public class CloudModuleWizardStep extends ModuleWizardStep {
     myAccountSelectionPanel = new CloudAccountSelectionEditor(cloudTypes);
     myAccountPanelPlaceHolder.add(myAccountSelectionPanel.getMainPanel());
 
-    myAccountSelectionPanel.setAccountSelectionListener(new Runnable() {
-
-      @Override
-      public void run() {
-        onAccountSelectionChanged();
-      }
-    });
+    myAccountSelectionPanel.setAccountSelectionListener(() -> onAccountSelectionChanged());
     onAccountSelectionChanged();
   }
 

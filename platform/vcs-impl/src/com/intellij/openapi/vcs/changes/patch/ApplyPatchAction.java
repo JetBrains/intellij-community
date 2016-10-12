@@ -30,12 +30,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
+import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -47,15 +47,18 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +66,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.changes.patch.PatchFileType.isPatchFile;
 
 public class ApplyPatchAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchAction");
@@ -78,10 +83,6 @@ public class ApplyPatchAction extends DumbAwareAction {
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(project != null);
     }
-  }
-
-  private static boolean isPatchFile(@Nullable VirtualFile vFile) {
-    return vFile != null && vFile.getFileType() == StdFileTypes.PATCH;
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -126,6 +127,25 @@ public class ApplyPatchAction extends DumbAwareAction {
       project, new ApplyPatchDefaultExecutor(project),
       Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, file);
     dialog.show();
+  }
+
+  @CalledInAwt
+  public static Boolean showAndGetApplyPatch(@NotNull final Project project, @NotNull final File file) {
+    VirtualFile vFile = VfsUtil.findFileByIoFile(file, true);
+    String patchPath = file.getPath();
+    if (vFile == null) {
+      VcsNotifier.getInstance(project).notifyWeakError("Can't find patch file " + patchPath);
+      return false;
+    }
+    if (!isPatchFile(file)) {
+      VcsNotifier.getInstance(project).notifyWeakError("Selected file " + patchPath + " is not patch type file ");
+      return false;
+    }
+    final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(project, new ApplyPatchDefaultExecutor(project),
+                                                                                     Collections.emptyList(),
+                                                                                     ApplyPatchMode.APPLY_PATCH_IN_MEMORY, vFile);
+    dialog.setModal(true);
+    return dialog.showAndGet();
   }
 
   public static void applySkipDirs(final List<FilePatch> patches, final int skipDirs) {
@@ -204,7 +224,12 @@ public class ApplyPatchAction extends DumbAwareAction {
         }
       }
       else {
-        request = PatchDiffRequestFactory.createBadMergeRequest(project, document, file, localContent, patchedContent, callback);
+        TextFilePatch textPatch = (TextFilePatch)patch.getPatch();
+        final GenericPatchApplier applier = new GenericPatchApplier(localContent, textPatch.getHunks());
+        applier.execute();
+
+        final AppliedTextPatch appliedTextPatch = AppliedTextPatch.create(applier.getAppliedInfo());
+        request = PatchDiffRequestFactory.createBadMergeRequest(project, document, file, localContent, appliedTextPatch, callback);
       }
       request.putUserData(DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS, new Function<MergeResult, String>() {
         @Override

@@ -93,12 +93,9 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     for (final ThemeInfo theme: myThemes) {
       final JRadioButton radioButton = new JRadioButton(theme.name, myDefaultTheme == theme);
       radioButton.setOpaque(false);
-      final JPanel panel = createBigButtonPanel(createSmallBorderLayout(), radioButton, new Runnable() {
-        @Override
-        public void run() {
-          applyLaf(theme, CustomizeUIThemeStepPanel.this);
-          theme.apply();
-        }
+      final JPanel panel = createBigButtonPanel(createSmallBorderLayout(), radioButton, () -> {
+        applyLaf(theme, CustomizeUIThemeStepPanel.this);
+        theme.apply();
       });
       panel.setBorder(createSmallEmptyBorder());
       panel.add(radioButton, myColumnMode ? BorderLayout.WEST : BorderLayout.NORTH);
@@ -121,12 +118,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       wrapperPanel.add(myPreviewLabel);
       add(wrapperPanel, BorderLayout.CENTER);
     }
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        applyLaf(myDefaultTheme, CustomizeUIThemeStepPanel.this);
-      }
-    });
+    SwingUtilities.invokeLater(() -> applyLaf(myDefaultTheme, CustomizeUIThemeStepPanel.this));
     myInitial = false;
   }
 

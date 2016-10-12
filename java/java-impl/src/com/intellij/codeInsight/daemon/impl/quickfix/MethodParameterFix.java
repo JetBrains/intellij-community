@@ -115,6 +115,11 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
     }
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   private ParameterInfoImpl[] getNewParametersInfo(PsiMethod method) throws IncorrectOperationException {
     List<ParameterInfoImpl> result = new ArrayList<ParameterInfoImpl>();
     PsiParameter[] parameters = method.getParameterList().getParameters();

@@ -40,7 +40,7 @@ import java.util.ArrayList;
 public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceListStub> implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList {
   private static final Logger LOG = Logger.getInstance(GrReferenceListImpl.class);
   
-  private PsiClassType[] myCachedTypes = null;
+  private PsiClassType[] myCachedTypes;
 
   public GrReferenceListImpl(@NotNull ASTNode node) {
     super(node);

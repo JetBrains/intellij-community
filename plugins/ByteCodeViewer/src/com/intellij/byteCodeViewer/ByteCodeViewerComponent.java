@@ -26,14 +26,14 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
 
 import javax.swing.*;
@@ -82,12 +82,11 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
 
   public void setText(final String bytecode, PsiElement element) {
     int offset = 0;
-    PsiFile psiFile = element.getContainingFile();
-    final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(psiFile);
-    if (document != null) {
-      int lineNumber = document.getLineNumber(element.getTextOffset());
-      VirtualFile file = psiFile.getVirtualFile();
-      if (file != null) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    if (file != null) {
+      final Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document != null) {
+        int lineNumber = document.getLineNumber(element.getTextOffset());
         LineNumbersMapping mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
         if (mapping != null) {
           int mappedLine = mapping.sourceToBytecode(lineNumber);
@@ -98,26 +97,23 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
             lineNumber = mappedLine;
           }
         }
-      }
-      offset = bytecode.indexOf("LINENUMBER " + lineNumber);
-      while (offset == -1 && lineNumber < document.getLineCount()) {
-        offset = bytecode.indexOf("LINENUMBER " + (lineNumber++));
+        offset = bytecode.indexOf("LINENUMBER " + lineNumber);
+        while (offset == -1 && lineNumber < document.getLineCount()) {
+          offset = bytecode.indexOf("LINENUMBER " + (lineNumber++));
+        }
       }
     }
     setText(bytecode, Math.max(0, offset));
   }
 
   public void setText(final String bytecode, final int offset) {
-    DocumentUtil.writeInRunUndoTransparentAction(new Runnable() {
-      @Override
-      public void run() {
-        Document fragmentDoc = myEditor.getDocument();
-        fragmentDoc.setReadOnly(false);
-        fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), bytecode);
-        fragmentDoc.setReadOnly(true);
-        myEditor.getCaretModel().moveToOffset(offset);
-        myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-      }
+    DocumentUtil.writeInRunUndoTransparentAction(() -> {
+      Document fragmentDoc = myEditor.getDocument();
+      fragmentDoc.setReadOnly(false);
+      fragmentDoc.replaceString(0, fragmentDoc.getTextLength(), bytecode);
+      fragmentDoc.setReadOnly(true);
+      myEditor.getCaretModel().moveToOffset(offset);
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     });
   }
 

@@ -17,73 +17,67 @@ package com.intellij.util.ui.table;
 
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 /**
  * @author Aleksey Pivovarov
  */
-public abstract class ComponentsListFocusTraversalPolicy extends FocusTraversalPolicy {
+public abstract class ComponentsListFocusTraversalPolicy extends LayoutFocusTraversalPolicy {
+  private static final int FORWARD = 1;
+  private static final int BACKWARD = -1;
+
   @Override
   public Component getComponentAfter(Container aContainer, Component aComponent) {
     final List<Component> components = getOrderedComponents();
     int i = components.indexOf(aComponent);
-    if (i != -1) {
-      i++;
-      if (i >= components.size()) {
-        if (isFocusCycleRoot())
-          i = 0;
-        else
-          return null; // fallback to default behavior
-      }
-      return components.get(i);
+    Component after = (i != -1 ? searchShowing(components, i + 1, FORWARD) : null);
+    if (after == null) {
+      // Let LayoutFTP detect the nearest focus cycle root and handle cycle icity correctly.
+      return super.getComponentAfter(aContainer, aComponent);
     }
-    return null;
+    return after;
   }
 
   @Override
   public Component getComponentBefore(Container aContainer, Component aComponent) {
     final List<Component> components = getOrderedComponents();
     int i = components.indexOf(aComponent);
-    if (i != -1) {
-      i--;
-      if (i == -1) {
-        if (isFocusCycleRoot())
-          i = components.size() - 1;
-        else
-          return null; // fallback to default behavior
-      }
-      return components.get(i);
+    Component before = (i != -1 ? searchShowing(components, i - 1, BACKWARD) : null);
+    if (before == null) {
+      // Let LayoutFTP detect the nearest focus cycle root and handle cyclicity correctly.
+      return super.getComponentBefore(aContainer, aComponent);
     }
-    return null;
+    return before;
   }
 
   @Override
   public Component getFirstComponent(Container aContainer) {
     final List<Component> components = getOrderedComponents();
-    return components.isEmpty() ? null : components.get(0);
+    return components.isEmpty() ? null : searchShowing(components, 0, FORWARD);
   }
 
   @Override
   public Component getLastComponent(Container aContainer) {
     final List<Component> components = getOrderedComponents();
-    return components.isEmpty() ? null : components.get(components.size() - 1);
+    return components.isEmpty() ? null : searchShowing(components, components.size() - 1, BACKWARD);
   }
 
   @Override
   public Component getDefaultComponent(Container aContainer) {
     final List<Component> components = getOrderedComponents();
-    return components.isEmpty() ? null : components.get(0);
+    return components.isEmpty() ? null : searchShowing(components, 0, FORWARD);
   }
 
   @NotNull
   protected abstract List<Component> getOrderedComponents();
 
-  /**
-   * Returns {@code true} to keep the focus cycling only through the components of the {@link #getOrderedComponents} list.
-   * Returns {@code false} to allows the focus to cycle through components outside of the {@link #getOrderedComponents} list.
-   */
-  protected boolean isFocusCycleRoot() {
-    return true;
+  private static Component searchShowing(@NotNull List<Component> components, int start, int direction) {
+    for (int i = start; i >= 0 && i < components.size(); i += direction) {
+      Component c = components.get(i);
+      if (c != null && c.isShowing()) return c;
+    }
+    return null;
   }
 }

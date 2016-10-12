@@ -47,7 +47,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
       bounds = ((InferenceVariable)superClass).getBounds(InferenceBound.LOWER);
     }
     else if (superClass instanceof PsiTypeParameter) {
-      final PsiType lowerBound = superClass.getUserData(InferenceSession.LOWER_BOUND);
+      final PsiType lowerBound = InferenceSession.getLowerBound(superClass);
       if (lowerBound != null) {
         bounds = Collections.singletonList(lowerBound);
       }
@@ -93,6 +93,9 @@ public class JavaClassSupersImpl extends JavaClassSupers {
           return substitutor;
         }
       }
+    }
+    else if (lowerBound instanceof PsiCapturedWildcardType) {
+      return processLowerBound(((PsiCapturedWildcardType)lowerBound).getUpperBound(), derivedClass, scope, derivedSubstitutor);
     }
     return null;
   }

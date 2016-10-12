@@ -57,11 +57,8 @@ public class RecentTaskRepositories implements PersistentStateComponent<Element>
   }
 
   public Set<TaskRepository> getRepositories() {
-    return new THashSet<TaskRepository>(ContainerUtil.findAll(myRepositories, new Condition<TaskRepository>() {
-      public boolean value(TaskRepository repository) {
-        return !StringUtil.isEmptyOrSpaces(repository.getUrl());
-      }
-    }), HASHING_STRATEGY);
+    return new THashSet<TaskRepository>(ContainerUtil.findAll(myRepositories,
+                                                              repository -> !StringUtil.isEmptyOrSpaces(repository.getUrl())), HASHING_STRATEGY);
   }
 
   public void addRepositories(Collection<TaskRepository> repositories) {

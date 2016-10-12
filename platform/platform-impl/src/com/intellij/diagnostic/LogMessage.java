@@ -15,13 +15,22 @@
  */
 package com.intellij.diagnostic;
 
+import com.intellij.idea.IdeaLogger;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.apache.log4j.Layout;
 import org.apache.log4j.spi.LoggingEvent;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 public class LogMessage extends AbstractMessage {
   private final Throwable myThrowable;
   private final String myHeader;
+  private List<Attachment> myAttachments = null;
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public LogMessage(LoggingEvent aEvent) {
@@ -81,6 +90,19 @@ public class LogMessage extends AbstractMessage {
 
   @Override
   public String getThrowableText() {
-    return StringUtil.getThrowableText(getThrowable());
+    return StringUtil.join(IdeaLogger.getThrowableRenderer().doRender(getThrowable()), Layout.LINE_SEP);
+  }
+
+  public void addAttachment(Attachment attachment) {
+    if (myAttachments == null) {
+      myAttachments = ContainerUtil.createLockFreeCopyOnWriteList();
+    }
+    myAttachments.add(attachment);
+  }
+
+  @NotNull
+  @Override
+  public List<Attachment> getAllAttachments() {
+    return myAttachments != null ? myAttachments : Collections.emptyList();
   }
 }

@@ -29,5 +29,4 @@ public class VcsLogSorter {
   public static <Commit extends TimedVcsCommit> List<Commit> sortByDateTopoOrder(@NotNull Collection<Commit> commits) {
     return new VcsLogJoiner.NewCommitIntegrator<Hash, Commit>(new ArrayList<Commit>(), commits).getResultList();
   }
-
 }

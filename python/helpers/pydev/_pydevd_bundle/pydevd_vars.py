@@ -2,8 +2,8 @@
     resolution/conversion to XML.
 """
 import pickle
-from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
-from types import * #@UnusedWildImport
+from _pydevd_bundle.pydevd_constants import *  # @UnusedWildImport
+from types import *  # @UnusedWildImport
 
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import *
@@ -13,7 +13,7 @@ try:
     from StringIO import StringIO
 except ImportError:
     from io import StringIO
-import sys #@Reimport
+import sys  # @Reimport
 
 from _pydev_imps._pydev_saved_modules import threading
 import traceback
@@ -21,31 +21,29 @@ from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, quote, execfile
 from _pydevd_bundle.pydevd_utils import to_string
 
-try:
-    import types
-    frame_type = types.FrameType
-except:
-    frame_type = type(sys._getframe())
 
-
-#-------------------------------------------------------------------------- defining true and false for earlier versions
+# -------------------------------------------------------------------------- defining true and false for earlier versions
 
 try:
     __setFalse = False
 except:
     import __builtin__
+
     setattr(__builtin__, 'True', 1)
     setattr(__builtin__, 'False', 0)
 
-#------------------------------------------------------------------------------------------------------ class for errors
 
-class VariableError(RuntimeError):pass
+# ------------------------------------------------------------------------------------------------------ class for errors
 
-class FrameNotFoundError(RuntimeError):pass
+class VariableError(RuntimeError): pass
+
+
+class FrameNotFoundError(RuntimeError): pass
+
 
 def _iter_frames(initialFrame):
     '''NO-YIELD VERSION: Iterates through all the frames starting at the specified frame (which will be the first returned item)'''
-    #cannot use yield
+    # cannot use yield
     frames = []
 
     while initialFrame is not None:
@@ -53,6 +51,7 @@ def _iter_frames(initialFrame):
         initialFrame = initialFrame.f_back
 
     return frames
+
 
 def dump_frames(thread_id):
     sys.stdout.write('dumping frames\n')
@@ -64,21 +63,25 @@ def dump_frames(thread_id):
         sys.stdout.write('%s\n' % pickle.dumps(frame))
 
 
-#===============================================================================
+# ===============================================================================
 # AdditionalFramesContainer
-#===============================================================================
+# ===============================================================================
 class AdditionalFramesContainer:
     lock = thread.allocate_lock()
-    additional_frames = {} #dict of dicts
+    additional_frames = {}  # dict of dicts
 
 
 def add_additional_frame_by_id(thread_id, frames_by_id):
     AdditionalFramesContainer.additional_frames[thread_id] = frames_by_id
-addAdditionalFrameById = add_additional_frame_by_id # Backward compatibility
+
+
+addAdditionalFrameById = add_additional_frame_by_id  # Backward compatibility
 
 
 def remove_additional_frame_by_id(thread_id):
     del AdditionalFramesContainer.additional_frames[thread_id]
+
+
 removeAdditionalFrameById = remove_additional_frame_by_id  # Backward compatibility
 
 
@@ -94,9 +97,9 @@ def find_frame(thread_id, frame_id):
     """ returns a frame on the thread that has a given frame_id """
     try:
         curr_thread_id = get_thread_id(threading.currentThread())
-        if thread_id != curr_thread_id :
+        if thread_id != curr_thread_id:
             try:
-                return get_custom_frame(thread_id, frame_id)  #I.e.: thread_id could be a stackless frame id + thread_id.
+                return get_custom_frame(thread_id, frame_id)  # I.e.: thread_id could be a stackless frame id + thread_id.
             except:
                 pass
 
@@ -125,12 +128,12 @@ def find_frame(thread_id, frame_id):
 
             del frame
 
-        #Important: python can hold a reference to the frame from the current context
-        #if an exception is raised, so, if we don't explicitly add those deletes
-        #we might have those variables living much more than we'd want to.
+        # Important: python can hold a reference to the frame from the current context
+        # if an exception is raised, so, if we don't explicitly add those deletes
+        # we might have those variables living much more than we'd want to.
 
-        #I.e.: sys.exc_info holding reference to frame that raises exception (so, other places
-        #need to call sys.exc_clear())
+        # I.e.: sys.exc_info holding reference to frame that raises exception (so, other places
+        # need to call sys.exc_clear())
         del curFrame
 
         if frameFound is None:
@@ -160,6 +163,7 @@ def find_frame(thread_id, frame_id):
         traceback.print_exc()
         return None
 
+
 def getVariable(thread_id, frame_id, scope, attrs):
     """
     returns the value of a variable
@@ -175,14 +179,14 @@ def getVariable(thread_id, frame_id, scope, attrs):
            not the frame (as we don't care about the frame in this case).
     """
     if scope == 'BY_ID':
-        if thread_id != get_thread_id(threading.currentThread()) :
+        if thread_id != get_thread_id(threading.currentThread()):
             raise VariableError("getVariable: must execute on same thread")
 
         try:
             import gc
             objects = gc.get_objects()
         except:
-            pass  #Not all python variants have it.
+            pass  # Not all python variants have it.
         else:
             frame_id = int(frame_id)
             for var in objects:
@@ -195,7 +199,7 @@ def getVariable(thread_id, frame_id, scope, attrs):
 
                     return var
 
-        #If it didn't return previously, we coudn't find it by id (i.e.: alrceady garbage collected).
+        # If it didn't return previously, we coudn't find it by id (i.e.: alrceady garbage collected).
         sys.stderr.write('Unable to find object with id: %s\n' % (frame_id,))
         return None
 
@@ -333,36 +337,37 @@ def evaluate_expression(thread_id, frame_id, expression, doExec):
     if frame is None:
         return
 
-    #Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
-    #(Names not resolved in generator expression in method)
-    #See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
+    # Not using frame.f_globals because of https://sourceforge.net/tracker2/?func=detail&aid=2541355&group_id=85796&atid=577329
+    # (Names not resolved in generator expression in method)
+    # See message: http://mail.python.org/pipermail/python-list/2009-January/526522.html
     updated_globals = {}
     updated_globals.update(frame.f_globals)
-    updated_globals.update(frame.f_locals)  #locals later because it has precedence over the actual globals
+    updated_globals.update(frame.f_locals)  # locals later because it has precedence over the actual globals
 
     try:
         expression = str(expression.replace('@LINE@', '\n'))
 
         if doExec:
             try:
-                #try to make it an eval (if it is an eval we can print it, otherwise we'll exec it and
-                #it will have whatever the user actually did)
+                # try to make it an eval (if it is an eval we can print it, otherwise we'll exec it and
+                # it will have whatever the user actually did)
                 compiled = compile(expression, '<string>', 'eval')
             except:
                 Exec(expression, updated_globals, frame.f_locals)
                 pydevd_save_locals.save_locals(frame)
             else:
                 result = eval(compiled, updated_globals, frame.f_locals)
-                if result is not None:  #Only print if it's not None (as python does)
+                if result is not None:  # Only print if it's not None (as python does)
                     sys.stdout.write('%s\n' % (result,))
             return
 
         else:
             return eval_in_context(expression, updated_globals, frame.f_locals)
     finally:
-        #Should not be kept alive if an exception happens and this frame is kept in the stack.
+        # Should not be kept alive if an exception happens and this frame is kept in the stack.
         del updated_globals
         del frame
+
 
 def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
     '''Changes some attribute in a given frame.
@@ -390,7 +395,7 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
                 pydevd_save_locals.save_locals(frame)
                 return frame.f_locals[attr]
 
-            #default way (only works for changing it in the topmost frame)
+            # default way (only works for changing it in the topmost frame)
             result = eval(expression, frame.f_globals, frame.f_locals)
             Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
             return result
@@ -399,16 +404,35 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg):
     except Exception:
         traceback.print_exc()
 
+
 MAXIMUM_ARRAY_SIZE = 100
 MAX_SLICE_SIZE = 1000
+
+
+def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):
+    _, type_name, _ = get_type(array)
+    if type_name == 'ndarray':
+        array, metaxml, r, c, f = array_to_meta_xml(array, name, format)
+        xml = metaxml
+        format = '%' + f
+        if rows == -1 and cols == -1:
+            rows = r
+            cols = c
+        xml += array_to_xml(array, roffset, coffset, rows, cols, format)
+    elif type_name == 'DataFrame':
+        xml = dataframe_to_xml(array, name, roffset, coffset, rows, cols, format)
+    else:
+        raise VariableError("Do not know how to convert type %s to table" % (type_name))
+
+    return "<xml>%s</xml>" % xml
+
 
 def array_to_xml(array, roffset, coffset, rows, cols, format):
     xml = ""
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE)
 
-
-    #there is no obvious rule for slicing (at least 5 choices)
+    # there is no obvious rule for slicing (at least 5 choices)
     if len(array) == 1 and (rows > 1 or cols > 1):
         array = array[0]
     if array.size > len(array):
@@ -494,11 +518,11 @@ def array_to_meta_xml(array, name, format):
     elif l == 2:
         rows = min(array.shape[-2], MAX_SLICE_SIZE)
         cols = min(array.shape[-1], MAX_SLICE_SIZE)
-        if cols < array.shape[-1] or  rows < array.shape[-2]:
+        if cols < array.shape[-1] or rows < array.shape[-2]:
             reslice = '[0:%s, 0:%s]' % (rows, cols)
         array = array[0:rows, 0:cols]
 
-    #avoid slice duplication
+    # avoid slice duplication
     if not slice.endswith(reslice):
         slice += reslice
 
@@ -506,8 +530,86 @@ def array_to_meta_xml(array, name, format):
     if type in "biufc":
         bounds = (array.min(), array.max())
     xml = '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
-           (slice, rows, cols, format, type, bounds[1], bounds[0])
+          (slice, rows, cols, format, type, bounds[1], bounds[0])
     return array, xml, rows, cols, format
 
 
+def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
+    """
+    :type df: pandas.core.frame.DataFrame
+    :type name: str
+    :type coffset: int
+    :type roffset: int
+    :type rows: int
+    :type cols: int
+    :type format: str
 
+
+    """
+    num_rows = min(df.shape[0], MAX_SLICE_SIZE)
+    num_cols = min(df.shape[1], MAX_SLICE_SIZE)
+    if (num_rows, num_cols) != df.shape:
+        df = df.iloc[0:num_rows, 0: num_cols]
+        slice = '.iloc[0:%s, 0:%s]' % (num_rows, num_cols)
+    else:
+        slice = ''
+    slice = name + slice
+    xml = '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"\" type=\"\" max=\"0\" min=\"0\"/>\n' % \
+          (slice, num_rows, num_cols)
+
+    if (rows, cols) == (-1, -1):
+        rows, cols = num_rows, num_cols
+
+    rows = min(rows, MAXIMUM_ARRAY_SIZE)
+    cols = min(min(cols, MAXIMUM_ARRAY_SIZE), num_cols)
+    # need to precompute column bounds here before slicing!
+    col_bounds = [None] * cols
+    for col in range(cols):
+        dtype = df.dtypes.iloc[col].kind
+        if dtype in "biufc":
+            cvalues = df.iloc[:, col]
+            bounds = (cvalues.min(), cvalues.max())
+        else:
+            bounds = (0, 0)
+        col_bounds[col] = bounds
+
+    df = df.iloc[roffset: roffset + rows, coffset: coffset + cols]
+    rows, cols = df.shape
+
+    def default_format(type):
+        if type == 'f':
+            return '.5f'
+        elif type == 'i' or type == 'u':
+            return 'd'
+        else:
+            return 's'
+
+    xml += "<headerdata rows=\"%s\" cols=\"%s\">\n" % (rows, cols)
+    format = format.replace('%', '')
+    col_formats = []
+    for col in range(cols):
+        label = df.axes[1].values[col]
+        if isinstance(label, tuple):
+            label = '/'.join(label)
+        label = str(label)
+        dtype = df.dtypes.iloc[col].kind
+        fmt = format if (dtype == 'f' and format) else default_format(dtype)
+        col_formats.append('%' + fmt)
+        bounds = col_bounds[col]
+
+        xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
+               (str(col), label, dtype, fmt, bounds[1], bounds[0])
+    for row, label in enumerate(iter(df.axes[0])):
+        if isinstance(label, tuple):
+            label = '/'.join(label)
+        xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % \
+               (str(row), label)
+    xml += "</headerdata>\n"
+    xml += "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
+    for row in range(rows):
+        xml += "<row index=\"%s\"/>\n" % str(row)
+        for col in range(cols):
+            value = df.iat[row, col]
+            value = col_formats[col] % value
+            xml += var_to_xml(value, '')
+    return xml

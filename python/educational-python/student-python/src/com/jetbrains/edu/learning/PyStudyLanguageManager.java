@@ -1,9 +1,11 @@
 package com.jetbrains.edu.learning;
 
-import com.jetbrains.edu.EduNames;
+import com.jetbrains.edu.learning.core.EduNames;
 import org.jetbrains.annotations.NotNull;
 
 public class PyStudyLanguageManager implements StudyLanguageManager {
+  public static final String PYTHON_3 = "3.x";
+  public static final String PYTHON_2 = "2.x";
 
   @NotNull
   @Override

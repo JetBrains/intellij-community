@@ -35,7 +35,7 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
   private RunListener myTestsListener;
   private OutputObjectRegistry myRegistry;
 
-  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, boolean sendTree) {
+  public int startRunnerWithArgs(String[] args, ArrayList listeners, String name, int count, final boolean sendTree) {
     try {
       Result result;
       if (count == 1) {
@@ -53,7 +53,6 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
             if (result == null) {
               return -1;
             }
-            sendTree = false;
             success &= result.wasSuccessful();
           }
           
@@ -66,7 +65,6 @@ public class JUnit4IdeaTestRunner implements IdeaTestRunner {
             if (result == null) {
               return -1;
             }
-            sendTree = false;
             success &= result.wasSuccessful();
             if (count == -2 && !success) {
               return -1;

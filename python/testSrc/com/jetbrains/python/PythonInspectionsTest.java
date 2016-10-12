@@ -152,20 +152,12 @@ public class PythonInspectionsTest extends PyTestCase {
 
   //PY-3373
   public void testPyDocstringParametersInspection() {     
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, new Runnable() {
-      public void run() {
-        doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33));
   }
   
   // PY-9795
   public void testGoogleDocstringParametersInspection() {     
-    runWithDocStringFormat(DocStringFormat.GOOGLE, new Runnable() {
-      public void run() {
-        doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33);
-      }
-    });
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33));
   }
 
   public void testPySimplifyBooleanCheckInspection() {
@@ -248,16 +240,16 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyPropertyDefinitionInspection25() {
-    doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON25);
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON25);
   }
 
   public void testPyPropertyDefinitionInspection26() {
-    doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON26);
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON26);
   }
 
   // PY-11426
   public void testPyPropertyDefinitionInspection33() {
-    doTestWithLanguageLevel(getTestName(false), new PyPropertyDefinitionInspection(), LanguageLevel.PYTHON33);
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON33);
   }
 
   public void testInconsistentIndentation() {
@@ -335,5 +327,9 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyShadowingNamesInspection() {
     doHighlightingTest(PyShadowingNamesInspection.class);
+  }
+
+  public void testPyDunderSlotsInspection() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doHighlightingTest(PyDunderSlotsInspection.class));
   }
 }

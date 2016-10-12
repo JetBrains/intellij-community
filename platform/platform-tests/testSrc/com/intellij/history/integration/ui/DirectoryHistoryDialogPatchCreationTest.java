@@ -19,6 +19,8 @@ package com.intellij.history.integration.ui;
 import com.intellij.history.integration.PatchingTestCase;
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 
+import java.nio.charset.Charset;
+
 public class DirectoryHistoryDialogPatchCreationTest extends PatchingTestCase {
   public void testPatchCreation() throws Exception {
     createChildData(myRoot, "f1.txt");
@@ -29,7 +31,7 @@ public class DirectoryHistoryDialogPatchCreationTest extends PatchingTestCase {
     assertSize(3, m.getRevisions());
 
     m.selectRevisions(0, 2);
-    m.createPatch(patchFilePath, false);
+    m.createPatch(patchFilePath, myProject.getBasePath(), false, Charset.defaultCharset());
     clearRoot();
 
     applyPatch();

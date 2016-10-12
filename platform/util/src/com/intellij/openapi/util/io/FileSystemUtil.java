@@ -41,7 +41,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import static com.intellij.util.BitUtil.isSet;
-import static com.intellij.util.BitUtil.notSet;
 
 /**
  * @version 11.1
@@ -553,7 +552,7 @@ public class FileSystemUtil {
         final int flags = (Integer)myGetBooleanAttributes.invoke(myFileSystem, file);
         if (flags != 0) {
           boolean isDirectory = isSet(flags, BA_DIRECTORY);
-          boolean isSpecial = notSet(flags, BA_REGULAR) && notSet(flags, BA_DIRECTORY);
+          boolean isSpecial = !isSet(flags, BA_REGULAR) && !isSet(flags, BA_DIRECTORY);
           boolean isHidden = isSet(flags, BA_HIDDEN) && !isWindowsRoot(path);
           boolean isWritable = SystemInfo.isWindows && isDirectory || file.canWrite();
           return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), isWritable);

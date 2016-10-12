@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
     myInitialBreakpoint = initialBreakpoint;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -56,9 +57,10 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
     myInitialBreakpoint = null;
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = event.getProject();
     if (project == null) {
       presentation.setEnabled(false);
       return;

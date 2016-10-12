@@ -17,6 +17,8 @@ package git4idea.reset;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,9 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUiHandlerImpl;
 import git4idea.branch.GitSmartOperationDialog;
@@ -60,7 +60,6 @@ public class GitResetOperation {
   @NotNull private final ProgressIndicator myIndicator;
   @NotNull private final Git myGit;
   @NotNull private final VcsNotifier myNotifier;
-  @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final GitBranchUiHandlerImpl myUiHandler;
 
   public GitResetOperation(@NotNull Project project, @NotNull Map<GitRepository, VcsFullCommitDetails> targetCommits,
@@ -71,8 +70,7 @@ public class GitResetOperation {
     myIndicator = indicator;
     myGit = ServiceManager.getService(Git.class);
     myNotifier = VcsNotifier.getInstance(project);
-    myFacade = ServiceManager.getService(GitPlatformFacade.class);
-    myUiHandler = new GitBranchUiHandlerImpl(myProject, myFacade, myGit, indicator);
+    myUiHandler = new GitBranchUiHandlerImpl(myProject, myGit, indicator);
   }
 
   public void execute() {
@@ -95,7 +93,7 @@ public class GitResetOperation {
         }
         results.put(repository, result);
         repository.update();
-        VfsUtil.markDirtyAndRefresh(true, true, false, root);
+        VfsUtil.markDirtyAndRefresh(false, true, false, root);
         VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
       }
     }
@@ -112,7 +110,7 @@ public class GitResetOperation {
     int choice = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths, "reset", "&Hard Reset");
     if (choice == GitSmartOperationDialog.SMART_EXIT_CODE) {
       final Ref<GitCommandResult> result = Ref.create();
-      new GitPreservingProcess(myProject, myFacade, myGit, Collections.singleton(repository.getRoot()), "reset", target,
+      new GitPreservingProcess(myProject, myGit, Collections.singleton(repository.getRoot()), "reset", target,
                                GitVcsSettings.UpdateChangesPolicy.STASH, myIndicator,
                                new Runnable() {
         @Override
@@ -186,12 +184,8 @@ public class GitResetOperation {
   }
 
   private static void saveAllDocuments() {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        FileDocumentManager.getInstance().saveAllDocuments();
-      }
-    });
+    ApplicationManager.getApplication().invokeAndWait(() -> FileDocumentManager.getInstance().saveAllDocuments(),
+                                                      ModalityState.defaultModalityState());
   }
 
 }

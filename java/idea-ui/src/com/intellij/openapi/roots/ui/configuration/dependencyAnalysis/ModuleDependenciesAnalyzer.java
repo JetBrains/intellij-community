@@ -189,38 +189,35 @@ public class ModuleDependenciesAnalyzer {
         else {
           e.runtimeOnly();
         }
-        e.forEach(new Processor<OrderEntry>() {
-          @Override
-          public boolean process(OrderEntry orderEntry) {
-            myStack.add(new OrderEntryPathElement(orderEntry));
-            try {
-              if (orderEntry instanceof ModuleOrderEntry) {
-                ModuleOrderEntry o = (ModuleOrderEntry)orderEntry;
-                examine(o.getModule(), level + 1);
-              }
-              else if (orderEntry instanceof ModuleSourceOrderEntry) {
-                if (!myProduction || !myCompile) {
-                  CompilerModuleExtension e = CompilerModuleExtension.getInstance(m);
-                  final OrderPath p = new OrderPath(myStack);
-                  for (String u : e.getOutputRootUrls(!myCompile ? !myProduction : level > 0 && !myProduction)) {
-                    addUrlPath(p, u);
-                  }
-                  addEntryPath(orderEntry, p);
-                }
-              }
-              else {
+        e.forEach(orderEntry -> {
+          myStack.add(new OrderEntryPathElement(orderEntry));
+          try {
+            if (orderEntry instanceof ModuleOrderEntry) {
+              ModuleOrderEntry o = (ModuleOrderEntry)orderEntry;
+              examine(o.getModule(), level + 1);
+            }
+            else if (orderEntry instanceof ModuleSourceOrderEntry) {
+              if (!myProduction || !myCompile) {
+                CompilerModuleExtension e1 = CompilerModuleExtension.getInstance(m);
                 final OrderPath p = new OrderPath(myStack);
-                for (String u : orderEntry.getUrls(OrderRootType.CLASSES)) {
+                for (String u : e1.getOutputRootUrls(!myCompile ? !myProduction : level > 0 && !myProduction)) {
                   addUrlPath(p, u);
                 }
                 addEntryPath(orderEntry, p);
               }
             }
-            finally {
-              myStack.remove(myStack.size() - 1);
+            else {
+              final OrderPath p = new OrderPath(myStack);
+              for (String u : orderEntry.getUrls(OrderRootType.CLASSES)) {
+                addUrlPath(p, u);
+              }
+              addEntryPath(orderEntry, p);
             }
-            return true;
           }
+          finally {
+            myStack.remove(myStack.size() - 1);
+          }
+          return true;
         });
       }
       finally {

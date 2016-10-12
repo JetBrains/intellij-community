@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -61,7 +62,13 @@ import org.jetbrains.idea.svn.dialogs.LockDialog;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.Status;
 import org.tmatesoft.sqljet.core.SqlJetException;
+import org.tmatesoft.sqljet.core.internal.schema.SqlJetSchema;
+import org.tmatesoft.sqljet.core.internal.table.ISqlJetBtreeSchemaTable;
+import org.tmatesoft.sqljet.core.internal.table.SqlJetBtreeSchemaTable;
+import org.tmatesoft.sqljet.core.table.ISqlJetOptions;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
+import org.tmatesoft.sqljet.core.table.engine.ISqlJetEngineSynchronized;
+import org.tmatesoft.sqljet.core.table.engine.SqlJetEngine;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -77,6 +84,10 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.net.URI;
 import java.nio.channels.NonWritableChannelException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -346,7 +357,8 @@ public class SvnUtil {
     File dbFile = resolveDatabase(path);
 
     if (dbFile != null) {
-      result = FileUtilRt.doIOOperation(new WorkingCopyFormatOperation(dbFile));
+      result = FileUtilRt.doIOOperation(
+        Registry.is("svn.use.sqlite.jdbc") ? new SqLiteJdbcWorkingCopyFormatOperation(dbFile) : new WorkingCopyFormatOperation(dbFile));
 
       if (result == null) {
         notifyDatabaseError();
@@ -845,15 +857,15 @@ public class SvnUtil {
     @Nullable
     @Override
     public WorkingCopyFormat execute(boolean lastAttempt) {
-      // TODO: rewrite it using sqlite jdbc driver
-      SqlJetDb db = null;
-      WorkingCopyFormat result = null;
+      SqLiteDb db = null;
+      int userVersion = 0;
+
       try {
         // "write" access is requested here for now as workaround - see some details
         // in https://code.google.com/p/sqljet/issues/detail?id=25 and http://issues.tmatesoft.com/issue/SVNKIT-418.
         // BUSY error is currently handled same way as others.
-        db = SqlJetDb.open(myDbFile, true);
-        result = WorkingCopyFormat.getInstance(db.getOptions().getUserVersion());
+        db = SqLiteDb.open(myDbFile, true);
+        userVersion = db.getOptions().getUserVersion();
       }
       catch (NonWritableChannelException e) {
         // Such exceptions could be thrown when db is opened in "read" mode, but the db file is readonly (for instance, locked
@@ -863,11 +875,156 @@ public class SvnUtil {
       }
       catch (SqlJetException e) {
         LOG.info(e);
+        if (db != null) {
+          // Even if there is an error in db schema, db options could already be read successfully - so we just use them
+          userVersion = db.getUserVersion();
+          LOG.debug("Working copy database schema: " + db.getDbSchema());
+        }
       }
       finally {
         close(db);
       }
+
+      WorkingCopyFormat format = WorkingCopyFormat.getInstance(userVersion);
+
+      return !WorkingCopyFormat.UNKNOWN.equals(format) ? format : null;
+    }
+  }
+
+  private static class SqLiteJdbcWorkingCopyFormatOperation
+    implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
+    @NotNull private final File myDbFile;
+
+    public SqLiteJdbcWorkingCopyFormatOperation(@NotNull File dbFile) {
+      myDbFile = dbFile;
+    }
+
+    @Nullable
+    @Override
+    public WorkingCopyFormat execute(boolean lastAttempt) {
+      Connection connection = null;
+      int userVersion = 0;
+
+      try {
+        Class.forName("org.sqlite.JDBC");
+        connection = DriverManager.getConnection("jdbc:sqlite:" + FileUtil.toSystemIndependentName(myDbFile.getPath()));
+        ResultSet resultSet = connection.createStatement().executeQuery("pragma user_version");
+
+        if (resultSet.next()) {
+          userVersion = resultSet.getInt(1);
+        }
+        else {
+          LOG.info("No result while getting user version for " + myDbFile.getPath());
+        }
+      }
+      catch (ClassNotFoundException | SQLException e) {
+        LOG.info(e);
+      }
+      finally {
+        close(connection);
+      }
+
+      WorkingCopyFormat format = WorkingCopyFormat.getInstance(userVersion);
+
+      return !WorkingCopyFormat.UNKNOWN.equals(format) ? format : null;
+    }
+
+    private static void close(@Nullable Connection connection) {
+      if (connection != null) {
+        try {
+          connection.close();
+        }
+        catch (SQLException e) {
+          notifyDatabaseError();
+        }
+      }
+    }
+  }
+
+  private static class SqLiteDb extends SqlJetDb {
+
+    private SqLiteDb(@NotNull File file, boolean writable) {
+      super(file, writable);
+    }
+
+    @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+    @NotNull
+    public static SqLiteDb open(@NotNull File file, boolean write) throws SqlJetException {
+      final SqLiteDb db = new SqLiteDb(file, write);
+      db.open();
+      return db;
+    }
+
+    private int getUserVersion() {
+      int result = 0;
+      ISqlJetOptions options = dbHandle.getOptions();
+
+      if (options != null) {
+        try {
+          result = options.getUserVersion();
+        }
+        catch (SqlJetException ignore) {
+        }
+      }
+
       return result;
+    }
+
+    /**
+     * See {@link SqlJetEngine#readSchema()} for reference.
+     */
+    @NotNull
+    private String getDbSchema() {
+      String result = "";
+
+      try {
+        result = (String)runSynchronized(new ISqlJetEngineSynchronized() {
+          public Object runSynchronized(SqlJetEngine engine) throws SqlJetException {
+            btree.enter();
+            try {
+              return readDbSchema();
+            }
+            finally {
+              btree.leave();
+            }
+          }
+        });
+      }
+      catch (SqlJetException ignore) {
+      }
+
+      return result;
+    }
+
+    /**
+     * See {@link SqlJetSchema#init()} for reference.
+     */
+    @NotNull
+    private String readDbSchema() throws SqlJetException {
+      StringBuilder result = new StringBuilder();
+      ISqlJetBtreeSchemaTable table = new SqlJetBtreeSchemaTable(btree, false);
+
+      try {
+        table.lock();
+        try {
+          for (table.first(); !table.eof(); table.next()) {
+            String sql = table.getSqlField();
+
+            if (sql != null) {
+              result.append(sql);
+              result.append("\n");
+            }
+          }
+        }
+        finally {
+          table.unlock();
+        }
+      }
+      finally {
+        table.close();
+      }
+
+      return result.toString();
     }
   }
 }

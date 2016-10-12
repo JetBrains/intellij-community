@@ -65,23 +65,20 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
   private void updateAfterPsiChange() {
     if (myProject.isDisposed()) return;
     if (myBaseStructureViewDescriptor != null && ((StructureViewComponent)myBaseStructureViewDescriptor.structureView).getTree() == null) return;
-    ApplicationManager.getApplication().runReadAction(new Runnable(){
-      @Override
-      public void run() {
-        if (!myVirtualFile.isValid() || getViewProvider() == null) return;
+    ApplicationManager.getApplication().runReadAction(() -> {
+      if (!myVirtualFile.isValid() || getViewProvider() == null) return;
 
-        StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
-        if (structureViewWrapper == null) return;
+      StructureViewWrapper structureViewWrapper = StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
+      if (structureViewWrapper == null) return;
 
-        Language baseLanguage = getTemplateDataLanguage();
-        if (baseLanguage == myTemplateDataLanguage
-            && (myBaseStructureViewDescriptor == null || isPsiValid(myBaseStructureViewDescriptor))) {
-          updateBaseLanguageView();
-        }
-        else {
-          myTemplateDataLanguage = baseLanguage;
-          ((StructureViewWrapperImpl)structureViewWrapper).rebuild();
-        }
+      Language baseLanguage = getTemplateDataLanguage();
+      if (baseLanguage == myTemplateDataLanguage
+          && (myBaseStructureViewDescriptor == null || isPsiValid(myBaseStructureViewDescriptor))) {
+        updateBaseLanguageView();
+      }
+      else {
+        myTemplateDataLanguage = baseLanguage;
+        ((StructureViewWrapperImpl)structureViewWrapper).rebuild();
       }
     });
   }
@@ -189,12 +186,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
       @Override
       public void modificationCountChanged() {
         alarm.cancelAllRequests();
-        alarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            updateAfterPsiChange();
-          }
-        }, 300, ModalityState.NON_MODAL);
+        alarm.addRequest(() -> updateAfterPsiChange(), 300, ModalityState.NON_MODAL);
       }
     });
     return myStructureViewComposite;

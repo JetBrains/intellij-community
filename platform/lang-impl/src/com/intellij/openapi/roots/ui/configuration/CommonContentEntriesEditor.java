@@ -274,12 +274,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
           editor.setSelected(true);
           final JComponent component = editor.getComponent();
           final JComponent scroller = (JComponent)component.getParent();
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              scroller.scrollRectToVisible(component.getBounds());
-            }
-          });
+          SwingUtilities.invokeLater(() -> scroller.scrollRectToVisible(component.getBounds()));
           myRootTreeEditor.setContentEntryEditor(editor);
           myRootTreeEditor.requestFocus();
         }
@@ -415,12 +410,9 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      FileChooser.chooseFiles(myDescriptor, myProject, myLastSelectedDir, new Consumer<List<VirtualFile>>() {
-        @Override
-        public void consume(List<VirtualFile> files) {
-          myLastSelectedDir = files.get(0);
-          addContentEntries(VfsUtilCore.toVirtualFileArray(files));
-        }
+      FileChooser.chooseFiles(myDescriptor, myProject, myLastSelectedDir, files -> {
+        myLastSelectedDir = files.get(0);
+        addContentEntries(VfsUtilCore.toVirtualFileArray(files));
       });
     }
 

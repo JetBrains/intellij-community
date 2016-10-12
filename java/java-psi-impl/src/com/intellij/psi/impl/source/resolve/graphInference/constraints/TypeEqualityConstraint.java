@@ -85,12 +85,12 @@ public class TypeEqualityConstraint implements ConstraintFormula {
 
     InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
     if (inferenceVariable != null && !(myT instanceof PsiPrimitiveType)) {
-      inferenceVariable.addBound(myT, InferenceBound.EQ, session.myIncorporationPhase);
+      InferenceVariable.addBound(myS, myT, InferenceBound.EQ, session);
       return true;
     }
     inferenceVariable = session.getInferenceVariable(myT);
     if (inferenceVariable != null && !(myS instanceof PsiPrimitiveType)) {
-      inferenceVariable.addBound(myS, InferenceBound.EQ, session.myIncorporationPhase);
+      InferenceVariable.addBound(myT, myS, InferenceBound.EQ, session);
       return true;
     }
     if (myT instanceof PsiClassType && myS instanceof PsiClassType) {

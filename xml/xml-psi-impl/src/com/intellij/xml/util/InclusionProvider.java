@@ -48,12 +48,8 @@ class InclusionProvider implements CachedValueProvider<PsiElement[]> {
 
   @Override
   public Result<PsiElement[]> compute() {
-    PsiElement[] result = RecursionManager.doPreventingRecursion(myXincludeTag, true, new NullableComputable<PsiElement[]>() {
-      @Override
-      public PsiElement[] compute() {
-        return computeInclusion(myXincludeTag);
-      }
-    });
+    PsiElement[] result = RecursionManager.doPreventingRecursion(myXincludeTag, true,
+                                                                 (NullableComputable<PsiElement[]>)() -> computeInclusion(myXincludeTag));
     return Result.create(result == null ? PsiElement.EMPTY_ARRAY : result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
   }
 

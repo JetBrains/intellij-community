@@ -118,15 +118,7 @@ public class UIUtil {
   public static void setContent(final Editor editor, String val, final int from, final int end, final Project project) {
     final String value = val != null ? val : "";
 
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            editor.getDocument().replaceString(from, (end == -1) ? editor.getDocument().getTextLength() : end, value);
-          }
-        });
-      }
-    }, MODIFY_EDITOR_CONTENT, SS_GROUP);
+    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> editor.getDocument().replaceString(from, (end == -1) ? editor.getDocument().getTextLength() : end, value)), MODIFY_EDITOR_CONTENT, SS_GROUP);
   }
 
   static String getShortParamString(Configuration config, String varname) {
@@ -291,7 +283,7 @@ public class UIUtil {
   }
 
   @NotNull
-  static JComponent createCompleteMatchInfo(final Producer<Configuration> configurationProducer) {
+  public static JComponent createCompleteMatchInfo(final Producer<Configuration> configurationProducer) {
     final JLabel completeMatchInfo = new JLabel(AllIcons.RunConfigurations.Variables);
     final Point location = completeMatchInfo.getLocation();
     final JLabel label = new JLabel(SSRBundle.message("complete.match.variable.tooltip.message",

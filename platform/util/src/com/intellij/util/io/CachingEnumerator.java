@@ -16,11 +16,11 @@
 package com.intellij.util.io;
 
 import com.intellij.util.containers.SLRUMap;
-import jsr166e.extra.SequenceLock;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author peter
@@ -44,7 +44,7 @@ public class CachingEnumerator<Data> implements DataEnumerator<Data> {
     for(int i = 0; i < STRIPE_COUNT; ++i) {
       myHashcodeToIdCache[i] = new SLRUMap<Integer, Integer>(protectedSize / STRIPE_COUNT, probationalSize / STRIPE_COUNT);
       myIdToStringCache[i] = new SLRUMap<Integer, Data>(protectedSize / STRIPE_COUNT, probationalSize / STRIPE_COUNT);
-      myStripeLocks[i] = new SequenceLock();
+      myStripeLocks[i] = new ReentrantLock();
     }
 
   }

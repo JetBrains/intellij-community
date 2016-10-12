@@ -187,18 +187,15 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
     MavenDomConfiguration pluginCfg = DomUtil.findDomElement(myElement, MavenDomConfiguration.class);
     if (pluginCfg != null) {
-      boolean notFound = MavenPluginDescriptor.processDescriptors(new Processor<MavenPluginDescriptor>() {
-        @Override
-        public boolean process(MavenPluginDescriptor descriptor) {
-          if (descriptor.properties != null) {
-            for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
-              if (property.insideConfigurationOnly && property.name.equals(myText)) {
-                return false;
-              }
+      boolean notFound = MavenPluginDescriptor.processDescriptors(descriptor -> {
+        if (descriptor.properties != null) {
+          for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
+            if (property.insideConfigurationOnly && property.name.equals(myText)) {
+              return false;
             }
           }
-          return true;
         }
+        return true;
       }, pluginCfg);
 
       if (!notFound) {
@@ -420,18 +417,15 @@ public class MavenPropertyPsiReference extends MavenPsiReference {
 
     MavenDomConfiguration pluginCfg = DomUtil.findDomElement(myElement, MavenDomConfiguration.class);
     if (pluginCfg != null) {
-      MavenPluginDescriptor.processDescriptors(new Processor<MavenPluginDescriptor>() {
-        @Override
-        public boolean process(MavenPluginDescriptor descriptor) {
-          if (descriptor.properties != null) {
-            for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
-              if (property.insideConfigurationOnly) {
-                result.add(LookupElementBuilder.create(property.name).withIcon(PlatformIcons.PROPERTY_ICON));
-              }
+      MavenPluginDescriptor.processDescriptors(descriptor -> {
+        if (descriptor.properties != null) {
+          for (MavenPluginDescriptor.ModelProperty property : descriptor.properties) {
+            if (property.insideConfigurationOnly) {
+              result.add(LookupElementBuilder.create(property.name).withIcon(PlatformIcons.PROPERTY_ICON));
             }
           }
-          return true;
         }
+        return true;
       }, pluginCfg);
     }
   }

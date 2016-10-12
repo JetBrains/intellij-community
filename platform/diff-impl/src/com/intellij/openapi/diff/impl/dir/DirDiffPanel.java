@@ -442,14 +442,10 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
   public void focusTable() {
     final Project project = myModel.getProject();
-    final IdeFocusManager focusManager = project == null || project.isDefault()
-                                         ? IdeFocusManager.getGlobalInstance() : IdeFocusManager.getInstance(project);
-    focusManager.doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        focusManager.requestFocus(myTable, true);
-      }
-    });
+    final IdeFocusManager focusManager = project == null || project.isDefault() ?
+                                         IdeFocusManager.getGlobalInstance() :
+                                         IdeFocusManager.getInstance(project);
+    focusManager.requestFocus(myTable, true);
   }
 
   public String getFilter() {
@@ -543,7 +539,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private OpenFileDescriptor[] getOpenFileDescriptorsArray() {
     Project project = myModel.getProject();
     List<DirDiffElementImpl> elements = myModel.getSelectedElements();
-    List<OpenFileDescriptor> descriptors = new ArrayList<OpenFileDescriptor>();
+    List<OpenFileDescriptor> descriptors = new ArrayList<>();
     for (DirDiffElementImpl element : elements) {
       DiffElement source = element.getSource();
       DiffElement target = element.getTarget();

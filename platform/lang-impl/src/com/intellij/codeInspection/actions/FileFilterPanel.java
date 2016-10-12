@@ -15,16 +15,20 @@
  */
 package com.intellij.codeInspection.actions;
 
+import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.find.impl.FindDialog;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author Dmitry Avdeev
@@ -35,8 +39,19 @@ class FileFilterPanel {
   private JComboBox myFileMask;
   private JPanel myPanel;
 
-  void init() {
+  void init(AnalysisUIOptions options) {
     FindDialog.initFileFilter(myFileMask, myUseFileMask);
+    myUseFileMask.setSelected(StringUtil.isNotEmpty(options.FILE_MASK));
+    myFileMask.setEnabled(StringUtil.isNotEmpty(options.FILE_MASK));
+    myFileMask.setSelectedItem(options.FILE_MASK);
+    ActionListener listener = new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        options.FILE_MASK = myUseFileMask.isSelected() ? (String)myFileMask.getSelectedItem() : null;
+      }
+    };
+    myUseFileMask.addActionListener(listener);
+    myFileMask.addActionListener(listener);
   }
 
   @Nullable

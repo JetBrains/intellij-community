@@ -59,20 +59,6 @@ public class DiffDividerDrawUtil {
     config.restore();
   }
 
-  public static void paintSeparatorsOnScrollbar(@NotNull Graphics2D gg,
-                                                int width,
-                                                @NotNull Editor editor1,
-                                                @NotNull Editor editor2,
-                                                @NotNull DividerSeparatorPaintable paintable) {
-    List<DividerSeparator> polygons = createVisibleSeparators(editor1, editor2, paintable);
-
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(gg);
-    for (DividerSeparator polygon : polygons) {
-      polygon.paintOnScrollbar(gg, width);
-    }
-    config.restore();
-  }
-
   public static void paintPolygons(@NotNull Graphics2D gg,
                                    int width,
                                    @NotNull Editor editor1,
@@ -105,34 +91,22 @@ public class DiffDividerDrawUtil {
     config.restore();
   }
 
-  public static void paintPolygonsOnScrollbar(@NotNull Graphics2D g,
-                                              int width,
-                                              @NotNull Editor editor1,
-                                              @NotNull Editor editor2,
-                                              @NotNull DividerPaintable paintable) {
-    List<DividerPolygon> polygons = createVisiblePolygons(editor1, editor2, paintable);
-
-    for (DividerPolygon polygon : polygons) {
-      polygon.paintOnScrollbar(g, width);
-    }
-  }
-
   @NotNull
   public static List<DividerPolygon> createVisiblePolygons(@NotNull Editor editor1,
                                                            @NotNull Editor editor2,
                                                            @NotNull DividerPaintable paintable) {
-    final List<DividerPolygon> polygons = new ArrayList<DividerPolygon>();
+    final List<DividerPolygon> polygons = new ArrayList<>();
 
     final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
 
-    final Interval leftInterval = getVisibleInterval(editor1);
-    final Interval rightInterval = getVisibleInterval(editor2);
+    final LineRange leftInterval = getVisibleInterval(editor1);
+    final LineRange rightInterval = getVisibleInterval(editor2);
 
     paintable.process(new DividerPaintable.Handler() {
       @Override
       public boolean process(int startLine1, int endLine1, int startLine2, int endLine2, @NotNull Color color, boolean resolved) {
-        if (leftInterval.startLine > endLine1 && rightInterval.startLine > endLine2) return true;
-        if (leftInterval.endLine < startLine1 && rightInterval.endLine < startLine2) return false;
+        if (leftInterval.start > endLine1 && rightInterval.start > endLine2) return true;
+        if (leftInterval.end < startLine1 && rightInterval.end < startLine2) return false;
 
         polygons.add(createPolygon(transformations, startLine1, endLine1, startLine2, endLine2, color, resolved));
         return true;
@@ -151,27 +125,24 @@ public class DiffDividerDrawUtil {
   public static List<DividerSeparator> createVisibleSeparators(@NotNull Editor editor1,
                                                                @NotNull Editor editor2,
                                                                @NotNull DividerSeparatorPaintable paintable) {
-    final List<DividerSeparator> separators = new ArrayList<DividerSeparator>();
+    final List<DividerSeparator> separators = new ArrayList<>();
 
     final Transformation[] transformations = new Transformation[]{getTransformation(editor1), getTransformation(editor2)};
 
-    final Interval leftInterval = getVisibleInterval(editor1);
-    final Interval rightInterval = getVisibleInterval(editor2);
+    final LineRange leftInterval = getVisibleInterval(editor1);
+    final LineRange rightInterval = getVisibleInterval(editor2);
 
     final int height1 = editor1.getLineHeight();
     final int height2 = editor2.getLineHeight();
 
     final EditorColorsScheme scheme = editor1.getColorsScheme();
 
-    paintable.process(new DividerSeparatorPaintable.Handler() {
-      @Override
-      public boolean process(int line1, int line2) {
-        if (leftInterval.startLine > line1 + 1 && rightInterval.startLine > line2 + 1) return true;
-        if (leftInterval.endLine < line1 && rightInterval.endLine < line2) return false;
+    paintable.process((line1, line2) -> {
+      if (leftInterval.start > line1 + 1 && rightInterval.start > line2 + 1) return true;
+      if (leftInterval.end < line1 && rightInterval.end < line2) return false;
 
-        separators.add(createSeparator(transformations, line1, line2, height1, height2, scheme));
-        return true;
-      }
+      separators.add(createSeparator(transformations, line1, line2, height1, height2, scheme));
+      return true;
     });
 
     return separators;
@@ -179,16 +150,13 @@ public class DiffDividerDrawUtil {
 
   @NotNull
   private static Transformation getTransformation(@NotNull final Editor editor) {
-    return new Transformation() {
-      @Override
-      public int transform(int line) {
-        int yOffset = editor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
+    return (line) -> {
+      int yOffset = editor.logicalPositionToXY(new LogicalPosition(line, 0)).y;
 
-        final JComponent header = editor.getHeaderComponent();
-        int headerOffset = header == null ? 0 : header.getHeight();
+      final JComponent header = editor.getHeaderComponent();
+      int headerOffset = header == null ? 0 : header.getHeight();
 
-        return yOffset - editor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
-      }
+      return yOffset - editor.getScrollingModel().getVerticalScrollOffset() + headerOffset;
     };
   }
 
@@ -222,11 +190,12 @@ public class DiffDividerDrawUtil {
   }
 
   @NotNull
-  private static Interval getVisibleInterval(Editor editor) {
+  private static LineRange getVisibleInterval(Editor editor) {
     Rectangle area = editor.getScrollingModel().getVisibleArea();
+    if (area.height < 0) return new LineRange(0, 0);
     LogicalPosition position1 = editor.xyToLogicalPosition(new Point(0, area.y));
     LogicalPosition position2 = editor.xyToLogicalPosition(new Point(0, area.y + area.height));
-    return new Interval(position1.line, position2.line);
+    return new LineRange(position1.line, position2.line);
   }
 
   public interface DividerPaintable {
@@ -299,28 +268,6 @@ public class DiffDividerDrawUtil {
       g.setStroke(oldStroke);
     }
 
-    public void paintOnScrollbar(Graphics2D g, int width) {
-      int startY = myStart1 - 1;
-      int endY = myEnd1 - 1;
-      int height = endY - startY;
-
-      int startX = 0;
-      int endX = startX + width - 1;
-
-      g.setColor(myColor);
-      if (height > 2) {
-        if (!myResolved) {
-          g.fillRect(startX, startY, width, height);
-        }
-
-        DiffDrawUtil.drawChunkBorderLine(g, startX, endX, startY, myColor, false, myResolved);
-        DiffDrawUtil.drawChunkBorderLine(g, startX, endX, endY, myColor, false, myResolved);
-      }
-      else {
-        DiffDrawUtil.drawChunkBorderLine(g, startX, endX, startY, myColor, true, myResolved);
-      }
-    }
-
     public String toString() {
       return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myColor;
     }
@@ -350,22 +297,8 @@ public class DiffDividerDrawUtil {
       DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart2, myEnd2, myScheme);
     }
 
-    public void paintOnScrollbar(Graphics2D g, int width) {
-      DiffDrawUtil.drawConnectorLineSeparator(g, 0, width, myStart1, myEnd1, myStart1, myEnd1, myScheme);
-    }
-
     public String toString() {
       return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> ";
-    }
-  }
-
-  public static class Interval {
-    public final int startLine;
-    public final int endLine;
-
-    public Interval(int startLine, int endLine) {
-      this.startLine = startLine;
-      this.endLine = endLine;
     }
   }
 }

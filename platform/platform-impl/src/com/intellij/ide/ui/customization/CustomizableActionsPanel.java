@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.InsertPathAction;
+import com.intellij.ui.JBDefaultTreeCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.treeStructure.Tree;
@@ -404,6 +405,7 @@ public class CustomizableActionsPanel {
     mySelectedSchema.copyFrom(CustomActionsSchema.getInstance());
     patchActionsTreeCorrespondingToSchema((DefaultMutableTreeNode)myActionsTree.getModel().getRoot());
     myRestoreAllDefaultButton.setEnabled(mySelectedSchema.isModified(new CustomActionsSchema()));
+    myActionsTree.setSelectionRow(0);
   }
 
   public boolean isModified() {
@@ -449,7 +451,7 @@ public class CustomizableActionsPanel {
     }
   }
 
-  private static class MyTreeCellRenderer extends DefaultTreeCellRenderer {
+  private static class MyTreeCellRenderer extends JBDefaultTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,

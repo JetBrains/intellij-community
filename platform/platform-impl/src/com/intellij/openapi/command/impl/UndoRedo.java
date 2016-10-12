@@ -192,7 +192,9 @@ abstract class UndoRedo {
   }
 
   private boolean restore(EditorAndState pair) {
-    if (myEditor == null || pair == null || pair.getEditor() == null) {
+    if (myEditor == null ||
+        !myEditor.isValid() || // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
+        pair == null || pair.getEditor() == null) {
       return false;
     }
 

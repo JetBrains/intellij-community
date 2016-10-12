@@ -92,7 +92,7 @@ public class PyOverrideImplementUtil {
   private static void chooseAndOverrideOrImplementMethods(final Project project,
                                                           @NotNull final Editor editor,
                                                           @NotNull final PyClass pyClass) {
-    LOG.assertTrue(pyClass.isValid());
+    PyPsiUtils.assertValid(pyClass);
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Set<PyFunction> result = new HashSet<PyFunction>();

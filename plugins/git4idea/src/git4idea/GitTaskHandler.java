@@ -20,13 +20,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.branch.GitBrancher;
+import git4idea.branch.GitBranchesCollection;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -65,19 +66,35 @@ public class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
   }
 
   @Override
-  protected boolean hasBranch(@NotNull GitRepository repository, @NotNull String name) {
-    return repository.getBranches().findLocalBranch(name) != null;
+  protected boolean hasBranch(@NotNull GitRepository repository, @NotNull TaskInfo info) {
+    GitBranchesCollection branches = repository.getBranches();
+    return info.isRemote() ?
+           branches.getRemoteBranches().stream().anyMatch(branch -> info.getName().equals(branch.getName())) :
+           branches.findLocalBranch(info.getName()) != null;
   }
 
   @NotNull
   @Override
-  protected Collection<String> getAllBranches(@NotNull GitRepository repository) {
-    return ContainerUtil.map(repository.getBranches().getLocalBranches(), new Function<GitLocalBranch, String>() {
+  protected Iterable<TaskInfo> getAllBranches(@NotNull GitRepository repository) {
+    GitBranchesCollection branches = repository.getBranches();
+    List<TaskInfo> list = ContainerUtil.map(branches.getLocalBranches(), new Function<GitBranch, TaskInfo>() {
       @Override
-      public String fun(GitLocalBranch branch) {
-        return branch.getName();
+      public TaskInfo fun(GitBranch branch) {
+        return new TaskInfo(branch.getName(), Collections.singleton(repository.getPresentableUrl()));
       }
     });
+    list.addAll(ContainerUtil.map(branches.getRemoteBranches(), new Function<GitBranch, TaskInfo>() {
+      @Override
+      public TaskInfo fun(GitBranch branch) {
+        return new TaskInfo(branch.getName(), Collections.singleton(repository.getPresentableUrl())) {
+          @Override
+          public boolean isRemote() {
+            return true;
+          }
+        };
+      }
+    }));
+    return list;
   }
 
   @Override

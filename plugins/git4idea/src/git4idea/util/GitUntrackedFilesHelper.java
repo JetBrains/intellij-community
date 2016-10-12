@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -137,7 +138,7 @@ public class GitUntrackedFilesHelper {
           filesBrowser = new GitSimplePathsBrowser(project, absolutePaths);
         }
         else {
-          filesBrowser = new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, false);
+          filesBrowser = ScrollPaneFactory.createScrollPane(new SelectFilesDialog.VirtualFileList(project, untrackedFiles, false, false));
         }
         String title = "Could not " + StringUtil.capitalize(operationName);
         String description = StringUtil.stripHtml(createUntrackedFilesOverwrittenDescription(operationName, false), true);

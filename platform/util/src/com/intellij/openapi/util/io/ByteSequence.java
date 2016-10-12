@@ -48,4 +48,36 @@ public class ByteSequence {
   public int getLength() {
     return myLen;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ByteSequence sequence = (ByteSequence)o;
+    int len = myLen;
+    if (len != sequence.myLen) return false;
+
+    final byte[] thisBytes = myBytes;
+    final byte[] thatBytes = sequence.myBytes;
+    for (int i = 0, j = myOffset, k = sequence.myOffset; i < len; i++) {
+      if (thisBytes[j] != thatBytes[k]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    final int len = myLen;
+    final byte[] thisBytes = myBytes;
+
+    int result = 1;
+    for (int i = 0, j = myOffset; i < len; i++) {
+      result = result * 31 + thisBytes[j];
+    }
+    return result;
+  }
 }

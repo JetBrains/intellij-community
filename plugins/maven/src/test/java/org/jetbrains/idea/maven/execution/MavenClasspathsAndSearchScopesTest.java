@@ -1314,19 +1314,12 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
   }
 
   private static List<Module> orderEntriesToOwnerModules(List<OrderEntry> orderEntries) {
-    return ContainerUtil.map(orderEntries, new Function<OrderEntry,Module>() {
-      @Override
-      public Module fun(OrderEntry orderEntry) { return orderEntry.getOwnerModule(); }
-    });
+    return ContainerUtil.map(orderEntries, orderEntry -> orderEntry.getOwnerModule());
   }
 
   private static List<Module> orderEntriesToDepModules(List<OrderEntry> orderEntries) {
-    return ContainerUtil.map(orderEntries, new Function<OrderEntry,Module>() {
-      @Override
-      public Module fun(OrderEntry orderEntry) {
-        return (orderEntry instanceof ModuleOrderEntry) ? ((ModuleOrderEntry)orderEntry).getModule() : null;
-      }
-    });
+    return ContainerUtil.map(orderEntries,
+                             orderEntry -> (orderEntry instanceof ModuleOrderEntry) ? ((ModuleOrderEntry)orderEntry).getModule() : null);
   }
 
   private void assertAllProductionClasspath(String moduleName, String... paths) throws Exception {

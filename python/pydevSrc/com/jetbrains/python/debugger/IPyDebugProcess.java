@@ -13,7 +13,7 @@ import java.io.IOException;
 public interface IPyDebugProcess extends PyFrameAccessor {
   PyPositionConverter getPositionConverter();
 
-  void threadSuspended(PyThreadInfo thread);
+  void threadSuspended(PyThreadInfo thread, boolean updateSourcePosition);
 
   boolean canSaveToTemp(String name);
 
@@ -32,6 +32,12 @@ public interface IPyDebugProcess extends PyFrameAccessor {
   void showConsole(PyThreadInfo thread);
 
   void loadReferrers(PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback);
+
+  void suspendAllOtherThreads(PyThreadInfo thread);
+
+  boolean isSuspendedOnAllThreadsPolicy();
+
+  void consoleInputRequested();
 
   XDebugSession getSession();
 }

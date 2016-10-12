@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +43,7 @@ public class ComplementaryFontsRegistry {
   private static final List<String> ourFontNames;
   private static final Map<String, Pair<String, Integer>[]> ourStyledFontMap = new HashMap<String, Pair<String, Integer>[]>();
   private static final LinkedHashMap<FontKey, FontInfo> ourUsedFonts;
-  private static FontKey ourSharedKeyInstance = new FontKey("", 0, 0, false);
+  private static FontKey ourSharedKeyInstance = new FontKey("", 0, Font.PLAIN, false);
   private static FontInfo ourSharedDefaultFont;
   private static final TIntHashSet ourUndisplayableChars = new TIntHashSet();
   private static boolean ourOldUseAntialiasing;
@@ -150,10 +149,7 @@ public class ComplementaryFontsRegistry {
     Font[] allFonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
     for (Font font : allFonts) {
       String name = font.getName();
-      Integer style = null;
-      if (!SystemInfo.isAppleJvm) {
-        style = FONT_NAME_TO_STYLE.get(name); // workaround with explicit fontName->style mapping doesn't work on Apple JVM
-      }
+      Integer style = FONT_NAME_TO_STYLE.get(name);
       if (style == null) {
         if (!Patches.JDK_MAC_FONT_STYLE_BUG) continue;
         style = getFontStyle(name);
@@ -264,7 +260,7 @@ public class ComplementaryFontsRegistry {
       if (defaultFont == null) {
         defaultFont = new FontInfo(defaultFontFamily, size, style, originalStyle, useLigatures);
         ourUsedFonts.put(ourSharedKeyInstance, defaultFont);
-        ourSharedKeyInstance = new FontKey("", 0, 0, false);
+        ourSharedKeyInstance = new FontKey("", 0, Font.PLAIN, false);
       }
 
       ourSharedDefaultFont = defaultFont;

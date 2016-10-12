@@ -94,13 +94,10 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
     }
 
     final PsiParameterList parameterList = method.getParameterList();
-    Arrays.sort(params, new Comparator<PsiParameter>() {
-      @Override
-      public int compare(PsiParameter p1, PsiParameter p2) {
-        final int parameterIndex1 = parameterList.getParameterIndex(p1);
-        final int parameterIndex2 = parameterList.getParameterIndex(p2);
-        return parameterIndex1 > parameterIndex2 ? -1 : 1;
-      }
+    Arrays.sort(params, (p1, p2) -> {
+      final int parameterIndex1 = parameterList.getParameterIndex(p1);
+      final int parameterIndex2 = parameterList.getParameterIndex(p2);
+      return parameterIndex1 > parameterIndex2 ? -1 : 1;
     });
 
     for (PsiParameter param : params) {
@@ -126,58 +123,52 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
 
     if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        
-        final PsiMethod prototype = (PsiMethod)method.getContainingClass().addBefore(methodPrototype, method);
-        RefactoringUtil.fixJavadocsForParams(prototype, new HashSet<PsiParameter>(Arrays.asList(prototype.getParameterList().getParameters())));
-        TemplateBuilderImpl builder = new TemplateBuilderImpl(prototype);
+    Runnable runnable = () -> {
 
-        PsiCodeBlock body = prototype.getBody();
-        final String callArgs =
-          "(" + StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
-            @Override
-            public String fun(PsiParameter psiParameter) {
-              if (ArrayUtil.find(parameters, psiParameter) > -1) return "IntelliJIDEARulezzz";
-              return psiParameter.getName();
-            }
-          }, ",") + ");";
-        final String methodCall;
-        if (method.getReturnType() == null) {
-          methodCall = "this";
-        } else if (!PsiType.VOID.equals(method.getReturnType())) {
-          methodCall = "return " + method.getName();
-        } else {
-          methodCall = method.getName();
+      final PsiMethod prototype = (PsiMethod)method.getContainingClass().addBefore(methodPrototype, method);
+      RefactoringUtil.fixJavadocsForParams(prototype, new HashSet<PsiParameter>(Arrays.asList(prototype.getParameterList().getParameters())));
+      TemplateBuilderImpl builder = new TemplateBuilderImpl(prototype);
+
+      PsiCodeBlock body = prototype.getBody();
+      final String callArgs =
+        "(" + StringUtil.join(method.getParameterList().getParameters(), psiParameter -> {
+          if (ArrayUtil.find(parameters, psiParameter) > -1) return "IntelliJIDEARulezzz";
+          return psiParameter.getName();
+        }, ",") + ");";
+      final String methodCall;
+      if (method.getReturnType() == null) {
+        methodCall = "this";
+      } else if (!PsiType.VOID.equals(method.getReturnType())) {
+        methodCall = "return " + method.getName();
+      } else {
+        methodCall = method.getName();
+      }
+      body.add(JavaPsiFacade.getElementFactory(project).createStatementFromText(methodCall + callArgs, method));
+      body = (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body);
+      final PsiStatement stmt = body.getStatements()[0];
+      PsiExpression expr = null;
+      if (stmt instanceof PsiReturnStatement) {
+        expr = ((PsiReturnStatement)stmt).getReturnValue();
+      } else if (stmt instanceof PsiExpressionStatement) {
+        expr = ((PsiExpressionStatement)stmt).getExpression();
+      }
+      if (expr instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression methodCallExp = (PsiMethodCallExpression)expr;
+        RangeMarker rangeMarker = editor.getDocument().createRangeMarker(prototype.getTextRange());
+        for (PsiParameter parameter : parameters) {
+          final PsiExpression exprToBeDefault =
+            methodCallExp.getArgumentList().getExpressions()[method.getParameterList().getParameterIndex(parameter)];
+          builder.replaceElement(exprToBeDefault, new TextExpression(""));
         }
-        body.add(JavaPsiFacade.getElementFactory(project).createStatementFromText(methodCall + callArgs, method));
-        body = (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body);
-        final PsiStatement stmt = body.getStatements()[0];
-        PsiExpression expr = null;
-        if (stmt instanceof PsiReturnStatement) {
-          expr = ((PsiReturnStatement)stmt).getReturnValue();
-        } else if (stmt instanceof PsiExpressionStatement) {
-          expr = ((PsiExpressionStatement)stmt).getExpression();
-        }
-        if (expr instanceof PsiMethodCallExpression) {
-          PsiMethodCallExpression methodCallExp = (PsiMethodCallExpression)expr;
-          RangeMarker rangeMarker = editor.getDocument().createRangeMarker(prototype.getTextRange());
-          for (PsiParameter parameter : parameters) {
-            final PsiExpression exprToBeDefault =
-              methodCallExp.getArgumentList().getExpressions()[method.getParameterList().getParameterIndex(parameter)];
-            builder.replaceElement(exprToBeDefault, new TextExpression(""));
-          }
-          Template template = builder.buildTemplate();
-          editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
-    
-          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-          editor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
-    
-          rangeMarker.dispose();
-    
-          CreateFromUsageBaseFix.startTemplate(editor, template, project);
-        }
+        Template template = builder.buildTemplate();
+        editor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+        editor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
+
+        rangeMarker.dispose();
+
+        CreateFromUsageBaseFix.startTemplate(editor, template, project);
       }
     };
     if (startInWriteAction()) {

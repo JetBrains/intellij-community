@@ -49,17 +49,15 @@ public class UnmarkAddedAction extends AnAction{
   public void actionPerformed(AnActionEvent e) {
     VcsContext context = CvsContextWrapper.createCachedInstance(e);
     final VirtualFile[] selectedFiles = context.getSelectedFiles();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
-        ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        for (int i = 0; i < selectedFiles.length; i++) {
-          File file = CvsVfsUtil.getFileFor(selectedFiles[i]);
-          if (progressIndicator != null){
-            progressIndicator.setFraction((double)i/(double)selectedFiles.length);
-            progressIndicator.setText(file.getAbsolutePath());
-          }
-          CvsUtil.removeEntryFor(file);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      for (int i = 0; i < selectedFiles.length; i++) {
+        File file = CvsVfsUtil.getFileFor(selectedFiles[i]);
+        if (progressIndicator != null){
+          progressIndicator.setFraction((double)i/(double)selectedFiles.length);
+          progressIndicator.setText(file.getAbsolutePath());
         }
+        CvsUtil.removeEntryFor(file);
       }
     }, CvsBundle.message("operation.name.undo.add"), true, context.getProject());
     VirtualFileManager.getInstance().asyncRefresh(null);

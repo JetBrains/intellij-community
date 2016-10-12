@@ -22,7 +22,6 @@ package com.intellij.lang.xml;
 import com.intellij.formatting.Block;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -40,13 +39,10 @@ public class XmlFormattingModel extends PsiBasedFormattingModel {
   private static final Logger LOG =
       Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.PsiBasedFormatterModelWithShiftIndentInside");
 
-  private final Project myProject;
-
   public XmlFormattingModel(final PsiFile file,
                                                      final Block rootBlock,
                                                      final FormattingDocumentModelImpl documentModel) {
     super(file, rootBlock, documentModel);
-    myProject = file.getProject();
   }
 
   @Override

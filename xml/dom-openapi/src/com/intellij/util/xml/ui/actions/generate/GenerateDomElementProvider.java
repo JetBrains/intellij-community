@@ -50,12 +50,9 @@ public abstract class GenerateDomElementProvider<T extends DomElement> {
       final DomElementNavigationProvider navigateProvider = getNavigationProviderName(project);
 
       if (navigateProvider != null && navigateProvider.canNavigate(copy)) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (!project.isDisposed()) {
-              doNavigate(navigateProvider, copy);
-            }
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!project.isDisposed()) {
+            doNavigate(navigateProvider, copy);
           }
         });
       }

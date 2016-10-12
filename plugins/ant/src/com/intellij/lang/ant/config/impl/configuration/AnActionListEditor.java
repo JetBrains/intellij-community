@@ -70,19 +70,17 @@ public class AnActionListEditor<T> extends JPanel {
       }
     });
     description.setEnableCondition(removeCondition);
-    description.setConfirmation(new Condition<List<T>>() {
-      public boolean value(final List<T> list) {
-        if (list.size() == 1) {
-          return Messages.showOkCancelDialog(description.getList(),
-                                             AntBundle.message("delete.selected.ant.configuration.confirmation.text"),
-                                             ExecutionBundle.message("delete.confirmation.dialog.title"),
-                                             Messages.getQuestionIcon()) == Messages.OK;
-        } else {
-          return Messages.showOkCancelDialog(description.getList(),
-                                             AntBundle.message("delete.selected.ant.configurations.confirmation.text"),
-                                             ExecutionBundle.message("delete.confirmation.dialog.title"),
-                                             Messages.getQuestionIcon()) == Messages.OK;
-        }
+    description.setConfirmation(list -> {
+      if (list.size() == 1) {
+        return Messages.showOkCancelDialog(description.getList(),
+                                           AntBundle.message("delete.selected.ant.configuration.confirmation.text"),
+                                           ExecutionBundle.message("delete.confirmation.dialog.title"),
+                                           Messages.getQuestionIcon()) == Messages.OK;
+      } else {
+        return Messages.showOkCancelDialog(description.getList(),
+                                           AntBundle.message("delete.selected.ant.configurations.confirmation.text"),
+                                           ExecutionBundle.message("delete.confirmation.dialog.title"),
+                                           Messages.getQuestionIcon()) == Messages.OK;
       }
     });
 

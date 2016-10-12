@@ -17,6 +17,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.ResolveScopeManager;
@@ -37,9 +38,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
 
-public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement {
+public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiAnnotatedJavaCodeReferenceElement {
   private final PsiElement myParent;
   private final String myCanonicalText;
   private final String myQualifiedName;
@@ -87,6 +89,28 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @NotNull
   public String getCanonicalText() {
     return myCanonicalText;
+  }
+
+  @NotNull
+  @Override
+  public String getCanonicalText(boolean annotated, @Nullable PsiAnnotation[] annotations) {
+    String text = getCanonicalText();
+    if (!annotated || annotations == null) return text;
+
+    StringBuilder sb = new StringBuilder();
+
+    String prefix = getOuterClassRef(text);
+    int tailStart = 0;
+    if (!StringUtil.isEmpty(prefix)) {
+      sb.append(prefix).append('.');
+      tailStart = prefix.length() + 1;
+    }
+
+    PsiNameHelper.appendAnnotations(sb, Arrays.asList(annotations), true);
+
+    sb.append(text, tailStart, text.length());
+
+    return sb.toString();
   }
 
   private static class Resolver implements ResolveCache.PolyVariantContextResolver<ClsJavaCodeReferenceElementImpl> {
@@ -142,7 +166,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
                                          final String canonicalText,
                                          final Map<PsiTypeParameter, PsiType> substitutionMap) {
     final PsiClass containingClass = psiClass.getContainingClass();
-    if (containingClass != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+    if (containingClass != null) {
       final String outerClassRef = getOuterClassRef(canonicalText);
       final String[] classParameters = PsiNameHelper.getClassParametersText(outerClassRef);
       final PsiType[] args = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters).getTypeArguments();
@@ -152,7 +176,9 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
           substitutionMap.put(typeParameters[i], args[i]);
         }
       }
-      collectOuterClassTypeArgs(containingClass, outerClassRef, substitutionMap);
+      if (!containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+        collectOuterClassTypeArgs(containingClass, outerClassRef, substitutionMap);
+      }
     }
   }
 
@@ -203,23 +229,23 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @Nullable
   private PsiElement resolveElement(@NotNull PsiFile containingFile) {
     PsiElement element = getParent();
-    while(element != null && (!(element instanceof PsiClass) || element instanceof PsiTypeParameter)) {
-      if(element instanceof PsiMethod){
-        final PsiMethod method = (PsiMethod)element;
-        final PsiTypeParameterList list = method.getTypeParameterList();
-        if (list != null) {
-          final PsiTypeParameter[] parameters = list.getTypeParameters();
-          for (int i = 0; parameters != null && i < parameters.length; i++) {
-            final PsiTypeParameter parameter = parameters[i];
-            if (myQualifiedName.equals(parameter.getName())) return parameter;
-          }
+    while (element != null && !(element instanceof PsiFile)) {
+      if (element instanceof PsiMethod) {
+        for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiMethod)element)) {
+          if (myQualifiedName.equals(parameter.getName())) return parameter;
+        }
+      }
+      else if (element instanceof PsiClass && !(element instanceof PsiTypeParameter)) {
+        PsiClass psiClass = (PsiClass)element;
+        if (myQualifiedName.equals(psiClass.getQualifiedName())) return element;
+        for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(psiClass)) {
+          if (myQualifiedName.equals(parameter.getName())) return parameter;
+        }
+        for (PsiClass innerClass : psiClass.getInnerClasses()) {
+          if (myQualifiedName.equals(innerClass.getQualifiedName())) return innerClass;
         }
       }
       element = element.getParent();
-    }
-    if (element == null) return null;
-    for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiTypeParameterListOwner)element)) {
-      if (myQualifiedName.equals(parameter.getName())) return parameter;
     }
 
     Project project = containingFile.getProject();

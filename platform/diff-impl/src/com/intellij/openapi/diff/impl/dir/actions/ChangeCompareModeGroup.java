@@ -38,7 +38,7 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
   public ChangeCompareModeGroup(DirDiffTableModel model) {
     mySettings = model.getSettings();
     getTemplatePresentation().setText(mySettings.compareMode.getPresentableName(mySettings));
-    final ArrayList<ChangeCompareModeAction> actions = new ArrayList<ChangeCompareModeAction>();
+    final ArrayList<ChangeCompareModeAction> actions = new ArrayList<>();
     if (model.getSettings().showCompareModes) {
       for (DirDiffSettings.CompareMode mode : DirDiffSettings.CompareMode.values()) {
         actions.add(new ChangeCompareModeAction(model, mode));

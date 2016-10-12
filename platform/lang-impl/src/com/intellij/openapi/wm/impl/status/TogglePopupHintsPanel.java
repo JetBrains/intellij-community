@@ -84,18 +84,15 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
 
   @Override
   public Consumer<MouseEvent> getClickConsumer() {
-    return new Consumer<MouseEvent>() {
-      @Override
-      public void consume(final MouseEvent e) {
-        Point point = new Point(0, 0);
-        final PsiFile file = getCurrentFile();
-        if (file != null) {
-          if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
-          final HectorComponent component = new HectorComponent(file);
-          final Dimension dimension = component.getPreferredSize();
-          point = new Point(point.x - dimension.width, point.y - dimension.height);
-          component.showComponent(new RelativePoint(e.getComponent(), point));
-        }
+    return e -> {
+      Point point = new Point(0, 0);
+      final PsiFile file = getCurrentFile();
+      if (file != null) {
+        if (!DaemonCodeAnalyzer.getInstance(file.getProject()).isHighlightingAvailable(file)) return;
+        final HectorComponent component = new HectorComponent(file);
+        final Dimension dimension = component.getPreferredSize();
+        point = new Point(point.x - dimension.width, point.y - dimension.height);
+        component.showComponent(new RelativePoint(e.getComponent(), point));
       }
     };
   }

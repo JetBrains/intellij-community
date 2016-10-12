@@ -33,11 +33,6 @@ public class AdvHighlightingJdk7Test extends DaemonAnalyzerTestCase {
   @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting7/";
 
   @Override
-  protected Sdk getTestProjectJdk() {
-    return IdeaTestUtil.getMockJdk17();
-  }
-
-  @Override
   public void setUp() throws Exception {
     super.setUp();
     LanguageLevelProjectExtension.getInstance(myProject).setLanguageLevel(LanguageLevel.JDK_1_7);

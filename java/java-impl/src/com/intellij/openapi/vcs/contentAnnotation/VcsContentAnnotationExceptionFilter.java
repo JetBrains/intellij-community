@@ -107,12 +107,9 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
       final int lineEndOffset = copiedFragment.getLineEndOffset(i);
       final ExceptionWorker worker = new ExceptionWorker(myCache);
       final String[] lineText = new String[1];
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        @Override
-        public void run() {
-          lineText[0] = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
-          worker.execute(lineText[0], lineEndOffset);
-        }
+      ApplicationManager.getApplication().runReadAction(() -> {
+        lineText[0] = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
+        worker.execute(lineText[0], lineEndOffset);
       });
       if (worker.getResult() != null) {
         VirtualFile vf = worker.getFile().getVirtualFile();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 /**
  * @author Max Medvedev
@@ -209,7 +210,7 @@ public class GrStaticChecker {
         else if (PsiUtil.isThisReference(qualifier)) { //instance 'this' already is processed. So it static 'this'
           return true;
         }
-        return qualifier instanceof GrQualifiedReference && ((GrQualifiedReference)qualifier).resolve() instanceof PsiClass;
+        return qualifier instanceof GrQualifiedReference && ResolveUtil.resolvesToClass(qualifier);
       }
 
 

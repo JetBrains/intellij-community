@@ -70,11 +70,7 @@ public abstract class EditorEvaluationCommand<T> extends DebuggerContextCommandI
       return result;
     } catch (final EvaluateException e) {
       if (myEditor != null) {
-        DebuggerInvocationUtil.invokeLater(myDebuggerContext.getProject(), new Runnable() {
-          public void run() {
-            showEvaluationHint(myEditor, myElement, e);
-          }
-        }, myProgressIndicator.getModalityState());
+        DebuggerInvocationUtil.invokeLater(myDebuggerContext.getProject(), () -> showEvaluationHint(myEditor, myElement, e), myProgressIndicator.getModalityState());
       }
       throw e;
     }

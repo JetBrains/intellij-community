@@ -119,12 +119,7 @@ public class BuildoutConfigPanel extends JPanel {
 
   public void reset() {
     final List<File> scriptFiles = BuildoutFacet.getScripts(BuildoutFacet.getInstance(myModule), myModule.getProject().getBaseDir());
-    final List<String> scripts = ContainerUtil.map(scriptFiles, new Function<File, String>() {
-      @Override
-      public String fun(File file) {
-        return file.getPath();
-      }
-    });
+    final List<String> scripts = ContainerUtil.map(scriptFiles, file -> file.getPath());
     myScript.getComboBox().setModel(new CollectionComboBoxModel(scripts, myConfiguration.getScriptName()));
     myScript.getComboBox().getEditor().setItem(myConfiguration.getScriptName());
   }

@@ -27,7 +27,6 @@ import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.*
 import com.intellij.openapi.components.impl.stores.StateStorageManager.ExternalizationSession
-import com.intellij.openapi.components.store.ReadOnlyModificationException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -35,7 +34,6 @@ import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NamedJDOMExternalizable
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.ui.AppUIUtil
@@ -47,6 +45,7 @@ import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.JDOMXIncluder
 import gnu.trove.THashMap
+import io.netty.util.internal.SystemPropertyUtil
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -82,52 +81,60 @@ abstract class ComponentStoreImpl : IComponentStore {
       settingsSavingComponents.add(component)
     }
 
-    @Suppress("DEPRECATION")
-    if (!(component is JDOMExternalizable || component is PersistentStateComponent<*>)) {
-      return
-    }
-
-    val componentNameIfStateExists: String?
+    var componentName = ""
     try {
-      componentNameIfStateExists = if (component is PersistentStateComponent<*>) {
+      @Suppress("DEPRECATION")
+      if (component is PersistentStateComponent<*>) {
         val stateSpec = StoreUtil.getStateSpec(component)
-        doAddComponent(stateSpec.name, component)
-        @Suppress("UNCHECKED_CAST")
-        initPersistentComponent(stateSpec, component as PersistentStateComponent<Any>, null, false)
+        componentName = stateSpec.name
+        doAddComponent(componentName, component)
+        if (initPersistentComponent(stateSpec, component, null, false) && service) {
+          // if not service, so, component manager will check it later for all components
+          project?.let {
+            val app = ApplicationManager.getApplication()
+            if (!app.isHeadlessEnvironment && !app.isUnitTestMode && it.isInitialized) {
+              notifyUnknownMacros(this, it, componentName)
+            }
+          }
+        }
       }
-      else {
+      else if (component is JDOMExternalizable) {
+        componentName = ComponentManagerImpl.getComponentName(component)
         @Suppress("DEPRECATION")
-        initJdomExternalizable(component as JDOMExternalizable)
+        initJdomExternalizable(component, componentName)
       }
     }
     catch (e: ProcessCanceledException) {
       throw e
     }
     catch (e: Exception) {
-      LOG.error(e)
+      LOG.error("Cannot init ${componentName} component state", e)
       return
-    }
-
-    // if not service, so, component manager will check it later for all components
-    if (componentNameIfStateExists != null && service) {
-      val project = this.project
-      val app = ApplicationManager.getApplication()
-      if (project != null && !app.isHeadlessEnvironment && !app.isUnitTestMode && project.isInitialized) {
-        notifyUnknownMacros(this, project, componentNameIfStateExists)
-      }
     }
   }
 
   override fun save(readonlyFiles: MutableList<JBPair<StateStorage.SaveSession, VirtualFile>>) {
+    var errors: MutableList<Throwable>? = null
+
     val externalizationSession = if (components.isEmpty()) null else storageManager.startExternalization()
     if (externalizationSession != null) {
       val names = ArrayUtilRt.toStringArray(components.keys)
       Arrays.sort(names)
       val timeLogPrefix = "Saving"
-      var timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
+      val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
       for (name in names) {
         val start = if (timeLog == null) 0 else System.currentTimeMillis()
-        commitComponent(externalizationSession, components[name]!!, name)
+
+        try {
+          commitComponent(externalizationSession, components.get(name)!!, name)
+        }
+        catch (e: Throwable) {
+          if (errors == null) {
+            errors = SmartList<Throwable>()
+          }
+          errors.add(Exception("Cannot get ${name} component state", e))
+        }
+
         timeLog?.let {
           val duration = System.currentTimeMillis() - start
           if (duration > 10) {
@@ -141,7 +148,6 @@ abstract class ComponentStoreImpl : IComponentStore {
       }
     }
 
-    var errors: MutableList<Throwable>? = null
     for (settingsSavingComponent in settingsSavingComponents) {
       try {
         settingsSavingComponent.save()
@@ -195,10 +201,9 @@ abstract class ComponentStoreImpl : IComponentStore {
   private fun commitComponent(session: ExternalizationSession, component: Any, componentName: String?) {
     @Suppress("DEPRECATION")
     if (component is PersistentStateComponent<*>) {
-      val state = component.state
-      if (state != null) {
+      component.state?.let {
         val stateSpec = StoreUtil.getStateSpec(component)
-        session.setState(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE), component, componentName ?: stateSpec.name, state)
+        session.setState(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE), component, componentName ?: stateSpec.name, it)
       }
     }
     else if (component is JDOMExternalizable) {
@@ -214,8 +219,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return errors
   }
 
-  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable): String? {
-    val componentName = ComponentManagerImpl.getComponentName(component)
+  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable, componentName: String): String? {
     doAddComponent(componentName, component)
 
     if (loadPolicy != StateLoadPolicy.LOAD) {
@@ -248,9 +252,9 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun <T: Any> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): String? {
+  private fun <T: Any> initPersistentComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): Boolean {
     if (loadPolicy == StateLoadPolicy.NOT_LOAD) {
-      return null
+      return false
     }
 
     val name = stateSpec.name
@@ -269,7 +273,14 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        var stateGetter = if (isUseLoadedStateAsExisting(storage) && (ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("use.loaded.state.as.existing", false))) {
+        // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
+        // use.loaded.state.as.existing used in upsource
+        val stateGetter = if (isUseLoadedStateAsExisting(storage) &&
+          name != "AntConfiguration" &&
+          name != "FacetManager" &&
+          name != "ProjectModuleManager" &&
+          name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
+          SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)) {
           (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
         }
         else {
@@ -293,7 +304,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         finally {
           stateGetter?.close()
         }
-        return name
+        return true
       }
     }
 
@@ -301,7 +312,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     if (defaultState != null) {
       component.loadState(defaultState)
     }
-    return name
+    return true
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED

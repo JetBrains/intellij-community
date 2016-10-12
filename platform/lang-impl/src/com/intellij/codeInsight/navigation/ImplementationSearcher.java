@@ -41,7 +41,7 @@ public class ImplementationSearcher {
   public static final String SEARCHING_FOR_IMPLEMENTATIONS = CodeInsightBundle.message("searching.for.implementations");
 
   @NotNull
-  public PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
+  PsiElement[] searchImplementations(final Editor editor, final PsiElement element, final int offset) {
     final TargetElementUtil targetElementUtil = TargetElementUtil.getInstance();
     boolean onRef = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
@@ -101,16 +101,13 @@ public class ImplementationSearcher {
   @Nullable("For the case the search has been cancelled")
   protected PsiElement[] searchDefinitions(final PsiElement element, final Editor editor) {
     final PsiElement[][] result = new PsiElement[1][];
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          result[0] = DefinitionsScopedSearch.search(element, getSearchScope(element, editor)).toArray(PsiElement.EMPTY_ARRAY);
-        }
-        catch (IndexNotReadyException e) {
-          dumbModeNotification(element);
-          result[0] = null;
-        }
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      try {
+        result[0] = DefinitionsScopedSearch.search(element, getSearchScope(element, editor)).toArray(PsiElement.EMPTY_ARRAY);
+      }
+      catch (IndexNotReadyException e) {
+        dumbModeNotification(element);
+        result[0] = null;
       }
     }, SEARCHING_FOR_IMPLEMENTATIONS, true, element.getProject())) {
       return null;
@@ -118,7 +115,7 @@ public class ImplementationSearcher {
     return result[0];
   }
 
-  public static void dumbModeNotification(final PsiElement element) {
+  private static void dumbModeNotification(@NotNull PsiElement element) {
     Project project = ApplicationManager.getApplication().runReadAction(new Computable<Project>() {
       @Override
       public Project compute() {
@@ -143,7 +140,8 @@ public class ImplementationSearcher {
         return new PsiElement[]{element};
       }
 
-      final PsiElementProcessor.CollectElementsWithLimit<PsiElement> collectProcessor = new PsiElementProcessor.CollectElementsWithLimit<PsiElement>(2, new THashSet<PsiElement>());
+      final PsiElementProcessor.CollectElementsWithLimit<PsiElement> collectProcessor =
+        new PsiElementProcessor.CollectElementsWithLimit<>(2, new THashSet<>());
       final PsiElement[][] result = new PsiElement[1][];
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override

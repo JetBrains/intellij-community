@@ -77,8 +77,7 @@ class TextOutput(val out: StringBuilder) {
   }
 
   fun openBlock(): TextOutput {
-    openBlock(true)
-    return this
+    return openBlock(true)
   }
 
   inline fun block(addNewLine: Boolean = true, writer: () -> Unit): TextOutput {
@@ -88,16 +87,18 @@ class TextOutput(val out: StringBuilder) {
     return this
   }
 
-  fun openBlock(addNewLine: Boolean) {
+  fun openBlock(addNewLine: Boolean): TextOutput {
     space().append('{')
     if (addNewLine) {
       newLine()
     }
     indentIn()
+    return this
   }
 
-  fun closeBlock() {
+  fun closeBlock(): TextOutput {
     indentOut().newLine().append('}')
+    return this
   }
 
   fun comma() = append(',').space()

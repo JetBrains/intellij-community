@@ -44,6 +44,9 @@ public abstract class AbstractApplicationUsagesCollector extends UsagesCollector
     catch (CollectUsagesException e) {
       LOG.info(e);
     }
+    catch (Exception usageCollectorException) {
+      LOG.info(usageCollectorException);
+    }
   }
 
   public void persistProjectUsages(@NotNull Project project, @NotNull CollectedUsages usages) {

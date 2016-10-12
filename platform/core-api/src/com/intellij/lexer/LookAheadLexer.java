@@ -32,13 +32,13 @@ public abstract class LookAheadLexer extends LexerBase{
   private final Queue<IElementType> myTypeCache;
   private final Queue<Integer> myEndOffsetCache;
 
-  public LookAheadLexer(final Lexer baseLexer, int capacity) {
+  public LookAheadLexer(@NotNull Lexer baseLexer, int capacity) {
     myBaseLexer = baseLexer;
     myTypeCache = new Queue<IElementType>(capacity);
     myEndOffsetCache = new Queue<Integer>(capacity);
   }
 
-  public LookAheadLexer(final Lexer baseLexer) {
+  public LookAheadLexer(@NotNull Lexer baseLexer) {
     this(baseLexer, 64);
   }
 
@@ -52,7 +52,7 @@ public abstract class LookAheadLexer extends LexerBase{
     myEndOffsetCache.addLast(endOffset);
   }
 
-  protected void lookAhead(Lexer baseLexer) {
+  protected void lookAhead(@NotNull Lexer baseLexer) {
     advanceLexer(baseLexer);
   }
 

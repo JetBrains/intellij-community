@@ -104,6 +104,11 @@ public class XmlSmartEnterTest extends LightCodeInsightTestCase {
     _doTest("idea103417_2.xml", "idea103417_2_after.xml");
   }
 
+  public void testEmptyHtml() throws Exception {
+    _doTestCompletion("EmptyHtml.html", "EmptyHtml_after.html");
+    _doTestCompletion("EmptyHtml2.html", "EmptyHtml2_after.html");
+  }
+
   private void _doTestCompletion(final String name, final String after_name) throws Exception {
     configureByFile(BASE_PATH + "/" + name);
     performCompletionAction();

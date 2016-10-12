@@ -140,13 +140,9 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   public void onMouseClicked(final Component component) {
-    myAutoScrollAlarm.cancelAllRequests();
+    cancelAllRequests();
     if (isAutoScrollMode()){
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          scrollToSource(component);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> scrollToSource(component));
     }
   }
 
@@ -162,11 +158,9 @@ public abstract class AutoScrollToSourceHandler {
 
     myAutoScrollAlarm.cancelAllRequests();
     myAutoScrollAlarm.addRequest(
-      new Runnable() {
-        public void run() {
-          if (component.isShowing()) { //for tests
-            scrollToSource(component);
-          }
+      () -> {
+        if (component.isShowing()) { //for tests
+          scrollToSource(component);
         }
       },
       500
@@ -182,31 +176,28 @@ public abstract class AutoScrollToSourceHandler {
 
   protected void scrollToSource(final Component tree) {
     DataContext dataContext=DataManager.getInstance().getDataContext(tree);
-    getReady(dataContext).doWhenDone(new Runnable() {
-      @Override
-      public void run() {
-        DataContext context = DataManager.getInstance().getDataContext(tree);
-        final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
-        if (vFile != null) {
-          // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
-          // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.
-          if (vFile.getFileType() == FileTypes.UNKNOWN || vFile.getFileType() instanceof INativeFileType) return;
+    getReady(dataContext).doWhenDone(() -> {
+      DataContext context = DataManager.getInstance().getDataContext(tree);
+      final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
+      if (vFile != null) {
+        // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
+        // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.
+        if (vFile.getFileType() == FileTypes.UNKNOWN || vFile.getFileType() instanceof INativeFileType) return;
 
-          //IDEA-84881 Don't autoscroll to very large files
-          if (vFile.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return;
-        }
-        Navigatable[] navigatables = CommonDataKeys.NAVIGATABLE_ARRAY.getData(context);
-        if (navigatables != null) {
-          if (navigatables.length > 1) {
-            return;
-          }
-          for (Navigatable navigatable : navigatables) {
-            // we are not going to open modal dialog during autoscrolling
-            if (!navigatable.canNavigateToSource()) return;
-          }
-        }
-        OpenSourceUtil.navigate(false, true, navigatables);
+        //IDEA-84881 Don't autoscroll to very large files
+        if (vFile.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return;
       }
+      Navigatable[] navigatables = CommonDataKeys.NAVIGATABLE_ARRAY.getData(context);
+      if (navigatables != null) {
+        if (navigatables.length > 1) {
+          return;
+        }
+        for (Navigatable navigatable : navigatables) {
+          // we are not going to open modal dialog during autoscrolling
+          if (!navigatable.canNavigateToSource()) return;
+        }
+      }
+      OpenSourceUtil.navigate(false, true, navigatables);
     });
   }
 

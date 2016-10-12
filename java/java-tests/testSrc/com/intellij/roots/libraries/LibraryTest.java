@@ -67,9 +67,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(model2);
     assertFalse(listenerNotifiedOnChange[0]);
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      libraryTable.removeLibrary(library);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> libraryTable.removeLibrary(library));
   }
 
   public void testLibrarySerialization() {
@@ -112,12 +110,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
   }
 
   private static void commit(LibraryTable.ModifiableModel model) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> model.commit());
   }
 
   public void testFindLibraryByNameAfterChainedRename() {

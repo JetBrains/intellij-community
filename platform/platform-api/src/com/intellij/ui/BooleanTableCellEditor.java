@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,13 @@ public class BooleanTableCellEditor extends DefaultCellEditor {
   private final boolean myStringEditor;
 
   public BooleanTableCellEditor(boolean isStringEditor) {
+    this(isStringEditor, SwingConstants.CENTER);
+  }
+
+  public BooleanTableCellEditor(boolean isStringEditor, int horizontalAlignment) {
     super(new JCheckBox());
     myStringEditor = isStringEditor;
-    ((JCheckBox) editorComponent).setHorizontalAlignment(SwingConstants.CENTER);
+    ((JCheckBox) editorComponent).setHorizontalAlignment(horizontalAlignment);
   }
 
   public BooleanTableCellEditor() {

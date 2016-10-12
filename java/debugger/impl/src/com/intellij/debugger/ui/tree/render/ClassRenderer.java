@@ -99,16 +99,6 @@ public class ClassRenderer extends NodeRendererImpl{
   }
 
   @Override
-  public boolean isEnabled() {
-    return myProperties.isEnabled();
-  }
-
-  @Override
-  public void setEnabled(boolean enabled) {
-    myProperties.setEnabled(enabled);
-  }
-
-  @Override
   public ClassRenderer clone() {
     return (ClassRenderer) super.clone();
   }

@@ -54,12 +54,9 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     myProject = project;
     myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
     myTestFrameworkName = testFrameworkName;
-    myTransferToEDTQueue = new TransferToEDTQueue<Runnable>("SM queue", new Processor<Runnable>() {
-      @Override
-      public boolean process(Runnable runnable) {
-        runnable.run();
-        return true;
-      }
+    myTransferToEDTQueue = new TransferToEDTQueue<Runnable>("SM queue", runnable -> {
+      runnable.run();
+      return true;
     }, project.getDisposed(), 300);
   }
   // tree construction events
@@ -166,45 +163,37 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
    */
   public void onCustomProgressTestsCategory(@Nullable final String categoryName,
                                             final int testCount) {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestsCategory(categoryName, testCount);
-        for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-          adapter.onCustomProgressTestsCategory(categoryName, testCount);
-        }
+    addToInvokeLater(() -> {
+      myEventPublisher.onCustomProgressTestsCategory(categoryName, testCount);
+      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+        adapter.onCustomProgressTestsCategory(categoryName, testCount);
       }
     });
   }
 
   public void onCustomProgressTestStarted() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestStarted();
-        for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-          adapter.onCustomProgressTestStarted();
-        }
+    addToInvokeLater(() -> {
+      myEventPublisher.onCustomProgressTestStarted();
+      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+        adapter.onCustomProgressTestStarted();
       }
     });
   }
 
   public void onCustomProgressTestFinished() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestFinished();
-        for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-          adapter.onCustomProgressTestFinished();
-        }
+    addToInvokeLater(() -> {
+      myEventPublisher.onCustomProgressTestFinished();
+      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+        adapter.onCustomProgressTestFinished();
       }
     });
   }
 
   public void onCustomProgressTestFailed() {
-    addToInvokeLater(new Runnable() {
-      public void run() {
-        myEventPublisher.onCustomProgressTestFailed();
-        for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-          adapter.onCustomProgressTestFailed();
-        }
+    addToInvokeLater(() -> {
+      myEventPublisher.onCustomProgressTestFailed();
+      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+        adapter.onCustomProgressTestFailed();
       }
     });
   }
@@ -255,12 +244,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   }
 
   public void stopEventProcessing() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        myTransferToEDTQueue.drain();
-      }
-    });
+    UIUtil.invokeLaterIfNeeded(() -> myTransferToEDTQueue.drain());
   }
 
 

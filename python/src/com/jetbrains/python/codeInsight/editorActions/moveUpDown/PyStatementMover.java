@@ -328,33 +328,30 @@ public class PyStatementMover extends LineMover {
 
     if (toMove instanceof MyLineRange && toMove2 instanceof ScopeRange) {
 
-      PostprocessReformattingAspect.getInstance(editor.getProject()).disablePostprocessFormattingInside(new Runnable() {
-        @Override
-        public void run() {
-          final PsiElement startToMove = ((MyLineRange)toMove).myStartElement;
-          final PsiElement endToMove = ((MyLineRange)toMove).myEndElement;
-          final PsiFile file = startToMove.getContainingFile();
-          final SelectionModel selectionModel = editor.getSelectionModel();
-          final CaretModel caretModel = editor.getCaretModel();
+      PostprocessReformattingAspect.getInstance(editor.getProject()).disablePostprocessFormattingInside(() -> {
+        final PsiElement startToMove = ((MyLineRange)toMove).myStartElement;
+        final PsiElement endToMove = ((MyLineRange)toMove).myEndElement;
+        final PsiFile file = startToMove.getContainingFile();
+        final SelectionModel selectionModel = editor.getSelectionModel();
+        final CaretModel caretModel = editor.getCaretModel();
 
-          final int selectionStart = selectionModel.getSelectionStart();
-          boolean isSelectionStartAtCaret = caretModel.getOffset() == selectionStart;
-          final SelectionContainer selectionLen = getSelectionLenContainer(editor, ((MyLineRange)toMove));
+        final int selectionStart = selectionModel.getSelectionStart();
+        boolean isSelectionStartAtCaret = caretModel.getOffset() == selectionStart;
+        final SelectionContainer selectionLen = getSelectionLenContainer(editor, ((MyLineRange)toMove));
 
-          int shift = getCaretShift(startToMove, endToMove, caretModel, isSelectionStartAtCaret);
+        int shift = getCaretShift(startToMove, endToMove, caretModel, isSelectionStartAtCaret);
 
-          final boolean hasSelection = selectionModel.hasSelection();
-          int offset;
-          if (((ScopeRange)toMove2).isTheSameLevel()) {
-            offset = moveTheSameLevel((ScopeRange)toMove2, (MyLineRange)toMove);
-          }
-          else {
-            offset = moveInOut(((MyLineRange)toMove), editor, info);
-          }
-          restoreCaretAndSelection(file, editor, isSelectionStartAtCaret, hasSelection, selectionLen,
-                                   shift, offset, (MyLineRange)toMove);
-          info.toMove2 = info.toMove;   //do not move further
+        final boolean hasSelection = selectionModel.hasSelection();
+        int offset;
+        if (((ScopeRange)toMove2).isTheSameLevel()) {
+          offset = moveTheSameLevel((ScopeRange)toMove2, (MyLineRange)toMove);
         }
+        else {
+          offset = moveInOut(((MyLineRange)toMove), editor, info);
+        }
+        restoreCaretAndSelection(file, editor, isSelectionStartAtCaret, hasSelection, selectionLen,
+                                 shift, offset, (MyLineRange)toMove);
+        info.toMove2 = info.toMove;   //do not move further
       });
     }
 
@@ -532,16 +529,13 @@ public class PyStatementMover extends LineMover {
     adjustLineIndents(editor, scope, project, addedElement, toMove.size);
 
     if (removePass) {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          final Document document = editor.getDocument();
-          final int lineNumber = document.getLineNumber(anchor.getTextOffset());
-          final int endOffset = document.getLineCount() <= lineNumber + 1 ? document.getLineEndOffset(lineNumber)
-                                                                          : document.getLineStartOffset(lineNumber + 1);
-          document.deleteString(document.getLineStartOffset(lineNumber), endOffset);
-          PsiDocumentManager.getInstance(startElement.getProject()).commitAllDocuments();
-        }
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        final Document document = editor.getDocument();
+        final int lineNumber = document.getLineNumber(anchor.getTextOffset());
+        final int endOffset = document.getLineCount() <= lineNumber + 1 ? document.getLineEndOffset(lineNumber)
+                                                                        : document.getLineStartOffset(lineNumber + 1);
+        document.deleteString(document.getLineStartOffset(lineNumber), endOffset);
+        PsiDocumentManager.getInstance(startElement.getProject()).commitAllDocuments();
       });
     }
 

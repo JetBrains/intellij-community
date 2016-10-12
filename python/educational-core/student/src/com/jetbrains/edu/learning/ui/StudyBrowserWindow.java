@@ -9,8 +9,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.jetbrains.edu.learning.StudyToolWindowConfigurator;
+import com.jetbrains.edu.learning.StudyPluginConfigurator;
+import com.jetbrains.edu.learning.navigation.StudyNavigator;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -34,20 +36,25 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-class StudyBrowserWindow extends JFrame {
+public class StudyBrowserWindow extends JFrame {
   private static final Logger LOG = Logger.getInstance(StudyToolWindow.class);
   private static final String EVENT_TYPE_CLICK = "click";
+  private static final Pattern IN_COURSE_LINK = Pattern.compile("#(\\w+)#(\\w+)#");
   private JFXPanel myPanel;
   private WebView myWebComponent;
   private StackPane myPane;
 
   private WebEngine myEngine;
   private ProgressBar myProgressBar;
+  private final Project myProject;
   private boolean myLinkInNewBrowser = true;
   private boolean myShowProgress = false;
 
-  public StudyBrowserWindow(final boolean linkInNewWindow, final boolean showProgress) {
+  public StudyBrowserWindow(@NotNull final Project project, final boolean linkInNewWindow, final boolean showProgress) {
+    myProject = project;
     myLinkInNewBrowser = linkInNewWindow;
     myShowProgress = showProgress;
     setSize(new Dimension(900, 800));
@@ -92,6 +99,7 @@ class StudyBrowserWindow extends JFrame {
     Platform.runLater(() -> {
       myPane = new StackPane();
       myWebComponent = new WebView();
+      myWebComponent.setOnDragDetected(event -> {});
       myEngine = myWebComponent.getEngine();
 
 
@@ -124,16 +132,21 @@ class StudyBrowserWindow extends JFrame {
     });
   }
 
-  public void loadContent(@NotNull final String content, StudyToolWindowConfigurator configurator) {
-    String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator);
-    Platform.runLater(()-> {
+  public void loadContent(@NotNull final String content, @Nullable StudyPluginConfigurator configurator) {
+    if (configurator == null) {
+      Platform.runLater(() -> myEngine.loadContent(content));
+    }
+    else {
+      String withCodeHighlighting = createHtmlWithCodeHighlighting(content, configurator);
+      Platform.runLater(() -> {
         updateLookWithProgressBarIfNeeded();
-        myEngine.loadContent(withCodeHighlighting);        
+        myEngine.loadContent(withCodeHighlighting);
       });
+    }
   }
 
   @Nullable
-  private String createHtmlWithCodeHighlighting(@NotNull final String content, @NotNull StudyToolWindowConfigurator configurator) {
+  private String createHtmlWithCodeHighlighting(@NotNull final String content, @NotNull StudyPluginConfigurator configurator) {
     String template = null;
     InputStream stream = getClass().getResourceAsStream("/code-mirror/template.html");
     try {
@@ -160,9 +173,9 @@ class StudyBrowserWindow extends JFrame {
     int fontSize = editorColorsScheme.getEditorFontSize();
     
     template = template.replace("${font_size}", String.valueOf(fontSize- 2));
-    template = template.replace("${highlight_mode}", getClass().getResource("/code-mirror/clike.js").toExternalForm());
     template = template.replace("${codemirror}", getClass().getResource("/code-mirror/codemirror.js").toExternalForm());
-    template = template.replace("${python}", getClass().getResource("/code-mirror/python.js").toExternalForm());
+    template = template.replace("${language_script}", configurator.getLanguageScriptUrl());
+    template = template.replace("${default_mode}", configurator.getDefaultHighlightingMode());
     template = template.replace("${runmode}", getClass().getResource("/code-mirror/runmode.js").toExternalForm());
     template = template.replace("${colorize}", getClass().getResource("/code-mirror/colorize.js").toExternalForm());
     template = template.replace("${javascript}", getClass().getResource("/code-mirror/javascript.js").toExternalForm());
@@ -174,7 +187,6 @@ class StudyBrowserWindow extends JFrame {
       template = template.replace("${css_oldcodemirror}", getClass().getResource("/code-mirror/codemirror-old.css").toExternalForm());
       template = template.replace("${css_codemirror}", getClass().getResource("/code-mirror/codemirror.css").toExternalForm());
     }
-    template = template.replace("${default-mode}", configurator.getDefaultHighlightingMode());
     template = template.replace("${code}", content);
 
     return template;
@@ -214,19 +226,24 @@ class StudyBrowserWindow extends JFrame {
       public void handleEvent(Event ev) {
         String domEventType = ev.getType();
         if (domEventType.equals(EVENT_TYPE_CLICK)) {
-          myEngine.setJavaScriptEnabled(true);
-          myEngine.getLoadWorker().cancel();
-          ev.preventDefault();
-
-          ApplicationManager.getApplication().invokeLater(() -> {
-            final String href = getLink((Element)ev.getTarget());
-            if (href == null) return;
-            final StudyBrowserWindow studyBrowserWindow = new StudyBrowserWindow(false, true);
-            studyBrowserWindow.addBackAndOpenButtons();
-            studyBrowserWindow.load(href);
-            studyBrowserWindow.setVisible(true);
-          });
-
+          Element target = (Element)ev.getTarget();
+          String hrefAttribute = target.getAttribute("href");
+          if (hrefAttribute != null) {
+            final Matcher matcher = IN_COURSE_LINK.matcher(hrefAttribute);
+            if (matcher.matches()) {
+              final String lessonName = matcher.group(1);
+              final String taskName = matcher.group(2);
+              StudyNavigator.navigateToTask(myProject, lessonName, taskName);
+            }
+            else {
+              myEngine.setJavaScriptEnabled(true);
+              myEngine.getLoadWorker().cancel();
+              ev.preventDefault();
+              final String href = getLink(target);
+              if (href == null) return;
+              BrowserUtil.browse(href);
+            }
+          }
         }
       }
 

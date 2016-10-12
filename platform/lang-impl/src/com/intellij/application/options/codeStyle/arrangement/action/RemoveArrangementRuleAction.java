@@ -33,6 +33,7 @@ public class RemoveArrangementRuleAction extends AbstractArrangementRuleAction i
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.remove.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.remove.description"));
     getTemplatePresentation().setIcon(IconUtil.getRemoveIcon());
+    setEnabledInModalContext(true);
   }
 
   @Override
@@ -56,13 +57,10 @@ public class RemoveArrangementRuleAction extends AbstractArrangementRuleAction i
     }
 
     final ArrangementMatchingRulesModel model = control.getModel();
-    control.runOperationIgnoreSelectionChange(new Runnable() {
-      @Override
-      public void run() {
-        for (int i = 0; i < rowsToRemove.size(); i++) {
-          int row = rowsToRemove.get(i);
-          model.removeRow(row);
-        } 
+    control.runOperationIgnoreSelectionChange(() -> {
+      for (int i = 0; i < rowsToRemove.size(); i++) {
+        int row = rowsToRemove.get(i);
+        model.removeRow(row);
       }
     });
   }

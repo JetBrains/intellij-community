@@ -155,13 +155,10 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     for (Library library : libraries) {
       myRoot.add(new MyNode(new LibraryConfigurable(modelProvider, library, myContext, TREE_UPDATER)));
     }
-    TreeUtil.sort(myRoot, new Comparator() {
-      @Override
-      public int compare(final Object o1, final Object o2) {
-        MyNode node1 = (MyNode)o1;
-        MyNode node2 = (MyNode)o2;
-        return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
-      }
+    TreeUtil.sort(myRoot, (o1, o2) -> {
+      MyNode node1 = (MyNode)o1;
+      MyNode node2 = (MyNode)o2;
+      return node1.getDisplayName().compareToIgnoreCase(node2.getDisplayName());
     });
     ((DefaultTreeModel)myTree.getModel()).reload(myRoot);
   }
@@ -169,12 +166,9 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        for (final LibrariesModifiableModel provider : myContext.myLevel2Providers.values()) {
-          provider.deferredCommit();
-        }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      for (final LibrariesModifiableModel provider : myContext.myLevel2Providers.values()) {
+        provider.deferredCommit();
       }
     });
   }

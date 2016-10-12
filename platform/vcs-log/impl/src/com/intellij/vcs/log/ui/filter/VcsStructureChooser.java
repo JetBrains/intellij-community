@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -27,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileListCellRenderer;
@@ -167,36 +165,30 @@ public class VcsStructureChooser extends DialogWrapper {
     final MyCheckboxTreeCellRenderer cellRenderer =
       new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
     FileSystemTreeImpl fileSystemTree =
-      new FileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, null, new Convertor<TreePath, String>() {
-        @Override
-        public String convert(TreePath o) {
-          DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode)o.getLastPathComponent());
-          Object uo = lastPathComponent.getUserObject();
-          if (uo instanceof FileNodeDescriptor) {
-            VirtualFile file = ((FileNodeDescriptor)uo).getElement().getFile();
-            String module = myModulesSet.get(file);
-            if (module != null) return module;
-            return file == null ? "" : file.getName();
-          }
-          return o.toString();
+      new FileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, null, o -> {
+        DefaultMutableTreeNode lastPathComponent = ((DefaultMutableTreeNode)o.getLastPathComponent());
+        Object uo = lastPathComponent.getUserObject();
+        if (uo instanceof FileNodeDescriptor) {
+          VirtualFile file = ((FileNodeDescriptor)uo).getElement().getFile();
+          String module = myModulesSet.get(file);
+          if (module != null) return module;
+          return file == null ? "" : file.getName();
         }
+        return o.toString();
       });
 
-    fileSystemTree.getTreeBuilder().getUi().setNodeDescriptorComparator(new Comparator<NodeDescriptor>() {
-      @Override
-      public int compare(NodeDescriptor o1, NodeDescriptor o2) {
-        if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
-          VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
-          VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
+    fileSystemTree.getTreeBuilder().getUi().setNodeDescriptorComparator((o1, o2) -> {
+      if (o1 instanceof FileNodeDescriptor && o2 instanceof FileNodeDescriptor) {
+        VirtualFile f1 = ((FileNodeDescriptor)o1).getElement().getFile();
+        VirtualFile f2 = ((FileNodeDescriptor)o2).getElement().getFile();
 
-          boolean isDir1 = f1.isDirectory();
-          boolean isDir2 = f2.isDirectory();
-          if (isDir1 != isDir2) return isDir1 ? -1 : 1;
+        boolean isDir1 = f1.isDirectory();
+        boolean isDir2 = f2.isDirectory();
+        if (isDir1 != isDir2) return isDir1 ? -1 : 1;
 
-          return f1.getPath().compareToIgnoreCase(f2.getPath());
-        }
-        return o1.getIndex() - o2.getIndex();
+        return f1.getPath().compareToIgnoreCase(f2.getPath());
       }
+      return o1.getIndex() - o2.getIndex();
     });
 
     new ClickListener() {
@@ -245,7 +237,7 @@ public class VcsStructureChooser extends DialogWrapper {
     JBPanel panel = new JBPanel(new BorderLayout());
     panel.add(new JBScrollPane(fileSystemTree.getTree()), BorderLayout.CENTER);
     final JLabel selectedLabel = new JLabel("");
-    selectedLabel.setBorder(BorderFactory.createEmptyBorder(2, 0, 2, 0));
+    selectedLabel.setBorder(JBUI.Borders.empty(2, 0));
     panel.add(selectedLabel, BorderLayout.SOUTH);
 
     mySelectionManager.setSelectionChangeListener(new PlusMinus<VirtualFile>() {

@@ -15,12 +15,9 @@
  */
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.FileBasedTestCaseHelper;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,14 +28,11 @@ import org.junit.runner.RunWith;
 public class IndentingBackspaceHandlerTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
   @Test
   public void testAction() {
-    new WriteCommandAction<Void>(null) {
-      @Override
-      protected void run(@NotNull Result<Void> result) throws Throwable {
-        configureByFile(myFileSuffix);
-        backspace();
-        checkResultByFile(myFileSuffix.replace(".", "-after."));
-      }
-    }.execute();
+    edt(() -> {
+      configureByFile(myFileSuffix);
+      backspace();
+      checkResultByFile(myFileSuffix.replace(".", "-after."));
+    });
   }
 
   @Nullable

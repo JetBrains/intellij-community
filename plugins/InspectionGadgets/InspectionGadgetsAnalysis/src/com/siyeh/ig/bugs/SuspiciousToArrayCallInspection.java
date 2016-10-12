@@ -52,18 +52,14 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
   private static class SuspiciousToArrayCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"toArray".equals(methodName)) {
         return;
       }
-      final PsiExpression qualifierExpression =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression == null) {
         return;
       }
@@ -73,9 +69,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
       }
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass aClass = classType.resolve();
-      if (aClass == null ||
-          !InheritanceUtil.isInheritor(aClass,
-                                       CommonClassNames.JAVA_UTIL_COLLECTION)) {
+      if (aClass == null || !InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
@@ -87,10 +81,9 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
       checkCollectionAndArrayTypes(classType, argument, expression);
     }
 
-    private void checkCollectionAndArrayTypes(
-      @NotNull PsiClassType collectionType,
-      @NotNull PsiExpression argument,
-      @NotNull PsiMethodCallExpression expression) {
+    private void checkCollectionAndArrayTypes(@NotNull PsiClassType collectionType,
+                                              @NotNull PsiExpression argument,
+                                              @NotNull PsiMethodCallExpression expression) {
       final PsiType argumentType = argument.getType();
       if (!(argumentType instanceof PsiArrayType)) {
         return;
@@ -99,10 +92,8 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
       final PsiType componentType = arrayType.getComponentType();
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiTypeCastExpression) {
-        final PsiTypeCastExpression castExpression =
-          (PsiTypeCastExpression)parent;
-        final PsiTypeElement castTypeElement =
-          castExpression.getCastType();
+        final PsiTypeCastExpression castExpression = (PsiTypeCastExpression)parent;
+        final PsiTypeElement castTypeElement = castExpression.getCastType();
         if (castTypeElement == null) {
           return;
         }

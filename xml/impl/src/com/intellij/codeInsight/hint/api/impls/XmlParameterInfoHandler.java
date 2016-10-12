@@ -40,12 +40,7 @@ import java.util.Comparator;
  * @author Maxim.Mossienko
  */
 public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlElementDescriptor> {
-  private static final Comparator<XmlAttributeDescriptor> COMPARATOR = new Comparator<XmlAttributeDescriptor>() {
-    @Override
-    public int compare(final XmlAttributeDescriptor o1, final XmlAttributeDescriptor o2) {
-      return o1.getName().compareTo(o2.getName());
-    }
-  };
+  private static final Comparator<XmlAttributeDescriptor> COMPARATOR = (o1, o2) -> o1.getName().compareTo(o2.getName());
 
   @Override
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {

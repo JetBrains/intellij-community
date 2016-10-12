@@ -75,12 +75,6 @@ public class ConsolePanel extends TestResultsPanel {
   }
 
   @Override
-  protected JComponent createStatisticsPanel() {
-    myStatisticsPanel = new StatisticsPanel();
-    return myStatisticsPanel;
-  }
-
-  @Override
   protected ToolbarPanel createToolbarPanel() {
     return new JUnitToolbarPanel(myProperties, this);
   }
@@ -152,12 +146,7 @@ public class ConsolePanel extends TestResultsPanel {
     private final ProcessAdapter myProcessListener = new ProcessAdapter() {
       @Override
       public void processTerminated(ProcessEvent event) {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            doStop();
-          }
-        });
+        ApplicationManager.getApplication().invokeLater(() -> doStop());
       }
     };
 

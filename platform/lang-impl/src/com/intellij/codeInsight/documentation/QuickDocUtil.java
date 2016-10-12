@@ -44,24 +44,16 @@ public class QuickDocUtil {
 
   public static void updateQuickDocAsync(@NotNull final PsiElement element, @NotNull final Producer<String> docProducer) {
     final Project project = element.getProject();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        updateQuickDoc(project, element, docProducer.produce());
-      }
-    });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> updateQuickDoc(project, element, docProducer.produce()));
   }
 
   public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable final String documentation) {
     if (StringUtil.isEmpty(documentation)) return;
     // modal dialogs with fragment editors fix: can't guess proper modality state here
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        DocumentationComponent component = getActiveDocComponent(project);
-        if (component != null) {
-          component.replaceText(documentation, element);
-        }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      DocumentationComponent component = getActiveDocComponent(project);
+      if (component != null) {
+        component.replaceText(documentation, element);
       }
     });
   }

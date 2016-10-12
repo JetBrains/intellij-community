@@ -21,7 +21,6 @@ import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDSource;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +28,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -69,7 +69,7 @@ public class PaletteItemsComponent extends JBList {
 
     ColoredListCellRenderer renderer = new ColoredListCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
         clear();
         PaletteItem item = (PaletteItem)value;
 
@@ -145,10 +145,6 @@ public class PaletteItemsComponent extends JBList {
         }
       }
     });
-
-    if (ApplicationManager.getApplication().isUnitTestMode() && GraphicsEnvironment.isHeadless()) {
-      return;
-    }
 
     setDragEnabled(true);
     setTransferHandler(new TreeTransfer(PaletteItem.class));

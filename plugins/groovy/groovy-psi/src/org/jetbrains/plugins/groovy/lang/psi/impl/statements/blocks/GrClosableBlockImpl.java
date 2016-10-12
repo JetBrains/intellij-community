@@ -298,29 +298,26 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   private PsiVariable getOwner() {
-    return CachedValuesManager.getCachedValue(this, new CachedValueProvider<PsiVariable>() {
-      @Override
-      public Result<PsiVariable> compute() {
-        final GroovyPsiElement context = PsiTreeUtil.getParentOfType(GrClosableBlockImpl.this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        PsiType type = null;
-        if (context instanceof GrTypeDefinition) {
-          type = factory.createType((PsiClass)context);
-        }
-        else if (context instanceof GrClosableBlock) {
-          type = GrClosureType.create((GrClosableBlock)context, true);
-        }
-        else if (context instanceof GroovyFile) {
-          final PsiClass scriptClass = ((GroovyFile)context).getScriptClass();
-          if (scriptClass != null && GroovyNamesUtil.isIdentifier(scriptClass.getName())) type = factory.createType(scriptClass);
-        }
-        if (type == null) {
-          type = TypesUtil.getJavaLangObject(GrClosableBlockImpl.this);
-        }
-
-        PsiVariable owner = new GrLightVariable(getManager(), OWNER_NAME, type, GrClosableBlockImpl.this);
-        return Result.create(owner, PsiModificationTracker.MODIFICATION_COUNT);
+    return CachedValuesManager.getCachedValue(this, () -> {
+      final GroovyPsiElement context = PsiTreeUtil.getParentOfType(GrClosableBlockImpl.this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
+      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+      PsiType type = null;
+      if (context instanceof GrTypeDefinition) {
+        type = factory.createType((PsiClass)context);
       }
+      else if (context instanceof GrClosableBlock) {
+        type = GrClosureType.create((GrClosableBlock)context, true);
+      }
+      else if (context instanceof GroovyFile) {
+        final PsiClass scriptClass = ((GroovyFile)context).getScriptClass();
+        if (scriptClass != null && GroovyNamesUtil.isIdentifier(scriptClass.getName())) type = factory.createType(scriptClass);
+      }
+      if (type == null) {
+        type = TypesUtil.getJavaLangObject(GrClosableBlockImpl.this);
+      }
+
+      PsiVariable owner = new GrLightVariable(getManager(), OWNER_NAME, type, GrClosableBlockImpl.this);
+      return CachedValueProvider.Result.create(owner, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -329,12 +326,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 
-  private static final Function<GrClosableBlock, PsiType> ourTypesCalculator = new NullableFunction<GrClosableBlock, PsiType>() {
-    @Override
-    public PsiType fun(GrClosableBlock block) {
-      return GroovyPsiManager.inferType(block, new MethodTypeInferencer(block));
-    }
-  };
+  private static final Function<GrClosableBlock, PsiType> ourTypesCalculator =
+    (NullableFunction<GrClosableBlock, PsiType>)block -> GroovyPsiManager.inferType(block, new MethodTypeInferencer(block));
 
   @Override
   @Nullable

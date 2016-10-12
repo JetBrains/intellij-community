@@ -32,24 +32,22 @@ import java.util.List;
  */
 public final class ToolWindowsGroup extends ActionGroup implements DumbAware {
 
-  private static final Comparator<ActivateToolWindowAction> COMPARATOR = new Comparator<ActivateToolWindowAction>() {
-    public int compare(ActivateToolWindowAction a1, ActivateToolWindowAction a2) {
-      int m1 = ActivateToolWindowAction.getMnemonicForToolWindow(a1.getToolWindowId());
-      int m2 = ActivateToolWindowAction.getMnemonicForToolWindow(a2.getToolWindowId());
+  private static final Comparator<ActivateToolWindowAction> COMPARATOR = (a1, a2) -> {
+    int m1 = ActivateToolWindowAction.getMnemonicForToolWindow(a1.getToolWindowId());
+    int m2 = ActivateToolWindowAction.getMnemonicForToolWindow(a2.getToolWindowId());
 
-      if (m1 != -1 && m2 == -1) {
-        return -1;
-      }
-      else if (m1 == -1 && m2 != -1) {
-        return 1;
-      }
-      else if (m1 != -1) {
-        return m1 - m2;
-      }
-      else {
-      // Both actions have no mnemonic, therefore they are sorted alphabetically
-        return a1.getToolWindowId().compareToIgnoreCase(a2.getToolWindowId());
-      }
+    if (m1 != -1 && m2 == -1) {
+      return -1;
+    }
+    else if (m1 == -1 && m2 != -1) {
+      return 1;
+    }
+    else if (m1 != -1) {
+      return m1 - m2;
+    }
+    else {
+    // Both actions have no mnemonic, therefore they are sorted alphabetically
+      return a1.getToolWindowId().compareToIgnoreCase(a2.getToolWindowId());
     }
   };
 

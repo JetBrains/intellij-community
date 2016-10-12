@@ -3,25 +3,33 @@ package com.intellij.ide.ui;
 import java.awt.image.ImageFilter;
 
 final class SimulationFilter extends WeightFilter {
+  public static ImageFilter get(ColorBlindness blindness) {
+    if (blindness == ColorBlindness.protanopia) return protanopia;
+    if (blindness == ColorBlindness.deuteranopia) return deuteranopia;
+    if (blindness == ColorBlindness.tritanopia) return tritanopia;
+    if (blindness == ColorBlindness.achromatopsia) return achromatopsia;
+    return null;
+  }
+
   public static final ImageFilter protanopia = forProtanopia(null);
   public static final ImageFilter deuteranopia = forDeuteranopia(null);
   public static final ImageFilter tritanopia = forTritanopia(null);
   public static final ImageFilter achromatopsia = forAchromatopsia(null);
 
   public static ImageFilter forProtanopia(Double weight) {
-    return new SimulationFilter(weight, 0.7465, 0.2535, 1.273463, -0.073894);
+    return new SimulationFilter("Protanopia", weight, 0.7465, 0.2535, 1.273463, -0.073894);
   }
-  
+
   public static ImageFilter forDeuteranopia(Double weight) {
-    return new SimulationFilter(weight, 1.4, -0.4, 0.968437, 0.003331);
+    return new SimulationFilter("Deuteranopia", weight, 1.4, -0.4, 0.968437, 0.003331);
   }
 
   public static ImageFilter forTritanopia(Double weight) {
-    return new SimulationFilter(weight, 0.1748, 0, 0.062921, 0.292119);
+    return new SimulationFilter("Tritanopia", weight, 0.1748, 0, 0.062921, 0.292119);
   }
 
   public static ImageFilter forAchromatopsia(Double weight) {
-    return new WeightFilter(weight) {
+    return new WeightFilter("Achromatopsia (simulation)", weight) {
       @Override
       int toRGB(int srcR, int srcG, int srcB) {
         double gray = 0.212656 * srcR + 0.715158 * srcG + 0.072186 * srcB;
@@ -35,8 +43,8 @@ final class SimulationFilter extends WeightFilter {
   private final double myConfuseM;
   private final double myConfuseYint;
 
-  private SimulationFilter(Double weight, double x, double y, double m, double yint) {
-    super(weight);
+  private SimulationFilter(String name, Double weight, double x, double y, double m, double yint) {
+    super(name + " (simulation)", weight);
     myConfuseX = x;
     myConfuseY = y;
     myConfuseM = m;
@@ -85,9 +93,9 @@ final class SimulationFilter extends WeightFilter {
     double fitG = ((dstG < 0 ? 0 : 1) - dstG) / diffG;
     double fitB = ((dstB < 0 ? 0 : 1) - dstB) / diffB;
     double adjust = Math.max(Math.max( // highest value
-                    (fitR < 0 || 1 < fitR) ? 0 : fitR,
-                    (fitG < 0 || 1 < fitG) ? 0 : fitG),
-                    (fitB < 0 || 1 < fitB) ? 0 : fitB);
+                                       (fitR < 0 || 1 < fitR) ? 0 : fitR,
+                                       (fitG < 0 || 1 < fitG) ? 0 : fitG),
+                             (fitB < 0 || 1 < fitB) ? 0 : fitB);
     // Shift proportional to the greatest shift
     dstR += adjust * diffR;
     dstG += adjust * diffG;

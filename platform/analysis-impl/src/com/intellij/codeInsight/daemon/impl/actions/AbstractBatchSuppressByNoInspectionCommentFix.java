@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -106,6 +107,11 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
     invoke(project, element);
   }
 
+  @Override
+  public boolean isSuppressAll() {
+    return SuppressionUtil.ALL.equals(myID);
+  }
+
   protected final void replaceSuppressionComment(@NotNull final PsiElement comment) {
     SuppressionUtil.replaceSuppressionComment(comment, myID, myReplaceOtherSuppressionIds, getCommentLanguage(comment));
   }
@@ -170,6 +176,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionsBundle.message("suppress.inspection.family");
+    final String text = getText();
+    return StringUtil.isEmpty(text) ? InspectionsBundle.message("suppress.inspection.family") : text;
   }
 }

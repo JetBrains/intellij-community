@@ -27,6 +27,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
@@ -135,7 +136,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   private void destroyViewer() {
     Disposer.dispose(myViewer);
 
-    myMainPanel.putClientProperty(AnAction.ourClientProperty, null);
+    ActionUtil.clearActions(myMainPanel);
 
     myContentPanel.setContent(null);
     myToolbarPanel.setContent(null);
@@ -206,17 +207,14 @@ public abstract class MergeRequestProcessor implements Disposable {
   @Override
   public void dispose() {
     if (myDisposed) return;
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myDisposed) return;
-        myDisposed = true;
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myDisposed) return;
+      myDisposed = true;
 
-        onDispose();
+      onDispose();
 
-        destroyViewer();
-        applyRequestResult(MergeResult.CANCEL);
-      }
+      destroyViewer();
+      applyRequestResult(MergeResult.CANCEL);
     });
   }
 

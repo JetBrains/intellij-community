@@ -15,21 +15,16 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
@@ -45,29 +40,6 @@ public class ArrangementRuleAliasConfigurable implements UnnamedConfigurable {
     myToken = token;
     myTokenRulesPanel = new ArrangementRuleAliasesPanel(settingsManager, colorsProvider);
     myTokenRulesPanel.setRuleSequences(token.getDefinitionRules());
-
-    registerShortcut(ArrangementConstants.MATCHING_ALIAS_RULE_ADD, CommonShortcuts.getNew(), myTokenRulesPanel);
-    registerShortcut(ArrangementConstants.MATCHING_ALIAS_RULE_REMOVE, CommonShortcuts.getDelete(), myTokenRulesPanel);
-    registerShortcut(ArrangementConstants.MATCHING_ALIAS_RULE_MOVE_UP, CommonShortcuts.MOVE_UP, myTokenRulesPanel);
-    registerShortcut(ArrangementConstants.MATCHING_ALIAS_RULE_MOVE_DOWN, CommonShortcuts.MOVE_DOWN, myTokenRulesPanel);
-    final CustomShortcutSet edit = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
-    registerShortcut(ArrangementConstants.MATCHING_ALIAS_RULE_EDIT, edit, myTokenRulesPanel);
-  }
-
-  private static void registerShortcut(@NotNull String actionId,
-                                       @NotNull ShortcutSet shortcut,
-                                       @NotNull JComponent component) {
-    final AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action != null) {
-      action.registerCustomShortcutSet(shortcut, component);
-    }
-  }
-
-  private static void unregisterShortcut(@NotNull String actionId, @NotNull JComponent component) {
-    final AnAction action = ActionManager.getInstance().getAction(actionId);
-    if (action != null) {
-      action.unregisterCustomShortcutSet(component);
-    }
   }
 
   @Nullable
@@ -94,15 +66,5 @@ public class ArrangementRuleAliasConfigurable implements UnnamedConfigurable {
 
   @Override
   public void disposeUIResources() {
-    Disposer.dispose(new Disposable() {
-      @Override
-      public void dispose() {
-        unregisterShortcut(ArrangementConstants.MATCHING_ALIAS_RULE_ADD, myTokenRulesPanel);
-        unregisterShortcut(ArrangementConstants.MATCHING_ALIAS_RULE_REMOVE, myTokenRulesPanel);
-        unregisterShortcut(ArrangementConstants.MATCHING_ALIAS_RULE_MOVE_UP, myTokenRulesPanel);
-        unregisterShortcut(ArrangementConstants.MATCHING_ALIAS_RULE_MOVE_DOWN, myTokenRulesPanel);
-        unregisterShortcut(ArrangementConstants.MATCHING_ALIAS_RULE_EDIT, myTokenRulesPanel);
-      }
-    });
   }
 }

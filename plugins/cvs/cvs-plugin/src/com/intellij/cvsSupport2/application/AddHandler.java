@@ -98,12 +98,10 @@ class AddHandler {
 
     if (!myAddedFiles.isEmpty()) {
       if (CvsVcs2.getInstance(myProject).getAddConfirmation().getValue() != VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) {
-        final Runnable addRunnable = new Runnable() {
-          public void run() {
-            if (!myCvsStorageComponent.getIsActive()) return;
-            AddFileOrDirectoryAction.createActionToAddNewFileAutomatically()
-              .actionPerformed(createDataContext(myAddedFiles));
-          }
+        final Runnable addRunnable = () -> {
+          if (!myCvsStorageComponent.getIsActive()) return;
+          AddFileOrDirectoryAction.createActionToAddNewFileAutomatically()
+            .actionPerformed(createDataContext(myAddedFiles));
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           addRunnable.run();

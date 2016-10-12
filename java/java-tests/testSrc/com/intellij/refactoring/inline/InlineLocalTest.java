@@ -248,6 +248,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testParenthesisAroundInlinedLambda() throws Exception {
+    doTest(true);
+  }
+
   public void testArrayAccessPriority() throws Exception {
     doTest(true);
   }
@@ -256,7 +260,19 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(true);
   }
 
+  public void testDontOpenMultidimensionalArrays() throws Exception {
+    doTest(false);
+  }
+
   public void testInsertNarrowingCastToAvoidSemanticsChange() throws Exception {
+    doTest(false);
+  }
+
+  public void testInsertCastToGenericTypeToProvideValidReturnType() throws Exception {
+    doTest(false);
+  }
+
+  public void testOperationPrecedenceWhenInlineToStringConcatenation() throws Exception {
     doTest(false);
   }
 

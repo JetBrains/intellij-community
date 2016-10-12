@@ -116,6 +116,10 @@ public class CalendarView extends JPanel {
     mySeconds.setValue(new Integer(myCalendar.get(Calendar.SECOND)));
   }
 
+  public JComponent getDaysCombo() {
+    return myDays;
+  }
+
   private void addTimeFields() {
     JPanel timePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     timePanel.add(myHours);

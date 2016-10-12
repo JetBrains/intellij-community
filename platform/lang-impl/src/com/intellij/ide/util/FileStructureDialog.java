@@ -372,17 +372,14 @@ public class FileStructureDialog extends DialogWrapper {
             return;
           }
           builder.addUpdateRequest(hasPrefixShortened(evt));
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              int index = myList.getSelectedIndex();
-              if (index != -1 && index < myList.getModel().getSize()) {
-                myList.clearSelection();
-                ScrollingUtil.selectItem(myList, index);
-              }
-              else {
-                ScrollingUtil.ensureSelectionExists(myList);
-              }
+          ApplicationManager.getApplication().invokeLater(() -> {
+            int index = myList.getSelectedIndex();
+            if (index != -1 && index < myList.getModel().getSize()) {
+              myList.clearSelection();
+              ScrollingUtil.selectItem(myList, index);
+            }
+            else {
+              ScrollingUtil.ensureSelectionExists(myList);
             }
           });
         }
@@ -399,12 +396,9 @@ public class FileStructureDialog extends DialogWrapper {
     public boolean navigateSelectedElement() {
       final Ref<Boolean> succeeded = new Ref<Boolean>();
       final CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      commandProcessor.executeCommand(myProject, new Runnable() {
-        @Override
-        public void run() {
-          succeeded.set(MyCommanderPanel.super.navigateSelectedElement());
-          IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
-        }
+      commandProcessor.executeCommand(myProject, () -> {
+        succeeded.set(MyCommanderPanel.super.navigateSelectedElement());
+        IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
       }, "Navigate", null);
       if (succeeded.get()) {
         close(CANCEL_EXIT_CODE);
@@ -501,6 +495,6 @@ public class FileStructureDialog extends DialogWrapper {
 
   @NotNull
   public static MinusculeMatcher createFileStructureMatcher(@NotNull String pattern) {
-    return new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE, " ()");
+    return NameUtil.buildMatcher(pattern).withSeparators(" ()").build();
   }
 }

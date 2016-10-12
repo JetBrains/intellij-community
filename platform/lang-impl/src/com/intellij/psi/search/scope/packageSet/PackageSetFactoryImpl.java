@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
 
     public PackageSet parse() throws ParsingException {
       PackageSet set = parseUnion();
-      if (myLexer.getTokenType() != null) error(AnalysisScopeBundle.message("error.packageset.token.expectations", getTokenText()));
+      if (myLexer.getTokenType() != null) error(AnalysisScopeBundle.message("error.package.set.token.expectations", getTokenText()));
       return set;
     }
 
@@ -142,7 +142,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
         myLexer.advance();
       }
       if (pattern.length() == 0) {
-        error(AnalysisScopeBundle.message("error.packageset.pattern.expectations"));
+        error(AnalysisScopeBundle.message("error.package.set.pattern.expectations"));
       }
       return pattern.toString();
     }
@@ -152,7 +152,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
       myLexer.advance();
 
       PackageSet result = parseUnion();
-      if (myLexer.getTokenType() != ScopeTokenTypes.RPARENTH) error(AnalysisScopeBundle.message("error.packageset.rparen.expected"));
+      if (myLexer.getTokenType() != ScopeTokenTypes.RPARENTH) error(AnalysisScopeBundle.message("error.package.set.rparen.expected"));
       myLexer.advance();
 
       return result;
@@ -160,7 +160,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
 
     private void error(String message) throws ParsingException {
       throw new ParsingException(
-        AnalysisScopeBundle.message("error.packageset.position.parsing.error", message, (myLexer.getTokenStart() + 1)));
+        AnalysisScopeBundle.message("error.package.set.position.parsing.error", message, (myLexer.getTokenStart() + 1)));
     }
   }
 }

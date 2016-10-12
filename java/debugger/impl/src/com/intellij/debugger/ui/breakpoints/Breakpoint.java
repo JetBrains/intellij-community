@@ -423,7 +423,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     // need to delete the request immediately, see IDEA-133978
     debugProcess.getRequestsManager().deleteRequest(this);
 
-    debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
+    debugProcess.addDebugProcessListener(new DebugProcessListener() {
       @Override
       public void resumed(SuspendContext suspendContext) {
         removeBreakpoint();
@@ -435,12 +435,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
 
       private void removeBreakpoint() {
-        AppUIUtil.invokeOnEdt(new Runnable() {
-          @Override
-          public void run() {
-            DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(Breakpoint.this);
-          }
-        });
+        AppUIUtil.invokeOnEdt(() -> DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(Breakpoint.this));
         debugProcess.removeDebugProcessListener(this);
       }
     });

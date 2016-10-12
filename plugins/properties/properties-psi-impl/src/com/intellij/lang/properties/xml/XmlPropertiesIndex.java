@@ -52,7 +52,6 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   public final static Key MARKER_KEY = new Key();
   public static final ID<Key,String> NAME = ID.create("xmlProperties");
 
-  private static final EnumeratorStringDescriptor ENUMERATOR_STRING_DESCRIPTOR = new EnumeratorStringDescriptor();
   private static final String HTTP_JAVA_SUN_COM_DTD_PROPERTIES_DTD = "http://java.sun.com/dtd/properties.dtd";
 
   @NotNull
@@ -76,7 +75,7 @@ public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesInd
   @NotNull
   @Override
   public DataExternalizer<String> getValueExternalizer() {
-    return ENUMERATOR_STRING_DESCRIPTOR;
+    return EnumeratorStringDescriptor.INSTANCE;
   }
 
   @NotNull

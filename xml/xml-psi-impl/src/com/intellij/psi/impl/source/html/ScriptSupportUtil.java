@@ -57,34 +57,31 @@ public class ScriptSupportUtil {
     CachedValue<XmlTag[]> myCachedScriptTags = element.getUserData(CachedScriptTagsKey);
     if (myCachedScriptTags == null) {
       myCachedScriptTags = CachedValuesManager.getManager(element.getProject())
-          .createCachedValue(new CachedValueProvider<XmlTag[]>() {
-            @Override
-            public Result<XmlTag[]> compute() {
-              final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
-              final XmlDocument document = HtmlPsiUtil.getRealXmlDocument(element.getDocument());
+          .createCachedValue(() -> {
+            final List<XmlTag> scriptTags = new ArrayList<XmlTag>();
+            final XmlDocument document = HtmlPsiUtil.getRealXmlDocument(element.getDocument());
 
-              if (document != null) {
-                PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
-                  @Override
-                  public boolean execute(@NotNull final PsiElement element) {
-                    if (element instanceof XmlTag) {
-                      final XmlTag tag = (XmlTag)element;
+            if (document != null) {
+              PsiElementProcessor psiElementProcessor = new PsiElementProcessor() {
+                @Override
+                public boolean execute(@NotNull final PsiElement element1) {
+                  if (element1 instanceof XmlTag) {
+                    final XmlTag tag = (XmlTag)element1;
 
-                      if (HtmlUtil.SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName())) {
-                        final XmlElementDescriptor descriptor = tag.getDescriptor();
-                        if (descriptor != null && HtmlUtil.SCRIPT_TAG_NAME.equals(descriptor.getName())) {
-                          scriptTags.add(tag);
-                        }
+                    if (HtmlUtil.SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName())) {
+                      final XmlElementDescriptor descriptor = tag.getDescriptor();
+                      if (descriptor != null && HtmlUtil.SCRIPT_TAG_NAME.equals(descriptor.getName())) {
+                        scriptTags.add(tag);
                       }
                     }
-                    return true;
                   }
-                };
-                XmlPsiUtil.processXmlElements(document, psiElementProcessor, true);
-              }
-
-              return new Result<XmlTag[]>(scriptTags.toArray(new XmlTag[scriptTags.size()]), element);
+                  return true;
+                }
+              };
+              XmlPsiUtil.processXmlElements(document, psiElementProcessor, true);
             }
+
+            return new CachedValueProvider.Result<XmlTag[]>(scriptTags.toArray(new XmlTag[scriptTags.size()]), element);
           }, false);
       element.putUserData(CachedScriptTagsKey, myCachedScriptTags);
     }

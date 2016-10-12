@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,8 @@
 package com.intellij.xdebugger;
 
 /**
- * @author nik
+ * Is not required since Java 1.8
  */
+@Deprecated
 public abstract class XDebugSessionAdapter implements XDebugSessionListener {
-  public void sessionPaused() {
-  }
-
-  public void sessionResumed() {
-  }
-
-  public void sessionStopped() {
-  }
-
-  public void stackFrameChanged() {
-  }
-
-  public void beforeSessionResume() {
-  }
 }

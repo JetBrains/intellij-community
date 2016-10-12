@@ -88,22 +88,19 @@ public class EnforcedPlainTextFileTypeManager implements ProjectManagerListener 
   }
 
   private void setPlainTextStatus(@NotNull final Project project, final boolean isAdded, @NotNull final VirtualFile... files) {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
-        for (VirtualFile file : files) {
-          if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
-            ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
-            if (isAdded ?
-                projectPlainTextFileTypeManager.addFile(file) :
-                projectPlainTextFileTypeManager.removeFile(file)) {
-              FileBasedIndex.getInstance().requestReindex(file);
-            }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectPlainTextFileTypeManager projectPlainTextFileTypeManager = ProjectPlainTextFileTypeManager.getInstance(project);
+      for (VirtualFile file : files) {
+        if (projectPlainTextFileTypeManager.hasProjectContaining(file)) {
+          ensureProjectFileSetAdded(project, projectPlainTextFileTypeManager);
+          if (isAdded ?
+              projectPlainTextFileTypeManager.addFile(file) :
+              projectPlainTextFileTypeManager.removeFile(file)) {
+            FileBasedIndex.getInstance().requestReindex(file);
           }
         }
-        FileContentUtilCore.reparseFiles(files);
       }
+      FileContentUtilCore.reparseFiles(files);
     });
   }
 

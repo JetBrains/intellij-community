@@ -406,12 +406,12 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    HgUtil.executeOnPooledThread(new Runnable() {
       public void run() {
         Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
         new HgIntegrationEnabler(HgVcs.this).enable(roots);
       }
-    });
+    }, myProject);
   }
 
   @Override

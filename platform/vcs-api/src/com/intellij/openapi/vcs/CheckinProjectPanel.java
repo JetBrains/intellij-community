@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -83,14 +84,13 @@ public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
    */
   Collection<VirtualFile> getRoots();
 
-  void setWarning(final String s);
-
   /**
    * Gets the description for the check-in.
    *
    * @return the description text.
    * @since 5.1
    */
+  @NotNull
   String getCommitMessage();
 
   String getCommitActionName();

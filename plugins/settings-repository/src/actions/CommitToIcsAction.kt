@@ -116,17 +116,14 @@ private class ProjectChangeCollectConsumer(private val project: Project) {
 private fun getProjectId(project: Project): String? {
   val projectId = ServiceManager.getService<ProjectId>(project, ProjectId::class.java)!!
   if (projectId.uid == null) {
-    if (MessageDialogBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(object : DialogWrapper.PropertyDoNotAskOption("") {
-      override fun setToBeShown(value: Boolean, exitCode: Int) {
-        icsManager.settings.doNoAskMapProject = !value
-      }
-
-      override fun isToBeShown(): Boolean {
-        return !icsManager.settings.doNoAskMapProject
-      }
-
-      override fun canBeHidden(): Boolean {
+    if (icsManager.settings.doNoAskMapProject ||
+        MessageDialogBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).doNotAsk(object : DialogWrapper.DoNotAskOption.Adapter() {
+      override fun isSelectedByDefault(): Boolean {
         return true
+      }
+
+      override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+        icsManager.settings.doNoAskMapProject = isSelected
       }
     }).show() == Messages.YES) {
       projectId.uid = UUID.randomUUID().toString()

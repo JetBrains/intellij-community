@@ -82,23 +82,13 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     for (ComponentElementProperties componentElementProperty : new LinkedHashSet<>(componentToContainingListElement.values())) {
       myChooser.addElement(componentElementProperty, true, componentElementProperty);
     }
-    myChooser.sort(new Comparator<ComponentElementProperties>() {
-      @Override
-      public int compare(@NotNull ComponentElementProperties o1, @NotNull ComponentElementProperties o2) {
-        return o1.toString().compareTo(o2.toString());
-      }
-    });
+    myChooser.sort((o1, o2) -> o1.toString().compareTo(o2.toString()));
 
     final ActionListener browseAction = new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         chooseSettingsFile(myPathPanel.getText(), getWindow(), IdeBundle.message("title.export.file.location"), IdeBundle.message("prompt.choose.export.settings.file.path"))
-          .done(new Consumer<String>() {
-            @Override
-            public void consume(String path) {
-              myPathPanel.setText(FileUtil.toSystemDependentName(path));
-            }
-          });
+          .done(path -> myPathPanel.setText(FileUtil.toSystemDependentName(path)));
       }
     };
 
@@ -106,12 +96,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
     String exportPath = PropertiesComponent.getInstance().getValue("export.settings.path", DEFAULT_PATH);
     myPathPanel.setText(exportPath);
-    myPathPanel.setChangeListener(new Runnable() {
-      @Override
-      public void run() {
-        updateControls();
-      }
-    });
+    myPathPanel.setChangeListener(() -> updateControls());
     updateControls();
 
     setTitle(title);

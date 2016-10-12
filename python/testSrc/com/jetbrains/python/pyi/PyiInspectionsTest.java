@@ -18,9 +18,7 @@ package com.jetbrains.python.pyi;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.psi.PsiDocumentManager;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.inspections.PyStatementEffectInspection;
-import com.jetbrains.python.inspections.PyTypeCheckerInspection;
-import com.jetbrains.python.inspections.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,5 +62,15 @@ public class PyiInspectionsTest extends PyTestCase {
 
   public void testPyiStatementEffect() {
     doPyiTest(PyStatementEffectInspection.class);
+  }
+
+  // PY-19375
+  public void testPyiCompatibilityAndEllipsis() {
+    doPyiTest(PyCompatibilityInspection.class);
+  }
+
+  // PY-19375
+  public void testPyiMissingOrEmptyDocstring() {
+    doPyiTest(PyMissingOrEmptyDocstringInspection.class);
   }
 }

@@ -65,12 +65,7 @@ public abstract class LocalTask extends Task {
 
   @NotNull
   public List<BranchInfo> getBranches(final boolean original) {
-    return ContainerUtil.filter(getBranches(), new Condition<BranchInfo>() {
-      @Override
-      public boolean value(BranchInfo info) {
-        return info.original == original;
-      }
-    });
+    return ContainerUtil.filter(getBranches(), info -> info.original == original);
   }
 
   public abstract void addBranch(BranchInfo info);

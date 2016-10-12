@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,8 +54,12 @@ import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.TextFieldCompletionProvider;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.DialogUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
@@ -178,12 +182,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Ref<JavaCallerChooser> chooser = new Ref<JavaCallerChooser>();
-        Consumer<Set<PsiMethod>> callback = new Consumer<Set<PsiMethod>>() {
-          @Override
-          public void consume(Set<PsiMethod> psiMethods) {
-            myMethodsToPropagateExceptions = psiMethods;
-            myExceptionPropagationTree = chooser.get().getTree();
-          }
+        Consumer<Set<PsiMethod>> callback = psiMethods -> {
+          myMethodsToPropagateExceptions = psiMethods;
+          myExceptionPropagationTree = chooser.get().getTree();
         };
         chooser.set(new JavaCallerChooser(myMethod.getMethod(),
                                           myProject,
@@ -327,7 +328,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
                 });
                 final JPanel anyVarPanel = new JPanel(new BorderLayout());
                 anyVarPanel.add(myAnyVar, BorderLayout.SOUTH);
-                UIUtil.addInsets(anyVarPanel, new Insets(0,0,8,0));
+                UIUtil.addInsets(anyVarPanel, JBUI.insetsBottom(8));
                 additionalPanel.add(anyVarPanel, BorderLayout.CENTER);
                 //additionalPanel.setPreferredSize(new Dimension(t.getWidth() / 3, -1));
               }
@@ -451,12 +452,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           animator.setStep(48);
           animator.addColumn(defaultValue, (t.getWidth() - 48) / 3);
           animator.addColumn(varArg, 48);
-          animator.startAndDoWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              t.editCellAt(t.getRowCount() - 1, 0);
-            }
-          });
+          animator.startAndDoWhenDone(() -> t.editCellAt(t.getRowCount() - 1, 0));
           animator.start();
         }
       }

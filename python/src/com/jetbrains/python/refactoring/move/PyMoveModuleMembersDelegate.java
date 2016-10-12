@@ -144,12 +144,9 @@ public class PyMoveModuleMembersDelegate extends MoveHandlerDelegate {
     final SelectionModel selectionModel = editor.getSelectionModel();
     final TextRange selectionRange = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd());
     final List<PyElement> members = PyMoveModuleMembersHelper.getTopLevelModuleMembers(pyFile);
-    return ContainerUtil.filter(members, new Condition<PyElement>() {
-      @Override
-      public boolean value(PyElement member) {
-        final PsiElement body = PyMoveModuleMembersHelper.expandNamedElementBody(((PsiNamedElement)member));
-        return body != null && selectionRange.contains(body.getTextRange());
-      }
+    return ContainerUtil.filter(members, member -> {
+      final PsiElement body = PyMoveModuleMembersHelper.expandNamedElementBody(((PsiNamedElement)member));
+      return body != null && selectionRange.contains(body.getTextRange());
     });
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final String myAnalysisNoon;
   private ButtonGroup myGroup;
 
-  private static final String ALL = AnalysisScopeBundle.message("scope.option.uncommited.files.all.changelists.choice");
+  private static final String ALL = AnalysisScopeBundle.message("scope.option.uncommitted.files.all.changelists.choice");
   private final AnalysisUIOptions myAnalysisOptions;
   @Nullable private final PsiElement myContext;
 
@@ -170,6 +170,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myCustomScopeButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.CUSTOM);
 
     myScopeCombo.init(myProject, searchInLib, true, preselect);
+    myScopeCombo.setCurrentSelection(false);
 
     //correct selection
     myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT || myFileName == null);
@@ -312,7 +313,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     }
     uiOptions.ANALYZE_TEST_SOURCES = isInspectTestSources();
     scope.setIncludeTestSource(isInspectTestSources());
-    scope.setScope(getCustomScope());
 
     FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
     return scope;

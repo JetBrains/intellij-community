@@ -18,11 +18,12 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -36,13 +37,13 @@ public abstract class CodeInsightAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     if (project != null) {
-      Editor editor = getEditor(e.getDataContext(), project);
+      Editor editor = getEditor(e.getDataContext(), project, false);
       actionPerformedImpl(project, editor);
     }
   }
 
   @Nullable
-  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project) {
+  protected Editor getEditor(@NotNull DataContext dataContext, @NotNull Project project, boolean forUpdate) {
     return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
@@ -51,25 +52,28 @@ public abstract class CodeInsightAction extends AnAction {
     //final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     if (psiFile == null) return;
-    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-      @Override
-      public void run() {
-        final CodeInsightActionHandler handler = getHandler();
-        final Runnable action = new Runnable() {
-          @Override
-          public void run() {
-            if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
-            handler.invoke(project, editor, psiFile);
-          }
-        };
-        if (handler.startInWriteAction()) {
-          ApplicationManager.getApplication().runWriteAction(action);
-        }
-        else {
-          action.run();
-        }
+    CommandProcessor.getInstance().executeCommand(project, () -> {
+      final CodeInsightActionHandler handler = getHandler();
+      final Runnable action = () -> {
+        if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
+        handler.invoke(project, editor, psiFile);
+      };
+      if (handler.startInWriteAction()) {
+        ApplicationManager.getApplication().runWriteAction(action);
+      }
+      else {
+        action.run();
       }
     }, getCommandName(), DocCommandGroupId.noneGroupId(editor.getDocument()));
+  }
+
+  @Override
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    if (project != null) {
+      getEditor(e.getDataContext(), project, false); // ensure documents are committed
+    }
+    super.beforeActionPerformedUpdate(e);
   }
 
   @Override
@@ -83,7 +87,7 @@ public abstract class CodeInsightAction extends AnAction {
     }
 
     final DataContext dataContext = e.getDataContext();
-    Editor editor = getEditor(dataContext, project);
+    Editor editor = getEditor(dataContext, project, true);
     if (editor == null) {
       presentation.setEnabled(false);
       return;

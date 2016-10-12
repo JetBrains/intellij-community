@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class GenerateCopyrightAction extends AnAction
 {
-    public void update(AnActionEvent event)
+    public void update(AnActionEvent e)
     {
-        Presentation presentation = event.getPresentation();
-        DataContext context = event.getDataContext();
-        Project project = CommonDataKeys.PROJECT.getData(context);
+        Presentation presentation = e.getPresentation();
+        DataContext context = e.getDataContext();
+        Project project = e.getProject();
         if (project == null)
         {
             presentation.setEnabled(false);
@@ -60,12 +60,11 @@ public class GenerateCopyrightAction extends AnAction
       return file;
     }
 
-    public void actionPerformed(AnActionEvent event)
-    {
-        DataContext context = event.getDataContext();
-        Project project = CommonDataKeys.PROJECT.getData(context);
+    public void actionPerformed(AnActionEvent e) {
+        DataContext context = e.getDataContext();
+        Project project = e.getProject();
         assert project != null;
-        Module module = LangDataKeys.MODULE.getData(context);
+        Module module = e.getData(LangDataKeys.MODULE);
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
 

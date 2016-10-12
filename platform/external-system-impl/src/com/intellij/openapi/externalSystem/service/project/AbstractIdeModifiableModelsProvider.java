@@ -364,39 +364,37 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   @Override
   public void commit() {
-    ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(new Runnable() {
-      public void run() {
-        processExternalArtifactDependencies();
-        for (Library.ModifiableModel each : myModifiableLibraryModels.values()) {
-          each.commit();
-        }
-        getModifiableProjectLibrariesModel().commit();
+    ((ProjectRootManagerEx)ProjectRootManager.getInstance(myProject)).mergeRootsChangesDuring(() -> {
+      processExternalArtifactDependencies();
+      for (Library.ModifiableModel each : myModifiableLibraryModels.values()) {
+        each.commit();
+      }
+      getModifiableProjectLibrariesModel().commit();
 
-        Collection<ModifiableRootModel> rootModels = myModifiableRootModels.values();
-        ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
+      Collection<ModifiableRootModel> rootModels = myModifiableRootModels.values();
+      ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
+      for (ModifiableRootModel model : rootModels1) {
+        assert !model.isDisposed() : "Already disposed: " + model;
+      }
+
+      if (myModifiableModuleModel != null) {
+        ModifiableModelCommitter.multiCommit(rootModels1, myModifiableModuleModel);
+      } else {
         for (ModifiableRootModel model : rootModels1) {
-          assert !model.isDisposed() : "Already disposed: " + model;
+          model.commit();
         }
+      }
+      for (Map.Entry<Module, String> entry : myProductionModulesForTestModules.entrySet()) {
+        TestModuleProperties.getInstance(entry.getKey()).setProductionModuleName(entry.getValue());
+      }
 
-        if (myModifiableModuleModel != null) {
-          ModifiableModelCommitter.multiCommit(rootModels1, myModifiableModuleModel);
-        } else {
-          for (ModifiableRootModel model : rootModels1) {
-            model.commit();
-          }
+      for (Map.Entry<Module, ModifiableFacetModel> each : myModifiableFacetModels.entrySet()) {
+        if(!each.getKey().isDisposed()) {
+          each.getValue().commit();
         }
-        for (Map.Entry<Module, String> entry : myProductionModulesForTestModules.entrySet()) {
-          TestModuleProperties.getInstance(entry.getKey()).setProductionModuleName(entry.getValue());
-        }
-
-        for (Map.Entry<Module, ModifiableFacetModel> each : myModifiableFacetModels.entrySet()) {
-          if(!each.getKey().isDisposed()) {
-            each.getValue().commit();
-          }
-        }
-        if (myModifiableArtifactModel != null) {
-          myModifiableArtifactModel.commit();
-        }
+      }
+      if (myModifiableArtifactModel != null) {
+        myModifiableArtifactModel.commit();
       }
     });
   }

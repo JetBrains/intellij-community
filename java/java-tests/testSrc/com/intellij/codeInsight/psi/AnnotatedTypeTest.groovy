@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,7 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
       @interface A { }
       @Target(ElementType.TYPE_USE) @interface TA { int value() default 42; }
 
-      class O {
-        class I { }
-      }
+      class O { class I { } }
 
       @SuppressWarnings("ExceptionClassNameDoesntEndWithException") class E1 extends Exception { }
       @SuppressWarnings("ExceptionClassNameDoesntEndWithException") class E2 extends Exception { }""".stripIndent())
@@ -101,9 +99,9 @@ class AnnotatedTypeTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testMethodReturnType() {
-    def psi = factory.createMethodFromText("@A @TA(1) String m() { return null; }", context)
-    assertTypeText psi.returnType, "java.lang.@pkg.TA(1) String", "java.lang.String"
-    assertAnnotations psi.returnType, "@TA(1)"
+    def psi = factory.createMethodFromText("@A @TA(1) <T> @TA(2) String m() { return null; }", context)
+    assertTypeText psi.returnType, "java.lang.@pkg.TA(1) @pkg.TA(2) String", "java.lang.String"
+    assertAnnotations psi.returnType, "@TA(1)", "@TA(2)"
   }
 
   private void doTest(String text, String annotated, String canonical) {

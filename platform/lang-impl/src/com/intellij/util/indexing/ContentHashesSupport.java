@@ -43,18 +43,8 @@ class ContentHashesSupport {
       final File hashEnumeratorFile = new File(IndexInfrastructure.getPersistentIndexRoot(), "hashesWithFileType");
       try {
         hashEnumerator = new ContentHashesUtil.HashEnumerator(hashEnumeratorFile, null);
-        FlushingDaemon.everyFiveSeconds(new Runnable() {
-          @Override
-          public void run() {
-            flushContentHashes();
-          }
-        });
-        ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
-          @Override
-          public void run() {
-            flushContentHashes();
-          }
-        });
+        FlushingDaemon.everyFiveSeconds(() -> flushContentHashes());
+        ShutDownTracker.getInstance().registerShutdownTask(() -> flushContentHashes());
         ourHashesWithFileType = hashEnumerator;
       } catch (IOException ex) {
         IOUtil.deleteAllFilesStartingWith(hashEnumeratorFile);
@@ -67,9 +57,24 @@ class ContentHashesSupport {
     if (ourHashesWithFileType != null && ourHashesWithFileType.isDirty()) ourHashesWithFileType.force();
   }
 
+  static byte[] calcContentHash(@NotNull byte[] bytes, @NotNull FileType fileType) throws IOException {
+    MessageDigest messageDigest = ContentHashesUtil.HASHER_CACHE.getValue();
+
+    Charset defaultCharset = Charset.defaultCharset();
+    messageDigest.update(fileType.getName().getBytes(defaultCharset));
+    messageDigest.update((byte)0);
+    messageDigest.update(String.valueOf(bytes.length).getBytes(defaultCharset));
+    messageDigest.update((byte)0);
+    messageDigest.update(bytes, 0, bytes.length);
+    return messageDigest.digest();
+  }
 
   static int calcContentHashIdWithFileType(@NotNull byte[] bytes, @Nullable Charset charset, @NotNull FileType fileType) throws IOException {
     return enumerateHash(calcContentHashWithFileType(bytes, charset, fileType));
+  }
+
+  static int calcContentHashId(@NotNull byte[] bytes, @NotNull FileType fileType) throws IOException {
+    return enumerateHash(calcContentHash(bytes, fileType));
   }
 
   static int enumerateHash(@NotNull byte[] digest) throws IOException {

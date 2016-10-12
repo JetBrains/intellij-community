@@ -30,6 +30,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
@@ -660,6 +661,11 @@ public class ListUtils {
 
   public void testInnerEnumConstant() throws Throwable { doTest('\n'); }
 
+  public void testNoExpectedReturnTypeDuplication() {
+    configure()
+    assert myFixture.lookupElementStrings == ['boolean', 'byte']
+  }
+
   public void testMethodReturnType() throws Throwable {
     doTest();
   }
@@ -808,7 +814,7 @@ public class ListUtils {
 
   public void testDoubleFalse() throws Throwable {
     configureByFile(getTestName(false) + ".java");
-    assertFirstStringItems("fefefef", "false", "float", "finalize");
+    assertFirstStringItems("false", "fefefef", "float", "finalize");
   }
 
   public void testSameNamedVariableInNestedClasses() throws Throwable {
@@ -950,7 +956,7 @@ public class ListUtils {
   public void testTabReplacesMethodNameWithLocalVariableName() throws Throwable { doTest('\t'); }
   public void testMethodParameterAnnotationClass() throws Throwable { doTest(); }
   public void testInnerAnnotation() { doTest('\n'); }
-  public void testPrimitiveCastOverwrite() throws Throwable { doTest '\t' }
+  public void testPrimitiveCastOverwrite() throws Throwable { doTest() }
   public void testClassReferenceInFor() throws Throwable { doTest ' ' }
   public void testClassReferenceInFor2() throws Throwable { doTest ' ' }
   public void testClassReferenceInFor3() throws Throwable {
@@ -1016,6 +1022,7 @@ public class ListUtils {
   public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
   public void testOnlyAnnotationsAfterAt2() throws Throwable { doTest('\n') }
   public void testAnnotationBeforeIdentifier() { doTest('\n') }
+  public void testAnnotationBeforeQualifiedReference() { doTest('\n') }
   public void testAnnotationBeforeIdentifierFinishWithSpace() { doTest(' ') }
 
   public void testOnlyExceptionsInCatch1() throws Exception { doTest('\n') }
@@ -1040,6 +1047,7 @@ public class ListUtils {
   public void testNoFieldsInImplements() throws Throwable { doTest() }
 
   public void testSwitchConstantsFromReferencedClass() throws Throwable { doTest('\n') }
+  public void testSwitchValueFinishWithColon() throws Throwable { doTest(':') }
 
   public void testUnfinishedMethodTypeParameter() throws Throwable {
     configure()
@@ -1101,6 +1109,7 @@ public class ListUtils {
     myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)
     checkResult()
   }
+  void testSynchronizedArgumentSmartEnter() { doTest(Lookup.COMPLETE_STATEMENT_SELECT_CHAR as String) }
 
   public void testImportStringValue() throws Throwable {
     myFixture.addClass("package foo; public class StringValue {}")
@@ -1536,6 +1545,7 @@ class Bar {
     myFixture.configureByText "a.java", "class Foo {int i; ge<caret>}"
     myFixture.enableInspections(new UnqualifiedFieldAccessInspection())
     myFixture.complete(CompletionType.BASIC)
+    UIUtil.dispatchAllInvocationEvents()
     myFixture.checkResult '''class Foo {int i;
 
     public int getI() {

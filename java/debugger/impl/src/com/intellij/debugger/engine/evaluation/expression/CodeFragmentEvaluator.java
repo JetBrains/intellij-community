@@ -18,6 +18,7 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
+import com.intellij.debugger.engine.evaluation.EvaluateRuntimeException;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.HashMap;
@@ -103,10 +104,11 @@ public class CodeFragmentEvaluator extends BlockStatementEvaluator{
     }
   }
 
-  public void setInitialValue(String localName, Object value) throws EvaluateException {
+  public void setInitialValue(String localName, Object value) {
     LOG.assertTrue(!(value instanceof Value), "use setValue for jdi values");
     if(hasValue(localName)) {
-      throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.variable.already.declared", localName));
+      throw new EvaluateRuntimeException(
+        EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.variable.already.declared", localName)));
     }
     mySyntheticLocals.put(localName, value);
   }

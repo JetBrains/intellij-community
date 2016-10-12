@@ -33,11 +33,7 @@ import java.util.Comparator;
  */
 public abstract class ArtifactManager implements ArtifactModel {
   public static final Topic<ArtifactListener> TOPIC = Topic.create("artifacts changes", ArtifactListener.class);
-  public static final Comparator<Artifact> ARTIFACT_COMPARATOR = new Comparator<Artifact>() {
-    public int compare(Artifact o1, Artifact o2) {
-      return o1.getName().compareToIgnoreCase(o2.getName());
-    }
-  };
+  public static final Comparator<Artifact> ARTIFACT_COMPARATOR = (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName());
 
   public static ArtifactManager getInstance(@NotNull Project project) {
     return project.getComponent(ArtifactManager.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,14 +87,11 @@ public abstract class SourcePosition implements Navigatable{
 
     @Override
     public void navigate(final boolean requestFocus) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!canNavigate()) {
-            return;
-          }
-          openEditor(requestFocus);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!canNavigate()) {
+          return;
         }
+        openEditor(requestFocus);
       });
     }
 
@@ -162,7 +159,7 @@ public abstract class SourcePosition implements Navigatable{
       PsiElement element = myPsiElementRef != null ? myPsiElementRef.get() : null;
       if (element == null) {
         element = calcPsiElement();
-        myPsiElementRef = new WeakReference<PsiElement>(element);
+        myPsiElementRef = new WeakReference<>(element);
         return element;
       }
       return element;
@@ -218,14 +215,13 @@ public abstract class SourcePosition implements Navigatable{
     @Nullable
     protected PsiElement calcPsiElement() {
       // currently PsiDocumentManager does not store documents for mirror file, so we store original file
-      PsiFile origPsiFile = getFile();
-      final PsiFile psiFile = origPsiFile instanceof PsiCompiledFile ? ((PsiCompiledFile)origPsiFile).getDecompiledPsiFile() : origPsiFile;
+      PsiFile psiFile = getFile();
       int lineNumber = getLine();
       if(lineNumber < 0) {
         return psiFile;
       }
 
-      final Document document = getDocument(origPsiFile);
+      final Document document = getDocument(getFile());
       if (document == null) {
         return null;
       }

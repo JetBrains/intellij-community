@@ -39,5 +39,4 @@ public interface EdgePrintElement extends PrintElement {
     DASHED,
     DOTTED
   }
-
 }

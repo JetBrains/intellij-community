@@ -27,6 +27,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -47,6 +50,7 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -268,24 +272,14 @@ public class AbstractPopup implements JBPopup {
         myCaption.setButtonComponent(new InplaceButton(
           new IconButton("Open as Tool Window", 
                          AllIcons.General.AutohideOff, AllIcons.General.AutohideOff, AllIcons.General.AutohideOffInactive),
-          new ActionListener() {
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-              pinCallback.process(AbstractPopup.this);
-            }
-          }
-        ));
+          e -> pinCallback.process(this)
+        ), JBUI.Borders.empty(4));
       }
       else if (cancelButton != null) {
-        myCaption.setButtonComponent(new InplaceButton(cancelButton, new ActionListener() {
-          @Override
-          public void actionPerformed(final ActionEvent e) {
-            cancel();
-          }
-        }));
+        myCaption.setButtonComponent(new InplaceButton(cancelButton, e -> cancel()), JBUI.Borders.empty(4));
       }
       else if (commandButton != null) {
-        myCaption.setButtonComponent(commandButton);
+        myCaption.setButtonComponent(commandButton, null);
       }
     }
     else {
@@ -451,7 +445,7 @@ public class AbstractPopup implements JBPopup {
       window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
     }
 
-    if (window != null) {
+    if (window != null && window.isShowing()) {
       showInCenterOf(window);
     }
   }
@@ -528,6 +522,10 @@ public class AbstractPopup implements JBPopup {
   public void showInBestPositionFor(@NotNull Editor editor) {
     assert editor.getComponent().isShowing() : "Editor must be showing on the screen";
 
+    // Set the accessible parent so that screen readers don't announce
+    // a window context change -- the tooltip is "logically" hosted
+    // inside the component (e.g. editor) it appears on top of.
+    AccessibleContextUtil.setParent(myComponent, editor.getContentComponent());
     DataContext context = ((EditorEx)editor).getDataContext();
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
     if (dominantArea != null && !myRequestFocus) {
@@ -763,6 +761,19 @@ public class AbstractPopup implements JBPopup {
       sizeToSet = myForcedSize;
     }
 
+    if (myLocateWithinScreen) {
+      Dimension size = sizeToSet != null ? sizeToSet : myContent.getPreferredSize();
+      Rectangle screen = ScreenUtil.getScreenRectangle(aScreenX, aScreenY);
+      if (size.width > screen.width) {
+        size.width = screen.width;
+        sizeToSet = size;
+      }
+      if (size.height > screen.height) {
+        size.height = screen.height;
+        sizeToSet = size;
+      }
+    }
+
     if (sizeToSet != null) {
       sizeToSet.width = Math.max(sizeToSet.width, myContent.getMinimumSize().width);
       sizeToSet.height = Math.max(sizeToSet.height, myContent.getMinimumSize().height);
@@ -930,21 +941,18 @@ public class AbstractPopup implements JBPopup {
 
     setMinimumSize(myMinSize);
 
-    final Runnable afterShow = new Runnable() {
-      @Override
-      public void run() {
-        if (myPreferredFocusedComponent != null && myInStack && myFocusable) {
-          myFocusTrackback.registerFocusComponent(myPreferredFocusedComponent);
-          if (myPreferredFocusedComponent instanceof JTextComponent) {
-            IJSwingUtilities.moveMousePointerOn(myPreferredFocusedComponent);
-          }
+    final Runnable afterShow = () -> {
+      if (myPreferredFocusedComponent != null && myInStack && myFocusable) {
+        myFocusTrackback.registerFocusComponent(myPreferredFocusedComponent);
+        if (myPreferredFocusedComponent instanceof JTextComponent) {
+          IJSwingUtilities.moveMousePointerOn(myPreferredFocusedComponent);
         }
-
-        removeActivity();
-
-        afterShow();
-
       }
+
+      removeActivity();
+
+      afterShow();
+
     };
 
     if (myRequestFocus) {
@@ -961,45 +969,34 @@ public class AbstractPopup implements JBPopup {
 
           final ActionCallback result = new ActionCallback();
 
-          final Runnable afterShowRunnable = new Runnable() {
-            @Override
-            public void run() {
-              afterShow.run();
-              result.setDone();
-            }
+          final Runnable afterShowRunnable = () -> {
+            afterShow.run();
+            result.setDone();
           };
           if (myNativePopup) {
             final FocusRequestor furtherRequestor = getFocusManager().getFurtherRequestor();
             //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (isDisposed()) {
-                  result.setRejected();
-                  return;
-                }
-
-                furtherRequestor.requestFocus(new FocusCommand() {
-                  @NotNull
-                  @Override
-                  public ActionCallback run() {
-                    if (isDisposed()) {
-                      return ActionCallback.REJECTED;
-                    }
-
-                    _requestFocus();
-
-                    afterShowRunnable.run();
-
-                    return ActionCallback.DONE;
-                  }
-                }, true).notify(result).doWhenProcessed(new Runnable() {
-                  @Override
-                  public void run() {
-                    removeActivity();
-                  }
-                });
+            SwingUtilities.invokeLater(() -> {
+              if (isDisposed()) {
+                result.setRejected();
+                return;
               }
+
+              furtherRequestor.requestFocus(new FocusCommand() {
+                @NotNull
+                @Override
+                public ActionCallback run() {
+                  if (isDisposed()) {
+                    return ActionCallback.REJECTED;
+                  }
+
+                  _requestFocus();
+
+                  afterShowRunnable.run();
+
+                  return ActionCallback.DONE;
+                }
+              }, true).notify(result).doWhenProcessed(() -> removeActivity());
             });
           } else {
             afterShowRunnable.run();
@@ -1007,36 +1004,25 @@ public class AbstractPopup implements JBPopup {
 
           return result;
         }
-      }, true).doWhenRejected(new Runnable() {
-        @Override
-        public void run() {
-          afterShow.run();
-        }
-      });
+      }, true).doWhenRejected(() -> afterShow.run());
     } else {
       //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (isDisposed()) {
-            removeActivity();
-            return;
-          }
-
-          if (X_WINDOW_FOCUS_BUG && !myRequestFocus && prevOwner != null &&
-              Registry.is("actionSystem.xWindow.remove.focus.from.nonFocusable.popups")) {
-            new Alarm().addRequest(new Runnable() {
-              @Override
-              public void run() {
-                if (isFocused()) {
-                  IdeFocusManager.getInstance(myProject).requestFocus(prevOwner, false);
-                }
-              }
-            }, Registry.intValue("actionSystem.xWindow.remove.focus.from.nonFocusable.popups.delay"));
-          }
-
-          afterShow.run();
+      SwingUtilities.invokeLater(() -> {
+        if (isDisposed()) {
+          removeActivity();
+          return;
         }
+
+        if (X_WINDOW_FOCUS_BUG && !myRequestFocus && prevOwner != null &&
+            Registry.is("actionSystem.xWindow.remove.focus.from.nonFocusable.popups")) {
+          new Alarm().addRequest(() -> {
+            if (isFocused()) {
+              IdeFocusManager.getInstance(myProject).requestFocus(prevOwner, false);
+            }
+          }, Registry.intValue("actionSystem.xWindow.remove.focus.from.nonFocusable.popups.delay"));
+        }
+
+        afterShow.run();
       });
     }
     debugState("popup shown", State.SHOWING);
@@ -1071,12 +1057,7 @@ public class AbstractPopup implements JBPopup {
   private static void installWindowHook(final AbstractPopup popup) {
     if (popup.myCancelOnWindow) {
       popup.myCancelOnWindow = false;
-      new Alarm(popup).addRequest(new Runnable() {
-        @Override
-        public void run() {
-          popup.myCancelOnWindow = true;
-        }
-      }, 100);
+      new Alarm(popup).addRequest(() -> popup.myCancelOnWindow = true, 100);
     }
   }
 
@@ -1147,6 +1128,7 @@ public class AbstractPopup implements JBPopup {
     Disposer.register(this, focusWatcher);
 
     mySpeedSearchPatternField = new JTextField();
+    mySpeedSearchPatternField.setFocusable(false);
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
     }
@@ -1396,19 +1378,25 @@ public class AbstractPopup implements JBPopup {
 
     if (myFinalRunnable != null) {
       final ActionCallback typeAheadDone = new ActionCallback();
-      Runnable runFinal = new Runnable() {
-        @Override
-        public void run() {
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
+
+      ModalityState modalityState = ModalityState.current();
+      Runnable finalRunnable = myFinalRunnable;
+
+      getFocusManager().doWhenFocusSettlesDown(() -> {
           //noinspection SSBasedInspection
-          SwingUtilities.invokeLater(myFinalRunnable);
+          SwingUtilities.invokeLater(() -> {
+            if (ModalityState.current().equals(modalityState)) {
+              ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
+            }
+            // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
+            // And we don't want finalRunnable to perform potentially destructive actions
+            //   in the context of a suddenly appeared modal dialog.
+          });
           //noinspection SSBasedInspection
           SwingUtilities.invokeLater(typeAheadDone.createSetDoneRunnable());
           myFinalRunnable = null;
-        }
-      };
-
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
-      getFocusManager().doWhenFocusSettlesDown(runFinal);
+      });
     }
 
     if (LOG.isDebugEnabled()) {
@@ -1566,7 +1554,8 @@ public class AbstractPopup implements JBPopup {
   @Override
   public Point getLocationOnScreen() {
     Dimension headerCorrectionSize = myLocateByContent ? myHeaderPanel.getPreferredSize() : null;
-    Point screenPoint = myContent.getLocationOnScreen();
+    Point screenPoint = myContent.getLocation();
+    SwingUtilities.convertPointToScreen(screenPoint, myContent);
     if (headerCorrectionSize != null) {
       screenPoint.y -= headerCorrectionSize.height;
     }

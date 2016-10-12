@@ -82,12 +82,7 @@ public abstract class XmlSchemaProvider {
   }
 
   public static List<XmlSchemaProvider> getAvailableProviders(@NotNull final XmlFile file) {
-    return ContainerUtil.findAll(Extensions.getExtensions(EP_NAME), new Condition<XmlSchemaProvider>() {
-      @Override
-      public boolean value(XmlSchemaProvider xmlSchemaProvider) {
-        return xmlSchemaProvider.isAvailable(file);
-      }
-    });
+    return ContainerUtil.findAll(Extensions.getExtensions(EP_NAME), xmlSchemaProvider -> xmlSchemaProvider.isAvailable(file));
   }
 
   @Nullable

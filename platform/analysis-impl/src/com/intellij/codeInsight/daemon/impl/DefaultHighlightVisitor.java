@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.ErrorQuickFixProvider;
@@ -50,18 +49,22 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final DumbService myDumbService;
   private HighlightInfoHolder myHolder;
   private final boolean myBatchMode;
-  private final CachedAnnotators cachedAnnotators;
+  private final CachedAnnotators myCachedAnnotators;
 
   @SuppressWarnings("UnusedDeclaration")
   DefaultHighlightVisitor(@NotNull Project project, @NotNull CachedAnnotators cachedAnnotators) {
     this(project, true, true, false, cachedAnnotators);
   }
 
-  DefaultHighlightVisitor(@NotNull Project project, boolean highlightErrorElements, boolean runAnnotators, boolean batchMode, @NotNull CachedAnnotators cachedAnnotators) {
+  DefaultHighlightVisitor(@NotNull Project project,
+                          boolean highlightErrorElements,
+                          boolean runAnnotators,
+                          boolean batchMode,
+                          @NotNull CachedAnnotators cachedAnnotators) {
     myProject = project;
     myHighlightErrorElements = highlightErrorElements;
     myRunAnnotators = runAnnotators;
-    this.cachedAnnotators = cachedAnnotators;
+    myCachedAnnotators = cachedAnnotators;
     myErrorFilters = Extensions.getExtensions(HighlightErrorFilter.EP_NAME, project);
     myDumbService = DumbService.getInstance(project);
     myBatchMode = batchMode;
@@ -98,6 +101,7 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     else {
       if (myRunAnnotators) runAnnotators(element);
     }
+
     if (myAnnotationHolder.hasAnnotations()) {
       for (Annotation annotation : myAnnotationHolder) {
         myHolder.add(HighlightInfo.fromAnnotation(annotation, null, myBatchMode));
@@ -110,7 +114,7 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   @Override
   @NotNull
   public HighlightVisitor clone() {
-    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode,cachedAnnotators);
+    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode, myCachedAnnotators);
   }
 
   @Override
@@ -119,7 +123,7 @@ class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   }
 
   private void runAnnotators(PsiElement element) {
-    List<Annotator> annotators = cachedAnnotators.get(element.getLanguage().getID());
+    List<Annotator> annotators = myCachedAnnotators.get(element.getLanguage().getID());
     if (annotators.isEmpty()) return;
     final boolean dumb = myDumbService.isDumb();
 

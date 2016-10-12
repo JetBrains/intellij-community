@@ -22,17 +22,13 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.filters.*;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.impl.ConsoleBuffer;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
@@ -95,13 +91,10 @@ public class TestResultsXmlFormatter {
   private void execute() throws SAXException {
     myResultHandler.startDocument();
 
-    TreeMap<String, Integer> counts = new TreeMap<String, Integer>(new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        if (TOTAL_STATUS.equals(o1) && !TOTAL_STATUS.equals(o2)) return -1;
-        if (TOTAL_STATUS.equals(o2) && !TOTAL_STATUS.equals(o1)) return 1;
-        return o1.compareTo(o2);
-      }
+    TreeMap<String, Integer> counts = new TreeMap<String, Integer>((o1, o2) -> {
+      if (TOTAL_STATUS.equals(o1) && !TOTAL_STATUS.equals(o2)) return -1;
+      if (TOTAL_STATUS.equals(o2) && !TOTAL_STATUS.equals(o1)) return 1;
+      return o1.compareTo(o2);
     });
     for (AbstractTestProxy node : myTestRoot.getAllTests()) {
       if (!node.isLeaf()) continue;

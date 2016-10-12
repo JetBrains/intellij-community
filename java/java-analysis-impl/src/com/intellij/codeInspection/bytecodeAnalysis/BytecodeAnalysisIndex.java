@@ -42,7 +42,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
   private static final ClassDataIndexer INDEXER = new ClassDataIndexer();
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int ourInternalVersion = 8;
+  private static final int ourInternalVersion = 9;
   private static final boolean ourEnabled = SystemProperties.getBooleanProperty("idea.enable.bytecode.contract.inference", true);
 
   @NotNull
@@ -67,6 +67,11 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
   @Override
   public DataExternalizer<HEquations> getValueExternalizer() {
     return myExternalizer;
+  }
+
+  @Override
+  public boolean hasSnapshotMapping() {
+    return true;
   }
 
   @NotNull
@@ -103,9 +108,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
     @Override
     public Bytes read(@NotNull DataInput in) throws IOException {
       byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
-      for (int i = 0; i < bytes.length; i++) {
-        bytes[i] = in.readByte();
-      }
+      in.readFully(bytes);
       return new Bytes(bytes);
     }
 
@@ -221,9 +224,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
             }
             else if (effectMask == -3){
               byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
-              for (int bi = 0; bi < bytes.length; bi++) {
-                bytes[bi] = in.readByte();
-              }
+              in.readFully(bytes);
               int rawDirKey = DataInputOutputUtil.readINT(in);
               boolean isStable = in.readBoolean();
               HKey key = new HKey(bytes, Math.abs(rawDirKey), isStable, false);
@@ -277,9 +278,7 @@ public class BytecodeAnalysisIndex extends FileBasedIndexExtension<Bytes, HEquat
               HKey[] ids = new HKey[componentSize];
               for (int j = 0; j < componentSize; j++) {
                 byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
-                for (int bi = 0; bi < bytes.length; bi++) {
-                  bytes[bi] = in.readByte();
-                }
+                in.readFully(bytes);
                 int rawDirKey = DataInputOutputUtil.readINT(in);
                 ids[j] = new HKey(bytes, Math.abs(rawDirKey), in.readBoolean(), rawDirKey < 0);
               }

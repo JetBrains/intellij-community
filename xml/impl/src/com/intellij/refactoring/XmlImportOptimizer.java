@@ -45,13 +45,10 @@ import java.util.Map;
 public class XmlImportOptimizer implements ImportOptimizer {
   
   private final XmlUnusedNamespaceInspection myInspection = new XmlUnusedNamespaceInspection();
-  private final Condition<ProblemDescriptor> myCondition = new Condition<ProblemDescriptor>() {
-    @Override
-    public boolean value(ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      PsiElement parent = element.getParent();
-      return parent != null && !myInspection.isSuppressedFor(parent);
-    }
+  private final Condition<ProblemDescriptor> myCondition = descriptor -> {
+    PsiElement element = descriptor.getPsiElement();
+    PsiElement parent = element.getParent();
+    return parent != null && !myInspection.isSuppressedFor(parent);
   };
 
   @Override

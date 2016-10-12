@@ -128,11 +128,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     final PsiClass aClass = getJavaFacade().getElementFactory().createClassFromText("public int i, j;", null);
 
     final PsiField aField = aClass.getFields()[0];
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      public void run() {
-        aField.delete();
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> aField.delete());
 
     assertEquals("public int j;", aClass.getFields()[0].getText());
   }
@@ -185,11 +181,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
   public void testDeleteAnnotationAttribute() throws Exception {
     final PsiAnnotation annotation = getJavaFacade().getElementFactory().createAnnotationFromText("@A(b,c)", null);
     final PsiNameValuePair secondAttribute = annotation.getParameterList().getAttributes()[1];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        secondAttribute.delete();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> secondAttribute.delete());
 
     assertEquals("@A(b )", annotation.getText());
   }
@@ -199,11 +191,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     final PsiNameValuePair firstAttribute = annotation.getParameterList().getAttributes()[0];
     assertTrue(firstAttribute.getValue() instanceof PsiArrayInitializerMemberValue);
     final PsiAnnotationMemberValue firstInitializer = ((PsiArrayInitializerMemberValue)firstAttribute.getValue()).getInitializers()[0];
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        firstInitializer.delete();
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> firstInitializer.delete());
 
     assertEquals("@A({ c})", annotation.getText());
   }

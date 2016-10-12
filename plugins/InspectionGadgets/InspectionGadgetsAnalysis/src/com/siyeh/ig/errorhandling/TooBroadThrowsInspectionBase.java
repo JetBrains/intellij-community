@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 Bas Leijdekkers
+ * Copyright 2010-2016 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,7 +175,7 @@ public class TooBroadThrowsInspectionBase extends BaseInspection {
       if (ignoreLibraryOverrides && LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
-      final Set<PsiType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(body);
+      final Set<PsiClassType> exceptionsThrown = ExceptionUtils.calculateExceptionsThrown(body);
       final PsiClassType[] referencedExceptions = throwsList.getReferencedTypes();
       final Set<PsiType> exceptionsDeclared = new HashSet<PsiType>(referencedExceptions.length);
       ContainerUtil.addAll(exceptionsDeclared, referencedExceptions);

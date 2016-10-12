@@ -52,12 +52,8 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
 
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
-    return MavenPathReferenceConverter.createReferences(genericDomValue, element, new Condition<PsiFileSystemItem>() {
-      @Override
-      public boolean value(PsiFileSystemItem item) {
-        return (item instanceof PsiDirectory) || item.getName().endsWith(".jar");
-      }
-    }, true);
+    return MavenPathReferenceConverter.createReferences(genericDomValue, element,
+                                                        item -> (item instanceof PsiDirectory) || item.getName().endsWith(".jar"), true);
   }
 }
 

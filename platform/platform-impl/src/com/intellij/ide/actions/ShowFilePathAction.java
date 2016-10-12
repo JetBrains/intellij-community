@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -61,6 +62,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -76,7 +78,7 @@ public class ShowFilePathAction extends AnAction {
     }
   };
 
-  private static NotNullLazyValue<Boolean> canUseNautilus = new NotNullLazyValue<Boolean>() {
+  private static NotNullLazyValue<Boolean> canUseNautilus = new AtomicNotNullLazyValue<Boolean>() {
     @NotNull
     @Override
     protected Boolean compute() {
@@ -144,51 +146,45 @@ public class ShowFilePathAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    if (SystemInfo.isMac || !isSupported()) {
-      e.getPresentation().setVisible(false);
-      return;
+  public void update(@NotNull AnActionEvent e) {
+    boolean visible = !SystemInfo.isMac && isSupported();
+    e.getPresentation().setVisible(visible);
+    if (visible) {
+      VirtualFile file = getFile(e);
+      e.getPresentation().setEnabled(file != null);
+      e.getPresentation().setText(ActionsBundle.message("action.ShowFilePath.tuned", file != null && file.isDirectory() ? 1 : 0));
     }
-    e.getPresentation().setEnabled(getFile(e) != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    show(getFile(e), new ShowAction() {
-      @Override
-      public void show(final ListPopup popup) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    VirtualFile file = getFile(e);
+    if (file != null) {
+      show(file, popup -> {
         DataManager dataManager = DataManager.getInstance();
         if (dataManager != null) {
-          dataManager.getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
-            @Override
-            public void consume(DataContext context) {
-              popup.showInBestPositionFor(context);
-            }
-          });
+          dataManager.getDataContextFromFocus().doWhenDone(((Consumer<DataContext>)popup::showInBestPositionFor));
         }
+      });
+    }
+  }
+
+  public static void show(@NotNull VirtualFile file, @NotNull MouseEvent e) {
+    show(file, popup -> {
+      if (e.getComponent().isShowing()) {
+        popup.show(new RelativePoint(e));
       }
     });
   }
 
-  public static void show(final VirtualFile file, final MouseEvent e) {
-    show(file, new ShowAction() {
-      @Override
-      public void show(final ListPopup popup) {
-        if (e.getComponent().isShowing()) {
-          popup.show(new RelativePoint(e));
-        }
-      }
-    });
-  }
-
-  public static void show(final VirtualFile file, final ShowAction show) {
+  private static void show(@NotNull VirtualFile file, @NotNull ShowAction show) {
     if (!isSupported()) return;
 
-    final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
-    final ArrayList<String> fileUrls = new ArrayList<String>();
+    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    List<String> fileUrls = new ArrayList<String>();
     VirtualFile eachParent = file;
     while (eachParent != null) {
-      final int index = files.size() == 0 ? 0 : files.size();
+      int index = files.size() == 0 ? 0 : files.size();
       files.add(index, eachParent);
       fileUrls.add(index, getPresentableUrl(eachParent));
       if (eachParent.getParent() == null && eachParent.getFileSystem() instanceof JarFileSystem) {
@@ -198,48 +194,28 @@ public class ShowFilePathAction extends AnAction {
       eachParent = eachParent.getParent();
     }
 
-
-    final ArrayList<Icon> icons = new ArrayList<Icon>();
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        for (String each : fileUrls) {
-          final File ioFile = new File(each);
-          Icon eachIcon;
-          if (ioFile.exists()) {
-            eachIcon = FileSystemView.getFileSystemView().getSystemIcon(ioFile);
-          }
-          else {
-            eachIcon = EmptyIcon.ICON_16;
-          }
-
-          icons.add(eachIcon);
-        }
-
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            show.show(createPopup(files, icons));
-          }
-        });
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      List<Icon> icons = new ArrayList<Icon>();
+      for (String url : fileUrls) {
+        File ioFile = new File(url);
+        icons.add(ioFile.exists() ? FileSystemView.getFileSystemView().getSystemIcon(ioFile) : EmptyIcon.ICON_16);
       }
+      ApplicationManager.getApplication().invokeLater(() -> show.show(createPopup(files, icons)));
     });
   }
 
-  private static String getPresentableUrl(final VirtualFile eachParent) {
-    String url = eachParent.getPresentableUrl();
-    if (eachParent.getParent() == null && SystemInfo.isWindows) {
-      url += "\\";
-    }
+  private static String getPresentableUrl(VirtualFile file) {
+    String url = file.getPresentableUrl();
+    if (file.getParent() == null && SystemInfo.isWindows) url += "\\";
     return url;
   }
 
-  interface ShowAction {
+  private interface ShowAction {
     void show(ListPopup popup);
   }
 
-  private static ListPopup createPopup(final ArrayList<VirtualFile> files, final ArrayList<Icon> icons) {
-    final BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<VirtualFile>("File Path", files, icons) {
+  private static ListPopup createPopup(List<VirtualFile> files, List<Icon> icons) {
+    BaseListPopupStep<VirtualFile> step = new BaseListPopupStep<VirtualFile>(RevealFileAction.getActionName(), files, icons) {
       @NotNull
       @Override
       public String getTextFor(final VirtualFile value) {
@@ -250,12 +226,7 @@ public class ShowFilePathAction extends AnAction {
       public PopupStep onChosen(final VirtualFile selectedValue, final boolean finalChoice) {
         final File selectedFile = new File(getPresentableUrl(selectedValue));
         if (selectedFile.exists()) {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            @Override
-            public void run() {
-              openFile(selectedFile);
-            }
-          });
+          ApplicationManager.getApplication().executeOnPooledThread(() -> openFile(selectedFile));
         }
         return FINAL_CHOICE;
       }
@@ -360,8 +331,9 @@ public class ShowFilePathAction extends AnAction {
   }
 
   @Nullable
-  private static VirtualFile getFile(final AnActionEvent e) {
-    return CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+  private static VirtualFile getFile(AnActionEvent e) {
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+    return files == null || files.length == 1 ? CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext()) : null;
   }
 
   public static Boolean showDialog(Project project, String message, String title, File file) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,17 +47,13 @@ public class LazyLoader {
   }
 
   public ConstantPool loadPool(String classname) {
-    try {
-      DataInputFullStream in = getClassStream(classname);
-      if (in == null) return null;
-
-      try {
+    try (DataInputFullStream in = getClassStream(classname)) {
+      if (in != null) {
         in.discard(8);
         return new ConstantPool(in);
       }
-      finally {
-        in.close();
-      }
+
+      return null;
     }
     catch (IOException ex) {
       throw new RuntimeException(ex);
@@ -67,11 +63,8 @@ public class LazyLoader {
   public byte[] loadBytecode(StructMethod mt, int codeFullLength) {
     String className = mt.getClassStruct().qualifiedName;
 
-    try {
-      DataInputFullStream in = getClassStream(className);
-      if (in == null) return null;
-
-      try {
+    try (DataInputFullStream in = getClassStream(className)) {
+      if (in != null) {
         in.discard(8);
 
         ConstantPool pool = mt.getClassStruct().getPool();
@@ -118,16 +111,12 @@ public class LazyLoader {
             }
 
             in.discard(12);
-            byte[] code = new byte[codeFullLength];
-            in.readFull(code);
-            return code;
+
+            return in.read(codeFullLength);
           }
 
           break;
         }
-      }
-      finally {
-        in.close();
       }
 
       return null;

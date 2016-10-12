@@ -54,13 +54,10 @@ public final class SingletonNotificationManager {
     }
 
     if (expiredListener == null) {
-      expiredListener = new Runnable() {
-        @Override
-        public void run() {
-          Notification currentNotification = notification.get();
-          if (currentNotification != null && currentNotification.isExpired()) {
-            notification.compareAndSet(currentNotification, null);
-          }
+      expiredListener = () -> {
+        Notification currentNotification = notification.get();
+        if (currentNotification != null && currentNotification.isExpired()) {
+          notification.compareAndSet(currentNotification, null);
         }
       };
     }

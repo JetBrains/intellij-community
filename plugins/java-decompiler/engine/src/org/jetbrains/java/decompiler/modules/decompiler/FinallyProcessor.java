@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructMethod;
+import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
@@ -45,23 +46,22 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class FinallyProcessor {
-
   private final Map<Integer, Integer> finallyBlockIDs = new HashMap<Integer, Integer>();
   private final Map<Integer, Integer> catchallBlockIDs = new HashMap<Integer, Integer>();
 
-  private final VarProcessor varprocessor;
+  private final MethodDescriptor methodDescriptor;
+  private final VarProcessor varProcessor;
 
-  public FinallyProcessor(VarProcessor varprocessor) {
-    this.varprocessor = varprocessor;
+  public FinallyProcessor(MethodDescriptor md, VarProcessor varProc) {
+    methodDescriptor = md;
+    varProcessor = varProc;
   }
 
   public boolean iterateGraph(StructMethod mt, RootStatement root, ControlFlowGraph graph) {
-    //		return processStatement(mt, root, graph, root);
     return processStatementEx(mt, root, graph);
   }
 
   private boolean processStatementEx(StructMethod mt, RootStatement root, ControlFlowGraph graph) {
-
     int bytecode_version = mt.getClassStruct().getBytecodeVersion();
 
     LinkedList<Statement> stack = new LinkedList<Statement>();
@@ -87,7 +87,7 @@ public class FinallyProcessor {
           fin.setFinally(true);
 
           Integer var = finallyBlockIDs.get(handler.id);
-          fin.setMonitor(var == null ? null : new VarExprent(var.intValue(), VarType.VARTYPE_INT, varprocessor));
+          fin.setMonitor(var == null ? null : new VarExprent(var.intValue(), VarType.VARTYPE_INT, varProcessor));
         }
         else {
 
@@ -190,9 +190,7 @@ public class FinallyProcessor {
     }
   }
 
-
-  private static Record getFinallyInformation(StructMethod mt, RootStatement root, CatchAllStatement fstat) {
-
+  private Record getFinallyInformation(StructMethod mt, RootStatement root, CatchAllStatement fstat) {
     Map<BasicBlock, Boolean> mapLast = new HashMap<BasicBlock, Boolean>();
 
     BasicBlockStatement firstBlockStatement = fstat.getHandler().getBasichead();
@@ -209,7 +207,7 @@ public class FinallyProcessor {
         firstcode = 2;
     }
 
-    ExprProcessor proc = new ExprProcessor();
+    ExprProcessor proc = new ExprProcessor(methodDescriptor, varProcessor);
     proc.processStatement(root, mt.getClassStruct());
 
     SSAConstructorSparseEx ssa = new SSAConstructorSparseEx();

@@ -16,18 +16,25 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.function.IntSupplier;
 
 import static com.intellij.codeInspection.ProblemDescriptorUtil.APPEND_LINE_NUMBER;
 import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END;
@@ -35,36 +42,53 @@ import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END
 /**
  * @author max
  */
-public class ProblemDescriptionNode extends InspectionTreeNode {
-  protected RefEntity myElement;
-  private final CommonProblemDescriptor myDescriptor;
+public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   protected final InspectionToolWrapper myToolWrapper;
-  @NotNull
-  protected final InspectionToolPresentation myPresentation;
+  private final CommonProblemDescriptor myDescriptor;
+  private final HighlightDisplayLevel myLevel;
+  protected final int myLineNumber;
+  protected final RefEntity myElement;
 
-  public ProblemDescriptionNode(@NotNull Object userObject,
-                                @NotNull InspectionToolWrapper toolWrapper,
-                                @NotNull InspectionToolPresentation presentation) {
-    this(userObject, null, null, toolWrapper, presentation);
-  }
-
-  public ProblemDescriptionNode(@NotNull RefEntity element,
-                                @NotNull CommonProblemDescriptor descriptor,
-                                @NotNull InspectionToolWrapper toolWrapper,
-                                @NotNull InspectionToolPresentation presentation) {
-    this(descriptor, element, descriptor, toolWrapper, presentation);
-  }
-
-  private ProblemDescriptionNode(@NotNull Object userObject,
-                                RefEntity element,
+  public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolWrapper toolWrapper,
                                 @NotNull InspectionToolPresentation presentation) {
-    super(userObject);
+    this(element, descriptor, toolWrapper, presentation, true, null);
+  }
+
+  protected ProblemDescriptionNode(@Nullable RefEntity element,
+                                   CommonProblemDescriptor descriptor,
+                                   @NotNull InspectionToolWrapper toolWrapper,
+                                   @NotNull InspectionToolPresentation presentation,
+                                   boolean doInit,
+                                   @Nullable IntSupplier lineNumberCounter) {
+    super(descriptor, presentation);
     myElement = element;
     myDescriptor = descriptor;
     myToolWrapper = toolWrapper;
-    myPresentation = presentation;
+    final InspectionProfileImpl profile = (InspectionProfileImpl)presentation.getContext().getCurrentProfile();
+    myLevel = descriptor instanceof ProblemDescriptor
+              ? profile
+                .getErrorLevel(HighlightDisplayKey.find(toolWrapper.getShortName()), ((ProblemDescriptor)descriptor).getStartElement())
+              : profile.getTools(toolWrapper.getShortName(), presentation.getContext().getProject()).getLevel();
+    if (doInit) {
+      init(presentation.getContext().getProject());
+    }
+    myLineNumber = myDescriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)myDescriptor).getLineNumber() : (lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt());
+  }
+
+  public int getLineNumber() {
+    return myLineNumber;
+  }
+
+  @Override
+  public boolean canSuppress() {
+    return super.canSuppress() && !isQuickFixAppliedFromView();
+  }
+
+  @NotNull
+  public InspectionToolWrapper getToolWrapper() {
+    return myToolWrapper;
   }
 
   @Nullable
@@ -78,68 +102,89 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
   @Override
-  public Icon getIcon(boolean expanded) {
-    if (myDescriptor instanceof ProblemDescriptorBase) {
-      ProblemHighlightType problemHighlightType = ((ProblemDescriptorBase)myDescriptor).getHighlightType();
-      if (problemHighlightType == ProblemHighlightType.ERROR) return AllIcons.General.Error;
-      if (problemHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) return AllIcons.General.Warning;
-    }
-    return AllIcons.General.Information;
-  }
-
-  @Override
   public int getProblemCount() {
-    return 1;
+    return myPresentation.isProblemResolved(getElement(), myDescriptor) ? 0 : 1;
   }
 
   @Override
-  public boolean isValid() {
+  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+    if (!myPresentation.isProblemResolved(getElement(), myDescriptor)) {
+      counter.put(myLevel, counter.get(myLevel) + 1);
+    }
+  }
+
+  @Override
+  protected boolean calculateIsValid() {
+    if (myDescriptor == null) return false;
     if (myElement instanceof RefElement && !myElement.isValid()) return false;
-    final CommonProblemDescriptor descriptor = getDescriptor();
-    if (descriptor instanceof ProblemDescriptor) {
-      final PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+    if (myDescriptor instanceof ProblemDescriptor) {
+      final PsiElement psiElement = ((ProblemDescriptor)myDescriptor).getPsiElement();
       return psiElement != null && psiElement.isValid();
     }
     return true;
   }
 
-
   @Override
-  public boolean isResolved() {
-    return myElement instanceof RefElement && getPresentation().isProblemResolved(myElement, getDescriptor());
-  }
-
-  @Override
-  public void ignoreElement() {
+  public void excludeElement(ExcludedInspectionTreeNodesManager manager) {
     InspectionToolPresentation presentation = getPresentation();
     presentation.ignoreCurrentElementProblem(getElement(), getDescriptor());
+    super.excludeElement(manager);
   }
 
   @Override
-  public void amnesty() {
-    InspectionToolPresentation presentation = getPresentation();
-    presentation.amnesty(getElement());
+  public void amnestyElement(ExcludedInspectionTreeNodesManager manager) {
+    if (!isAlreadySuppressedFromView()) {
+      InspectionToolPresentation presentation = getPresentation();
+      presentation.amnesty(getElement(), getDescriptor());
+    }
+    super.amnestyElement(manager);
   }
 
+  @Override
   @NotNull
-  private InspectionToolPresentation getPresentation() {
+  public InspectionToolPresentation getPresentation() {
     return myPresentation;
   }
 
   @Override
   public FileStatus getNodeStatus() {
-    if (myElement instanceof RefElement){
+    if (myElement instanceof RefElement) {
       return getPresentation().getProblemStatus(myDescriptor);
     }
     return FileStatus.NOT_CHANGED;
   }
 
-  public String toString() {
+  @Override
+  protected void dropCache(Project project) {
+    if (!isQuickFixAppliedFromView()) {
+      super.dropCache(project);
+    }
+  }
+
+  @NotNull
+  @Override
+  protected String calculatePresentableName() {
     CommonProblemDescriptor descriptor = getDescriptor();
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
     return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element,
                                                                                   APPEND_LINE_NUMBER | TRIM_AT_TREE_END));
+  }
+
+  public boolean isQuickFixAppliedFromView() {
+    return (myDescriptor != null && myPresentation.isProblemResolved(getElement(), myDescriptor)) && !isAlreadySuppressedFromView();
+  }
+
+  @Nullable
+  @Override
+  public String getCustomizedTailText() {
+    if (isQuickFixAppliedFromView()) {
+      return "";
+    }
+    else {
+      final String text = super.getCustomizedTailText();
+      return text == null ? "" : text;
+    }
   }
 }

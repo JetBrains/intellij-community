@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,25 +18,32 @@ package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -88,6 +95,45 @@ public class GrStubUtils {
   @Nullable
   public static String getTypeText(@Nullable GrTypeElement typeElement) {
     return typeElement == null ? null : typeElement.getText();
+  }
+
+  @NotNull
+  private static Map<String, String> getAliasMapping(@Nullable PsiFile file) {
+    if (!(file instanceof GroovyFile)) return Collections.emptyMap();
+    return CachedValuesManager.getCachedValue(file, () -> {
+      Map<String, String> mapping = ContainerUtil.newHashMap();
+      for (GrImportStatement importStatement : ((GroovyFile)file).getImportStatements()) {
+        if (importStatement.getImportReference() != null && !importStatement.isStatic() && importStatement.isAliasedImport()) {
+          String importName = importStatement.getImportReference().getClassNameText();
+          String importedName = importStatement.getImportedName();
+          if (importedName != null) {
+            mapping.put(importedName, importName);
+          }
+        }
+      }
+      return CachedValueProvider.Result.create(mapping, file);
+    });
+  }
+
+  @Nullable
+  public static String getReferenceName(@NotNull GrReferenceElement element) {
+    final String referenceName = element.getReferenceName();
+    if (referenceName == null) return null;
+
+    // Foo -> java.util.List
+    final String mappedFqn = getAliasMapping(element.getContainingFile()).get(referenceName);
+    final String fullText = element.getText();
+
+    // alias: Foo<String> -> java.util.List<String>
+    // unqualified ref: List<String> -> List<String>
+    // qualified ref: java.util.List<String> -> java.util.List<String>
+    return mappedFqn == null || element.isQualified() ? fullText : fullText.replace(referenceName, mappedFqn);
+  }
+
+  @Nullable
+  public static String getBaseClassName(@NotNull GrTypeDefinition psi) {
+    if (!(psi instanceof GrAnonymousClassDefinition)) return null;
+    return getReferenceName(((GrAnonymousClassDefinition)psi).getBaseClassReferenceGroovy());
   }
 
   public static String[] getAnnotationNames(PsiModifierListOwner psi) {

@@ -141,20 +141,18 @@ public class RepositoryAttachHandler {
     if (attachSources) extraTypes.add(MavenExtraArtifactType.SOURCES);
     if (attachJavaDoc) extraTypes.add(MavenExtraArtifactType.DOCS);
     final Ref<List<OrderRoot>> result = Ref.create(null);
-    doResolveInner(project, getMavenId(coord), extraTypes, repositories, new Processor<List<MavenArtifact>>() {
-      public boolean process(final List<MavenArtifact> artifacts) {
-        if (!artifacts.isEmpty()) {
-          AccessToken accessToken = WriteAction.start();
-          try {
-            final List<OrderRoot> roots = createRoots(artifacts, copyTo);
-            result.set(roots);
-          }
-          finally {
-            accessToken.finish();
-          }
+    doResolveInner(project, getMavenId(coord), extraTypes, repositories, artifacts -> {
+      if (!artifacts.isEmpty()) {
+        AccessToken accessToken = WriteAction.start();
+        try {
+          final List<OrderRoot> roots = createRoots(artifacts, copyTo);
+          result.set(roots);
         }
-        return true;
+        finally {
+          accessToken.finish();
+        }
       }
+      return true;
     }, indicator);
 
     List<OrderRoot> roots = result.get();
@@ -270,16 +268,7 @@ public class RepositoryAttachHandler {
             if (!proceedFlag.get()) break;
             final Boolean aBoolean = i == length - 1 ? tooManyResults : null;
             ApplicationManager.getApplication().invokeLater(
-              new Runnable() {
-                public void run() {
-                  proceedFlag.set(resultProcessor.process(resultList, aBoolean));
-                }
-              }, new Condition() {
-                @Override
-                public boolean value(Object o) {
-                  return !proceedFlag.get();
-                }
-              });
+              () -> proceedFlag.set(resultProcessor.process(resultList, aBoolean)), o -> !proceedFlag.get());
           }
         }
       }
@@ -312,11 +301,7 @@ public class RepositoryAttachHandler {
           MavenLog.LOG.error(e);
         }
         finally {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            public void run() {
-              resultProcessor.process(result.get());
-            }
-          });
+          ApplicationManager.getApplication().invokeLater(() -> resultProcessor.process(result.get()));
         }
       }
     });
@@ -348,18 +333,9 @@ public class RepositoryAttachHandler {
       }
       // download docs & sources
       if (!extraTypes.isEmpty()) {
-        Set<String> allowedClassifiers = JBIterable.from(extraTypes).transform(new Function<MavenExtraArtifactType, String>() {
-          @Override
-          public String fun(MavenExtraArtifactType extraType) {
-            return extraType.getDefaultClassifier();
-          }
-        }).toSet();
-        List<MavenArtifactInfo> resolve = JBIterable.from(extraTypes).transform(new Function<MavenExtraArtifactType, MavenArtifactInfo>() {
-          @Override
-          public MavenArtifactInfo fun(MavenExtraArtifactType extraType) {
-            return new MavenArtifactInfo(mavenId, extraType.getDefaultExtension(), extraType.getDefaultClassifier());
-          }
-        }).toList();
+        Set<String> allowedClassifiers = JBIterable.from(extraTypes).transform(extraType -> extraType.getDefaultClassifier()).toSet();
+        List<MavenArtifactInfo> resolve = JBIterable.from(extraTypes).transform(
+          extraType -> new MavenArtifactInfo(mavenId, extraType.getDefaultExtension(), extraType.getDefaultClassifier())).toList();
         // skip sources/javadoc for dependencies
         for (MavenArtifact artifact : embedder.resolveTransitively(new ArrayList<MavenArtifactInfo>(resolve), remoteRepositories)) {
           if (!artifact.isResolved() || MavenConstants.SCOPE_TEST.equals(artifact.getScope()) || !allowedClassifiers.contains(artifact.getClassifier())) {
@@ -375,16 +351,8 @@ public class RepositoryAttachHandler {
     finally {
       manager.release(embedder);
       if (!cancelled && resultProcessor != null) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          public void run() {
-            DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND, new Runnable() {
-              @Override
-              public void run() {
-                resultProcessor.process(new ArrayList<MavenArtifact>(result));
-              }
-            });
-          }
-        }, indicator.getModalityState());
+        ApplicationManager.getApplication().invokeAndWait(() -> DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_BACKGROUND,
+                                                                                                    () -> resultProcessor.process(new ArrayList<MavenArtifact>(result))), indicator.getModalityState());
       }
     }
   }

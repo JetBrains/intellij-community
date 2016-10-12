@@ -37,5 +37,4 @@ class BekEdgeRestrictions {
   boolean hasRestriction(int upNode) {
     return myUpToEdge.containsKey(upNode);
   }
-
 }

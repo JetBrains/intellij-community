@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Vladislav.Soroka
  * @since 5/16/2016
  */
-public class AbstractExternalSystemRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
+public abstract class AbstractExternalSystemRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
 
   public AbstractExternalSystemRunConfigurationProducer(@NotNull AbstractExternalSystemTaskConfigurationType type) {
     super(type);
@@ -71,7 +71,11 @@ public class AbstractExternalSystemRunConfigurationProducer extends RunConfigura
     ExternalSystemTaskLocation taskLocation = (ExternalSystemTaskLocation)contextLocation;
     ExternalSystemTaskExecutionSettings contextTaskExecutionSettings = taskLocation.getTaskInfo().getSettings();
     ExternalSystemTaskExecutionSettings taskExecutionSettings = configuration.getSettings();
-    if (!StringUtil.equals(contextTaskExecutionSettings.getExternalProjectPath(), configuration.getSettings().getExternalProjectPath())) {
+
+    if(!contextTaskExecutionSettings.getExternalSystemId().equals(taskExecutionSettings.getExternalSystemId())) {
+      return false;
+    }
+    if (!StringUtil.equals(contextTaskExecutionSettings.getExternalProjectPath(), taskExecutionSettings.getExternalProjectPath())) {
       return false;
     }
     if (!contextTaskExecutionSettings.getTaskNames().equals(taskExecutionSettings.getTaskNames())) return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,9 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +68,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsRightMarginShown                    = null;
   private Integer myRightMargin                           = null;
   private Boolean myAreLineNumbersShown                   = null;
+  private Boolean myGutterIconsShown                      = null;
   private Boolean myIsFoldingOutlineShown                 = null;
   private Boolean myIsSmartHome                           = null;
   private Boolean myIsBlockCursor                         = null;
@@ -198,6 +197,21 @@ public class SettingsImpl implements EditorSettings {
   }
 
   @Override
+  public boolean areGutterIconsShown() {
+    return myGutterIconsShown != null
+           ? myGutterIconsShown.booleanValue()
+           : EditorSettingsExternalizable.getInstance().areGutterIconsShown();
+  }
+
+  @Override
+  public void setGutterIconsShown(boolean val) {
+    final Boolean newValue = val ? Boolean.TRUE : Boolean.FALSE;
+    if (newValue.equals(myGutterIconsShown)) return;
+    myGutterIconsShown = newValue;
+    fireEditorRefresh();
+  }
+
+  @Override
   public int getRightMargin(Project project) {
     return myRightMargin != null ? myRightMargin.intValue() :
            CodeStyleFacade.getInstance(project).getRightMargin(myLanguage);
@@ -311,7 +325,14 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void setSoftWrapAppliancePlace(SoftWrapAppliancePlaces softWrapAppliancePlace) {
-    mySoftWrapAppliancePlace = softWrapAppliancePlace;
+    if (softWrapAppliancePlace != mySoftWrapAppliancePlace) {
+      mySoftWrapAppliancePlace = softWrapAppliancePlace;
+      fireEditorRefresh();
+    }
+  }
+
+  public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
+    return mySoftWrapAppliancePlace;
   }
 
   public void reinitSettings() {
@@ -330,20 +351,7 @@ public class SettingsImpl implements EditorSettings {
     final PsiFile file = psiManager.getPsiFile(document);
     if (file == null) return;
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptionsByFile(file);
-
-    if (CodeStyleSettings.isRecalculateForCommittedDocument(options)) {
-      PsiDocumentManager.getInstance(project).performForCommittedDocument(document, new Runnable() {
-        @Override
-        public void run() {
-          CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
-        }
-      });
-    }
-    else {
-      CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
-    }
+    CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
   }
 
   @Override

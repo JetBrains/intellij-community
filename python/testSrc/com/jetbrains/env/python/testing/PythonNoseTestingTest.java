@@ -8,6 +8,9 @@ import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.nosetest.PythonNoseTestConfigurationProducer;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * User : catherine
@@ -16,19 +19,21 @@ import org.jetbrains.annotations.NotNull;
 public final class PythonNoseTestingTest extends PyEnvTestCase {
 
 
+  @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(
       new CreateConfigurationTestTask(PythonNoseTestConfigurationProducer.class, PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME));
   }
 
+  @Test
   public void testNoseRunner() {
 
-    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>( "/testRunner/env/nose", SdkCreationType.EMPTY_SDK) {
 
       @NotNull
       @Override
       protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
-        return new PyNoseTestProcessRunner(getTestDataPath() + "/testRunner/env/nose", "test1.py", 0);
+        return new PyNoseTestProcessRunner("test1.py", 0);
       }
 
       @Override
@@ -42,12 +47,13 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
     });
   }
 
+  @Test
   public void testNoseRunner2() {
-    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>(SdkCreationType.EMPTY_SDK) {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>("/testRunner/env/nose", SdkCreationType.EMPTY_SDK) {
       @NotNull
       @Override
       protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
-        return new PyNoseTestProcessRunner(getTestDataPath() + "/testRunner/env/nose", "test2.py", 0);
+        return new PyNoseTestProcessRunner( "test2.py", 0);
       }
 
       @Override

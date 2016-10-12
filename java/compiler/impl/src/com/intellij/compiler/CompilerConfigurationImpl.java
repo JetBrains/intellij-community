@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/**
- * created at Jan 3, 2002
- * @author Jeka
- */
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;

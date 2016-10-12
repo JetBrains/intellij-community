@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,12 +142,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   protected final void setPreviewText(final String text) {
     if (myPreview == null) return; //already disposed
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), text);
-      }
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), text));
   }
 
   protected final JComponent getPreviewComponent() {
@@ -180,7 +175,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
    * @return the declaration
    */
   @Nullable
-  protected abstract V createFieldToStartTemplateOn(boolean replaceAll, String[] names);
+  protected abstract V createFieldToStartTemplateOn(boolean replaceAll, @NotNull String[] names);
 
   /**
    * Returns the suggested names for the introduced element.
@@ -189,6 +184,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
    * @param variable   introduced element declaration, if already created.
    * @return the suggested names
    */
+  @NotNull
   protected abstract String[] suggestNames(boolean replaceAll, @Nullable V variable);
 
   protected abstract void performIntroduce();
@@ -197,13 +193,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   public abstract boolean isReplaceAllOccurrences();
   public abstract void setReplaceAllOccurrences(boolean allOccurrences);
   @Override
+  @Nullable
   protected abstract JComponent getComponent();
 
   protected abstract void saveSettings(@NotNull V variable);
   @Override
+  @Nullable
   protected abstract V getVariable();
 
-  public abstract E restoreExpression(PsiFile containingFile, V variable, RangeMarker marker, String exprText);
+  public abstract E restoreExpression(@NotNull PsiFile containingFile, @NotNull V variable, @NotNull RangeMarker marker, @Nullable String exprText);
 
   /**
    * Begins the in-place refactoring operation.
@@ -213,52 +211,48 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   public boolean startInplaceIntroduceTemplate() {
     final boolean replaceAllOccurrences = isReplaceAllOccurrences();
     final Ref<Boolean> result = new Ref<Boolean>();
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
-        final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
-        boolean started = false;
-        if (variable != null) {
-          int caretOffset = getCaretOffset();
-          myEditor.getCaretModel().moveToOffset(caretOffset);
-          myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
+      final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
+      boolean started = false;
+      if (variable != null) {
+        int caretOffset = getCaretOffset();
+        myEditor.getCaretModel().moveToOffset(caretOffset);
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-          final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
-          nameSuggestions.add(variable.getName());
-          nameSuggestions.addAll(Arrays.asList(names));
-          initOccurrencesMarkers();
-          setElementToRename(variable);
-          updateTitle(getVariable());
-          started = AbstractInplaceIntroducer.super.performInplaceRefactoring(nameSuggestions);
-          if (started) {
-            onRenameTemplateStarted();
-            myDocumentAdapter = new DocumentAdapter() {
-              @Override
-              public void documentChanged(DocumentEvent e) {
-                if (myPreview == null) return;
-                final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-                if (templateState != null) {
-                  final TextResult value = templateState.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME);
-                  if (value != null) {
-                    updateTitle(getVariable(), value.getText());
-                  }
+        final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<String>();
+        nameSuggestions.add(variable.getName());
+        nameSuggestions.addAll(Arrays.asList(names));
+        initOccurrencesMarkers();
+        setElementToRename(variable);
+        updateTitle(getVariable());
+        started = AbstractInplaceIntroducer.super.performInplaceRefactoring(nameSuggestions);
+        if (started) {
+          onRenameTemplateStarted();
+          myDocumentAdapter = new DocumentAdapter() {
+            @Override
+            public void documentChanged(DocumentEvent e) {
+              if (myPreview == null) return;
+              final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+              if (templateState != null) {
+                final TextResult value = templateState.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME);
+                if (value != null) {
+                  updateTitle(getVariable(), value.getText());
                 }
               }
-            };
-            myEditor.getDocument().addDocumentListener(myDocumentAdapter);
-            updateTitle(getVariable());
-            if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
-              myEditor.putUserData(ACTIVE_INTRODUCE, AbstractInplaceIntroducer.this);
             }
+          };
+          myEditor.getDocument().addDocumentListener(myDocumentAdapter);
+          updateTitle(getVariable());
+          if (TemplateManagerImpl.getTemplateState(myEditor) != null) {
+            myEditor.putUserData(ACTIVE_INTRODUCE, AbstractInplaceIntroducer.this);
           }
         }
-        result.set(started);
-        if (!started) {
-          finish(true);
-        }
       }
-
+      result.set(started);
+      if (!started) {
+        finish(true);
+      }
     }, getCommandName(), getCommandName());
     return result.get();
   }
@@ -315,43 +309,35 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   }
 
   public void restartInplaceIntroduceTemplate() {
-    Runnable restartTemplateRunnable = new Runnable() {
-      @Override
-      public void run() {
-        final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
-        if (templateState != null) {
-          myEditor.putUserData(INTRODUCE_RESTART, true);
+    Runnable restartTemplateRunnable = () -> {
+      final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+      if (templateState != null) {
+        myEditor.putUserData(INTRODUCE_RESTART, true);
+        try {
+          final TextRange range = templateState.getCurrentVariableRange();
+          if (range != null) {
+            final TextResult inputText = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
+            final String inputName = inputText != null ? inputText.getText() : null;
+            final V variable = getVariable();
+            if (inputName == null || variable == null || !isIdentifier(inputName, variable.getLanguage())) {
+              final String[] names = suggestNames(isReplaceAllOccurrences(), getLocalVariable());
+              ApplicationManager.getApplication().runWriteAction(() -> myEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), names[0]));
+            }
+          }
+          templateState.gotoEnd(true);
           try {
-            final TextRange range = templateState.getCurrentVariableRange();
-            if (range != null) {
-              final TextResult inputText = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
-              final String inputName = inputText != null ? inputText.getText() : null;
-              final V variable = getVariable();
-              if (inputName == null || variable == null || !isIdentifier(inputName, variable.getLanguage())) {
-                final String[] names = suggestNames(isReplaceAllOccurrences(), getLocalVariable());
-                ApplicationManager.getApplication().runWriteAction(new Runnable() {
-                  @Override
-                  public void run() {
-                    myEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), names[0]);
-                  }
-                });
-              }
-            }
-            templateState.gotoEnd(true);
-            try {
-              myShouldSelect = false;
-              startInplaceIntroduceTemplate();
-            }
-            finally {
-              myShouldSelect = true;
-            }
+            myShouldSelect = false;
+            startInplaceIntroduceTemplate();
           }
           finally {
-            myEditor.putUserData(INTRODUCE_RESTART, false);
+            myShouldSelect = true;
           }
         }
-        updateTitle(getVariable());
+        finally {
+          myEditor.putUserData(INTRODUCE_RESTART, false);
+        }
       }
+      updateTitle(getVariable());
     };
     CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, getCommandName(), getCommandName());
   }
@@ -471,53 +457,50 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   protected void restoreState(@NotNull final V psiField) {
     if (!ReadonlyStatusHandler.ensureDocumentWritable(myProject, InjectedLanguageUtil.getTopLevelEditor(myEditor).getDocument())) return;
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        final PsiFile containingFile = psiField.getContainingFile();
-        final RangeMarker exprMarker = getExprMarker();
-        if (exprMarker != null) {
-          myExpr = restoreExpression(containingFile, psiField, exprMarker, myExprText);
-        }
-
-        if (myLocalMarker != null) {
-          final PsiElement refVariableElement = containingFile.findElementAt(myLocalMarker.getStartOffset());
-          if (refVariableElement != null) {
-            final PsiElement parent = refVariableElement.getParent();
-            if (parent instanceof PsiNamedElement) {
-              ((PsiNamedElement)parent).setName(myLocalName);
-            }
-          }
-
-          final V localVariable = getLocalVariable();
-          if (localVariable != null && localVariable.isPhysical()) {
-            myLocalVariable = localVariable;
-            final PsiElement nameIdentifier = localVariable.getNameIdentifier();
-            if (nameIdentifier != null) {
-              myLocalMarker = createMarker(nameIdentifier);
-            }
-          }
-        }
-        final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
-        for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
-          RangeMarker marker = occurrenceMarkers.get(i);
-          if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset() && myExpr != null) {
-            myOccurrences[i] = myExpr;
-            continue;
-          }
-          final E psiExpression =
-             restoreExpression(containingFile, psiField, marker, getLocalVariable() != null ? myLocalName : myExprText);
-          if (psiExpression != null) {
-            myOccurrences[i] = psiExpression;
-          }
-        }
-
-        if (myExpr != null && myExpr.isPhysical()) {
-          myExprMarker = createMarker(myExpr);
-        }
-        myOccurrenceMarkers = null;
-        deleteTemplateField(psiField);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      final PsiFile containingFile = psiField.getContainingFile();
+      final RangeMarker exprMarker = getExprMarker();
+      if (exprMarker != null) {
+        myExpr = restoreExpression(containingFile, psiField, exprMarker, myExprText);
       }
+
+      if (myLocalMarker != null) {
+        final PsiElement refVariableElement = containingFile.findElementAt(myLocalMarker.getStartOffset());
+        if (refVariableElement != null) {
+          final PsiElement parent = refVariableElement.getParent();
+          if (parent instanceof PsiNamedElement) {
+            ((PsiNamedElement)parent).setName(myLocalName);
+          }
+        }
+
+        final V localVariable = getLocalVariable();
+        if (localVariable != null && localVariable.isPhysical()) {
+          myLocalVariable = localVariable;
+          final PsiElement nameIdentifier = localVariable.getNameIdentifier();
+          if (nameIdentifier != null) {
+            myLocalMarker = createMarker(nameIdentifier);
+          }
+        }
+      }
+      final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
+      for (int i = 0, occurrenceMarkersSize = occurrenceMarkers.size(); i < occurrenceMarkersSize; i++) {
+        RangeMarker marker = occurrenceMarkers.get(i);
+        if (getExprMarker() != null && marker.getStartOffset() == getExprMarker().getStartOffset() && myExpr != null) {
+          myOccurrences[i] = myExpr;
+          continue;
+        }
+        final E psiExpression =
+           restoreExpression(containingFile, psiField, marker, getLocalVariable() != null ? myLocalName : myExprText);
+        if (psiExpression != null) {
+          myOccurrences[i] = psiExpression;
+        }
+      }
+
+      if (myExpr != null && myExpr.isPhysical()) {
+        myExprMarker = createMarker(myExpr);
+      }
+      myOccurrenceMarkers = null;
+      deleteTemplateField(psiField);
     });
   }
 
@@ -530,27 +513,24 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   @Override
   protected boolean performRefactoring() {
     if (!ensureValid()) return false;
-    CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-      @Override
-      public void run() {
-        final String refactoringId = getRefactoringId();
-        if (refactoringId != null) {
-          final RefactoringEventData beforeData = new RefactoringEventData();
-          final V localVariable = getLocalVariable();
-          if (localVariable != null) {
-            beforeData.addElement(localVariable);
-          } 
-          else {
-            final E beforeExpr = getBeforeExpr();
-            if (beforeExpr != null) {
-              beforeData.addElement(beforeExpr);
-            }
-          }
-          myProject.getMessageBus()
-            .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> {
+      final String refactoringId = getRefactoringId();
+      if (refactoringId != null) {
+        final RefactoringEventData beforeData = new RefactoringEventData();
+        final V localVariable = getLocalVariable();
+        if (localVariable != null) {
+          beforeData.addElement(localVariable);
         }
-        performIntroduce();
+        else {
+          final E beforeExpr = getBeforeExpr();
+          if (beforeExpr != null) {
+            beforeData.addElement(beforeExpr);
+          }
+        }
+        myProject.getMessageBus()
+          .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
       }
+      performIntroduce();
     }, getCommandName(), getCommandName());
 
     V variable = getVariable();
@@ -618,7 +598,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   protected String getRefactoringId() {
     return null;
   }
-  
+
   @Override
   protected boolean startsOnTheSameElement(RefactoringActionHandler handler, PsiElement element) {
     return super.startsOnTheSameElement(handler, element) || getLocalVariable() == element;
@@ -647,12 +627,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
   public void stopIntroduce(Editor editor) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null) {
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          templateState.gotoEnd(true);
-        }
-      };
+      final Runnable runnable = () -> templateState.gotoEnd(true);
       CommandProcessor.getInstance().executeCommand(myProject, runnable, getCommandName(), getCommandName());
     }
   }

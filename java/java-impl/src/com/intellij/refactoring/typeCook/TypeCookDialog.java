@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.XmlStringUtil;
 
 import javax.swing.*;
@@ -120,7 +121,7 @@ public class TypeCookDialog extends RefactoringDialog {
     myCbCookObjects.setText(RefactoringBundle.message("type.cook.generify.objects"));
     myCbCookToWildcards.setText(RefactoringBundle.message("type.cook.produce.wildcard.types"));
 
-    gbConstraints.insets = new Insets(4, 8, 4, 8);
+    gbConstraints.insets = JBUI.insets(4, 8);
 
     gbConstraints.weighty = 1;
     gbConstraints.weightx = 1;

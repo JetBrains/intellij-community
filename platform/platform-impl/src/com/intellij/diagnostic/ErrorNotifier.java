@@ -47,7 +47,9 @@ public class ErrorNotifier {
     NotificationListener listener = new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        openFatals(event, message);
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          openFatals(event, message);
+        }
       }
     };
     Notification notification = new Notification(NOTIFICATION_GROUP.getDisplayId(), title, notificationText, NotificationType.ERROR, listener) {

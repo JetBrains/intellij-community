@@ -23,7 +23,6 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LicensingFacade;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +37,6 @@ import java.awt.*;
  */
 public abstract class AbstractUpdateDialog extends DialogWrapper {
   private final boolean myEnableLink;
-
-  protected String myLicenseInfo = null;
-  protected boolean myPaidUpgrade;
-  protected boolean mySubscriptionLicense = false;
 
   protected AbstractUpdateDialog(boolean enableLink) {
     super(true);
@@ -71,42 +66,25 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   }
 
   protected void restart() {
-    final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     // do not stack several modal dialogs (native & swing)
-    app.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        app.restart(true);
-      }
-    });
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    app.invokeLater(() -> app.restart(true));
   }
-
-  protected void initLicensingInfo(@NotNull UpdateChannel channel, @SuppressWarnings("UnusedParameters") @NotNull BuildInfo build) {
-    LicensingFacade facade = LicensingFacade.getInstance();
-    if (facade != null) {
-      mySubscriptionLicense = facade.isSubscriptionLicense();
-      if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
-        myLicenseInfo = IdeBundle.message("updates.channel.bundled.key");
-      }
-    }
-  }
-
 
   protected void configureMessageArea(@NotNull JEditorPane area) {
     String messageBody = myEnableLink ? IdeBundle.message("updates.configure.label", ShowSettingsUtil.getSettingsMenuName()) : "";
     configureMessageArea(area, messageBody, null, null);
   }
 
-  protected void configureMessageArea(final @NotNull JEditorPane area,
+  protected void configureMessageArea(@NotNull JEditorPane area,
                                       @NotNull String messageBody,
                                       @Nullable Color fontColor,
                                       @Nullable HyperlinkListener listener) {
-    String text = "<html><head>" +
-                 UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), fontColor, null, null) +
-                 "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>" +
-                 "</head><body>" +
-                 messageBody +
-                 "</body></html>";
+    String text =
+      "<html><head>" +
+      UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), fontColor, null, null) +
+      "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>" +
+      "</head><body>" + messageBody + "</body></html>";
 
     area.setBackground(UIUtil.getPanelBackground());
     area.setBorder(IdeBorderFactory.createEmptyBorder());
@@ -114,13 +92,9 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     area.setEditable(false);
 
     if (listener == null && myEnableLink) {
-      listener = new HyperlinkListener() {
-        @Override
-        public void hyperlinkUpdate(final HyperlinkEvent e) {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            UpdateSettingsConfigurable settings = new UpdateSettingsConfigurable(false);
-            ShowSettingsUtil.getInstance().editConfigurable(area, settings);
-          }
+      listener = (e) -> {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          ShowSettingsUtil.getInstance().editConfigurable(area, new UpdateSettingsConfigurable(false));
         }
       };
     }

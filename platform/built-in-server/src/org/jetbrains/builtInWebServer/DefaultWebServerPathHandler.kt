@@ -33,7 +33,7 @@ import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpRequest
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.jetbrains.io.*
-import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
 
@@ -56,7 +56,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     if (pathInfo == null || !pathInfo.isValid) {
       pathInfo = pathToFileManager.doFindByRelativePath(path)
       if (pathInfo == null) {
-        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, null, request, extraHeaders)
+        HttpResponseStatus.NOT_FOUND.send(channel, request, extraHeaders = extraHeaders)
         return true
       }
 
@@ -66,7 +66,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     var indexUsed = false
     if (pathInfo.isDirectory()) {
       var indexVirtualFile: VirtualFile? = null
-      var indexFile: File? = null
+      var indexFile: Path? = null
       if (pathInfo.file == null) {
         indexFile = findIndexFile(pathInfo.ioFile!!)
       }
@@ -75,7 +75,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
       }
 
       if (indexFile == null && indexVirtualFile == null) {
-        Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, null, request, extraHeaders)
+        HttpResponseStatus.NOT_FOUND.send(channel, request, extraHeaders = extraHeaders)
         return true
       }
 
@@ -118,21 +118,26 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     }
 
     // we registered as a last handler, so, we should just return 404 and send extra headers
-    Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, null, request, extraHeaders)
+    HttpResponseStatus.NOT_FOUND.send(channel, request, extraHeaders = extraHeaders)
     return true
   }
 }
 
 private fun checkAccess(pathInfo: PathInfo, channel: Channel, request: HttpRequest): Boolean {
   if (pathInfo.ioFile != null || pathInfo.file!!.isInLocalFileSystem) {
-    val file = pathInfo.ioFile?.toPath() ?: Paths.get(pathInfo.file!!.path)
-    if (file.isDirectory() || !hasAccess(file)) {
-      Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
+    val file = pathInfo.ioFile ?: Paths.get(pathInfo.file!!.path)
+    if (file.isDirectory()) {
+      HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
+      return false
+    }
+    else if (!hasAccess(file)) {
+      // we check only file, but all directories in the path because of https://youtrack.jetbrains.com/issue/WEB-21594
+      HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
       return false
     }
   }
   else if (pathInfo.file!!.`is`(VFileProperty.HIDDEN)) {
-    Responses.sendStatus(HttpResponseStatus.NOT_FOUND, channel, request)
+    HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request)
     return false
   }
 

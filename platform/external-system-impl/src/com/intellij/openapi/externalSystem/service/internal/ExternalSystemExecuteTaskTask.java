@@ -41,12 +41,7 @@ import java.util.List;
  */
 public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
-  @NotNull private static final Function<ExternalTaskPojo, String> MAPPER = new Function<ExternalTaskPojo, String>() {
-    @Override
-    public String fun(ExternalTaskPojo task) {
-      return task.getName();
-    }
-  };
+  @NotNull private static final Function<ExternalTaskPojo, String> MAPPER = task -> task.getName();
 
   @NotNull private final List<ExternalTaskPojo> myTasksToExecute;
   @Nullable private final String myVmOptions;

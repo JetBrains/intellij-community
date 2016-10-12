@@ -137,32 +137,28 @@ public class TypedAction {
     @Override
     public void execute(@NotNull final Editor editor, final char charTyped, @NotNull final DataContext dataContext) {
       CommandProcessor.getInstance().executeCommand(
-        CommonDataKeys.PROJECT.getData(dataContext), 
-        new Runnable() {
-          @Override
-          public void run() {
-            if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
-              return;
-            }
-            ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(), editor.getProject()) {
-              @Override
-              public void run() {
-                Document doc = editor.getDocument();
-                doc.startGuardedBlockChecking();
-                try {
-                  getHandler().execute(editor, charTyped, dataContext);
-                }
-                catch (ReadOnlyFragmentModificationException e) {
-                  EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
-                }
-                finally {
-                  doc.stopGuardedBlockChecking();
-                }
-              }
-            });
+        CommonDataKeys.PROJECT.getData(dataContext), () -> {
+          if (!FileDocumentManager.getInstance().requestWriting(editor.getDocument(), editor.getProject())) {
+            return;
           }
-        }, 
-        "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());    
+          ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(editor.getDocument(), editor.getProject()) {
+            @Override
+            public void run() {
+              Document doc = editor.getDocument();
+              doc.startGuardedBlockChecking();
+              try {
+                getHandler().execute(editor, charTyped, dataContext);
+              }
+              catch (ReadOnlyFragmentModificationException e) {
+                EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(doc).handle(e);
+              }
+              finally {
+                doc.stopGuardedBlockChecking();
+              }
+            }
+          });
+        },
+        "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
     }
   }
 }

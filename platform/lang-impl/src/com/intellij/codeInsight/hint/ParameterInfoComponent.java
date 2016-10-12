@@ -45,7 +45,6 @@ public class ParameterInfoComponent extends JPanel {
   private int myCurrentParameterIndex;
 
   private PsiElement myParameterOwner;
-  private boolean myRequestFocus;
   private Object myHighlighted;
   @NotNull private final ParameterInfoHandler myHandler;
 
@@ -56,7 +55,8 @@ public class ParameterInfoComponent extends JPanel {
   private final Font NORMAL_FONT;
   private final Font BOLD_FONT;
 
-  private static final Border BACKGROUND_BORDER = BorderFactory.createLineBorder(BACKGROUND_COLOR);
+  private static final Border LAST_ITEM_BORDER = BorderFactory.createEmptyBorder();
+  private static final Border BOTTOM_BORDER = new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM);
 
   protected int myWidthLimit = 500;
 
@@ -64,17 +64,15 @@ public class ParameterInfoComponent extends JPanel {
     ImmutableMap.of(ParameterInfoUIContextEx.Flag.HIGHLIGHT, "b", ParameterInfoUIContextEx.Flag.DISABLE, "font color=gray",
                     ParameterInfoUIContextEx.Flag.STRIKEOUT, "strike");
 
-  private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = new Comparator<TextRange>() {
-    @Override
-    public int compare(TextRange o1, TextRange o2) {
-      if (o1.getStartOffset() == o2.getStartOffset()) {
-        return o1.getEndOffset() > o2.getEndOffset() ? 1 : -1;
-      }
-      if (o1.getStartOffset() > o2.getStartOffset()) return 1;
-      if (o1.getEndOffset() > o2.getEndOffset()) return 1;
-      return -1;
+  private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = (o1, o2) -> {
+    if (o1.getStartOffset() == o2.getStartOffset()) {
+      return o1.getEndOffset() > o2.getEndOffset() ? 1 : -1;
     }
+    if (o1.getStartOffset() > o2.getStartOffset()) return 1;
+    if (o1.getEndOffset() > o2.getEndOffset()) return 1;
+    return -1;
   };
+  private boolean myRequestFocus;
 
   @TestOnly
   public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
@@ -83,12 +81,16 @@ public class ParameterInfoComponent extends JPanel {
 
   @TestOnly
   public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex, @Nullable PsiElement parameterOwner) {
-    final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler, false);
+    final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler);
     infoComponent.setCurrentParameterIndex(currentParameterIndex);
     infoComponent.setParameterOwner(parameterOwner);
     return infoComponent.new MyParameterContext();
-  } 
-  
+  }
+
+  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
+    this(objects, editor, handler, false);
+  }
+
   ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, boolean requestFocus) {
     super(new BorderLayout());
     myRequestFocus = requestFocus;
@@ -143,6 +145,14 @@ public class ParameterInfoComponent extends JPanel {
     return myHighlighted;
   }
 
+  public void setRequestFocus(boolean requestFocus) {
+    myRequestFocus = requestFocus;
+  }
+
+  public boolean isRequestFocus() {
+    return myRequestFocus;
+  }
+
   class MyParameterContext implements ParameterInfoUIContextEx {
     private int i;
     private Function<String, String> myEscapeFunction;
@@ -157,14 +167,14 @@ public class ParameterInfoComponent extends JPanel {
                                                Color background) {
       final String resultedText =
         myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM));
+      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
       return resultedText;
     }
 
     @Override
     public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
       final String resultedText = myPanels[i].setup(texts, myEscapeFunction, flags, background);
-      myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM));
+      myPanels[i].setBorder(isLastParameterOwner() ? LAST_ITEM_BORDER : BOTTOM_BORDER);
       return resultedText;
     }
 

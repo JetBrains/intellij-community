@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,22 +37,19 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * 1. chooses file where test results were saved
  * 2. finds the configuration element saved during export
  * 3. creates corresponding configuration with {@link SMTRunnerConsoleProperties} if configuration implements {@link SMRunnerConsolePropertiesProvider}
- * 
+ *
  * Without console properties no navigation, no rerun failed is possible.
  */
 public abstract class AbstractImportTestsAction extends AnAction {
@@ -87,7 +84,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
 
   @Nullable
   public abstract VirtualFile getFile(@NotNull Project project);
-  
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
@@ -102,7 +99,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
           LOG.info("Failed to detect test framework in " + file.getPath() +
                    "; use " + (properties != null ? properties.getTestFrameworkName() + " from toolbar" : "no properties"));
         }
-        final Executor executor = properties != null ? properties.getExecutor() 
+        final Executor executor = properties != null ? properties.getExecutor()
                                                      : ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
         ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
         ExecutionTarget target = profile.getTarget();
@@ -122,25 +119,17 @@ public abstract class AbstractImportTestsAction extends AnAction {
       }
     }
   }
-  
+
   public static void adjustHistory(Project project) {
     int historySize = getHistorySize();
 
-    final File[] files = TestStateStorage.getTestHistoryRoot(project).listFiles(new FilenameFilter() {
-      @Override
-      public boolean accept(File dir, String name) {
-        return name.endsWith(".xml");
-      }
-    });
+    final File[] files = TestStateStorage.getTestHistoryRoot(project).listFiles((dir, name) -> name.endsWith(".xml"));
     if (files != null && files.length >= historySize + 1) {
-      Arrays.sort(files, new Comparator<File>() {
-        @Override
-        public int compare(File o1, File o2) {
-          final long l1 = o1.lastModified();
-          final long l2 = o2.lastModified();
-          if (l1 == l2) return FileUtil.compareFiles(o1, o2);
-          return l1 < l2 ? -1 : 1;
-        }
+      Arrays.sort(files, (o1, o2) -> {
+        final long l1 = o1.lastModified();
+        final long l2 = o2.lastModified();
+        if (l1 == l2) return FileUtil.compareFiles(o1, o2);
+        return l1 < l2 ? -1 : 1;
       });
       FileUtil.delete(files[0]);
     }
@@ -158,8 +147,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
       myFile = file;
       myProject = project;
       try {
-        final Document document = JDOMUtil.loadDocument(VfsUtilCore.virtualToIoFile(myFile));
-        final Element config = document.getRootElement().getChild("config");
+        final Element config = JDOMUtil.load(VfsUtilCore.virtualToIoFile(myFile)).getChild("config");
         if (config != null) {
           String configTypeId = config.getAttributeValue("configId");
           if (configTypeId != null) {
@@ -189,7 +177,7 @@ public abstract class AbstractImportTestsAction extends AnAction {
         if (DefaultExecutionTarget.INSTANCE.getId().equals(myTargetId)) {
           return DefaultExecutionTarget.INSTANCE;
         }
-        final RunnerAndConfigurationSettingsImpl settings = 
+        final RunnerAndConfigurationSettingsImpl settings =
           new RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(myProject), myConfiguration, false);
         for (ExecutionTargetProvider provider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
           for (ExecutionTarget target : provider.getTargets(myProject, settings)) {

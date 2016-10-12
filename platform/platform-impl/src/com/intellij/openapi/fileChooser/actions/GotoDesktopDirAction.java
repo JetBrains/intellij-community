@@ -41,12 +41,7 @@ public class GotoDesktopDirAction extends FileChooserAction {
   protected void actionPerformed(final FileSystemTree tree, AnActionEvent e) {
     final VirtualFile dir = myDesktopDirectory.getValue();
     if (dir != null) {
-      tree.select(dir, new Runnable() {
-        @Override
-        public void run() {
-          tree.expand(dir, null);
-        }
-      });
+      tree.select(dir, () -> tree.expand(dir, null));
     }
   }
 

@@ -75,12 +75,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
 
     RelativePoint point = getPointToShowResults();
     final ProjectStructureElementUsage[] usagesArray = usages.toArray(new ProjectStructureElementUsage[usages.size()]);
-    Arrays.sort(usagesArray, new Comparator<ProjectStructureElementUsage>() {
-      @Override
-      public int compare(ProjectStructureElementUsage o1, ProjectStructureElementUsage o2) {
-        return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
-      }
-    });
+    Arrays.sort(usagesArray, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
 
     BaseListPopupStep<ProjectStructureElementUsage> step =
       new BaseListPopupStep<ProjectStructureElementUsage>(ProjectBundle.message("dependencies.used.in.popup.title"), usagesArray) {

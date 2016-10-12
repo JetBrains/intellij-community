@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
@@ -79,7 +78,7 @@ public class PrepareToDeployAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     if (module != null && PluginModuleType.isOfType(module)) {
-      doPrepare(Arrays.asList(module), CommonDataKeys.PROJECT.getData(e.getDataContext()));
+      doPrepare(Arrays.asList(module), e.getProject());
     }
   }
 
@@ -95,31 +94,29 @@ public class PrepareToDeployAction extends AnAction {
                                                 final int warnings,
                                                 final CompileContext compileContext) {
                              if (aborted || errors != 0) return;
-                             ApplicationManager.getApplication().invokeLater(new Runnable() {
-                               public void run() {
-                                 for (Module aModule : pluginModules) {
-                                   if (!doPrepare(aModule, errorMessages, successMessages)) {
-                                     return;
-                                   }
+                             ApplicationManager.getApplication().invokeLater(() -> {
+                               for (Module aModule : pluginModules) {
+                                 if (!doPrepare(aModule, errorMessages, successMessages)) {
+                                   return;
                                  }
+                               }
 
-                                 if (!errorMessages.isEmpty()) {
-                                   Messages.showErrorDialog(errorMessages.iterator().next(), DevKitBundle.message("error.occurred"));
-                                 }
-                                 else if (!successMessages.isEmpty()) {
-                                   StringBuilder messageBuf = new StringBuilder();
-                                   for (String message : successMessages) {
-                                     if (messageBuf.length() != 0) {
-                                       messageBuf.append('\n');
-                                     }
-                                     messageBuf.append(message);
+                               if (!errorMessages.isEmpty()) {
+                                 Messages.showErrorDialog(errorMessages.iterator().next(), DevKitBundle.message("error.occurred"));
+                               }
+                               else if (!successMessages.isEmpty()) {
+                                 StringBuilder messageBuf = new StringBuilder();
+                                 for (String message : successMessages) {
+                                   if (messageBuf.length() != 0) {
+                                     messageBuf.append('\n');
                                    }
-                                   final String title = pluginModules.size() == 1 ?
-                                                        DevKitBundle.message("success.deployment.message", pluginModules.get(0).getName()) :
-                                                        DevKitBundle.message("success.deployment.message.all");
-                                   NOTIFICATION_GROUP.createNotification(title, messageBuf.toString(),
-                                                                         NotificationType.INFORMATION, null).notify(project);
+                                   messageBuf.append(message);
                                  }
+                                 final String title = pluginModules.size() == 1 ?
+                                                      DevKitBundle.message("success.deployment.message", pluginModules.get(0).getName()) :
+                                                      DevKitBundle.message("success.deployment.message.all");
+                                 NOTIFICATION_GROUP.createNotification(title, messageBuf.toString(),
+                                                                       NotificationType.INFORMATION, null).notify(project);
                                }
                              }, project.getDisposed());
                            }
@@ -153,28 +150,26 @@ public class PrepareToDeployAction extends AnAction {
 
     final String dstPath = defaultPath + (isZip ? ZIP_EXTENSION : JAR_EXTENSION);
     final File dstFile = new File(dstPath);
-    return clearReadOnly(module.getProject(), dstFile) && ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-      public void run() {
+    return clearReadOnly(module.getProject(), dstFile) && ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
 
-        final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-        if (progressIndicator != null) {
-          progressIndicator.setText(DevKitBundle.message("prepare.for.deployment.common"));
-          progressIndicator.setIndeterminate(true);
+      final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+      if (progressIndicator != null) {
+        progressIndicator.setText(DevKitBundle.message("prepare.for.deployment.common"));
+        progressIndicator.setIndeterminate(true);
+      }
+      try {
+        File jarFile = preparePluginsJar(module, modules);
+        if (isZip) {
+          processLibrariesAndJpsPlugins(jarFile, dstFile, pluginName, libs, jpsModules, progressIndicator);
         }
-        try {
-          File jarFile = preparePluginsJar(module, modules);
-          if (isZip) {
-            processLibrariesAndJpsPlugins(jarFile, dstFile, pluginName, libs, jpsModules, progressIndicator);
-          }
-          else {
-            FileUtil.copy(jarFile, dstFile);
-          }
-          LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(dstFile), true, false, null);
-          successMessages.add(DevKitBundle.message("saved.message", isZip ? 1 : 2, pluginName, dstPath));
+        else {
+          FileUtil.copy(jarFile, dstFile);
         }
-        catch (final IOException e) {
-          errorMessages.add(e.getMessage() + "\n(" + dstPath + ")");
-        }
+        LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(dstFile), true, false, null);
+        successMessages.add(DevKitBundle.message("saved.message", isZip ? 1 : 2, pluginName, dstPath));
+      }
+      catch (final IOException e) {
+        errorMessages.add(e.getMessage() + "\n(" + dstPath + ")");
       }
     }, DevKitBundle.message("prepare.for.deployment", pluginName), true, module.getProject());
   }
@@ -227,13 +222,11 @@ public class PrepareToDeployAction extends AnAction {
   }
 
   private static FileFilter createFilter(final ProgressIndicator progressIndicator, @Nullable final FileTypeManager fileTypeManager) {
-    return new FileFilter() {
-      public boolean accept(File pathName) {
-        if (progressIndicator != null) {
-          progressIndicator.setText2("");
-        }
-        return fileTypeManager == null || !fileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathName.getName()));
+    return pathName -> {
+      if (progressIndicator != null) {
+        progressIndicator.setText2("");
       }
+      return fileTypeManager == null || !fileTypeManager.isFileIgnored(FileUtil.toSystemIndependentName(pathName.getName()));
     };
   }
 

@@ -60,10 +60,10 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   }
 
   private void cleanup() {
-    for (final VirtualFile file : new ArrayList<VirtualFile>(myMappings.keySet())) {
-      if (file != null //PROJECT, top-level
-          && !file.isValid()) {
-        myMappings.remove(file);
+    for (Iterator<VirtualFile> i = myMappings.keySet().iterator(); i.hasNext();) {
+      VirtualFile file = i.next();
+      if (file != null /* PROJECT, top-level */ && !file.isValid()) {
+        i.remove();
       }
     }
   }
@@ -196,12 +196,9 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       cleanup();
       final Element element = new Element("x");
       final List<VirtualFile> files = new ArrayList<VirtualFile>(myMappings.keySet());
-      Collections.sort(files, new Comparator<VirtualFile>() {
-        @Override
-        public int compare(final VirtualFile o1, final VirtualFile o2) {
-          if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
-          return o1.getPath().compareTo(o2.getPath());
-        }
+      Collections.sort(files, (o1, o2) -> {
+        if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
+        return o1.getPath().compareTo(o2.getPath());
       });
       for (VirtualFile file : files) {
         final T dialect = myMappings.get(file);

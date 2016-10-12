@@ -24,6 +24,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -53,6 +54,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     return myRbInlineThisOnly.isSelected();
   }
 
+  @NotNull
   @Override
   protected JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel();

@@ -40,10 +40,9 @@ public class PyScriptTestProcessRunner<CONF_T extends AbstractPythonRunConfigura
    */
   public PyScriptTestProcessRunner(@NotNull final ConfigurationFactory configurationFactory,
                                    @NotNull final Class<CONF_T> expectedConfigurationType,
-                                   @NotNull final String workingFolder,
                                    @NotNull final String scriptName,
                                    final int timesToRerunFailedTests) {
-    super(configurationFactory, expectedConfigurationType, workingFolder, timesToRerunFailedTests);
+    super(configurationFactory, expectedConfigurationType, timesToRerunFailedTests);
     myScriptName = scriptName;
   }
 

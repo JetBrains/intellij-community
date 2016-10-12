@@ -41,21 +41,18 @@ public class BlockingSetTest {
     List<Callable<Void>> taskList = new ArrayList<Callable<Void>>(tasks);
     final AtomicBoolean check = new AtomicBoolean(false);
     for (int i = 0; i < tasks; i++) {
-      taskList.add(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          lock.put("key");
-          try {
-            Assert.assertFalse(check.get());
-            check.set(true);
-            Thread.sleep(1);
-            check.set(false);
-          }
-          finally {
-            lock.remove("key");
-          }
-          return null;
+      taskList.add(() -> {
+        lock.put("key");
+        try {
+          Assert.assertFalse(check.get());
+          check.set(true);
+          Thread.sleep(1);
+          check.set(false);
         }
+        finally {
+          lock.remove("key");
+        }
+        return null;
       });
     }
     List<Future<Void>> futures = service.invokeAll(taskList);

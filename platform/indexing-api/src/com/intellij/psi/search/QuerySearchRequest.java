@@ -45,12 +45,7 @@ public class QuerySearchRequest {
       };
     }
     else {
-      this.processor = new Processor<PsiReference>() {
-        @Override
-        public boolean process(PsiReference psiReference) {
-          return processor.process(psiReference, collector);
-        }
-      };
+      this.processor = psiReference -> processor.process(psiReference, collector);
     }
   }
 

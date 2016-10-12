@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public abstract class ArgumentFixerActionFactory {
   @Nullable
   protected abstract PsiExpression getModifiedArgument(PsiExpression expression, final PsiType toType) throws IncorrectOperationException;
 
-  public void registerCastActions(CandidateInfo[] candidates, PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
+  public void registerCastActions(@NotNull CandidateInfo[] candidates, @NotNull PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {
     if (candidates.length == 0) return;
     List<CandidateInfo> methodCandidates = new ArrayList<CandidateInfo>(Arrays.asList(candidates));
     PsiExpressionList list = call.getArgumentList();
@@ -51,7 +52,6 @@ public abstract class ArgumentFixerActionFactory {
       CandidateInfo candidate = methodCandidates.get(i);
       PsiMethod method = (PsiMethod) candidate.getElement();
       PsiSubstitutor substitutor = candidate.getSubstitutor();
-      assert method != null;
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (expressions.length != parameters.length) {
         methodCandidates.remove(i);
@@ -91,8 +91,10 @@ public abstract class ArgumentFixerActionFactory {
           if (!GenericsUtil.isFromExternalTypeLanguage(parameterType)) continue;
           if (suggestedCasts.contains(parameterType.getCanonicalText())) continue;
           if (exprType instanceof PsiPrimitiveType && parameterType instanceof PsiClassType) {
-            parameterType = PsiPrimitiveType.getUnboxedType(parameterType);
-            if (parameterType == null) continue;
+            PsiType unboxedParameterType = PsiPrimitiveType.getUnboxedType(parameterType);
+            if (unboxedParameterType != null) {
+              parameterType = unboxedParameterType;
+            }
           }
           // strict compare since even widening cast may help
           if (Comparing.equal(exprType, parameterType)) continue;
@@ -113,7 +115,7 @@ public abstract class ArgumentFixerActionFactory {
     }
   }
 
-  public abstract boolean areTypesConvertible(final PsiType exprType, final PsiType parameterType, final PsiElement context);
+  public abstract boolean areTypesConvertible(@NotNull final PsiType exprType, @NotNull final PsiType parameterType, @NotNull final PsiElement context);
 
   public abstract MethodArgumentFix createFix(final PsiExpressionList list, final int i, final PsiType parameterType);
 

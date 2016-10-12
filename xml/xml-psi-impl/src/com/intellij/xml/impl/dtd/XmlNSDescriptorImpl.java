@@ -102,31 +102,28 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   // Read-only calculation
   private CachedValue<Map<String, XmlElementDescriptor>> doBuildDeclarationMap() {
-    return CachedValuesManager.getManager(myElement.getProject()).createCachedValue(new CachedValueProvider<Map<String, XmlElementDescriptor>>() {
-      @Override
-      public Result<Map<String, XmlElementDescriptor>> compute() {
-        final List<XmlElementDecl> result = new ArrayList<XmlElementDecl>();
-        myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());
-        final Map<String, XmlElementDescriptor> ret = new LinkedHashMap<String, XmlElementDescriptor>((int)(result.size() * 1.5));
-        Set<PsiFile> dependencies = new THashSet<PsiFile>(1);
-        dependencies.add(myDescriptorFile);
+    return CachedValuesManager.getManager(myElement.getProject()).createCachedValue(() -> {
+      final List<XmlElementDecl> result = new ArrayList<XmlElementDecl>();
+      myElement.processElements(new FilterElementProcessor(new ClassFilter(XmlElementDecl.class), result), getDeclaration());
+      final Map<String, XmlElementDescriptor> ret = new LinkedHashMap<String, XmlElementDescriptor>((int)(result.size() * 1.5));
+      Set<PsiFile> dependencies = new THashSet<PsiFile>(1);
+      dependencies.add(myDescriptorFile);
 
-        for (final XmlElementDecl xmlElementDecl : result) {
-          final String name = xmlElementDecl.getName();
-          if (name != null) {
-            if (!ret.containsKey(name)) {
-              ret.put(name, new XmlElementDescriptorImpl(xmlElementDecl));
-              // if element descriptor was produced from entity reference use proper dependency
-              PsiElement dependingElement = xmlElementDecl.getUserData(XmlElement.DEPENDING_ELEMENT);
-              if (dependingElement != null) {
-                PsiFile dependingElementContainingFile = dependingElement.getContainingFile();
-                if (dependingElementContainingFile != null) dependencies.add(dependingElementContainingFile);
-              }
+      for (final XmlElementDecl xmlElementDecl : result) {
+        final String name = xmlElementDecl.getName();
+        if (name != null) {
+          if (!ret.containsKey(name)) {
+            ret.put(name, new XmlElementDescriptorImpl(xmlElementDecl));
+            // if element descriptor was produced from entity reference use proper dependency
+            PsiElement dependingElement = xmlElementDecl.getUserData(XmlElement.DEPENDING_ELEMENT);
+            if (dependingElement != null) {
+              PsiFile dependingElementContainingFile = dependingElement.getContainingFile();
+              if (dependingElementContainingFile != null) dependencies.add(dependingElementContainingFile);
             }
           }
         }
-        return new Result<Map<String, XmlElementDescriptor>>(ret, dependencies.toArray());
-       }
+      }
+      return new CachedValueProvider.Result<Map<String, XmlElementDescriptor>>(ret, dependencies.toArray());
      }, false);
   }
 

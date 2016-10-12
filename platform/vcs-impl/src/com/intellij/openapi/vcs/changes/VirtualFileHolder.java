@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -129,6 +130,7 @@ public class VirtualFileHolder implements FileHolder {
   }
 
   // todo track number of copies made
+  @NotNull
   public List<VirtualFile> getFiles() {
     return new ArrayList<VirtualFile>(myFiles);
   }

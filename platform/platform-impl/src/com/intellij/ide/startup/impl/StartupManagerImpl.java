@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,13 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.FileNotFoundException;
 import java.util.Collection;
@@ -65,11 +67,11 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   private final List<Runnable> myDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
   private final List<Runnable> myNotDumbAwarePostStartupActivities = Collections.synchronizedList(new LinkedList<Runnable>());
-  private boolean myPostStartupActivitiesPassed = false; // guarded by this
+  private boolean myPostStartupActivitiesPassed; // guarded by this
 
-  private volatile boolean myPreStartupActivitiesPassed = false;
-  private volatile boolean myStartupActivitiesRunning = false;
-  private volatile boolean myStartupActivitiesPassed = false;
+  private volatile boolean myPreStartupActivitiesPassed;
+  private volatile boolean myStartupActivitiesRunning;
+  private volatile boolean myStartupActivitiesPassed;
 
   private final Project myProject;
 
@@ -111,43 +113,37 @@ public class StartupManagerImpl extends StartupManagerEx {
     return myPostStartupActivitiesPassed;
   }
 
+  @SuppressWarnings("SynchronizeOnThis")
   public void runStartupActivities() {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      @SuppressWarnings("SynchronizeOnThis")
-      public void run() {
-        AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
-        try {
-          runActivities(myPreStartupActivities);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Running Startup Activities");
+      try {
+        runActivities(myPreStartupActivities);
 
-          // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
-          synchronized (StartupManagerImpl.this) {
-            myPreStartupActivitiesPassed = true;
-            myStartupActivitiesRunning = true;
-          }
-
-          runActivities(myStartupActivities);
-
-          synchronized (StartupManagerImpl.this) {
-            myStartupActivitiesRunning = false;
-            myStartupActivitiesPassed = true;
-          }
+        // to avoid atomicity issues if runWhenProjectIsInitialized() is run at the same time
+        synchronized (this) {
+          myPreStartupActivitiesPassed = true;
+          myStartupActivitiesRunning = true;
         }
-        finally {
-          token.finish();
+
+        runActivities(myStartupActivities);
+
+        synchronized (this) {
+          myStartupActivitiesRunning = false;
+          myStartupActivitiesPassed = true;
         }
+      }
+      finally {
+        token.finish();
       }
     });
   }
 
   public void runPostStartupActivitiesFromExtensions() {
     for (final StartupActivity extension : Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY)) {
-      final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-          if (!myProject.isDisposed()) {
-            extension.runActivity(myProject);
-          }
+      final Runnable runnable = () -> {
+        if (!myProject.isDisposed()) {
+          extension.runActivity(myProject);
         }
       };
       if (extension instanceof DumbAware) {
@@ -161,12 +157,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   // queue each activity in smart mode separately so that if one of them starts dumb mode, the next ones just wait for it to finish
   private void queueSmartModeActivity(final Runnable activity) {
-    DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
-      @Override
-      public void run() {
-        runActivity(activity);
-      }
-    });
+    DumbService.getInstance(myProject).runWhenSmart(() -> runActivity(activity));
   }
 
   public void runPostStartupActivities() {
@@ -210,30 +201,27 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   public void scheduleInitialVfsRefresh() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
+    UIUtil.invokeLaterIfNeeded(() -> {
+      if (myProject.isDisposed()) return;
 
-        markContentRootsForRefresh();
+      markContentRootsForRefresh();
 
-        Application app = ApplicationManager.getApplication();
-        if (!app.isHeadlessEnvironment()) {
-          final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
-          final MessageBusConnection connection = app.getMessageBus().connect();
-          connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
-            @Override
-            public void afterProjectClosed(@NotNull Project project) {
-              if (project != myProject) return;
+      Application app = ApplicationManager.getApplication();
+      if (!app.isHeadlessEnvironment()) {
+        final long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
+        final MessageBusConnection connection = app.getMessageBus().connect();
+        connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener.Adapter() {
+          @Override
+          public void afterProjectClosed(@NotNull Project project) {
+            if (project != myProject) return;
 
-              RefreshQueue.getInstance().cancelSession(sessionId);
-              connection.disconnect();
-            }
-          });
-        }
-        else {
-          VirtualFileManager.getInstance().syncRefresh();
-        }
+            RefreshQueue.getInstance().cancelSession(sessionId);
+            connection.disconnect();
+          }
+        });
+      }
+      else {
+        VirtualFileManager.getInstance().syncRefresh();
       }
     });
   }
@@ -275,32 +263,42 @@ public class StartupManagerImpl extends StartupManagerEx {
   }
 
   private void checkProjectRoots() {
+    VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
+    if (roots.length == 0) return;
     LocalFileSystem fs = LocalFileSystem.getInstance();
     if (!(fs instanceof LocalFileSystemImpl)) return;
     FileWatcher watcher = ((LocalFileSystemImpl)fs).getFileWatcher();
     if (!watcher.isOperational()) return;
-    Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
-    if (manualWatchRoots.isEmpty()) return;
-    VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
-    if (roots.length == 0) return;
 
-    List<String> nonWatched = new SmartList<String>();
-    for (VirtualFile root : roots) {
-      if (!(root.getFileSystem() instanceof LocalFileSystem)) continue;
-      String rootPath = root.getPath();
-      for (String manualWatchRoot : manualWatchRoots) {
-        if (FileUtil.isAncestor(manualWatchRoot, rootPath, false)) {
-          nonWatched.add(rootPath);
+    PooledThreadExecutor.INSTANCE.submit(() -> {
+      LOG.debug("FW/roots waiting started");
+      while (true) {
+        if (myProject.isDisposed()) return;
+        if (!watcher.isSettingRoots()) break;
+        TimeoutUtil.sleep(10);
+      }
+      LOG.debug("FW/roots waiting finished");
+
+      Collection<String> manualWatchRoots = watcher.getManualWatchRoots();
+      if (!manualWatchRoots.isEmpty()) {
+        List<String> nonWatched = new SmartList<String>();
+        for (VirtualFile root : roots) {
+          if (!(root.getFileSystem() instanceof LocalFileSystem)) continue;
+          String rootPath = root.getPath();
+          for (String manualWatchRoot : manualWatchRoots) {
+            if (FileUtil.isAncestor(manualWatchRoot, rootPath, false)) {
+              nonWatched.add(rootPath);
+            }
+          }
+        }
+        if (!nonWatched.isEmpty()) {
+          String message = ApplicationBundle.message("watcher.non.watchable.project");
+          watcher.notifyOnFailure(message, null);
+          LOG.info("unwatched roots: " + nonWatched);
+          LOG.info("manual watches: " + manualWatchRoots);
         }
       }
-    }
-
-    if (!nonWatched.isEmpty()) {
-      String message = ApplicationBundle.message("watcher.non.watchable.project");
-      watcher.notifyOnFailure(message, null);
-      LOG.info("unwatched roots: " + nonWatched);
-      LOG.info("manual watches: " + manualWatchRoots);
-    }
+    });
   }
 
   public void startCacheUpdate() {
@@ -367,12 +365,9 @@ public class StartupManagerImpl extends StartupManagerEx {
       }
     }
 
-    Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        if (!myProject.isDisposed()) {
-          action.run();
-        }
+    Runnable runnable = () -> {
+      if (!myProject.isDisposed()) {
+        action.run();
       }
     };
     if (application.isDispatchThread() && ModalityState.current() == ModalityState.NON_MODAL) {

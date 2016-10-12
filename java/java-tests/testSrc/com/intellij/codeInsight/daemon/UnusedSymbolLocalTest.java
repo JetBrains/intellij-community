@@ -48,12 +48,7 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
     assertEquals(0, collection.size());
 
     final int offset = myEditor.getCaretModel().getOffset();
-    WriteCommandAction.runWriteCommandAction(null, new Runnable() {
-      @Override
-      public void run() {
-        document.insertString(offset, "//");
-      }
-    });
+    WriteCommandAction.runWriteCommandAction(null, () -> document.insertString(offset, "//"));
 
     PsiDocumentManager.getInstance(getProject()).commitDocument(document);
 

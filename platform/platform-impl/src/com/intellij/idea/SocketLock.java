@@ -28,13 +28,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.NotNullProducer;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.net.NetUtils;
+import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,11 +42,14 @@ import org.jetbrains.io.MessageDecoder;
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.net.ConnectException;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -125,59 +126,47 @@ public final class SocketLock {
   public ActivateStatus lock(@NotNull final String[] args) throws Exception {
     log("enter: lock(config=%s system=%s)", myConfigPath, mySystemPath);
 
-    return underLocks(new Callable<ActivateStatus>() {
-      @Override
-      public ActivateStatus call() throws Exception {
-        File portMarkerC = new File(myConfigPath, PORT_FILE);
-        File portMarkerS = new File(mySystemPath, PORT_FILE);
+    return underLocks(() -> {
+      File portMarkerC = new File(myConfigPath, PORT_FILE);
+      File portMarkerS = new File(mySystemPath, PORT_FILE);
 
-        List<Integer> ports = ContainerUtil.newSmartList();
-        addExistingPort(portMarkerC, ports);
-        addExistingPort(portMarkerS, ports);
-        if (!ports.isEmpty()) {
-          for (int port : ports) {
-            ActivateStatus status = tryActivate(port, myConfigPath, mySystemPath, args);
-            if (status != ActivateStatus.NO_INSTANCE) {
-              return status;
-            }
+      MultiMap<Integer, String> portToPath = MultiMap.createSmart();
+      addExistingPort(portMarkerC, myConfigPath, portToPath);
+      addExistingPort(portMarkerS, mySystemPath, portToPath);
+      if (!portToPath.isEmpty()) {
+        for (Map.Entry<Integer, Collection<String>> entry : portToPath.entrySet()) {
+          ActivateStatus status = tryActivate(entry.getKey(), entry.getValue(), args);
+          if (status != ActivateStatus.NO_INSTANCE) {
+            return status;
           }
         }
-
-        if (isShutdownCommand()) {
-          System.exit(0);
-        }
-
-        myToken = UUID.randomUUID().toString();
-
-        final String[] lockedPaths = {myConfigPath, mySystemPath};
-        int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
-        myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, new NotNullProducer<ChannelHandler>() {
-          @NotNull
-          @Override
-          public ChannelHandler produce() {
-            return new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken);
-          }
-        });
-
-        byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
-        FileUtil.writeToFile(portMarkerC, portBytes);
-        FileUtil.writeToFile(portMarkerS, portBytes);
-
-        File tokenFile = new File(mySystemPath, TOKEN_FILE);
-        FileUtil.writeToFile(tokenFile, myToken.getBytes(CharsetToolkit.UTF8_CHARSET));
-        PosixFileAttributeView view = Files.getFileAttributeView(tokenFile.toPath(), PosixFileAttributeView.class);
-        if (view != null) {
-          try {
-            view.setPermissions(ContainerUtil.newHashSet(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
-          }
-          catch (IOException e) {
-            log(e);
-          }
-        }
-
-        log("exit: lock(): succeed");
-        return ActivateStatus.NO_INSTANCE;
       }
+
+      if (isShutdownCommand()) {
+        System.exit(0);
+      }
+
+      myToken = UUID.randomUUID().toString();
+      final String[] lockedPaths = {myConfigPath, mySystemPath};
+      int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr() ? 1 : 2;
+      myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false,
+                                             () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken));
+      byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
+      FileUtil.writeToFile(portMarkerC, portBytes);
+      FileUtil.writeToFile(portMarkerS, portBytes);
+      File tokenFile = new File(mySystemPath, TOKEN_FILE);
+      FileUtil.writeToFile(tokenFile, myToken.getBytes(CharsetToolkit.UTF8_CHARSET));
+      PosixFileAttributeView view = Files.getFileAttributeView(tokenFile.toPath(), PosixFileAttributeView.class);
+      if (view != null) {
+        try {
+          view.setPermissions(ContainerUtil.newHashSet(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
+        }
+        catch (IOException e) {
+          log(e);
+        }
+      }
+      log("exit: lock(): succeed");
+      return ActivateStatus.NO_INSTANCE;
     });
   }
 
@@ -199,13 +188,10 @@ public final class SocketLock {
     }
   }
 
-  private static void addExistingPort(@NotNull File portMarker, @NotNull List<Integer> ports) {
+  private static void addExistingPort(@NotNull File portMarker, @NotNull String path, @NotNull MultiMap<Integer, String> portToPath) {
     if (portMarker.exists()) {
       try {
-        int port = Integer.parseInt(FileUtilRt.loadFile(portMarker));
-        if (!ports.contains(port)) {
-          ports.add(port);
-        }
+        portToPath.putValue(Integer.parseInt(FileUtilRt.loadFile(portMarker)), path);
       }
       catch (Exception e) {
         log(e);
@@ -215,13 +201,11 @@ public final class SocketLock {
   }
 
   @NotNull
-  private static ActivateStatus tryActivate(int portNumber, @NotNull String configPath, @NotNull String systemPath, @NotNull String[] args) {
+  private ActivateStatus tryActivate(int portNumber, @NotNull Collection<String> paths, @NotNull String[] args) {
     log("trying: port=%s", portNumber);
-
     args = checkForJetBrainsProtocolCommand(args);
-
     try {
-      Socket socket = new Socket(NetUtils.getLoopbackAddress(), portNumber);
+      Socket socket = new Socket(InetAddress.getLoopbackAddress(), portNumber);
       try {
         socket.setSoTimeout(1000);
 
@@ -234,7 +218,7 @@ public final class SocketLock {
             if (PATHS_EOT_RESPONSE.equals(path)) {
               break;
             }
-            else if (configPath.equals(path) || systemPath.equals(path)) {
+            else if (paths.contains(path)) {
               result = true;  // don't break - read all input
             }
           }
@@ -246,7 +230,7 @@ public final class SocketLock {
 
         if (result) {
           try {
-            String token = FileUtil.loadFile(new File(systemPath, TOKEN_FILE));
+            String token = FileUtil.loadFile(new File(mySystemPath, TOKEN_FILE));
             @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             out.writeUTF(ACTIVATE_COMMAND + token + "\0" + new File(".").getAbsolutePath() + "\0" + StringUtil.join(args, "\0"));
             out.flush();
@@ -282,7 +266,7 @@ public final class SocketLock {
 
   private static void printPID(int port) {
     try {
-      Socket socket = new Socket(NetUtils.getLoopbackAddress(), port);
+      Socket socket = new Socket(InetAddress.getLoopbackAddress(), port);
       socket.setSoTimeout(1000);
       @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream out = new DataOutputStream(socket.getOutputStream());
       out.writeUTF(PID_COMMAND);
@@ -386,7 +370,8 @@ public final class SocketLock {
             }
 
             if (StringUtil.startsWith(command, ACTIVATE_COMMAND)) {
-              List<String> args = StringUtil.split(command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString(), "\0");
+              String data = command.subSequence(ACTIVATE_COMMAND.length(), command.length()).toString();
+              List<String> args = StringUtil.split(data, data.contains("\0") ? "\0" : "\uFFFD");
 
               boolean tokenOK = !args.isEmpty() && myToken.equals(args.get(0));
               if (!tokenOK) {

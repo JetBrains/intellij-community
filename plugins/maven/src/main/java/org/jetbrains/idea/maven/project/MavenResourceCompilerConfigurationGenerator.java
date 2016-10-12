@@ -176,26 +176,23 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     final Document document = new Document(new Element("maven-project-configuration"));
     XmlSerializer.serializeInto(projectConfig, document.getRootElement());
-    buildManager.runCommand(new Runnable() {
-      @Override
-      public void run() {
-        buildManager.clearState(myProject);
-        FileUtil.createIfDoesntExist(mavenConfigFile);
-        try {
-          JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
+    buildManager.runCommand(() -> {
+      buildManager.clearState(myProject);
+      FileUtil.createIfDoesntExist(mavenConfigFile);
+      try {
+        JDOMUtil.writeDocument(document, mavenConfigFile, "\n");
 
-          DataOutputStream crcOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(crcFile)));
-          try {
-            crcOutput.writeInt(crc);
-          }
-          finally {
-            crcOutput.close();
-          }
+        DataOutputStream crcOutput = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(crcFile)));
+        try {
+          crcOutput.writeInt(crc);
         }
-        catch (IOException e) {
-          LOG.debug("Unable to write config file", e);
-          throw new RuntimeException(e);
+        finally {
+          crcOutput.close();
         }
+      }
+      catch (IOException e) {
+        LOG.debug("Unable to write config file", e);
+        throw new RuntimeException(e);
       }
     });
   }
@@ -398,8 +395,6 @@ public class MavenResourceCompilerConfigurationGenerator {
       return;
     }
 
-    String ejbClientArtifactName = MavenUtil.getEjbClientArtifactName(module);
-
     MavenEjbClientConfiguration ejbClientCfg = new MavenEjbClientConfiguration();
 
     Element includes = pluginCfg.getChild("clientIncludes");
@@ -423,7 +418,7 @@ public class MavenResourceCompilerConfigurationGenerator {
     }
 
     if (!ejbClientCfg.isEmpty()) {
-      projectCfg.ejbClientArtifactConfigs.put(ejbClientArtifactName, ejbClientCfg);
+      projectCfg.ejbClientArtifactConfigs.put(MavenUtil.getEjbClientArtifactName(module, true), ejbClientCfg);
     }
   }
 

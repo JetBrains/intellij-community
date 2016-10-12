@@ -21,7 +21,6 @@ import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -267,6 +266,10 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
+  protected boolean filterOutUnknownFiles() {
+    return true;
+  }
+
   protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
     final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(file);
     LOG.debug("Checking moved file " + file + "; status=" + status);
@@ -293,7 +296,10 @@ public abstract class VcsVFSListener implements Disposable {
     final List<MovedFileInfo> movedFiles = new ArrayList<MovedFileInfo>(myMovedFiles);
     LOG.debug("executeMoveRename " + movedFiles);
     myMovedFiles.clear();
-    performMoveRename(movedFiles);
+    performMoveRename(ContainerUtil.filter(movedFiles, info -> {
+      FileStatus status = FileStatusManager.getInstance(myProject).getStatus(info.myFile);
+      return !(status == FileStatus.UNKNOWN && filterOutUnknownFiles()) && status != FileStatus.IGNORED;
+    }));
   }
 
   protected VcsDeleteType needConfirmDeletion(final VirtualFile file) {
@@ -482,15 +488,6 @@ public abstract class VcsVFSListener implements Disposable {
       if (myCommandLevel == 0) {
         if (!myAddedFiles.isEmpty() || !myDeletedFiles.isEmpty() || !myDeletedWithoutConfirmFiles.isEmpty() || !myMovedFiles.isEmpty() ||
             ! myDirtyFiles.isEmpty()) {
-          // avoid reentering commandFinished handler - saving the documents may cause a "before file deletion" event firing,
-          // which will cause closing the text editor, which will itself run a command that will be caught by this listener
-          myCommandLevel++;
-          try {
-            FileDocumentManager.getInstance().saveAllDocuments();
-          }
-          finally {
-            myCommandLevel--;
-          }
           doNotDeleteAddedCopiedOrMovedFiles();
           checkMovedAddedSourceBack();
           if (!myAddedFiles.isEmpty()) {

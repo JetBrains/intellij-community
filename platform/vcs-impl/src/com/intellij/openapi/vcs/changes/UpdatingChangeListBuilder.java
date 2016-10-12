@@ -79,23 +79,19 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
       return;
     }
 
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      public void run() {
-        if (ChangeListManagerImpl.isUnder(change, myScope)) {
-          if (changeList != null) {
-            LOG.debug("[processChangeInList-1] to add change to cl");
-            myChangeListWorker.addChangeToList(changeList.getName(), change, vcsKey);
-          }
-          else {
-            LOG.debug("[processChangeInList-1] to add to corresponding list");
-            myChangeListWorker.addChangeToCorrespondingList(change, vcsKey);
-          }
-        }
-        else {
-          LOG.debug("[processChangeInList-1] not under scope");
-        }
+    if (ChangeListManagerImpl.isUnder(change, myScope)) {
+      if (changeList != null) {
+        LOG.debug("[processChangeInList-1] to add change to cl");
+        myChangeListWorker.addChangeToList(changeList.getName(), change, vcsKey);
       }
-    });
+      else {
+        LOG.debug("[processChangeInList-1] to add to corresponding list");
+        myChangeListWorker.addChangeToCorrespondingList(change, vcsKey);
+      }
+    }
+    else {
+      LOG.debug("[processChangeInList-1] not under scope");
+    }
   }
 
   public void processChangeInList(final Change change, final String changeListName, VcsKey vcsKey) {

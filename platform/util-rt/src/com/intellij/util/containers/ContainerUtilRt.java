@@ -344,6 +344,10 @@ public class ContainerUtilRt {
     return new CopyOnWriteArrayList<T>(ContainerUtilRt.<T>emptyList());
   }
 
+  /**
+   * @see #addIfNotNull(Collection, Object)
+   */
+  @Deprecated
   public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<T> result) {
     if (element != null) {
       result.add(element);

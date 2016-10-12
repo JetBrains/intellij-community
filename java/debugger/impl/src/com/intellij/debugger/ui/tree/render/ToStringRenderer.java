@@ -141,8 +141,8 @@ public class ToStringRenderer extends NodeRendererImpl {
   }
 
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
-    final Value parentValue = ((ValueDescriptor)node.getParent().getDescriptor()).getValue();
-    return DebugProcessImpl.getDefaultRenderer(parentValue).getChildValueExpression(node, context);
+    return DebugProcessImpl.getDefaultRenderer(((ValueDescriptor)node.getParent().getDescriptor()).getType())
+      .getChildValueExpression(node, context);
   }
 
   public boolean isExpandable(Value value, EvaluationContext evaluationContext, NodeDescriptor parentDescriptor) {
@@ -175,7 +175,7 @@ public class ToStringRenderer extends NodeRendererImpl {
   private boolean isFiltered(Type t) {
     if (t instanceof ReferenceType) {
       for (ClassFilter classFilter : myClassFilters) {
-        if (classFilter.isEnabled() && DebuggerUtils.getSuperType(t, classFilter.getPattern()) != null) {
+        if (classFilter.isEnabled() && DebuggerUtils.instanceOf(t, classFilter.getPattern())) {
           return true;
         }
       }

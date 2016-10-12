@@ -190,11 +190,8 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
     VirtualFile pkg = createChildDirectory(root, "foo");
     PsiDirectory dir = myPsiManager.findDirectory(pkg);
     assertNotNull(dir);
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText(className + ".java", JavaFileType.INSTANCE, text));
-      }
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      dir.add(PsiFileFactory.getInstance(getProject()).createFileFromText(className + ".java", JavaFileType.INSTANCE, text));
     });
 
     CoreJavaFileManager manager = new CoreJavaFileManager(myPsiManager);

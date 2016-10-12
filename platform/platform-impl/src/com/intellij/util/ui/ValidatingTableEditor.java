@@ -159,11 +159,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
 
     @Override
     public TableCellRenderer getRenderer(final Item item) {
-      return new WarningIconCellRenderer(new NullableComputable<String>() {
-        public String compute() {
-          return myWarnings.get(doGetItems().indexOf(item));
-        }
-      });
+      return new WarningIconCellRenderer(() -> myWarnings.get(doGetItems().indexOf(item)));
     }
   }
 

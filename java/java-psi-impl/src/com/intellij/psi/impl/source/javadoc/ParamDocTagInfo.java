@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author mike
@@ -38,25 +32,14 @@ class ParamDocTagInfo implements JavadocTagInfo {
   }
 
   @Override
-  public boolean isValidInContext(PsiElement element) {
-    return element instanceof PsiMethod ||
-           (element instanceof PsiClass && PsiUtil.isLanguageLevel5OrHigher(element));
+  public boolean isInline() {
+    return false;
   }
 
   @Override
-  public Object[] getPossibleValues(PsiElement context, PsiElement place, String prefix) {
-    if (context instanceof PsiTypeParameterListOwner) {
-      List<PsiNamedElement> result = new ArrayList<PsiNamedElement>(Arrays.asList(((PsiTypeParameterListOwner)context).getTypeParameters()));
-
-      if (context instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)context;
-        ContainerUtil.addAll(result, method.getParameterList().getParameters());
-      }
-
-      return result.toArray(new PsiNamedElement[result.size()]);
-    }
-
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  public boolean isValidInContext(PsiElement element) {
+    return element instanceof PsiMethod ||
+           (element instanceof PsiClass && PsiUtil.isLanguageLevel5OrHigher(element));
   }
 
   @Override
@@ -80,11 +63,5 @@ class ParamDocTagInfo implements JavadocTagInfo {
   public PsiReference getReference(PsiDocTagValue value) {
     if (value instanceof PsiDocParamRef) return value.getReference();
     return null;
-  }
-
-
-  @Override
-  public boolean isInline() {
-    return false;
   }
 }

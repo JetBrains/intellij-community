@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.DataManager;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
@@ -23,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.extension.SchemaType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +37,14 @@ import java.util.List;
  * @author Irina.Chernushina on 10/1/2015.
  */
 class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
+  private static final String BUILTIN_USAGE_KEY = "json.schema.builtin.completion";
+  private static final String SCHEMA_USAGE_KEY = "json.schema.schema.completion";
+  private static final String USER_USAGE_KEY = "json.schema.user.completion";
+  @NotNull private final SchemaType myType;
   @NotNull private final JsonSchemaObject myRootSchema;
 
-  public JsonBySchemaObjectCompletionContributor(final @NotNull JsonSchemaObject rootSchema) {
+  public JsonBySchemaObjectCompletionContributor(@NotNull SchemaType type, final @NotNull JsonSchemaObject rootSchema) {
+    myType = type;
     myRootSchema = rootSchema;
   }
 
@@ -47,19 +54,25 @@ class JsonBySchemaObjectCompletionContributor extends CompletionContributor {
     final PsiFile containingFile = position.getContainingFile();
     if (containingFile == null) return;
 
+    updateStat();
     new Worker(myRootSchema, position, result).work();
     result.stopHere();
   }
 
   public static List<LookupElement> getCompletionVariants(@NotNull final JsonSchemaObject schema, @NotNull final PsiElement position) {
     final List<LookupElement> result = new ArrayList<LookupElement>();
-    new Worker(schema, position, new Consumer<LookupElement>() {
-      @Override
-      public void consume(LookupElement element) {
-        result.add(element);
-      }
-    }).work();
+    new Worker(schema, position, element -> result.add(element)).work();
     return result;
+  }
+
+  private void updateStat() {
+    if (SchemaType.schema.equals(myType)) {
+      UsageTrigger.trigger(SCHEMA_USAGE_KEY);
+    } else if (SchemaType.embeddedSchema.equals(myType)) {
+      UsageTrigger.trigger(BUILTIN_USAGE_KEY);
+    } else if (SchemaType.userSchema.equals(myType)) {
+      UsageTrigger.trigger(USER_USAGE_KEY);
+    }
   }
 
   private static class Worker {

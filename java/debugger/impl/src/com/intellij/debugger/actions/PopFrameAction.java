@@ -92,15 +92,10 @@ public class PopFrameAction extends DebuggerAction {
 
                                   @Override
                                   public void errorOccurred(@NotNull final String errorMessage) {
-                                    ApplicationManager.getApplication().invokeLater(new Runnable() {
-                                      @Override
-                                      public void run() {
-                                        Messages
-                                          .showMessageDialog(project, DebuggerBundle.message("error.executing.finally", errorMessage),
-                                                             UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
-                                                             Messages.getErrorIcon());
-                                      }
-                                    });
+                                    ApplicationManager.getApplication().invokeLater(() -> Messages
+                                      .showMessageDialog(project, DebuggerBundle.message("error.executing.finally", errorMessage),
+                                                         UIUtil.removeMnemonic(ActionsBundle.actionText(DebuggerActions.POP_FRAME)),
+                                                         Messages.getErrorIcon()));
                                   }
                                 })) return;
       popFrame(debugProcess, debuggerContext, stackFrame);

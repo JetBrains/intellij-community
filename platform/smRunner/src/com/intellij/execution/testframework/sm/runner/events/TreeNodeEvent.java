@@ -16,24 +16,19 @@
 package com.intellij.execution.testframework.sm.runner.events;
 
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TreeNodeEvent {
+  @NonNls public static final String ROOT_NODE_ID = "0";
 
   private final String myName;
-  private final int myId;
+  private final String myId;
 
-  public TreeNodeEvent(@Nullable String name, int id) {
+  public TreeNodeEvent(@Nullable String name, @Nullable String id) {
     myName = name;
     myId = id;
-    validate();
-  }
-
-  private void validate() {
-    if (myId < -1) {
-      fail("id should be greater than -2");
-    }
   }
 
   protected void fail(@NotNull String message) {
@@ -46,9 +41,10 @@ public abstract class TreeNodeEvent {
   }
 
   /**
-   * @return tree node id (non-negative integer), or -1 if undefined
+   * @return tree node id, or null if undefined
    */
-  public int getId() {
+  @Nullable
+  public String getId() {
     return myId;
   }
 
@@ -80,16 +76,14 @@ public abstract class TreeNodeEvent {
     }
   }
 
-  public static int getNodeId(@NotNull ServiceMessage message) {
-    return getIntAttribute(message, "nodeId");
+  @Nullable
+  public static String getNodeId(@NotNull ServiceMessage message) {
+    return getNodeId(message, "nodeId");
   }
 
-  public static int getIntAttribute(@NotNull ServiceMessage message, @NotNull String key) {
-    String value = message.getAttributes().get(key);
-    if (value == null) {
-      return -1;
-    }
-    return Integer.parseInt(value);
+  @Nullable
+  public static String getNodeId(@NotNull ServiceMessage message, String key) {
+    return message.getAttributes().get(key);
   }
 
 }

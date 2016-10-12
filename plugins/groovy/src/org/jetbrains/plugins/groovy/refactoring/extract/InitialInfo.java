@@ -63,12 +63,7 @@ public class InitialInfo implements ExtractInfoHelper {
     myStringPartInfo = stringPartInfo;
     myVariable = variable;
 
-    myHasReturnValue = ContainerUtil.find(returnStatements, new Condition<GrStatement>() {
-      @Override
-      public boolean value(GrStatement statement) {
-        return statement instanceof GrReturnStatement && ((GrReturnStatement)statement).getReturnValue() != null;
-      }
-    }) != null;
+    myHasReturnValue = ContainerUtil.find(returnStatements, statement -> statement instanceof GrReturnStatement && ((GrReturnStatement)statement).getReturnValue() != null) != null;
 
     assert myStringPartInfo != null || myStatements.length > 0;
     myProject = project;

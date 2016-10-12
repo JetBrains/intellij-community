@@ -160,13 +160,10 @@ public class GithubProjectGeneratorPeer implements WebProjectGenerator.Generator
   @NotNull
   private static List<GithubTagInfo> createSortedTagList(@NotNull Collection<GithubTagInfo> tags) {
     List<GithubTagInfo> sortedTags = ContainerUtil.newArrayList(tags);
-    Collections.sort(sortedTags, new Comparator<GithubTagInfo>() {
-      @Override
-      public int compare(GithubTagInfo tag1, GithubTagInfo tag2) {
-        GithubTagInfo.Version v1 = tag1.getVersion();
-        GithubTagInfo.Version v2 = tag2.getVersion();
-        return v2.compareTo(v1);
-      }
+    Collections.sort(sortedTags, (tag1, tag2) -> {
+      GithubTagInfo.Version v1 = tag1.getVersion();
+      GithubTagInfo.Version v2 = tag2.getVersion();
+      return v2.compareTo(v1);
     });
     for (GithubTagInfo tag : sortedTags) {
       tag.setRecentTag(false);

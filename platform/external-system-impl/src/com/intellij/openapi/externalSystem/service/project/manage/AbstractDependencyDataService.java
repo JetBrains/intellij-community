@@ -91,38 +91,35 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
                                                      @NotNull final ProjectData projectData,
                                                      @NotNull final Project project,
                                                      @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    return new Computable<Collection<I>>() {
-      @Override
-      public Collection<I> compute() {
-        MultiMap<String /*module name*/, String /*dep name*/> byModuleName = MultiMap.create();
-        for (DataNode<E> node : toImport) {
-          final AbstractDependencyData data = node.getData();
-          byModuleName.putValue(data.getOwnerModule().getInternalName(), getInternalName(data));
-        }
+    return () -> {
+      MultiMap<String /*module name*/, String /*dep name*/> byModuleName = MultiMap.create();
+      for (DataNode<E> node : toImport) {
+        final AbstractDependencyData data = node.getData();
+        byModuleName.putValue(data.getOwnerModule().getInternalName(), getInternalName(data));
+      }
 
-        final ModifiableModuleModel modifiableModuleModel = modelsProvider.getModifiableModuleModel();
-        List<I> orphanEntries = ContainerUtil.newSmartList();
-        for (Module module : modelsProvider.getModules(projectData)) {
-          for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
-            // do not remove recently created library w/o name
-            if (entry instanceof LibraryOrderEntry &&
-                ((LibraryOrderEntry)entry).getLibraryName() == null &&
-                entry.getUrls(OrderRootType.CLASSES).length == 0) {
-              continue;
-            }
-            if (getOrderEntryType().isInstance(entry)) {
-              final String moduleName = ObjectUtils.chooseNotNull(modifiableModuleModel.getNewName(entry.getOwnerModule()), entry.getOwnerModule().getName()) ;
+      final ModifiableModuleModel modifiableModuleModel = modelsProvider.getModifiableModuleModel();
+      List<I> orphanEntries = ContainerUtil.newSmartList();
+      for (Module module : modelsProvider.getModules(projectData)) {
+        for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
+          // do not remove recently created library w/o name
+          if (entry instanceof LibraryOrderEntry &&
+              ((LibraryOrderEntry)entry).getLibraryName() == null &&
+              entry.getUrls(OrderRootType.CLASSES).length == 0) {
+            continue;
+          }
+          if (getOrderEntryType().isInstance(entry)) {
+            final String moduleName = ObjectUtils.chooseNotNull(modifiableModuleModel.getNewName(entry.getOwnerModule()), entry.getOwnerModule().getName()) ;
+            //noinspection unchecked
+            if (!byModuleName.get(moduleName).contains(getOrderEntryName(modelsProvider, (I)entry))) {
               //noinspection unchecked
-              if (!byModuleName.get(moduleName).contains(getOrderEntryName(modelsProvider, (I)entry))) {
-                //noinspection unchecked
-                orphanEntries.add((I)entry);
-              }
+              orphanEntries.add((I)entry);
             }
           }
         }
-
-        return orphanEntries;
       }
+
+      return orphanEntries;
     };
   }
 

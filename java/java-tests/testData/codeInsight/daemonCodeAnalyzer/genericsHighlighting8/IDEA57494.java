@@ -11,6 +11,6 @@ abstract class A1{
     abstract <T> T baz(List<? super T> a);
 
     void bar(List<?> x){
-        String o = baz<error descr="'baz(java.util.List<? super T>)' in 'A1' cannot be applied to '(java.util.List<capture<?>>)'">(x)</error>;
+        <error descr="Incompatible types. Found: 'T', required: 'java.lang.String'">String o = baz(x);</error>
     }
 }

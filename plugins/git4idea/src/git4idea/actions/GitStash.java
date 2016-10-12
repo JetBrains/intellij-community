@@ -17,12 +17,11 @@ package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
@@ -61,7 +60,7 @@ public class GitStash extends GitRepositoryAction {
     finally {
       DvcsUtil.workingTreeChangeFinished(project, token);
     }
-    ServiceManager.getService(project, GitPlatformFacade.class).hardRefresh(root);
+    VfsUtil.markDirtyAndRefresh(false, true, false, root);
   }
 
   /**

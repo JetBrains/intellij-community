@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public abstract class PsiAnchor {
   }
 
   @NotNull
-  public static PsiAnchor wrapperOrHardReference(@NotNull PsiElement element) {
+  private static PsiAnchor wrapperOrHardReference(@NotNull PsiElement element) {
     for (SmartPointerAnchorProvider provider : SmartPointerAnchorProvider.EP_NAME.getExtensions()) {
       PsiElement anchorElement = provider.getAnchor(element);
       if (anchorElement != null && anchorElement != element) {
@@ -399,7 +399,8 @@ public abstract class PsiAnchor {
   @Nullable
   public static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl,
                                                 int index,
-                                                @NotNull IStubElementType elementType, boolean throwIfNull) {
+                                                @NotNull IStubElementType elementType,
+                                                boolean throwIfNull) {
     if (fileImpl == null) {
       if (throwIfNull) throw new AssertionError("Null file");
       return null;
@@ -452,7 +453,7 @@ public abstract class PsiAnchor {
     private final Language myLanguage;
     private final IStubElementType myElementType;
 
-    private StubIndexReference(@NotNull final PsiFile file, final int index, @NotNull Language language, IStubElementType elementType) {
+    private StubIndexReference(@NotNull final PsiFile file, final int index, @NotNull Language language, @NotNull IStubElementType elementType) {
       myLanguage = language;
       myElementType = elementType;
       myVirtualFile = file.getVirtualFile();
@@ -504,11 +505,7 @@ public abstract class PsiAnchor {
       }
       catch (AssertionError e) {
         String msg = e.getMessage();
-        if (file == null) {
-          msg += "\n no PSI file";
-        } else {
-          msg += "\n current file stamp=" + (short)file.getModificationStamp();
-        }
+        msg += file == null ? "\n no PSI file" : "\n current file stamp=" + (short)file.getModificationStamp();
         final Document document = FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
         if (document != null) {
           msg += "\n committed=" + PsiDocumentManager.getInstance(myProject).isCommitted(document);

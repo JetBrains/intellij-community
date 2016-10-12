@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.DevKitBundle;
-
 
 public class PostfixTemplateDescriptionNotFoundInspection extends DescriptionNotFoundInspectionBase {
 
@@ -36,18 +33,5 @@ public class PostfixTemplateDescriptionNotFoundInspection extends DescriptionNot
   @Override
   protected String getHasNotBeforeAfterError() {
     return "Postfix template must have 'before.*.template' and 'after.*.template' beside 'description.html'";
-  }
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return DevKitBundle.message("inspections.component.postfix.template.not.found.description.name");
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "PostfixTemplateDescriptionNotFound";
   }
 }

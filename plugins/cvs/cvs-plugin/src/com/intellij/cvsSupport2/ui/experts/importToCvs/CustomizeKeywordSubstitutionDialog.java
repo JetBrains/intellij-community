@@ -54,13 +54,10 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
 
     @Override
     public Comparator<FileExtension> getComparator() {
-      return new Comparator<FileExtension>() {
-        @Override
-        public int compare(FileExtension extension1, FileExtension extension2) {
-          final KeywordSubstitutionWrapper firstSubstitution = extension1.getKeywordSubstitutionsWithSelection().getSelection();
-          final KeywordSubstitutionWrapper secondSubstitution = extension2.getKeywordSubstitutionsWithSelection().getSelection();
-          return firstSubstitution.toString().compareTo(secondSubstitution.toString());
-        }
+      return (extension1, extension2) -> {
+        final KeywordSubstitutionWrapper firstSubstitution = extension1.getKeywordSubstitutionsWithSelection().getSelection();
+        final KeywordSubstitutionWrapper secondSubstitution = extension2.getKeywordSubstitutionsWithSelection().getSelection();
+        return firstSubstitution.toString().compareTo(secondSubstitution.toString());
       };
     }
 
@@ -104,12 +101,7 @@ public class CustomizeKeywordSubstitutionDialog extends DialogWrapper {
 
     @Override
     public Comparator<FileExtension> getComparator() {
-      return new Comparator<FileExtension>(){
-        @Override
-        public int compare(FileExtension extension1, FileExtension extension2) {
-          return extension1.getExtension().compareTo(extension2.getExtension());
-        }
-      };
+      return (extension1, extension2) -> extension1.getExtension().compareTo(extension2.getExtension());
     }
 
     @Override

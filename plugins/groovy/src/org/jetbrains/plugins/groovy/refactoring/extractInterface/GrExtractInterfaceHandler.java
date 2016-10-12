@@ -122,12 +122,7 @@ public class GrExtractInterfaceHandler implements RefactoringActionHandler, Elem
         SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(myClass);
       final SmartPsiElementPointer<PsiClass> interfacePointer =
         SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(anInterface);
-      final Runnable turnRefsToSuperRunnable = new Runnable() {
-        @Override
-        public void run() {
-          ExtractClassUtil.askAndTurnRefsToSuper(myProject, classPointer, interfacePointer);
-        }
-      };
+      final Runnable turnRefsToSuperRunnable = () -> ExtractClassUtil.askAndTurnRefsToSuper(myProject, classPointer, interfacePointer);
       SwingUtilities.invokeLater(turnRefsToSuperRunnable);
     }
   }

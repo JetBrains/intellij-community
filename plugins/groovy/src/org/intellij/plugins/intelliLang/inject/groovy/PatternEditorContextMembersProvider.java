@@ -63,12 +63,7 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
                                      @NotNull final ResolveState state) {
     final PsiFile file = place.getContainingFile().getOriginalFile();
     final BaseInjection injection = file.getUserData(BaseInjection.INJECTION_KEY);
-    Processor<PsiElement> processor = new Processor<PsiElement>() {
-      @Override
-      public boolean process(PsiElement element) {
-        return element.processDeclarations(scopeProcessor, state, null, place);
-      }
-    };
+    Processor<PsiElement> processor = element -> element.processDeclarations(scopeProcessor, state, null, place);
     if (injection == null) {
       processDevContext(file, processor);
     }
@@ -139,13 +134,8 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
   private static Set<String> collectDevPatternClassNames(@NotNull final Project project) {
     CachedValue<Set<String>> cachedValue = project.getUserData(PATTERN_CLASSES);
     if (cachedValue == null) {
-      cachedValue = CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Set<String>>() {
-        @Nullable
-        @Override
-        public Result<Set<String>> compute() {
-          return Result.create(calcDevPatternClassNames(project), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
-        }
-      }, false);
+      cachedValue = CachedValuesManager.getManager(project).createCachedValue(
+        () -> CachedValueProvider.Result.create(calcDevPatternClassNames(project), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT), false);
       project.putUserData(PATTERN_CLASSES, cachedValue);
     }
     return cachedValue.getValue();
@@ -169,13 +159,10 @@ public class PatternEditorContextMembersProvider extends NonCodeMembersContribut
         }
       };
       final StringSearcher searcher = new StringSearcher("patternClass", true, true);
-      CacheManager.SERVICE.getInstance(beanClass.getProject()).processFilesWithWord(new Processor<PsiFile>() {
-        @Override
-        public boolean process(PsiFile psiFile) {
-          LowLevelSearchUtil.processElementsContainingWordInElement(occurenceProcessor, psiFile, searcher, true,
-                                                                     new EmptyProgressIndicator());
-          return true;
-        }
+      CacheManager.SERVICE.getInstance(beanClass.getProject()).processFilesWithWord(psiFile -> {
+        LowLevelSearchUtil.processElementsContainingWordInElement(occurenceProcessor, psiFile, searcher, true,
+                                                                   new EmptyProgressIndicator());
+        return true;
       }, searcher.getPattern(), UsageSearchContext.IN_FOREIGN_LANGUAGES, scope, searcher.isCaseSensitive());
     }
     return ContainerUtil.newHashSet(roots);

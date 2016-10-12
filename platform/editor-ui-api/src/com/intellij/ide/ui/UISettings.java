@@ -27,6 +27,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ComponentTreeEventDispatcher;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
@@ -38,10 +40,10 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
 
 import static com.intellij.util.ui.UIUtil.isValidFont;
 
@@ -53,8 +55,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   /** Not tabbed pane. */
   public static final int TABS_NONE = 0;
 
+  private static UISettings ourSettings;
+
   public static UISettings getInstance() {
-    return ServiceManager.getService(UISettings.class);
+    return ourSettings = ServiceManager.getService(UISettings.class);
   }
 
   /**
@@ -134,6 +138,7 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public boolean MERGE_EQUAL_STACKTRACES = true;
 
   private final EventDispatcher<UISettingsListener> myDispatcher = EventDispatcher.create(UISettingsListener.class);
+  private final ComponentTreeEventDispatcher<UISettingsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener.class);
 
   public UISettings() {
     tweakPlatformDefaults();
@@ -171,16 +176,21 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   public void fireUISettingsChanged() {
     incModificationCount();
     myDispatcher.getMulticaster().uiSettingsChanged(this);
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
-    IconLoader.setFilter(COLOR_BLINDNESS == ColorBlindness.protanopia
-                         ? DaltonizationFilter.protanopia
-                         : COLOR_BLINDNESS == ColorBlindness.deuteranopia
-                           ? DaltonizationFilter.deuteranopia
-                           : COLOR_BLINDNESS == ColorBlindness.tritanopia
-                             ? DaltonizationFilter.tritanopia
-                             : null);
+
+    if (ourSettings == this) {
+      // if this is the main UISettings instance push event to bus and to all current components
+      myTreeDispatcher.getMulticaster().uiSettingsChanged(this);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(UISettingsListener.TOPIC).uiSettingsChanged(this);
+    }
+
+    IconLoader.setFilter(Registry.is("color.blindness.daltonization")
+                         ? DaltonizationFilter.get(COLOR_BLINDNESS)
+                         : MatrixFilter.get(COLOR_BLINDNESS));
   }
 
+  /**
+   * @deprecated use {@link UISettings#addUISettingsListener(UISettingsListener, Disposable disposable)} instead.
+   */
   public void removeUISettingsListener(UISettingsListener listener) {
     myDispatcher.removeListener(listener);
   }
@@ -281,7 +291,10 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
     }
   }
 
-  /* This method must not be used for set up antialiasing for editor components
+  /**
+   *  This method must not be used for set up antialiasing for editor components. To make sure antialiasing settings are taken into account
+   *  when preferred size of component is calculated, {@link #setupComponentAntialiasing(JComponent)} method should be called from
+   *  <code>updateUI()</code> or <code>setUI()</code> method of component.
    */
   public static void setupAntialiasing(final Graphics g) {
 
@@ -308,15 +321,9 @@ public class UISettings extends SimpleModificationTracker implements PersistentS
   }
 
   /**
-   * @return true when Remote Desktop (i.e. Windows RDP) is connected
-   * @deprecated Use RemoteDesktopDetector class - it should work in more cases. To be removed in IDEA 16.
+   * @see #setupComponentAntialiasing(JComponent)
    */
-  @SuppressWarnings("unused")
-  public static boolean isRemoteDesktopConnected() {
-    if (System.getProperty("os.name").contains("Windows")) {
-      final Map map = (Map)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
-      return map != null && RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT.equals(map.get(RenderingHints.KEY_TEXT_ANTIALIASING));
-    }
-    return false;
+  public static void setupComponentAntialiasing(JComponent component) {
+    component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent());
   }
 }

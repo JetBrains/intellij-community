@@ -194,38 +194,27 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
   }
 
   private void doCreateElement(final String subDirName, final boolean createFile) {
-    Runnable command = new Runnable() {
-      @Override
-      public void run() {
-        final Runnable run = new Runnable() {
-          @Override
-          public void run() {
-            String dirPath = myDirectory.getVirtualFile().getPresentableUrl();
-            String actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
-            LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
-            try {
-              if (createFile) {
-                CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(subDirName, myDirectory);
-                myCreatedElement = mkdirs.directory.createFile(mkdirs.newName);
-              } else {
-                createDirectories(subDirName);
-              }
-            }
-            catch (final IncorrectOperationException ex) {
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  showErrorDialog(CreateElementActionBase.filterMessage(ex.getMessage()));
-                }
-              });
-            }
-            finally {
-              action.finish();
-            }
+    Runnable command = () -> {
+      final Runnable run = () -> {
+        String dirPath = myDirectory.getVirtualFile().getPresentableUrl();
+        String actionName = IdeBundle.message("progress.creating.directory", dirPath, File.separator, subDirName);
+        LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
+        try {
+          if (createFile) {
+            CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(subDirName, myDirectory);
+            myCreatedElement = mkdirs.directory.createFile(mkdirs.newName);
+          } else {
+            createDirectories(subDirName);
           }
-        };
-        ApplicationManager.getApplication().runWriteAction(run);
-      }
+        }
+        catch (final IncorrectOperationException ex) {
+          ApplicationManager.getApplication().invokeLater(() -> showErrorDialog(CreateElementActionBase.filterMessage(ex.getMessage())));
+        }
+        finally {
+          action.finish();
+        }
+      };
+      ApplicationManager.getApplication().runWriteAction(run);
     };
     CommandProcessor.getInstance().executeCommand(myProject, command, createFile ? IdeBundle.message("command.create.file") 
                                                                                  : myIsDirectory

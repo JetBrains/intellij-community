@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -37,9 +38,14 @@ import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.plaf.basic.BasicScrollPaneUI;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.image.*;
+import java.lang.reflect.Field;
 
 public class JBScrollPane extends JScrollPane {
   /**
@@ -63,6 +69,16 @@ public class JBScrollPane extends JScrollPane {
                                                                                 new ThumbPainter(.7f, .2f, Gray.x99, Gray.x8C));
   @Deprecated
   public static final RegionPainter<Float> THUMB_DARK_PAINTER = new ThumbPainter(.35f, .25f, Gray.x80, Gray.x94);
+
+  @Deprecated
+  public static final RegionPainter<Float> MAC_THUMB_PAINTER = new RoundThumbPainter(2, .2f, .3f, Gray.x00);
+  static final RegionPainter<Float> MAC_OVERLAY_THUMB_PAINTER = new RoundThumbPainter(2, 0f, .5f, Gray.x00);
+
+  @Deprecated
+  public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = new RoundThumbPainter(2, .10f, .05f, Gray.xFF);
+  static final RegionPainter<Float> MAC_OVERLAY_THUMB_DARK_PAINTER = new RoundThumbPainter(2, 0f, .15f, Gray.xFF);
+
+  private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
   private int myViewportBorderWidth = -1;
   private boolean myHasOverlayScrollbars;
@@ -113,6 +129,15 @@ public class JBScrollPane extends JScrollPane {
     return color;
   }
 
+  static Color getViewBackground(JScrollPane pane) {
+    if (pane == null) return null;
+    JViewport viewport = pane.getViewport();
+    if (viewport == null) return null;
+    Component view = viewport.getView();
+    if (view == null) return null;
+    return view.getBackground();
+  }
+
   public static JScrollPane findScrollPane(Component c) {
     if (c == null) return null;
 
@@ -151,6 +176,35 @@ public class JBScrollPane extends JScrollPane {
   public void setUI(ScrollPaneUI ui) {
     super.setUI(ui);
     updateViewportBorder();
+    if (ui instanceof BasicScrollPaneUI) {
+      try {
+        Field field = BasicScrollPaneUI.class.getDeclaredField("mouseScrollListener");
+        field.setAccessible(true);
+        Object value = field.get(ui);
+        if (value instanceof MouseWheelListener) {
+          MouseWheelListener oldListener = (MouseWheelListener)value;
+          MouseWheelListener newListener = event -> {
+            if (isScrollEvent(event)) {
+              Object source = event.getSource();
+              if (source instanceof JScrollPane) {
+                JScrollPane pane = (JScrollPane)source;
+                if (pane.isWheelScrollingEnabled()) {
+                  JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
+                  if (bar != null && bar.isVisible()) oldListener.mouseWheelMoved(event);
+                }
+              }
+            }
+          };
+          field.set(ui, newListener);
+          // replace listener if field updated successfully
+          removeMouseWheelListener(oldListener);
+          addMouseWheelListener(newListener);
+        }
+      }
+      catch (Exception exception) {
+        LOG.warn(exception);
+      }
+    }
   }
 
   @Override
@@ -312,10 +366,8 @@ public class JBScrollPane extends JScrollPane {
     @Override
     public void updateUI() {
       ScrollBarUI ui = getUI();
-      if (ui instanceof AbstractScrollBarUI) return;
-      setUI(!SystemInfo.isMac && Registry.is("ide.scroll.new.layout")
-            ? new DefaultScrollBarUI()
-            : ButtonlessScrollBarUI.createNormal());
+      if (ui instanceof DefaultScrollBarUI) return;
+      setUI(JBScrollBar.createUI(this));
     }
 
     @Override
@@ -339,6 +391,12 @@ public class JBScrollPane extends JScrollPane {
           return true;
         }
       }
+      else if (ui instanceof DefaultScrollBarUI) {
+        DefaultScrollBarUI dui = (DefaultScrollBarUI)ui;
+        Point point = e.getLocationOnScreen();
+        SwingUtilities.convertPointFromScreen(point, bar);
+        return !dui.isThumbContains(point.x, point.y);
+      }
     }
     return true;
   }
@@ -348,14 +406,17 @@ public class JBScrollPane extends JScrollPane {
 
     public Corner(String pos) {
       myPos = pos;
+      ScrollColorProducer.setBackground(this);
+      ScrollColorProducer.setForeground(this);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(ButtonlessScrollBarUI.getTrackBackgroundDefault());
+      g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
 
-      g.setColor(ButtonlessScrollBarUI.getTrackBorderColorDefault());
+      if (SystemInfo.isMac || !Registry.is("ide.scroll.track.border.paint")) return;
+      g.setColor(getForeground());
 
       int x2 = getWidth() - 1;
       int y2 = getHeight() - 1;
@@ -390,14 +451,7 @@ public class JBScrollPane extends JScrollPane {
 
     private void updateColor(Component c) {
       if (!(c instanceof JScrollPane)) return;
-
-      JViewport vp = ((JScrollPane)c).getViewport();
-      if (vp == null) return;
-
-      Component view = vp.getView();
-      if (view == null) return;
-
-      lineColor = view.getBackground();
+      lineColor = getViewBackground((JScrollPane)c);
     }
   }
 
@@ -438,6 +492,19 @@ public class JBScrollPane extends JScrollPane {
           }
           if (component == pane.getRowHeader()) {
             return ltr ? LEFT : RIGHT;
+          }
+        }
+        // assume alignment for a scroll bar,
+        // which is not contained in a scroll pane
+        if (component instanceof JScrollBar) {
+          JScrollBar bar = (JScrollBar)component;
+          switch (bar.getOrientation()) {
+            case Adjustable.HORIZONTAL:
+              return BOTTOM;
+            case Adjustable.VERTICAL:
+              return bar.getComponentOrientation().isLeftToRight()
+                     ? RIGHT
+                     : LEFT;
           }
         }
       }
@@ -570,7 +637,6 @@ public class JBScrollPane extends JScrollPane {
       // so that if we don't ask after resetting the bounds we may have gotten the wrong answer.
       if (viewport != null) {
         viewport.setBounds(bounds);
-        pane.setComponentZOrder(viewport, pane.getComponentCount() - 1);
         if (scrollable != null && hsbOpaque && vsbOpaque) {
           viewTracksViewportWidth = scrollable.getScrollableTracksViewportWidth();
           viewTracksViewportHeight = scrollable.getScrollableTracksViewportHeight();
@@ -655,7 +721,6 @@ public class JBScrollPane extends JScrollPane {
           int overlapY = !hsbOnTop ? 0 : overlapHeight;
           vsb.setBounds(vsbBounds.x, vsbBounds.y + overlapY, vsbBounds.width, vsbBounds.height - overlapHeight);
           vsb.putClientProperty(Alignment.class, vsbOnLeft ? Alignment.LEFT : Alignment.RIGHT);
-          pane.setComponentZOrder(vsb, 0);
         }
         // Modify the bounds of the translucent scroll bar.
         if (!vsbOpaque) {
@@ -714,10 +779,24 @@ public class JBScrollPane extends JScrollPane {
                              vsbOnLeft ? rowHeadBounds.width : vsbBounds.width,
                              hsbOnTop ? hsbBounds.height : colHeadBounds.height);
       }
+      if (!vsbOpaque && vsbNeeded || !hsbOpaque && hsbNeeded) {
+        fixComponentZOrder(vsb, 0);
+        fixComponentZOrder(viewport, -1);
+      }
+    }
+
+    private static void fixComponentZOrder(Component component, int index) {
+      if (component != null) {
+        Container parent = component.getParent();
+        synchronized (parent.getTreeLock()) {
+          if (index < 0) index += parent.getComponentCount();
+          parent.setComponentZOrder(component, index);
+        }
+      }
     }
 
     private void adjustForVSB(Rectangle bounds, Insets insets, Rectangle vsbBounds, boolean vsbOpaque, boolean vsbOnLeft) {
-      vsbBounds.width = min(bounds.width, vsb.getPreferredSize().width);
+      vsbBounds.width = !vsb.isEnabled() ? 0 : min(bounds.width, vsb.getPreferredSize().width);
       if (vsbOnLeft) {
         vsbBounds.x = bounds.x - insets.left/* + vsbBounds.width*/;
         if (vsbOpaque) bounds.x += vsbBounds.width;
@@ -729,7 +808,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     private void adjustForHSB(Rectangle bounds, Insets insets, Rectangle hsbBounds, boolean hsbOpaque, boolean hsbOnTop) {
-      hsbBounds.height = min(bounds.height, hsb.getPreferredSize().height);
+      hsbBounds.height = !hsb.isEnabled() ? 0 : min(bounds.height, hsb.getPreferredSize().height);
       if (hsbOnTop) {
         hsbBounds.y = bounds.y - insets.top/* + hsbBounds.height*/;
         if (hsbOpaque) bounds.y += hsbBounds.height;
@@ -773,10 +852,10 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  private static class AlphaPainter implements RegionPainter<Float> {
+  private static class AlphaPainter extends RegionPainter.Alpha {
     private final float myBase;
     private final float myDelta;
-    private final Color myFillColor;
+    final Color myFillColor;
 
     private AlphaPainter(float base, float delta, Color fill) {
       myBase = base;
@@ -784,28 +863,38 @@ public class JBScrollPane extends JScrollPane {
       myFillColor = fill;
     }
 
-    Composite newComposite(float alpha) {
-      return AlphaComposite.SrcOver.derive(alpha);
-    }
-
-    void paint(Graphics2D g, int x, int y, int width, int height) {
+    @Override
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
       g.setColor(myFillColor);
       g.fillRect(x, y, width, height);
     }
 
     @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
-      if (value != null) {
-        float alpha = myBase + myDelta * value;
-        if (alpha > 0) {
-          Composite old = g.getComposite();
-          g.setComposite(alpha < 1
-                         ? newComposite(alpha)
-                         : AlphaComposite.SrcOver);
-          paint(g, x, y, width, height);
-          g.setComposite(old);
-        }
-      }
+    protected float getAlpha(Float value) {
+      return value != null ? myBase + myDelta * value : 0;
+    }
+  }
+
+  private static class RoundThumbPainter extends AlphaPainter {
+    private final int myBorder;
+
+    private RoundThumbPainter(int border, float base, float delta, Color fill) {
+      super(base, delta, fill);
+      myBorder = border;
+    }
+
+    @Override
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
+      Object old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+      width -= myBorder + myBorder;
+      height -= myBorder + myBorder;
+
+      int arc = Math.min(width, height);
+      g.setColor(myFillColor);
+      g.fillRoundRect(x + myBorder, y + myBorder, width, height, arc, arc);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
     }
   }
 
@@ -818,7 +907,7 @@ public class JBScrollPane extends JScrollPane {
     }
 
     @Override
-    void paint(Graphics2D g, int x, int y, int width, int height) {
+    protected void paint(Graphics2D g, int x, int y, int width, int height) {
       super.paint(g, x + 1, y + 1, width - 2, height - 2);
       g.setColor(myDrawColor);
       if (Registry.is("ide.scroll.thumb.border.rounded")) {
@@ -839,8 +928,10 @@ public class JBScrollPane extends JScrollPane {
     }
 
     @Override
-    Composite newComposite(float alpha) {
-      return new SubtractComposite(alpha);
+    protected Composite getComposite(float alpha) {
+      return alpha < 1
+             ? new SubtractComposite(alpha)
+             : AlphaComposite.SrcOver;
     }
   }
 
@@ -899,4 +990,20 @@ public class JBScrollPane extends JScrollPane {
     public void dispose() {
     }
   }
+
+  /**
+   * Indicates whether the specified event is not consumed and does not have unexpected modifiers.
+   *
+   * @param event a mouse wheel event to check for validity
+   * @return {@code true} if the specified event is valid, {@code false} otherwise
+   */
+  public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
+    if (event.isConsumed()) return false; // event should not be consumed already
+    if (event.getWheelRotation() == 0) return false; // any rotation expected (forward or backward)
+    return 0 == (SCROLL_MODIFIERS & event.getModifiers());
+  }
+
+  private static final int SCROLL_MODIFIERS = // event modifiers allowed during scrolling
+    ~InputEvent.SHIFT_MASK & ~InputEvent.SHIFT_DOWN_MASK & // for horizontal scrolling
+    ~InputEvent.BUTTON1_MASK & ~InputEvent.BUTTON1_DOWN_MASK; // for selection
 }

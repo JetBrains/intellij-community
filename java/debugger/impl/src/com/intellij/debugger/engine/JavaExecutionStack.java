@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ public class JavaExecutionStack extends XExecutionStack {
       }
 
       @Override
-      public void contextAction() throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
         if (container.isObsolete()) return;
         if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
           int status = myThreadProxy.status();
@@ -136,7 +136,7 @@ public class JavaExecutionStack extends XExecutionStack {
                 iterator.next();
                 added++;
               }
-              myDebugProcess.getManagerThread().schedule(new AppendFrameCommand(getSuspendContext(), iterator, container, added, firstFrameIndex));
+              myDebugProcess.getManagerThread().schedule(new AppendFrameCommand(suspendContext, iterator, container, added, firstFrameIndex));
             }
             catch (EvaluateException e) {
               container.errorOccurred(e.getMessage());
@@ -174,7 +174,7 @@ public class JavaExecutionStack extends XExecutionStack {
     }
 
     @Override
-    public void contextAction() throws Exception {
+    public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
       if (myContainer.isObsolete()) return;
       if (myStackFramesIterator.hasNext()) {
         XStackFrame frame;
@@ -196,7 +196,7 @@ public class JavaExecutionStack extends XExecutionStack {
           }
         }
         myDebugProcess.getManagerThread().schedule(
-          new AppendFrameCommand(getSuspendContext(), myStackFramesIterator, myContainer, myAdded, mySkip));
+          new AppendFrameCommand(suspendContext, myStackFramesIterator, myContainer, myAdded, mySkip));
       }
       else {
         myContainer.addStackFrames(Collections.<JavaStackFrame>emptyList(), true);

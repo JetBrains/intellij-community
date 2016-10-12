@@ -152,12 +152,9 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
         }
       }
     }
-    final List<DElementPattern> patterns = ContainerUtil.findAll(list, new Condition<DElementPattern>() {
-      @Override
-      public boolean value(DElementPattern pattern) {
-        final NameClass nameClass = pattern.getName();
-        return nameClass.contains(qName);
-      }
+    final List<DElementPattern> patterns = ContainerUtil.findAll(list, pattern -> {
+      final NameClass nameClass = pattern.getName();
+      return nameClass.contains(qName);
     });
 
     if (maxPattern != null) {
@@ -303,14 +300,11 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
     CachedValue<XmlElementDescriptor> cachedValue = myDescriptorsMap.get(qName);
     if (cachedValue == null) {
       cachedValue =
-        CachedValuesManager.getManager(myElement.getProject()).createCachedValue(new CachedValueProvider<XmlElementDescriptor>() {
-          @Override
-          public Result<XmlElementDescriptor> compute() {
-            final XmlElementDescriptor descriptor = findRootDescriptorInner(qName);
-            return descriptor != null
-                   ? new Result<XmlElementDescriptor>(descriptor, descriptor.getDependences())
-                   : new Result<XmlElementDescriptor>(null, getDependences());
-          }
+        CachedValuesManager.getManager(myElement.getProject()).createCachedValue(() -> {
+          final XmlElementDescriptor descriptor = findRootDescriptorInner(qName);
+          return descriptor != null
+                 ? new CachedValueProvider.Result<XmlElementDescriptor>(descriptor, descriptor.getDependences())
+                 : new CachedValueProvider.Result<XmlElementDescriptor>(null, getDependences());
         }, false);
       myDescriptorsMap.put(qName, cachedValue);
     }

@@ -31,12 +31,7 @@ abstract public class AbstractDomElementNode extends SimpleNode {
 
   public static final Key<Map<Class, Boolean>> TREE_NODES_HIDERS_KEY = Key.create("TREE_NODES_HIDERS_KEY");
 
-  private final static Comparator<Class> INHERITORS_COMPARATOR = new Comparator<Class>() {
-    @Override
-    public int compare(final Class o1, final Class o2) {
-      return o1.isAssignableFrom(o2) ? 1 : -1;
-    }
-  };
+  private final static Comparator<Class> INHERITORS_COMPARATOR = (o1, o2) -> o1.isAssignableFrom(o2) ? 1 : -1;
 
   private boolean isExpanded;
 

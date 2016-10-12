@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class TreeTableTree extends Tree {
     super(model);
     myTreeTable = treeTable;
     setCellRenderer(getCellRenderer());
-    putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, Boolean.TRUE);
+    putClientProperty(WideSelectionTreeUI.TREE_TABLE_TREE_KEY, treeTable);
   }
 
   public TreeTable getTreeTable() {
@@ -101,7 +101,7 @@ public class TreeTableTree extends Tree {
   public void setVisibleRow(int row) {
     myVisibleRow  = row;
     final Rectangle rowBounds = getRowBounds(myVisibleRow);
-    final int indent = rowBounds.x - getVisibleRect().x - getTreeColumnOffset();
+    final int indent = rowBounds.x - getVisibleRect().x - getTreeColumnOffsetX();
     setPreferredSize(new Dimension(getRowBounds(myVisibleRow).width + indent, getPreferredSize().height));
   }
 
@@ -132,18 +132,18 @@ public class TreeTableTree extends Tree {
     if (bounds == null) {
       return null;
     }
-    bounds.x += getTreeColumnOffset();
+    bounds.x += getTreeColumnOffsetX();
     return bounds;
   }
 
-  public int getTreeColumnOffset() {
-    int dx = 0;
+  protected int getTreeColumnOffsetX() {
+    int offsetX = 0;
     for (int i = 0; i < myTreeTable.getColumnCount(); i++) {
       if (myTreeTable.isTreeColumn(i)) {
         break;
       }
-      dx += myTreeTable.getColumnModel().getColumn(i).getWidth();
+      offsetX += myTreeTable.getColumnModel().getColumn(i).getWidth();
     }
-    return dx;
+    return offsetX;
   }
 }

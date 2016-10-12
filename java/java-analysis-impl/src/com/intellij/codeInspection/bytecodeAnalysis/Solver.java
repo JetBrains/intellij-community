@@ -104,13 +104,7 @@ class ResultUtil {
 
 class HResultUtil {
   private static final HKey[] EMPTY_PRODUCT = new HKey[0];
-  private static final ArrayFactory<HComponent> HCOMPONENT_ARRAY_FACTORY = new ArrayFactory<HComponent>() {
-    @NotNull
-    @Override
-    public HComponent[] create(int count) {
-      return new HComponent[count];
-    }
-  };
+  private static final ArrayFactory<HComponent> HCOMPONENT_ARRAY_FACTORY = count -> new HComponent[count];
   private final ELattice<Value> lattice;
   final Value top;
 

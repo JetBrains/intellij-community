@@ -35,7 +35,7 @@ public class GraphLayoutBuilder {
   private static final Logger LOG = Logger.getInstance(GraphLayoutBuilder.class);
 
   @NotNull
-  public static GraphLayoutImpl build(@NotNull LinearGraph graph, @NotNull Comparator<Integer> headerNodeIndexComparator) {
+  public static GraphLayoutImpl build(@NotNull LinearGraph graph, @NotNull Comparator<Integer> headNodeIndexComparator) {
     List<Integer> heads = new ArrayList<Integer>();
     for (int i = 0; i < graph.nodesCount(); i++) {
       if (getUpNodes(graph, i).size() == 0) {
@@ -43,7 +43,7 @@ public class GraphLayoutBuilder {
       }
     }
     try {
-      heads = ContainerUtil.sorted(heads, headerNodeIndexComparator);
+      heads = ContainerUtil.sorted(heads, headNodeIndexComparator);
     }
     catch (ProcessCanceledException pce) {
       throw pce;
@@ -52,7 +52,7 @@ public class GraphLayoutBuilder {
       // protection against possible comparator flaws
       LOG.error(e);
     }
-    GraphLayoutBuilder builder = new GraphLayoutBuilder(graph, heads, new DfsUtil());
+    GraphLayoutBuilder builder = new GraphLayoutBuilder(graph, heads);
     return builder.build();
   }
 
@@ -62,18 +62,16 @@ public class GraphLayoutBuilder {
   @NotNull private final List<Integer> myHeadNodeIndex;
   @NotNull private final int[] myStartLayoutIndexForHead;
 
-  @NotNull private final DfsUtil myDfsUtil;
+  @NotNull private final DfsUtil myDfsUtil = new DfsUtil();
 
   private int currentLayoutIndex = 1;
 
-  private GraphLayoutBuilder(@NotNull LinearGraph graph, @NotNull List<Integer> headNodeIndex, @NotNull DfsUtil dfsUtil) {
+  private GraphLayoutBuilder(@NotNull LinearGraph graph, @NotNull List<Integer> headNodeIndex) {
     myGraph = graph;
-    myDfsUtil = dfsUtil;
     myLayoutIndex = new int[graph.nodesCount()];
 
     myHeadNodeIndex = headNodeIndex;
     myStartLayoutIndexForHead = new int[headNodeIndex.size()];
-
   }
 
   private void dfs(int nodeIndex) {
@@ -114,5 +112,4 @@ public class GraphLayoutBuilder {
 
     return new GraphLayoutImpl(myLayoutIndex, myHeadNodeIndex, myStartLayoutIndexForHead);
   }
-
 }

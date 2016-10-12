@@ -236,11 +236,9 @@ public class SwitchTaskAction extends BaseTaskAction {
     else {
 
       List<ChangeListInfo> infos = task.getChangeLists();
-      List<LocalChangeList> lists = ContainerUtil.mapNotNull(infos, new NullableFunction<ChangeListInfo, LocalChangeList>() {
-        public LocalChangeList fun(ChangeListInfo changeListInfo) {
-          LocalChangeList changeList = ChangeListManager.getInstance(project).getChangeList(changeListInfo.id);
-          return changeList != null && !changeList.isDefault() ? changeList : null;
-        }
+      List<LocalChangeList> lists = ContainerUtil.mapNotNull(infos, (NullableFunction<ChangeListInfo, LocalChangeList>)changeListInfo -> {
+        LocalChangeList changeList = ChangeListManager.getInstance(project).getChangeList(changeListInfo.id);
+        return changeList != null && !changeList.isDefault() ? changeList : null;
       });
 
       boolean removeIt = true;

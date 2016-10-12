@@ -145,8 +145,9 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
         @Override
         protected void registerJavaFxPackagerError(String message) {}
       };
-    final List<JavaFxAntGenerator.SimpleTag> tags = 
-      JavaFxAntGenerator.createJarAndDeployTasks(javaFxPackager, artifactFileName, artifact.getName(), tempDirPath);
+    final String tempDirDeployPath = tempDirPath + "/deploy";
+    final List<JavaFxAntGenerator.SimpleTag> tags =
+      JavaFxAntGenerator.createJarAndDeployTasks(javaFxPackager, artifactFileName, artifact.getName(), tempDirPath, tempDirDeployPath, context.getProject().getBasePath());
     for (JavaFxAntGenerator.SimpleTag tag : tags) {
       buildTags(generator, tag);
     }
@@ -181,14 +182,14 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       }
       
       final Tag signjar = new Tag("signjar", keysDescriptions);
-      final Tag fileset = new Tag("fileset", Couple.of("dir", tempDirPath + "/deploy"));
+      final Tag fileset = new Tag("fileset", Couple.of("dir", tempDirDeployPath));
       fileset.add(new Tag("include", Couple.of("name", "*.jar")));
       signjar.add(fileset);
       generator.add(signjar);
     }
 
     final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(BuildProperties.propertyRef(context.getConfiguredArtifactOutputProperty(artifact)));
-    generator.add(creator.createDirectoryContentCopyInstruction(tempDirPath + "/deploy"));
+    generator.add(creator.createDirectoryContentCopyInstruction(tempDirDeployPath));
     final Tag deleteTag = new Tag("delete", Couple.of("includeemptydirs", "true"));
     deleteTag.add(new Tag("fileset", Couple.of("dir", tempDirPath)));
     generator.add(deleteTag);

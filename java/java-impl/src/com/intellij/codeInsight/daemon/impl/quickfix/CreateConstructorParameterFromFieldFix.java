@@ -103,12 +103,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     PsiMethod[] constructors = myClass.getConstructors();
     if (constructors.length == 0) {
       final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(myClass);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          defaultConstructorFix.invoke(project, editor, file);
-        }
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
       constructors = myClass.getConstructors();
     }
     Arrays.sort(constructors, new Comparator<PsiMethod>() {
@@ -125,7 +120,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         }
       }
     });
-    final List<PsiElement> cleanupElements = new ArrayList<PsiElement>(); 
+    final List<SmartPsiElementPointer<PsiElement>> cleanupElements = new ArrayList<>();
     final List<PsiMethod> filtered = filterConstructorsIfFieldAlreadyAssigned(constructors, getField());
     if (filtered.size() > 1) {
       final PsiMethodMember[] members = new PsiMethodMember[filtered.size()];
@@ -188,7 +183,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         fieldsToFix.clear();
       }
     }
-    GlobalInspectionContextBase.cleanupElements(project, null, cleanupElements.toArray(new PsiElement[cleanupElements.size()]));
+    GlobalInspectionContextBase.cleanupElements(project, null, cleanupElements);
   }
 
    @NotNull
@@ -237,7 +232,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
                                                    final PsiFile file,
                                                    final Editor editor,
                                                    final PsiMethod constructor,
-                                                   final PsiField[] fields, final List<PsiElement> cleanupElements) throws IncorrectOperationException {
+                                                   final PsiField[] fields,
+                                                   final List<SmartPsiElementPointer<PsiElement>> cleanupElements) throws IncorrectOperationException {
     final PsiParameterList parameterList = constructor.getParameterList();
     final PsiParameter[] parameters = parameterList.getParameters();
     ParameterInfoImpl[] newParamInfos = new ParameterInfoImpl[parameters.length + fields.length];
@@ -291,12 +287,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   private static String createDummyMethod(PsiMethod constructor, ParameterInfoImpl[] newParamInfos) {
-    return constructor.getName() + "(" + StringUtil.join(newParamInfos, new Function<ParameterInfoImpl, String>() {
-      @Override
-      public String fun(ParameterInfoImpl info) {
-        return info.getTypeText() + " " + info.getName();
-      }
-    }, ", ") + "){}";
+    return constructor.getName() + "(" + StringUtil.join(newParamInfos, info -> info.getTypeText() + " " + info.getName(), ", ") + "){}";
   }
 
   private static String getUniqueParameterName(PsiParameter[] parameters, PsiVariable variable, Map<PsiField, String> usedNames) {
@@ -328,13 +319,14 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   private static boolean doCreate(Project project, Editor editor, PsiParameter[] parameters, SmartPsiElementPointer constructorPointer,
-                                  ParameterInfoImpl[] parameterInfos, Map<PsiField, String> fields, List<PsiElement> cleanupElements) {
+                                  ParameterInfoImpl[] parameterInfos, Map<PsiField, String> fields, List<SmartPsiElementPointer<PsiElement>> cleanupElements) {
     PsiMethod constructor = (PsiMethod)constructorPointer.getElement();
     assert constructor != null;
     PsiParameter[] newParameters = constructor.getParameterList().getParameters();
     if (newParameters == parameters) return false; //user must have canceled dialog
     // do not introduce assignment in chained constructor
     if (JavaHighlightUtil.getChainedConstructors(constructor) == null) {
+      final SmartPointerManager manager = SmartPointerManager.getInstance(project);
       boolean created = false;
       for (PsiField field : fields.keySet()) {
         final String defaultParamName = fields.get(field);
@@ -343,10 +335,10 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
           continue;
         }
         NullableNotNullManager.getInstance(field.getProject()).copyNotNullAnnotation(field, parameter);
-        cleanupElements.add(parameter);
+        cleanupElements.add(manager.createSmartPsiElementPointer(parameter));
         final PsiElement assignmentStatement = AssignFieldFromParameterAction.addFieldAssignmentStatement(project, field, parameter, editor);
         if (assignmentStatement != null) {
-          cleanupElements.add(assignmentStatement);
+          cleanupElements.add(manager.createSmartPsiElementPointer(assignmentStatement));
         }
         created = true;
       }
@@ -369,7 +361,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     for (int i = 0; i < newParameters.length; i++) {
       if (parameterInfos[i].getOldIndex() == -1) {
         final PsiParameter parameter = newParameters[i];
-        final PsiType paramType = parameterInfos[i].getTypeWrapper().getType(parameter, parameter.getManager());
+        final PsiType paramType = parameterInfos[i].getTypeWrapper().getType(parameter);
         if (type.isAssignableFrom(paramType)){
           return parameter;
         }

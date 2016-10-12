@@ -174,19 +174,9 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected void restartAutoUpdate(final boolean state) {
     if (state && myToolWindow != null) {
       if (myAutoUpdateRequest == null) {
-        myAutoUpdateRequest = new Runnable() {
-          @Override
-          public void run() {
-            updateComponent();
-          }
-        };
+        myAutoUpdateRequest = () -> updateComponent();
 
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            IdeEventQueue.getInstance().addIdleListener(myAutoUpdateRequest, 500);
-          }
-        });
+        UIUtil.invokeLaterIfNeeded(() -> IdeEventQueue.getInstance().addIdleListener(myAutoUpdateRequest, 500));
       }
     }
     else {

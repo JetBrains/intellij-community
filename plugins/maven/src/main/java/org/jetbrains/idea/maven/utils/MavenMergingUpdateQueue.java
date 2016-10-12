@@ -123,6 +123,9 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
     AccessToken accessToken = ReadAction.start();
 
     try {
+      if (DumbService.isDumb(project)) {
+        mySuspendCounter.incrementAndGet();
+      }
       MessageBusConnection connection = project.getMessageBus().connect(this);
       connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
         @Override
@@ -146,23 +149,21 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
   }
 
   public void makeModalAware(Project project) {
-    MavenUtil.invokeLater(project, new Runnable() {
-      public void run() {
-        final ModalityStateListener listener = new ModalityStateListener() {
-          @Override
-          public void beforeModalityStateChanged(boolean entering) {
-            if (entering) {
-              suspend();
-            }
-            else {
-              resume();
-            }
+    MavenUtil.invokeLater(project, () -> {
+      final ModalityStateListener listener = new ModalityStateListener() {
+        @Override
+        public void beforeModalityStateChanged(boolean entering) {
+          if (entering) {
+            suspend();
           }
-        };
-        LaterInvocator.addModalityStateListener(listener, MavenMergingUpdateQueue.this);
-        if (MavenUtil.isInModalContext()) {
-          suspend();
+          else {
+            resume();
+          }
         }
+      };
+      LaterInvocator.addModalityStateListener(listener, MavenMergingUpdateQueue.this);
+      if (MavenUtil.isInModalContext()) {
+        suspend();
       }
     });
   }

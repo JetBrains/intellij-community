@@ -32,18 +32,22 @@ import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
+import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRAIT;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRAIT_IMPLEMENTED;
-import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex.HELPER_SUFFIX;
-import static org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex.INDEX_ID;
 
 /**
  * @author Max Medvedev
@@ -89,6 +93,7 @@ public class GrTraitUtil {
            aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, false);
   }
 
+  @NotNull
   public static Collection<PsiMethod> getCompiledTraitConcreteMethods(@NotNull final ClsClassImpl trait) {
     return CachedValuesManager.getCachedValue(trait, () -> {
       final Collection<PsiMethod> result = ContainerUtil.newArrayList();
@@ -105,23 +110,23 @@ public class GrTraitUtil {
     }
 
     VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
-    if (traitFile != null) {
-      VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + HELPER_SUFFIX);
-      if (helperFile != null) {
-        int key = FileBasedIndex.getFileId(helperFile);
-        List<PsiJavaFileStub> values = FileBasedIndex.getInstance().getValues(INDEX_ID, key, trait.getResolveScope());
-        values.forEach(root -> ((PsiJavaFileStubImpl)root).setPsi((PsiJavaFile)trait.getContainingFile()));
-        values.stream().map(
-          root -> root.getChildrenStubs().get(0).getChildrenStubs()
-        ).<StubElement>flatMap(
-          Collection::stream
-        ).filter(
-          stub -> stub instanceof PsiMethodStub
-        ).forEach(
-          stub -> result.add(createTraitMethodFromCompiledHelperMethod(((PsiMethodStub)stub).getPsi(), trait))
-        );
-      }
-    }
+    if (traitFile == null) return;
+    VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitMethodsFileIndex.HELPER_SUFFIX);
+    if (helperFile == null) return;
+    int key = FileBasedIndex.getFileId(helperFile);
+    List<PsiJavaFileStub> values = FileBasedIndex.getInstance().getValues(
+      GroovyTraitMethodsFileIndex.INDEX_ID, key, trait.getResolveScope()
+    );
+    values.forEach(root -> ((PsiJavaFileStubImpl)root).setPsi((PsiJavaFile)trait.getContainingFile()));
+    values.stream().map(
+      root -> root.getChildrenStubs().get(0).getChildrenStubs()
+    ).<StubElement>flatMap(
+      Collection::stream
+    ).filter(
+      stub -> stub instanceof PsiMethodStub
+    ).forEach(
+      stub -> result.add(createTraitMethodFromCompiledHelperMethod(((PsiMethodStub)stub).getPsi(), trait))
+    );
   }
 
   private static PsiMethod createTraitMethodFromCompiledHelperMethod(PsiMethod compiledMethod, ClsClassImpl trait) {
@@ -195,5 +200,33 @@ public class GrTraitUtil {
         return hasChanges.get() ? elementFactory.createType(resolved, substitutes) : originalType;
       }
     };
+  }
+
+  @NotNull
+  public static Collection<GrField> getCompiledTraitFields(@NotNull final ClsClassImpl trait) {
+    return CachedValuesManager.getCachedValue(trait, () -> {
+      final Collection<GrField> result = ContainerUtil.newArrayList();
+      doCollectCompiledTraitFields(trait, result);
+      return CachedValueProvider.Result.create(result, trait);
+    });
+  }
+
+  private static void doCollectCompiledTraitFields(ClsClassImpl trait, Collection<GrField> result) {
+    VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
+    if (traitFile == null) return;
+    VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitFieldsFileIndex.HELPER_SUFFIX);
+    if (helperFile == null) return;
+    int key = FileBasedIndex.getFileId(helperFile);
+    final List<Collection<TraitFieldDescriptor>> values = FileBasedIndex.getInstance().getValues(
+      GroovyTraitFieldsFileIndex.INDEX_ID, key, trait.getResolveScope()
+    );
+    values.forEach(descriptors -> descriptors.forEach(descriptor -> result.add(createTraitField(descriptor, trait))));
+  }
+
+  private static GrLightField createTraitField(TraitFieldDescriptor descriptor, PsiClass trait) {
+    GrLightField field = new GrLightField(trait, descriptor.name, descriptor.typeString);
+    if ((descriptor.flags & TraitFieldDescriptor.STATIC) != 0) field.getModifierList().addModifier(STATIC_MASK);
+    field.getModifierList().addModifier((descriptor.flags & TraitFieldDescriptor.PUBLIC) != 0 ? PUBLIC_MASK : PRIVATE_MASK);
+    return field;
   }
 }

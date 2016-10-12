@@ -1474,7 +1474,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     addConditionalRuntimeThrow();
-    List<MethodContract> contracts = method instanceof PsiMethod ? getMethodCallContracts((PsiMethod)method, expression) : Collections.<MethodContract>emptyList();
+    List<MethodContract> contracts = method instanceof PsiMethod ? getMethodCallContracts((PsiMethod)method, expression) : Collections.emptyList();
     addInstruction(new MethodCallInstruction(expression, myFactory.createValue(expression), contracts));
     if (!contracts.isEmpty()) {
       // if a contract resulted in 'fail', handle it
@@ -1515,30 +1515,22 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   static List<MethodContract> getMethodContracts(@NotNull final PsiMethod method) {
-    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<List<MethodContract>>() {
-      @Nullable
-      @Override
-      public Result<List<MethodContract>> compute() {
-        final PsiAnnotation contractAnno = findContractAnnotation(method);
-        if (contractAnno != null) {
-          String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
-          if (text != null) {
-            try {
-              final int paramCount = method.getParameterList().getParametersCount();
-              List<MethodContract> applicable = ContainerUtil.filter(MethodContract.parseContract(text), new Condition<MethodContract>() {
-                @Override
-                public boolean value(MethodContract contract) {
-                  return contract.arguments.length == paramCount;
-                }
-              });
-              return Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-            }
-            catch (Exception ignored) {
-            }
+    return CachedValuesManager.getCachedValue(method, () -> {
+      final PsiAnnotation contractAnno = findContractAnnotation(method);
+      if (contractAnno != null) {
+        String text = AnnotationUtil.getStringAttributeValue(contractAnno, null);
+        if (text != null) {
+          try {
+            final int paramCount = method.getParameterList().getParametersCount();
+            List<MethodContract> applicable = ContainerUtil.filter(MethodContract.parseContract(text),
+                                                                   contract -> contract.arguments.length == paramCount);
+            return CachedValueProvider.Result.create(applicable, contractAnno, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          }
+          catch (Exception ignored) {
           }
         }
-        return Result.create(Collections.<MethodContract>emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
+      return CachedValueProvider.Result.create(Collections.<MethodContract>emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
@@ -1550,6 +1542,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   public static boolean isPure(@NotNull PsiMethod method) {
     PsiAnnotation anno = findContractAnnotation(method);
     return anno != null && Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"));
+  }
+
+  @Override
+  public void visitEnumConstant(PsiEnumConstant enumConstant) {
+    if (enumConstant.getArgumentList() == null) return;
+
+    pushUnknown();
+    pushConstructorArguments(enumConstant);
+    addInstruction(new MethodCallInstruction(enumConstant, null, Collections.emptyList()));
+    addInstruction(new PopInstruction());
   }
 
   @Override public void visitNewExpression(PsiNewExpression expression) {
@@ -1573,33 +1575,38 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
       addConditionalRuntimeThrow();
-      addInstruction(new MethodCallInstruction(expression, null, Collections.<MethodContract>emptyList()));
+      addInstruction(new MethodCallInstruction(expression, null, Collections.emptyList()));
     }
     else {
-      final PsiExpressionList args = expression.getArgumentList();
-      PsiMethod ctr = expression.resolveConstructor();
-      if (args != null) {
-        PsiExpression[] params = args.getExpressions();
-        PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
-        for (int i = 0; i < params.length; i++) {
-          PsiExpression param = params[i];
-          param.accept(this);
-          if (parameters != null && i < parameters.length) {
-            generateBoxingUnboxingInstructionFor(param, parameters[i].getType());
-          }
-        }
-      }
+      PsiMethod constructor = pushConstructorArguments(expression);
 
       addConditionalRuntimeThrow();
-      addInstruction(new MethodCallInstruction(expression, null, Collections.<MethodContract>emptyList()));
+      addInstruction(new MethodCallInstruction(expression, null, Collections.emptyList()));
 
       if (!myCatchStack.isEmpty()) {
-        addMethodThrows(ctr, expression);
+        addMethodThrows(constructor, expression);
       }
 
     }
 
     finishElement(expression);
+  }
+
+  private PsiMethod pushConstructorArguments(PsiConstructorCall call) {
+    PsiExpressionList args = call.getArgumentList();
+    PsiMethod ctr = call.resolveConstructor();
+    if (args != null) {
+      PsiExpression[] params = args.getExpressions();
+      PsiParameter[] parameters = ctr == null ? null : ctr.getParameterList().getParameters();
+      for (int i = 0; i < params.length; i++) {
+        PsiExpression param = params[i];
+        param.accept(this);
+        if (parameters != null && i < parameters.length) {
+          generateBoxingUnboxingInstructionFor(param, parameters[i].getType());
+        }
+      }
+    }
+    return ctr;
   }
 
   @Override public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {

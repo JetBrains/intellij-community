@@ -85,12 +85,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
           public void pass(final GrExpression selectedValue) {
             invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
           }
-        }, new Function<GrExpression, String>() {
-          @Override
-          public String fun(GrExpression grExpression) {
-            return grExpression.getText();
-          }
-        }
+        }, grExpression -> grExpression.getText()
         );
         return;
       }
@@ -129,12 +124,9 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
       showDialogOrStartInplace(new IntroduceParameterInfoImpl(initialInfo, owner, toSearchFor), editor);
     }
     else {
-      myEnclosingMethodsPopup = MethodOrClosureScopeChooser.create(scopes, editor, this, new PairFunction<GrParametersOwner, PsiElement, Object>() {
-        @Override
-        public Object fun(GrParametersOwner owner, PsiElement element) {
-          showDialogOrStartInplace(new IntroduceParameterInfoImpl(initialInfo, owner, element), editor);
-          return null;
-        }
+      myEnclosingMethodsPopup = MethodOrClosureScopeChooser.create(scopes, editor, this, (owner, element) -> {
+        showDialogOrStartInplace(new IntroduceParameterInfoImpl(initialInfo, owner, element), editor);
+        return null;
       });
       myEnclosingMethodsPopup.showInBestPositionFor(editor);
     }

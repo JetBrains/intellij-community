@@ -35,15 +35,12 @@ import static com.intellij.ide.diff.DiffType.ERROR;
  * @author Konstantin Bulenkov
  */
 public class DTree {
-  private static final Comparator<DTree> COMPARATOR = new Comparator<DTree>() {
-    @Override
-    public int compare(DTree o1, DTree o2) {
-      final boolean b1 = o1.isContainer();
-      final boolean b2 = o2.isContainer();
-      return (b1 && b2) || (!b1 && !b2)
-             ? o1.getName().compareToIgnoreCase(o2.getName())
-             : b1 ? 1 : -1;
-    }
+  private static final Comparator<DTree> COMPARATOR = (o1, o2) -> {
+    final boolean b1 = o1.isContainer();
+    final boolean b2 = o2.isContainer();
+    return (b1 && b2) || (!b1 && !b2)
+           ? o1.getName().compareToIgnoreCase(o2.getName())
+           : b1 ? 1 : -1;
   };
 
   private boolean myExpanded = true;
@@ -69,7 +66,7 @@ public class DTree {
   public Collection<DTree> getChildren() {
     init();
     if (myChildrenList == null) {
-      myChildrenList = new SortedList<DTree>(COMPARATOR);
+      myChildrenList = new SortedList<>(COMPARATOR);
       myChildrenList.addAll(myChildren.values());
     }
     return myChildrenList;
@@ -114,7 +111,7 @@ public class DTree {
 
   private void init() {
     if (myChildren == null) {
-      myChildren = new HashMap<String, DTree>();
+      myChildren = new HashMap<>();
     }
   }
 

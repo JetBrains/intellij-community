@@ -142,11 +142,14 @@ public class UnwrapTryTest extends UnwrapTestCase {
   }
 
   public void testTryWithResources() throws Exception {
-    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
-    assertUnwrapped("try (AutoCloseable r = null) {\n" +
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_9);
+    assertUnwrapped("AutoCloseable s = null;\n" +
+                    "try (AutoCloseable r = null; s) {\n" +
                     "    <caret>System.out.println();\n" +
                     "}",
 
+                    "AutoCloseable s = null;\n" +
+                    "AutoCloseable r = null;\n" +
                     "System.out.println();\n");
   }
 }

@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -247,12 +248,7 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
       int width = myLineWidths.get(visualLine);
       if (width == UNKNOWN_WIDTH) {
         final Ref<Boolean> approximateValue = new Ref<Boolean>(Boolean.FALSE);
-        width = getVisualLineWidth(iterator, new Runnable() {
-          @Override
-          public void run() {
-            approximateValue.set(Boolean.TRUE);
-          }
-        });
+        width = getVisualLineWidth(iterator, () -> approximateValue.set(Boolean.TRUE));
         if (approximateValue.get()) width = -width;
         myLineWidths.set(visualLine, width);
       }
@@ -393,5 +389,11 @@ class EditorSizeManager implements PrioritizedDocumentListener, Disposable, Fold
     return "[cached width: " + myWidthInPixels + 
            ", max line with extension width: " + myMaxLineWithExtensionWidth + 
            ", line widths: " + myLineWidths + "]";
+  }
+
+  @TestOnly
+  public void validateState() {
+    if (myDocument.isInBulkUpdate() || myDirty) return;
+    LOG.assertTrue(myLineWidths.size() == myEditor.getVisibleLineCount());
   }
 }

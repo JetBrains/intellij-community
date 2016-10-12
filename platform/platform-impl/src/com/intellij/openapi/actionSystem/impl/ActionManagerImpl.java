@@ -30,10 +30,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actions.BackspaceAction;
@@ -58,7 +55,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.pico.ConstructorInjectionComponentAdapter;
+import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -671,7 +668,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         group = new DefaultCompactActionGroup();
       } else {
         Class aClass = Class.forName(className, true, loader);
-        Object obj = new ConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
+        Object obj = new CachingConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
 
         if (!(obj instanceof ActionGroup)) {
           reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
@@ -1077,12 +1074,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Override
   public Comparator<String> getRegistrationOrderComparator() {
-    return new Comparator<String>() {
-      @Override
-      public int compare(String id1, String id2) {
-        return myId2Index.get(id1) - myId2Index.get(id2);
-      }
-    };
+    return (id1, id2) -> myId2Index.get(id1) - myId2Index.get(id2);
   }
 
   @NotNull
@@ -1292,12 +1284,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     assert app.isDispatchThread();
 
     final ActionCallback result = new ActionCallback();
-    final Runnable doRunnable = new Runnable() {
-      @Override
-      public void run() {
-        tryToExecuteNow(action, inputEvent, contextComponent, place, result);
-      }
-    };
+    final Runnable doRunnable = () -> tryToExecuteNow(action, inputEvent, contextComponent, place, result);
 
     if (now) {
       doRunnable.run();
@@ -1312,15 +1299,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private void tryToExecuteNow(final AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
     final Presentation presentation = action.getTemplatePresentation().clone();
 
-    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
+    IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
+      () -> ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> {
         final DataContext context = getContextBy(contextComponent);
 
         AnActionEvent event = new AnActionEvent(
           inputEvent, context,
           place != null ? place : ActionPlaces.UNKNOWN,
-          presentation, ActionManagerImpl.this,
+          presentation, this,
           inputEvent.getModifiersEx()
         );
 
@@ -1360,7 +1346,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         result.setDone();
         queueActionPerformedEvent(action, context, event);
       }
-    });
+    ));
   }
 
   private class MyTimer extends Timer implements ActionListener {

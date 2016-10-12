@@ -251,14 +251,12 @@ public class CoverageLineMarkerRenderer implements LineMarkerRendererEx, ActiveG
     editor.getCaretModel().moveToOffset(firstOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
-    editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-      public void run() {
-        Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(firstOffset));
-        EditorGutterComponentEx editorComponent = (EditorGutterComponentEx)editor.getGutter();
-        JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-        p = SwingUtilities.convertPoint(editorComponent, THICKNESS, p.y, layeredPane);
-        showHint(editor, p, lineNumber);
-      }
+    editor.getScrollingModel().runActionOnScrollingFinished(() -> {
+      Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(firstOffset));
+      EditorGutterComponentEx editorComponent = (EditorGutterComponentEx)editor.getGutter();
+      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
+      p = SwingUtilities.convertPoint(editorComponent, THICKNESS, p.y, layeredPane);
+      showHint(editor, p, lineNumber);
     });
   }
 

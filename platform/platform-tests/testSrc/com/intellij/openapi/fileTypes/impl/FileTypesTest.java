@@ -36,7 +36,10 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -72,18 +75,14 @@ public class FileTypesTest extends PlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     FileTypeManagerImpl.reDetectAsync(false);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(myOldIgnoredFilesList));
     super.tearDown();
   }
 
   public void testMaskExclude() {
     final String pattern1 = "a*b.c?d";
     final String pattern2 = "xxx";
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myFileTypeManager.setIgnoredFilesList(pattern1 + ";" + pattern2);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList(pattern1 + ";" + pattern2));
     checkIgnored("ab.cxd");
     checkIgnored("axb.cxd");
     checkIgnored("xxx");
@@ -97,9 +96,7 @@ public class FileTypesTest extends PlatformTestCase {
   }
 
   public void testExcludePerformance() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myFileTypeManager.setIgnoredFilesList("1*2;3*4;5*6;7*8;9*0;*1;*3;*5;*6;7*;*8*");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.setIgnoredFilesList("1*2;3*4;5*6;7*8;9*0;*1;*3;*5;*6;7*;*8*"));
     final String[] names = new String[100];
     for (int i = 0; i < names.length; i++) {
       String name = String.valueOf(i % 10 * 10 + i * 100 + i + 1);
@@ -140,13 +137,9 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void testIgnoreOrder() {
     final FileTypeManagerEx manager = FileTypeManagerEx.getInstanceEx();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      manager.setIgnoredFilesList("a;b;");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> manager.setIgnoredFilesList("a;b;"));
     assertEquals("a;b;", manager.getIgnoredFilesList());
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      manager.setIgnoredFilesList("b;a;");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> manager.setIgnoredFilesList("b;a;"));
     assertEquals("b;a;", manager.getIgnoredFilesList());
   }
 
@@ -234,7 +227,7 @@ public class FileTypesTest extends PlatformTestCase {
 
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType()); // type autodetected during indexing
 
-    PsiFile psiFile = ((PsiManagerEx)PsiManager.getInstance(getProject())).getFileManager().findFile(vFile); // autodetect text file if needed
+    PsiFile psiFile = PsiManagerEx.getInstanceEx(getProject()).getFileManager().findFile(vFile); // autodetect text file if needed
     assertNotNull(psiFile);
     assertEquals(PlainTextFileType.INSTANCE, psiFile.getFileType());
   }
@@ -353,9 +346,7 @@ public class FileTypesTest extends PlatformTestCase {
     final FileType perlFileType = myFileTypeManager.getFileTypeByFileName("foo.pl");
     assertEquals("Perl", perlFileType.getName());
     assertEquals(PlainTextFileType.INSTANCE, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myFileTypeManager.associatePattern(perlFileType, "*.cgi");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(perlFileType, "*.cgi"));
 
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
@@ -364,9 +355,7 @@ public class FileTypesTest extends PlatformTestCase {
     myFileTypeManager.initComponent();
     assertEquals(perlFileType, myFileTypeManager.getFileTypeByFileName("foo.cgi"));
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(perlFileType, "*.cgi"));
 
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
@@ -397,9 +386,7 @@ public class FileTypesTest extends PlatformTestCase {
 
   // for IDEA-114804 File types mapped to text are not remapped when corresponding plugin is installed
   public void testRemappingToInstalledPluginExtension() throws WriteExternalException, InvalidDataException {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin");
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(PlainTextFileType.INSTANCE, "*.fromPlugin"));
 
     Element element = myFileTypeManager.getState();
     //String s = JDOMUtil.writeElement(element);
@@ -476,9 +463,7 @@ public class FileTypesTest extends PlatformTestCase {
       myFileTypeManager.loadState(element);
       myFileTypeManager.initComponent();
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        myFileTypeManager.associatePattern(typeFromPlugin, "*.foo");
-      });
+      ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(typeFromPlugin, "*.foo"));
 
 
       element = myFileTypeManager.getState();
@@ -532,24 +517,18 @@ public class FileTypesTest extends PlatformTestCase {
     Element map = myFileTypeManager.getState().getChild("extensionMap");
     if (map != null) {
       List<Element> mapping = map.getChildren("mapping");
-      assertNull(ContainerUtil.find(mapping, o -> {
-        return "zip".equals(o.getAttributeValue("ext"));
-      }));
+      assertNull(ContainerUtil.find(mapping, o -> "zip".equals(o.getAttributeValue("ext"))));
     }
   }
 
   public void testDefaultFileType() throws Exception {
     final String extension = "veryRareExtension";
     final FileType idl = myFileTypeManager.findFileTypeByName("IDL");
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myFileTypeManager.associatePattern(idl, "*." + extension);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.associatePattern(idl, "*." + extension));
 
     Element element = myFileTypeManager.getState();
     //log(JDOMUtil.writeElement(element));
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      myFileTypeManager.removeAssociatedExtension(idl, extension);
-    });
+    ApplicationManager.getApplication().runWriteAction(() -> myFileTypeManager.removeAssociatedExtension(idl, extension));
 
     myFileTypeManager.clearForTests();
     myFileTypeManager.initStandardFileTypes();
@@ -629,47 +608,45 @@ public class FileTypesTest extends PlatformTestCase {
     int N = 1000;
     Random random = new Random();
     AtomicReference<Exception> exception = new AtomicReference<>();
-    List<Thread> threads = ContainerUtil.map(new Object[NThreads], o -> {
-      return new Thread(() -> {
-        try {
-          for (int i = 0; i < N; i++) {
-            boolean isText = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
-              if (virtualFile.getFileType().isBinary()) {
-                return false;
-              }
-              else {
-                LoadTextUtil.loadText(virtualFile);
-                return true;
-              }
-            });
-
-            if (random.nextInt(3) == 0) {
-              new WriteCommandAction.Simple(getProject()) {
-                @Override
-                protected void run() throws Throwable {
-                  byte[] bytes = new byte[(int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD + (isText ? 1 : 0)];
-                  Arrays.fill(bytes, (byte)' ');
-                  virtualFile.setBinaryContent(bytes);
-                }
-              }.execute().throwException();
-
-
-              //RandomAccessFile ra = new RandomAccessFile(f, "rw");
-              //ra.setLength(ra.length()+(isText ? 1 : -1));
-              //ra.close();
-              //LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
-              System.out.println(i+"; f = " + f.length()+"; virtualFile="+virtualFile.getLength()+"; type="+virtualFile.getFileType());
-              //Thread.sleep(random.nextInt(100));
+    List<Thread> threads = ContainerUtil.map(new Object[NThreads], o -> new Thread(() -> {
+      try {
+        for (int i = 0; i < N; i++) {
+          boolean isText = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+            if (virtualFile.getFileType().isBinary()) {
+              return false;
             }
+            else {
+              LoadTextUtil.loadText(virtualFile);
+              return true;
+            }
+          });
+
+          if (random.nextInt(3) == 0) {
+            new WriteCommandAction.Simple(getProject()) {
+              @Override
+              protected void run() throws Throwable {
+                byte[] bytes = new byte[(int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD + (isText ? 1 : 0)];
+                Arrays.fill(bytes, (byte)' ');
+                virtualFile.setBinaryContent(bytes);
+              }
+            }.execute().throwException();
+
+
+            //RandomAccessFile ra = new RandomAccessFile(f, "rw");
+            //ra.setLength(ra.length()+(isText ? 1 : -1));
+            //ra.close();
+            //LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
+            System.out.println(i+"; f = " + f.length()+"; virtualFile="+virtualFile.getLength()+"; type="+virtualFile.getFileType());
+            //Thread.sleep(random.nextInt(100));
           }
         }
-        catch (Exception e) {
-          exception.set(e);
-          e.printStackTrace();
-          throw new RuntimeException(e);
-        }
-      }, "reader");
-    });
+      }
+      catch (Exception e) {
+        exception.set(e);
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
+    }, "reader"));
     threads.forEach(Thread::start);
     for (Thread thread : threads) {
       while (thread.isAlive()) {
@@ -691,29 +668,27 @@ public class FileTypesTest extends PlatformTestCase {
 
     int NThreads = 1;
     int N = 10;
-    List<Thread> threads = ContainerUtil.map(new Object[NThreads], o -> {
-      return new Thread(() -> {
-        for (int i = 0; i < N; i++) {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            String text = psiFile.getText();
-            System.out.println("text = " + text.length());
-            //if (!virtualFile.getFileType().isBinary()) {
-            //  LoadTextUtil.loadText(virtualFile);
-            //}
-          });
-          if (i % 1 == 0) {
-            try {
-              FileUtil.appendToFile(f, StringUtil.repeatSymbol(' ', 50));
-              LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
-              System.out.println("f = " + f.length()+"; virtualFile="+virtualFile.getLength()+"; psiFile="+psiFile.isValid()+"; type="+virtualFile.getFileType());
-            }
-            catch (IOException e) {
-              throw new RuntimeException(e);
-            }
+    List<Thread> threads = ContainerUtil.map(new Object[NThreads], o -> new Thread(() -> {
+      for (int i = 0; i < N; i++) {
+        ApplicationManager.getApplication().runReadAction(() -> {
+          String text = psiFile.getText();
+          System.out.println("text = " + text.length());
+          //if (!virtualFile.getFileType().isBinary()) {
+          //  LoadTextUtil.loadText(virtualFile);
+          //}
+        });
+        if (i % 1 == 0) {
+          try {
+            FileUtil.appendToFile(f, StringUtil.repeatSymbol(' ', 50));
+            LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
+            System.out.println("f = " + f.length()+"; virtualFile="+virtualFile.getLength()+"; psiFile="+psiFile.isValid()+"; type="+virtualFile.getFileType());
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
           }
         }
-      }, "reader");
-    });
+      }
+    }, "reader"));
     threads.forEach(Thread::start);
     for (Thread thread : threads) {
       while (thread.isAlive()) {

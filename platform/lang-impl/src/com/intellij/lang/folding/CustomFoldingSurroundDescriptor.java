@@ -67,8 +67,11 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getLanguage());
     if (commenter == null || commenter.getLineCommentPrefix() == null) return PsiElement.EMPTY_ARRAY;
     PsiElement startElement = file.findElementAt(startOffset);
-    if (startElement instanceof PsiWhiteSpace) startElement = startElement.getNextSibling();
     PsiElement endElement = file.findElementAt(endOffset - 1);
+    if (startElement instanceof PsiWhiteSpace) {
+      if (startElement == endElement) return PsiElement.EMPTY_ARRAY;
+      startElement = startElement.getNextSibling();
+    }
     if (endElement instanceof PsiWhiteSpace) endElement = endElement.getPrevSibling();
     if (startElement != null && endElement != null) {
       startElement = findClosestParentAfterLineBreak(startElement);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.intellij.refactoring.move.moveMembers;
 
-import com.intellij.ide.util.*;
+import com.intellij.ide.util.ClassFilter;
+import com.intellij.ide.util.PackageUtil;
+import com.intellij.ide.util.TreeClassChooser;
+import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -39,7 +42,6 @@ import com.intellij.refactoring.move.MoveDialogBase;
 import com.intellij.refactoring.ui.JavaVisibilityPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionTable;
-import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
@@ -280,20 +282,17 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
       else {
         RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, fqName);
         final PsiClass[] targetClass = new PsiClass[]{null};
-        CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
-          public void run() {
-            try {
-              targetClass[0] = findOrCreateTargetClass(manager, fqName);
-            }
-            catch (IncorrectOperationException e) {
-              CommonRefactoringUtil.showErrorMessage(
-                MoveMembersImpl.REFACTORING_NAME,
-                e.getMessage(),
-                HelpID.MOVE_MEMBERS,
-                myProject);
-            }
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          try {
+            targetClass[0] = findOrCreateTargetClass(manager, fqName);
           }
-
+          catch (IncorrectOperationException e) {
+            CommonRefactoringUtil.showErrorMessage(
+              MoveMembersImpl.REFACTORING_NAME,
+              e.getMessage(),
+              HelpID.MOVE_MEMBERS,
+              myProject);
+          }
         }, RefactoringBundle.message("create.class.command", fqName), null);
 
         if (targetClass[0] == null) {
@@ -407,7 +406,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
   }
 
   private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo> {
-    PsiClass myTargetClass = null;
+    PsiClass myTargetClass;
     public MyMemberInfoModel() {
       super(mySourceClass, null, false, DEFAULT_CONTAINMENT_VERIFIER);
     }

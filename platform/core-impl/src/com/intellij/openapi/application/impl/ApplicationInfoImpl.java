@@ -112,6 +112,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
 
+  private String mySubscriptionFormId;
+  private String mySubscriptionNewsKey;
+  private String mySubscriptionNewsValue;
+  private String mySubscriptionTipsKey;
+  private boolean mySubscriptionTipsAvailable;
+  private String mySubscriptionAdditionalFormData;
+
   private Rectangle myAboutLogoRect;
 
   private static final String IDEA_PATH = "/idea/";
@@ -193,6 +200,14 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_KEY_CONVERSION_URL = "key-conversion-url";
   private static final String ESSENTIAL_PLUGIN = "essential-plugin";
 
+  private static final String ELEMENT_SUBSCRIPTIONS = "subscriptions";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_FORM_ID = "formid";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY = "news-key";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_NEWS_VALUE = "news-value";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY = "tips-key";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE = "tips-available";
+  private static final String ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA = "additional-form-data";
+
   private static final String DEFAULT_PLUGINS_HOST = "http://plugins.jetbrains.com";
 
   ApplicationInfoImpl() {
@@ -262,6 +277,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getFullVersion() {
+    String result = doGetFullVersion();
+    // In Android Studio we don't want the EAP suffix in version names
+    //if (isEAP()) result += " EAP";
+    return result;
+  }
+
+  private String doGetFullVersion() {
     if (myFullVersion == null) {
       if (!StringUtil.isEmptyOrSpaces(myMajorVersion)) {
         if (!StringUtil.isEmptyOrSpaces(myMinorVersion)) {
@@ -503,17 +525,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getFullApplicationName() {
-    StringBuilder buffer = new StringBuilder();
-    buffer.append(getVersionName());
-    buffer.append(" ");
-    if (getMajorVersion() != null) {
-      // In Studio, we always want the FullVersion.
-      buffer.append(getFullVersion());
-    }
-    else {
-      buffer.append(getBuild().asStringWithAllDetails());
-    }
-    return buffer.toString();
+    return getVersionName() + " " + getFullVersion();
   }
 
   @Override
@@ -556,6 +568,37 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public Rectangle getAboutLogoRect() {
     return myAboutLogoRect;
+  }
+
+  @Override
+  public String getSubscriptionFormId() {
+    return mySubscriptionFormId;
+  }
+
+  @Override
+  public String getSubscriptionNewsKey() {
+    return mySubscriptionNewsKey;
+  }
+
+  @Override
+  public String getSubscriptionNewsValue() {
+    return mySubscriptionNewsValue;
+  }
+
+  @Override
+  public String getSubscriptionTipsKey() {
+    return mySubscriptionTipsKey;
+  }
+
+  @Override
+  public boolean areSubscriptionTipsAvailable() {
+    return mySubscriptionTipsAvailable;
+  }
+
+  @Nullable
+  @Override
+  public String getSubscriptionAdditionalFormData() {
+    return mySubscriptionAdditionalFormData;
   }
 
   private static ApplicationInfoImpl ourShadowInstance;
@@ -870,6 +913,15 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       }
     }
 
+    Element subscriptionsElement = parentNode.getChild(ELEMENT_SUBSCRIPTIONS);
+    if (subscriptionsElement != null) {
+      mySubscriptionFormId = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_FORM_ID);
+      mySubscriptionNewsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_NEWS_KEY);
+      mySubscriptionNewsValue = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_NEWS_VALUE, "yes");
+      mySubscriptionTipsKey = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_KEY);
+      mySubscriptionTipsAvailable = Boolean.parseBoolean(subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_TIPS_AVAILABLE));
+      mySubscriptionAdditionalFormData = subscriptionsElement.getAttributeValue(ATTRIBUTE_SUBSCRIPTIONS_ADDITIONAL_FORM_DATA);
+    }
   }
 
   private static void setBuildNumber(String apiVersion, String buildNumber) {

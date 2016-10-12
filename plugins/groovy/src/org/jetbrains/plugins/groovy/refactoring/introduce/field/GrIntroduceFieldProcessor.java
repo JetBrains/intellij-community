@@ -331,12 +331,7 @@ public class GrIntroduceFieldProcessor {
   @Nullable
   private static GrStatement findAnchorForAssignment(@Nullable final GrCodeBlock block, @NotNull Collection<PsiElement> replaced) {
     if (block == null) return null;
-    final List<PsiElement> elements = ContainerUtil.findAll(replaced, new Condition<PsiElement>() {
-      @Override
-      public boolean value(PsiElement element) {
-        return PsiTreeUtil.isAncestor(block, element, true);
-      }
-    });
+    final List<PsiElement> elements = ContainerUtil.findAll(replaced, element -> PsiTreeUtil.isAncestor(block, element, true));
     if (elements.isEmpty()) return null;
     return (GrStatement)GrIntroduceHandlerBase.findAnchor(ContainerUtil.toArray(elements, new PsiElement[elements.size()]), block);
   }

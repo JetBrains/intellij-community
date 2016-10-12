@@ -273,7 +273,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
 
   @Override
   public boolean isDeprecated() {
-    return getStub().isDeprecated();
+    return getStub().isDeprecated() || PsiImplUtil.isDeprecatedByAnnotation(this);
   }
 
   public String getSourceFileName() {
@@ -561,14 +561,6 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   @NotNull
   public SearchScope getUseScope() {
     return PsiClassImplUtil.getClassUseScope(this);
-  }
-
-  @Override
-  public PsiQualifiedNamedElement getContainer() {
-    final PsiFile file = getContainingFile();
-    final PsiDirectory dir;
-    return file == null ? null : (dir = file.getContainingDirectory()) == null
-                                 ? null : JavaDirectoryService.getInstance().getPackage(dir);
   }
 
   @Override

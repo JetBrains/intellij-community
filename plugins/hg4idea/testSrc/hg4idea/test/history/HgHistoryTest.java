@@ -15,7 +15,6 @@
  */
 package hg4idea.test.history;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,19 +33,15 @@ import java.util.List;
 import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
-/**
- * @author Nadya Zabrodina
- */
 public class HgHistoryTest extends HgPlatformTest {
   static final String[] names = {"f1.txt", "f2.txt", "f3.txt"};
   static final String subDirName = "sub";
 
   @Override
-  protected void setUp() throws Exception {
+  public void setUp() throws Exception {
     super.setUp();
     cd(myRepository);
-    File hgrc = new File(new File(myRepository.getPath(), ".hg"), "hgrc");
-    FileUtil.appendToFile(hgrc, "[extensions]\n" +
+    appendToHgrc(myRepository, "[extensions]\n" +
                                 "largefiles=!\n");
     mkdir(subDirName);
     cd(subDirName);

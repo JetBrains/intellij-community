@@ -82,11 +82,6 @@ public class DefaultRemoteServersViewContribution extends RemoteServersViewContr
 
   @Override
   public List<RemoteServer<?>> getRemoteServers() {
-    return ContainerUtil.filter(RemoteServersManager.getInstance().getServers(), new Condition<RemoteServer<?>>() {
-      @Override
-      public boolean value(RemoteServer<?> server) {
-        return server.getType().getCustomToolWindowId() == null;
-      }
-    });
+    return ContainerUtil.filter(RemoteServersManager.getInstance().getServers(), server -> server.getType().getCustomToolWindowId() == null);
   }
 }

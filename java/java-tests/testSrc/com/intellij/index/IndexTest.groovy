@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.index
+
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
@@ -23,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
-import com.intellij.openapi.util.Factory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -72,7 +72,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testUpdate() throws StorageException, IOException {
-    StringIndex index = createIndex(new EnumeratorStringDescriptor())
+    StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor())
 
     try {
       // build index
@@ -119,7 +119,7 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testUpdateWithCustomEqualityPolicy() {
-    def index = createIndex(new CaseInsensitiveEnumeratorStringDescriptor())
+    def index = createIndex(getTestName(false), new CaseInsensitiveEnumeratorStringDescriptor())
     try {
       index.update("a.java", "x", null)
       assertDataEquals(index.getFilesByWord("x"), "a.java")
@@ -137,21 +137,12 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  private static StringIndex createIndex(EnumeratorStringDescriptor keyDescriptor) {
+  private static StringIndex createIndex(String testName, EnumeratorStringDescriptor keyDescriptor) {
     final File storageFile = FileUtil.createTempFile("index_test", "storage");
     final File metaIndexFile = FileUtil.createTempFile("index_test_inputs", "storage");
+    PersistentHashMap<Integer, Collection<String>>  index = createMetaIndex(metaIndexFile);
     final MapIndexStorage indexStorage = new MapIndexStorage(storageFile, keyDescriptor, new EnumeratorStringDescriptor(), 16 * 1024);
-    return new StringIndex(indexStorage, new Factory<PersistentHashMap<Integer, Collection<String>>>() {
-      @Override
-      public PersistentHashMap<Integer, Collection<String>> create() {
-        try {
-          return createMetaIndex(metaIndexFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    });
+    return new StringIndex(testName, indexStorage, index);
   }
   
   private static PersistentHashMap<Integer, Collection<String>> createMetaIndex(File metaIndexFile) throws IOException {
@@ -191,11 +182,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.deleteString(0, document.getTextLength());
     assertNotNull(findClass("Foo"));
 
-    //noinspection GroovyUnusedAssignment
-    psiFile = null;
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
-    assertNull(getPsiManager().getFileManager().getCachedPsiFile(vFile));
-
     PsiClass foo = findClass("Foo");
     assertNotNull(foo);
     assertTrue(foo.isValid());
@@ -217,12 +203,6 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.deleteString(0, document.getTextLength());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     document.insertString(0, " ");
-    //assertNotNull(myJavaFacade.findClass("Foo", scope));
-
-    //noinspection GroovyUnusedAssignment
-    psiFile = null;
-    PlatformTestUtil.tryGcSoftlyReachableObjects();
-    assertNull(getPsiManager().getFileManager().getCachedPsiFile(vFile));
 
     PsiClass foo = findClass("Foo");
     assertNull(foo);
@@ -403,13 +383,13 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     FileDocumentManager.instance.getDocument(vFile).text = "import zoo.Zoo; class Foo1 {}"
     assert PsiDocumentManager.getInstance(project).uncommittedDocuments
 
+    FileDocumentManager.instance.saveAllDocuments()
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+
     //noinspection GroovyUnusedAssignment
     psiFile = null
     PlatformTestUtil.tryGcSoftlyReachableObjects()
-
     assert !((PsiManagerEx) psiManager).fileManager.getCachedPsiFile(vFile)
-
-    FileDocumentManager.instance.saveAllDocuments()
 
     VfsUtil.saveText(vFile, "class Foo3 {}")
 

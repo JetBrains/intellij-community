@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.psi.text;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -37,10 +38,11 @@ public abstract class BlockSupport {
     return ServiceManager.getService(project, BlockSupport.class);
   }
 
-  public abstract void reparseRange(PsiFile file, int startOffset, int endOffset, @NonNls CharSequence newText) throws IncorrectOperationException;
+  public abstract void reparseRange(@NotNull PsiFile file, int startOffset, int endOffset, @NonNls @NotNull CharSequence newText) throws IncorrectOperationException;
 
   @NotNull
   public abstract DiffLog reparseRange(@NotNull PsiFile file,
+                                       @NotNull FileASTNode oldFileNode,
                                        @NotNull TextRange changedPsiRange,
                                        @NotNull CharSequence newText,
                                        @NotNull ProgressIndicator progressIndicator,

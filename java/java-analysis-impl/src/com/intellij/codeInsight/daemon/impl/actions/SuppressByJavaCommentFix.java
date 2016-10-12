@@ -52,13 +52,24 @@ public class SuppressByJavaCommentFix extends SuppressByCommentFix {
   protected void createSuppression(@NotNull final Project project,
                                    @NotNull final PsiElement element,
                                    @NotNull final PsiElement container) throws IncorrectOperationException {
-    PsiElement declaredElement = JavaSuppressionUtil.getElementToAnnotate(element, container);
+    PsiElement declaredElement = getElementToAnnotate(element, container);
     if (declaredElement == null) {
       suppressWithComment(project, element, container);
     }
     else {
       JavaSuppressionUtil.addSuppressAnnotation(project, container, (PsiLocalVariable)declaredElement, myID);
     }
+  }
+
+  @Override
+  protected boolean replaceSuppressionComments(PsiElement container) {
+    if (getElementToAnnotate(container, container) != null) return false;
+    return super.replaceSuppressionComments(container);
+  }
+
+  @Nullable
+  protected PsiElement getElementToAnnotate(PsiElement element, PsiElement container) {
+    return JavaSuppressionUtil.getElementToAnnotate(element, container);
   }
 
   protected void suppressWithComment(Project project, PsiElement element, PsiElement container) {

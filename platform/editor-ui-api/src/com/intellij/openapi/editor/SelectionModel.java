@@ -197,20 +197,6 @@ public interface SelectionModel {
   void setBlockSelection(@NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd);
 
   /**
-   * Does nothing.
-   *
-   * @deprecated To be removed in IDEA 16.
-   */
-  void removeBlockSelection();
-
-  /**
-   * Always returns <code>false</code>.
-   *
-   * @deprecated To be removed in IDEA 16.
-   */
-  boolean hasBlockSelection();
-
-  /**
    * Returns an array of start offsets in the document for ranges selected in the document currently. Works both for a single-caret and
    * a multiple-caret selection (for carets not having a selection, caret position is returned).
    *
@@ -227,37 +213,6 @@ public interface SelectionModel {
    */
   @NotNull
   int[] getBlockSelectionEnds();
-
-  /**
-   * Always returns <code>null</code>.
-   *
-   * @deprecated To be removed in IDEA 16.
-   */
-  @Nullable
-  LogicalPosition getBlockStart();
-
-  /**
-   * Always returns <code>null</code>.
-   *
-   * @deprecated To be removed in IDEA 16.
-   */
-  @Nullable
-  LogicalPosition getBlockEnd();
-
-  /**
-   * Always returns <code>false</code>.
-   *
-   * @deprecated To be removed in IDEA 16.
-   */
-  boolean isBlockSelectionGuarded();
-
-  /**
-   * Always returns <code>null</code>.
-   *
-   * @deprecated To be removed in IDEA 16.
-   */
-  @Nullable
-  RangeMarker getBlockSelectionGuard();
 
   /**
    * Returns visual representation of selection.

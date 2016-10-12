@@ -33,13 +33,17 @@ import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
-import org.apache.maven.artifact.resolver.*;
+import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Activation;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.Profile;
+import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.model.profile.DefaultProfileInjector;
 import org.apache.maven.plugin.LegacySupport;
@@ -280,7 +284,7 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
   private static MavenExecutionResult handleException(Throwable e) {
     if (e instanceof Error) throw (Error)e;
 
-    return new MavenExecutionResult(null, Collections.singletonList((Exception)e));
+    return new MavenExecutionResult(Collections.singletonList((Exception)e));
   }
 
   private static Collection<String> collectActivatedProfiles(MavenProject mavenProject)
@@ -557,9 +561,7 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
       @Override
       public MavenServerExecutionResult fun(MavenExecutionResult result) {
         try {
-          if (result != null && result.getMavenProject() != null && result.getMavenProject().getFile() != null) {
-            return createExecutionResult(result.getMavenProject().getFile(), result, listener.getRootNode());
-          }
+          return createExecutionResult(result.getPomFile(), result, listener.getRootNode());
         }
         catch (RemoteException e) {
           ExceptionUtil.rethrowAllAsUnchecked(e);
@@ -623,38 +625,32 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
       @Override
       public void run() {
         try {
-          // copied from DefaultMavenProjectBuilder.buildWithDependencies
-          ProjectBuilder builder = getComponent(ProjectBuilder.class);
+          RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
+          if (repositorySession instanceof DefaultRepositorySystemSession) {
+            DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
+            session.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
 
-          CustomMaven3ModelInterpolator2 modelInterpolator = (CustomMaven3ModelInterpolator2)getComponent(ModelInterpolator.class);
+            if (myWorkspaceMap != null) {
+              session.setWorkspaceReader(new Maven32WorkspaceReader(myWorkspaceMap));
+            }
 
-          String savedLocalRepository = modelInterpolator.getLocalRepository();
-          modelInterpolator.setLocalRepository(request.getLocalRepositoryPath().getAbsolutePath());
-          List<ProjectBuildingResult> buildingResults;
-
-          try {
-            // Don't use build(File projectFile, ProjectBuildingRequest request) , because it don't use cache !!!!!!!! (see http://devnet.jetbrains.com/message/5500218)
-            buildingResults = builder.build(new ArrayList<File>(files), false, request.getProjectBuildingRequest());
+            session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
+            session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
           }
-          finally {
-            modelInterpolator.setLocalRepository(savedLocalRepository);
-          }
+
+          List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
 
           for (ProjectBuildingResult buildingResult : buildingResults) {
-
             MavenProject project = buildingResult.getProject();
 
-            RepositorySystemSession repositorySession = getComponent(LegacySupport.class).getRepositorySession();
-            if (repositorySession instanceof DefaultRepositorySystemSession) {
-              DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
-              session.setTransferListener(new TransferListenerAdapter(myCurrentIndicator));
-
-              if (myWorkspaceMap != null) {
-                session.setWorkspaceReader(new Maven32WorkspaceReader(myWorkspaceMap));
+            if (project == null) {
+              List<Exception> exceptions = new ArrayList<Exception>();
+              for (ModelProblem problem : buildingResult.getProblems()) {
+                exceptions.add(problem.getException());
               }
-
-              session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
-              session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
+              MavenExecutionResult mavenExecutionResult = new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
+              executionResults.add(mavenExecutionResult);
+              continue;
             }
 
             List<Exception> exceptions = new ArrayList<Exception>();
@@ -667,23 +663,7 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
             //
 
             if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
-              ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
-              resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
-              resolutionRequest.setArtifact(project.getArtifact());
-              resolutionRequest.setManagedVersionMap(project.getManagedVersionMap());
-              resolutionRequest.setLocalRepository(myLocalRepository);
-              resolutionRequest.setRemoteRepositories(project.getRemoteArtifactRepositories());
-              resolutionRequest.setListeners(listeners);
-
-              resolutionRequest.setResolveRoot(false);
-              resolutionRequest.setResolveTransitively(true);
-
-              ArtifactResolver resolver = getComponent(ArtifactResolver.class);
-              ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
-
-              project.setArtifacts(result.getArtifacts());
-              // end copied from DefaultMavenProjectBuilder.buildWithDependencies
-              executionResults.add(new MavenExecutionResult(project, exceptions));
+              addMvn2CompatResults(project, exceptions, listeners, myLocalRepository, executionResults);
             }
             else {
               final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
@@ -804,7 +784,12 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
       LegacySupport legacySupport = getComponent(LegacySupport.class);
       MavenSession session = legacySupport.getSession();
       session.setCurrentProject(project);
-      session.setAllProjects(Arrays.asList(project));
+      try {
+        // the method can be removed
+        session.setAllProjects(Arrays.asList(project));
+      }
+      catch (NoSuchMethodError ignore) {
+      }
       session.setProjects(Arrays.asList(project));
 
       for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
@@ -863,7 +848,10 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
     return lifecycleListeners;
   }
 
-  public MavenExecutionRequest createRequest(File file, List<String> activeProfiles, List<String> inactiveProfiles, List<String> goals)
+  public MavenExecutionRequest createRequest(@Nullable File file,
+                                             List<String> activeProfiles,
+                                             List<String> inactiveProfiles,
+                                             List<String> goals)
     throws RemoteException {
     //Properties executionProperties = myMavenSettings.getProperties();
     //if (executionProperties == null) {
@@ -885,6 +873,8 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       result.setActiveProfiles(activeProfiles);
       result.setInactiveProfiles(inactiveProfiles);
+      result.setCacheNotFound(true);
+      result.setCacheTransferError(true);
 
       result.setStartTime(myBuildStartTime);
 
@@ -915,7 +905,7 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private MavenServerExecutionResult createExecutionResult(File file, MavenExecutionResult result, DependencyNode rootNode)
+  private MavenServerExecutionResult createExecutionResult(@Nullable File file, MavenExecutionResult result, DependencyNode rootNode)
     throws RemoteException {
     Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
     THashSet<MavenId> unresolvedArtifacts = new THashSet<MavenId>();
@@ -966,34 +956,42 @@ public class Maven32ServerEmbedderImpl extends Maven3ServerEmbedder {
     return new MavenServerExecutionResult(data, problems, unresolvedArtifacts);
   }
 
-  private void validate(@NotNull File file,
+  private void validate(@Nullable File file,
                         @NotNull Collection<Exception> exceptions,
                         @NotNull Collection<MavenProjectProblem> problems,
                         @Nullable Collection<MavenId> unresolvedArtifacts) throws RemoteException {
     for (Throwable each : exceptions) {
+      if(each == null) continue;
+
       Maven3ServerGlobals.getLogger().info(each);
 
       if (each instanceof IllegalStateException && each.getCause() != null) {
         each = each.getCause();
       }
 
+      String path = file == null ? "" : file.getPath();
+      if (path.isEmpty() && each instanceof ProjectBuildingException) {
+        File pomFile = ((ProjectBuildingException)each).getPomFile();
+        path = pomFile == null ? "" : pomFile.getPath();
+      }
+
       if (each instanceof InvalidProjectModelException) {
         ModelValidationResult modelValidationResult = ((InvalidProjectModelException)each).getValidationResult();
         if (modelValidationResult != null) {
           for (Object eachValidationProblem : modelValidationResult.getMessages()) {
-            problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), (String)eachValidationProblem));
+            problems.add(MavenProjectProblem.createStructureProblem(path, (String)eachValidationProblem));
           }
         }
         else {
-          problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), each.getCause().getMessage()));
+          problems.add(MavenProjectProblem.createStructureProblem(path, each.getCause().getMessage()));
         }
       }
       else if (each instanceof ProjectBuildingException) {
         String causeMessage = each.getCause() != null ? each.getCause().getMessage() : each.getMessage();
-        problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), causeMessage));
+        problems.add(MavenProjectProblem.createStructureProblem(path, causeMessage));
       }
       else {
-        problems.add(MavenProjectProblem.createStructureProblem(file.getPath(), each.getMessage()));
+        problems.add(MavenProjectProblem.createStructureProblem(path, each.getMessage()));
       }
     }
     if (unresolvedArtifacts != null) {

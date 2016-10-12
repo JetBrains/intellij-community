@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,8 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testArrayInitializer5() { doParserTest("{ { }"); }
   public void testArrayInitializer6() { doParserTest("{  ,  }"); }
   public void testArrayInitializer7() { doParserTest("{  ,  , 7 }"); }
+  public void testArrayInitializer8() { doParserTest("{ 8,  ,  , }"); }
+  public void testArrayInitializer9() { doParserTest("{  , 9 }"); }
 
   public void testPinesInReferenceExpression0() { doParserTest("Collections.<String>sort(null)"); }
   public void testPinesInReferenceExpression1() { doParserTest("this.<String>sort(null)"); }

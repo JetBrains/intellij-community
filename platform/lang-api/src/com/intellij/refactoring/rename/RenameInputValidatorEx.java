@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,12 +27,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface RenameInputValidatorEx extends RenameInputValidator {
   /**
-   * Called only if all input validators ({@link RenameInputValidator}) accept 
-   * the new name in {@link #isInputValid(String, PsiElement, ProcessingContext)} 
+   * Called only if all input validators ({@link RenameInputValidator}) accept
+   * the new name in {@link #isInputValid(String, PsiElement, ProcessingContext)}
    * and name is a valid identifier for a language of the element
-   * 
+   *
    * @return null if newName is a valid name, custom error message otherwise
    */
   @Nullable
-  String getErrorMessage(String newName, Project project);
+  String getErrorMessage(@NotNull String newName, @NotNull Project project);
 }

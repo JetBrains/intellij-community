@@ -43,8 +43,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.IconTableCellRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,8 +88,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus, int row, int column) {
         Component component = super.getTableCellRendererComponent(table, value, false, focus, row, column);
-        Color bg = selected ? ((focus || table.hasFocus()) ? table.getSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground())
-                            : table.getBackground();
+        Color bg = selected ? table.getSelectionBackground() : table.getBackground();
         component.setBackground(bg);
         ((JLabel) component).setText("");
         return component;
@@ -101,10 +100,10 @@ public class InspectionsConfigTreeTable extends TreeTable {
         return value;
       }
     });
-    severitiesColumn.setMaxWidth(20);
+    severitiesColumn.setMaxWidth(JBUI.scale(20));
 
     final TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    isEnabledColumn.setMaxWidth(20 + getAdditionalPadding());
+    isEnabledColumn.setMaxWidth(JBUI.scale(20 + getAdditionalPadding()));
     isEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
     isEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
 
@@ -159,13 +158,8 @@ public class InspectionsConfigTreeTable extends TreeTable {
       protected Transferable createTransferable(JComponent c) {
         final TreePath path = getTree().getPathForRow(getTree().getLeadSelectionRow());
         if (path != null) {
-          return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(), new NullableFunction<Object, String>() {
-            @Nullable
-            @Override
-            public String fun(Object o) {
-              return o == path.getPath()[0] ? null : o.toString();
-            }
-          }), " | "));
+          return new TextTransferable(StringUtil.join(ContainerUtil.mapNotNull(path.getPath(),
+                                                                               (NullableFunction<Object, String>)o -> o == path.getPath()[0] ? null : o.toString()), " | "));
         }
         return null;
       }
@@ -176,6 +170,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
     });
 
+    getTableHeader().setReorderingAllowed(false);
     registerKeyboardAction(new ActionListener() {
                              public void actionPerformed(ActionEvent e) {
                                model.swapInspectionEnableState();
@@ -221,11 +216,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
     public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, Disposable parentDisposable) {
       super(settings.getRoot());
       mySettings = settings;
-      myUpdateRunnable = new Runnable() {
-        public void run() {
-          settings.updateRightPanel();
-          ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
-        }
+      myUpdateRunnable = () -> {
+        settings.updateRightPanel();
+        ((AbstractTableModel)myTreeTable.getModel()).fireTableDataChanged();
       };
       myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
     }

@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -175,12 +175,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
 
   @NotNull
   protected PsiElement[] restoreOccurrences() {
-    List<PsiElement> result = ContainerUtil.map(getOccurrenceMarkers(), new Function<RangeMarker, PsiElement>() {
-      @Override
-      public PsiElement fun(RangeMarker marker) {
-        return PsiImplUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class);
-      }
-    });
+    List<PsiElement> result = ContainerUtil.map(getOccurrenceMarkers(), marker -> PsiImplUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class));
     return PsiUtilCore.toPsiElementArray(result);
   }
 
@@ -191,27 +186,22 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     final Settings settings = getInitialSettingsForInplace(myContext, myReplaceChoice, names);
     if (settings == null) return null;
 
-    SmartPsiElementPointer<GrVariable> pointer = ApplicationManager.getApplication().runWriteAction(new Computable<SmartPsiElementPointer<GrVariable>>() {
-      @Override
-      public SmartPsiElementPointer<GrVariable> compute() {
-        GrVariable var = runRefactoring(myContext, settings, false);
-        return var != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var) : null;
-      }
-    });
-
-    if (pointer != null) {
-      GrVariable var = pointer.getElement();
-      if (var != null) {
-        myVarMarker = myContext.getEditor().getDocument().createRangeMarker(var.getTextRange());
-      }
-      return var;
+    GrVariable var = runRefactoring(myContext, settings, false);
+    if (var != null) {
+      myVarMarker = myContext.getEditor().getDocument().createRangeMarker(var.getTextRange());
     }
-    else {
-      return null;
-    }
+    return var;
   }
 
   protected abstract GrVariable runRefactoring(GrIntroduceContext context, Settings settings, boolean processUsages);
+
+  protected final GrVariable refactorInWriteAction(Computable<GrVariable> computable) {
+    SmartPsiElementPointer<GrVariable> pointer = WriteAction.compute(() -> {
+      GrVariable var = computable.compute();
+      return var != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var) : null;
+    });
+    return pointer != null ? pointer.getElement() : null;
+  }
 
   @Nullable
   protected abstract Settings getInitialSettingsForInplace(@NotNull GrIntroduceContext context,

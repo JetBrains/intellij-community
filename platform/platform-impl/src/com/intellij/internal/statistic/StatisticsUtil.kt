@@ -37,11 +37,19 @@ fun getBooleanUsage(key: String, value: Boolean): UsageDescriptor {
  * ```
  * and if there are e.g. 50000 commits in the repository, one usage of the following key will be reported: `git.commit.count.10K+`.
  *
+ * NB:
+ * (1) the list of steps must be sorted ascendingly; If it is not, the result is undefined.
+ * (2) the value should lay somewhere inside steps ranges. If it is below the first step, the following usage will be reported:
+ * `git.commit.count.<1`.
+ *
  * @key   The key prefix which will be appended with "." and range code.
- * @steps Limits of the ranges. Each value represents the start of the next range.
+ * @steps Limits of the ranges. Each value represents the start of the next range. The list must be sorted ascendingly.
  * @value Value to be checked among the given ranges.
  */
 fun getCountingUsage(key: String, value: Int, steps: List<Int>) : UsageDescriptor {
+  if (steps.isEmpty()) return UsageDescriptor("$key.$value", 1)
+  if (value < steps[0]) return UsageDescriptor("$key.<${steps[0]}", 1)
+
   val index = steps.binarySearch(value)
   val stepIndex : Int
   if (index == steps.size) {

@@ -62,7 +62,8 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
                                                 @NotNull ThrowableComputable<Collection<Change>, ? extends Exception> changesGetter) {
     VcsUser author = createUser(authorName, authorEmail);
     VcsUser committer = createUser(committerName, committerEmail);
-    return new VcsChangesLazilyParsedDetails(hash, parents, commitTime, root, subject, author, message, committer, authorTime, changesGetter);
+    return new VcsChangesLazilyParsedDetails(hash, parents, commitTime, root, subject, author, message, committer, authorTime,
+                                             changesGetter);
   }
 
   @NotNull
@@ -76,5 +77,4 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   public VcsRef createRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
     return new VcsRefImpl(commitHash, name, type, root);
   }
-
 }

@@ -92,13 +92,15 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
 
   @Override
   protected GrVariable runRefactoring(GrIntroduceContext context, GrIntroduceConstantSettings settings, boolean processUsages) {
-    if (processUsages) {
-      return new GrIntroduceConstantProcessor(context, settings).run();
-    }
-    else {
-      PsiElement scope = context.getScope();
-      return new GrIntroduceConstantProcessor(context, settings).addDeclaration(scope instanceof GroovyFileBase ? ((GroovyFileBase)scope).getScriptClass() : (PsiClass)scope).getVariables()[0];
-    }
+    return refactorInWriteAction(() -> {
+      if (processUsages) {
+        return new GrIntroduceConstantProcessor(context, settings).run();
+      }
+      else {
+        PsiElement scope = context.getScope();
+        return new GrIntroduceConstantProcessor(context, settings).addDeclaration(scope instanceof GroovyFileBase ? ((GroovyFileBase)scope).getScriptClass() : (PsiClass)scope).getVariables()[0];
+      }
+    });
   }
 
   @Nullable

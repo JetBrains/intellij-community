@@ -35,13 +35,11 @@ public class LibraryDependentToolWindowManager extends AbstractProjectComponent 
       }
     };
 
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new Runnable() {
-      public void run() {
-        if (!myProject.isDisposed()) {
-          checkToolWindowStatuses(myProject);
-          final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
-          connection.subscribe(ProjectTopics.PROJECT_ROOTS, rootListener);
-        }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
+      if (!myProject.isDisposed()) {
+        checkToolWindowStatuses(myProject);
+        final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+        connection.subscribe(ProjectTopics.PROJECT_ROOTS, rootListener);
       }
     });
   }
