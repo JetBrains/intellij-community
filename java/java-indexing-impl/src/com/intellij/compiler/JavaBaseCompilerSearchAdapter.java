@@ -16,6 +16,7 @@
 package com.intellij.compiler;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +35,9 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSearchAdapter<PsiClass> {
   public static final JavaBaseCompilerSearchAdapter INSTANCE = new JavaBaseCompilerSearchAdapter();
@@ -100,7 +103,7 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
                                           @NotNull VirtualFile containingFile,
                                           @NotNull Project project) {
     Collection<InternalClassMatcher> matchers = createClassMatcher(classInternalNames, superClass);
-    return retrieveMatchedClasses(containingFile, project, matchers).toArray(PsiClass.EMPTY_ARRAY);
+    return ReadAction.compute(() -> retrieveMatchedClasses(containingFile, project, matchers).toArray(PsiClass.EMPTY_ARRAY));
   }
 
   private static boolean mayBeVisibleOutsideOwnerFile(@NotNull PsiElement element) {
@@ -170,7 +173,7 @@ public class JavaBaseCompilerSearchAdapter implements ClassResolvingCompilerSear
                 }
                 matcherBySuperNameAdded = true;
                 //anonymous
-                matchers.add(new InternalClassMatcher.BySuperName(baseClass.getName()));
+                matchers.add(new InternalClassMatcher.BySuperName(ReadAction.compute(() -> baseClass.getName())));
                 break;
               } else {
                 //declared inside method

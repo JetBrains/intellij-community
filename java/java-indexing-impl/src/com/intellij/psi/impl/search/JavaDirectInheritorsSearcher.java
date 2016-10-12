@@ -20,6 +20,7 @@ import com.intellij.compiler.JavaBaseCompilerSearchAdapter;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -302,7 +303,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     while (it.hasNext()) {
       ProgressManager.checkCanceled();
       PsiClass next = it.next();
-      if (checkInheritance && !next.isInheritor(baseClass, false)) continue;
+      if (checkInheritance && ReadAction.compute(() -> !next.isInheritor(baseClass, false))) continue;
       if (!consumer.process(next)) return false;
     }
     return true;

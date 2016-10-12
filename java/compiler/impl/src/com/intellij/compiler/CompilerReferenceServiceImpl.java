@@ -19,6 +19,7 @@ import com.intellij.compiler.backwardRefs.LanguageLightUsageConverter;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -294,7 +295,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       return null;
     }
 
-    final CompilerElement compilerElement = adapter.asCompilerElement(psiElement);
+    final CompilerElement compilerElement = ReadAction.compute(() -> adapter.asCompilerElement(psiElement));
     if (compilerElement == null) return null;
     if (place == ElementPlace.LIB && buildHierarchyForLibraryElements) {
       final CompilerElement[] elements = adapter.getHierarchyRestrictedToLibrariesScope(compilerElement, psiElement);
