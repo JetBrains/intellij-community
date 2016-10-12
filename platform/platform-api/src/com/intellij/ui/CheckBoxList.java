@@ -291,14 +291,14 @@ public class CheckBoxList<T> extends JBList {
       checkbox.setEnabled(isEnabled());
       checkbox.setFont(font);
       checkbox.setFocusPainted(false);
-
+      checkbox.setBorderPainted(false);
+      checkbox.setOpaque(true);
       String auxText = getSecondaryText(index);
 
       JComponent rootComponent;
       if (auxText != null) {
         JPanel panel = new JPanel(new BorderLayout());
 
-        checkbox.setBorderPainted(false);
         panel.add(checkbox, BorderLayout.LINE_START);
 
         JLabel infoLabel = new JLabel(auxText, SwingConstants.RIGHT);
@@ -315,7 +315,6 @@ public class CheckBoxList<T> extends JBList {
         rootComponent = panel;
       }
       else {
-        checkbox.setBorderPainted(true);
         rootComponent = checkbox;
       }
 

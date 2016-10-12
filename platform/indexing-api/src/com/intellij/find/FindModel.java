@@ -937,7 +937,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     Pattern pattern = myPattern;
     if (pattern == PatternUtil.NOTHING) {
       try {
-        myPattern = pattern = Pattern.compile(toFind, isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE);
+        myPattern = pattern = Pattern.compile(toFind, isCaseSensitive() ? Pattern.MULTILINE : Pattern.MULTILINE | Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
       }
       catch (PatternSyntaxException e) {
         myPattern = pattern = null;

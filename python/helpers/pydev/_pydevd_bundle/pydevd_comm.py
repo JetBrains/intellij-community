@@ -59,12 +59,11 @@ each command has a format:
 '''
 
 from _pydev_bundle.pydev_imports import _queue
-from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
-from _pydev_imps._pydev_saved_modules import socket
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
+from _pydev_imps._pydev_saved_modules import time
 from _pydevd_bundle.pydevd_constants import * #@UnusedWildImport
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
@@ -1068,18 +1067,21 @@ class InternalGetFrame(InternalThreadCommand):
 class InternalEvaluateExpression(InternalThreadCommand):
     """ gets the value of a variable """
 
-    def __init__(self, seq, thread_id, frame_id, expression, doExec, doTrim):
+    def __init__(self, seq, thread_id, frame_id, expression, doExec, doTrim, temp_name):
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
         self.expression = expression
         self.doExec = doExec
         self.doTrim = doTrim
+        self.temp_name = temp_name
 
     def do_it(self, dbg):
         """ Converts request into python variable """
         try:
             result = pydevd_vars.evaluate_expression(self.thread_id, self.frame_id, self.expression, self.doExec)
+            if self.temp_name != "":
+                pydevd_vars.change_attr_expression(self.thread_id, self.frame_id, self.temp_name, self.expression, dbg, result)
             xml = "<xml>"
             xml += pydevd_vars.var_to_xml(result, self.expression, self.doTrim)
             xml += "</xml>"

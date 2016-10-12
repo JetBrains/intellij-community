@@ -136,12 +136,13 @@ class Jinja2TemplateFrame:
 
     def _change_variable(self, frame, name, value):
         in_vars_or_parents = False
-        if name in frame.f_locals['context'].parent:
-            self.back_context.parent[name] = value
-            in_vars_or_parents = True
-        if name in frame.f_locals['context'].vars:
-            self.back_context.vars[name] = value
-            in_vars_or_parents = True
+        if 'context' in frame.f_locals:
+            if name in frame.f_locals['context'].parent:
+                self.back_context.parent[name] = value
+                in_vars_or_parents = True
+            if name in frame.f_locals['context'].vars:
+                self.back_context.vars[name] = value
+                in_vars_or_parents = True
 
         l_name = 'l_' + name
         if l_name in frame.f_locals:

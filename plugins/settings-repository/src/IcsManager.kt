@@ -76,12 +76,12 @@ class IcsManager(dir: Path) {
   val repositoryManager: RepositoryManager = GitRepositoryManager(credentialsStore, dir.resolve("repository"))
 
   init {
-    try {
-      settings = loadSettings(settingsFile)
+    settings = try {
+      loadSettings(settingsFile)
     }
     catch (e: Exception) {
-      settings = IcsSettings()
       LOG.error(e)
+      IcsSettings()
     }
   }
 

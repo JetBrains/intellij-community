@@ -306,6 +306,12 @@ public class JUnit4TestListener extends RunListener {
   }
 
   private String getFullMethodName(Description description, Description parent) {
+    return getFullMethodName(description, parent, false);
+  }
+
+  private String getFullMethodName(Description description,
+                                   Description parent,
+                                   boolean acceptNull) {
     String methodName = (String)myMethodNames.get(description);
     if (methodName == null) {
       methodName = JUnit4ReflectionUtil.getMethodName(description);
@@ -313,7 +319,7 @@ public class JUnit4TestListener extends RunListener {
         methodName = getShortName(JUnit4ReflectionUtil.getClassName(description)) + "." + methodName;
       }
 
-      if (methodName == null && description.getChildren().isEmpty()) {
+      if (!acceptNull && methodName == null && description.getChildren().isEmpty()) {
         methodName = getShortName(description.getDisplayName());
       }
 
@@ -463,7 +469,7 @@ public class JUnit4TestListener extends RunListener {
 
     String className = JUnit4ReflectionUtil.getClassName(description);
     if (description.isTest()) {
-      final String methodName = getFullMethodName((Description)description, parent);
+      final String methodName = getFullMethodName((Description)description, parent, true);
       if (methodName != null ) {
         if (isWarning(methodName, className) && parent != null) {
           className = JUnit4ReflectionUtil.getClassName(parent);

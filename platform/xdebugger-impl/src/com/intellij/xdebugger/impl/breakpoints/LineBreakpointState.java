@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
@@ -33,8 +34,9 @@ public class LineBreakpointState<P extends XBreakpointProperties> extends Breakp
   public LineBreakpointState() {
   }
 
-  public LineBreakpointState(final boolean enabled, final String typeId, final String fileUrl, final int line, boolean temporary, final long timeStamp) {
-    super(enabled, typeId, timeStamp);
+  public LineBreakpointState(final boolean enabled, final String typeId, final String fileUrl, final int line, boolean temporary,
+                             final long timeStamp, final SuspendPolicy suspendPolicy) {
+    super(enabled, typeId, timeStamp, suspendPolicy);
     myFileUrl = fileUrl;
     myLine = line;
     myTemporary = temporary;

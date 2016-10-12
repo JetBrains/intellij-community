@@ -49,13 +49,12 @@ class StateGetter<S : Any, T : Any>(private val component: PersistentStateCompon
       return
     }
 
-    val stateAfterLoad: S?
-    try {
-      stateAfterLoad = component.state
+    val stateAfterLoad = try {
+      component.state
     }
     catch (e: Throwable) {
       LOG.error("Cannot get state after load", e)
-      stateAfterLoad = null
+      null
     }
 
     val serializedStateAfterLoad = if (stateAfterLoad == null) {
