@@ -26,7 +26,7 @@ class JetGradlePlugin implements Plugin<Project> {
   }
 
   public void apply(Project project) {
-    registry.register(new ExtraModelBuilder())
+    registry.register(project.extraModelBuilder)
   }
 }
 
@@ -38,6 +38,8 @@ initscript {
   }
 }
 
+def extraModelBuilderInstance = new ExtraModelBuilder()
 allprojects {
+  ext.extraModelBuilder = extraModelBuilderInstance
   apply plugin: JetGradlePlugin
 }
