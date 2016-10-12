@@ -727,8 +727,15 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     // There is a possible case that active logical line is represented on multiple lines due to soft wraps processing.
     // We want to highlight those visual lines as 'active' then, so, we calculate 'y' position for the logical line start
     // and height in accordance with the number of occupied visual lines.
-    VisualPosition visualPosition = myEditor.offsetToVisualPosition(document.getLineStartOffset(logicalLine));
-    int y = myEditor.myUseNewRendering ? myEditor.visibleLineToY(visualPosition.line) :  myEditor.visualPositionToXY(visualPosition).y;
+    int y;
+    if (myEditor.myUseNewRendering) {
+      int visualLine = myEditor.offsetToVisualLine(document.getLineStartOffset(logicalLine));
+      y = myEditor.visibleLineToY(visualLine);
+    }
+    else {
+      VisualPosition visualPosition = myEditor.offsetToVisualPosition(document.getLineStartOffset(logicalLine));
+      y = myEditor.visualPositionToXY(visualPosition).y;
+    }
     int lineHeight = myEditor.getLineHeight();
     int height = lineHeight;
     List<? extends SoftWrap> softWraps = myEditor.getSoftWrapModel().getSoftWrapsForRange(startOffset, endOffset);
