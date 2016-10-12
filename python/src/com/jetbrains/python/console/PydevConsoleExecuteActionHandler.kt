@@ -103,6 +103,17 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     }
   }
 
+  fun inputReceived() {
+    if (consoleCommunication is PythonDebugConsoleCommunication) {
+      if (consoleCommunication.waitingForInput) {
+        consoleCommunication.waitingForInput = false
+        val console = myConsoleView
+        if (PyConsoleUtil.INPUT_PROMPT.equals(console.prompt) || PyConsoleUtil.HELP_PROMPT.equals(console.prompt)) {
+          console.prompt = PyConsoleUtil.ORDINARY_PROMPT
+        }
+      }
+    }
+  }
 
   private fun inPrompt() {
     if (ipythonEnabled) {
