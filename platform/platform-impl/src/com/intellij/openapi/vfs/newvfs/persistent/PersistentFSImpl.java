@@ -860,19 +860,22 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       canonicalBasePath = basePath;
     }
 
-    FileAttributes attributes = fs.getAttributes(new StubVirtualFile() {
-      @NotNull
-      @Override
-      public String getPath() {
-        return canonicalBasePath;
-      }
+    FileAttributes attributes;
+    try {
+      attributes = fs.getAttributes(new StubVirtualFile() {
+        @NotNull
+        @Override
+        public String getPath() { return canonicalBasePath; }
 
-      @Nullable
-      @Override
-      public VirtualFile getParent() {
-        return null;
-      }
-    });
+        @Nullable
+        @Override
+        public VirtualFile getParent() { return null; }
+      });
+    }
+    catch (RuntimeException | AssertionError e) {
+      LOG.error(e);
+      return null;
+    }
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }
