@@ -243,6 +243,9 @@ public class TypeMigrationLabeler {
       final PsiElement element1 = info1.getElement();
       final PsiElement element2 = info2.getElement();
       LOG.assertTrue(element1 != null && element2 != null);
+      if (element1.equals(element2)) {
+        return 0;
+      }
       final TextRange range1 = element1.getTextRange();
       final TextRange range2 = element2.getTextRange();
       if (range1.contains(range2)) {
