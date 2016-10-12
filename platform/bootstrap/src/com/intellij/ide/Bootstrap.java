@@ -18,6 +18,7 @@ package com.intellij.ide;
 import com.intellij.idea.Main;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * @author max
@@ -28,11 +29,11 @@ public class Bootstrap {
   private Bootstrap() { }
 
   public static void main(String[] args, String mainClass, String methodName) throws Exception {
-    main(args, mainClass, methodName, null);
+    main(args, mainClass, methodName, null, null);
   }
 
-  public static void main(String[] args, String mainClass, String methodName, ClassLoader parent) throws Exception {
-    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(parent, !Main.isCommandLine());
+  public static void main(String[] args, String mainClass, String methodName, List<String> classpath, ClassLoader parent) throws Exception {
+    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(parent, classpath, !Main.isCommandLine());
     WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
 
     Class<?> klass = Class.forName(PLUGIN_MANAGER, true, newClassLoader);

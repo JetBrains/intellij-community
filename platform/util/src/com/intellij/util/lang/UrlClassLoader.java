@@ -62,6 +62,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
+  private final ClassLoader myFallback;
 
   @NotNull
   protected ClassPath getClassPath() {
@@ -87,6 +88,7 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myAllowBootstrapResources = false;
     @Nullable private CachePoolImpl myCachePool = null;
     @Nullable private CachingCondition myCachingCondition = null;
+    private ClassLoader myFallback;
 
     private Builder() { }
 
@@ -134,6 +136,11 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
+
+    public Builder fallback(ClassLoader fallback) {
+      myFallback = fallback;
+      return this;
+    }
   }
 
   public static Builder build() {
@@ -153,6 +160,7 @@ public class UrlClassLoader extends ClassLoader {
 
   protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
+    myFallback = builder.myFallback;
     myURLs = ContainerUtil.map(builder.myURLs, new Function<URL, URL>() {
       @Override
       public URL fun(URL url) {
@@ -199,7 +207,11 @@ public class UrlClassLoader extends ClassLoader {
   protected Class findClass(final String name) throws ClassNotFoundException {
     Resource res = getClassPath().getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
     if (res == null) {
-      throw new ClassNotFoundException(name);
+      if (myFallback != null) {
+        return myFallback.loadClass(name);
+      } else {
+        throw new ClassNotFoundException(name);
+      }
     }
 
     try {
@@ -213,7 +225,16 @@ public class UrlClassLoader extends ClassLoader {
   @Nullable
   protected Class _findClass(@NotNull String name) {
     Resource res = getClassPath().getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
+
     if (res == null) {
+      if (myFallback != null) {
+        try {
+          return myFallback.loadClass(name);
+        }
+        catch (ClassNotFoundException e) {
+          return null;
+        }
+      }
       return null;
     }
 
@@ -259,7 +280,8 @@ public class UrlClassLoader extends ClassLoader {
   @Override
   @Nullable  // Accessed from PluginClassLoader via reflection // TODO do we need it?
   public URL findResource(final String name) {
-    return findResourceImpl(name);
+    URL res = findResourceImpl(name);
+    return res == null ? (myFallback == null ? null : myFallback.getResource(name)) : res;
   }
 
   protected URL findResourceImpl(final String name) {
@@ -280,7 +302,13 @@ public class UrlClassLoader extends ClassLoader {
     if (myAllowBootstrapResources) return super.getResourceAsStream(name);
     try {
       Resource res = _getResource(name);
-      if (res == null) return null;
+      if (res == null) {
+        if (myFallback == null ) {
+          return null;
+        } else {
+          return myFallback.getResourceAsStream(name);
+        }
+      }
       return res.getInputStream();
     }
     catch (IOException e) {
