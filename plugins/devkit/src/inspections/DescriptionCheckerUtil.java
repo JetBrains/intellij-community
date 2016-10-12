@@ -39,7 +39,8 @@ public class DescriptionCheckerUtil {
       () -> ModuleUtilCore.getAllDependentModules(module).stream().map(Module::getModuleContentWithDependenciesScope)
         .reduce(GlobalSearchScope::uniteWith).orElse(GlobalSearchScope.EMPTY_SCOPE),
       () -> GlobalSearchScopesCore.projectProductionScope(module.getProject())
-    ).map(Supplier::get)
+    ).takeWhile(supplier -> !module.isDisposed())
+      .map(Supplier::get)
       .pairMap((prev, next) -> next.intersectWith(GlobalSearchScope.notScope(prev)));
   }
 
