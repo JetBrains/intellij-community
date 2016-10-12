@@ -107,12 +107,11 @@ public class TreeModelBuilder {
   }
 
   @NotNull
-  public TreeModelBuilder setIgnored(@Nullable List<VirtualFile> ignoredFiles) {
+  public TreeModelBuilder setIgnored(@Nullable List<VirtualFile> ignoredFiles, Couple<Integer> sizes, boolean updatingMode) {
     if (ContainerUtil.isEmpty(ignoredFiles)) return this;
-    // todo some ignoredFiles files holder may provide directories in the future,  now show only files counter
     return insertSpecificNodeToModel(ignoredFiles,
-                                     new ChangesBrowserIgnoredFilesNode(myProject, ignoredFiles.size(), 0,
-                                                                        ignoredFiles.size() > UNVERSIONED_MAX_SIZE));
+                                     new ChangesBrowserIgnoredFilesNode(myProject, sizes.getFirst(), sizes.getSecond(),
+                                                                        ignoredFiles.size() > UNVERSIONED_MAX_SIZE, updatingMode));
   }
 
   @NotNull

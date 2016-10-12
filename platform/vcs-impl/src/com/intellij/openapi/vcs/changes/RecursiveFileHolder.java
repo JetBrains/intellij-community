@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -53,7 +54,17 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     }
   }
 
-  public void removeFile(final VirtualFile file) {
+  @Override
+  public int getDirNum() {
+    return myDirMap.size();
+  }
+
+  @Override
+  public int getFilesNum() {
+    return myMap.size();
+  }
+
+  public void removeFile(@NotNull final VirtualFile file) {
     myMap.remove(file);
     if (file.isDirectory()) {
       myDirMap.remove(file);

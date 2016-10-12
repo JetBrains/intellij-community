@@ -79,6 +79,11 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
     myIdeIgnoredFilesHolder.addFile(file);
   }
 
+  public boolean isInUpdatingMode() {
+    return myVcsIgnoredHolderMap.values().stream()
+      .anyMatch((holder) -> (holder instanceof VcsIgnoredFilesHolder) && ((VcsIgnoredFilesHolder)holder).isInUpdatingMode());
+  }
+
   @Override
   public boolean containsFile(VirtualFile file) {
     if (myIdeIgnoredFilesHolder.containsFile(file)) return true;
@@ -94,6 +99,16 @@ public class IgnoredFilesCompositeHolder implements IgnoredFilesHolder {
     result.addAll(myIdeIgnoredFilesHolder.values());
     result.addAll(myVcsIgnoredHolderMap.values().stream().map(IgnoredFilesHolder::values).flatMap(set -> set.stream()).collect(Collectors.toSet()));
     return result;
+  }
+
+  @Override
+  public int getDirNum() {
+    return myIdeIgnoredFilesHolder.getDirNum() + myVcsIgnoredHolderMap.values().stream().mapToInt(IgnoredFilesHolder::getDirNum).sum();
+  }
+
+  @Override
+  public int getFilesNum() {
+    return myIdeIgnoredFilesHolder.getFilesNum() + myVcsIgnoredHolderMap.values().stream().mapToInt(IgnoredFilesHolder::getFilesNum).sum();
   }
 
   @Override

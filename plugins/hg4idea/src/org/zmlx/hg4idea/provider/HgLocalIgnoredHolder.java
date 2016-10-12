@@ -120,4 +120,8 @@ public class HgLocalIgnoredHolder implements Disposable {
       SET_LOCK.writeLock().unlock();
     }
   }
+
+  public int getSize() {
+    return getIgnoredFiles().size();
+  }
 }

@@ -19,15 +19,14 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
 public class ChangesBrowserSpecificFilesNode extends ChangesBrowserNode {
-  protected final int myFilesSize;
-  protected final int myDirsSize;
   protected final boolean myIsMany;
   @NotNull protected final Runnable myDialogShower;
 
   protected ChangesBrowserSpecificFilesNode(Object userObject, int filesSize, int dirsSize, boolean many, @NotNull Runnable shower) {
     super(userObject);
-    myFilesSize = filesSize;
-    myDirsSize = dirsSize;
+    // if files presented in the same view recalculate number of dirs and files -> provide -1; otherwise use from model
+    myCount = many ? filesSize : -1;
+    myDirectoryCount = many ? dirsSize : -1;
     myIsMany = many;
     myDialogShower = shower;
   }
@@ -43,17 +42,12 @@ public class ChangesBrowserSpecificFilesNode extends ChangesBrowserNode {
   }
 
   public int getFilesSize() {
-    return myFilesSize;
+    return myCount;
   }
 
   @Override
   public int getCount() {
-    return myFilesSize - myDirsSize;
-  }
-
-  @Override
-  public int getDirectoryCount() {
-    return myDirsSize;
+    return super.getCount() - getDirectoryCount();
   }
 
   public boolean isManyFiles() {

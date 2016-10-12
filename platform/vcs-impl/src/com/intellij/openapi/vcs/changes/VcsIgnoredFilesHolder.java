@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 public interface VcsIgnoredFilesHolder extends IgnoredFilesHolder {
   ExtensionPointName<VcsIgnoredFilesHolder> VCS_IGNORED_FILES_HOLDER_EP = ExtensionPointName.create("com.intellij.vcs.ignoredFilesHolder");
 
+  default boolean isInUpdatingMode() {return false;}
+
   @NotNull
   AbstractVcs getVcs();
 }

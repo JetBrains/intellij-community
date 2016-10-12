@@ -24,56 +24,66 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.repo.HgRepository;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder {
   private final Project myProject;
-  private HgVcs myVcs;
-  private final Set<VirtualFile> mySet;
-  private final Set<VirtualFile> myVcsIgnoredSet;
+  private final HgVcs myVcs;
+  private final Map<HgRepository, HgLocalIgnoredHolder> myVcsIgnoredHolderMap;
 
   public HgIgnoredFileHolder(Project project) {
     myProject = project;
     myVcs = HgVcs.getInstance(myProject);
-    mySet = ContainerUtil.newHashSet();
-    myVcsIgnoredSet = ContainerUtil.newHashSet();   //collect ignored files from VcsChangeProvider -> processIgnored
+    myVcsIgnoredHolderMap = ContainerUtil.newHashMap();
   }
 
   @Override
   public void addFile(VirtualFile file) {
-    // todo fix more. take from x0x branch
-    //LOG.assertTrue(! file.isDirectory());
-    mySet.add(file);
-    myVcsIgnoredSet.add(file);
+  }
+
+  @Override
+  public int getDirNum() {
+    return 0;
+  }
+
+  @Override
+  public int getFilesNum() {
+    return myVcsIgnoredHolderMap.values().stream().mapToInt(HgLocalIgnoredHolder::getSize).sum();
   }
 
   @Override
   public boolean containsFile(VirtualFile file) {
-    return mySet.contains(file) || myVcsIgnoredSet.contains(file);
+    HgRepository repositoryForFile = HgUtil.getRepositoryForFile(myProject, file);
+    if (repositoryForFile == null) return false;
+    HgLocalIgnoredHolder localIgnoredHolder = myVcsIgnoredHolderMap.get(repositoryForFile);
+    return localIgnoredHolder != null && localIgnoredHolder.contains(file);
   }
 
   @Override
   public Collection<VirtualFile> values() {
-    return ContainerUtil.union(mySet, myVcsIgnoredSet);
+    return myVcsIgnoredHolderMap.values().stream().map(HgLocalIgnoredHolder::getIgnoredFiles).flatMap(Set::stream)
+      .collect(Collectors.toSet());
   }
-  
- @Override
+
+  @Override
   public void cleanAndAdjustScope(final VcsModifiableDirtyScope scope) {
   }
 
   @Override
   public void cleanAll() {
-    mySet.clear();
-    myVcsIgnoredSet.clear();// not sure we need to delete
+    myVcsIgnoredHolderMap.clear();
   }
 
   @Override
   public FileHolder copy() {
     final HgIgnoredFileHolder result = new HgIgnoredFileHolder(myProject);
-    result.mySet.addAll(mySet);
-    result.myVcsIgnoredSet.addAll(myVcsIgnoredSet);
+    result.myVcsIgnoredHolderMap.putAll(myVcsIgnoredHolderMap);
     return result;
   }
 
@@ -84,7 +94,15 @@ public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder {
 
   @Override
   public void notifyVcsStarted(AbstractVcs scope) {
-    cleanAll();
+    myVcsIgnoredHolderMap.clear();
+    for (HgRepository repository : HgUtil.getRepositoryManager(myProject).getRepositories()) {
+      myVcsIgnoredHolderMap.put(repository, repository.getLocalIgnoredHolder());
+    }
+  }
+
+  @Override
+  public boolean isInUpdatingMode() {
+    return myVcsIgnoredHolderMap.values().stream().anyMatch(HgLocalIgnoredHolder::isInUpdateMode);
   }
 
   @NotNull

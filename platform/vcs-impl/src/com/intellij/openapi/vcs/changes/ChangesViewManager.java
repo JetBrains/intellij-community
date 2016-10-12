@@ -335,15 +335,18 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
+    TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.isShowFlatten())
+      .set(changeListManager.getChangeListsCopy(), changeListManager.getDeletedFiles(), changeListManager.getModifiedWithoutEditing(),
+           changeListManager.getSwitchedFilesMap(), changeListManager.getSwitchedRoots(),
+           changeListManager.getLockedFolders(),
+           changeListManager.getLogicallyLockedFolders())
+      .setUnversioned(changeListManager.getUnversionedFiles(), changeListManager.getUnversionedFilesSize());
+    if (myState.myShowIgnored) {
+      treeModelBuilder.setIgnored(changeListManager.getIgnoredFiles(), changeListManager.getIgnoredFilesSize(),
+                                  changeListManager.isIgnoredInUpdateMode());
+    }
     myView.updateModel(
-      new TreeModelBuilder(myProject, myView.isShowFlatten())
-        .set(changeListManager.getChangeListsCopy(), changeListManager.getDeletedFiles(), changeListManager.getModifiedWithoutEditing(),
-             changeListManager.getSwitchedFilesMap(), changeListManager.getSwitchedRoots(),
-             changeListManager.getLockedFolders(),
-             changeListManager.getLogicallyLockedFolders())
-        .setUnversioned(changeListManager.getUnversionedFiles(), changeListManager.getUnversionedFilesSize())
-        .setIgnored(myState.myShowIgnored ? changeListManager.getIgnoredFiles() : null)
-        .build()
+      treeModelBuilder.build()
     );
 
     changeDetails();
