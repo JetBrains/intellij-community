@@ -37,7 +37,10 @@ import com.intellij.util.containers.EmptyIntHashSet;
 import com.intellij.util.io.ReplicatorInputStream;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -850,10 +853,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     String rootName;
     String canonicalBasePath;
     if (fs instanceof ArchiveFileSystem) {
-      VirtualFile localFile = ((ArchiveFileSystem)fs).findLocalByRootPath(basePath);
+      final ArchiveFileSystem afs = (ArchiveFileSystem)fs;
+      VirtualFile localFile = afs.findLocalByRootPath(basePath);
       if (localFile == null) return null;
       rootName = localFile.getName();
-      canonicalBasePath = localFile.getPath() + URLUtil.JAR_SEPARATOR; // make sure to not create FsRoot with ".." garbage in path
+      canonicalBasePath = afs.getRootPathByLocal(localFile); // make sure to not create FsRoot with ".." garbage in path
     }
     else {
       rootName = basePath;
