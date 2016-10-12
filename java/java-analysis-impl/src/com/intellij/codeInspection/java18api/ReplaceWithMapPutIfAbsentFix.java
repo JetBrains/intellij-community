@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -33,10 +34,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ReplaceWithMapPutIfAbsentFix implements LocalQuickFix {
   private final SmartPsiElementPointer<PsiMethodCallExpression> myPutExpressionPointer;
+  private final String myMethodName;
 
-  public ReplaceWithMapPutIfAbsentFix(PsiMethodCallExpression putExpression) {
+  public ReplaceWithMapPutIfAbsentFix(PsiMethodCallExpression putExpression, String methodName) {
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(putExpression.getProject());
     myPutExpressionPointer = smartPointerManager.createSmartPsiElementPointer(putExpression);
+    myMethodName = methodName; // either "putIfAbsent" or "computeIfAbsent"
   }
 
   @Override
@@ -70,10 +73,15 @@ public class ReplaceWithMapPutIfAbsentFix implements LocalQuickFix {
     final PsiElement putContainingElement = operatorHelper.getPutContainingElement(putExpression);
     final Couple<String> boundText = getBoundText(putContainingElement, putExpression);
 
-    final PsiStatement newStatement = elementFactory.createStatementFromText(boundText.getFirst() + qualifier.getText() + ".putIfAbsent"
-                                                                             + "(" + arguments[0].getText() + "," +
-                                                                             putExpression.getArgumentList().getExpressions()[1].getText() +
-                                                                             ")" + boundText.getSecond(), conditionalOperator);
+    String valueArgument = putExpression.getArgumentList().getExpressions()[1].getText();
+    if(myMethodName.equals("computeIfAbsent")) {
+      String varName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName("k", putExpression, true);
+      valueArgument = varName + " -> " + valueArgument;
+    }
+    final PsiStatement newStatement =
+      elementFactory.createStatementFromText(boundText.getFirst() + qualifier.getText() + "." + myMethodName +
+                                             "(" + arguments[0].getText() + "," + valueArgument + ")" + boundText.getSecond(),
+                                             conditionalOperator);
     conditionalOperator.replace(newStatement);
   }
 
@@ -96,7 +104,7 @@ public class ReplaceWithMapPutIfAbsentFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return QuickFixBundle.message("java.8.collections.api.inspection.fix.text", "putIfAbsent");
+    return QuickFixBundle.message("java.8.collections.api.inspection.fix.text", myMethodName);
   }
 
   private static ConditionalOperatorHelper getHelper(PsiElement element) {

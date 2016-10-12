@@ -17,8 +17,10 @@ package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -37,12 +39,14 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
   private static final Logger LOG = Logger.getInstance(Java8CollectionsApiInspection.class);
 
   public boolean myReportContainsCondition;
+  public boolean mySuggestPutIfAbsentForComplexExpression;
 
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Report when \'containsKey\' is used in condition (may change semantics)", "myReportContainsCondition");
+    panel.addCheckbox("Suggest to replace with \'putIfAbsent\' if value is complex expression (may change semantics)", "mySuggestPutIfAbsentForComplexExpression");
     return panel;
   }
 
@@ -166,12 +170,12 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
     return new ConditionInfo(containsQualifier, containsKey, inverted);
   }
 
-  private static void analyzeCorrespondenceOfPutAndGet(@NotNull PsiElement adjustedElseBranch,
-                                                       @Nullable PsiElement adjustedThenBranch,
-                                                       @Nullable PsiExpression containsQualifier,
-                                                       @Nullable PsiExpression containsKey,
-                                                       @NotNull ProblemsHolder holder,
-                                                       @NotNull PsiElement context) {
+  private void analyzeCorrespondenceOfPutAndGet(@NotNull PsiElement adjustedElseBranch,
+                                                @Nullable PsiElement adjustedThenBranch,
+                                                @Nullable PsiExpression containsQualifier,
+                                                @Nullable PsiExpression containsKey,
+                                                @NotNull ProblemsHolder holder,
+                                                @NotNull PsiElement context) {
     final PsiElement maybePutMethodCall;
     final PsiElement maybeGetMethodCall;
     if (adjustedThenBranch == null) {
@@ -229,11 +233,24 @@ public class Java8CollectionsApiInspection extends BaseJavaBatchLocalInspectionT
           return;
         }
         PsiExpression putKeyArgument = putArguments[0];
+        PsiExpression putValueArgument = putArguments[1];
 
         if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(containsKey, putKeyArgument) &&
             (getArgument == null || EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(getArgument, putKeyArgument))) {
-          holder.registerProblem(context, QuickFixBundle.message("java.8.collections.api.inspection.description"),
-                                 new ReplaceWithMapPutIfAbsentFix(putMethodCall));
+          LocalQuickFix fix = null;
+          if (ExpressionUtils.isSimpleExpression(putValueArgument)) {
+            fix = new ReplaceWithMapPutIfAbsentFix(putMethodCall, "putIfAbsent");
+          }
+          else if ((maybePutMethodCall.getParent() instanceof PsiExpressionStatement) && // only if result of put is not used
+                   LambdaGenerationUtil.canBeUncheckedLambda(putValueArgument)) {
+            fix = new ReplaceWithMapPutIfAbsentFix(putMethodCall, "computeIfAbsent");
+          }
+          else if (mySuggestPutIfAbsentForComplexExpression) {
+            fix = new ReplaceWithMapPutIfAbsentFix(putMethodCall, "putIfAbsent");
+          }
+          if(fix != null) {
+            holder.registerProblem(context, QuickFixBundle.message("java.8.collections.api.inspection.description"), fix);
+          }
         }
       }
     }
