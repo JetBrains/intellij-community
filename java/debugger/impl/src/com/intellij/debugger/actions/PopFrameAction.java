@@ -221,6 +221,9 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
           if (listElement instanceof PsiResourceVariable) {
             res.add(factory.createStatementFromText(((PsiResourceVariable)listElement).getName() + ".close();", tryStatement));
           }
+          else if (listElement instanceof PsiResourceExpression) {
+            res.add(factory.createStatementFromText(((PsiResourceExpression)listElement).getExpression().getText() + ".close();", tryStatement));
+          }
         }
       }
       PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
