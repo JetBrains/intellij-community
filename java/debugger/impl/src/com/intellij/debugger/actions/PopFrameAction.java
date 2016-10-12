@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -65,6 +66,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class PopFrameAction extends DebuggerAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(PopFrameAction.class);
+
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final JavaStackFrame stackFrame = getStackFrame(e);
@@ -218,11 +221,9 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
       if (resourceList != null) {
         PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
         for (PsiResourceListElement listElement : resourceList) {
-          if (listElement instanceof PsiResourceVariable) {
-            res.add(factory.createStatementFromText(((PsiResourceVariable)listElement).getName() + ".close();", tryStatement));
-          }
-          else if (listElement instanceof PsiResourceExpression) {
-            res.add(factory.createStatementFromText(((PsiResourceExpression)listElement).getExpression().getText() + ".close();", tryStatement));
+          String varName = getResourceName(listElement);
+          if (varName != null) {
+            res.add(factory.createStatementFromText("if (" + varName + " != null) " + varName + ".close();", tryStatement));
           }
         }
       }
@@ -233,6 +234,17 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
       tryStatement = PsiTreeUtil.getParentOfType(tryStatement, PsiTryStatement.class);
     }
     return res;
+  }
+
+  private static String getResourceName(PsiResourceListElement resource) {
+    if (resource instanceof PsiResourceVariable) {
+      return ((PsiResourceVariable)resource).getName();
+    }
+    else if (resource instanceof PsiResourceExpression) {
+      return ((PsiResourceExpression)resource).getExpression().getText();
+    }
+    LOG.error("Unknown PsiResourceListElement type: " + resource.getClass());
+    return null;
   }
 
   static JavaStackFrame getStackFrame(AnActionEvent e) {
