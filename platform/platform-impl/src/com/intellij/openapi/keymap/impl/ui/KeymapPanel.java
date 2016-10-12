@@ -668,10 +668,18 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       myNonEnglishKeyboardSupportOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
     }
 
+    Keymap activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
     Keymap selectedKeymap = null;
     List<Keymap> list = getManagerKeymaps();
     for (Keymap keymap : list) {
-      if (selectedKeymap == null && keymap == KeymapManagerEx.getInstanceEx().getActiveKeymap()) {
+      if (activeKeymap == keymap) {
+        // select active keymap if it is present
+        selectedKeymap = keymap;
+        break;
+      }
+      if (selectedKeymap == null || KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP.equals(keymap.getName())) {
+        // select MacOS X keymap if default keymap is filtered out
+        // select first keymap if MacOS X keymap is not present
         selectedKeymap = keymap;
       }
     }
