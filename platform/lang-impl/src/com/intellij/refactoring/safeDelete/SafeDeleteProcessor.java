@@ -179,7 +179,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     for (PsiElement element : myElements) {
       for(SafeDeleteProcessorDelegate delegate: Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
         if (delegate.handlesElement(element)) {
-          Collection<String> foundConflicts = delegate instanceof SafeDeleteProcessorDelegateBase 
+          Collection<String> foundConflicts = delegate instanceof SafeDeleteProcessorDelegateBase
                                               ? ((SafeDeleteProcessorDelegateBase)delegate).findConflicts(element, myElements, usages)
                                               : delegate.findConflicts(element, myElements);
           if (foundConflicts != null) {
@@ -397,6 +397,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         }
       });
     } catch (IncorrectOperationException e) {
+      LOG.warn(e);
       RefactoringUIUtil.processIncorrectOperation(myProject, e);
     }
   }
