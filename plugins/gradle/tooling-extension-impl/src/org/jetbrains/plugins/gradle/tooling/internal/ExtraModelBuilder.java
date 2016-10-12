@@ -34,7 +34,7 @@ import java.util.ServiceLoader;
 @SuppressWarnings("UnusedDeclaration")
 public class ExtraModelBuilder implements ToolingModelBuilder {
 
-  private static ServiceLoader<ModelBuilderService> buildersLoader =
+  private ServiceLoader<ModelBuilderService> buildersLoader =
     ServiceLoader.load(ModelBuilderService.class, ExtraModelBuilder.class.getClassLoader());
 
   @NotNull
