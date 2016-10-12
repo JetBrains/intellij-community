@@ -16,12 +16,16 @@
 package com.intellij.compiler;
 
 import com.intellij.compiler.backwardRefs.LanguageLightUsageConverter;
+import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -33,7 +37,10 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -43,7 +50,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -73,17 +83,16 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   @Override
   public void projectOpened() {
     if (isEnabled()) {
-      myDirtyModulesHolder.markAsDirty(ModuleManager.getInstance(myProject).getModules());
-
       myProject.getMessageBus().connect(myProject).subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
-          myDirtyModulesHolder.compilationPhaseStarted();
+          myDirtyModulesHolder.compilerActivityStarted();
           closeReaderIfNeed();
         }
       });
 
-      CompilerManager.getInstance(myProject).addCompilationStatusListener(new CompilationStatusListener() {
+      CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+      compilerManager.addCompilationStatusListener(new CompilationStatusListener() {
         @Override
         public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
           compilationFinished(errors, compileContext);
@@ -95,36 +104,28 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         }
 
         private void compilationFinished(int errors, CompileContext context) {
-          final Module[] compilationModules = context.getCompileScope().getAffectedModules();
-          if (errors != 0) {
-            final Set<Module> modulesWithErrors = new THashSet<>();
-            boolean unknownErrorLocation = false;
-            for (CompilerMessage message : context.getMessages(CompilerMessageCategory.ERROR)) {
-              VirtualFile file = message.getVirtualFile();
-              if (file == null) {
-                unknownErrorLocation = true;
-                break;
-              }
-              Module module = myProjectFileIndex.getModuleForFile(file);
-              if (module == null) {
-                unknownErrorLocation = true;
-                break;
-              }
-              modulesWithErrors.add(module);
-            }
-            if (unknownErrorLocation) {
-              myDirtyModulesHolder.compilationPhaseFinishedWithUnknownErrorLocation(compilationModules);
+          BuildManager.getInstance().runCommand(() -> {
+            final Module[] compilationModules = context.getCompileScope().getAffectedModules();
+            Set<Module> modulesWithErrors;
+            if (errors != 0) {
+              modulesWithErrors = Stream.of(context.getMessages(CompilerMessageCategory.ERROR))
+                .map(CompilerMessage::getVirtualFile)
+                .distinct()
+                .map(f -> f == null ? null : myProjectFileIndex.getModuleForFile(f))
+                .collect(Collectors.toSet());
             }
             else {
-              myDirtyModulesHolder.compilationPhaseFinished(compilationModules, modulesWithErrors.toArray(Module.EMPTY_ARRAY));
+              modulesWithErrors = Collections.emptySet();
             }
-          }
-          else {
-            myDirtyModulesHolder.compilationPhaseFinished(compilationModules, Module.EMPTY_ARRAY);
-          }
+            if (modulesWithErrors.contains(null) /*unknown error location*/) {
+              myDirtyModulesHolder.compilerActivityFinished(Module.EMPTY_ARRAY, compilationModules);
+            } else {
+              myDirtyModulesHolder.compilerActivityFinished(compilationModules, modulesWithErrors.toArray(Module.EMPTY_ARRAY));
+            }
 
-          myCompilationCount.increment();
-          openReaderIfNeed();
+            myCompilationCount.increment();
+            openReaderIfNeed();
+          });
         }
       });
 
@@ -170,8 +171,26 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
           myDirtyModulesHolder.fileChanged(file);
         }
       }, myProject);
-    }
 
+      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, CompilerBundle.message("compiler.ref.service.validation.task.name")) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            indicator.setText(CompilerBundle.message("compiler.ref.service.validation.progress.text"));
+            CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
+            boolean isUpToDate = compilerManager.isUpToDate(projectCompileScope);
+            BuildManager.getInstance().runCommand(() -> {
+              if (isUpToDate) {
+                myDirtyModulesHolder.compilerActivityFinished(projectCompileScope.getAffectedModules(), Module.EMPTY_ARRAY);
+                myCompilationCount.increment();
+                openReaderIfNeed();
+              }
+              else {
+                myDirtyModulesHolder.compilerActivityFinished(Module.EMPTY_ARRAY, projectCompileScope.getAffectedModules());
+              }
+            });
+          }
+        });
+    }
   }
 
   @Override
@@ -371,22 +390,18 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
     private final Object myLock = new Object();
 
-    private void compilationPhaseStarted() {
+    private void compilerActivityStarted() {
       synchronized (myLock) {
         myCompilationPhase = true;
       }
     }
 
-    private void compilationPhaseFinishedWithUnknownErrorLocation(Module[] compilationModules) {
-      compilationPhaseFinished(Module.EMPTY_ARRAY, compilationModules);
-    }
-
-    private void compilationPhaseFinished(Module[] compilationModules, Module[] modulesWithErrors) {
+    private void compilerActivityFinished(Module[] affectedModules, Module[] markAsDirty) {
       synchronized (myLock) {
         myCompilationPhase = false;
 
-        ContainerUtil.removeAll(myChangedModules, compilationModules);
-        Collections.addAll(myChangedModules, modulesWithErrors);
+        ContainerUtil.removeAll(myChangedModules, affectedModules);
+        Collections.addAll(myChangedModules, markAsDirty);
         myChangedModules.addAll(myChangedModulesDuringCompilation);
         myChangedModulesDuringCompilation.clear();
       }
@@ -421,8 +436,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
       return getDirtyScope().contains(file);
     }
 
-    private void markAsDirty(Module[] modules) {
-      //TODO delete; the service should be available on IDE restart
+    private void markAllModulesAsDirty() {
+      final Module[] modules = ModuleManager.getInstance(myProject).getModules();
       synchronized (myLock) {
         Collections.addAll(myChangedModules, modules);
       }
