@@ -854,12 +854,14 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
           exclude(name: "src/*.jar")
         }
         fileset(dir: "${home}/../../out/studio/runtime")
-
         jar("android-common.jar") {
           module("android-common")
         }
         jar("adt-ui.jar") {
           module("adt-ui")
+        }
+        jar("sdk-updates.jar") {
+          module("sdk-updates")
         }
         jar("repository.jar") {
           module("repository")
