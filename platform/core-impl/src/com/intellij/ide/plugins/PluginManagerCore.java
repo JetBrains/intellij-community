@@ -340,6 +340,10 @@ public class PluginManagerCore {
 
   @Nullable
   public static PluginId getPluginByClassName(@NotNull String className) {
+    if (className.startsWith("java.") || className.startsWith("javax.") || className.startsWith("kotlin.") || className.startsWith("groovy.")) {
+      return null;
+    }
+
     for (IdeaPluginDescriptor descriptor : getPlugins()) {
       if (hasLoadedClass(className, descriptor.getPluginClassLoader())) {
         PluginId id = descriptor.getPluginId();
