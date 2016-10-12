@@ -16,8 +16,6 @@
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.impl.PluginLayout
-
 /**
  * @author nik
  */
@@ -101,6 +99,12 @@ abstract class ProductProperties {
    * If {@code true} the main product JAR file will be scrambled using {@link ProprietaryBuildTools#scrambleTool}
    */
   boolean scrambleMainJar = false
+
+  /**
+   * If {@code false} names of private fields won't be scrambled (to avoid problems with serialization). This field is ignored if
+   * {@link #scrambleMainJar} is {@code false}.
+   */
+  boolean scramblePrivateFields = true
 
   /**
    * Describes which modules should be included into the product's platform and which plugins should be bundled with the product
