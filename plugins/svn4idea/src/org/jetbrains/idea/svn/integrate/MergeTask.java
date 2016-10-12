@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -23,6 +24,8 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNURL;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class MergeTask extends BaseMergeTask {
 
@@ -35,16 +38,12 @@ public class MergeTask extends BaseMergeTask {
   }
 
   @Override
-  public void run() {
-    SVNURL sourceUrl = parseSourceUrl();
+  public void run() throws VcsException {
+    next(TaskDescriptor.createForBackgroundableTask(newIntegrateTask(createUrl(myMergeContext.getSourceUrl()))));
 
-    if (sourceUrl != null) {
-      next(TaskDescriptor.createForBackgroundableTask(newIntegrateTask(sourceUrl)));
-
-      boolean needRefresh = setupDefaultEmptyChangeListForMerge();
-      if (needRefresh) {
-        refreshChanges();
-      }
+    boolean needRefresh = setupDefaultEmptyChangeListForMerge();
+    if (needRefresh) {
+      refreshChanges();
     }
   }
 

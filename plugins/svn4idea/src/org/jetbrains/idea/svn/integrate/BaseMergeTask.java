@@ -24,15 +24,11 @@ import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.List;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtil.ar;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
 
@@ -76,11 +72,6 @@ public abstract class BaseMergeTask extends TaskDescriptor {
     myRunner.next(tasks);
   }
 
-  @CalledInAny
-  protected void next(@NotNull List<TaskDescriptor> tasks) {
-    myRunner.next(tasks);
-  }
-
   protected void suspend() {
     myRunner.suspend();
   }
@@ -90,7 +81,7 @@ public abstract class BaseMergeTask extends TaskDescriptor {
   }
 
   @NotNull
-  protected List<TaskDescriptor> getMergeAllTasks(boolean supportsMergeInfo) {
+  protected TaskDescriptor[] getMergeAllTasks(boolean supportsMergeInfo) {
     // merge info is not supported - branch copy point is used to make first sync merge successful (without unnecessary tree conflicts)
     // merge info is supported and svn client < 1.8 - branch copy point is used to determine if sync or reintegrate merge should be performed
     // merge info is supported and svn client >= 1.8 - branch copy point is not used - svn automatically detects if reintegrate is necessary
@@ -100,26 +91,12 @@ public abstract class BaseMergeTask extends TaskDescriptor {
       : new LookForBranchOriginTask(myMergeProcess, true, copyPoint ->
         next(new MergeAllWithBranchCopyPointTask(myMergeProcess, copyPoint, supportsMergeInfo)));
 
-    return newArrayList(new LocalChangesPromptTask(myMergeProcess), mergeAllTask);
+    return ar(new LocalChangesPromptTask(myMergeProcess), mergeAllTask);
   }
 
   protected void runChangeListsMerge(@NotNull List<CommittedChangeList> lists, @NotNull String title) {
     next(new LocalChangesPromptTask(myMergeProcess, lists),
          new MergeTask(myMergeProcess, new ChangeListsMergerFactory(lists, false, false, true), title));
-  }
-
-  @Nullable
-  protected SVNURL parseSourceUrl() {
-    SVNURL result = null;
-
-    try {
-      result = SvnUtil.createUrl(myMergeContext.getSourceUrl());
-    }
-    catch (SvnBindException e) {
-      end(e);
-    }
-
-    return result;
   }
 
   protected void end() {

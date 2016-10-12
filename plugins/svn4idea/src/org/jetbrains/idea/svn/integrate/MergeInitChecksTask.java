@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.NestedCopyType;
@@ -24,6 +25,8 @@ import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 
 import java.io.File;
 
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+
 public class MergeInitChecksTask extends BaseMergeTask {
 
   public MergeInitChecksTask(@NotNull QuickMerge mergeProcess) {
@@ -31,16 +34,12 @@ public class MergeInitChecksTask extends BaseMergeTask {
   }
 
   @Override
-  public void run() {
-    SVNURL url = parseSourceUrl();
-
-    if (url != null) {
-      if (areInSameHierarchy(url, myMergeContext.getWcInfo().getUrl())) {
-        end("Cannot merge from self", true);
-      }
-      else if (hasSwitchedRoots() && !myInteraction.shouldContinueSwitchedRootFound()) {
-        end();
-      }
+  public void run() throws VcsException {
+    if (areInSameHierarchy(createUrl(myMergeContext.getSourceUrl()), myMergeContext.getWcInfo().getUrl())) {
+      end("Cannot merge from self", true);
+    }
+    else if (hasSwitchedRoots() && !myInteraction.shouldContinueSwitchedRootFound()) {
+      end();
     }
   }
 

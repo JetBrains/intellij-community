@@ -15,13 +15,10 @@
  */
 package org.jetbrains.idea.svn.integrate;
 
-import com.intellij.util.continuation.TaskDescriptor;
 import com.intellij.util.continuation.Where;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.util.containers.ContainerUtil.ar;
 import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
 
 public class CheckRepositorySupportsMergeInfoTask extends BaseMergeTask {
@@ -32,16 +29,11 @@ public class CheckRepositorySupportsMergeInfoTask extends BaseMergeTask {
 
   @Override
   public void run() {
-    next(supportsMergeInfo() ? getChooseMergeTypeTasks() : getMergeAllTasks(false));
+    next(supportsMergeInfo() ? ar(new MergeAllOrSelectedChooserTask(myMergeProcess)) : getMergeAllTasks(false));
   }
 
   private boolean supportsMergeInfo() {
     return myMergeContext.getWcInfo().getFormat().supportsMergeInfo() &&
            checkRepositoryVersion15(myMergeContext.getVcs(), myMergeContext.getSourceUrl());
-  }
-
-  @NotNull
-  private List<TaskDescriptor> getChooseMergeTypeTasks() {
-    return newArrayList(new MergeAllOrSelectedChooserTask(myMergeProcess));
   }
 }
