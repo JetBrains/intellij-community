@@ -230,7 +230,7 @@ public class StepikConnectorGet {
       for (Integer section : info.sections) {
         switch (course.getCourseType()) {
           case ("stepik"):
-            course.addLessons(getLessonsWithSectionNames(section));
+            course.addLessons(getLessonsWithSectionNames(section, course));
             break;
           default:
             course.addLessons(getLessons(section));
@@ -283,7 +283,7 @@ public class StepikConnectorGet {
     return lessons;
   }
 
-  public static List<Lesson> getLessonsWithSectionNames(int sectionId) throws IOException {
+  public static List<Lesson> getLessonsWithSectionNames(int sectionId, Course course) throws IOException {
     final StepikWrappers.SectionContainer
       sectionContainer = getFromStepik(EduStepikNames.SECTIONS + String.valueOf(sectionId), StepikWrappers.SectionContainer.class);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
@@ -301,6 +301,7 @@ public class StepikConnectorGet {
 
     String sectionName = sectionContainer.sections.get(0).title;
     final List<Lesson> lessons = new ArrayList<Lesson>();
+    course.addSectionName(EduNames.SECTION+sectionContainer.sections.get(0).position, sectionName);
     for (Lesson lesson : lessonContainer.lessons) {
       lesson.setName(sectionName + EduNames.SEPARATOR + lesson.getName());
       createTasks(lesson, lesson.steps);

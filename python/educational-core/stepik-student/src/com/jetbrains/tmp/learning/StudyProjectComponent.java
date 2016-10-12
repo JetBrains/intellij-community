@@ -26,8 +26,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.tmp.learning.actions.StudyActionWithShortcut;
-import com.jetbrains.tmp.learning.actions.StudyNextWindowAction;
-import com.jetbrains.tmp.learning.actions.StudyPrevWindowAction;
 import com.jetbrains.tmp.learning.core.EduNames;
 import com.jetbrains.tmp.learning.core.EduUtils;
 import com.jetbrains.tmp.learning.courseFormat.Course;
@@ -83,6 +81,7 @@ public class StudyProjectComponent implements ProjectComponent {
             if (course != null) {
               UISettings.getInstance().HIDE_TOOL_STRIPES = false;
               UISettings.getInstance().fireUISettingsChanged();
+              LOG.info("register Shortcuts");
               registerShortcuts();
               EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
               StepikConnectorLogin.loginFromDialog(myProject);
@@ -120,8 +119,8 @@ public class StudyProjectComponent implements ProjectComponent {
             }
           }
         }
-        addShortcut(StudyNextWindowAction.ACTION_ID, new String[]{StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.SHORTCUT2});
-        addShortcut(StudyPrevWindowAction.ACTION_ID, new String[]{StudyPrevWindowAction.SHORTCUT});
+//        addShortcut(StudyNextWindowAction.ACTION_ID, new String[]{StudyNextWindowAction.SHORTCUT, StudyNextWindowAction.SHORTCUT2});
+//        addShortcut(StudyPrevWindowAction.ACTION_ID, new String[]{StudyPrevWindowAction.SHORTCUT});
       }
       else {
         LOG.warn("Actions on toolbar are nulls");
@@ -274,7 +273,8 @@ public class StudyProjectComponent implements ProjectComponent {
   @NotNull
   @Override
   public String getComponentName() {
-    return "StudyTaskManager";
+    //return "StudyTaskManager";
+    return "StepikTaskManager";
   }
 
   public static StudyProjectComponent getInstance(@NotNull final Project project) {

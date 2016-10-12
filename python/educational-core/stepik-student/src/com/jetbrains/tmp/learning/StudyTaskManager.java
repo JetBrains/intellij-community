@@ -44,6 +44,7 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public boolean myShouldUseJavaFx = StudyUtils.hasJavaFx();
   private StudyToolWindow.StudyToolWindowMode myToolWindowMode = StudyToolWindow.StudyToolWindowMode.TEXT;
   private boolean myTurnEditingMode = false;
+  private boolean showHint = true;
 
   private String defaultLang;
 
@@ -218,6 +219,12 @@ public class StudyTaskManager implements PersistentStateComponent<Element>, Dumb
   public void setLangManager(LangManager langManager) {
     this.langManager = langManager;
   }
+
+  public boolean getShowHint() {
+    return showHint;
+  }
+
+  public void setShowHint(boolean showHint) {
+    this.showHint = showHint;
+  }
 }
-
-

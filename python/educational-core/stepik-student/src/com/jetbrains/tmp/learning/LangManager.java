@@ -20,7 +20,7 @@ import com.jetbrains.tmp.learning.courseFormat.Task;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LangManager  {
+public class LangManager {
   private Map<Integer, LangSetting> langSettingsMap;
 
   public LangManager() {
@@ -35,19 +35,19 @@ public class LangManager  {
     this.langSettingsMap = langSettingsMap;
   }
 
-  public LangSetting getLangSetting(Task task){
+  public LangSetting getLangSetting(Task task) {
     return getLangSetting(task.getStepId());
   }
 
-  public LangSetting getLangSetting(int stepId){
+  public LangSetting getLangSetting(int stepId) {
     return langSettingsMap.get(stepId);
   }
 
-  public void setLangSetting(Task task, LangSetting langSetting){
+  public void setLangSetting(Task task, LangSetting langSetting) {
     setLangSetting(task.getStepId(), langSetting);
   }
 
-  public void setLangSetting(int stepId, LangSetting langSetting){
+  public void setLangSetting(int stepId, LangSetting langSetting) {
     langSettingsMap.put(stepId, langSetting);
   }
 }
