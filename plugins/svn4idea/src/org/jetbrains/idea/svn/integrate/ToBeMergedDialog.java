@@ -117,7 +117,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     myListsEngine = new BasePageEngine<>(lists, lists.size());
 
     myPanel = new JPanel(new BorderLayout());
-    myWiseSelection = new QuantitySelection<>(myAllListsLoaded);
+    myWiseSelection = new QuantitySelection<>(allStatusesCalculated);
     myAlreadyMerged = newHashSet();
     setOKButtonText("Merge Selected");
     initUI();
