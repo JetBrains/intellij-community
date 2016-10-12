@@ -349,7 +349,7 @@ public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspe
                                                          JavaHighlightUtil.formatType(componentType));
           if (!arrayTypeFixChecked) {
             final PsiType checkResult = JavaHighlightUtil.sameType(initializers);
-            fix = checkResult != null ? new VariableArrayTypeFix(arrayInitializer, checkResult) : null;
+            fix = checkResult != null ? VariableArrayTypeFix.createFix(arrayInitializer, checkResult) : null;
             arrayTypeFixChecked = true;
           }
 
