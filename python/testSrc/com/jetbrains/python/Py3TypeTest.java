@@ -84,6 +84,40 @@ public class Py3TypeTest extends PyTestCase {
            "    pass"));
   }
 
+  public void testYieldFromHomogeneousTuple() {
+    myFixture.copyDirectoryToProject("typing", "");
+    doTest("str",
+           "import typing\n"+
+           "def get_tuple() -> typing.Tuple[str, ...]:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_tuple()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
+  public void testYieldFromHeterogeneousTuple() {
+    myFixture.copyDirectoryToProject("typing", "");
+    doTest("Union[int, str]",
+           "import typing\n" +
+           "def get_tuple() -> typing.Tuple[int, int, str]:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_tuple()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
+  public void testYieldFromUnknownTuple() {
+    doTest("Any",
+           "def get_tuple() -> tuple:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_tuple()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
   public void testYieldFromUnknownList() {
     doTest("Any",
            "def get_list() -> list:\n" +
