@@ -152,13 +152,9 @@ public class SvnQuickMergeTest extends Svn17TestCase {
       Thread.sleep(10);
     }
 
-    // we should get exactly 2 revisions for selection (copy and change in b2)
     AtomicReference<String> selectionError = new AtomicReference<>();
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true, lists -> {
-      if (lists.size() != 4) {
-        selectionError.set("List size: " + lists.size());
-      }
-      else if (lists.get(3).getNumber() != numberBefore) {
+      if (lists.get(3).getNumber() != numberBefore) {
         selectionError.set("wrong revision for copy statement: " + lists.get(3).getNumber());
       }
       return new SmartList<>(lists.get(2));  // get a change
@@ -167,7 +163,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     waitQuickMerge(myBranchUrl, testInteraction);
 
-    if (selectionError.get() != null){
+    if (selectionError.get() != null) {
       throw new RuntimeException(selectionError.get());
     }
 
@@ -223,13 +219,9 @@ public class SvnQuickMergeTest extends Svn17TestCase {
     VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS2File, "completely changed");
     runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in b2", myBranchTree.myS2File.getPath());
 
-    // we should get exactly 2 revisions for selection (copy and change in b2)
     AtomicReference<String> selectionError = new AtomicReference<>();
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true, lists -> {
-      if (lists.size() != 2) {
-        selectionError.set("List size: " + lists.size());
-      }
-      else if (lists.get(1).getNumber() != numberBeforeCopy + 1) {
+      if (lists.get(1).getNumber() != numberBeforeCopy + 1) {
         selectionError.set("wrong revision for copy statement: " + lists.get(1).getNumber());
       }
       return new SmartList<>(lists.get(0));  // get a change
@@ -238,7 +230,7 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     waitQuickMerge(myRepoUrl + "/branches/b2", testInteraction);
 
-    if (selectionError.get() != null){
+    if (selectionError.get() != null) {
       throw new RuntimeException(selectionError.get());
     }
 
