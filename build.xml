@@ -16,6 +16,10 @@
     <isset property="build" />
   </condition>
 
+  <condition property="bundle.gradle.plugin" value="${bundle.gradle.plugin}" else="false">
+    <isset property="bundle.gradle.plugin" />
+  </condition>
+
   <condition property="test.patterns" value="${testpatterns}"
              else="org.jetbrains.android.*;com.android.tools.idea.*;com.android.tools.ndk.*;com.google.gct.*;com.google.idea.blaze.*">
     <isset property="testpatterns" />
@@ -88,6 +92,7 @@
         <sysproperty key="idea.test.patterns" value="${test.patterns}" />
         <sysproperty key="product" value="${product.name}" />
         <sysproperty key="productPropertiesPath" value="${productPropertiesPath}" />
+        <sysproperty key="bundle.gradle.plugin" value="${bundle.gradle.plugin}" />
         <sysproperty key="studio.ui.tests" value="${studio.ui.tests}" />
         <sysproperty key="ui.test.groups" value="${ui.test.groups}" />
         <sysproperty key="compile.parallel" value="${compile.parallel}" />
