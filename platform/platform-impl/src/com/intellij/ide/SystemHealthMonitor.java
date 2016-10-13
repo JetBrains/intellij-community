@@ -163,6 +163,12 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   }
 
   private void checkJvm() {
+    try {
+      Class.forName("com.sun.jdi.Value");
+    } catch (Throwable t) {
+      showNotification("unsupported.jre");
+    }
+
     if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") &&
         !SystemInfo.isJetbrainsJvm && !SystemInfo.isStudioJvm) {
       showNotification("unsupported.jvm.openjdk.message");
@@ -262,7 +268,10 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
     LOG.info("issue detected: " + key + (ignored ? " (ignored)" : ""));
     if (ignored) return;
 
-    final String message = IdeBundle.message(key) + IdeBundle.message("sys.health.acknowledge.link");
+    final String message = IdeBundle.message(key)
+                           // Don't allow suppressing the JRE warning
+                           + (key.equals("unsupported.jre") ?  "" :
+                           IdeBundle.message("sys.health.acknowledge.link"));
 
     final Application app = ApplicationManager.getApplication();
     app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {

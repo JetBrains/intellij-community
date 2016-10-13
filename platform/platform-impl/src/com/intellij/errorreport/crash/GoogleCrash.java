@@ -182,6 +182,16 @@ public class GoogleCrash {
   }
 
   public static boolean isReportableCrash(@NotNull Throwable t) {
+    if (t instanceof ClassNotFoundException) {
+      String cls = t.getMessage();
+      if (cls != null && cls.startsWith("com.sun.jdi.")) {
+        // Android Studio:
+        // Running on a JRE. We're already warning about that in the System Health Monitor.
+        // https://code.google.com/p/android/issues/detail?id=225130
+        return false;
+      }
+    }
+
     return !(t instanceof Logger.EmptyThrowable);
   }
 

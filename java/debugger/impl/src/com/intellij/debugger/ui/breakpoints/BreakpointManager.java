@@ -507,6 +507,7 @@ public class BreakpointManager {
     if (xBreakpoint == null) {
       return null;
     }
+    try {
     Breakpoint breakpoint = xBreakpoint.getUserData(Breakpoint.DATA_KEY);
     if (breakpoint == null && xBreakpoint.getType() instanceof JavaBreakpointType) {
       Project project = ((XBreakpointBase)xBreakpoint).getProject();
@@ -514,6 +515,12 @@ public class BreakpointManager {
       xBreakpoint.putUserData(Breakpoint.DATA_KEY, breakpoint);
     }
     return breakpoint;
+    } catch (Throwable t) {
+      // https://code.google.com/p/android/issues/detail?id=225130
+      // Java debugger running under JRE
+      // We've already warned in the health detector
+      return null;
+    }
   }
 
   //interaction with RequestManagerImpl

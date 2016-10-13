@@ -116,6 +116,12 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     try {
       DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
     }
+    catch (NoClassDefFoundError e) {
+      // Android Studio:
+      // https://code.google.com/p/android/issues/detail?id=225130
+      // Running on a JRE: we've already warned in the system health detector
+      return null;
+    }
     catch (WriteExternalException e) {
       LOG.error(e);
       return null;
@@ -139,6 +145,11 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     }
     catch (InvalidDataException e) {
       LOG.error(e);
+    }
+    catch (NoClassDefFoundError ignore) {
+      // Android Studio:
+      // https://code.google.com/p/android/issues/detail?id=225130
+      // Running on a JRE: we've already warned in the system health detector
     }
 
     myContentStates.clear();
