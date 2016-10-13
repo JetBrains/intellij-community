@@ -1191,16 +1191,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return false;
     }
 
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    DataContext dataContext = getDataContext();
+    Graphics graphics = myEditorComponent.getGraphics();
+    if (graphics != null) { // editor component is not showing
+      processKeyTypedImmediately(c, graphics);
+      graphics.dispose();
+    }
 
-    myImmediatePainter.paintCharacter(myEditorComponent.getGraphics(), c);
-
-    actionManager.fireBeforeEditorTyping(c, dataContext);
+    ActionManagerEx.getInstanceEx().fireBeforeEditorTyping(c, getDataContext());
     MacUIUtil.hideCursor();
-    EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, dataContext);
+    processKeyTypedNormally(c);
 
     return true;
+  }
+
+  void processKeyTypedImmediately(char c, Graphics graphics) {
+    myImmediatePainter.paintCharacter(graphics, c);
+  }
+
+  void processKeyTypedNormally(char c) {
+    EditorActionManager.getInstance().getTypedAction().actionPerformed(this, c, getDataContext());
   }
 
   private void fireFocusLost() {
@@ -1965,8 +1974,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!mySoftWrapModel.isSoftWrappingEnabled() && !myUseNewRendering) {
       mySizeContainer.beforeChange(e);
     }
-
-    myImmediatePainter.beforeUpdate(e);
   }
 
   void invokeDelayedErrorStripeRepaint() {
@@ -1979,8 +1986,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void changedUpdate(DocumentEvent e) {
     myDocumentChangeInProgress = false;
     if (myDocument.isInBulkUpdate()) return;
-
-    myImmediatePainter.paintUpdate(myEditorComponent.getGraphics(), e);
 
     if (myErrorStripeNeedsRepaint) {
       myMarkupModel.repaint(e.getOffset(), e.getOffset() + e.getNewLength());
