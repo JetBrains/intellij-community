@@ -75,27 +75,12 @@ public class PersistentUtil {
   }
 
   @NotNull
-  public static <T> PersistentSet<T> createPersistentSet(@NotNull KeyDescriptor<T> keyDescriptor,
-                                                         @NotNull String storageKind,
-                                                         @NotNull String logId,
-                                                         int version) throws IOException {
+  public static <T> PersistentSet<T> createPersistentSetOrFailIfBroken(@NotNull KeyDescriptor<T> keyDescriptor,
+                                                                       @NotNull String storageKind,
+                                                                       @NotNull String logId,
+                                                                       int version) throws IOException {
     File storageFile = getStorageFile(storageKind, logId, version);
-
-    return IOUtil.openCleanOrResetBroken(() ->
-                                           new PersistentSetImpl<>(storageFile, keyDescriptor, Page.PAGE_SIZE, null, version),
-                                         storageFile);
-  }
-
-  @NotNull
-  public static <V> PersistentHashMap<Integer, V> createPersistentHashMap(@NotNull DataExternalizer<V> externalizer,
-                                                                          @NotNull String storageKind,
-                                                                          @NotNull String logId,
-                                                                          int version) throws IOException {
-    File storageFile = getStorageFile(storageKind, logId, version);
-
-    return IOUtil.openCleanOrResetBroken(() ->
-                                           new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), externalizer, Page.PAGE_SIZE),
-                                         storageFile);
+    return new PersistentSetImpl<>(storageFile, keyDescriptor, Page.PAGE_SIZE, null, version);
   }
 
   @NotNull

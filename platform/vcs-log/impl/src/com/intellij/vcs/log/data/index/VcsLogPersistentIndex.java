@@ -23,25 +23,24 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.EmptyIntHashSet;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
-import com.intellij.util.io.PersistentMap;
+import com.intellij.util.io.*;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
-import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.TroveUtil;
@@ -68,10 +67,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final Set<VirtualFile> myRoots;
 
-  @NotNull private final PersistentMap<Integer, String> myMessagesIndex;
-  @Nullable private final VcsLogMessagesTrigramIndex myTrigramIndex;
-  @Nullable private final VcsLogUserIndex myUserIndex;
-  @Nullable private final VcsLogPathsIndex myPathsIndex;
+  @Nullable private final MyIndexStorage myIndexStorage;
 
   @NotNull private final SingleTaskController<IndexingRequest, Void> mySingleTaskController = new MySingleTaskController();
   @NotNull private final Map<VirtualFile, AtomicInteger> myNumberOfTasks = ContainerUtil.newHashMap();
@@ -99,12 +95,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(myProject, VcsUserRegistry.class);
 
-    String logId = PersistentUtil.calcLogId(myProject, providers);
-
-    myMessagesIndex = createMap(EnumeratorStringDescriptor.INSTANCE, "messages", logId, 0);
-    myTrigramIndex = createIndex(() -> new VcsLogMessagesTrigramIndex(logId, fatalErrorsConsumer, this));
-    myUserIndex = createIndex(() -> new VcsLogUserIndex(logId, myUserRegistry, fatalErrorsConsumer, this));
-    myPathsIndex = createIndex(() -> new VcsLogPathsIndex(logId, myRoots, fatalErrorsConsumer, this));
+    myIndexStorage = createIndexStorage(fatalErrorsConsumer, PersistentUtil.calcLogId(myProject, providers));
 
     for (VirtualFile root : myRoots) {
       myNumberOfTasks.put(root, new AtomicInteger());
@@ -113,14 +104,10 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     Disposer.register(disposableParent, this);
   }
 
-  public static int getVersion() {
-    return VcsLogStorageImpl.VERSION + VERSION;
-  }
-
-  @Nullable
-  private <I extends VcsLogFullDetailsIndex> I createIndex(@NotNull ThrowableComputable<I, IOException> computable) {
+  protected MyIndexStorage createIndexStorage(@NotNull FatalErrorHandler fatalErrorHandler, @NotNull String logId) {
     try {
-      return computable.compute();
+      return IOUtil.openCleanOrResetBroken(() -> new MyIndexStorage(logId, myUserRegistry, myRoots, fatalErrorHandler, this),
+                                           () -> MyIndexStorage.cleanup(logId));
     }
     catch (IOException e) {
       myFatalErrorsConsumer.consume(this, e);
@@ -128,17 +115,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     return null;
   }
 
-  @NotNull
-  private <V> PersistentMap<Integer, V> createMap(@NotNull KeyDescriptor<V> descriptor,
-                                                  @NotNull String kind,
-                                                  @NotNull String logId, int version) {
-    try {
-      return PersistentUtil.createPersistentHashMap(descriptor, kind, logId, version);
-    }
-    catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
-      return new InMemoryMap<>();
-    }
+  public static int getVersion() {
+    return VcsLogStorageImpl.VERSION + VERSION;
   }
 
   @Override
@@ -155,14 +133,17 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   private void storeDetails(@NotNull List<? extends VcsFullCommitDetails> details, boolean flush) {
+    if (myIndexStorage == null) return;
     try {
       for (VcsFullCommitDetails detail : details) {
         int index = myHashMap.getCommitIndex(detail.getId(), detail.getRoot());
 
-        myMessagesIndex.put(index, detail.getFullMessage());
-        if (myTrigramIndex != null) myTrigramIndex.update(index, detail);
-        if (myUserIndex != null) myUserIndex.update(index, detail);
-        if (myPathsIndex != null) myPathsIndex.update(index, detail);
+        myIndexStorage.messages.put(index, detail.getFullMessage());
+        myIndexStorage.trigrams.update(index, detail);
+        myIndexStorage.users.update(index, detail);
+        myIndexStorage.paths.update(index, detail);
+
+        myIndexStorage.commits.put(index);
       }
       if (flush) {
         flush();
@@ -175,10 +156,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   private void flush() {
     try {
-      myMessagesIndex.force();
-      if (myTrigramIndex != null) myTrigramIndex.flush();
-      if (myUserIndex != null) myUserIndex.flush();
-      if (myPathsIndex != null) myPathsIndex.flush();
+      if (myIndexStorage != null) {
+        myIndexStorage.messages.force();
+        myIndexStorage.trigrams.flush();
+        myIndexStorage.users.flush();
+        myIndexStorage.paths.flush();
+        myIndexStorage.commits.flush();
+      }
     }
     catch (StorageException e) {
       myFatalErrorsConsumer.consume(this, e);
@@ -186,19 +170,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   }
 
   public void markCorrupted() {
-    if (myMessagesIndex instanceof PersistentHashMap) ((PersistentHashMap)myMessagesIndex).markCorrupted();
-    if (myTrigramIndex != null) myTrigramIndex.markCorrupted();
-    if (myUserIndex != null) myUserIndex.markCorrupted();
-    if (myPathsIndex != null) myPathsIndex.markCorrupted();
+    if (myIndexStorage != null) myIndexStorage.commits.markCorrupted();
   }
 
   @Override
   public boolean isIndexed(int commit) {
     try {
-      return myMessagesIndex.get(commit) != null &&
-             (myUserIndex == null || myUserIndex.isIndexed(commit)) &&
-             (myPathsIndex == null || myPathsIndex.isIndexed(commit)) &&
-             (myTrigramIndex == null || myTrigramIndex.isIndexed(commit));
+      return myIndexStorage == null || myIndexStorage.commits.contains(commit);
     }
     catch (IOException e) {
       myFatalErrorsConsumer.consume(this, e);
@@ -225,6 +203,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   @NotNull
   private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<T> condition) {
     TIntHashSet result = new TIntHashSet();
+    if (myIndexStorage == null) return result;
     try {
       Processor<Integer> processor = integer -> {
         try {
@@ -241,11 +220,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         }
         return true;
       };
-      if (myMessagesIndex instanceof PersistentHashMap) {
-        ((PersistentHashMap<Integer, T>)myMessagesIndex).processKeysWithExistingMapping(processor);
+      if (myIndexStorage.messages instanceof PersistentHashMap) {
+        ((PersistentHashMap<Integer, T>)myIndexStorage.messages).processKeysWithExistingMapping(processor);
       }
       else {
-        myMessagesIndex.processKeys(processor);
+        myIndexStorage.messages.processKeys(processor);
       }
     }
     catch (IOException e) {
@@ -257,9 +236,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @NotNull
   private TIntHashSet filterUsers(@NotNull Set<VcsUser> users) {
-    if (myUserIndex != null) {
+    if (myIndexStorage != null) {
       try {
-        return myUserIndex.getCommitsForUsers(users);
+        return myIndexStorage.users.getCommitsForUsers(users);
       }
       catch (IOException | StorageException e) {
         myFatalErrorsConsumer.consume(this, e);
@@ -270,9 +249,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @NotNull
   private TIntHashSet filterPaths(@NotNull Collection<FilePath> paths) {
-    if (myPathsIndex != null) {
+    if (myIndexStorage != null) {
       try {
-        return myPathsIndex.getCommitsForPaths(paths);
+        return myIndexStorage.paths.getCommitsForPaths(paths);
       }
       catch (IOException | StorageException e) {
         myFatalErrorsConsumer.consume(this, e);
@@ -283,20 +262,20 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @NotNull
   public TIntHashSet filterMessages(@NotNull String text) {
-    if (myTrigramIndex != null) {
+    if (myIndexStorage != null) {
       try {
         if (VcsLogUtil.isRegexp(text)) {
           Pattern pattern = Pattern.compile(text);
-          return filter(myMessagesIndex, message -> pattern.matcher(message).find());
+          return filter(myIndexStorage.messages, message -> pattern.matcher(message).find());
         }
         else {
-          ValueContainer.IntIterator commitsForSearch = myTrigramIndex.getCommitsForSubstring(text);
+          ValueContainer.IntIterator commitsForSearch = myIndexStorage.trigrams.getCommitsForSubstring(text);
           if (commitsForSearch != null) {
             TIntHashSet result = new TIntHashSet();
             while (commitsForSearch.hasNext()) {
               int commit = commitsForSearch.next();
               try {
-                String value = myMessagesIndex.get(commit);
+                String value = myIndexStorage.messages.get(commit);
                 if (value != null) {
                   if (StringUtil.containsIgnoreCase(value, text)) {
                     result.add(commit);
@@ -315,18 +294,20 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       catch (StorageException e) {
         myFatalErrorsConsumer.consume(this, e);
       }
+
+      return filter(myIndexStorage.messages, message -> StringUtil.containsIgnoreCase(message, text));
     }
 
-    return filter(myMessagesIndex, message -> StringUtil.containsIgnoreCase(message, text));
+    return EmptyIntHashSet.INSTANCE;
   }
 
   @Override
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
-    if (filters.isEmpty()) return false;
+    if (filters.isEmpty() || myIndexStorage == null) return false;
     for (VcsLogDetailsFilter filter : filters) {
-      if (filter instanceof VcsLogTextFilter && myTrigramIndex != null ||
-          filter instanceof VcsLogUserFilterImpl && myUserIndex != null ||
-          filter instanceof VcsLogStructureFilter && myPathsIndex != null) {
+      if (filter instanceof VcsLogTextFilter ||
+          filter instanceof VcsLogUserFilterImpl ||
+          filter instanceof VcsLogStructureFilter) {
         continue;
       }
       return false;
@@ -366,49 +347,61 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @Override
   public void dispose() {
-    try {
-      myMessagesIndex.close();
-    }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
   }
 
-  public void printDebugInfoForCommit(@NotNull CommitId commitId) {
-    int commit = myHashMap.getCommitIndex(commitId.getHash(), commitId.getRoot());
-    if (!isIndexed(commit)) {
-      LOG.info("Commit " + commitId.getHash().asString() + " is not indexed.");
-    }
-    else {
-      StringBuilder builder = new StringBuilder();
-      try {
-        builder.append("Commit ").append(commitId.getHash().asString()).append(" index info:\n");
+  private static class MyIndexStorage {
+    private static final String COMMITS = "commits";
+    private static final String MESSAGES = "messages";
+    private static final int MESSAGES_VERSION = 0;
+    @NotNull private final PersistentSet<Integer> commits;
+    @NotNull private final PersistentMap<Integer, String> messages;
+    @NotNull private final VcsLogMessagesTrigramIndex trigrams;
+    @NotNull private final VcsLogUserIndex users;
+    @NotNull private final VcsLogPathsIndex paths;
 
-        builder.append("Message:\n").append(myMessagesIndex.get(commit)).append("\n");
-        if (myTrigramIndex != null) {
-          builder.append("Trigrams:\n").append(myTrigramIndex.getTrigramInfo(commit)).append("\n");
-        }
-        else {
-          builder.append("Trigrams index is null");
-        }
-        if (myUserIndex != null) {
-          builder.append("User:\n").append(myUserIndex.getUserInfo(commit)).append("\n");
-        }
-        else {
-          builder.append("User index is null");
-        }
-        if (myPathsIndex != null) {
-          builder.append("Paths:\n").append(myPathsIndex.getPathInfo(commit)).append("\n");
-        }
-        else {
-          builder.append("Paths index is null");
-        }
+    public MyIndexStorage(@NotNull String logId,
+                          @NotNull VcsUserRegistryImpl userRegistry,
+                          @NotNull Set<VirtualFile> roots,
+                          @NotNull FatalErrorHandler fatalErrorHandler,
+                          @NotNull Disposable parentDisposable)
+      throws IOException {
+      Disposable disposable = Disposer.newDisposable();
+      Disposer.register(parentDisposable, disposable);
+
+      try {
+        commits =
+          PersistentUtil.createPersistentSetOrFailIfBroken(EnumeratorIntegerDescriptor.INSTANCE, COMMITS, logId, getVersion());
+        Disposer.register(disposable, () -> catchAndWarn(commits::close));
+        messages = new PersistentHashMap<>(PersistentUtil.getStorageFile(MESSAGES, logId, MESSAGES_VERSION), new IntInlineKeyDescriptor(),
+                                           EnumeratorStringDescriptor.INSTANCE, Page.PAGE_SIZE);
+        Disposer.register(disposable, () -> catchAndWarn(messages::close));
+
+        trigrams = new VcsLogMessagesTrigramIndex(logId, fatalErrorHandler, disposable);
+        users = new VcsLogUserIndex(logId, userRegistry, fatalErrorHandler, disposable);
+        paths = new VcsLogPathsIndex(logId, roots, fatalErrorHandler, disposable);
+      }
+      catch (Throwable t) {
+        Disposer.dispose(disposable);
+        throw t;
+      }
+    }
+
+    private static void catchAndWarn(@NotNull ThrowableRunnable<IOException> runnable) {
+      try {
+        runnable.run();
       }
       catch (IOException e) {
-        LOG.error(e);
+        LOG.warn(e);
       }
+    }
 
-      LOG.info(builder.toString());
+    private static void cleanup(@NotNull String logId) {
+      IOUtil.deleteAllFilesStartingWith(PersistentUtil.getStorageFile(COMMITS, logId, getVersion()));
+      IOUtil.deleteAllFilesStartingWith(PersistentUtil.getStorageFile(MESSAGES, logId, MESSAGES_VERSION));
+
+      VcsLogMessagesTrigramIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
+      VcsLogUserIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
+      VcsLogPathsIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
     }
   }
 

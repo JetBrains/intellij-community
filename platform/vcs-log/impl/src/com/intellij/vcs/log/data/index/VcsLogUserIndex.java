@@ -31,26 +31,33 @@ import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
+
 public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
+  private static final String USERS = "users";
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
 
   public VcsLogUserIndex(@NotNull String logId,
                          @NotNull VcsUserRegistryImpl userRegistry,
                          @NotNull FatalErrorHandler consumer,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(logId, "users", VcsLogPersistentIndex.getVersion(), new UserIndexer(userRegistry), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
+    super(logId, USERS, getVersion(), new UserIndexer(userRegistry), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
           consumer, disposableParent);
     myUserRegistry = userRegistry;
-    ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> {
-      consumer.consume(this, e);
-      markCorrupted();
-    });
+    ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
+  }
+
+  @NotNull
+  public static Collection<File> getStorageFiles(@NotNull String logId) {
+    return Collections.singletonList(getStorageFile(USERS, logId, getVersion()));
   }
 
   public TIntHashSet getCommitsForUsers(@NotNull Set<VcsUser> users) throws IOException, StorageException {
@@ -59,14 +66,6 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
       ids.add(myUserRegistry.getUserId(user));
     }
     return getCommitsWithAnyKey(ids);
-  }
-
-  @NotNull
-  public String getUserInfo(int commit) throws IOException {
-    Collection<Integer> keys = getKeysForCommit(commit);
-    assert keys != null;
-    assert keys.size() == 1;
-    return ObjectUtils.assertNotNull(myUserRegistry.getUserById(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(keys)))).toString();
   }
 
   private static class UserIndexer implements DataIndexer<Integer, Void, VcsFullCommitDetails> {
