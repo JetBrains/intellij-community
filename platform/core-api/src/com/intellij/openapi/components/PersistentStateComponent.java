@@ -31,7 +31,7 @@ public interface PersistentStateComponent<T> {
   /**
    * @return a component state. All properties, public and annotated fields are serialized. Only values, which differ
    * from default (i.e. the value of newly instantiated class) are serialized. <code>null</code> value indicates
-   * that no state should be stored.
+   * that the returned state won't be stored, as a result previously stored state will be used.
    * @see com.intellij.util.xmlb.XmlSerializer
    */
   @Nullable
