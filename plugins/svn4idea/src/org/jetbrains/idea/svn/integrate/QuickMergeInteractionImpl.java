@@ -79,9 +79,11 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   @NotNull
   @Override
   public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
-                                                 @NotNull String mergeTitle,
-                                                 @NotNull MergeChecker mergeChecker) {
-    ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, lists, mergeTitle, mergeChecker, true, true);
+                                                 @NotNull MergeChecker mergeChecker,
+                                                 boolean allStatusesCalculated,
+                                                 boolean allListsLoaded) {
+    ToBeMergedDialog dialog =
+      new ToBeMergedDialog(myMergeContext, lists, myMergeContext.getTitle(), mergeChecker, allStatusesCalculated, allListsLoaded);
     dialog.show();
 
     QuickMergeContentsVariants resultCode = toMergeVariant(dialog.getExitCode());
@@ -122,16 +124,6 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   @Override
   public void showErrors(@NotNull String message, boolean isError) {
     VcsBalloonProblemNotifier.showOverChangesView(myProject, message, isError ? MessageType.ERROR : MessageType.WARNING);
-  }
-
-  @NotNull
-  @Override
-  public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                               @NotNull MergeChecker mergeChecker,
-                                                               boolean allListsLoaded) {
-    ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, list, myMergeContext.getTitle(), mergeChecker, false, allListsLoaded);
-
-    return dialog.showAndGet() ? dialog.getSelected() : emptyList();
   }
 
   private boolean prompt(@NotNull String question) {

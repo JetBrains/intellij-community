@@ -34,8 +34,9 @@ public interface QuickMergeInteraction {
 
   @NotNull
   SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
-                                          @NotNull String mergeTitle,
-                                          @NotNull MergeChecker mergeChecker);
+                                          @NotNull MergeChecker mergeChecker,
+                                          boolean allStatusesCalculated,
+                                          boolean allListsLoaded);
 
   @NotNull
   LocalChangesAction selectLocalChangesAction(boolean mergeAll);
@@ -45,9 +46,4 @@ public interface QuickMergeInteraction {
   void showErrors(@NotNull String message, @NotNull List<VcsException> exceptions);
 
   void showErrors(@NotNull String message, boolean isError);
-
-  @NotNull
-  List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                        @NotNull MergeChecker mergeChecker,
-                                                        boolean allListsLoaded);
 }

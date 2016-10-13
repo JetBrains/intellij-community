@@ -38,7 +38,7 @@ public class ShowRevisionSelector extends BaseMergeTask {
 
   @Override
   public void run() {
-    SelectMergeItemsResult result = myInteraction.selectMergeItems(myChangeLists, myMergeContext.getTitle(), myMergeChecker);
+    SelectMergeItemsResult result = myInteraction.selectMergeItems(myChangeLists, myMergeChecker, true, true);
 
     switch (result.getResultCode()) {
       case cancel:

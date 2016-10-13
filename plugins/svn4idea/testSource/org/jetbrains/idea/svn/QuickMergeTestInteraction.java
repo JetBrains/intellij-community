@@ -69,20 +69,13 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   @NotNull
   @Override
   public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
-                                                 @NotNull String mergeTitle,
-                                                 @NotNull MergeChecker mergeChecker) {
+                                                 @NotNull MergeChecker mergeChecker,
+                                                 boolean allStatusesCalculated,
+                                                 boolean allListsLoaded) {
     return new SelectMergeItemsResult(
       mySelectedListsProvider != null ? QuickMergeContentsVariants.select : QuickMergeContentsVariants.all,
       mySelectedListsProvider != null ? mySelectedListsProvider.fun(lists) : emptyList()
     );
-  }
-
-  @NotNull
-  @Override
-  public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
-                                                               @NotNull MergeChecker mergeChecker,
-                                                               boolean allListsLoaded) {
-    return mySelectedListsProvider != null ? mySelectedListsProvider.fun(list) : emptyList();
   }
 
   @NotNull
