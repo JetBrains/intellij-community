@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +100,18 @@ public class PyTypeChecker {
       return true;
     }
     if (actual instanceof PyUnionType) {
-      for (PyType m : ((PyUnionType)actual).getMembers()) {
+      final PyUnionType actualUnionType = (PyUnionType)actual;
+
+      if (expected instanceof PyTupleType) {
+        final PyTupleType expectedTupleType = (PyTupleType)expected;
+        final int elementCount = expectedTupleType.getElementCount();
+
+        if (!expectedTupleType.isHomogeneous() && consistsOfSameElementNumberTuples(actualUnionType, elementCount)) {
+          return substituteExpectedElementsWithUnions(expectedTupleType, elementCount, actualUnionType, context, substitutions, recursive);
+        }
+      }
+
+      for (PyType m : actualUnionType.getMembers()) {
         if (match(expected, m, context, substitutions, recursive)) {
           return true;
         }
@@ -242,6 +254,48 @@ public class PyTypeChecker {
       }
     }
     return matchNumericTypes(expected, actual);
+  }
+
+  private static boolean consistsOfSameElementNumberTuples(@NotNull PyUnionType unionType, int elementCount) {
+    for (PyType type : unionType.getMembers()) {
+      if (type instanceof PyTupleType) {
+        final PyTupleType tupleType = (PyTupleType)type;
+
+        if (!tupleType.isHomogeneous() && elementCount != tupleType.getElementCount()) {
+          return false;
+        }
+      }
+      else {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private static boolean substituteExpectedElementsWithUnions(@NotNull PyTupleType expected,
+                                                              int elementCount,
+                                                              @NotNull PyUnionType actual,
+                                                              @NotNull TypeEvalContext context,
+                                                              @Nullable Map<PyGenericType, PyType> substitutions,
+                                                              boolean recursive) {
+    for (int i = 0; i < elementCount; i++) {
+      final int currentIndex = i;
+
+      final PyType elementType = PyUnionType.union(
+        StreamEx
+          .of(actual.getMembers())
+          .select(PyTupleType.class)
+          .map(type -> type.getElementType(currentIndex))
+          .toList()
+      );
+
+      if (!match(expected.getElementType(i), elementType, context, substitutions, recursive)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private static boolean matchNumericTypes(PyType expected, PyType actual) {
