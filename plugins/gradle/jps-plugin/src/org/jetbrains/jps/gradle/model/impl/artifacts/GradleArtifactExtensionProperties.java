@@ -16,7 +16,10 @@
 package org.jetbrains.jps.gradle.model.impl.artifacts;
 
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
+
+import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
@@ -27,4 +30,7 @@ public class GradleArtifactExtensionProperties {
   public String externalProjectPath;
   @Tag("manifest")
   public String manifest;
+  @Tag("files")
+  @MapAnnotation(surroundWithTag = false, keyAttributeName = "path", entryTagName = "file")
+  public Map<String, String> additionalFiles;
 }
