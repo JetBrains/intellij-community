@@ -72,7 +72,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
 
   private PersistentHashMap<Integer, ByteSequence> myContents;
   private PersistentHashMap<Integer, Integer> myInputsSnapshotMapping;
-  protected PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
+  @Nullable protected PersistentHashMap<Integer, Collection<Key>> myInputsIndex;
   private PersistentHashMap<Integer, String> myIndexingTrace;
 
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
@@ -305,7 +305,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
-  private static void doForce(PersistentHashMap<?, ?> inputsIndex) {
+  private static void doForce(@Nullable PersistentHashMap<?, ?> inputsIndex) {
     if (inputsIndex != null && inputsIndex.isDirty()) {
       inputsIndex.force();
     }
@@ -350,7 +350,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     return IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
   }
 
-  private static void doClose(PersistentHashMap<?, ?> index) {
+  private static void doClose(@Nullable PersistentHashMap<?, ?> index) {
     if (index != null) {
       try {
         index.close();
@@ -703,7 +703,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
       return keys;
     }
-    return myInputsIndex.get(inputId);
+    return myInputsIndex != null ? myInputsIndex.get(inputId) : null;
   }
 
   private void saveInputKeys(int inputId, int savedInputId, Map<Key, Value> newData) throws IOException {
