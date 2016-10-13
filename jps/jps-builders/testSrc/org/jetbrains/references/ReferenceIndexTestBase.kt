@@ -17,8 +17,10 @@ package org.jetbrains.references
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.PathUtil
 import com.sun.tools.javac.util.Convert
+import junit.framework.TestCase
 import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter
 import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex
@@ -66,7 +68,9 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
 
 
   protected fun assertIndexEquals(expectedIndexDumpFile: String) {
-    assertSameLinesWithFile(testDataRootPath + "/" + getTestName(true) + "/" + expectedIndexDumpFile, indexAsText())
+    val expectedIndex = FileUtil.loadFile(File(testDataRootPath + "/" + getTestName(true) + "/" + expectedIndexDumpFile), CharsetToolkit.UTF8_CHARSET)
+    val actualIndex = indexAsText()
+    TestCase.assertTrue(String.CASE_INSENSITIVE_ORDER.compare(expectedIndex, actualIndex) == 0)
   }
 
   protected fun indexAsText(): String {

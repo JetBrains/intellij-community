@@ -15,12 +15,14 @@
  */
 package org.jetbrains.jps.backwardRefs;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.io.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.dependencyView.CloseableMaplet;
 import org.jetbrains.jps.builders.java.dependencyView.CollectionFactory;
 import org.jetbrains.jps.builders.java.dependencyView.IntObjectPersistentMultiMaplet;
@@ -29,6 +31,7 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.util.Collection;
+import java.util.Locale;
 
 public class CompilerBackwardReferenceIndex {
   private static final int VERSION = 0;
@@ -66,7 +69,12 @@ public class CompilerBackwardReferenceIndex {
       if (versionDiffers(buildDir)) {
         FileUtil.writeToFile(new File(myIndicesDir, VERSION_FILE), String.valueOf(VERSION));
       }
-      myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB));
+      myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
+        @Override
+        public int enumerate(@Nullable String value) throws IOException {
+          return super.enumerate(SystemInfo.isFileSystemCaseSensitive ? value : value.toLowerCase(Locale.ROOT));
+        }
+      };
 
       final KeyDescriptor<LightUsage> lightUsageDescriptor = LightUsage.createDescriptor();
       final KeyDescriptor<LightDefinition> defDescriptor = LightDefinition.createDescriptor(lightUsageDescriptor);
