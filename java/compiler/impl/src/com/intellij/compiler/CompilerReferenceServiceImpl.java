@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -56,6 +55,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,10 +67,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   private final DirtyModulesHolder myDirtyModulesHolder;
   private final ProjectFileIndex myProjectFileIndex;
   private final LongAdder myCompilationCount = new LongAdder();
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
+  private final Lock myReadDataLock = myLock.readLock();
+  private final Lock myOpenCloseLock = myLock.writeLock();
 
   private volatile CompilerReferenceReader myReader;
-
-  private final Object myLock = new Object();
 
   public CompilerReferenceServiceImpl(Project project) {
     super(project);
@@ -202,7 +204,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   @Nullable
   @Override
   public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element, @NotNull CompilerSearchAdapter adapter) {
-    if (!isServiceEnabled() || InjectedLanguageManager.getInstance(myProject).isInjectedFragment(element.getContainingFile())) return null;
+    if (!isServiceEnabledFor(element)) return null;
 
     return CachedValuesManager.getCachedValue(element,
                                               () -> CachedValueProvider.Result.create(new ConcurrentFactoryMap<CompilerSearchAdapter, GlobalSearchScope>() {
@@ -222,7 +224,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                                                          @NotNull GlobalSearchScope searchScope,
                                                                                          @NotNull ClassResolvingCompilerSearchAdapter<T> inheritorSearchAdapter,
                                                                                          @NotNull FileType searchFileType) {
-    if (!isServiceEnabled() || InjectedLanguageManager.getInstance(myProject).isInjectedFragment(aClass.getContainingFile())) return null;
+    if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
 
     Couple<Map<VirtualFile, T[]>> directInheritorsAndCandidates =
       CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(calculateDirectInheritors(aClass,
@@ -240,6 +242,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     return new CompilerDirectInheritorInfoImpl<>(directInheritorsAndCandidates, dirtyScope, searchScope);
   }
 
+  private boolean isServiceEnabledFor(PsiElement element) {
+    return isServiceEnabled() && InjectedLanguageManager.getInstance(myProject).isInjectedFragment(ReadAction.compute(() -> element.getContainingFile()));
+  }
+
   private boolean isServiceEnabled() {
     return myReader != null && isEnabled();
   }
@@ -249,7 +255,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                                                                               @NotNull GlobalSearchScope useScope,
                                                                                               @NotNull FileType searchFileType) {
     final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, searchAdapter, false);
-    synchronized (myLock) {
+    myReadDataLock.lock();
+    try {
       if (myReader == null) return null;
       return myReader.getDirectInheritors(aClass,
                                           searchElementInfo,
@@ -258,6 +265,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
                                           myDirtyModulesHolder.getDirtyScope(),
                                           myProject,
                                           searchFileType);
+    } finally {
+      myReadDataLock.unlock();
     }
   }
 
@@ -275,7 +284,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
     final CompilerElementInfo compilerElementInfo = asCompilerElements(element, adapter, true);
     if (compilerElementInfo == null) return null;
 
-    synchronized (myLock) {
+    myReadDataLock.lock();
+    try {
       if (myReader == null) return null;
       TIntHashSet referentFileIds = new TIntHashSet();
       for (CompilerElement compilerElement : compilerElementInfo.searchElements) {
@@ -284,6 +294,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
         referentFileIds.addAll(referents.toArray());
       }
       return referentFileIds;
+    } finally {
+      myReadDataLock.unlock();
     }
   }
 
@@ -310,19 +322,25 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
   }
 
   private void closeReaderIfNeed() {
-    synchronized (myLock) {
+    myOpenCloseLock.lock();
+    try {
       if (myReader != null) {
         myReader.close();
         myReader = null;
       }
+    } finally {
+      myOpenCloseLock.unlock();
     }
   }
 
   private void openReaderIfNeed() {
-    synchronized (myLock) {
+    myOpenCloseLock.lock();
+    try {
       if (myProject.isOpen()) {
         myReader = CompilerReferenceReader.create(myProject);
       }
+    } finally {
+      myOpenCloseLock.unlock();
     }
   }
 
@@ -435,13 +453,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceService imple
 
     private boolean contains(VirtualFile file) {
       return getDirtyScope().contains(file);
-    }
-
-    private void markAllModulesAsDirty() {
-      final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-      synchronized (myLock) {
-        Collections.addAll(myChangedModules, modules);
-      }
     }
   }
 
