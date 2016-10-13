@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.fixtures
 
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -49,6 +50,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
   override fun setUpProject(project: Project, handler: SetupHandler) {
     super.setUpProject(project, handler)
+
     runWriteAction {
       val main = ModuleManager.getInstance(project).findModuleByName(TEST_MODULE_NAME)!!
 
@@ -68,6 +70,9 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
       val m7 = makeModule(project, ModuleDescriptor.M7)
       ModuleRootModificationUtil.addDependency(m6, m7, DependencyScope.COMPILE, true)
+
+      val libDir = "jar://${PathManagerEx.getTestDataPath()}/codeInsight/jigsaw/"
+      ModuleRootModificationUtil.addModuleLibrary(main, libDir + "lib1.jar!/")
     }
   }
 
