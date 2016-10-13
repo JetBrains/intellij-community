@@ -519,8 +519,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       List<CaretState> states = new ArrayList<>(myCarets.size());
       for (CaretImpl caret : myCarets) {
         states.add(new CaretState(caret.getLogicalPosition(),
-                                  myEditor.visualToLogicalPosition(caret.getSelectionStartPosition()),
-                                  myEditor.visualToLogicalPosition(caret.getSelectionEndPosition())));
+                                  caret.getSelectionStartLogicalPosition(),
+                                  caret.getSelectionEndLogicalPosition()));
       }
       return states;
     }

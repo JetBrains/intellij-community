@@ -982,6 +982,24 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     return position;
   }
 
+  LogicalPosition getSelectionStartLogicalPosition() {
+    validateContext(true);
+    LogicalPosition position;
+    SelectionMarker marker = mySelectionMarker;
+    if (hasSelection()) {
+      VisualPosition visualPosition = getRangeMarkerStartPosition();
+      position = visualPosition == null ? myEditor.offsetToLogicalPosition(marker.getStartOffset()).leanForward(true)
+                                        : myEditor.visualToLogicalPosition(visualPosition);
+    }
+    else {
+      position = getLogicalPosition();
+    }
+    if (hasVirtualSelection()) {
+      position = new LogicalPosition(position.line, position.column + marker.startVirtualOffset);
+    }
+    return position;
+  }
+
   @Override
   public int getSelectionEnd() {
     validateContext(false);
@@ -1014,6 +1032,24 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
     if (hasVirtualSelection()) {
       position = new VisualPosition(position.line, position.column + marker.endVirtualOffset);
+    }
+    return position;
+  }
+
+  LogicalPosition getSelectionEndLogicalPosition() {
+    validateContext(true);
+    LogicalPosition position;
+    SelectionMarker marker = mySelectionMarker;
+    if (hasSelection()) {
+      VisualPosition visualPosition = getRangeMarkerEndPosition();
+      position = visualPosition == null ? myEditor.offsetToLogicalPosition(marker.getEndOffset())
+                                        : myEditor.visualToLogicalPosition(visualPosition);
+    }
+    else {
+      position = getLogicalPosition();
+    }
+    if (hasVirtualSelection()) {
+      position = new LogicalPosition(position.line, position.column + marker.endVirtualOffset);
     }
     return position;
   }
