@@ -18,7 +18,6 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
-import com.intellij.util.PathUtilRt;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -37,8 +36,10 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.ObjIntConsumer;
 
+import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
+
 public class VcsLogFullDetailsIndex<T> implements Disposable {
-  @NotNull protected static final String INDEX = "index-";
+  protected static final String INDEX = "index";
   @NotNull protected final MyMapReduceIndex myMapReduceIndex;
   @NotNull private final ID<Integer, T> myID;
   @NotNull private final String myLogId;
@@ -122,15 +123,8 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   }
 
   @NotNull
-  public File getStorageFile(int version) {
-    return getStorageFile(INDEX + myName, myLogId, version);
-  }
-
-  @NotNull
-  public static File getStorageFile(@NotNull String kind, @NotNull String id, int version) {
-    File subdir = new File(PersistentUtil.LOG_CACHE, kind);
-    String safeLogId = PathUtilRt.suggestFileName(id, true, true);
-    return new File(subdir, safeLogId + "." + version);
+  public static File getStorageFile(@NotNull String kind, @NotNull String id) {
+    return PersistentUtil.getStorageFile(INDEX, kind, id, getVersion(), false);
   }
 
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, VcsFullCommitDetails> {
@@ -139,7 +133,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
                             @NotNull DataExternalizer<T> externalizer,
                             int version) throws IOException {
       super(new MyIndexExtension(indexer, externalizer, version),
-            new MapIndexStorage<>(getStorageFile(version),
+            new MapIndexStorage<>(getStorageFile(myName, myLogId),
                                   EnumeratorIntegerDescriptor.INSTANCE,
                                   externalizer, 5000));
     }

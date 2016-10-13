@@ -52,8 +52,8 @@ import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
 
 public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
-  private static final String PATHS = "paths";
-  private static final String INDEX_PATHS_IDS = "index-paths-ids";
+  public static final String PATHS = "paths";
+  public static final String INDEX_PATHS_IDS = "paths-ids";
 
   @NotNull private final PathsIndexer myPathsIndexer;
 
@@ -70,8 +70,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
 
   @NotNull
   private static PersistentEnumeratorBase<String> createPathsEnumerator(@NotNull String logId) throws IOException {
-    File storageFile = PersistentUtil.getStorageFile(INDEX_PATHS_IDS, logId, getVersion());
-
+    File storageFile = PersistentUtil.getStorageFile(INDEX, INDEX_PATHS_IDS, logId, getVersion(), true);
     return new PersistentBTreeEnumerator<>(storageFile, SystemInfo.isFileSystemCaseSensitive ? EnumeratorStringDescriptor.INSTANCE
                                                                                              : new ToLowerCaseStringDescriptor(),
                                            Page.PAGE_SIZE, null, getVersion());
@@ -79,8 +78,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
 
   @NotNull
   public static Collection<File> getStorageFiles(@NotNull String logId) {
-    return Arrays.asList(PersistentUtil.getStorageFile(INDEX_PATHS_IDS, logId, getVersion()),
-                         getStorageFile(PATHS, logId, getVersion()));
+    return Arrays.asList(getStorageFile(INDEX_PATHS_IDS, logId),
+                         getStorageFile(PATHS, logId));
   }
 
   @Override

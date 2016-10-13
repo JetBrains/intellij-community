@@ -36,7 +36,7 @@ import java.util.Map;
 import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
 
 public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
-  private static final String TRIGRAMS = "trigrams";
+  public static final String TRIGRAMS = "trigrams";
 
   public VcsLogMessagesTrigramIndex(@NotNull String logId,
                                     @NotNull FatalErrorHandler fatalErrorHandler,
@@ -47,7 +47,7 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
 
   @NotNull
   public static Collection<File> getStorageFiles(@NotNull String logId) {
-    return Collections.singletonList(getStorageFile(TRIGRAMS, logId, getVersion()));
+    return Collections.singletonList(getStorageFile(TRIGRAMS, logId));
   }
 
   @Nullable

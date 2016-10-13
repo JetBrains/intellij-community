@@ -41,6 +41,7 @@ import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogUserFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.util.PersistentSet;
+import com.intellij.vcs.log.util.PersistentSetImpl;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.TroveUtil;
@@ -48,11 +49,15 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
+
+import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
+import static com.intellij.vcs.log.util.PersistentUtil.getStorageFile;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
@@ -355,6 +360,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @NotNull private final VcsLogMessagesTrigramIndex trigrams;
     @NotNull private final VcsLogUserIndex users;
     @NotNull private final VcsLogPathsIndex paths;
+    private static final String INPUTS = "inputs";
 
     public MyIndexStorage(@NotNull String logId,
                           @NotNull VcsUserRegistryImpl userRegistry,
@@ -366,11 +372,15 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       Disposer.register(parentDisposable, disposable);
 
       try {
-        commits =
-          PersistentUtil.createPersistentSetOrFailIfBroken(EnumeratorIntegerDescriptor.INSTANCE, COMMITS, logId, getVersion());
+        int version = getVersion();
+
+        File commitsStorage = getStorageFile(INDEX, COMMITS, logId, version, true);
+        commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null, version);
         Disposer.register(disposable, () -> catchAndWarn(commits::close));
-        messages = new PersistentHashMap<>(PersistentUtil.getStorageFile(MESSAGES, logId, MESSAGES_VERSION), new IntInlineKeyDescriptor(),
-                                           EnumeratorStringDescriptor.INSTANCE, Page.PAGE_SIZE);
+
+        File messagesStorage = getStorageFile(INDEX, MESSAGES, logId, MESSAGES_VERSION, true);
+        messages = new PersistentHashMap<>(messagesStorage, new IntInlineKeyDescriptor(), EnumeratorStringDescriptor.INSTANCE,
+                                           Page.PAGE_SIZE);
         Disposer.register(disposable, () -> catchAndWarn(messages::close));
 
         trigrams = new VcsLogMessagesTrigramIndex(logId, fatalErrorHandler, disposable);
@@ -381,6 +391,19 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         Disposer.dispose(disposable);
         throw t;
       }
+
+      // cleanup of old index storage files
+      // to remove after 2017.1 release
+      PersistentUtil.cleanupOldStorageFile(MESSAGES, logId);
+      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
+      PersistentUtil.cleanupOldStorageFile(INDEX + "-no-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
+      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogMessagesTrigramIndex.TRIGRAMS, logId);
+      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + VcsLogPathsIndex.PATHS, logId);
+      PersistentUtil.cleanupOldStorageFile(INDEX + "-no-" + VcsLogPathsIndex.PATHS, logId);
+      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + VcsLogPathsIndex.PATHS + "-ids", logId);
+      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogPathsIndex.PATHS, logId);
+      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + VcsLogUserIndex.USERS, logId);
+      PersistentUtil.cleanupOldStorageFile(INDEX + "-" + INPUTS + "-" + VcsLogUserIndex.USERS, logId);
     }
 
     private static void catchAndWarn(@NotNull ThrowableRunnable<IOException> runnable) {
@@ -393,8 +416,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private static void cleanup(@NotNull String logId) {
-      IOUtil.deleteAllFilesStartingWith(PersistentUtil.getStorageFile(COMMITS, logId, getVersion()));
-      IOUtil.deleteAllFilesStartingWith(PersistentUtil.getStorageFile(MESSAGES, logId, MESSAGES_VERSION));
+      IOUtil.deleteAllFilesStartingWith(getStorageFile(COMMITS, logId, getVersion()));
+      IOUtil.deleteAllFilesStartingWith(getStorageFile(MESSAGES, logId, MESSAGES_VERSION));
 
       VcsLogMessagesTrigramIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);
       VcsLogUserIndex.getStorageFiles(logId).forEach(IOUtil::deleteAllFilesStartingWith);

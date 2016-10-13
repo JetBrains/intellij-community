@@ -53,7 +53,6 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   public static final int VERSION = 5;
   private static final int REFS_VERSION = 1;
   @NotNull private static final String ROOT_STORAGE_KIND = "roots";
-  private static final int ROOTS_STORAGE_VERSION = 0;
 
   public static final int NO_INDEX = -1;
 
@@ -79,7 +78,7 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
     // cleanup old root storages, to remove after 2016.3 release
     PersistentUtil
-      .cleanupOldStorageFile(ROOT_STORAGE_KIND, project.getName() + "." + project.getBaseDir().getPath().hashCode(), ROOTS_STORAGE_VERSION);
+      .cleanupOldStorageFile(ROOT_STORAGE_KIND, project.getName() + "." + project.getBaseDir().getPath().hashCode());
 
     Disposer.register(parent, this);
   }

@@ -18,7 +18,6 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.ScalarIndexExtension;
@@ -42,7 +41,7 @@ import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
 
 public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
-  private static final String USERS = "users";
+  public static final String USERS = "users";
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
 
   public VcsLogUserIndex(@NotNull String logId,
@@ -57,7 +56,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
 
   @NotNull
   public static Collection<File> getStorageFiles(@NotNull String logId) {
-    return Collections.singletonList(getStorageFile(USERS, logId, getVersion()));
+    return Collections.singletonList(getStorageFile(USERS, logId));
   }
 
   public TIntHashSet getCommitsForUsers(@NotNull Set<VcsUser> users) throws IOException, StorageException {
