@@ -70,8 +70,7 @@ public abstract class DumbService {
    *   <li>and there's no dumb mode in progress</li>
    * </ul>
    * This may also happen immediately if these conditions are already met.<p/>
-   * Note that it's not guaranteed that the dumb mode won't start again during this runnable execution, it should manage that situation explicitly
-   * (e.g. by starting a read action; it's still necessary to check isDumb inside the read action).
+   * Note that it's not guaranteed that the dumb mode won't start again during this runnable execution, it should manage that situation explicitly.
    * @param runnable runnable to run
    */
   public abstract void runWhenSmart(@NotNull Runnable runnable);
