@@ -162,6 +162,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def productName = buildContext.applicationInfo.shortProductName
 
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : "";
+      String vmOptionsEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "64" : ""
       def envVarBaseName = buildContext.productProperties.environmentVariableBaseName(buildContext.applicationInfo)
       new File(launcherPropertiesPath).text = """
 IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
@@ -172,7 +173,7 @@ IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${lowerCase
 IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${lowerCaseProductName}.hprof
 IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
 IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
-IDS_VM_OPTIONS_ENV_VAR=$envVarBaseName${arch.fileSuffix}_VM_OPTIONS
+IDS_VM_OPTIONS_ENV_VAR=$envVarBaseName${vmOptionsEnvVarSuffix}_VM_OPTIONS
 IDS_ERROR_LAUNCHING_APP=Error launching $productName
 IDS_VM_OPTIONS=$vmOptions
 """.trim()
