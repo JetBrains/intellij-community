@@ -331,6 +331,46 @@ public class Py3TypeTest extends PyTestCase {
                                                               "    expr = [await z async for z in asyncgen2()]\n"));
   }
 
+  public void testIsNotNone() {
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is not None:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is not x:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not x is None:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not None is x:\n" +
+           "        expr = x\n");
+  }
+
+  public void testIsNone() {
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is None:\n" +
+           "        expr = x\n");
+
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is x:\n" +
+           "        expr = x\n");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

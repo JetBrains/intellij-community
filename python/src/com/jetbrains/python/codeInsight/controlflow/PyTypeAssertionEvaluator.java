@@ -96,9 +96,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final PyExpression lhs = node.getLeftExpression();
     final PyExpression rhs = node.getRightExpression();
 
-    if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression) {
-      final boolean leftIsNone = PyNames.NONE.equals(lhs.getName());
-      final boolean rightIsNone = PyNames.NONE.equals(rhs.getName());
+    if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression ||
+        lhs instanceof PyReferenceExpression && rhs instanceof PyNoneLiteralExpression ||
+        lhs instanceof PyNoneLiteralExpression && rhs instanceof PyReferenceExpression) {
+      final boolean leftIsNone = lhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(lhs.getName());
+      final boolean rightIsNone = rhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(rhs.getName());
 
       if (leftIsNone && rightIsNone) {
         return;
