@@ -326,4 +326,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testFunctionReturnType() {
     doTest();
   }
+
+  // PY-19522
+  public void testCsvRegisterDialect() {
+    doMultiFileTest();
+  }
 }
