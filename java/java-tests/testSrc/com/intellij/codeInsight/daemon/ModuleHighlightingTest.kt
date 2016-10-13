@@ -134,7 +134,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testPackageAccessibility() {
-    addFile("module-info.java", "module M { requires M2; requires M6; }")
+    addFile("module-info.java", "module M { requires M2; requires M6; requires LIB1; }")
     addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
     addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
     addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
@@ -153,6 +153,10 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         import <error descr="A named module cannot access packages of an unnamed one">pkg.m4.C4</error>;
         import <error descr="The module 'M' does not have the module 'M5' in requirements">pkg.m5.C5</error>;
         import pkg.m7.C7;
+
+        import pkg.lib1.LC1;
+        import <error descr="The module 'LIB1' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl.LC1Impl</error>;
+        import <error descr="The module 'LIB1' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl</error>.*;
 
         import static <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make;
 
