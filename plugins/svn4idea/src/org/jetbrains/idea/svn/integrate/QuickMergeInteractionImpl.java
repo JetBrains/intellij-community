@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -30,11 +29,13 @@ import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
 
+import static com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE;
 import static com.intellij.openapi.ui.Messages.*;
 import static com.intellij.util.Functions.TO_STRING;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static org.jetbrains.idea.svn.integrate.LocalChangesAction.*;
+import static org.jetbrains.idea.svn.integrate.ToBeMergedDialog.MERGE_ALL_CODE;
 
 public class QuickMergeInteractionImpl implements QuickMergeInteraction {
 
@@ -83,26 +84,10 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
     ToBeMergedDialog dialog = new ToBeMergedDialog(myMergeContext, lists, mergeTitle, mergeChecker, true, true);
     dialog.show();
 
-    return new SelectMergeItemsResult() {
-      @NotNull
-      @Override
-      public QuickMergeContentsVariants getResultCode() {
-        switch (dialog.getExitCode()) {
-          case ToBeMergedDialog.MERGE_ALL_CODE:
-            return QuickMergeContentsVariants.all;
-          case DialogWrapper.OK_EXIT_CODE:
-            return QuickMergeContentsVariants.select;
-          default:
-            return QuickMergeContentsVariants.cancel;
-        }
-      }
+    QuickMergeContentsVariants resultCode = toMergeVariant(dialog.getExitCode());
+    List<CommittedChangeList> selectedLists = resultCode == QuickMergeContentsVariants.select ? dialog.getSelected() : emptyList();
 
-      @NotNull
-      @Override
-      public List<CommittedChangeList> getSelectedLists() {
-        return dialog.getSelected();
-      }
-    };
+    return new SelectMergeItemsResult(resultCode, selectedLists);
   }
 
   @NotNull
@@ -151,5 +136,17 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
 
   private boolean prompt(@NotNull String question) {
     return showOkCancelDialog(myProject, question, myTitle, getQuestionIcon()) == OK;
+  }
+
+  @NotNull
+  private static QuickMergeContentsVariants toMergeVariant(int exitCode) {
+    switch (exitCode) {
+      case MERGE_ALL_CODE:
+        return QuickMergeContentsVariants.all;
+      case OK_EXIT_CODE:
+        return QuickMergeContentsVariants.select;
+      default:
+        return QuickMergeContentsVariants.cancel;
+    }
   }
 }

@@ -50,12 +50,4 @@ public interface QuickMergeInteraction {
   List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
                                                         @NotNull MergeChecker mergeChecker,
                                                         boolean allListsLoaded);
-
-  interface SelectMergeItemsResult {
-    @NotNull
-    QuickMergeContentsVariants getResultCode();
-
-    @NotNull
-    List<CommittedChangeList> getSelectedLists();
-  }
 }

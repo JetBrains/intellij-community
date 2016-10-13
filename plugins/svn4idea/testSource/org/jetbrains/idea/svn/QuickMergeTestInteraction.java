@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.integrate.LocalChangesAction;
 import org.jetbrains.idea.svn.integrate.QuickMergeContentsVariants;
 import org.jetbrains.idea.svn.integrate.QuickMergeInteraction;
+import org.jetbrains.idea.svn.integrate.SelectMergeItemsResult;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.List;
@@ -70,19 +71,10 @@ public class QuickMergeTestInteraction implements QuickMergeInteraction {
   public SelectMergeItemsResult selectMergeItems(@NotNull List<CommittedChangeList> lists,
                                                  @NotNull String mergeTitle,
                                                  @NotNull MergeChecker mergeChecker) {
-    return new SelectMergeItemsResult() {
-      @NotNull
-      @Override
-      public QuickMergeContentsVariants getResultCode() {
-        return mySelectedListsProvider != null ? QuickMergeContentsVariants.select : QuickMergeContentsVariants.all;
-      }
-
-      @NotNull
-      @Override
-      public List<CommittedChangeList> getSelectedLists() {
-        return mySelectedListsProvider != null ? mySelectedListsProvider.fun(lists) : emptyList();
-      }
-    };
+    return new SelectMergeItemsResult(
+      mySelectedListsProvider != null ? QuickMergeContentsVariants.select : QuickMergeContentsVariants.all,
+      mySelectedListsProvider != null ? mySelectedListsProvider.fun(lists) : emptyList()
+    );
   }
 
   @NotNull
