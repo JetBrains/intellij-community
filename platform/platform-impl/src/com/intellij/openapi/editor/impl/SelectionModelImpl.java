@@ -308,8 +308,7 @@ public class SelectionModelImpl implements SelectionModel {
     myTextAttributes = null;
   }
 
-  private void validateContext(boolean isWrite) {
-    if (!myEditor.getComponent().isShowing()) return;
+  private static void validateContext(boolean isWrite) {
     if (isWrite) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }

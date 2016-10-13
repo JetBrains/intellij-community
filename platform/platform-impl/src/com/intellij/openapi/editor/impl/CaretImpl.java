@@ -1323,8 +1323,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     }
   }
 
-  private void validateContext(boolean requireEdt) {
-    if (!myEditor.getComponent().isShowing()) return;
+  private static void validateContext(boolean requireEdt) {
     if (requireEdt) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
