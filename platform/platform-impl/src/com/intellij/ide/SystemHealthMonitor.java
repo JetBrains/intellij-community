@@ -20,12 +20,10 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.LinkedHashMultiset;
 import com.google.common.collect.Multiset;
 import com.google.common.io.Files;
-import com.google.wireless.android.sdk.stats.AndroidStudioStats;
-import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent;
-import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent.EventCategory;
-import com.google.wireless.android.sdk.stats.AndroidStudioStats.AndroidStudioEvent.EventKind;
-import com.google.wireless.android.sdk.stats.AndroidStudioStats.UIActionStats;
-import com.google.wireless.android.sdk.stats.AndroidStudioStats.UIActionStats.InvocationKind;
+import com.google.wireless.android.sdk.stats.*;
+import com.google.wireless.android.sdk.stats.AndroidStudioEvent.EventCategory;
+import com.google.wireless.android.sdk.stats.AndroidStudioEvent.EventKind;
+import com.google.wireless.android.sdk.stats.UIActionStats.InvocationKind;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.IdePerformanceListener;
 import com.intellij.diagnostic.ThreadDump;
@@ -144,7 +142,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
           // track how long the IDE was frozen
           UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
                                            .setKind(EventKind.STUDIO_PERFORMANCE_STATS)
-                                           .setStudioPerformanceStats(AndroidStudioStats.StudioPerformanceStats.newBuilder()
+                                           .setStudioPerformanceStats(StudioPerformanceStats.newBuilder()
                                                                         .setUiFreezeTimeMs(lengthInSeconds * 1000)));
         }
 
@@ -253,7 +251,7 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
       UsageTracker.getInstance().log(AndroidStudioEvent.newBuilder()
                                        .setCategory(EventCategory.PING)
                                        .setKind(EventKind.STUDIO_CRASH)
-                                       .setStudioCrash(AndroidStudioStats.StudioCrash.newBuilder()
+                                       .setStudioCrash(StudioCrash.newBuilder()
                                                          .setActions(activityCount)
                                                          .setExceptions(exceptionCount)
                                                          .setBundledPluginExceptions(bundledPluginExceptionCount)
