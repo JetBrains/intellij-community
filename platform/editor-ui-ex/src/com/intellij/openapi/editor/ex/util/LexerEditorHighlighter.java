@@ -45,7 +45,9 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDocumentListener {
@@ -380,23 +382,33 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return attrs;
   }
 
-  // Called to determine visual attributes of inserted character prior to starting a write action.
-  // TODO Should be removed when we implement typing without starting write actions.
   @NotNull
-  public TextAttributes getAttributesForTypedChar(@NotNull Document document, int offset, char c) {
+  public List<TextAttributes> getAttributesForPreviousAndTypedChars(@NotNull Document document, int offset, char c) {
+    final CharSequence text = document.getImmutableCharSequence();
+
+    final CharSequence newText = new MergingCharSequence(
+      new MergingCharSequence(text.subSequence(0, offset), new SingleCharSequence(c)),
+      text.subSequence(offset, text.length()));
+
+    final List<IElementType> tokenTypes = getTokenType(newText, offset);
+
+    return Arrays.asList(getAttributes(tokenTypes.get(0)).clone(), getAttributes(tokenTypes.get(1)).clone());
+  }
+
+  // TODO Unify with LexerEditorHighlighter.documentChanged
+  @NotNull
+  private List<IElementType> getTokenType(CharSequence text, int offset) {
     int startOffset = 0;
 
-    if (mySegments.getSegmentCount() > 0) {
-      final int segmentIndex;
-      try {
-        segmentIndex = mySegments.findSegmentIndex(offset) - 2;
-      }
-      catch (IndexOutOfBoundsException ex) {
-        throw new IndexOutOfBoundsException(ex.getMessage() + " Lexer: " + myLexer);
-      }
-      int startIndex = Math.max(0, segmentIndex);
+    int data = 0;
+    int oldStartIndex = 0;
+    int startIndex = 0;
 
-      int data;
+    if (mySegments.getSegmentCount() > 0) {
+      final int segmentIndex = mySegments.findSegmentIndex(offset - 1) - 2;
+      oldStartIndex = Math.max(0, segmentIndex);
+      startIndex = oldStartIndex;
+
       do {
         data = mySegments.getSegmentData(startIndex);
         if (isInitialState(data)|| startIndex == 0) break;
@@ -407,21 +419,42 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       startOffset = mySegments.getSegmentStart(startIndex);
     }
 
-    CharSequence text = document.getImmutableCharSequence();
-    CharSequence newText = new MergingCharSequence(new MergingCharSequence(text.subSequence(0, offset), new SingleCharSequence(c)), text.subSequence(offset, text.length()));
+    myLexer.start(text, startOffset, text.length(), myInitialState);
 
-    myLexer.start(newText, startOffset, newText.length(), myInitialState);
-
-    IElementType tokenType = null;
     while (myLexer.getTokenType() != null) {
+      if (startIndex >= oldStartIndex) break;
+
+      int tokenStart = myLexer.getTokenStart();
+      int lexerState = myLexer.getState();
+
+      int tokenEnd = myLexer.getTokenEnd();
+      data = packData(myLexer.getTokenType(), lexerState);
+      if (mySegments.getSegmentStart(startIndex) != tokenStart ||
+          mySegments.getSegmentEnd(startIndex) != tokenEnd ||
+          mySegments.getSegmentData(startIndex) != data) {
+        break;
+      }
+      startIndex++;
+      myLexer.advance();
+    }
+
+    IElementType tokenType1 = null;
+    IElementType tokenType2 = null;
+
+    while (myLexer.getTokenType() != null) {
+      int lexerState = myLexer.getState();
+      data = packData(myLexer.getTokenType(), lexerState);
+      if (tokenType1 == null && myLexer.getTokenEnd() >= offset) {
+        tokenType1 = unpackToken(data);
+      }
       if (myLexer.getTokenEnd() >= offset + 1) {
-        tokenType = myLexer.getTokenType();
+        tokenType2 = unpackToken(data);
         break;
       }
       myLexer.advance();
     }
 
-    return getAttributes(tokenType);
+    return Arrays.asList(tokenType1, tokenType2);
   }
 
   @NotNull
