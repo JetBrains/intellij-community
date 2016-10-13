@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
@@ -85,8 +86,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (value != null) {
         final PyType type = getType(value, new Context(context));
         if (type != null) {
+          final PyType containerType = getContainerTypeForPositionalOrKeywordArg(param, type);
           final PyType optionalType = getOptionalTypeFromDefaultNone(param, type, context);
-          return Ref.create(optionalType != null ? optionalType : type);
+          return Ref.create(containerType != null ? containerType :
+                            optionalType != null ? optionalType : type);
         }
       }
     }
@@ -203,7 +206,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   /**
-   * Checks that text of a comment starts with the "type:" prefix and returns trimmed part afterwards. This trailing part is supposed to 
+   * Checks that text of a comment starts with the "type:" prefix and returns trimmed part afterwards. This trailing part is supposed to
    * contain type annotation in PEP 484 compatible format, that can be parsed with either {@link PyTypeParser#parse(PsiElement, String)}
    * or {@link PyTypeParser#parsePep484FunctionTypeComment(PsiElement, String)}.
    */
@@ -232,6 +235,28 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static PyType getContainerTypeForPositionalOrKeywordArg(@NotNull PyNamedParameter param, @NotNull PyType argType) {
+    if (param.isPositionalContainer()) {
+      // in the case of a positional container, the actual parameter type is a homogeneous tuple type
+      argType = PyTupleType.createHomogeneous(param, argType);
+    }
+    else if (param.isKeywordContainer()) {
+      final PyClassType dictClassType = PyBuiltinCache.getInstance(param).getDictType();
+      if (dictClassType == null) {
+        return null;
+      }
+      final PyClass dictClass = dictClassType.getPyClass();
+      final PyType strType = PyBuiltinCache.getInstance(param).getStrType();
+      argType = new PyCollectionTypeImpl(dictClass, false, Arrays.asList(strType, argType));
+      ;
+    } else {
+      return null;
+    }
+
+    return argType;
   }
 
   @Nullable

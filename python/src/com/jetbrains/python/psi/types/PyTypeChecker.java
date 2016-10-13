@@ -150,7 +150,7 @@ public class PyTypeChecker {
         else if (superTupleType.isHomogeneous() && !subTupleType.isHomogeneous()) {
           final PyType expectedElementType = superTupleType.getElementType(0);
           for (int i = 0; i < subTupleType.getElementCount(); i++) {
-            if (!match(expectedElementType, subTupleType.getElementType(i), context)) {
+            if (!match(expectedElementType, subTupleType.getElementType(i), context, substitutions, recursive)) {
               return false;
             }
           }
@@ -160,7 +160,7 @@ public class PyTypeChecker {
           return false;
         }
         else {
-          return match(superTupleType.getElementType(0), subTupleType.getElementType(0), context);
+          return match(superTupleType.getElementType(0), subTupleType.getElementType(0), context, substitutions, recursive);
         }
       }
       else if (matchClasses(superClass, subClass, context)) {
@@ -385,11 +385,23 @@ public class PyTypeChecker {
     final Map<PyGenericType, PyType> substitutions = unifyReceiver(receiver, context);
     for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
       final PyNamedParameter p = entry.getValue();
-      if (p.isPositionalContainer() || p.isKeywordContainer()) {
-        continue;
-      }
-      final PyType argType = context.getType(entry.getKey());
+
       final PyType paramType = context.getType(p);
+      PyType argType = context.getType(entry.getKey());
+      if (p.isPositionalContainer()) {
+        // in the case of a positional container, the actual parameter type is a homogeneous tuple type
+        argType = PyTupleType.createHomogeneous(p, argType);
+      }
+       else if (p.isKeywordContainer()) {
+        final PyClassType dictClassType = PyBuiltinCache.getInstance(p).getDictType();
+        if (dictClassType == null) {
+          return null;
+        }
+        final PyClass dictClass = dictClassType.getPyClass();
+        final PyType strType = PyBuiltinCache.getInstance(p).getStrType();
+        // in the case of a keyword container, the actual parameter type is a dict[str, argType]
+        argType = new PyCollectionTypeImpl(dictClass, false, Arrays.asList(strType, argType));
+      }
       if (!match(paramType, argType, context, substitutions)) {
         return null;
       }

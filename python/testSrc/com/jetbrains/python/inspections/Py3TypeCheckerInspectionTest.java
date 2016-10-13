@@ -92,7 +92,7 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testStrFormatPy3() {
     doTest();
   }
-  
+
   // PY-18762
   public void testHomogeneousTuples() {
     myFixture.copyDirectoryToProject("typing/typing.py", TEST_DIRECTORY);
@@ -106,6 +106,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
 
   // PY-9924
   public void testListGetItemWithSlice() {
+  }
+  
+  public void testFunctionVarardicTypeVars() {
     doTest();
   }
 
