@@ -378,7 +378,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null, version);
         Disposer.register(disposable, () -> catchAndWarn(commits::close));
 
-        File messagesStorage = getStorageFile(INDEX, MESSAGES, logId, MESSAGES_VERSION, true);
+        File messagesStorage = getStorageFile(INDEX, MESSAGES, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION, true);
         messages = new PersistentHashMap<>(messagesStorage, new IntInlineKeyDescriptor(), EnumeratorStringDescriptor.INSTANCE,
                                            Page.PAGE_SIZE);
         Disposer.register(disposable, () -> catchAndWarn(messages::close));
