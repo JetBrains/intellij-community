@@ -89,7 +89,7 @@ public class JpsGradleModelSerializationExtension extends JpsModelSerializerExte
 
     @Override
     public void saveExtension(@NotNull JpsGradleArtifactExtension extension, @NotNull Element optionsTag) {
-      GradleArtifactExtensionProperties properties = ((JpsGradleArtifactExtensionImpl)extension).getProperties();
+      GradleArtifactExtensionProperties properties = extension.getProperties();
       XmlSerializer.serializeInto(properties, optionsTag, new SkipDefaultValuesSerializationFilters());
     }
   }
