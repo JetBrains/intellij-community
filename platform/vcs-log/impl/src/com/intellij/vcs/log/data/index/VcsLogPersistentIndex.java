@@ -132,7 +132,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     mySingleTaskController.request(new IndexingRequest(commitsToIndex, full));
   }
 
-  private void storeDetails(@NotNull List<? extends VcsFullCommitDetails> details, boolean flush) {
+  private void storeDetails(@NotNull List<? extends VcsFullCommitDetails> details) {
     if (myIndexStorage == null) return;
     try {
       for (VcsFullCommitDetails detail : details) {
@@ -144,9 +144,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         myIndexStorage.paths.update(index, detail);
 
         myIndexStorage.commits.put(index);
-      }
-      if (flush) {
-        flush();
       }
     }
     catch (IOException e) {
@@ -518,8 +515,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     private boolean indexOneByOne(@NotNull VirtualFile root, @NotNull TIntHashSet commits) {
       VcsLogProvider provider = myProviders.get(root);
       try {
-        storeDetails(provider.readFullDetails(root, TroveUtil.map(commits, value -> myHashMap.getCommitId(value).getHash().asString())),
-                     false);
+        storeDetails(provider.readFullDetails(root, TroveUtil.map(commits, value -> myHashMap.getCommitId(value).getHash().asString())));
       }
       catch (VcsException e) {
         LOG.error(e);
@@ -554,7 +550,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
           myProviders.get(root).readAllFullDetails(root, details -> {
             int index = myHashMap.getCommitIndex(details.getId(), details.getRoot());
             if (notIndexed.contains(index)) {
-              storeDetails(Collections.singletonList(details), false);
+              storeDetails(Collections.singletonList(details));
               counter.newIndexedCommits++;
             }
 
