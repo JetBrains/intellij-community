@@ -24,7 +24,7 @@ import java.util.*;
  * @author: db
  * Date: 01.03.11
  */
-abstract class Difference {
+public abstract class Difference {
 
   public static boolean weakerAccess(final int me, final int then) {
     return ((me & Opcodes.ACC_PRIVATE) > 0 && (then & Opcodes.ACC_PRIVATE) == 0) ||

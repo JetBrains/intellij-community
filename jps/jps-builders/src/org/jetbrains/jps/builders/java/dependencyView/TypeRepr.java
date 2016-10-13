@@ -32,7 +32,7 @@ import java.util.Set;
  * @author: db
  * Date: 14.02.11
  */
-class TypeRepr {
+public class TypeRepr {
   private static final byte PRIMITIVE_TYPE = 0x0;
   private static final byte CLASS_TYPE = 0x1;
   private static final byte ARRAY_TYPE = 0x2;
