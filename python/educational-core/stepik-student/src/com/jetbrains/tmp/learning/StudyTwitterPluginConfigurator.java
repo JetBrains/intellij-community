@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface StudyTwitterPluginConfigurator {
-  ExtensionPointName<StudyTwitterPluginConfigurator> EP_NAME = ExtensionPointName.create("STEPIK.studyTwitterPluginConfigurator");
+  ExtensionPointName<StudyTwitterPluginConfigurator> EP_NAME = ExtensionPointName.create("SCore.studyTwitterPluginConfigurator");
 
   /**
    * To implement tweeting you should register you app in twitter. For registered application twitter provide

@@ -13,7 +13,7 @@ import java.util.List;
  * data: 6/30/14.
  */
 public class StudyPrevWindowAction extends StudyWindowNavigationAction {
-  public static final String ACTION_ID = "STEPIK.PrevWindowAction";
+  public static final String ACTION_ID = "SCore.PrevWindowAction";
   public static final String SHORTCUT = "ctrl shift pressed COMMA";
 
   public StudyPrevWindowAction() {

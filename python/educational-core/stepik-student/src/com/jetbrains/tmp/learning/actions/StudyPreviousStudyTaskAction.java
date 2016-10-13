@@ -16,7 +16,7 @@ public class StudyPreviousStudyTaskAction extends StudyTaskNavigationAction {
     super("Previous Task (" + KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(SHORTCUT), null)) + ")", "Navigate to the previous task", InteractiveLearningIcons.Prev);
   }
 
-  public static final String ACTION_ID = "STEPIK.PreviousTaskAction";
+  public static final String ACTION_ID = "SCore.PreviousTaskAction";
   public static final String SHORTCUT = "ctrl pressed COMMA";
 
   @Override

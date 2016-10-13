@@ -5,5 +5,5 @@ import com.intellij.openapi.options.ConfigurableEP;
 
 public class StudyOptionsProviderEP extends ConfigurableEP<StudyOptionsProvider> {
   public static final ExtensionPointName<StudyOptionsProviderEP>
-    EP_NAME = ExtensionPointName.create("STEPIK.optionsProvider");
+    EP_NAME = ExtensionPointName.create("SCore.optionsProvider");
 }
