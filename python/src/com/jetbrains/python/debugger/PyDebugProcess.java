@@ -62,6 +62,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.pydev.*;
@@ -341,14 +342,24 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public void showConsole(PyThreadInfo thread) {
     myConsoleContextFrame = new PyExecutionStack(this, thread).getTopFrame();
     if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
-      UIUtil.invokeLaterIfNeeded(() -> ((PythonDebugLanguageConsoleView)myExecutionConsole).enableConsole(false));
+      PythonDebugLanguageConsoleView consoleView = (PythonDebugLanguageConsoleView)myExecutionConsole;
+      UIUtil.invokeLaterIfNeeded(() -> {
+        consoleView.enableConsole(false);
+        consoleView.getPydevConsoleView().setConsoleEnabled(true);
+      });
     }
   }
 
   @Override
-  public void consoleInputRequested() {
+  public void consoleInputRequested(boolean isStarted) {
     if (myExecutionConsole instanceof PythonDebugLanguageConsoleView) {
-      ((PythonDebugLanguageConsoleView)myExecutionConsole).getPydevConsoleView().inputRequested();
+      PythonConsoleView consoleView = ((PythonDebugLanguageConsoleView)myExecutionConsole).getPydevConsoleView();
+      if (isStarted) {
+        consoleView.inputRequested();
+      }
+      else {
+        consoleView.inputReceived();
+      }
     }
   }
 

@@ -272,7 +272,9 @@ public class HighlightMethodUtil {
     List<PsiClassType> checkedExceptions = new ArrayList<>();
     for (int i = 0; i < exceptions.length; i++) {
       PsiClassType exception = exceptions[i];
-      LOG.assertTrue(exception != null, "throws: " + method.getThrowsList().getText() + "; method: " + method);
+      if (exception == null) {
+        LOG.error("throws: " + method.getThrowsList().getText() + "; method: " + method);
+      }
       if (!ExceptionUtil.isUncheckedException(exception)) {
         checkedExceptions.add(exception);
         if (includeRealPositionInfo && i < referenceElements.length) {

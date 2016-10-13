@@ -18,8 +18,10 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,26 +42,6 @@ import java.util.List;
  * @author spleaner
  */
 public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent implements Disposable, Weighted {
-  private interface Background {
-    ColorKey DEFAULT = ColorKey.createColorKey("BREADCRUMBS_BACKGROUND");
-    ColorKey HOVERED = ColorKey.createColorKey("BREADCRUMBS_BACKGROUND_HOVERED");
-    ColorKey CURRENT = ColorKey.createColorKey("BREADCRUMBS_BACKGROUND_CURRENT");
-    ColorKey INACTIVE = ColorKey.createColorKey("BREADCRUMBS_BACKGROUND_INACTIVE");
-  }
-
-  private interface TextColor {
-    ColorKey DEFAULT = ColorKey.createColorKey("BREADCRUMBS_TEXT_COLOR");
-    ColorKey HOVERED = ColorKey.createColorKey("BREADCRUMBS_TEXT_COLOR_HOVERED");
-    ColorKey CURRENT = ColorKey.createColorKey("BREADCRUMBS_TEXT_COLOR_CURRENT");
-    ColorKey INACTIVE = ColorKey.createColorKey("BREADCRUMBS_TEXT_COLOR_INACTIVE");
-  }
-
-  private interface BorderColor {
-    ColorKey DEFAULT = ColorKey.createColorKey("BREADCRUMBS_BORDER_COLOR");
-    ColorKey HOVERED = ColorKey.createColorKey("BREADCRUMBS_BORDER_COLOR_HOVERED");
-    ColorKey CURRENT = ColorKey.createColorKey("BREADCRUMBS_BORDER_COLOR_CURRENT");
-    ColorKey INACTIVE = ColorKey.createColorKey("BREADCRUMBS_BORDER_COLOR_INACTIVE");
-  }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.breadcrumbs.BreadcrumbsComponent");
   private static final Painter DEFAULT_PAINTER = new DefaultPainter(new ButtonSettings());
@@ -622,17 +604,17 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   abstract static class PainterSettings {
     @Nullable
     Color getBackgroundColor(@NotNull final Crumb c) {
-      return getColor(c, Background.DEFAULT, Background.HOVERED, Background.CURRENT, Background.INACTIVE);
+      return getAttributes(c).getBackgroundColor();
     }
 
     @Nullable
     Color getForegroundColor(@NotNull final Crumb c) {
-      return getColor(c, TextColor.DEFAULT, TextColor.HOVERED, TextColor.CURRENT, TextColor.INACTIVE);
+      return getAttributes(c).getForegroundColor();
     }
 
     @Nullable
     Color getBorderColor(@NotNull final Crumb c) {
-      return getColor(c, BorderColor.DEFAULT, BorderColor.HOVERED, BorderColor.CURRENT, BorderColor.INACTIVE);
+      return getAttributes(c).getEffectColor();
     }
 
     @Nullable
@@ -640,28 +622,34 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
       return null;
     }
 
-    static Color getColor(Crumb c, ColorKey main, ColorKey hovered, ColorKey current, ColorKey inactive) {
-      return EditorColorsManager.getInstance().getGlobalScheme().getColor(
+    @NotNull
+    static TextAttributesKey getKey(Crumb c) {
+      return
         c.isHovered()
-        ? hovered
+        ? EditorColors.BREADCRUMBS_HOVERED
         : c.isSelected()
-          ? current
+          ? EditorColors.BREADCRUMBS_CURRENT
           : c.isLight() && !(c instanceof NavigationCrumb)
-            ? inactive
-            : main);
+            ? EditorColors.BREADCRUMBS_INACTIVE
+            : EditorColors.BREADCRUMBS_DEFAULT;
+    }
+    
+    @NotNull
+    static TextAttributes getAttributes(Crumb c) {
+      return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(getKey(c));
     }
   }
 
   static class ButtonSettings extends PainterSettings {
     static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
-      return EditorColorsManager.getInstance().getGlobalScheme().getColor(
+      return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
         hovered
-        ? Background.HOVERED
+        ? EditorColors.BREADCRUMBS_HOVERED
         : selected
-          ? Background.CURRENT
+          ? EditorColors.BREADCRUMBS_CURRENT
           : light && !navigationCrumb
-            ? Background.INACTIVE
-            : Background.DEFAULT);
+            ? EditorColors.BREADCRUMBS_INACTIVE
+            : EditorColors.BREADCRUMBS_DEFAULT).getBackgroundColor();
     }
 
     @Override

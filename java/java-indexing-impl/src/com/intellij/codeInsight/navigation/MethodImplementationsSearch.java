@@ -54,7 +54,6 @@ public class MethodImplementationsSearch implements QueryExecutor<PsiElement, De
     return OverridingMethodsSearch.search(method, scope, true).forEach(processor);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public static PsiMethod[] getMethodImplementations(final PsiMethod method, SearchScope scope) {
     List<PsiMethod> result = new ArrayList<>();

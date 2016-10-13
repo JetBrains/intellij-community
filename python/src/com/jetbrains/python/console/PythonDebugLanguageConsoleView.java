@@ -54,6 +54,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     getPydevConsoleView().executeCode(code, e);
   }
 
+  @NotNull
   public PythonConsoleView getPydevConsoleView() {
     return getSecondaryConsoleView();
   }

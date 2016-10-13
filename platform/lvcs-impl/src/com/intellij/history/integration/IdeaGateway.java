@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,21 +67,79 @@ public class IdeaGateway {
 
     if (!f.isDirectory() && StringUtil.endsWith(f.getNameSequence(), ".class")) return false;
 
-    Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+    LocalHistoryImpl.getInstanceImpl().dispatchPendingEvents();
+
+    VersionedFilterData versionedFilterData;
+    VfsEventDispatchContext vfsEventDispatchContext = ourCurrentEventDispatchContext.get();
+    if (vfsEventDispatchContext != null) {
+      versionedFilterData = vfsEventDispatchContext.myFilterData;
+      if (versionedFilterData == null) versionedFilterData = vfsEventDispatchContext.myFilterData = new VersionedFilterData();
+    } else {
+      versionedFilterData = new VersionedFilterData();
+    }
+
     boolean isInContent = false;
-    for (Project each : openProjects) {
-      if (each.isDefault()) continue;
-      if (!each.isInitialized()) continue;
-      if (Comparing.equal(each.getWorkspaceFile(), f)) return false;
-      ProjectFileIndex index = ProjectRootManager.getInstance(each).getFileIndex();
-      
+    int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
+    for (int i = 0; i < numberOfOpenProjects; ++i) {
+      if (Comparing.equal(versionedFilterData.myWorkspaceFiles.get(i), f)) return false;
+      ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
+
       if (index.isExcluded(f)) return false;
       isInContent |= index.isInContent(f);
     }
     if (shouldBeInContent && !isInContent) return false;
-    
+
     // optimisation: FileTypeManager.isFileIgnored(f) already checked inside ProjectFileIndex.isIgnored()
-    return openProjects.length != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
+    return numberOfOpenProjects != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
+  }
+
+  private static final ThreadLocal<VfsEventDispatchContext> ourCurrentEventDispatchContext = new ThreadLocal<>();
+
+  private static class VfsEventDispatchContext {
+    final List<? extends VFileEvent> myEvents;
+    final boolean myBeforeEvents;
+    final VfsEventDispatchContext myPreviousContext;
+
+    VersionedFilterData myFilterData;
+
+    VfsEventDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents, VfsEventDispatchContext context) {
+      myEvents = events;
+      myBeforeEvents = beforeEvents;
+      myPreviousContext = context;
+    }
+
+    public void close() {
+      ourCurrentEventDispatchContext.set(myPreviousContext);
+    }
+  }
+
+  public void runWithVfsEventsDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents, Runnable action) {
+    VfsEventDispatchContext vfsEventDispatchContext = new VfsEventDispatchContext(events, beforeEvents, ourCurrentEventDispatchContext.get());
+    ourCurrentEventDispatchContext.set(vfsEventDispatchContext);
+    try {
+      action.run();
+    } finally {
+      vfsEventDispatchContext.close();
+    }
+  }
+
+  private static class VersionedFilterData {
+    final List<Project> myOpenedProjects = new ArrayList<>();
+    final List<ProjectFileIndex> myProjectFileIndices = new ArrayList<>();
+    final List<VirtualFile> myWorkspaceFiles = new ArrayList<>();
+
+    VersionedFilterData() {
+      Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
+
+      for (Project each : openProjects) {
+        if (each.isDefault()) continue;
+        if (!each.isInitialized()) continue;
+
+        myWorkspaceFiles.add(each.getWorkspaceFile());
+        myOpenedProjects.add(each);
+        myProjectFileIndices.add(ProjectRootManager.getInstance(each).getFileIndex());
+      }
+    }
   }
 
   public boolean areContentChangesVersioned(@NotNull VirtualFile f) {

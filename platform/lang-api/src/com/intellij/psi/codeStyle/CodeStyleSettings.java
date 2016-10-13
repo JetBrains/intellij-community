@@ -180,13 +180,10 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public boolean AUTODETECT_INDENTS = true;
 
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public final IndentOptions JAVA_INDENT_OPTIONS = new IndentOptions();
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public final IndentOptions JSP_INDENT_OPTIONS = new IndentOptions();
-  @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   public final IndentOptions XML_INDENT_OPTIONS = new IndentOptions();
 

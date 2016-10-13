@@ -163,10 +163,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
     if (!project.isInitialized()) return;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
     if (psiFile == null) return;
-    if (psiFile instanceof PsiCompiledFile) {
-      throw new IllegalArgumentException("Can't commit ClsFile: "+psiFile);
-    }
-
     doQueue(project, document, getAllFileNodes(psiFile), reason, currentModalityState);
   }
 
@@ -429,9 +425,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
           @Override
           public List<Pair<PsiFileImpl, FileASTNode>> compute() {
             PsiFile file = finalProject.isDisposed() ? null : documentManager.getPsiFile(finalDocument);
-            if (file != null && !file.isValid()) {
-              throw new PsiInvalidElementAccessException(file, "documentManager.getPsiFile(" + finalDocument + ") is invalid");
-            }
             return file == null ? null : getAllFileNodes(file);
           }
         });
@@ -461,9 +454,6 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
       throw new RuntimeException(s);
     }
 
-    if (!psiFile.isValid()) {
-      throw new PsiInvalidElementAccessException(psiFile, "File " + psiFile + " is invalid, can't commit");
-    }
     List<Pair<PsiFileImpl, FileASTNode>> allFileNodes = getAllFileNodes(psiFile);
 
     Lock documentLock = getDocumentLock(document);
@@ -493,6 +483,13 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
   @NotNull
   private static List<Pair<PsiFileImpl, FileASTNode>> getAllFileNodes(@NotNull PsiFile file) {
+    if (!file.isValid()) {
+      throw new PsiInvalidElementAccessException(file, "File " + file + " is invalid, can't commit");
+    }
+    if (file instanceof PsiCompiledFile) {
+      throw new IllegalArgumentException("Can't commit ClsFile: "+file);
+    }
+
     return ContainerUtil.map(file.getViewProvider().getAllFiles(), new Function<PsiFile, Pair<PsiFileImpl, FileASTNode>>() {
       @Override
       public Pair<PsiFileImpl, FileASTNode> fun(PsiFile root) {
