@@ -80,8 +80,8 @@ class MergeAutoTest : MergeTestBase() {
   private fun TestBuilder.doReplace(): Unit {
     val length = document.textLength
 
-    var index1: Int = 0;
-    var index2: Int = 0;
+    var index1: Int = 0
+    var index2: Int = 0
     if (length != 0) {
       index1 = RNG.nextInt(length)
       index2 = index1 + RNG.nextInt(length - index1)
