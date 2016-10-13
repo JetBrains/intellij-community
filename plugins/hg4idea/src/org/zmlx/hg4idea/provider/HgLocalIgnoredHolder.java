@@ -17,16 +17,21 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.repo.HgRepository;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -78,6 +83,36 @@ public class HgLocalIgnoredHolder implements Disposable {
       SET_LOCK.writeLock().lock();
       myIgnoredSet.clear();
       myIgnoredSet.addAll(ignored);
+    }
+    finally {
+      SET_LOCK.writeLock().unlock();
+    }
+  }
+
+  @NotNull
+  public List<FilePath> removeIgnoredFiles(@NotNull Collection<FilePath> files) {
+    List<FilePath> removedIgnoredFiles = ContainerUtil.newArrayList();
+    try {
+      SET_LOCK.writeLock().lock();
+      Iterator<VirtualFile> iter = myIgnoredSet.iterator();
+      while (iter.hasNext()) {
+        FilePath filePath = VcsUtil.getFilePath(iter.next());
+        if (files.contains(filePath)) {
+          iter.remove();
+          removedIgnoredFiles.add(filePath);
+        }
+      }
+    }
+    finally {
+      SET_LOCK.writeLock().unlock();
+    }
+    return removedIgnoredFiles;
+  }
+
+  public void addFiles(@NotNull List<VirtualFile> files) {
+    try {
+      SET_LOCK.writeLock().lock();
+      myIgnoredSet.addAll(files);
     }
     finally {
       SET_LOCK.writeLock().unlock();
