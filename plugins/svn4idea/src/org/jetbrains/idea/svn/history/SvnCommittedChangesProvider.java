@@ -93,16 +93,19 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                            }, project.getDisposed()));
   }
 
+  @Override
   @NotNull
   public ChangeBrowserSettings createDefaultSettings() {
     return new ChangeBrowserSettings();
   }
 
+  @Override
   @NotNull
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new SvnVersionFilterComponent(showDateFilter);
   }
 
+  @Override
   @Nullable
   public RepositoryLocation getLocationFor(@NotNull FilePath root) {
     String url = SvnUtil.getExactLocation(myVcs, root.getIOFile());
@@ -110,16 +113,19 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return url == null ? null : new SvnRepositoryLocation(url, root);
   }
 
+  @Override
   @Nullable
   public RepositoryLocation getLocationFor(@NotNull FilePath root, @Nullable String repositoryPath) {
     return repositoryPath == null ? getLocationFor(root) : new SvnRepositoryLocation(repositoryPath);
   }
 
+  @Override
   @NotNull
   public VcsCommittedListsZipper getZipper() {
     return myZipper;
   }
 
+  @Override
   public void loadCommittedChanges(@NotNull ChangeBrowserSettings settings,
                                    @NotNull RepositoryLocation location,
                                    int maxCount,
@@ -143,6 +149,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     }
   }
 
+  @Override
   @NotNull
   public List<SvnChangeList> getCommittedChanges(@NotNull ChangeBrowserSettings settings,
                                                  @NotNull RepositoryLocation location,
@@ -260,6 +267,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                              SvnBundle.message("progress.text2.changes.establishing.connection", location));
   }
 
+  @Override
   @NotNull
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[]{
@@ -275,6 +283,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     myMergeInfoUpdatesListener.addPanel(action);
   }
 
+  @Override
   @NotNull
   public VcsCommittedViewAuxiliary createActions(@NotNull DecoratorManager manager, @Nullable RepositoryLocation location) {
     RootsAndBranches rootsAndBranches = new RootsAndBranches(myVcs, manager, location);
@@ -295,6 +304,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     }, singletonList(action));
   }
 
+  @Override
   public int getUnlimitedCountValue() {
     return 0;
   }
@@ -316,14 +326,17 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return true;
   }
 
+  @Override
   public int getFormatVersion() {
     return VERSION_WITH_REPLACED_PATHS;
   }
 
+  @Override
   public void writeChangeList(@NotNull DataOutput dataStream, @NotNull SvnChangeList list) throws IOException {
     list.writeToStream(dataStream);
   }
 
+  @Override
   @NotNull
   public SvnChangeList readChangeList(@NotNull RepositoryLocation location, @NotNull DataInput stream) throws IOException {
     int version = getFormatVersion();
@@ -331,10 +344,12 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
                              VERSION_WITH_REPLACED_PATHS <= version);
   }
 
+  @Override
   public boolean isMaxCountSupported() {
     return true;
   }
 
+  @Override
   @Nullable
   public Collection<FilePath> getIncomingFiles(@NotNull RepositoryLocation location) throws VcsException {
     FilePath root = null;
@@ -382,14 +397,17 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return status != null && !StatusType.STATUS_NONE.equals(status);
   }
 
+  @Override
   public boolean refreshCacheByNumber() {
     return true;
   }
 
+  @Override
   public String getChangelistTitle() {
     return SvnBundle.message("changes.browser.revision.term");
   }
 
+  @Override
   public boolean isChangeLocallyAvailable(FilePath filePath,
                                           @Nullable VcsRevisionNumber localRevision,
                                           VcsRevisionNumber changeRevision,
@@ -397,6 +415,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return localRevision != null && localRevision.compareTo(changeRevision) >= 0;
   }
 
+  @Override
   public boolean refreshIncomingWithCommitted() {
     return true;
   }
