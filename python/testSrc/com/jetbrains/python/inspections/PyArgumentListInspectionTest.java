@@ -97,7 +97,7 @@ public class PyArgumentListInspectionTest extends PyTestCase {
 
   // PY-19412
   public void testReassignedViaClassMethodInAnotherModule() {
-    doMutliFileTest();
+    doMultiFileTest();
   }
 
   // PY-2294
@@ -209,15 +209,15 @@ public class PyArgumentListInspectionTest extends PyTestCase {
 
   // PY-19716
   public void testMethodsForLoggingExceptions() {
-    doMutliFileTest();
+    doMultiFileTest();
   }
 
   // PY-19522
   public void testCsvRegisterDialect() {
-    doMutliFileTest();
+    doMultiFileTest();
   }
 
-  private void doMutliFileTest() {
+  private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 
     myFixture.copyDirectoryToProject(folderPath, "");
