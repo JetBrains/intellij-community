@@ -61,7 +61,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<Integer> {
                           @NotNull FatalErrorHandler fatalErrorHandler,
                           @NotNull Disposable disposableParent) throws IOException {
     super(logId, NAME, VcsLogPersistentIndex.getVersion(), new PathsIndexer(createPathsEnumerator(logId), roots),
-          new NullableIntKeyDescriptor(), disposableParent);
+          new NullableIntKeyDescriptor(), fatalErrorHandler, disposableParent);
 
     myEmptyCommits = PersistentUtil.createPersistentSet(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + NAME, logId,
                                                         VcsLogPersistentIndex.getVersion());

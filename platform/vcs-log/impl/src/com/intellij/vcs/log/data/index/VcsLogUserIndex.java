@@ -45,7 +45,7 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
                          @NotNull FatalErrorHandler consumer,
                          @NotNull Disposable disposableParent) throws IOException {
     super(logId, "users", VcsLogPersistentIndex.getVersion(), new UserIndexer(userRegistry), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
-          disposableParent);
+          consumer, disposableParent);
     myUserRegistry = userRegistry;
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> {
       consumer.consume(this, e);

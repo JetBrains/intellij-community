@@ -94,7 +94,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         flush();
       } catch (StorageException e) {
         LOG.info(e);
-        FileBasedIndex.getInstance().requestRebuild(myIndexId);
+        requestRebuild(null);
       }
     }
   });
@@ -585,15 +585,24 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         Application application = ApplicationManager.getApplication();
         if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
           // avoid deadlock due to synchronous update in DumbServiceImpl#queueTask
-          application.invokeLater(() -> FileBasedIndex.getInstance().requestRebuild(myIndexId, ex), ModalityState.any());
+          application.invokeLater(() -> requestRebuild(ex), ModalityState.any());
         } else {
-          FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+          requestRebuild(ex);
         }
         return Boolean.FALSE;
       }
 
       return Boolean.TRUE;
     };
+  }
+
+  protected void requestRebuild(@Nullable Exception ex) {
+    if (ex == null) {
+      FileBasedIndex.getInstance().requestRebuild(myIndexId);
+    }
+    else {
+      FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+    }
   }
 
   protected UpdateData<Key, Value> buildUpdateData(Map<Key, Value> data, NotNullComputable<Collection<Key>> oldKeysGetter, int savedInputId) {

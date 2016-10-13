@@ -22,6 +22,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -41,18 +42,21 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   @NotNull private final String myLogId;
   @NotNull private final String myName;
   @NotNull protected final DataIndexer<Integer, T, VcsFullCommitDetails> myIndexer;
+  @NotNull private final FatalErrorHandler myFatalErrorHandler;
 
   public VcsLogFullDetailsIndex(@NotNull String logId,
                                 @NotNull String name,
                                 final int version,
                                 @NotNull DataIndexer<Integer, T, VcsFullCommitDetails> indexer,
                                 @NotNull DataExternalizer<T> externalizer,
+                                @NotNull FatalErrorHandler fatalErrorHandler,
                                 @NotNull Disposable disposableParent)
     throws IOException {
     myID = ID.create(name);
     myName = name;
     myLogId = logId;
     myIndexer = indexer;
+    myFatalErrorHandler = fatalErrorHandler;
 
     MyMapReduceIndex result = IOUtil.openCleanOrResetBroken(() -> new MyMapReduceIndex(myIndexer, externalizer, version),
                                                             () -> {
@@ -192,6 +196,11 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
 
     public void markCorrupted() {
       myInputsIndex.markCorrupted();
+    }
+
+    @Override
+    protected void requestRebuild(@Nullable Exception ex) {
+      myFatalErrorHandler.consume(this, ex != null ? ex : new Exception("Index rebuild requested"));
     }
   }
 

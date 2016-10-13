@@ -24,6 +24,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentUtil;
 import gnu.trove.THashMap;
@@ -40,9 +41,11 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
 
   @NotNull private final PersistentSet<Integer> myNoTrigramsCommits;
 
-  public VcsLogMessagesTrigramIndex(@NotNull String logId, @NotNull Disposable disposableParent) throws IOException {
+  public VcsLogMessagesTrigramIndex(@NotNull String logId,
+                                    @NotNull FatalErrorHandler fatalErrorHandler,
+                                    @NotNull Disposable disposableParent) throws IOException {
     super(logId, TRIGRAMS, VcsLogPersistentIndex.getVersion(), new TrigramMessageIndexer(), ScalarIndexExtension.VOID_DATA_EXTERNALIZER,
-          disposableParent);
+          fatalErrorHandler, disposableParent);
 
     myNoTrigramsCommits =
       PersistentUtil.createPersistentSet(EnumeratorIntegerDescriptor.INSTANCE, "index-no-" + TRIGRAMS, logId,
