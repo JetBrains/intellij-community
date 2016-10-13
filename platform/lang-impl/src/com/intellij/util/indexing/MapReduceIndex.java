@@ -57,7 +57,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Value, Input> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.MapReduceIndex");
   private static final int NULL_MAPPING = 0;
-  @Nullable private final ID<Key, Value> myIndexId;
+  @NotNull private final ID<Key, Value> myIndexId;
   private final DataIndexer<Key, Value, Input> myIndexer;
   @NotNull protected final IndexStorage<Key, Value> myStorage;
   private final boolean myHasSnapshotMapping;
@@ -125,7 +125,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       }
     }
 
-    if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping && myIndexId != null) {
+    if (DebugAssertions.EXTRA_SANITY_CHECKS && myHasSnapshotMapping) {
       myIndexingTrace = createIndexingTrace();
     }
 
@@ -172,7 +172,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   private PersistentHashMap<Integer, ByteSequence> createContentsIndex() throws IOException {
-    final File saved = myHasSnapshotMapping && myIndexId != null ? new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values") : null;
+    final File saved = myHasSnapshotMapping ? new File(IndexInfrastructure.getPersistentIndexRootDir(myIndexId), "values") : null;
 
     if (saved != null) {
       try {
@@ -225,7 +225,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   private PersistentHashMap<Integer, Integer> createInputSnapshotMapping() throws IOException {
-    assert myIndexId != null;
     final File fileIdToHashIdFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "fileIdToHashId");
     try {
       return new PersistentHashMap<Integer, Integer>(fileIdToHashIdFile, EnumeratorIntegerDescriptor.INSTANCE,
@@ -243,7 +242,6 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   }
 
   private PersistentHashMap<Integer, String> createIndexingTrace() throws IOException {
-    assert myIndexId != null;
     final File mapFile = new File(IndexInfrastructure.getIndexRootDir(myIndexId), "indextrace");
     try {
       return new PersistentHashMap<>(mapFile, EnumeratorIntegerDescriptor.INSTANCE,
