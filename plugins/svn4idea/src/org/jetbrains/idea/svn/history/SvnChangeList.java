@@ -795,13 +795,10 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
     }
   }
 
-  public void forceReloadCachedInfo(final boolean reloadRoot) {
+  public void forceReloadCachedInfo() {
     myCachedInfoLoaded = false;
     myBranchUrl = null;
-
-    if (reloadRoot) {
-      myWcRoot = null;
-    }
+    myWcRoot = null;
   }
 
   @NotNull
