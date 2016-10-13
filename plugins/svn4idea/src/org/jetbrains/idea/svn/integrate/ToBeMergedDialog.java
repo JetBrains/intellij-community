@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.QuantitySelection;
-import com.intellij.openapi.vcs.SelectionResult;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
@@ -232,12 +231,11 @@ public class ToBeMergedDialog extends DialogWrapper {
       result.addAll(myListsEngine.next());
     }
 
-    SelectionResult<Long> selected = myWiseSelection.getSelected();
-    SelectionResult<Long> unselected = myWiseSelection.getUnselected();
+    Set<Long> selected = myWiseSelection.getSelected();
+    Set<Long> unselected = myWiseSelection.getUnselected();
     // todo: can be made faster
-    Predicate<CommittedChangeList> removeCondition = selected.isAll()
-                                                     ? list -> unselected.getMarked().contains(list.getNumber())
-                                                     : list -> !selected.getMarked().contains(list.getNumber());
+    Predicate<CommittedChangeList> removeCondition =
+      myWiseSelection.areAllSelected() ? list -> unselected.contains(list.getNumber()) : list -> !selected.contains(list.getNumber());
     result.removeIf(removeCondition);
     return result;
   }

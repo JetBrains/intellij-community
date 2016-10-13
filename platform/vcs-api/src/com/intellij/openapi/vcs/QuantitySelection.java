@@ -15,14 +15,17 @@
  */
 package com.intellij.openapi.vcs;
 
-import java.util.HashSet;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Set;
 
-public class QuantitySelection<T> implements SelectionManipulation<T>, SelectionState<T> {
-  private final Group<T> mySelected;
-  private final Group<T> myUnselected;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
-  public QuantitySelection(final boolean startFromSelectAll) {
+public class QuantitySelection<T> {
+  @NotNull private final Group<T> mySelected;
+  @NotNull private final Group<T> myUnselected;
+
+  public QuantitySelection(boolean startFromSelectAll) {
     mySelected = new Group<>();
     myUnselected = new Group<>();
     if (startFromSelectAll) {
@@ -33,7 +36,7 @@ public class QuantitySelection<T> implements SelectionManipulation<T>, Selection
   }
 
   public void add(T t) {
-    if (mySelected.isAll()) {
+    if (mySelected.hasAll()) {
       myUnselected.remove(t);
     } else {
       mySelected.add(t);
@@ -41,7 +44,7 @@ public class QuantitySelection<T> implements SelectionManipulation<T>, Selection
   }
 
   public void remove(T t) {
-    if (mySelected.isAll()) {
+    if (mySelected.hasAll()) {
       myUnselected.add(t);
     } else {
       mySelected.remove(t);
@@ -58,60 +61,58 @@ public class QuantitySelection<T> implements SelectionManipulation<T>, Selection
     mySelected.setAll();
   }
 
-  public SelectionResult<T> getSelected() {
-    return mySelected;
+  @NotNull
+  public Set<T> getSelected() {
+    return mySelected.getItems();
   }
 
-  public SelectionResult<T> getUnselected() {
-    return myUnselected;
+  @NotNull
+  public Set<T> getUnselected() {
+    return myUnselected.getItems();
   }
 
-  public boolean isSelected(final T t) {
-    return mySelected.isAll() && (! myUnselected.hasPoint(t)) || myUnselected.isAll() && mySelected.hasPoint(t);
+  public boolean isSelected(T t) {
+    return mySelected.hasAll() && !myUnselected.has(t) || myUnselected.hasAll() && mySelected.has(t);
   }
 
-  public static class Group<T> implements SelectionManipulation<T>, SelectionResult<T> {
+  public boolean areAllSelected() {
+    return mySelected.hasAll();
+  }
+
+  private static class Group<T> {
     private boolean myAll;
-    private final Set<T> myMarked;
+    @NotNull private final Set<T> myItems = newHashSet();
 
-    private Group() {
-      myMarked = new HashSet<>();
+    public void add(T t) {
+      myItems.add(t);
     }
 
-    public void add(final T t) {
-      myMarked.add(t);
-    }
-
-    // +- consistency check not here
-    public void remove(final T t) {
+    public void remove(T t) {
       myAll = false;
-      myMarked.remove(t);
+      myItems.remove(t);
     }
 
     public void clearAll() {
       myAll = false;
-      myMarked.clear();
+      myItems.clear();
     }
 
     public void setAll() {
       myAll = true;
-      myMarked.clear();
+      myItems.clear();
     }
 
-    public Set<T> getMarked() {
-      return myMarked;
+    @NotNull
+    public Set<T> getItems() {
+      return myItems;
     }
 
-    public boolean isAll() {
+    public boolean hasAll() {
       return myAll;
     }
 
-    public boolean hasPoint(final T t) {
-      return myMarked.contains(t);
-    }
-
-    public boolean isIncluded(final T t) {
-      return myAll || myMarked.contains(t);
+    public boolean has(T t) {
+      return myItems.contains(t);
     }
   }
 }
