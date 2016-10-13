@@ -67,9 +67,13 @@ class PasswordSafeImpl(/* public - backward compatibility */val settings: Passwo
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     val value = currentProvider.get(attributes)
-    if ((value == null || value.password == null || value.password!!.isEmpty()) && memoryHelperProvider.isInitialized()) {
+    if ((value == null || value.password.isNullOrEmpty()) && memoryHelperProvider.isInitialized()) {
       // if password was set as `memoryOnly`
-      return memoryHelperProvider.value.get(attributes)
+      memoryHelperProvider.value.get(attributes)?.let {
+        if (!it.isEmpty()) {
+          return it
+        }
+      }
     }
     return value
   }
