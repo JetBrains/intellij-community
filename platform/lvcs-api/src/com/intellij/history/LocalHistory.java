@@ -25,12 +25,8 @@ import org.jetbrains.annotations.Nullable;
 public abstract class LocalHistory {
   public static final Object VFS_EVENT_REQUESTOR = new Object();
 
-  private static class LocalHistoryHolder {
-    static final LocalHistory ourInstance = ApplicationManager.getApplication().getComponent(LocalHistory.class);
-  }
-
   public static LocalHistory getInstance() {
-    return LocalHistoryHolder.ourInstance;
+    return ApplicationManager.getApplication().getComponent(LocalHistory.class);
   }
 
   public abstract LocalHistoryAction startAction(@Nullable String name);
