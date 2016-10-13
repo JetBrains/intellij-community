@@ -144,8 +144,9 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   protected String getFullName() {
-    final String name = DescriptiveNameUtil.getDescriptiveName(myPsiElement);
-    return (UsageViewUtil.getType(myPsiElement) + " " + name).trim();
+    String name = DescriptiveNameUtil.getDescriptiveName(myPsiElement);
+    String type = UsageViewUtil.getType(myPsiElement);
+    return StringUtil.isEmpty(name) ? type : type + " '" + name + "'";
   }
 
   protected void createNewNameComponent() {
