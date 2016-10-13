@@ -97,12 +97,7 @@ public class PyArgumentListInspectionTest extends PyTestCase {
 
   // PY-19412
   public void testReassignedViaClassMethodInAnotherModule() {
-    final String folderPath = "inspections/PyArgumentListInspection/ReassignedViaClassMethodInAnotherModule/";
-
-    myFixture.copyDirectoryToProject(folderPath, "");
-    myFixture.configureFromTempProjectFile("b.py");
-    myFixture.enableInspections(PyArgumentListInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+    doMutliFileTest();
   }
 
   // PY-2294
@@ -214,20 +209,19 @@ public class PyArgumentListInspectionTest extends PyTestCase {
 
   // PY-19716
   public void testMethodsForLoggingExceptions() {
-    final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
-
-    myFixture.copyDirectoryToProject(folderPath, "");
-    myFixture.configureFromTempProjectFile("methodsForLoggingExceptions.py");
-    myFixture.enableInspections(PyArgumentListInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+    doMutliFileTest();
   }
 
   // PY-19522
   public void testCsvRegisterDialect() {
+    doMutliFileTest();
+  }
+
+  private void doMutliFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 
     myFixture.copyDirectoryToProject(folderPath, "");
-    myFixture.configureFromTempProjectFile("csvRegisterDialect.py");
+    myFixture.configureFromTempProjectFile("b.py");
     myFixture.enableInspections(PyArgumentListInspection.class);
     myFixture.checkHighlighting(true, false, false);
   }
