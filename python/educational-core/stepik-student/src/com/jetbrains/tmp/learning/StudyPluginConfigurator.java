@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.util.Map;
 
 public interface StudyPluginConfigurator {
-  ExtensionPointName<StudyPluginConfigurator> EP_NAME = ExtensionPointName.create("STEPIK.studyPluginConfigurator");
+  ExtensionPointName<StudyPluginConfigurator> EP_NAME = ExtensionPointName.create("SCore.studyPluginConfigurator");
 
   /**
    * Provide action group that should be placed on the tool window toolbar.

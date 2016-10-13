@@ -14,7 +14,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 public class StudyFileEditorProvider implements FileEditorProvider, DumbAware {
-  public static final String EDITOR_TYPE_ID = "STEPIK.StudyEditor";
+  public static final String EDITOR_TYPE_ID = "SCore.StudyEditor";
   private final FileEditorProvider defaultTextEditorProvider = TextEditorProvider.getInstance();
 
   @Override

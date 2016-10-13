@@ -12,7 +12,7 @@ import javax.swing.*;
 
 public class StudyNextStudyTaskAction extends StudyTaskNavigationAction {
 
-  public static final String ACTION_ID = "STEPIK.NextTaskAction";
+  public static final String ACTION_ID = "SCore.NextTaskAction";
   public static final String SHORTCUT = "ctrl pressed PERIOD";
 
   public StudyNextStudyTaskAction() {

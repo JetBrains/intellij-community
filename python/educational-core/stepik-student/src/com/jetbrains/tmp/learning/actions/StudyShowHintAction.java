@@ -32,7 +32,7 @@ import java.awt.*;
 import java.util.LinkedList;
 
 public class StudyShowHintAction extends StudyActionWithShortcut {
-  public static final String ACTION_ID = "STEPIK.ShowHintAction";
+  public static final String ACTION_ID = "SCore.ShowHintAction";
   public static final String SHORTCUT = "ctrl pressed 7";
   private static final String ourWarningMessage = "Put the caret in the answer placeholder to get hint";
   public static final String HINT_NOT_AVAILABLE = "There is no hint for this answer placeholder";

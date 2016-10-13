@@ -5,7 +5,9 @@
   <version>2.0.7</version>
   <idea-version since-build="162.0"/>
   <description><![CDATA[
-      Stepik plugin core. Plugin based on Education plugin core.
+      Stepik plugin core. Plugin based on Education plugin core.<br>
+
+      It is core plugin for <a href="https://plugins.jetbrains.com/plugin/8589?pr=idea">Stepik Union</a>
       ]]></description>
   <vendor email="petr.bogdanov@stepik.org" url="http://www.stepik.org">Stepik</vendor>
 
@@ -35,50 +37,50 @@
   </application-components>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="STEPIK.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="SCore.StudyExecutor" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.tmp.learning.checker.StudyExecutor"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="STEPIK.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
+    <extensionPoint qualifiedName="SCore.StudyLanguageManager" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.jetbrains.tmp.learning.StudyLanguageManager"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="STEPIK.studyPluginConfigurator" interface="com.jetbrains.tmp.learning.StudyPluginConfigurator"/>
-    <extensionPoint qualifiedName="STEPIK.studyActionsProvider" interface="com.jetbrains.tmp.learning.StudyActionsProvider"/>
-    <extensionPoint qualifiedName="STEPIK.studyTwitterPluginConfigurator" interface="com.jetbrains.tmp.learning.StudyTwitterPluginConfigurator"/>
-    <extensionPoint qualifiedName="STEPIK.studyActionListener" interface="com.jetbrains.tmp.learning.StudyActionListener"/>
-    <extensionPoint qualifiedName="STEPIK.optionsProvider" beanClass="com.jetbrains.tmp.learning.settings.StudyOptionsProviderEP">>
+    <extensionPoint qualifiedName="SCore.studyPluginConfigurator" interface="com.jetbrains.tmp.learning.StudyPluginConfigurator"/>
+    <extensionPoint qualifiedName="SCore.studyActionsProvider" interface="com.jetbrains.tmp.learning.StudyActionsProvider"/>
+    <extensionPoint qualifiedName="SCore.studyTwitterPluginConfigurator" interface="com.jetbrains.tmp.learning.StudyTwitterPluginConfigurator"/>
+    <extensionPoint qualifiedName="SCore.studyActionListener" interface="com.jetbrains.tmp.learning.StudyActionListener"/>
+    <extensionPoint qualifiedName="SCore.optionsProvider" beanClass="com.jetbrains.tmp.learning.settings.StudyOptionsProviderEP">>
       <with attribute="instance" implements="com.jetbrains.tmp.learning.settings.StudyOptionsProvider"/>
     </extensionPoint>
   </extensionPoints>
 
   <actions>
-    <action id="STEPIK.NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" text="New Scratch File...">
+    <action id="SCore.NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" text="New Scratch File...">
       <add-to-group group-id="FileOpenGroup" relative-to-action="OpenFile" anchor="before"/>
     </action>
-    <action id="STEPIK.PrevWindowAction" class="com.jetbrains.tmp.learning.actions.StudyPrevWindowAction" text="Previous Answer Placeholder"
+    <action id="SCore.PrevWindowAction" class="com.jetbrains.tmp.learning.actions.StudyPrevWindowAction" text="Previous Answer Placeholder"
             description="Navigate to the previous answer placeholder">
     </action>
-    <action id="STEPIK.NextWindow" class="com.jetbrains.tmp.learning.actions.StudyNextWindowAction" text="Next Answer Placeholder"
+    <action id="SCore.NextWindow" class="com.jetbrains.tmp.learning.actions.StudyNextWindowAction" text="Next Answer Placeholder"
             description="Navigate to the next answer holder">
     </action>
-    <action id="STEPIK.PreviousTaskAction" class="com.jetbrains.tmp.learning.actions.StudyPreviousStudyTaskAction" text="Previous Task"
+    <action id="SCore.PreviousTaskAction" class="com.jetbrains.tmp.learning.actions.StudyPreviousStudyTaskAction" text="Previous Task"
             description="Navigate to the previous task"/>
-    <action id="STEPIK.NextTaskAction" class="com.jetbrains.tmp.learning.actions.StudyNextStudyTaskAction" text="Next Task"
+    <action id="SCore.NextTaskAction" class="com.jetbrains.tmp.learning.actions.StudyNextStudyTaskAction" text="Next Task"
             description="Navigate to the next task"/>
-    <action id="STEPIK.RefreshTaskAction" class="com.jetbrains.tmp.learning.actions.StudyRefreshTaskFileAction" text="Reset Task File"
+    <action id="SCore.RefreshTaskAction" class="com.jetbrains.tmp.learning.actions.StudyRefreshTaskFileAction" text="Reset Task File"
             description="Refresh current task"/>
-    <action id="STEPIK.RefreshAnswerPlaceholder" class="com.jetbrains.tmp.learning.actions.StudyRefreshAnswerPlaceholder" text="Refresh Answer Placeholder">
+    <action id="SCore.RefreshAnswerPlaceholder" class="com.jetbrains.tmp.learning.actions.StudyRefreshAnswerPlaceholder" text="Refresh Answer Placeholder">
         <add-to-group group-id="EditorPopupMenu" anchor="last"/>
     </action>
             description="Watch test input "/>
-    <action id="STEPIK.ShowHintAction" class="com.jetbrains.tmp.learning.actions.StudyShowHintAction" text="Show Hint for Answer Placeholder"
+    <action id="SCore.ShowHintAction" class="com.jetbrains.tmp.learning.actions.StudyShowHintAction" text="Show Hint for Answer Placeholder"
             description="Show hint for answer placeholder"/>
-    <action id="STEPIK.StudyRunAction" class="com.jetbrains.tmp.learning.actions.StudyRunAction" text="Run File With Tests"
+    <action id="SCore.StudyRunAction" class="com.jetbrains.tmp.learning.actions.StudyRunAction" text="Run File With Tests"
             description="Run your code with tests"/>
-    <action id="STEPIK.StudyShowAnswersAction" class="com.jetbrains.tmp.learning.actions.StudyFillPlaceholdersAction"
+    <action id="SCore.StudyShowAnswersAction" class="com.jetbrains.tmp.learning.actions.StudyFillPlaceholdersAction"
             text="Fill Answer Placeholders">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>
-    <action id="STEPIK.StudySwitchPanel" class="com.jetbrains.tmp.learning.actions.StudySwitchTaskPanelAction"
+    <action id="SCore.StudySwitchPanel" class="com.jetbrains.tmp.learning.actions.StudySwitchTaskPanelAction"
             text="Switch Task Description Panel">
     </action>
 

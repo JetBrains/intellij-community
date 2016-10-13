@@ -30,7 +30,7 @@ import java.util.List;
 
 public class StudyRunAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(StudyRunAction.class.getName());
-  public static final String ACTION_ID = "STEPIK.StudyRunAction";
+  public static final String ACTION_ID = "SCore.StudyRunAction";
   private ProcessHandler myHandler;
   private List<ProcessListener> myProcessListeners = new LinkedList<ProcessListener>();
 
