@@ -17,15 +17,14 @@ package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Ref
 import com.intellij.util.SmartList
 import com.intellij.util.messages.MessageBus
 import gnu.trove.THashSet
@@ -142,7 +141,6 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
 }
 
 internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateResult: UpdateResult, messageBus: MessageBus, reloadAllSchemes: Boolean = false): Boolean {
-  val changedComponentNames = LinkedHashSet<String>()
   val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, ::toIdeaPath)
 
   val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
@@ -168,9 +166,8 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
     return false
   }
 
-  val result = Ref.create(false)
-  ApplicationManager.getApplication().invokeAndWait(Runnable {
-    val notReloadableComponents: Collection<String>
+  return invokeAndWaitIfNeed {
+    val changedComponentNames = LinkedHashSet<String>()
     updateStateStorage(changedComponentNames, changed, false)
     updateStateStorage(changedComponentNames, deleted, true)
 
@@ -179,20 +176,17 @@ internal fun updateStoragesFromStreamProvider(store: ComponentStoreImpl, updateR
     }
 
     if (changedComponentNames.isEmpty()) {
-      return@Runnable
+      return@invokeAndWaitIfNeed false
     }
 
-    notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
-
+    val notReloadableComponents = store.getNotReloadableComponents(changedComponentNames)
     val changedStorageSet = THashSet<StateStorage>(changed)
     changedStorageSet.addAll(deleted)
     runBatchUpdate(messageBus) {
       store.reinitComponents(changedComponentNames, changedStorageSet, notReloadableComponents)
     }
-
-    result.set(!notReloadableComponents.isEmpty() && askToRestart(store, notReloadableComponents, null, true))
-  }, ModalityState.defaultModalityState())
-  return result.get()
+    return@invokeAndWaitIfNeed !notReloadableComponents.isEmpty() && askToRestart(store, notReloadableComponents, null, true)
+  }
 }
 
 private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateStorages: Collection<StateStorage>, deleted: Boolean) {
