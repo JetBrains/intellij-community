@@ -33,6 +33,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbModePermission;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -290,7 +291,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       @Override
       public void run() {
         Collection<UsageInfo> usageInfos = new LinkedHashSet<>(Arrays.asList(usages));
-        doRefactoring(usageInfos);
+        DumbService.allowStartingDumbModeInside(DumbModePermission.MAY_START_MODAL, () -> doRefactoring(usageInfos));
         if (isGlobalUndoAction()) CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
       }
     }, getCommandName(), null, getUndoConfirmationPolicy());
