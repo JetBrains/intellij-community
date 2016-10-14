@@ -2,7 +2,6 @@ package circlet.components
 
 import circlet.client.*
 import circlet.client.auth.*
-import circlet.modelApi.*
 import circlet.ring.*
 import circlet.utils.*
 import circlet.utils.lifetime.*
