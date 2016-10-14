@@ -310,6 +310,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     final String newCellText = cellPanel.getText(position);
     
     if (oldCellText != null) {
+      final JTextArea editablePanel = cellPanel.myEditablePanel;
+      if (editablePanel != null) editablePanel.setText(oldCellText);
       cellPanel.getCell().setSource(createCellSourceFromText(oldCellText));
       actualizeCellData(cell);
       cellPanel.updateCellView();

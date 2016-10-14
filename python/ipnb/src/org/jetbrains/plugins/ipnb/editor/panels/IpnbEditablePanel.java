@@ -226,8 +226,16 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       @Override
       public void mousePressed(MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
-          final DefaultActionGroup group =
-            new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction(), new IpnbSplitCellAction());
+          final DefaultActionGroup group = new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction());
+          createClickMenu(e.getLocationOnScreen(), group);
+        }
+      }
+    });
+    myEditablePanel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
+          final DefaultActionGroup group = new DefaultActionGroup(new IpnbSplitCellAction());
           createClickMenu(e.getLocationOnScreen(), group);
         }
       }
@@ -246,7 +254,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   public String getText(int from, int to) {
     if (myEditing && myEditablePanel != null) {
       try {
-        return myEditablePanel.getDocument().getText(from, to);
+        return myEditablePanel.getDocument().getText(from, to - from);
       }
       catch (BadLocationException e) {
         LOG.warn(e.getMessage());
