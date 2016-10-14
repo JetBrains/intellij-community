@@ -967,7 +967,9 @@
 
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomPropertiesAction$AccessExtension"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.EditCustomVmOptionsAction$AccessExtension"/>
-    <lineIndentProvider implementation="com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedLineIndentProvider"/>
+    <lineIndentProvider
+        implementation="com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedLineIndentProvider"
+        order="last"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.psi.codeStyle.KeepTrailingSpacesOnEmptyLinesFilterFactory"/>
 
     <treeStructureProvider implementation="com.intellij.ide.projectView.impl.NestingTreeStructureProvider" order="last"/>
