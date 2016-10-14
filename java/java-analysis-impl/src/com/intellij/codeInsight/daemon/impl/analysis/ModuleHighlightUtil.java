@@ -28,8 +28,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -62,11 +64,21 @@ public class ModuleHighlightUtil {
     Project project = fsItem.getProject();
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
     if (index.isInLibraryClasses(file)) {
-      return Optional.ofNullable(index.getClassRootForFile(file))
-        .map(r -> r.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE))
-        .map(PsiManager.getInstance(project)::findFile)
-        .map(f -> f instanceof PsiJavaFile ? ((PsiJavaFile)f).getModuleDeclaration() : null)
-        .orElse(null);
+      VirtualFile classRoot = index.getClassRootForFile(file);
+      if (classRoot != null) {
+        VirtualFile descriptorFile = classRoot.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
+        if (descriptorFile != null) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
+          if (psiFile instanceof PsiJavaFile) {
+            return ((PsiJavaFile)psiFile).getModuleDeclaration();
+          }
+        }
+        else if (classRoot.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(classRoot.getExtension())) {
+          return LightJavaModule.getModule(PsiManager.getInstance(project), classRoot);
+        }
+      }
+
+      return null;
     }
     else {
       Module module = index.getModuleForFile(file);
@@ -374,7 +386,7 @@ public class ModuleHighlightUtil {
 
       String refModuleName = refModule.getModuleName();
       String requiredName = targetModule.getModuleName();
-      if (!JavaModuleGraphUtil.exports(targetModule, packageName, refModule)) {
+      if (!(targetModule instanceof LightJavaModule || JavaModuleGraphUtil.exports(targetModule, packageName, refModule))) {
         String message = JavaErrorMessages.message("module.package.not.exported", requiredName, packageName, refModuleName);
         return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(ref).description(message).create();
       }

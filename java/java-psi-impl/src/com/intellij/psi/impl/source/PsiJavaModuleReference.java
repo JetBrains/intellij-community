@@ -28,7 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import com.intellij.psi.util.ParameterizedCachedValueProvider;
@@ -131,10 +131,10 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     return manager.getParameterizedCachedValue(refOwner, KEY, new ParameterizedCachedValueProvider<PsiJavaModule, Pair<String, Boolean>>() {
       @Nullable
       @Override
-      public CachedValueProvider.Result<PsiJavaModule> compute(Pair<String, Boolean> p) {
+      public Result<PsiJavaModule> compute(Pair<String, Boolean> p) {
         Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), p.first, p.second);
         PsiJavaModule module = modules.size() == 1 ? modules.iterator().next() : null;
-        return CachedValueProvider.Result.create(module, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+        return Result.create(module, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     }, false, pair(refText, incompleteCode));
   }

@@ -134,7 +134,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testPackageAccessibility() {
-    addFile("module-info.java", "module M { requires M2; requires M6; requires LIB1; }")
+    addFile("module-info.java", "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }")
     addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
     addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
     addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
@@ -155,8 +155,11 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         import pkg.m7.C7;
 
         import pkg.lib1.LC1;
-        import <error descr="The module 'LIB1' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl.LC1Impl</error>;
-        import <error descr="The module 'LIB1' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl</error>.*;
+        import <error descr="The module 'lib.named' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl.LC1Impl</error>;
+        import <error descr="The module 'lib.named' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl</error>.*;
+
+        import pkg.lib2.LC2;
+        import pkg.lib2.impl.LC2Impl;
 
         import static <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make;
 
