@@ -230,7 +230,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
         SwingUtilities.invokeLater(() -> myTable.getEmptyText().setText(EMPTY_TABLE_CONTENT_WHEN_SUSPENDED));
         commitAllTrackers();
         updateClassesAndCounts();
-        if(!myIsTrackersActivated) {
+        if (!myIsTrackersActivated) {
           myConstructorTrackedClasses.values().forEach(ConstructorInstancesTracker::enable);
           myIsTrackersActivated = true;
         }
@@ -345,8 +345,8 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
 
   private void doActivate() {
     myDebugSession.addSessionListener(myDebugSessionListener, ClassesFilteredView.this);
-    if (getSuspendContext() != null) {
-      myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(false));
+    myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(false));
+    if (!myLastSuspendContext.equals(getSuspendContext())) {
       commitAllTrackers();
       updateClassesAndCounts();
     }
