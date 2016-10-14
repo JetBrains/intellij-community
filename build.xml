@@ -107,7 +107,7 @@
     </sequential>
   </macrodef>
 
-  <target name="build" depends="init">
+  <target name="build" depends="init,gradleplugin">
     <call_gant script="${project.home}/build/scripts/dist.gant"/>
   </target>
 
@@ -145,5 +145,5 @@
     </jarjar>
     <zip destfile="${out.dir}/sdk-patcher.zip" compress="true" basedir="${out.dir}" includes="sdk-patcher/*"/>
   </target>
-  <target name="all" depends="cleanup,gradleplugin,build,fullupdater"/>
+  <target name="all" depends="cleanup,build,fullupdater"/>
 </project>
