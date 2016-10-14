@@ -17,6 +17,7 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.changes.ChangesViewRefresher;
 import com.intellij.openapi.vcs.changes.FileHolder;
 import com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder;
 import com.intellij.openapi.vcs.changes.VcsModifiableDirtyScope;
@@ -32,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder {
+public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder, ChangesViewRefresher {
   private final Project myProject;
   private final HgVcs myVcs;
   private final Map<HgRepository, HgLocalIgnoredHolder> myVcsIgnoredHolderMap;
@@ -109,5 +110,10 @@ public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder {
   @Override
   public AbstractVcs getVcs() {
     return myVcs;
+  }
+
+  @Override
+  public void refresh(Project project) {
+    HgUtil.getRepositoryManager(project).getRepositories().forEach(r -> r.getLocalIgnoredHolder().startRescan());
   }
 }
