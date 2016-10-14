@@ -66,7 +66,7 @@ public class MvcProjectViewSelectInTarget implements DumbAware, SelectInTarget {
   }
 
   public String toString() {
-    return "Grails/Griffon View";
+    return "Griffon View";
   }
 
   @Override
