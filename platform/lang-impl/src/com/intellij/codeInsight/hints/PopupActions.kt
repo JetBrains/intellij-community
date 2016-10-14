@@ -16,21 +16,24 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
+import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 
 class ShowParameterHintsSettings : AnAction() {
-
   init {
     val presentation = templatePresentation
     presentation.text = "Show Settings"
@@ -42,11 +45,9 @@ class ShowParameterHintsSettings : AnAction() {
     val dialog = ParameterNameHintsConfigurable(project)
     dialog.show()
   }
-
 }
 
 class BlacklistCurrentMethodAction : AnAction() {
-
   init {
     val presentation = templatePresentation
     presentation.text = "Do Not Show Hints For Current Method"
@@ -59,6 +60,21 @@ class BlacklistCurrentMethodAction : AnAction() {
     
     addMethodAtCaretToBlackList(editor, file)
   }
+}
+
+class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
+  override fun getText() = "Do Not Show Hints For Current Method"
+  override fun getFamilyName() = "Parameter Name Hints"
+
+  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
+    return InlayParameterHintsExtension.hasAnyExtensions() && hasParameterHintAtOffset(editor)
+  }
+
+  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+    addMethodAtCaretToBlackList(editor, file)
+  }
+
+  override fun startInWriteAction() = false
 }
 
 class ToggleInlineHintsAction : AnAction() {
@@ -81,6 +97,18 @@ class ToggleInlineHintsAction : AnAction() {
 
     refreshAllOpenEditors()
   }
+}
+
+private fun hasParameterHintAtOffset(editor: Editor): Boolean {
+  val offset = editor.caretModel.offset
+  if (editor.inlayModel.hasInlineElementAt(offset)) {
+    val manager = ParameterHintsPresentationManager.getInstance()
+    return editor.inlayModel
+        .getInlineElementsInRange(offset, offset)
+        .find { manager.isParameterHint(it) } != null
+  }
+
+  return false
 }
 
 private fun refreshAllOpenEditors() {
