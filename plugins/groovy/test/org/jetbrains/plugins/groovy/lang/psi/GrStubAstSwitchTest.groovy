@@ -225,6 +225,20 @@ class X {
     assert file.contentsLoaded
   }
 
+  void 'test do not load ast for annotation reference value'() {
+    def file = myFixture.addFileToProject('Pogo.groovy', '''\
+@groovy.transform.AutoClone(style=groovy.transform.AutoCloneStyle.SIMPLE)
+class Pogo {} 
+''') as GroovyFileImpl
+    assert !file.contentsLoaded
+    def clazz = file.classes[0]
+    assert !file.contentsLoaded
+    def method = clazz.methods.find { it.name == 'cloneOrCopyMembers' }
+    assert !file.contentsLoaded
+    assert method?.hasModifierProperty(PsiModifier.PROTECTED)
+    assert !file.contentsLoaded
+  }
+
   void "test do not load content for findMethodsByName"() {
     GroovyFileImpl file = myFixture.addFileToProject('usage.groovy', '''\
 class X {

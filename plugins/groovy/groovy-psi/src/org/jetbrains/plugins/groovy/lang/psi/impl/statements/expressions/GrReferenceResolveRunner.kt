@@ -18,8 +18,10 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -27,38 +29,39 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTraitType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
-import org.jetbrains.plugins.groovy.lang.resolve.processNonCodeMembers
+import org.jetbrains.plugins.groovy.lang.resolve.*
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 
 class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: PsiScopeProcessor) {
 
   fun resolveReferenceExpression(): Boolean {
+    val processNonCode = PsiTreeUtil.skipParentsOfType(place, GrReferenceExpression::class.java) !is GrAnnotationNameValuePair
+    val initialState = initialState(processNonCode)
     val qualifier = place.qualifier
     if (qualifier == null) {
-      if (!ResolveUtil.treeWalkUp(place, processor, true)) return false
-      return place.context !is GrMethodCall || ClosureMissingMethodContributor.processMethodsFromClosures(place, processor)
+      if (!treeWalkUp(place, processor, initialState)) return false
+      if (!processNonCode) return true
+      if (place.context is GrMethodCall && !ClosureMissingMethodContributor.processMethodsFromClosures(place, processor)) return false
     }
     else {
       if (place.dotTokenType === GroovyTokenTypes.mSPREAD_DOT) {
         val qType = qualifier.type
         val componentType = ClosureParameterEnhancer.findTypeForIteration(qType, place)
         if (componentType != null) {
-          val state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, qualifier).put(SpreadState.SPREAD_STATE, SpreadState.create(qType, null))
+          val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier).put(SpreadState.SPREAD_STATE, SpreadState.create(qType, null))
           return processQualifierType(componentType, state)
         }
       }
       else {
         if (ResolveUtil.isClassReference(place)) return false
-        if (!processJavaLangClass(qualifier)) return false
-        return processQualifier(qualifier)
+        if (!processJavaLangClass(qualifier, initialState)) return false
+        if (!processQualifier(qualifier, initialState)) return false
       }
     }
     return true
   }
 
-  private fun processJavaLangClass(qualifier: GrExpression): Boolean {
+  private fun processJavaLangClass(qualifier: GrExpression, initialState: ResolveState): Boolean {
     if (qualifier !is GrReferenceExpression) return true
 
     //optimization: only 'class' or 'this' in static context can be an alias of java.lang.Class
@@ -66,14 +69,14 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
 
     val classType = ResolveUtil.unwrapClassType(qualifier.getType())
     return classType?.let {
-      val state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, qualifier)
+      val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier)
       processQualifierType(classType, state)
     } ?: true
   }
 
-  private fun processQualifier(qualifier: GrExpression): Boolean {
+  private fun processQualifier(qualifier: GrExpression, initialState: ResolveState): Boolean {
     val qualifierType = qualifier.type
-    val state = ResolveState.initial().put(ClassHint.RESOLVE_CONTEXT, qualifier)
+    val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier)
     if (qualifierType == null || PsiType.VOID == qualifierType) {
       if (qualifier is GrReferenceExpression) {
         val resolved = qualifier.resolve()
