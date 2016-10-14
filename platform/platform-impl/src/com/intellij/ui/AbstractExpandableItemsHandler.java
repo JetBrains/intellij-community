@@ -286,7 +286,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     }
     boolean focused = SystemInfo.isWindows || isFocused(owner);
     for (Window other : owner.getOwnedWindows()) {
-      if (!focused && !SystemInfo.isWindows) {
+      if (!focused) {
         focused = other.isFocused();
       }
       if (popup != other && other.isVisible() && bounds.x + 10 >= other.getX() && bounds.intersects(other.getBounds())) {
