@@ -263,28 +263,34 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     final List<String> currentCellSource = getCellSource(currentCellPanel);
 
     if (below) {
-      selectPrev(currentCellPanel);
-    }
-    else {
       selectNext(currentCellPanel);
     }
-    final IpnbEditablePanel prevCellPanel = getSelectedCell();
-    final IpnbCell prevCell = prevCellPanel.myCell;
-    if (prevCell instanceof IpnbEditableCell) {
-      final ArrayList<String> source = new ArrayList<>();
-      final List<String> prevCellSource = ((IpnbEditableCell)prevCell).getSource();
-      source.addAll(prevCellSource);
-      source.add("\n");
-      source.addAll(currentCellSource);
-      ((IpnbEditableCell)prevCell).setSource(source);
-      prevCellPanel.updateCellView();
+    else {
+      selectPrev(currentCellPanel);
+    }
+    final IpnbEditablePanel cellToMergePanel = getSelectedCell();
+    final IpnbCell cellToMerge = cellToMergePanel.myCell;
+    if (cellToMerge instanceof IpnbEditableCell) {
+      final List<String> cellToMergeSource = ((IpnbEditableCell)cellToMerge).getSource();
+      final ArrayList<String> source = below ? mergeCellsSource(cellToMergeSource, currentCellSource) : 
+                                       mergeCellsSource(currentCellSource, cellToMergeSource);
+      ((IpnbEditableCell)cellToMerge).setSource(source);
+      cellToMergePanel.updateCellView();
     }
     
-    actualizeCellData(prevCell);
+    actualizeCellData(cellToMerge);
     
     currentCellPanel.repaint();
     deleteCell(currentCellPanel);
     saveToFile();
+  }
+
+  private static ArrayList<String> mergeCellsSource(List<String> currentCellSource, List<String> prevCellSource) {
+    final ArrayList<String> source = new ArrayList<>();
+    source.addAll(prevCellSource);
+    source.add("\n");
+    source.addAll(currentCellSource);
+    return source;
   }
 
   private static void actualizeCellData(IpnbCell cell) {
