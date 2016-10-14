@@ -40,12 +40,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 
 import java.io.File;
+
+import static com.intellij.testFramework.Assertions.assertThat;
 
 public class EclipseImlTest extends IdeaTestCase {
   @NonNls private static final String JUNIT = "JUNIT";
@@ -100,10 +101,8 @@ public class EclipseImlTest extends IdeaTestCase {
     PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
     PathMacros.getInstance().removeMacro(JUNIT);
 
-    Element expectedIml = JDOMUtil.load(new File(project.getBaseDir().getPath() + "/expected", "expected.iml"));
-    PlatformTestUtil.assertElementsEqual(expectedIml, actualImlElement);
+    assertThat(actualImlElement).isEqualTo(FileUtil.loadFile(new File(project.getBaseDir().getPath() + "/expected", "expected.iml")));
   }
-
 
   public void testWorkspaceOnly() throws Exception {
     doTest();
