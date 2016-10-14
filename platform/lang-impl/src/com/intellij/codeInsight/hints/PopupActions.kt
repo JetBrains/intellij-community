@@ -116,14 +116,9 @@ class ToggleInlineHintsAction : AnAction() {
 
 private fun hasParameterHintAtOffset(editor: Editor): Boolean {
   val offset = editor.caretModel.offset
-  if (editor.inlayModel.hasInlineElementAt(offset)) {
-    val manager = ParameterHintsPresentationManager.getInstance()
-    return editor.inlayModel
-        .getInlineElementsInRange(offset, offset)
-        .find { manager.isParameterHint(it) } != null
-  }
-
-  return false
+  return editor.inlayModel
+      .getInlineElementsInRange(offset, offset)
+      .find { ParameterHintsPresentationManager.getInstance().isParameterHint(it) } != null
 }
 
 private fun refreshAllOpenEditors() {
