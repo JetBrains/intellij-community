@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -62,7 +61,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -80,11 +78,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
+
 /**
  * @author ven
  */
 public class ResolveUtil {
-  private static final Logger LOG = Logger.getInstance(ResolveUtil.class);
 
   public static final PsiScopeProcessor.Event DECLARATION_SCOPE_PASSED = new PsiScopeProcessor.Event() {};
   public static final Key<String> DOCUMENTATION_DELEGATE_FQN = Key.create("groovy.documentation.delegate.fqn");
@@ -96,47 +95,22 @@ public class ResolveUtil {
    *
    * @param place - place to start tree walk up
    * @param processor
-   * @param processNonCodeMethods - this parameter tells us if we need non code members
+   * @param processNonCodeMembers - this parameter tells us if we need non code members
    * @return
    */
-  public static boolean treeWalkUp(@NotNull final PsiElement place,
-                                   @NotNull final PsiScopeProcessor processor,
-                                   boolean processNonCodeMethods) {
-    return treeWalkUp(place, place, processor, processNonCodeMethods, ResolveState.initial());
+  public static boolean treeWalkUp(@NotNull PsiElement place, @NotNull PsiScopeProcessor processor, boolean processNonCodeMembers) {
+    return ResolveUtilKt.treeWalkUp(place, processor, initialState(processNonCodeMembers));
   }
 
-  /**
-   *
-   * @param place - place to start tree walk up
-   * @param processor
-   * @param processNonCodeMethods - this parameter tells us if we need non code members
-   * @param state
-   * @return
-   */
   public static boolean treeWalkUp(@NotNull final PsiElement place,
                                    @NotNull final PsiElement originalPlace,
                                    @NotNull final PsiScopeProcessor processor,
-                                   boolean processNonCodeMethods,
                                    @NotNull final ResolveState state) {
-    try {
-      return doTreeWalkUp(place, originalPlace, processor, processNonCodeMethods ? processor : null, state);
-    }
-    catch (StackOverflowError e) {
-      LOG.error("StackOverflow", e, place.getContainingFile().getText());
-      throw e;
-    }
-  }
-
-  public static boolean doTreeWalkUp(@NotNull final PsiElement place,
-                                     @NotNull final PsiElement originalPlace,
-                                     @NotNull final PsiScopeProcessor processor,
-                                     @Nullable final PsiScopeProcessor nonCodeProcessor,
-                                     @NotNull final ResolveState state) {
-    final GrClosableBlock maxScope = nonCodeProcessor != null ? PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, PsiFile.class) : null;
+    final GrClosableBlock maxScope = ResolveUtilKt.processNonCodeMembers(state) ? PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, PsiFile.class) : null;
 
     return PsiTreeUtil.treeWalkUp(place, maxScope, (scope, lastParent) -> {
       ProgressManager.checkCanceled();
-      if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
+      if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), state)) {
         return false;
       }
       issueLevelChangeEvents(processor, scope);
@@ -147,26 +121,26 @@ public class ResolveUtil {
   static boolean doProcessDeclarations(@NotNull PsiElement place,
                                        @Nullable PsiElement lastParent,
                                        @NotNull PsiElement scope,
-                                       @NotNull PsiScopeProcessor plainProcessor,
-                                       @Nullable PsiScopeProcessor nonCodeProcessor,
+                                       @NotNull PsiScopeProcessor processor,
                                        @NotNull ResolveState state) {
-    if (scope instanceof GrClosableBlock && nonCodeProcessor != null) {
-      if (!((GrClosableBlock)scope).processClosureDeclarations(plainProcessor, nonCodeProcessor, state, lastParent, place)) return false;
+    boolean processNonCodeMembers = ResolveUtilKt.processNonCodeMembers(state);
+    if (scope instanceof GrClosableBlock && processNonCodeMembers) {
+      if (!((GrClosableBlock)scope).processClosureDeclarations(processor, state, lastParent, place)) return false;
     }
     else {
       if (scope instanceof PsiClass) {
-        if (!processClassDeclarations((PsiClass)scope, plainProcessor, state, lastParent, place)) return false;
+        if (!processClassDeclarations((PsiClass)scope, processor, state, lastParent, place)) return false;
       } else {
-        if (!scope.processDeclarations(plainProcessor, state, lastParent, place)) return false;
+        if (!scope.processDeclarations(processor, state, lastParent, place)) return false;
       }
 
       if (scope instanceof GrTypeDefinition || scope instanceof GrClosableBlock) {
-        if (!processStaticImports(plainProcessor, place.getContainingFile(), state, place)) return false;
+        if (!processStaticImports(processor, place.getContainingFile(), state, place)) return false;
       }
     }
 
-    if (nonCodeProcessor != null) {
-      if (!processScopeNonCodeMembers(place, lastParent, nonCodeProcessor, scope, state)) return false;
+    if (processNonCodeMembers) {
+      if (!processScopeNonCodeMembers(place, lastParent, processor, scope, state)) return false;
     }
     return true;
   }
@@ -278,17 +252,16 @@ public class ResolveUtil {
 
   public static boolean processAllDeclarations(@NotNull PsiType type,
                                                @NotNull PsiScopeProcessor processor,
-                                               @NotNull ResolveState state,
+                                               boolean processNonCodeMembers,
                                                @NotNull PsiElement place) {
-    return processAllDeclarationsSeparately(type, processor, processor, state, place);
+    return processAllDeclarations(type, processor, initialState(processNonCodeMembers), place);
   }
 
-  public static boolean processAllDeclarationsSeparately(@NotNull PsiType type,
-                                                         @NotNull PsiScopeProcessor processor,
-                                                         @NotNull PsiScopeProcessor nonCodeProcessor,
-                                                         @NotNull ResolveState state,
-                                                         @NotNull PsiElement place) {
-    type = TypesUtil.boxPrimitiveType(type,place.getManager(),place.getResolveScope());
+  public static boolean processAllDeclarations(@NotNull PsiType type,
+                                               @NotNull PsiScopeProcessor processor,
+                                               @NotNull ResolveState state,
+                                               @NotNull PsiElement place) {
+    type = TypesUtil.boxPrimitiveType(type, place.getManager(), place.getResolveScope());
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
@@ -298,8 +271,10 @@ public class ResolveUtil {
         if (!processClassDeclarations(psiClass, processor, state, null, place)) return false;
       }
     }
-    if (!processCategoryMembers(place, nonCodeProcessor, state)) return false;
-    if (!processNonCodeMembers(type, nonCodeProcessor, place, state)) return false;
+    if (ResolveUtilKt.processNonCodeMembers(state)) {
+      if (!processCategoryMembers(place, processor, state)) return false;
+      if (!processNonCodeMembers(type, processor, place, state)) return false;
+    }
     return true;
   }
 
