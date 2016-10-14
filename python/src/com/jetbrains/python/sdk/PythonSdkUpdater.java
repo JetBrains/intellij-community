@@ -340,7 +340,7 @@ public class PythonSdkUpdater implements StartupActivity {
         if (virtualFile != null) {
           final VirtualFile rootFile = PythonSdkType.getSdkRootVirtualFile(virtualFile);
           if (!excludedPaths.contains(rootFile)) {
-            results.add(virtualFile);
+            results.add(rootFile);
             continue;
           }
         }
