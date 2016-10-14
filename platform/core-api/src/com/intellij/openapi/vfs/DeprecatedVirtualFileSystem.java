@@ -140,37 +140,38 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
 
   @Override
   protected void deleteFile(Object requestor, @NotNull VirtualFile vFile) throws IOException {
-    throw new UnsupportedOperationException("deleteFile() not supported");
+    throw unsupported("deleteFile", vFile);
   }
 
   @Override
   protected void moveFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent) throws IOException {
-    throw new UnsupportedOperationException("move() not supported");
+    throw unsupported("move", vFile);
   }
 
   @Override
   protected void renameFile(Object requestor, @NotNull VirtualFile vFile, @NotNull String newName) throws IOException {
-    throw new UnsupportedOperationException("renameFile() not supported");
+    throw unsupported("renameFile", vFile);
   }
 
   @NotNull
   @Override
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile vDir, @NotNull String fileName) throws IOException {
-    throw new UnsupportedOperationException("createChildFile() not supported");
+    throw unsupported("createChildFile", vDir);
   }
 
   @NotNull
   @Override
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile vDir, @NotNull String dirName) throws IOException {
-    throw new UnsupportedOperationException("createChildDirectory() not supported");
+    throw unsupported("createChildDirectory", vDir);
   }
 
   @NotNull
   @Override
-  public VirtualFile copyFile(Object requestor,
-                                 @NotNull VirtualFile virtualFile,
-                                 @NotNull VirtualFile newParent,
-                                 @NotNull String copyName) throws IOException {
-    throw new UnsupportedOperationException("copyFile() not supported");
+  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile vFile, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException {
+    throw unsupported("copyFile() not supported", vFile);
+  }
+
+  private UnsupportedOperationException unsupported(String op, VirtualFile vFile) {
+    return new UnsupportedOperationException(op + '(' + vFile + ") not supported by " + getClass().getName());
   }
 }
