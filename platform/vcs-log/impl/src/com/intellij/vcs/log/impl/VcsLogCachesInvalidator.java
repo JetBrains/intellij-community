@@ -16,11 +16,13 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.util.PersistentUtil;
 
 public class VcsLogCachesInvalidator extends CachesInvalidator {
+  private static final Logger LOG = Logger.getInstance(VcsLogCachesInvalidator.class);
 
   public synchronized boolean isValid() {
     if (PersistentUtil.getCorruptionMarkerFile().exists()) {
@@ -28,6 +30,9 @@ public class VcsLogCachesInvalidator extends CachesInvalidator {
       if (!deleted) {
         // if could not delete caches, ensure that corruption marker is still there
         FileUtil.createIfDoesntExist(PersistentUtil.getCorruptionMarkerFile());
+      }
+      else {
+        LOG.debug("Deleted VCS Log caches at " + PersistentUtil.LOG_CACHE);
       }
       return deleted;
     }
