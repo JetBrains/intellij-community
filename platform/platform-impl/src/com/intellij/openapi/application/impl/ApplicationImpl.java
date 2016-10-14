@@ -1245,7 +1245,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   public void executeSuspendingWriteAction(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
     assertIsDispatchThread();
     if (!myLock.isWriteLocked()) {
-      runnable.run();
+      runModalProgress(project, title, false, runnable);
       return;
     }
 
@@ -1254,17 +1254,21 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       myWriteStackBase = myWriteActionsStack.size();
       myLock.writeSuspend();
       try {
-        ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            try (AccessToken ignored = myLock.setupReadPrivilege(true)) {
-              runnable.run();
-            }
-          }
-        });
+        runModalProgress(project, title, true, runnable);
       } finally {
         myLock.writeResume();
         myWriteStackBase = prevBase;
+      }
+    });
+  }
+
+  private void runModalProgress(@Nullable Project project, @NotNull String title, boolean withReadPrivileges, @NotNull Runnable runnable) {
+    ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try (AccessToken ignored = myLock.setupReadPrivilege(withReadPrivileges)) {
+          runnable.run();
+        }
       }
     });
   }
