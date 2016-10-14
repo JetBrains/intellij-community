@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
@@ -29,15 +30,19 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 
+
+private fun String.capitalize() = StringUtil.capitalizeWords(this, true)  
+
 class ShowParameterHintsSettings : AnAction() {
   init {
     val presentation = templatePresentation
-    presentation.text = "Show Settings"
-    presentation.description = "Show Parameter Name Hints Settings"
+    presentation.text = CodeInsightBundle.message("inlay.hints.show.settings").capitalize()
+    presentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -50,8 +55,8 @@ class ShowParameterHintsSettings : AnAction() {
 class BlacklistCurrentMethodAction : AnAction() {
   init {
     val presentation = templatePresentation
-    presentation.text = "Do Not Show Hints For Current Method"
-    presentation.description = "Adds Current Method to Parameter Name Hints Blacklist"
+    presentation.text = CodeInsightBundle.message("inlay.hints.blacklist.method").capitalize()
+    presentation.description = CodeInsightBundle.message("inlay.hints.blacklist.method.description")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -63,8 +68,13 @@ class BlacklistCurrentMethodAction : AnAction() {
 }
 
 class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
-  override fun getText() = "Do not show hints for current method"
-  override fun getFamilyName() = "Parameter Name Hints"
+  companion object {
+    private val presentableText = CodeInsightBundle.message("inlay.hints.blacklist.method")
+    private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
+  }
+  
+  override fun getText(): String = presentableText
+  override fun getFamilyName(): String = presentableFamilyName
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     return InlayParameterHintsExtension.hasAnyExtensions() && hasParameterHintAtOffset(editor)
@@ -80,8 +90,8 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
 class ToggleInlineHintsAction : AnAction() {
   
   companion object {
-    private val disableText = "Disable Parameter Name Hints"
-    private val enableText = "Enable Parameter Name Hints"
+    private val disableText = CodeInsightBundle.message("inlay.hints.disable.action.text").capitalize()
+    private val enableText = CodeInsightBundle.message("inlay.hints.enable.action.text").capitalize()
   }
   
   override fun update(e: AnActionEvent) {
