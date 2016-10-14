@@ -23,19 +23,20 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonFileType
-import com.jetbrains.python.psi.PyStatement
 import com.jetbrains.python.psi.PyStatementListContainer
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
 
-/**
- * Created by Yuli Fiterman on 9/20/2016.
- */
+
 class PyConsoleEnterHandler {
   fun handleEnterPressed(editor: EditorEx): Boolean {
     val project = editor.project ?: throw IllegalArgumentException()
@@ -54,41 +55,26 @@ class PyConsoleEnterHandler {
     atElement?.let {
       insideDocString = isElementInsideDocString(atElement, caretOffset)
     }
-    val prevLine = getLineAtOffset(editor.document, caretOffset)
-    if (prevLine.isBlank() && !insideDocString) {
-      return true
-    }
-
-    val isCellMagic = prevLine.trim().startsWith("%%") && !prevLine.trimEnd().endsWith("?")
-    val isCellHelp = prevLine.trim().startsWith("%%") && prevLine.trimEnd().endsWith("?")
-    val isLineCellMagic = prevLine.trim().startsWith("%")
-    val hasCompleteStatement = if (atElement != null && !insideDocString && !isCellMagic) {
-      isCellHelp || isLineCellMagic || checkComplete(atElement)
-    }
-    else {
-      false
-    }
 
     val enterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
-
     object : WriteCommandAction<Nothing>(project) {
-
       @Throws(Throwable::class)
       override fun run(result: Result<Nothing>) {
         enterHandler.execute(editor, null, DataManager.getInstance().getDataContext(editor.component))
       }
     }.execute()
 
-    /* If we have an indent we don't want to execute either */
+    val prevLine = getLineAtOffset(editor.document, caretOffset)
+    val isCellMagic = prevLine.trim().startsWith("%%") && !prevLine.trimEnd().endsWith("?")
+    val isCellHelp = prevLine.trim().startsWith("%%") && prevLine.trimEnd().endsWith("?")
+    val isLineCellMagic = prevLine.trim().startsWith("%")
+    val hasCompleteStatement = atElement != null && !insideDocString && !isCellMagic &&
+        (isCellHelp || isLineCellMagic || checkComplete(atElement))
+
     val currentLine = getLineAtOffset(editor.document, editor.expectedCaretOffset)
     val indent = IndentHelperImpl.getIndent(project, PythonFileType.INSTANCE, currentLine, false)
-    if (indent > 0) {
-      return false
-    }
 
-    return hasCompleteStatement
-
-
+    return indent == 0 || (hasCompleteStatement && prevLine.isBlank())
   }
 
   private fun isElementInsideDocString(atElement: PsiElement, caretOffset: Int): Boolean {
@@ -99,19 +85,12 @@ class PyConsoleEnterHandler {
   }
 
   private fun checkComplete(el: PsiElement): Boolean {
-    var el = el
-    while (el.parent !is PsiFile && el.parent != null) {
-      el = el.parent
+    val compoundStatement = PsiTreeUtil.getParentOfType(el, PyStatementListContainer::class.java)
+    if (compoundStatement != null) {
+      return compoundStatement.statementList.statements.size != 0
     }
-    if (el !is PyStatement) {
-      return false
-    }
-    val container = PsiTreeUtil.findChildOfType(el, PyStatementListContainer::class.java, false)
-    if (container != null) {
-      return false
-    }
-
-    return PsiTreeUtil.findChildOfType(el, PsiErrorElement::class.java, false) == null
+    val topLevel = PyPsiUtils.getParentRightBefore(el, el.containingFile)
+    return topLevel != null && PsiTreeUtil.hasErrorElements(topLevel)
   }
 
   private fun findFirstNoneSpaceElement(psiFile: PsiFile, offset: Int): PsiElement? {
