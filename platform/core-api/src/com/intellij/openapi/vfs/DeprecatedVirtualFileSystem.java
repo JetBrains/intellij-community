@@ -32,13 +32,11 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
   private final EventDispatcher<VirtualFileListener> myEventDispatcher = EventDispatcher.create(VirtualFileListener.class);
 
   protected void startEventPropagation() {
-    Application application = ApplicationManager.getApplication();
-    if (application == null) {
-      return;
+    Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      app.getMessageBus().connect().subscribe(
+        VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(myEventDispatcher.getMulticaster(), this));
     }
-
-    application.getMessageBus().connect().subscribe(
-      VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(myEventDispatcher.getMulticaster(), this));
   }
 
   @Override
@@ -46,16 +44,12 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     myEventDispatcher.addListener(listener);
   }
 
-  /**
-   * Removes listener form the file system.
-   *
-   * @param listener the listener
-   */
   @Override
   public void removeVirtualFileListener(@NotNull VirtualFileListener listener) {
     myEventDispatcher.removeListener(listener);
   }
 
+  @SuppressWarnings("unused")
   protected void firePropertyChanged(Object requestor,
                                      @NotNull VirtualFile file,
                                      @NotNull String propertyName,
@@ -66,41 +60,42 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     myEventDispatcher.getMulticaster().propertyChanged(event);
   }
 
+  @SuppressWarnings("unused")
   protected void fireContentsChanged(Object requestor, @NotNull VirtualFile file, long oldModificationStamp) {
     assertWriteAccessAllowed();
     VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getParent(), oldModificationStamp, file.getModificationStamp());
     myEventDispatcher.getMulticaster().contentsChanged(event);
   }
 
+  @SuppressWarnings("unused")
   protected void fireFileCreated(@Nullable Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
     VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
     myEventDispatcher.getMulticaster().fileCreated(event);
   }
 
+  @SuppressWarnings("unused")
   protected void fireFileDeleted(Object requestor, @NotNull VirtualFile file, @NotNull String fileName, VirtualFile parent) {
     assertWriteAccessAllowed();
     VirtualFileEvent event = new VirtualFileEvent(requestor, file, fileName, parent);
     myEventDispatcher.getMulticaster().fileDeleted(event);
   }
 
+  @SuppressWarnings("unused")
   protected void fireFileMoved(Object requestor, @NotNull VirtualFile file, VirtualFile oldParent) {
     assertWriteAccessAllowed();
     VirtualFileMoveEvent event = new VirtualFileMoveEvent(requestor, file, oldParent, file.getParent());
     myEventDispatcher.getMulticaster().fileMoved(event);
   }
 
-  protected void fireFileCopied(@Nullable Object requestor, @NotNull VirtualFile originalFile, @NotNull final VirtualFile createdFile) {
+  @SuppressWarnings("unused")
+  protected void fireFileCopied(@Nullable Object requestor, @NotNull VirtualFile originalFile, @NotNull VirtualFile createdFile) {
     assertWriteAccessAllowed();
     VirtualFileCopyEvent event = new VirtualFileCopyEvent(requestor, originalFile, createdFile);
-    try {
-      myEventDispatcher.getMulticaster().fileCopied(event);
-    }
-    catch (AbstractMethodError e) { //compatibility with 6.0
-      myEventDispatcher.getMulticaster().fileCreated(event);
-    }
+    myEventDispatcher.getMulticaster().fileCopied(event);
   }
 
+  @SuppressWarnings("unused")
   protected void fireBeforePropertyChange(Object requestor,
                                           @NotNull VirtualFile file,
                                           @NotNull String propertyName,
@@ -111,18 +106,21 @@ public abstract class DeprecatedVirtualFileSystem extends VirtualFileSystem {
     myEventDispatcher.getMulticaster().beforePropertyChange(event);
   }
 
+  @SuppressWarnings("unused")
   protected void fireBeforeContentsChange(Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
     VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
     myEventDispatcher.getMulticaster().beforeContentsChange(event);
   }
 
+  @SuppressWarnings("unused")
   protected void fireBeforeFileDeletion(Object requestor, @NotNull VirtualFile file) {
     assertWriteAccessAllowed();
     VirtualFileEvent event = new VirtualFileEvent(requestor, file, file.getName(), file.getParent());
     myEventDispatcher.getMulticaster().beforeFileDeletion(event);
   }
 
+  @SuppressWarnings("unused")
   protected void fireBeforeFileMovement(Object requestor, @NotNull VirtualFile file, VirtualFile newParent) {
     assertWriteAccessAllowed();
     VirtualFileMoveEvent event = new VirtualFileMoveEvent(requestor, file, file.getParent(), newParent);
