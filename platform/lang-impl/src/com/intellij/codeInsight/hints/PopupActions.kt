@@ -63,7 +63,7 @@ class BlacklistCurrentMethodAction : AnAction() {
 }
 
 class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
-  override fun getText() = "Do Not Show Hints For Current Method"
+  override fun getText() = "Do not show hints for current method"
   override fun getFamilyName() = "Parameter Name Hints"
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
@@ -78,12 +78,17 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
 }
 
 class ToggleInlineHintsAction : AnAction() {
-
+  
+  companion object {
+    private val disableText = "Disable Parameter Name Hints"
+    private val enableText = "Enable Parameter Name Hints"
+  }
+  
   override fun update(e: AnActionEvent) {
     if (InlayParameterHintsExtension.hasAnyExtensions()) {
       e.presentation.isEnabledAndVisible = true
       val isShow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
-      e.presentation.text = if (isShow) "Disable Parameter Name Hints" else "Enable Parameter Name Hints"
+      e.presentation.text = if (isShow) disableText else enableText
     }
     else {
       e.presentation.isEnabledAndVisible = false      
