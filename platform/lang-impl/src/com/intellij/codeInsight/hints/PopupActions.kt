@@ -21,9 +21,11 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 
@@ -54,19 +56,8 @@ class BlacklistCurrentMethodAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-
-    val offset = editor.caretModel.offset
-
-    val element = file.findElementAt(offset)
-    val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
-
-    val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getMethodInfo(e) != null }) ?: return
-    val info = hintsProvider.getMethodInfo(method) ?: return
-
-    val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
-    ParameterNameHintsSettings.getInstance().addIgnorePattern(pattern)
     
-    refreshAllOpenEditors()
+    addMethodAtCaretToBlackList(editor, file)
   }
 }
 
@@ -102,4 +93,19 @@ private fun refreshAllOpenEditors() {
       psiManager.findFile(it)?.let { daemonCodeAnalyzer.restart(it) }
     }
   }
+}
+
+private fun addMethodAtCaretToBlackList(editor: Editor, file: PsiFile) {
+  val offset = editor.caretModel.offset
+
+  val element = file.findElementAt(offset)
+  val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
+
+  val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getMethodInfo(e) != null }) ?: return
+  val info = hintsProvider.getMethodInfo(method) ?: return
+
+  val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
+  ParameterNameHintsSettings.getInstance().addIgnorePattern(pattern)
+
+  refreshAllOpenEditors()
 }
