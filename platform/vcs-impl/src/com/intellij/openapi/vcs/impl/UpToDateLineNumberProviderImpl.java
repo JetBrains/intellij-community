@@ -58,4 +58,13 @@ public class UpToDateLineNumberProviderImpl implements UpToDateLineNumberProvide
     }
     return tracker.transferLineToVcs(currentNumber, false);
   }
+
+  @Override
+  public int getLineCount() {
+    LineStatusTracker tracker = myLineStatusTrackerManagerI.getLineStatusTracker(myDocument);
+    if (tracker == null || !tracker.isOperational()) {
+      return myDocument.getLineCount();
+    }
+    return tracker.getVcsDocument().getLineCount();
+  }
 }

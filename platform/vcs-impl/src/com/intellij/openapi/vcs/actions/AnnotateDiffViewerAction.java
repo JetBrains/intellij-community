@@ -515,6 +515,11 @@ public class AnnotateDiffViewerAction extends ToggleAction implements DumbAware 
       }
       return myLocalChangesProvider.isRangeChanged(line1, line2);
     }
+
+    @Override
+    public int getLineCount() {
+      return myLocalChangesProvider.getLineCount();
+    }
   }
 
   private static class ThreesideAnnotatorFactory extends ThreesideViewerAnnotatorFactory<ThreesideTextDiffViewerEx> {
