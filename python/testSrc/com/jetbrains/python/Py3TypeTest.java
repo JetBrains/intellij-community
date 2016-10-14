@@ -84,6 +84,70 @@ public class Py3TypeTest extends PyTestCase {
            "    pass"));
   }
 
+  public void testYieldFromHomogeneousTuple() {
+    myFixture.copyDirectoryToProject("typing", "");
+    doTest("str",
+           "import typing\n"+
+           "def get_tuple() -> typing.Tuple[str, ...]:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_tuple()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
+  public void testYieldFromHeterogeneousTuple() {
+    myFixture.copyDirectoryToProject("typing", "");
+    doTest("Union[int, str]",
+           "import typing\n" +
+           "def get_tuple() -> typing.Tuple[int, int, str]:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_tuple()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
+  public void testYieldFromUnknownTuple() {
+    doTest("Any",
+           "def get_tuple() -> tuple:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_tuple()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
+  public void testYieldFromUnknownList() {
+    doTest("Any",
+           "def get_list() -> list:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_list()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
+  public void testYieldFromUnknownDict() {
+    doTest("Any",
+           "def get_dict() -> dict:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_dict()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
+  public void testYieldFromUnknownSet() {
+    doTest("Any",
+           "def get_set() -> set:\n" +
+           "    pass\n" +
+           "def gen()\n" +
+           "    yield from get_set()\n" +
+           "for expr in gen():" +
+           "    pass");
+  }
+
   public void testAwaitAwaitable() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
            "class C:\n" +
@@ -329,6 +393,46 @@ public class Py3TypeTest extends PyTestCase {
                                                               "    yield asyncgen().__anext__()\n" +
                                                               "async def run():\n" +
                                                               "    expr = [await z async for z in asyncgen2()]\n"));
+  }
+
+  public void testIsNotNone() {
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is not None:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is not x:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not x is None:\n" +
+           "        expr = x\n");
+
+    doTest("int",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if not None is x:\n" +
+           "        expr = x\n");
+  }
+
+  public void testIsNone() {
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if x is None:\n" +
+           "        expr = x\n");
+
+    doTest("None",
+           "def test_1(self, c):\n" +
+           "    x = 1 if c else None\n" +
+           "    if None is x:\n" +
+           "        expr = x\n");
   }
 
   private void doTest(final String expectedType, final String text) {

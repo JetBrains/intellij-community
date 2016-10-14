@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,8 @@ public class PyBuiltinCache {
   public static final String EXCEPTIONS_FILE = "exceptions.py";
 
   private static final PyBuiltinCache DUD_INSTANCE = new PyBuiltinCache(null, null);
+
+  private static final int MAX_ANALYZED_ELEMENTS_OF_LITERALS = 10; /* performance */
 
   /**
    * Stores the most often used types, returned by getNNNType().
@@ -170,32 +173,77 @@ public class PyBuiltinCache {
 
   @NotNull
   private static List<PyType> getSequenceElementTypes(@NotNull PySequenceExpression sequence, @NotNull TypeEvalContext context) {
-    final PyExpression[] elements = sequence.getElements();
-    if (elements.length == 0 || elements.length > 10 /* performance */) {
-      return Collections.singletonList(null);
+    if (sequence instanceof PyListLiteralExpression || sequence instanceof PySetLiteralExpression) {
+      return Collections.singletonList(getListOrSetIteratedValueType(sequence.getElements(), context));
     }
-    final PyType firstElementType = context.getType(elements[0]);
-    if (firstElementType == null) {
-      return Collections.singletonList(null);
-    }
-    for (int i = 1; i < elements.length; i++) {
-      final PyType elementType = context.getType(elements[i]);
-      if (elementType == null || !elementType.equals(firstElementType)) {
-        return Collections.singletonList(null);
-      }
-    }
-    if (sequence instanceof PyDictLiteralExpression) {
-      if (firstElementType instanceof PyTupleType) {
-        final PyTupleType tupleType = (PyTupleType)firstElementType;
-        if (tupleType.getElementCount() == 2) {
-          return Arrays.asList(tupleType.getElementType(0), tupleType.getElementType(1));
-        }
-      }
-      return Arrays.asList(null, null);
+    else if (sequence instanceof PyDictLiteralExpression) {
+      return getDictElementTypes(sequence.getElements(), context);
     }
     else {
-      return Collections.singletonList(firstElementType);
+      return Collections.singletonList(null);
     }
+  }
+
+  @Nullable
+  private static PyType getListOrSetIteratedValueType(@NotNull PyExpression[] elements, @NotNull TypeEvalContext context) {
+    final int maxAnalyzedElements = Math.min(MAX_ANALYZED_ELEMENTS_OF_LITERALS, elements.length);
+
+    final PyType analyzedElementsType = StreamEx
+      .of(elements, 0, maxAnalyzedElements)
+      .map(context::getType)
+      .toListAndThen(PyUnionType::union);
+
+    if (elements.length > maxAnalyzedElements) {
+      return PyUnionType.createWeakType(analyzedElementsType);
+    }
+    else {
+      return analyzedElementsType;
+    }
+  }
+
+  @NotNull
+  private static List<PyType> getDictElementTypes(@NotNull PyExpression[] elements, @NotNull TypeEvalContext context) {
+    final int maxAnalyzedElements = Math.min(MAX_ANALYZED_ELEMENTS_OF_LITERALS, elements.length);
+
+    final List<PyType> keyTypes = new ArrayList<>();
+    final List<PyType> valueTypes = new ArrayList<>();
+
+    StreamEx
+      .of(elements, 0, maxAnalyzedElements)
+      .map(element -> PyUtil.as(context.getType(element), PyTupleType.class))
+      .forEach(
+        tupleType -> {
+          if (tupleType != null) {
+            final List<PyType> tupleElementTypes = tupleType.getElementTypes(context);
+
+            if (tupleType.isHomogeneous()) {
+              final PyType keyAndValueType = tupleType.getIteratedItemType();
+
+              keyTypes.add(keyAndValueType);
+              valueTypes.add(keyAndValueType);
+            }
+            else if (tupleElementTypes.size() == 2) {
+              keyTypes.add(tupleElementTypes.get(0));
+              valueTypes.add(tupleElementTypes.get(1));
+            }
+            else {
+              keyTypes.add(null);
+              valueTypes.add(null);
+            }
+          }
+          else {
+            keyTypes.add(null);
+            valueTypes.add(null);
+          }
+        }
+      );
+
+    if (elements.length > maxAnalyzedElements) {
+      keyTypes.add(null);
+      valueTypes.add(null);
+    }
+
+    return Arrays.asList(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes));
   }
 
   @Nullable

@@ -36,10 +36,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -47,6 +44,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedIndentAdjuster;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
@@ -170,6 +168,10 @@ public class EnterHandler extends BaseEnterHandler {
       if (delegate.postProcessEnter(file, editor, dataContext) == EnterHandlerDelegate.Result.Stop) {
         break;
       }
+    }
+    
+    if (settings.SMART_INDENT_ON_ENTER && action.isIndentAdjustmentNeeded()) {
+      FormatterBasedIndentAdjuster.scheduleIndentAdjustment(project, document, editor.getCaretModel().getOffset());
     }
   }
   
@@ -308,6 +310,8 @@ public class EnterHandler extends BaseEnterHandler {
 
     private boolean myForceIndent = false;
     private static final String LINE_SEPARATOR = "\n";
+    
+    private boolean myIsIndentAdjustmentNeeded = true;
 
     public DoEnterAction(PsiFile file, Editor view, Document document, DataContext dataContext, int offset, boolean insertSpace,
                          int caretAdvance, Project project) 
@@ -484,6 +488,7 @@ public class EnterHandler extends BaseEnterHandler {
       if (newIndent == null) return myOffset;
       int delta = newIndent.length() - (indentEnd - indentStart);
       myDocument.replaceString(indentStart, indentEnd, newIndent);
+      myIsIndentAdjustmentNeeded = false;
       return myOffset + delta;
     }
 
@@ -723,6 +728,10 @@ public class EnterHandler extends BaseEnterHandler {
         docAsterisk = false;
       }
       return docAsterisk;
+    }
+
+    public boolean isIndentAdjustmentNeeded() {
+      return myIsIndentAdjustmentNeeded;
     }
   }
   

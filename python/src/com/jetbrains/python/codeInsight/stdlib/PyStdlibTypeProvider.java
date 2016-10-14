@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -38,10 +39,7 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -165,6 +163,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           return getOpenFunctionType(qname, mapping.getMappedParameters(), callSite);
         }
       }
+      else if ("__builtin__.tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
+        return getTupleInitializationType((PyCallExpression)callSite, context);
+      }
       else if ("__builtin__.tuple.__add__".equals(qname) && callSite instanceof PyBinaryExpression) {
         return getTupleConcatenationResultType((PyBinaryExpression)callSite, context);
       }
@@ -250,7 +251,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             elementTypes[i * originalSize + j] = leftTupleType.getElementType(j);
           }
         }
-        return Ref.create(PyTupleType.create(multiplication, elementTypes));
+        return Ref.create(PyTupleType.create(multiplication, Arrays.asList(elementTypes)));
       }
     }
 
@@ -268,17 +269,31 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           // We may try to find the common type of elements of two homogeneous tuple as an alternative
           return null;
         }
-        
-        final PyType[] elementTypes = new PyType[leftTupleType.getElementCount() + rightTupleType.getElementCount()];
-        for (int i = 0; i < leftTupleType.getElementCount(); i++) {
-          elementTypes[i] = leftTupleType.getElementType(i);
-        }
-        for (int i = 0; i < rightTupleType.getElementCount(); i++) {
-          elementTypes[i + leftTupleType.getElementCount()] = rightTupleType.getElementType(i);
-        }
 
-        return Ref.create(PyTupleType.create(addition, elementTypes));
+        final List<PyType> newElementTypes = ContainerUtil.concat(leftTupleType.getElementTypes(context),
+                                                                  rightTupleType.getElementTypes(context));
+        return Ref.create(PyTupleType.create(addition, newElementTypes));
       }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getTupleInitializationType(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
+    final PyExpression[] arguments = call.getArguments();
+
+    if (arguments.length != 1) return null;
+
+    final PyExpression argument = arguments[0];
+    final PyType argumentType = context.getType(argument);
+
+    if (argumentType instanceof PyTupleType) {
+      return Ref.create(argumentType);
+    }
+    else if (argumentType instanceof PyCollectionType) {
+      final PyType iteratedItemType = ((PyCollectionType)argumentType).getIteratedItemType();
+      return Ref.create(PyTupleType.createHomogeneous(call, iteratedItemType));
     }
 
     return null;

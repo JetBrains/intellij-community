@@ -36,6 +36,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.scope.processor.VariablesProcessor;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -55,6 +56,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -396,6 +398,15 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     final PsiVariable variable = ApplicationManager.getApplication().runWriteAction(
       IntroduceVariableBase.introduce(myProject, myExpr, myEditor, myChosenAnchor.getElement(), getOccurrences(), mySettings));
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+
+    if (isReplaceAllOccurrences()) {
+      List<RangeMarker> occurrences = new ArrayList<>();
+      ReferencesSearch.search(variable).forEach(reference -> {
+        occurrences.add(createMarker(reference.getElement()));
+      });
+      setOccurrenceMarkers(occurrences);
+    }
+
     final PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
     myPointer = declarationStatement != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(declarationStatement) : null;
     myEditor.putUserData(ReassignVariableUtil.DECLARATION_KEY, myPointer);
@@ -411,6 +422,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     finally {
       myDeleteSelf = true;
     }
+    PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
     initOccurrencesMarkers();
     return variable;
   }

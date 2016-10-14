@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ class FilePointerPartNode {
     Pair<VirtualFile, String> fileAndUrl = myFileAndUrl;
     if (fileAndUrl != null && fileAndUrl.second != null) {
       String url = fileAndUrl.second;
-      assert url.endsWith(part) : "part is: '"+part +"' but url is: '"+url+"'";
+      assert endsWith(url, part) : "part is: '" + part + "' but url is: '" + url + "'";
     }
     boolean hasFile = fileAndUrl != null && fileAndUrl.first != null;
 
@@ -242,6 +242,10 @@ class FilePointerPartNode {
 
   private int indexOfFirstDifferentChar(@NotNull CharSequence path, int start) {
     return indexOfFirstDifferentChar(path, start, part, 0);
+  }
+
+  private static boolean endsWith(@NotNull String string, @NotNull String end) {
+    return indexOfFirstDifferentChar(string, string.length() - end.length(), end, 0) == string.length();
   }
 
   @NotNull

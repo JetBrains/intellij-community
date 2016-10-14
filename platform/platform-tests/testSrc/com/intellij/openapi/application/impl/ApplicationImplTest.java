@@ -38,10 +38,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ApplicationImplTest extends LightPlatformTestCase {
@@ -542,5 +541,64 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       progress.cancel();
       future.get(1, TimeUnit.SECONDS);
     });
+  }
+
+  public void testSuspendWriteActionDelaysForeignReadActions() throws Exception {
+    List<String> log = new ArrayList<>();
+
+    Semaphore mayStartForeignRead = new Semaphore();
+    mayStartForeignRead.down();
+
+    List<Future> futures = Collections.synchronizedList(new ArrayList<>());
+
+    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    futures.add(app.executeOnPooledThread(() -> {
+      assertTrue(mayStartForeignRead.waitFor(1000));
+      ReadAction.run(() -> log.add("foreign read"));
+    }));
+
+    app.invokeLater(() -> WriteAction.run(() -> {
+      log.add("write started");
+      app.executeSuspendingWriteAction(ourProject, "", () -> {
+        app.invokeAndWait(() ->
+          futures.add(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("foreign read")))));
+
+        mayStartForeignRead.up();
+        TimeoutUtil.sleep(50);
+
+        ReadAction.run(() -> log.add("progress read"));
+        app.invokeAndWait(() -> WriteAction.run(() -> log.add("nested write")));
+        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("forked read"))));
+      });
+      log.add("write finished");
+    }));
+    UIUtil.dispatchAllInvocationEvents();
+
+    futures.forEach(ApplicationImplTest::waitForFuture);
+    assertOrderedEquals(log, "write started", "progress read", "nested write", "forked read", "write finished", "foreign read", "foreign read");
+  }
+
+  private static void waitForFuture(Future<?> future) {
+    try {
+      future.get(1000, TimeUnit.MILLISECONDS);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void testHasWriteActionWorksInOtherThreads() {
+    Class<?> actionClass = WriteAction.class;
+
+    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    assertFalse(app.hasWriteAction(actionClass));
+    app.invokeLater(() -> WriteAction.run(() -> {
+      assertTrue(app.hasWriteAction(actionClass));
+      app.executeSuspendingWriteAction(ourProject, "", () -> ReadAction.run(() -> {
+        assertTrue(app.hasWriteAction(actionClass));
+        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
+      }));
+    }));
+    UIUtil.dispatchAllInvocationEvents();
   }
 }

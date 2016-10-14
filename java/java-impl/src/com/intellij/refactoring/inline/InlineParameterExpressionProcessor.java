@@ -30,10 +30,8 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
 import com.intellij.refactoring.changeSignature.JavaChangeInfo;
 import com.intellij.refactoring.changeSignature.JavaChangeInfoImpl;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.refactoring.util.InlineUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.safeDelete.JavaSafeDeleteProcessor;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -204,6 +202,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, myMethod, myParameter);
     final UsageInfo[] usages = refUsages.get();
     final InaccessibleExpressionsDetector detector = new InaccessibleExpressionsDetector(conflicts);
     myInitializer.accept(detector);

@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -126,7 +127,7 @@ public abstract class SourcePosition implements Navigatable{
       if (myModificationStamp != myFile.getModificationStamp()) {
         return true;
       }
-      PsiElement psiElement = myPsiElementRef != null ? myPsiElementRef.get() : null;
+      PsiElement psiElement = SoftReference.dereference(myPsiElementRef);
       return psiElement != null && !ApplicationManager.getApplication().runReadAction((Computable<Boolean>)psiElement::isValid);
     }
 
@@ -151,7 +152,7 @@ public abstract class SourcePosition implements Navigatable{
     @Override
     public PsiElement getElementAt() {
       updateData();
-      PsiElement element = myPsiElementRef != null ? myPsiElementRef.get() : null;
+      PsiElement element = SoftReference.dereference(myPsiElementRef);
       if (element == null) {
         element = ApplicationManager.getApplication().runReadAction((Computable<PsiElement>)this::calcPsiElement);
         myPsiElementRef = new WeakReference<>(element);

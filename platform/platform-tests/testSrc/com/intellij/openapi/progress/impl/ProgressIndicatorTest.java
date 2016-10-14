@@ -599,14 +599,8 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
           assertFalse(ModalityState.NON_MODAL.equals(ModalityState.defaultModalityState()));
           assertEquals(ProgressManager.getInstance().getProgressIndicator().getModalityState(), ModalityState.defaultModalityState());
           ProgressManager.getInstance().runProcess(() -> {
-            assertFalse(ModalityState.NON_MODAL.equals(ModalityState.defaultModalityState()));
-
-            Semaphore semaphore = new Semaphore();
-            semaphore.down();
-            ApplicationManager.getApplication().invokeLater(() -> {
-              semaphore.up();
-            });
-            assertTrue(semaphore.waitFor(1000));
+            assertSame(indicator.getModalityState(), ModalityState.defaultModalityState());
+            assertInvokeAndWaitWorks();
           }, new ProgressIndicatorBase());
         }
         catch (Throwable e) {
@@ -616,4 +610,28 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     });
   }
 
+  public void testProgressWrapperModality() {
+    ProgressManager.getInstance().run(new Task.Modal(getProject(), "", false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(
+            () -> ProgressManager.getInstance().runProcess(
+              () -> assertInvokeAndWaitWorks(),
+              ProgressWrapper.wrap(indicator)));
+          future.get(2000, TimeUnit.MILLISECONDS);
+        }
+        catch (Throwable e) {
+          throw new RuntimeException(e); // ProgressManager doesn't handle errors
+        }
+      }
+    });
+  }
+
+  private static void assertInvokeAndWaitWorks() {
+    Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    ApplicationManager.getApplication().invokeLater(() -> semaphore.up());
+    assertTrue("invokeAndWait would deadlock", semaphore.waitFor(1000));
+  }
 }

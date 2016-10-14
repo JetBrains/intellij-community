@@ -43,10 +43,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
@@ -109,6 +106,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private final String myName;
 
   private final Stack<Class> myWriteActionsStack = new Stack<>(); // accessed from EDT only, no need to sync
+  private int myWriteStackBase = 0;
 
   private int myInEditorPaintCounter; // EDT only
   private final long myStartTime;
@@ -298,6 +296,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NotNull
   @Override
   public Future<?> executeOnPooledThread(@NotNull final Runnable action) {
+    boolean privileged = myLock.isPrivilegedReader();
     return ourThreadExecutorsService.submit(new Runnable() {
       @Override
       public String toString() {
@@ -306,7 +305,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       @Override
       public void run() {
-        try {
+        try (AccessToken ignored = myLock.setupReadPrivilege(privileged)) {
           action.run();
         }
         catch (ProcessCanceledException e) {
@@ -325,10 +324,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   @NotNull
   @Override
   public <T> Future<T> executeOnPooledThread(@NotNull final Callable<T> action) {
+    boolean privileged = myLock.isPrivilegedReader();
     return ourThreadExecutorsService.submit(new Callable<T>() {
       @Override
       public T call() {
-        try {
+        try (AccessToken ignored = myLock.setupReadPrivilege(privileged)) {
           return action.call();
         }
         catch (ProcessCanceledException e) {
@@ -954,7 +954,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean hasWriteAction(@NotNull Class<?> actionClass) {
-    assertIsDispatchThread();
+    assertReadAccessAllowed();
 
     for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
       Class action = myWriteActionsStack.get(i);
@@ -1136,8 +1136,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       if (gatherStatistics && myWriteActionsStack.isEmpty() && !myWriteActionPending) {
         ActionPauses.WRITE.finished("write action ("+clazz+")");
       }
-      if (myWriteActionsStack.isEmpty()) {
+      if (myWriteActionsStack.size() == myWriteStackBase) {
         myLock.writeUnlock();
+      }
+      if (myWriteActionsStack.isEmpty()) {
         fireAfterWriteActionFinished(clazz);
       }
     }
@@ -1240,32 +1242,32 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     return myLock.isWriteLocked();
   }
 
-  public void executeSuspendingWriteAction(Runnable runnable) {
+  public void executeSuspendingWriteAction(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
     assertIsDispatchThread();
     if (!myLock.isWriteLocked()) {
-      runnable.run();
+      runModalProgress(project, title, false, runnable);
       return;
     }
 
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-      if (gatherStatistics) {
-        ActionPauses.WRITE.finished("write action ("+myWriteActionsStack.get(0)+")");
-      }
-
-      List<Class> savedStack = new ArrayList<>(myWriteActionsStack);
-      myWriteActionsStack.clear();
-      myLock.writeUnlock();
+      int prevBase = myWriteStackBase;
+      myWriteStackBase = myWriteActionsStack.size();
+      myLock.writeSuspend();
       try {
-        runnable.run();
+        runModalProgress(project, title, true, runnable);
       } finally {
-        boolean stackWasEmpty = myWriteActionsStack.isEmpty();
-        myWriteActionsStack.clear();
-        myWriteActionsStack.addAll(savedStack);
-        myLock.writeLock();
-        LOG.assertTrue(stackWasEmpty);
+        myLock.writeResume();
+        myWriteStackBase = prevBase;
+      }
+    });
+  }
 
-        if (gatherStatistics) {
-          ActionPauses.WRITE.started();
+  private void runModalProgress(@Nullable Project project, @NotNull String title, boolean withReadPrivileges, @NotNull Runnable runnable) {
+    ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try (AccessToken ignored = myLock.setupReadPrivilege(withReadPrivileges)) {
+          runnable.run();
         }
       }
     });

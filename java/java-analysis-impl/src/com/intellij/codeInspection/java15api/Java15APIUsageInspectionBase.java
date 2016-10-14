@@ -319,7 +319,7 @@ public class Java15APIUsageInspectionBase extends BaseJavaBatchLocalInspectionTo
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE);
+      PsiAnnotation annotation = !method.isConstructor() ? AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_OVERRIDE) : null;
       if (annotation != null) {
         final Module module = ModuleUtilCore.findModuleForPsiElement(annotation);
         if (module != null) {
