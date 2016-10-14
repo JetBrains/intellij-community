@@ -32,6 +32,7 @@ import java.util.Map;
 
 public class PersistentUtil {
   @NotNull public static final File LOG_CACHE = new File(PathManager.getSystemPath(), "vcs-log");
+  @NotNull private static final String CORRUPTION_MARKER = "corruption.marker";
 
   @NotNull
   public static String calcLogId(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
@@ -81,5 +82,10 @@ public class PersistentUtil {
     return IOUtil.openCleanOrResetBroken(() ->
                                            new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), externalizer, Page.PAGE_SIZE),
                                          storageFile);
+  }
+
+  @NotNull
+  public static File getCorruptionMarkerFile() {
+    return new File(LOG_CACHE, CORRUPTION_MARKER);
   }
 }
