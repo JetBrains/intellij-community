@@ -19,7 +19,9 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
+import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.codeInspection.reference.UnusedDeclarationFixProvider;
 import com.intellij.find.findUsages.*;
 import com.intellij.openapi.extensions.Extensions;
@@ -77,7 +79,7 @@ public class UnusedSymbolUtil {
         return true;
       }
     }
-    return isInjected(project, element);
+    return EntryPointsManager.getInstance(project).isImplicitWrite(element);
   }
 
   @Nullable
