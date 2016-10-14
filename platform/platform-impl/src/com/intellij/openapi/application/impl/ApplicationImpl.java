@@ -954,7 +954,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public boolean hasWriteAction(@NotNull Class<?> actionClass) {
-    assertIsDispatchThread();
+    assertReadAccessAllowed();
 
     for (int i = myWriteActionsStack.size() - 1; i >= 0; i--) {
       Class action = myWriteActionsStack.get(i);

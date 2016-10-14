@@ -586,4 +586,19 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       throw new RuntimeException(e);
     }
   }
+
+  public void testHasWriteActionWorksInOtherThreads() {
+    Class<?> actionClass = WriteAction.class;
+
+    ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
+    assertFalse(app.hasWriteAction(actionClass));
+    app.invokeLater(() -> WriteAction.run(() -> {
+      assertTrue(app.hasWriteAction(actionClass));
+      app.executeSuspendingWriteAction(ourProject, "", () -> ReadAction.run(() -> {
+        assertTrue(app.hasWriteAction(actionClass));
+        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
+      }));
+    }));
+    UIUtil.dispatchAllInvocationEvents();
+  }
 }
