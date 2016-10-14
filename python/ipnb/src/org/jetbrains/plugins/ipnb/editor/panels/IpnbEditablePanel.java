@@ -1,14 +1,23 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbMergeCellAboveAction;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbMergeCellBelowAction;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbSplitCellAction;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbEditableCell;
 
 import javax.swing.*;
@@ -48,6 +57,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     mySplitter.setSecondComponent(null);
     setBackground(IpnbEditorUtil.getBackground());
     add(mySplitter);
+    addRightClickMenu();
   }
 
   private void addEditablePanel() {
@@ -201,7 +211,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
 
   public void updateCellView() { // TODO: make abstract
   }
-  
+
   public int getCaretPosition() {
     if (myEditing) {
       if (myEditablePanel != null) {
@@ -210,7 +220,28 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     }
     return -1;
   }
-  
+
+  public void addRightClickMenu() {
+    myViewPanel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
+          final DefaultActionGroup group =
+            new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction(), new IpnbSplitCellAction());
+          createClickMenu(e.getLocationOnScreen(), group);
+        }
+      }
+    });
+  }
+
+  protected void createClickMenu(@NotNull Point point, @NotNull DefaultActionGroup group) {
+    final DataContext context = DataManager.getInstance().getDataContext(this);
+    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, context,
+                                                                                JBPopupFactory.ActionSelectionAid.MNEMONICS,
+                                                                                true);
+    popup.show(RelativePoint.fromScreen(point));
+  }
+
   @Nullable
   public String getText(int from, int to) {
     if (myEditing && myEditablePanel != null) {
