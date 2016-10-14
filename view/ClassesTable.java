@@ -36,7 +36,6 @@ import javax.swing.table.TableRowSorter;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ClassesTable extends JBTable implements DataProvider, Disposable {
@@ -44,6 +43,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   public static final DataKey<XDebugSession> DEBUG_SESSION_KEY = DataKey.create("ClassesTable.DebugSession");
   public static final DataKey<InstancesProvider> NEW_INSTANCES_PROVIDER_KEY =
       DataKey.create("ClassesTable.NewInstances");
+  public static final DataKey<ReferenceCountProvider> REF_COUNT_PROVIDER_KEY =
+      DataKey.create("ClassesTable.ReferenceCountProvider");
 
   private static final int CLASSES_COLUMN_PREFERRED_WIDTH = 250;
   private static final int COUNT_COLUMN_MIN_WIDTH = 80;
@@ -57,6 +58,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   private final Map<ReferenceType, DiffValue> myCounts = new ConcurrentHashMap<>();
   private final InstancesTracker myInstancesTracker;
   private final ClassesFilteredView myParent;
+  private final ReferenceCountProvider myCountProvider;
 
   private boolean myOnlyWithDiff;
 
@@ -139,6 +141,32 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     sorter.setSortKeys(myDefaultSortingKeys);
     setRowSorter(sorter);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+    myCountProvider = new ReferenceCountProvider() {
+      @Override
+      public int getTotalCount(@NotNull ReferenceType ref) {
+        return (int) myCounts.get(ref).myCurrentCount;
+      }
+
+      @Override
+      public int getDiffCount(@NotNull ReferenceType ref) {
+        return (int) myCounts.get(ref).diff();
+      }
+
+      @Override
+      public int getNewInstancesCount(@NotNull ReferenceType ref) {
+        TrackerForNewInstances strategy = myParent.getStrategy(ref);
+        return strategy == null || !strategy.isReady() ? -1 : strategy.getCount();
+      }
+    };
+  }
+
+  public interface ReferenceCountProvider {
+    int getTotalCount(@NotNull ReferenceType ref);
+
+    int getDiffCount(@NotNull ReferenceType ref);
+
+    int getNewInstancesCount(@NotNull ReferenceType ref);
   }
 
   @Nullable
@@ -226,6 +254,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     myModel.show();
   }
 
+
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
@@ -244,6 +273,10 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
           return (InstancesProvider) limit -> newInstances;
         }
       }
+    }
+
+    if (REF_COUNT_PROVIDER_KEY.is(dataId)) {
+      return myCountProvider;
     }
 
     return null;
@@ -437,22 +470,21 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     @Override
     protected void addText(JTable table, @NotNull Object value, boolean isSelected,
                            boolean hasFocus, int row, int column) {
-      long diff = ((DiffValue) value).diff();
       setTextAlign(SwingConstants.RIGHT);
 
       ReferenceType ref = myElems.get(convertRowIndexToModel(row));
-      TrackerForNewInstances strategy = myParent.getStrategy(ref);
 
+      long diff = myCountProvider.getDiffCount(ref);
       String text = String.format("%s%d", diff > 0 ? "+" : "", diff);
 
-      if (strategy != null && strategy.isReady()) {
-        long trackedNew = strategy.getCount();
-        if (trackedNew == diff) {
+      int newInstancesCount = myCountProvider.getNewInstancesCount(ref);
+      if (newInstancesCount >= 0) {
+        if (newInstancesCount == diff) {
           append(text, diff == 0 ? SimpleTextAttributes.REGULAR_ATTRIBUTES : myClickableCellAttributes);
         } else {
           append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-          if (trackedNew != 0) {
-            append(String.format(" (%d)", trackedNew), myClickableCellAttributes);
+          if (newInstancesCount != 0) {
+            append(String.format(" (%d)", newInstancesCount), myClickableCellAttributes);
           }
         }
       } else {
