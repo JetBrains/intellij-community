@@ -32,7 +32,7 @@ public class ExtraFieldGutter extends AnnotationFieldGutter  {
   public ExtraFieldGutter(FileAnnotation fileAnnotation,
                           AnnotationPresentation presentation,
                           Couple<Map<VcsRevisionNumber, Color>> bgColorMap, AnnotateActionGroup actionGroup) {
-    super(fileAnnotation, null, presentation, bgColorMap);
+    super(fileAnnotation, presentation, bgColorMap);
     myActionGroup = actionGroup;
   }
 

@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.vcsUtil.VcsUtil;
 
 import java.awt.*;
 import java.util.Map;
@@ -36,7 +35,7 @@ class HistoryIdColumn extends AnnotationFieldGutter {
                   final TextAnnotationPresentation presentation,
                   Couple<Map<VcsRevisionNumber, Color>> colorScheme,
                   Map<VcsRevisionNumber, Integer> ids) {
-    super(annotation, null, presentation, colorScheme);
+    super(annotation, presentation, colorScheme);
     myHistoryIds = ids;
   }
 
@@ -59,8 +58,8 @@ class HistoryIdColumn extends AnnotationFieldGutter {
   }
 
   @Override
-  public boolean isAvailable() {
-    return VcsUtil.isAspectAvailableByDefault(getID(), false);
+  public boolean isShowByDefault() {
+    return false;
   }
 
   @Override
