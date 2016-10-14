@@ -30,7 +30,7 @@ def getProperties(String home, String buildNumber) {
   def gradleOut = "${home}/../../out/studio"
 
   def enableUITests = System.getProperty("studio.ui.tests") ? !System.getProperty("studio.ui.tests").isEmpty() : false
-  def bundleGradlePlugin = System.getProperty("bundle.gradle.plugin") ?: false
+  def bundleGradlePlugin = System.getProperty("bundle.gradle.plugin") ? !System.getProperty("bundle.gradle.plugin").isEmpty() : false
 
   return new org.jetbrains.intellij.build.ProductProperties() {
     {
