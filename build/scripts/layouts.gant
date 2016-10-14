@@ -901,7 +901,7 @@ def layoutAndroid(String androidHome, String androidToolsBaseHome) {
         module("ninepatch")
         module("perflib")
         module("rpclib")
-        //module("builder-model")
+        module("builder-model")
         module("builder-test-api")
       }
       jar("androidAnnotations.jar") {
