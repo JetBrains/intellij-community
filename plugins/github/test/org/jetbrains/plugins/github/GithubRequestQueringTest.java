@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.github;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
@@ -28,15 +29,14 @@ import static org.junit.Assume.assumeNotNull;
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubRequestPagingTest extends GithubTest {
+public class GithubRequestQueringTest extends GithubTest {
 
   @Override
   protected void beforeTest() throws Exception {
     assumeNotNull(myLogin2);
   }
 
-  public void testAvailableRepos() throws Throwable {
-
+  public void testPagination() throws Throwable {
     GithubConnection connection = new GithubConnection(myGitHubSettings.getAuthData(), true);
     try {
       List<GithubRepo> availableRepos = GithubApiUtil.getUserRepos(connection, myLogin2);
@@ -55,5 +55,21 @@ public class GithubRequestPagingTest extends GithubTest {
     finally {
       connection.close();
     }
+  }
+
+  public void testOwnRepos() throws Throwable {
+    List<GithubRepo> result = GithubApiUtil.getUserRepos(new GithubConnection(myAuth));
+
+    assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("example")));
+    assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("PullRequestTest")));
+    assertFalse(ContainerUtil.exists(result, (it) -> it.getName().equals("org_repo")));
+  }
+
+  public void testAllRepos() throws Throwable {
+    List<GithubRepo> result = GithubApiUtil.getUserRepos(new GithubConnection(myAuth), true);
+
+    assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("example")));
+    assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("PullRequestTest")));
+    assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("org_repo")));
   }
 }
