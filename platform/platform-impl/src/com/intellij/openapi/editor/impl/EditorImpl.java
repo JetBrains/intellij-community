@@ -2022,7 +2022,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       restoreCaretRelativePosition();
     }
 
-    if (EMPTY_CURSOR != null) {
+    if (EMPTY_CURSOR != null && !myIsViewer) {
       myEditorComponent.setCursor(EMPTY_CURSOR);
     }
   }
