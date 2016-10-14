@@ -2,11 +2,14 @@ package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.google.common.collect.Lists;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.TextRange;
@@ -18,6 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbMergeCellAboveAction;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbMergeCellBelowAction;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbSplitCellAction;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbPanel;
@@ -49,6 +55,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
     myViewPanel = createViewPanel();
     add(myViewPanel);
+    addRightClickMenu();
   }
 
   @NotNull
@@ -77,6 +84,20 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     panel.add(createHideableOutputPanel());
 
     return panel;
+  }
+
+  @Override
+  public void addRightClickMenu() {
+    myCodeSourcePanel.addMouseListener(new EditorMouseAdapter() {
+      @Override
+      public void mousePressed(EditorMouseEvent e) {
+        final MouseEvent mouseEvent = e.getMouseEvent();
+        if (SwingUtilities.isRightMouseButton(mouseEvent) && mouseEvent.getClickCount() == 1) {
+          createClickMenu(mouseEvent.getLocationOnScreen(),
+                          new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction(), new IpnbSplitCellAction()));
+        }
+      }
+    });
   }
 
   @NotNull

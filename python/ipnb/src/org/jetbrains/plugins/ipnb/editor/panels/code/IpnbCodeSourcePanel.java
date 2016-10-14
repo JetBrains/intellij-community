@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
@@ -55,6 +56,10 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
     mySource = cell.getSourceAsString();
     final JComponent panel = createViewPanel();
     add(panel);
+  }
+  
+  public void addMouseListener(@NotNull final EditorMouseListener listener) {
+    myEditor.addEditorMouseListener(listener);
   }
 
   @NotNull

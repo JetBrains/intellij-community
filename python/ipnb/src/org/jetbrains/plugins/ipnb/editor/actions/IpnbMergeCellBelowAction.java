@@ -10,6 +10,11 @@ import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
 public class IpnbMergeCellBelowAction extends AnAction {
+
+  public IpnbMergeCellBelowAction() {
+    super("Merge Cell Below");
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext context = e.getDataContext();
