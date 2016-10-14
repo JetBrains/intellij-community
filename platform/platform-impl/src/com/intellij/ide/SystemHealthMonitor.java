@@ -27,8 +27,6 @@ import com.google.wireless.android.sdk.stats.UIActionStats.InvocationKind;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.IdePerformanceListener;
 import com.intellij.diagnostic.ThreadDump;
-import com.intellij.errorreport.crash.CrashReport;
-import com.intellij.errorreport.crash.GoogleCrash;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
@@ -221,9 +219,9 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
             return;
           }
 
-          GoogleCrash.getInstance().submit(
-            CrashReport.Builder.createForPerfReport(t.getFileName().toString(), lines)
-              .build());
+          //GoogleCrash.getInstance().submit(
+          //  CrashReport.Builder.createForPerfReport(t.getFileName().toString(), lines)
+          //    .build());
         });
     });
   }
@@ -233,8 +231,8 @@ public class SystemHealthMonitor extends ApplicationComponent.Adapter {
       return;
     }
 
-    CrashReport report = CrashReport.Builder.createForCrashes(descriptions).build();
-    GoogleCrash.getInstance().submit(report);
+    //CrashReport report = CrashReport.Builder.createForCrashes(descriptions).build();
+    //GoogleCrash.getInstance().submit(report);
     trackExceptionsAndActivity(0, 0, 0, 0, descriptions.size());
   }
 
