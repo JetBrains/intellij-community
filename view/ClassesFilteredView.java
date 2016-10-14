@@ -346,7 +346,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private void doActivate() {
     myDebugSession.addSessionListener(myDebugSessionListener, ClassesFilteredView.this);
     myConstructorTrackedClasses.values().forEach(x -> x.setBackgroundMode(false));
-    if (!myLastSuspendContext.equals(getSuspendContext())) {
+    if (myLastSuspendContext == null || !myLastSuspendContext.equals(getSuspendContext())) {
       commitAllTrackers();
       updateClassesAndCounts();
     }
