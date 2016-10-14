@@ -302,8 +302,11 @@
     <group id="ParameterNameHints" popup="true">
       <action id="BlacklistCurrentMethodAction" class="com.intellij.codeInsight.hints.BlacklistCurrentMethodAction"/>
       <action id="ShowParameterHintsSettings" class="com.intellij.codeInsight.hints.ShowParameterHintsSettings"/>
-      <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction"/>
     </group>
+    
+    <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction">
+      <add-to-group group-id="EditorPopupMenu"/>
+    </action>
     
     <!-- Analyze -->
     <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction"/>

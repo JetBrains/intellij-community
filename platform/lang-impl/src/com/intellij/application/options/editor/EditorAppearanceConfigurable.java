@@ -17,6 +17,7 @@
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
+import com.intellij.codeInsight.hints.InlayParameterHintsExtension;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -76,6 +77,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     
     myCbBlinkCaret.addActionListener((e) -> myBlinkIntervalField.setEnabled(myCbBlinkCaret.isSelected()));
     myCbShowWhitespaces.addActionListener((e) -> updateWhitespaceCheckboxesState());
+    myShowParameterNameHints.setVisible(InlayParameterHintsExtension.INSTANCE.hasAnyExtensions());
   }
   
   private void applyNameHintsSettings() {

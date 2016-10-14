@@ -26,13 +26,19 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
+import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
+import com.intellij.openapi.externalSystem.service.notification.NotificationData;
+import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileFilters;
@@ -467,6 +473,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
     if (dependencies == null) return;
 
+    List<String> orphanModules = ContainerUtil.newArrayList();
     for (IdeaDependency dependency : dependencies) {
       if (dependency == null) {
         continue;
@@ -480,6 +487,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           d.setScope(scope);
         }
         ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, d);
+        ModuleData targetModule = d.getTarget();
+        if (targetModule.getId().isEmpty() && targetModule.getLinkedExternalProjectPath().isEmpty()) {
+          orphanModules.add(targetModule.getExternalName());
+        }
       }
       else if (dependency instanceof IdeaSingleEntryLibraryDependency) {
         LibraryDependencyData d = buildDependency(gradleModule, ideModule, (IdeaSingleEntryLibraryDependency)dependency, ideProject);
@@ -488,6 +499,20 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           d.setScope(scope);
         }
         ideModule.createChild(ProjectKeys.LIBRARY_DEPENDENCY, d);
+      }
+    }
+
+    if (!orphanModules.isEmpty()) {
+      ExternalSystemTaskId taskId = resolverCtx.getExternalSystemTaskId();
+      Project project = taskId.findProject();
+      if (project != null) {
+        String msg =
+          "Can't find the following module" + (orphanModules.size() > 1 ? "s" : "") + ": " + StringUtil.join(orphanModules, ", ")
+          + "\nIt can be caused by composite build configuration inside your *.gradle scripts with Gradle version older than 3.3." +
+          "\nTry Gradle 3.3 or better or enable 'Create separate module per source set' option";
+        NotificationData notification = new NotificationData(
+          "Gradle project structure problems", msg, NotificationCategory.WARNING, NotificationSource.PROJECT_SYNC);
+        ExternalSystemNotificationManager.getInstance(project).showNotification(taskId.getProjectSystemId(), notification);
       }
     }
   }
@@ -793,6 +818,10 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         ModuleData moduleData = executionSettings.getExecutionWorkspace().findModuleDataByName(moduleName);
         if (moduleData != null) {
           return new ModuleDependencyData(ownerModule.getData(), moduleData);
+        }
+        else if (StringUtil.isNotEmpty(moduleName)) {
+          return new ModuleDependencyData(
+            ownerModule.getData(), new ModuleData("", GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName, "", ""));
         }
       }
       throw new IllegalStateException(
