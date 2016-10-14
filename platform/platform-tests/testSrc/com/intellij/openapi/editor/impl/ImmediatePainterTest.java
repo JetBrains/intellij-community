@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -40,9 +41,17 @@ import java.io.IOException;
  * @author Pavel Fatin
  */
 public class ImmediatePainterTest extends AbstractEditorTest {
+  private String myDefaultFontName;
+  private int myDefaultFontSize;
+  private float myDefaultLineSpacing;
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+
+    myDefaultFontName = getDefaultColorScheme().getEditorFontName();
+    myDefaultFontSize = getDefaultColorScheme().getEditorFontSize();
+    myDefaultLineSpacing = getDefaultColorScheme().getLineSpacing();
 
     FontLayoutService.setInstance(null);
 
@@ -51,6 +60,18 @@ public class ImmediatePainterTest extends AbstractEditorTest {
 
     setFont(Font.MONOSPACED, 14);
     setLineSpacing(1.3F);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      getDefaultColorScheme().setEditorFontName(myDefaultFontName);
+      getDefaultColorScheme().setEditorFontSize(myDefaultFontSize);
+      getDefaultColorScheme().setLineSpacing(myDefaultLineSpacing);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testDrawingNarrowChar() throws Exception {
@@ -265,16 +286,20 @@ public class ImmediatePainterTest extends AbstractEditorTest {
   }
 
   private static void setCaretColor(Color color) {
-    EditorColorsUtil.getGlobalOrDefaultColorScheme().setColor(EditorColors.CARET_COLOR, color);
+    getDefaultColorScheme().setColor(EditorColors.CARET_COLOR, color);
   }
 
   private static void setFont(String name, int size) {
-    EditorColorsUtil.getGlobalOrDefaultColorScheme().setEditorFontName(name);
-    EditorColorsUtil.getGlobalOrDefaultColorScheme().setEditorFontSize(size);
+    getDefaultColorScheme().setEditorFontName(name);
+    getDefaultColorScheme().setEditorFontSize(size);
   }
 
   private static void setLineSpacing(float lineSpacing) {
-    EditorColorsUtil.getGlobalOrDefaultColorScheme().setLineSpacing(lineSpacing);
+    getDefaultColorScheme().setLineSpacing(lineSpacing);
+  }
+
+  private static EditorColorsScheme getDefaultColorScheme() {
+    return EditorColorsUtil.getGlobalOrDefaultColorScheme();
   }
 
   private static void setZeroLatencyRenderingEnabled(boolean enabled) {
