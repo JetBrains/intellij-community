@@ -41,7 +41,7 @@ class InspectionSchemeTest {
   @Test fun loadSchemes() {
     val schemeFile = fsRule.fs.getPath("inspection/Bar.xml")
     val schemeData = """
-    <inspections profile_name="Bar" version="1.0">
+    <inspections version="1.0">
       <option name="myName" value="Bar" />
       <inspection_tool class="Since15" enabled="true" level="ERROR" enabled_by_default="true" />
     "</inspections>""".trimIndent()
