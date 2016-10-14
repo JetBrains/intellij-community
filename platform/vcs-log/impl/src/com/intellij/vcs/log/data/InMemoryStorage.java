@@ -27,9 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class InMemoryStorage implements VcsLogStorage {
-  private final BiDirectionalEnumerator<CommitId> myCommitIdEnumerator =
+  @SuppressWarnings("unchecked") private final BiDirectionalEnumerator<CommitId> myCommitIdEnumerator =
     new BiDirectionalEnumerator<>(1, TObjectHashingStrategy.CANONICAL);
-  private final BiDirectionalEnumerator<VcsRef> myRefsEnumerator = new BiDirectionalEnumerator<>(1, TObjectHashingStrategy.CANONICAL);
+  @SuppressWarnings("unchecked") private final BiDirectionalEnumerator<VcsRef> myRefsEnumerator =
+    new BiDirectionalEnumerator<>(1, TObjectHashingStrategy.CANONICAL);
 
   @Override
   public int getCommitIndex(@NotNull Hash hash, @NotNull VirtualFile root) {
