@@ -38,6 +38,7 @@ import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.theoryinpractice.testng.inspection.DependsOnGroupsInspection;
 import com.theoryinpractice.testng.util.TestNGUtil;
@@ -85,6 +86,14 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
 
     public MethodReference(PsiLiteral element) {
       super(element, false);
+    }
+
+    @Override
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+      if (element instanceof PsiMethod) {
+        return handleElementRename(((PsiMethod)element).getName());
+      }
+      return super.bindToElement(element);
     }
 
     @Nullable
