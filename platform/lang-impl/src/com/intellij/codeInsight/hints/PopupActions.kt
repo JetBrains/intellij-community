@@ -73,10 +73,14 @@ class BlacklistCurrentMethodAction : AnAction() {
 class ToggleInlineHintsAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = true
-
-    val isShow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
-    e.presentation.text = if (isShow) "Disable Parameter Name Hints" else "Enable Parameter Name Hints"
+    if (InlayParameterHintsExtension.hasAnyExtensions()) {
+      e.presentation.isEnabledAndVisible = true
+      val isShow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
+      e.presentation.text = if (isShow) "Disable Parameter Name Hints" else "Enable Parameter Name Hints"
+    }
+    else {
+      e.presentation.isEnabledAndVisible = false      
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
