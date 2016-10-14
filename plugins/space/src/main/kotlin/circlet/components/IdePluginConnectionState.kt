@@ -1,6 +1,5 @@
 package circlet.components
 
-import circlet.modelApi.*
 import circlet.protocol.*
 import circlet.utils.lifetime.*
 import javax.websocket.*
