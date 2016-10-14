@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.containers.ContainerUtil
@@ -1234,6 +1235,25 @@ class Foo {{
 }}
 """
   }
+
+  void "test delete at the last template position"() {
+    myFixture.configureByText 'a.java', """
+class Foo {{
+  <caret>
+}}
+"""
+    myFixture.type 'iter\t'
+    LightPlatformCodeInsightTestCase.delete(myFixture.editor, myFixture.project)
+    myFixture.checkResult """
+class Foo {{
+    for (Object o : <caret> {
+        
+    }
+}}
+"""
+  }
+
+
 
   void "test multicaret expanding with space"() {
     myFixture.configureByText "a.java", """\
