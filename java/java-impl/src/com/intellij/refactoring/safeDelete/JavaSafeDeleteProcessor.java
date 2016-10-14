@@ -296,15 +296,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       final PsiElement scope = ((PsiParameter)element).getDeclarationScope();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;
-        final PsiClass containingClass = method.getContainingClass();
-        if (containingClass != null) {
-          final int parameterIndex = method.getParameterList().getParameterIndex((PsiParameter)element);
-          final PsiMethod methodCopy = (PsiMethod)method.copy();
-          methodCopy.getParameterList().getParameters()[parameterIndex].delete();
-          final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-          ConflictsUtil.checkMethodConflicts(containingClass, method, methodCopy, conflicts);
-          return (Collection<String>)conflicts.values();
-        }
+        final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+        collectMethodConflicts(conflicts, method, (PsiParameter)element);
+        return (Collection<String>)conflicts.values();
       }
     }
     return null;
@@ -963,7 +957,17 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
     return false;
   }
-  
+
+  public static void collectMethodConflicts(MultiMap<PsiElement, String> conflicts, PsiMethod method, PsiParameter parameter) {
+    final PsiClass containingClass = method.getContainingClass();
+    if (containingClass != null) {
+      final int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+      final PsiMethod methodCopy = (PsiMethod)method.copy();
+      methodCopy.getParameterList().getParameters()[parameterIndex].delete();
+      ConflictsUtil.checkMethodConflicts(containingClass, method, methodCopy, conflicts);
+    }
+  }
+
   private static class SafeDeleteFunctionalExpressionUsageInfo extends SafeDeleteReferenceUsageInfo {
     public SafeDeleteFunctionalExpressionUsageInfo(@NotNull PsiElement element, PsiElement referencedElement) {
       super(element, referencedElement, false);
