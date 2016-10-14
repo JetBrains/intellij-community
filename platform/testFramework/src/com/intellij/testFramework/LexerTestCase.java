@@ -33,6 +33,10 @@ import java.io.IOException;
  * @author peter
  */
 public abstract class LexerTestCase extends UsefulTestCase {
+  private static final String defaultExpectedOutputExt = "txt";
+  private static final TokenTypePrinter defaultTokenTypePrinter = (tokenType, tokenSequence) ->
+    tokenType + " ('" + getTokenText(tokenType, tokenSequence) + "')\n";
+
   protected void doTest(@NonNls String text) {
     doTest(text, null);
   }
@@ -42,13 +46,13 @@ public abstract class LexerTestCase extends UsefulTestCase {
   }
 
   protected void doTest(@NonNls String text, @Nullable String expected, @NotNull Lexer lexer) {
-    String result = printTokens(text, 0, lexer);
+    String result = customPrintTokens(text, 0, lexer);
 
     if (expected != null) {
       assertSameLines(expected, result);
     }
     else {
-      assertSameLinesWithFile(PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + ".txt", result);
+      assertSameLinesWithFile(getFilePathWithoutExt() + "." + getExpectedOutputExt(), result, shouldTrim());
     }
   }
 
@@ -70,7 +74,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
 
   protected void checkCorrectRestart(String text) {
     Lexer mainLexer = createLexer();
-    String allTokens = printTokens(text, 0, mainLexer);
+    String allTokens = customPrintTokens(text, 0, mainLexer);
 
     Lexer auxLexer = createLexer();
     auxLexer.start(text);
@@ -81,7 +85,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
       }
       if (auxLexer.getState() == 0) {
         int tokenStart = auxLexer.getTokenStart();
-        String subTokens = printTokens(text, tokenStart, mainLexer);
+        String subTokens = customPrintTokens(text, tokenStart, mainLexer);
         if (!allTokens.endsWith(subTokens)) {
           assertEquals("Restarting impossible from offset " + tokenStart + "; lexer state should not return 0 at this point", allTokens, subTokens);
         }
@@ -90,50 +94,76 @@ public abstract class LexerTestCase extends UsefulTestCase {
     }
   }
 
-  protected String printTokens(String text, int start) {
-    return printTokens(text, start, createLexer());
+  protected String customPrintTokens(String text, int start, Lexer lexer) {
+    return printTokens(text, start, lexer);
   }
 
   public static String printTokens(CharSequence text, int start, Lexer lexer) {
+    return printTokens(text, start, lexer, defaultTokenTypePrinter);
+  }
+
+  public static String printTokens(CharSequence text, int start, Lexer lexer, TokenTypePrinter printer) {
     lexer.start(text, start, text.length());
     StringBuilder result = new StringBuilder();
-    IElementType tokenType;
-    while ((tokenType = lexer.getTokenType()) != null) {
-      result.append(tokenType).append(" ('").append(getTokenText(lexer)).append("')\n");
+    while (lexer.getTokenType() != null) {
+      String printTokeType = printer.print(lexer.getTokenType(), lexer.getTokenSequence());
+      result.append(printTokeType);
       lexer.advance();
     }
     return result.toString();
   }
 
+  @Deprecated
   protected void doFileTest(@NonNls String fileExt) {
-    String fileName = PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + "." + fileExt;
+    String fileName = getFilePathWithoutExt() + "." + fileExt;
     String text = "";
     try {
       String fileText = FileUtil.loadFile(new File(fileName));
-      text = StringUtil.convertLineSeparators(shouldTrim() ? fileText.trim() : fileText);
-    }
-    catch (IOException e) {
+      text = shouldTrim() ? fileText.trim() : fileText;
+      text = !shouldConvertLineSeparators() ? text : StringUtil.convertLineSeparators(text);
+    } catch (IOException e) {
       fail("can't load file " + fileName + ": " + e.getMessage());
     }
     doTest(text);
+  }
+
+  protected void doFileTest() {
+    doFileTest(getTestFileExt());
   }
 
   protected boolean shouldTrim() {
     return true;
   }
 
-  private static String getTokenText(Lexer lexer) {
-    final IElementType tokenType = lexer.getTokenType();
-    if (tokenType instanceof TokenWrapper) {
-      return ((TokenWrapper)tokenType).getValue();
-    }
+  protected boolean shouldConvertLineSeparators() {
+    return true;
+  }
 
-    String text = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
-    text = StringUtil.replace(text, "\n", "\\n");
-    return text;
+  private static String getTokenText(IElementType tokenType, CharSequence tokenSequence) {
+    if (tokenType instanceof TokenWrapper) {
+      return ((TokenWrapper) tokenType).getValue();
+    }
+    return StringUtil.replace(tokenSequence.toString(), "\n", "\\n");
   }
 
   protected abstract Lexer createLexer();
 
   protected abstract String getDirPath();
+
+  protected String getTestFileExt() {
+    return "testExt";
+  }
+
+  protected String getExpectedOutputExt() {
+    return defaultExpectedOutputExt;
+  }
+
+  @NotNull
+  protected String getFilePathWithoutExt() {
+    return FileUtil.join(PathManager.getHomePath(), getDirPath(), getTestName(true));
+  }
+
+  public interface TokenTypePrinter {
+    String print(IElementType tokenType, CharSequence tokenSequence);
+  }
 }

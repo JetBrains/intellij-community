@@ -17,199 +17,200 @@ public class YAMLLexerTest extends LexerTestCase {
       .substring(PathManager.getHomePath().length());
   }
 
+  @Override
+  protected String getTestFileExt() {
+    return "yml";
+  }
+
   public void test2docs() {
-    doTest();
+    doFileTest();
   }
 
   public void testColorspage(){
-    doTest();
+    doFileTest();
   }
 
   public void testDocuments(){
-    doTest();
+    doFileTest();
   }
 
   public void testIndentation(){
-    doTest();
+    doFileTest();
   }
 
   public void testMap_between_seq(){
-    doTest();
+    doFileTest();
   }
 
   public void testMap_map(){
-    doTest();
+    doFileTest();
   }
 
   public void testQuoted_scalars(){
-    doTest();
+    doFileTest();
   }
 
   public void testSample_log(){
-    doTest();
+    doFileTest();
   }
 
   public void testSeq_seq(){
-    doTest();
+    doFileTest();
   }
 
   public void testSequence_mappings(){
-    doTest();
+    doFileTest();
   }
 
   public void testWrong_string_highlighting(){
-    doTest();
+    doFileTest();
   }
 
   public void testValue_injection(){
-    doTest();
+    doFileTest();
   }
 
   public void testValue_injection_2(){
-    doTest();
+    doFileTest();
   }
 
   public void testComma(){
-    doTest();
+    doFileTest();
   }
 
   public void testIndex(){
-    doTest();
+    doFileTest();
   }
 
   public void testKeydots(){
-    doTest();
+    doFileTest();
   }
 
   public void testColons74100(){
-    doTest();
+    doFileTest();
   }
 
   public void testOnlyyamlkey(){
-    doTest();
+    doFileTest();
   }
 
   public void testKey_parens(){
-    doTest();
+    doFileTest();
   }
 
   public void testKey_trailing_space(){
-    doTest();
+    doFileTest();
   }
 
   public void testComments(){
-    doTest();
+    doFileTest();
   }
 
   public void testNon_comment() {
-    doTest();
+    doFileTest();
   }
 
   public void testNon_comment2() {
-    doTest();
+    doFileTest();
   }
 
   public void testKey_with_brackets() {
-    doTest();
+    doFileTest();
   }
 
   public void testStrings() {
-    doTest();
+    doFileTest();
   }
 
   public void testStringWithTag() {
-    doTest();
+    doFileTest();
   }
 
   public void testNested_seqs() {
-    doTest();
+    doFileTest();
   }
 
   public void testMultiline_seq() {
-    doTest();
+    doFileTest();
   }
 
   public void testClosing_braces_in_value() {
-    doTest();
+    doFileTest();
   }
 
   public void testQuoted_keys() {
-    doTest();
+    doFileTest();
   }
 
   public void testTyped_scalar_list() {
-    doTest();
+    doFileTest();
   }
 
   public void testMultiline_ruby_16796() {
-    doTest();
+    doFileTest();
   }
 
   public void testRuby14738() {
-    doTest();
+    doFileTest();
   }
 
   public void testRuby14864() throws Throwable {
-    doTest();
+    doFileTest();
   }
 
   public void testRuby15402() throws Throwable {
-    doTest();
+    doFileTest();
   }
 
   public void testRuby17389() throws Throwable {
-    doTest();
+    doFileTest();
   }
 
   public void testEmptyMultiline() throws Throwable {
-    doTest();
+    doFileTest();
   }
 
   public void testMultilineDoubleQuotedKey() {
-    doTest();
+    doFileTest();
   }
 
   public void testMultilineSingleQuotedKey() {
-    doTest();
+    doFileTest();
   }
 
   public void testMultilineDqLiteralWithEscapedNewlines() {
-    doTest();
+    doFileTest();
   }
 
   public void testSmallExplicitDocument() {
-    doTest();
+    doFileTest();
   }
 
   public void testSmallStream() {
-    doTest();
+    doFileTest();
   }
 
   public void testVerbatimTags() {
-    doTest();
+    doFileTest();
   }
 
   public void testTagShorthands() {
-    doTest();
+    doFileTest();
   }
 
   public void testOnlyScalars() {
-    doTest();
+    doFileTest();
   }
 
   public void testOnlyScalarNoDocument() {
-    doTest();
+    doFileTest();
   }
 
   public void testSingleQuotedEscapes() {
-    doTest();
-  }
-  
-  public void testUnicodeNewlines() {
-    doTest();
+    doFileTest();
   }
 
-  private void doTest() {
-    doFileTest("yml");
+  public void testUnicodeNewlines() {
+    doFileTest();
   }
 }
