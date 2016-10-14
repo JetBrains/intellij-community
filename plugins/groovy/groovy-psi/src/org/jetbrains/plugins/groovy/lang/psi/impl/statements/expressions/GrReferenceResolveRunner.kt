@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhan
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.processNonCodeMembers
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 
 fun resolveReferenceExpression(place: GrReferenceExpression, processor: PsiScopeProcessor): Boolean {
@@ -131,7 +132,9 @@ fun doProcessQualifierType(place: PsiElement, qualifierType: PsiType, processor:
     }
   }
 
-  if (!ResolveUtil.processCategoryMembers(place, processor, state)) return false
-  if (!ResolveUtil.processNonCodeMembers(qualifierType, processor, place, state)) return false
+  if (state.processNonCodeMembers()) {
+    if (!ResolveUtil.processCategoryMembers(place, processor, state)) return false
+    if (!ResolveUtil.processNonCodeMembers(qualifierType, processor, place, state)) return false
+  }
   return true
 }
