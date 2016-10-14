@@ -42,13 +42,13 @@ import java.util.Map;
  */
 public class AnnotationFieldGutter implements ActiveAnnotationGutter {
   @NotNull protected final FileAnnotation myAnnotation;
-  protected final LineAnnotationAspect myAspect;
+  @Nullable protected final LineAnnotationAspect myAspect;
   @NotNull private final TextAnnotationPresentation myPresentation;
   private final boolean myIsGutterAction;
   @Nullable private Couple<Map<VcsRevisionNumber, Color>> myColorScheme;
 
   AnnotationFieldGutter(@NotNull FileAnnotation annotation,
-                        LineAnnotationAspect aspect,
+                        @Nullable LineAnnotationAspect aspect,
                         @NotNull TextAnnotationPresentation presentation,
                         @Nullable Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
     myAnnotation = annotation;

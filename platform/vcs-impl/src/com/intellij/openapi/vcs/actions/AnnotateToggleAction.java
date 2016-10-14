@@ -132,7 +132,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       final CurrentRevisionAnnotationFieldGutter currentRevisionGutter =
         new CurrentRevisionAnnotationFieldGutter(fileAnnotation, revisionAspect, presentation, bgColorMap);
       final MergeSourceAvailableMarkerGutter mergeSourceGutter =
-        new MergeSourceAvailableMarkerGutter(fileAnnotation, null, presentation, bgColorMap);
+        new MergeSourceAvailableMarkerGutter(fileAnnotation, presentation, bgColorMap);
 
       SwitchAnnotationSourceAction switchAction = new SwitchAnnotationSourceAction(switcher, editorGutter);
       presentation.addAction(switchAction);
@@ -155,7 +155,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     if (historyIds != null) {
       gutters.add(new HistoryIdColumn(fileAnnotation, presentation, bgColorMap, historyIds));
     }
-    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, null, presentation, bgColorMap));
+    gutters.add(new HighlightedAdditionalColumn(fileAnnotation, presentation, bgColorMap));
     final AnnotateActionGroup actionGroup = new AnnotateActionGroup(gutters, editorGutter, bgColorMap);
     presentation.addAction(actionGroup, 1);
     gutters.add(new ExtraFieldGutter(fileAnnotation, presentation, bgColorMap, actionGroup));

@@ -33,10 +33,9 @@ class MergeSourceAvailableMarkerGutter extends AnnotationFieldGutter implements 
   private boolean myTurnedOn;
 
   MergeSourceAvailableMarkerGutter(FileAnnotation annotation,
-                                   LineAnnotationAspect aspect,
                                    TextAnnotationPresentation highlighting,
                                    Couple<Map<VcsRevisionNumber, Color>> colorScheme) {
-    super(annotation, aspect, highlighting, colorScheme);
+    super(annotation, null, highlighting, colorScheme);
   }
 
   @Override
