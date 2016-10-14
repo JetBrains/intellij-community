@@ -240,5 +240,10 @@ public class VcsLogManager implements Disposable {
         myLogData.getIndex().markCorrupted();
       }
     }
+
+    @Override
+    public void displayFatalErrorMessage(@NotNull String message) {
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
+    }
   }
 }

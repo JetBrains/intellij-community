@@ -20,4 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 public interface FatalErrorConsumer {
   void consume(@Nullable Object source, @NotNull Exception exception);
+
+  void displayFatalErrorMessage(@NotNull String message);
 }

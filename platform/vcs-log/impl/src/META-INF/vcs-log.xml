@@ -25,6 +25,8 @@
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.IndexHighlighter$Factory"/>
 
     <postStartupActivity implementation="com.intellij.vcs.log.impl.VcsProjectLog$InitLogStartupActivity"/>
+
+    <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
   </extensions>
 
   <actions>
