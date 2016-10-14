@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -203,24 +202,7 @@ public class CoreJavaFileManager implements JavaFileManager {
   @NotNull
   @Override
   public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
-    Collection<PsiJavaModule> result = null;
-
-    for (VirtualFile root : roots()) {
-      VirtualFile moduleInfo = root.findChild(PsiJavaModule.MODULE_INFO_FILE);
-      if (moduleInfo == null) moduleInfo = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
-      if (moduleInfo != null && scope.accept(moduleInfo)) {
-        PsiFile file = myPsiManager.findFile(moduleInfo);
-        if (file instanceof PsiJavaFile) {
-          PsiJavaModule module = ((PsiJavaFile)file).getModuleDeclaration();
-          if (module != null) {
-            if (result == null) result = ContainerUtil.newSmartList();
-            result.add(module);
-          }
-        }
-      }
-    }
-
-    return result != null ? result : Collections.<PsiJavaModule>emptySet();
+    return Collections.emptySet();
   }
 
   public void addToClasspath(VirtualFile root) {
