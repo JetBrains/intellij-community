@@ -82,6 +82,7 @@ public class IpnbJfxUtils {
 
     Platform.runLater(() -> {
       final WebView webView = new WebView();
+      webView.setContextMenuEnabled(false);
       webView.setOnDragDetected(event -> {
       });
       final WebEngine engine = webView.getEngine();
