@@ -113,7 +113,6 @@ public abstract class JBIterator<E> implements Iterator<E> {
     return myNext != STOP;
   }
 
-  @Nullable
   @Override
   public final E next() {
     advance();
@@ -136,7 +135,6 @@ public abstract class JBIterator<E> implements Iterator<E> {
   /**
    * Returns the current element if any; otherwise throws exception.
    */
-  @Nullable
   public final E current() {
     if (myCurrent == NONE) throw new NoSuchElementException();
     return (E)myCurrent;
