@@ -34,8 +34,8 @@ import java.io.IOException;
  */
 public abstract class LexerTestCase extends UsefulTestCase {
   private static final String defaultExpectedOutputExt = "txt";
-  private static final TokenTypePrinter defaultTokenTypePrinter = (tokenType, tokenSequence) ->
-    tokenType + " ('" + getTokenText(tokenType, tokenSequence) + "')\n";
+  private static final TokenTypePrinter defaultTokenTypePrinter = (s, e, tokenType, tokenSequence) ->
+    tokenType + " ('" + getTokenText(tokenType, tokenSequence.toString()) + "')\n";
 
   protected void doTest(@NonNls String text) {
     doTest(text, null);
@@ -105,8 +105,10 @@ public abstract class LexerTestCase extends UsefulTestCase {
   public static String printTokens(CharSequence text, int start, Lexer lexer, TokenTypePrinter printer) {
     lexer.start(text, start, text.length());
     StringBuilder result = new StringBuilder();
-    while (lexer.getTokenType() != null) {
-      String printTokeType = printer.print(lexer.getTokenType(), lexer.getTokenSequence());
+    IElementType token;
+    while ((token = lexer.getTokenType()) != null) {
+      CharSequence sequence = lexer.getTokenSequence();
+      String printTokeType = printer.print(lexer.getTokenStart(), lexer.getTokenEnd(), token, sequence);
       result.append(printTokeType);
       lexer.advance();
     }
@@ -139,11 +141,11 @@ public abstract class LexerTestCase extends UsefulTestCase {
     return true;
   }
 
-  private static String getTokenText(IElementType tokenType, CharSequence tokenSequence) {
+  private static String getTokenText(IElementType tokenType, String tokenString) {
     if (tokenType instanceof TokenWrapper) {
       return ((TokenWrapper) tokenType).getValue();
     }
-    return StringUtil.replace(tokenSequence.toString(), "\n", "\\n");
+    return StringUtil.replace(tokenString, "\n", "\\n");
   }
 
   protected abstract Lexer createLexer();
@@ -164,6 +166,6 @@ public abstract class LexerTestCase extends UsefulTestCase {
   }
 
   public interface TokenTypePrinter {
-    String print(IElementType tokenType, CharSequence tokenSequence);
+    String print(int tokenStart, int tokenEnd, IElementType tokenType, CharSequence tokenSequence);
   }
 }
