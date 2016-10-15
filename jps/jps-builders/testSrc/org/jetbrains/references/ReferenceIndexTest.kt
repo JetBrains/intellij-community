@@ -89,5 +89,13 @@ class ReferenceIndexTest : ReferenceIndexTestBase() {
     buildAllModules()
     assertIndexEquals("fileDeletedIndex.txt")
   }
+
+  fun testCompilationUnitContains2Decls() {
+    assertIndexOnRebuild("Foo.java")
+  }
+
+  fun testNestedClasses() {
+    assertIndexOnRebuild("Foo.java")
+  }
 }
 

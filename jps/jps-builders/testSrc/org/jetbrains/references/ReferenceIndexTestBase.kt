@@ -17,10 +17,10 @@ package org.jetbrains.references
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.PathUtil
+import com.intellij.util.io.PersistentStringEnumerator
 import com.sun.tools.javac.util.Convert
-import junit.framework.TestCase
 import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexWriter
 import org.jetbrains.jps.backwardRefs.ByteArrayEnumerator
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex
@@ -68,9 +68,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
 
 
   protected fun assertIndexEquals(expectedIndexDumpFile: String) {
-    val expectedIndex = FileUtil.loadFile(File(testDataRootPath + "/" + getTestName(true) + "/" + expectedIndexDumpFile), CharsetToolkit.UTF8_CHARSET)
-    val actualIndex = indexAsText()
-    TestCase.assertTrue(String.CASE_INSENSITIVE_ORDER.compare(expectedIndex, actualIndex) == 0)
+    assertSameLinesWithFile(testDataRootPath + "/" + getTestName(true) + "/" + expectedIndexDumpFile, indexAsText())
   }
 
   protected fun indexAsText(): String {
@@ -91,7 +89,6 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
         val inheritorsText = mutableListOf<String>()
         inheritors.forEach { id ->
           inheritorsText.add(id.asText(nameEnumerator))
-          true
         }
         inheritorsText.sort()
         hierarchyText.add(superClassName + " -> " + inheritorsText.joinToString(separator = " "))
@@ -105,9 +102,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       index.backwardReferenceMap.forEachEntry { usage, files ->
         val referents = mutableListOf<String>()
         files.forEach { id ->
-          val file = File(fileEnumerator.valueOf(id))
-          val fileName = FileUtil.getNameWithoutExtension(file)
-          referents.add(fileName)
+          referents.add(id.asFileName(fileEnumerator))
         }
         referents.sort()
         referencesText.add(usage.asText(nameEnumerator) + " in " + referents.joinToString(separator = " "))
@@ -121,9 +116,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
       index.backwardClassDefinitionMap.forEachEntry { usage, files ->
         val definitionFiles = mutableListOf<String>()
         files.forEach { id ->
-          val file = File(fileEnumerator.valueOf(id))
-          val fileName = FileUtil.getNameWithoutExtension(file)
-          definitionFiles.add(fileName)
+          definitionFiles.add(id.asFileName(fileEnumerator))
         }
         definitionFiles.sort()
         classDefs.add(usage.asText(nameEnumerator) + " in " + definitionFiles.joinToString(separator = " "))
@@ -140,8 +133,7 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
 
   private fun getTestDataPath() = testDataRootPath + "/" + getTestName(true) + "/"
 
-  private fun Int.asName(byteArrayEnumerator: ByteArrayEnumerator): String = Convert.utf2string(
-      byteArrayEnumerator.valueOf(this))
+  private fun Int.asName(byteArrayEnumerator: ByteArrayEnumerator): String = Convert.utf2string(byteArrayEnumerator.valueOf(this))
 
   private fun CompilerBackwardReferenceIndex.LightDefinition.asText(byteArrayEnumerator: ByteArrayEnumerator) = this.usage.asText(byteArrayEnumerator)
 
@@ -154,4 +146,6 @@ abstract class ReferenceIndexTestBase : JpsBuildTestCase() {
         is LightUsage.LightFunExprUsage -> "fun_expr(" + this.name.asName(byteArrayEnumerator) + ")"
         else -> throw UnsupportedOperationException()
       }
+
+  private fun Int.asFileName(fileNameEnumerator: PersistentStringEnumerator) = FileUtil.getNameWithoutExtension(File(fileNameEnumerator.valueOf(this)).canonicalFile)
 }
