@@ -32,7 +32,8 @@ public interface ReferencePainter {
   void customizePainter(@NotNull JComponent component,
                         @NotNull Collection<VcsRef> references,
                         @NotNull Color background,
-                        @NotNull Color foreground);
+                        @NotNull Color foreground,
+                        int availableWidth);
 
   void paint(@NotNull Graphics2D g2, int x, int y, int height);
 

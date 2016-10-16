@@ -92,7 +92,8 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     GraphCommitCell cell = getValue(value);
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
-      myTooltipPainter.customizePainter(myComponent, refs, myComponent.getBackground(), myComponent.getForeground());
+      myTooltipPainter
+        .customizePainter(myComponent, refs, myComponent.getBackground(), myComponent.getForeground(), myComponent.getWidth());
       if (myTooltipPainter.getSize().getWidth() - LabelPainter.GRADIENT_WIDTH >= width - point.getX()) {
         return new TooltipReferencesPanel(myLogData, myTooltipPainter, refs);
       }
@@ -108,7 +109,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     GraphCommitCell cell = getValue(myGraphTable.getModel().getValueAt(row, GraphTableModel.COMMIT_COLUMN));
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
-      int labelWidth = LabelPainter.calculateWidth(myLogData, refs, myComponent, getPreferredHeight());
+      int labelWidth = LabelPainter.calculateWidth(myLogData, refs, myComponent, getPreferredHeight(), true);
       TableColumn commitColumn = myGraphTable.getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN);
       return commitColumn.getWidth() - (labelWidth - LabelPainter.GRADIENT_WIDTH) / 2;
     }
@@ -176,12 +177,22 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
 
       Collection<VcsRef> refs = cell.getRefsToThisCommit();
       Color baseForeground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground());
-      myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground);
 
-      setBorder(null);
-      append("");
-      appendTextPadding(myGraphImage.getWidth() + (myReferencePainter.isLeftAligned() ? myReferencePainter.getSize().width : 0));
-      myIssueLinkRenderer.appendTextWithLinks(cell.getText(), style);
+      append(""); // appendTextPadding wont work without this
+      int columnWidth = myGraphTable.getColumnModel().getColumn(column).getWidth();
+      if (myReferencePainter.isLeftAligned()) {
+        myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground,
+                                            0 /*left aligned painter does not use available width*/);
+
+        appendTextPadding(myGraphImage.getWidth() + myReferencePainter.getSize().width);
+        myIssueLinkRenderer.appendTextWithLinks(cell.getText(), style);
+      }
+      else {
+        appendTextPadding(myGraphImage.getWidth());
+        myIssueLinkRenderer.appendTextWithLinks(cell.getText(), style);
+        myReferencePainter.customizePainter(this, refs, getBackground(), baseForeground,
+                                            Math.min(columnWidth - super.getPreferredSize().width, columnWidth / 3));
+      }
     }
 
     private int calculateHeight() {
@@ -255,13 +266,13 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
         int prevWidth = 0;
         if (row > 0) {
           GraphCommitCell commitCell = getValue(table.getValueAt(row - 1, column));
-          prevWidth = LabelPainter.calculateWidth(myLogData, commitCell.getRefsToThisCommit(), myComponent, getPreferredHeight());
+          prevWidth = LabelPainter.calculateWidth(myLogData, commitCell.getRefsToThisCommit(), myComponent, getPreferredHeight(), true);
         }
 
         int nextWidth = 0;
         if (row < table.getRowCount() - 1) {
           GraphCommitCell commitCell = getValue(table.getValueAt(row + 1, column));
-          nextWidth = LabelPainter.calculateWidth(myLogData, commitCell.getRefsToThisCommit(), myComponent, getPreferredHeight());
+          nextWidth = LabelPainter.calculateWidth(myLogData, commitCell.getRefsToThisCommit(), myComponent, getPreferredHeight(), true);
         }
 
         myWidth = Math.max(Math.max(prevWidth, nextWidth), LabelPainter.GRADIENT_WIDTH);
