@@ -137,10 +137,10 @@ public class GraphCommitCellRenderer extends ColoredTableCellRenderer {
       graphPadding = 0;
     }
 
-    SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, "", hasFocus, isSelected);
+    SimpleTextAttributes style = myGraphTable.applyHighlighters(this, row, column, hasFocus, isSelected);
 
     Collection<VcsRef> refs = cell.getRefsToThisCommit();
-    Color foreground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, "", hasFocus, isSelected).getForeground());
+    Color foreground = ObjectUtils.assertNotNull(myGraphTable.getBaseStyle(row, column, hasFocus, isSelected).getForeground());
     myExpanded = myGraphTable.getExpandableItemsHandler().getExpandedItems().contains(new TableCell(row, column));
     if (myFadeOutPainter != null) {
       myFadeOutPainter.customize(refs, row, column, table, foreground);
