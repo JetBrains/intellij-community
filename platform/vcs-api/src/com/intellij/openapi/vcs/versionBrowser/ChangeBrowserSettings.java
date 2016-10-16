@@ -29,6 +29,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
+
 public class ChangeBrowserSettings implements JDOMExternalizable {
 
   public interface Filter {
@@ -66,12 +68,22 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
   }
 
   @Nullable
-  private static Date parseDate(@Nullable String dateStr) {
-    if (dateStr == null || dateStr.isEmpty()) return null;
+  private static Date parseDate(@Nullable String dateValue) {
     try {
-      return DATE_FORMAT.parse(dateStr);
+      return !isEmpty(dateValue) ? DATE_FORMAT.parse(dateValue) : null;
     }
     catch (Exception e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
+
+  @Nullable
+  private static Long parseLong(@Nullable String longValue) {
+    try {
+      return !isEmpty(longValue) ? Long.parseLong(longValue) : null;
+    }
+    catch (NumberFormatException e) {
       LOG.warn(e);
       return null;
     }
@@ -93,11 +105,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
 
   @Nullable
   public Long getChangeBeforeFilter() {
-    if (USE_CHANGE_BEFORE_FILTER && CHANGE_BEFORE.length() > 0) {
-      if (HEAD.equals(CHANGE_BEFORE)) return null;
-      return Long.parseLong(CHANGE_BEFORE);      
-    }
-    return null;
+    return USE_CHANGE_BEFORE_FILTER && !HEAD.equals(CHANGE_BEFORE) ? parseLong(CHANGE_BEFORE) : null;
   }
 
   @Nullable
@@ -107,10 +115,7 @@ public class ChangeBrowserSettings implements JDOMExternalizable {
 
   @Nullable
   public Long getChangeAfterFilter() {
-    if (USE_CHANGE_AFTER_FILTER && CHANGE_AFTER.length() > 0) {
-      return Long.parseLong(CHANGE_AFTER);
-    }
-    return null;
+    return USE_CHANGE_AFTER_FILTER ? parseLong(CHANGE_AFTER) : null;
   }
 
   @Nullable
