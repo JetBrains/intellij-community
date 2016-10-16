@@ -17,6 +17,8 @@ package git4idea.rebase;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.UUID;
+
 /**
  * <p>Serves as the GIT_EDITOR during interactive rebase: it is called by Git instead of vim,
  * and allows to edit the list of rebased commits, and to reword commit messages.</p>
@@ -33,4 +35,14 @@ public interface GitRebaseEditorHandler {
    */
   int editCommits(@NotNull String path);
 
+  /**
+   * Unique number of the handler registered in the {@link com.intellij.ide.XmlRpcServer}
+   */
+  @NotNull
+  UUID getHandlerNo();
+
+  /**
+   * Return true if the editing was cancelled by user.
+   */
+  boolean wasEditorCancelled();
 }

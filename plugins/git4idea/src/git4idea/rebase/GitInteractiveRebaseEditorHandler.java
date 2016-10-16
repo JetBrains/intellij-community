@@ -185,14 +185,13 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     myService.unregisterHandler(myHandlerNo);
   }
 
-  /**
-   * @return the handler number
-   */
+  @Override
   @NotNull
   public UUID getHandlerNo() {
     return myHandlerNo;
   }
 
+  @Override
   public boolean wasEditorCancelled() {
     return myEditorCancelled;
   }
