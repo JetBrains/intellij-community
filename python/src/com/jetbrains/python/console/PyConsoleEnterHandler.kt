@@ -32,63 +32,24 @@ import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
 /**
  * @author Yuli Fiterman
  */
-private class BlockCompletionChecker : PyRecursiveElementVisitor() {
-  var result = true
-  private fun hasNonErrorElements(stmtList: PyStatementList?): Boolean {
-    val statements = stmtList?.statements ?: return false
-    return statements.any { it !is PsiErrorElement }
-  }
 
-  private fun isCompleteDocString(str: String): Boolean {
-    val prefixLen = PyStringLiteralExpressionImpl.getPrefixLength(str)
-    val text = str.substring(prefixLen)
-    for (token in arrayOf("\"\"\"", "'''")) {
-      if (text.length >= 2 * token.length && text.startsWith(token) && text.endsWith(token)) {
-        return true
-      }
-    }
-
-    return false
-
-  }
-
-  override fun visitPyTryExceptStatement(node: PyTryExceptStatement) {
-    val tryNotEmpty = hasNonErrorElements(node.tryPart.statementList)
-    val exceptNotEmpty = node.exceptParts.any { hasNonErrorElements(it.statementList) }
-    val finallyNotEmpty = hasNonErrorElements(node.finallyPart?.statementList)
-    val isComplete = tryNotEmpty && (exceptNotEmpty || finallyNotEmpty)
-    if (!isComplete) {
-      result = false
-      return
-    }
-    super.visitPyTryExceptStatement(node)
-  }
-
-  override fun visitPyStringLiteralExpression(elem: PyStringLiteralExpression) {
-    if ((PyTokenTypes.TRIPLE_NODES.contains(elem.node.firstChildNode.elementType) || elem.node.firstChildNode.elementType === PyTokenTypes.DOCSTRING)) {
-      if (!isCompleteDocString(elem.text)) {
-        result = false
-        return
-      }
-    }
-    super.visitPyStringLiteralExpression(elem)
-  }
-
-  override fun visitPyStatementList(node: PyStatementList) {
-    if (!hasNonErrorElements(node)) {
-      result = false
-      return
-    }
-
-    super.visitPyStatementList(node)
-  }
-
-  fun checkComplete(node: PsiElement): Boolean {
-    node.accept(this)
-    return result
-  }
-}
-
+/**
+ *  Implementation notes:
+ *  This class determines whether the console input should be sent to the console.
+ *  The goal is to be consistent with IPython's logic for handling this in as many cases as possible ,
+ *  with the exception of input errors.
+ *
+ *  It is not necessary to handle input errors in the same way as IPython because PyCharm has error highlighting so
+ *  we can present the error to the user without having to execute the input. Also, attempting to make input error
+ *  handling 100% consistent would be a near impossible task, as IPython delegates this to the Python interpreter
+ *
+ *  When in doubt it is better to err on the side of NOT sending the input. The console implementation does handle
+ *  the case where we send incomplete input, but not very well. Therefore any case where we end up sending incomplete input
+ *  should be considered an implementation error.
+ *
+ *  For reference, the IPython implementation of input handling can be found at:
+ *  https://github.com/ipython/ipython/blob/master/IPython/core/inputsplitter.py
+ */
 class PyConsoleEnterHandler {
   fun handleEnterPressed(editor: EditorEx): Boolean {
     val project = editor.project ?: throw IllegalArgumentException()
@@ -156,4 +117,61 @@ class PyConsoleEnterHandler {
   }
 
 
+}
+
+private class BlockCompletionChecker : PyRecursiveElementVisitor() {
+  var result = true
+  private fun hasNonErrorElements(stmtList: PyStatementList?): Boolean {
+    val statements = stmtList?.statements ?: return false
+    return statements.any { it !is PsiErrorElement }
+  }
+
+  private fun isCompleteDocString(str: String): Boolean {
+    val prefixLen = PyStringLiteralExpressionImpl.getPrefixLength(str)
+    val text = str.substring(prefixLen)
+    for (token in arrayOf("\"\"\"", "'''")) {
+      if (text.length >= 2 * token.length && text.startsWith(token) && text.endsWith(token)) {
+        return true
+      }
+    }
+
+    return false
+
+  }
+
+  override fun visitPyTryExceptStatement(node: PyTryExceptStatement) {
+    val tryNotEmpty = hasNonErrorElements(node.tryPart.statementList)
+    val exceptNotEmpty = node.exceptParts.any { hasNonErrorElements(it.statementList) }
+    val finallyNotEmpty = hasNonErrorElements(node.finallyPart?.statementList)
+    val isComplete = tryNotEmpty && (exceptNotEmpty || finallyNotEmpty)
+    if (!isComplete) {
+      result = false
+      return
+    }
+    super.visitPyTryExceptStatement(node)
+  }
+
+  override fun visitPyStringLiteralExpression(elem: PyStringLiteralExpression) {
+    if ((PyTokenTypes.TRIPLE_NODES.contains(elem.node.firstChildNode.elementType) || elem.node.firstChildNode.elementType === PyTokenTypes.DOCSTRING)) {
+      if (!isCompleteDocString(elem.text)) {
+        result = false
+        return
+      }
+    }
+    super.visitPyStringLiteralExpression(elem)
+  }
+
+  override fun visitPyStatementList(node: PyStatementList) {
+    if (!hasNonErrorElements(node)) {
+      result = false
+      return
+    }
+
+    super.visitPyStatementList(node)
+  }
+
+  fun checkComplete(node: PsiElement): Boolean {
+    node.accept(this)
+    return result
+  }
 }
