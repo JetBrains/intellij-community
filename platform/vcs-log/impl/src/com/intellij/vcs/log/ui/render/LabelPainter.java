@@ -82,7 +82,8 @@ public class LabelPainter implements ReferencePainter {
   public void customizePainter(@NotNull JComponent component,
                                @NotNull Collection<VcsRef> references,
                                @NotNull Color background,
-                               @NotNull Color foreground) {
+                               @NotNull Color foreground,
+                               int availableWidth) {
     myBackground = background;
     myForeground = foreground;
 
@@ -91,17 +92,21 @@ public class LabelPainter implements ReferencePainter {
 
     VcsLogRefManager manager = ReferencePainter.getRefManager(myLogData, references);
     List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references);
-    Pair<List<Pair<String, LabelIcon>>, Integer> presentation = calculatePresentation(refGroups, metrics, myHeight, myBackground);
+    Pair<List<Pair<String, LabelIcon>>, Integer> presentation = calculatePresentation(refGroups, metrics, myHeight, myBackground, false);
+    if (presentation.second - GRADIENT_WIDTH > availableWidth) {
+      presentation = calculatePresentation(refGroups, metrics, myHeight, myBackground, true);
+    }
 
     myLabels = presentation.first;
     myWidth = presentation.second;
   }
 
   @NotNull
-  private static Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<RefGroup> refGroups,
-                                                                                    @NotNull FontMetrics fontMetrics,
-                                                                                    int height,
-                                                                                    @NotNull Color background) {
+  public static Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<RefGroup> refGroups,
+                                                                                   @NotNull FontMetrics fontMetrics,
+                                                                                   int height,
+                                                                                   @NotNull Color background,
+                                                                                   boolean shorten) {
     int width = GRADIENT_WIDTH + RIGHT_PADDING;
 
     List<Pair<String, LabelIcon>> labels = ContainerUtil.newArrayList();
@@ -111,7 +116,7 @@ public class LabelPainter implements ReferencePainter {
       if (group.isExpanded()) {
         for (VcsRef ref : group.getRefs()) {
           LabelIcon labelIcon = new LabelIcon(height, background, ref.getType().getBackgroundColor());
-          String text = shortenRefName(ref.getName());
+          String text = shorten ? shortenRefName(ref.getName()) : ref.getName();
 
           labels.add(Pair.create(text, labelIcon));
           width += labelIcon.getIconWidth() + fontMetrics.stringWidth(text) + MIDDLE_PADDING;
@@ -119,7 +124,7 @@ public class LabelPainter implements ReferencePainter {
       }
       else {
         LabelIcon labelIcon = new LabelIcon(height, background, getGroupColors(group));
-        String text = shortenRefName(group.getName());
+        String text = shorten ? shortenRefName(group.getName()) : group.getName();
 
         labels.add(Pair.create(text, labelIcon));
         width += labelIcon.getIconWidth() + fontMetrics.stringWidth(text) + MIDDLE_PADDING;
@@ -132,10 +137,11 @@ public class LabelPainter implements ReferencePainter {
   public static int calculateWidth(@NotNull VcsLogData logData,
                                    @NotNull Collection<VcsRef> references,
                                    @NotNull JComponent component,
-                                   int height) {
+                                   int height, boolean shorten) {
     VcsLogRefManager manager = ReferencePainter.getRefManager(logData, references);
     List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references);
-    return calculatePresentation(refGroups, component.getFontMetrics(RectanglePainter.getFont()), height, JBColor.white/*bg color does not affect width*/).second;
+    return calculatePresentation(refGroups, component.getFontMetrics(RectanglePainter.getFont()), height, JBColor.white/*bg color does not affect width*/,
+                                 shorten).second;
   }
 
   @NotNull
