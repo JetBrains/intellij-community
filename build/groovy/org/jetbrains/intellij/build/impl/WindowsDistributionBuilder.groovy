@@ -28,9 +28,11 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final WindowsDistributionCustomizer customizer
   private final File ideaProperties
+  private final File patchedApplicationInfo
 
-  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, File ideaProperties) {
+  WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, File ideaProperties, File patchedApplicationInfo) {
     super(BuildOptions.OS_WINDOWS, "Windows", buildContext)
+    this.patchedApplicationInfo = patchedApplicationInfo
     this.customizer = customizer
     this.ideaProperties = ideaProperties
   }
@@ -184,7 +186,7 @@ IDS_VM_OPTIONS=$vmOptions
       buildContext.ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true", failonerror: "true") {
         sysproperty(key: "java.awt.headless", value: "true")
         arg(value: inputPath)
-        arg(value: buildContext.findApplicationInfoInSources().absolutePath)
+        arg(value: patchedApplicationInfo.absolutePath)
         arg(value: "$communityHome/native/WinLauncher/WinLauncher/resource.h")
         arg(value: launcherPropertiesPath)
         arg(value: outputPath)
