@@ -257,10 +257,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   public void mergeCell(boolean below) {
     final IpnbEditablePanel currentCellPanel = getSelectedCell();
     if (currentCellPanel == null) return;
+    
     final boolean hasCellToMerge = below ? hasNextCell(currentCellPanel) : hasPrevCell(currentCellPanel);
     if (!hasCellToMerge) return;
-    
-    final List<String> currentCellSource = getCellSource(currentCellPanel);
 
     if (below) {
       selectNext(currentCellPanel);
@@ -268,12 +267,13 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     else {
       selectPrev(currentCellPanel);
     }
+    
     final IpnbEditablePanel cellToMergePanel = getSelectedCell();
     final IpnbCell cellToMerge = cellToMergePanel.myCell;
     if (cellToMerge instanceof IpnbEditableCell) {
+      final List<String> currentCellSource = getCellSource(currentCellPanel);
       final List<String> cellToMergeSource = ((IpnbEditableCell)cellToMerge).getSource();
-      final ArrayList<String> source = below ? mergeCellsSource(cellToMergeSource, currentCellSource) : 
-                                       mergeCellsSource(currentCellSource, cellToMergeSource);
+      final ArrayList<String> source = mergeCellsSource(currentCellSource, cellToMergeSource, below);
       ((IpnbEditableCell)cellToMerge).setSource(source);
       cellToMergePanel.updateCellView();
     }
@@ -285,15 +285,24 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     saveToFile();
   }
 
-  private static ArrayList<String> mergeCellsSource(List<String> currentCellSource, List<String> prevCellSource) {
+  private static ArrayList<String> mergeCellsSource(@NotNull List<String> currentCellSource, 
+                                                    @NotNull List<String> cellToMergeSource,
+                                                    boolean below) {
     final ArrayList<String> source = new ArrayList<>();
-    source.addAll(prevCellSource);
-    source.add("\n");
-    source.addAll(currentCellSource);
+    if (below) {
+      source.addAll(currentCellSource);
+      source.add("\n");
+      source.addAll(cellToMergeSource);   
+    }
+    else {
+      source.addAll(cellToMergeSource);
+      source.add("\n");
+      source.addAll(currentCellSource);
+    }
     return source;
   }
 
-  private static void actualizeCellData(IpnbCell cell) {
+  private static void actualizeCellData(@NotNull IpnbCell cell) {
     if (cell instanceof IpnbCodeCell) {
       ((IpnbCodeCell)cell).removeCellOutputs();
       ((IpnbCodeCell)cell).setPromptNumber(null);
@@ -303,37 +312,49 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   public void splitCell() {
     final IpnbEditablePanel cellPanel = getSelectedCell();
     if (cellPanel == null) return;
+    
     final IpnbEditableCell cell = cellPanel.getCell();
     final int position = cellPanel.getCaretPosition();
+    
+    if (position == -1) return;
     
     final String oldCellText = cellPanel.getText(0, position);
     final String newCellText = cellPanel.getText(position);
     
     if (oldCellText != null) {
       final JTextArea editablePanel = cellPanel.myEditablePanel;
-      if (editablePanel != null) editablePanel.setText(oldCellText);
+      if (editablePanel != null) {
+        editablePanel.setText(oldCellText);
+      }
       cellPanel.getCell().setSource(createCellSourceFromText(oldCellText));
       actualizeCellData(cell);
       cellPanel.updateCellView();
     }
     
+    IpnbEditablePanel panel;
     final ArrayList<String> newCellSource = createCellSourceFromText(newCellText);
+    panel = createPanel(cell, newCellSource);
+    addCell(panel, true);
+    
+    saveToFile();
+  }
+
+  @NotNull
+  private IpnbEditablePanel createPanel(@NotNull IpnbEditableCell cell, @NotNull ArrayList<String> newCellSource) {
     if (cell instanceof IpnbCodeCell) {
       final IpnbCodeCell codeCell = (IpnbCodeCell)cell;
       final IpnbCodeCell ipnbCodeCell = new IpnbCodeCell(codeCell.getLanguage(), newCellSource, codeCell.getPromptNumber(), 
                                                          codeCell.getCellOutputs(), codeCell.getMetadata());
-      addCell(new IpnbCodePanel(myProject,  myParent, ipnbCodeCell), true);
+      return new IpnbCodePanel(myProject, myParent, ipnbCodeCell);
     }
     else if (cell instanceof IpnbMarkdownCell) {
       final IpnbMarkdownCell markdownCell = new IpnbMarkdownCell(newCellSource, cell.getMetadata());
-      addCell(new IpnbMarkdownPanel(markdownCell, this), true);
+      return new IpnbMarkdownPanel(markdownCell, this);
     }
-    else if (cell instanceof IpnbHeadingCell) {
+    else {
       final IpnbHeadingCell headingCell = new IpnbHeadingCell(newCellSource, ((IpnbHeadingCell)cell).getLevel(), cell.getMetadata());
-      addCell(new IpnbHeadingPanel(headingCell), true);
+      return new IpnbHeadingPanel(headingCell);
     }
-    
-    saveToFile();
   }
 
   private static ArrayList<String> createCellSourceFromText(@NotNull String oldCellText) {
@@ -343,8 +364,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   @NotNull
-  private static List<String> getCellSource(@NotNull IpnbEditablePanel currentCellPanel) {
-    final IpnbCell cell = currentCellPanel.myCell;
+  private static List<String> getCellSource(@NotNull IpnbEditablePanel cellPanel) {
+    final IpnbCell cell = cellPanel.myCell;
     List<String> source = new ArrayList<>();
     if (cell instanceof IpnbEditableCell) {
       source = ((IpnbEditableCell)cell).getSource();
