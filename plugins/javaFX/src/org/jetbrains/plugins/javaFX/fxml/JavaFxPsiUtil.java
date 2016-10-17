@@ -1236,4 +1236,26 @@ public class JavaFxPsiUtil {
     }
     return true;
   }
+
+  public static boolean isJavaFxPackageImported(@NotNull PsiFile file) {
+    if (!(file instanceof PsiJavaFile)) return false;
+    final PsiJavaFile javaFile = (PsiJavaFile)file;
+
+    return CachedValuesManager.getCachedValue(
+      javaFile, () -> {
+        final PsiImportList importList = javaFile.getImportList();
+        if (importList != null) {
+          for (PsiImportStatementBase statementBase : importList.getAllImportStatements()) {
+            final PsiJavaCodeReferenceElement importReference = statementBase.getImportReference();
+            if (importReference != null) {
+              final String qualifiedName = importReference.getQualifiedName();
+              if (qualifiedName != null && qualifiedName.startsWith("javafx.")) {
+                return CachedValueProvider.Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+              }
+            }
+          }
+        }
+        return CachedValueProvider.Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      });
+  }
 }

@@ -1,0 +1,8 @@
+int number;
+
+int getNumber() {
+    return number;
+}
+void setNumber(int newNumber) {
+    number = newNumber;
+}
