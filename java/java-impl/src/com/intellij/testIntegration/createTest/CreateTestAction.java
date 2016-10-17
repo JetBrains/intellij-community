@@ -142,6 +142,16 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
         return module;
       }
     }
+
+    if (computeSuitableTestRootUrls(productionModule).isEmpty()) {
+      final HashSet<Module> modules = new HashSet<>();
+      ModuleUtilCore.collectModulesDependsOn(productionModule, modules);
+      modules.remove(productionModule);
+      for (Module module : modules) {
+        if (!computeSuitableTestRootUrls(module).isEmpty()) return module;
+      }
+    }
+
     return productionModule;
   }
 
