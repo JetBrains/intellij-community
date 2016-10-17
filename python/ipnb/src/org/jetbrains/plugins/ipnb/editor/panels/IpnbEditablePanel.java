@@ -213,12 +213,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
   }
 
   public int getCaretPosition() {
-    if (myEditing) {
-      if (myEditablePanel != null) {
-        return myEditablePanel.getCaretPosition();
-      }
-    }
-    return -1;
+    return (myEditing && myEditablePanel != null) ? myEditablePanel.getCaretPosition() : -1;
   }
 
   public void addRightClickMenu() {
@@ -227,7 +222,8 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       public void mousePressed(MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
           final DefaultActionGroup group = new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction());
-          createClickMenu(e.getLocationOnScreen(), group);
+          final ListPopup menu = createClickMenu(group);
+          menu.show(RelativePoint.fromScreen(e.getLocationOnScreen()));
         }
       }
     });
@@ -236,18 +232,17 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
       public void mousePressed(MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
           final DefaultActionGroup group = new DefaultActionGroup(new IpnbSplitCellAction());
-          createClickMenu(e.getLocationOnScreen(), group);
+          final ListPopup menu = createClickMenu(group);
+          menu.show(RelativePoint.fromScreen(e.getLocationOnScreen()));
         }
       }
     });
   }
 
-  protected void createClickMenu(@NotNull Point point, @NotNull DefaultActionGroup group) {
+  protected ListPopup createClickMenu(@NotNull DefaultActionGroup group) {
     final DataContext context = DataManager.getInstance().getDataContext(this);
-    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, group, context,
-                                                                                JBPopupFactory.ActionSelectionAid.MNEMONICS,
+    return JBPopupFactory.getInstance().createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS,
                                                                                 true);
-    popup.show(RelativePoint.fromScreen(point));
   }
 
   @Nullable

@@ -12,9 +12,11 @@ import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,8 +95,9 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       public void mousePressed(EditorMouseEvent e) {
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (SwingUtilities.isRightMouseButton(mouseEvent) && mouseEvent.getClickCount() == 1) {
-          createClickMenu(mouseEvent.getLocationOnScreen(),
-                          new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction(), new IpnbSplitCellAction()));
+          final ListPopup menu = createClickMenu(new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction(),
+                                                                        new IpnbSplitCellAction()));
+          menu.show(RelativePoint.fromScreen(e.getMouseEvent().getLocationOnScreen()));
         }
       }
     });
@@ -103,9 +106,11 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   @NotNull
   private JPanel createCodeComponent() {
     myCodeSourcePanel = new IpnbCodeSourcePanel(myProject, this, myCell);
+    
     final JPanel panel = new JPanel(new GridBagLayout());
     panel.setBackground(IpnbEditorUtil.getBackground());
     addPromptPanel(panel, myCell.getPromptNumber(), IpnbEditorUtil.PromptType.In, myCodeSourcePanel);
+    
     final JPanel topComponent = new JPanel(new BorderLayout());
     topComponent.add(panel, BorderLayout.PAGE_START);
     return topComponent;
@@ -114,16 +119,17 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   public JPanel createHideableOutputPanel() {
     final OnePixelSplitter splitter = new OnePixelSplitter(true);
     final JPanel toggleBar = createToggleBar(splitter);
-    final JPanel secondComponent = createOutputPanel(createHideOutputListener(splitter, toggleBar));
+    final JPanel outputComponent = createOutputPanel(createHideOutputListener(splitter, toggleBar));
+    
     final Map<String, Object> metadata = myCell.getMetadata();
     if (metadata != null && metadata.containsKey(COLLAPSED_METADATA)) {
-      final Boolean isCollapsed = (Boolean)metadata.get(COLLAPSED_METADATA);
+      final boolean isCollapsed = (Boolean)metadata.get(COLLAPSED_METADATA);
       if (isCollapsed && !myCell.getCellOutputs().isEmpty()) {
         splitter.setFirstComponent(toggleBar);
         return splitter;
       }
     }
-    splitter.setSecondComponent(secondComponent);
+    splitter.setSecondComponent(outputComponent);
 
     return splitter;
   }
@@ -132,6 +138,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   private JPanel createOutputPanel(MouseAdapter hideOutputListener) {
     final JPanel outputPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, true, false));
     outputPanel.setBackground(IpnbEditorUtil.getBackground());
+    
     for (IpnbOutputCell outputCell : myCell.getCellOutputs()) {
       addOutputPanel(outputPanel, outputCell, hideOutputListener, true);
     }
@@ -144,7 +151,6 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
   private MouseAdapter createHideOutputListener(final OnePixelSplitter splitter, final JPanel toggleBar) {
     return new MouseAdapter() {
       private static final String TOGGLE_OUTPUT_TEXT = " Toggle output                                                (Double-Click)";
-      private JPopupMenu myMenu;
 
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -156,7 +162,8 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
       @Override
       public void mousePressed(MouseEvent e) {
         if (SwingUtilities.isRightMouseButton(e) && e.getClickCount() == 1) {
-          myMenu = new JPopupMenu("");
+          final JPopupMenu menu = new JPopupMenu("");
+          
           final JMenuItem item = new JMenuItem(TOGGLE_OUTPUT_TEXT);
           item.addActionListener(new ActionListener() {
             @Override
@@ -164,8 +171,9 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
               hideOutputPanel();
             }
           });
-          myMenu.add(item);
-          myMenu.show(e.getComponent(), e.getX(), e.getY());
+          
+          menu.add(item);
+          menu.show(e.getComponent(), e.getX(), e.getY());
         }
       }
 
@@ -206,8 +214,8 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
         setOutputStateInCell(false);
         updateBackground(IpnbEditorUtil.getBackground());
         splitter.setFirstComponent(null);
-        splitter.setSecondComponent(createOutputPanel(
-          IpnbCodePanel.this.createHideOutputListener(splitter, IpnbCodePanel.this.createToggleBar(splitter))));
+        final JPanel outputPanel = createOutputPanel(createHideOutputListener(splitter, IpnbCodePanel.this.createToggleBar(splitter)));
+        splitter.setSecondComponent(outputPanel);
       }
     };
   }
@@ -216,7 +224,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     final Map<String, Object> metadata = myCell.getMetadata();
     if (metadata != null) {
       metadata.put("collapsed", isCollapsed);
-    }    
+    }
   }
 
   private JPanel createToggleBar(OnePixelSplitter splitter) {
