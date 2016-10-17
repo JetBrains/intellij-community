@@ -311,9 +311,7 @@ class BuildContextImpl extends BuildContext {
 
   private boolean isJavaSupportedInProduct() {
     def productLayout = productProperties.productLayout
-    return productLayout.mainJarName == null ||
-           //todo[nik] remove this condition later; currently build scripts for IDEA don't fully migrated to the new scheme
-           productLayout.includedPlatformModules.contains("execution-impl")
+    return productLayout.includedPlatformModules.contains("execution-impl")
   }
 
   @CompileDynamic

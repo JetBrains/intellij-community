@@ -101,7 +101,6 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateScripts(String winDistPath) {
     String fullName = buildContext.applicationInfo.productName
-    //todo[nik] looks like names without .exe were also supported, do we need this?
     String vmOptionsFileName = "${buildContext.productProperties.baseFileName}%BITS%.exe"
 
     String classPath = "SET CLASS_PATH=%IDE_HOME%\\lib\\${buildContext.bootClassPathJarNames[0]}\n"

@@ -874,6 +874,10 @@
       <category>Java/Streams</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.InlineStreamMapAction</className>
+      <category>Java/Streams</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.InvertIfConditionAction</className>
       <category>Java/Control Flow</category>
     </intentionAction>

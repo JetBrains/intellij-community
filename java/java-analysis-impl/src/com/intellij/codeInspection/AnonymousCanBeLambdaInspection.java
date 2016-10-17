@@ -195,9 +195,10 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
     return canBeConvertedToLambda(aClass, acceptParameterizedFunctionTypes, true, ignoredRuntimeAnnotations);
   }
 
-  public static boolean isClassAndMethodSuitableForConversion(PsiAnonymousClass aClass,
-                                                              PsiMethod method,
-                                                              Set<String> ignoredRuntimeAnnotations) {
+  public static boolean isLambdaForm(PsiAnonymousClass aClass, Set<String> ignoredRuntimeAnnotations) {
+    PsiMethod[] methods = aClass.getMethods();
+    if(methods.length != 1) return false;
+    PsiMethod method = methods[0];
     return aClass.getFields().length == 0 &&
            aClass.getInnerClasses().length == 0 &&
            aClass.getInitializers().length == 0 &&
@@ -222,16 +223,9 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
       }
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
       if (interfaceMethod != null && (acceptParameterizedFunctionTypes || !interfaceMethod.hasTypeParameters())) {
-        final PsiMethod[] methods = aClass.getMethods();
-        if (methods.length == 1) {
-          final PsiMethod method = methods[0];
-          if (isClassAndMethodSuitableForConversion(aClass, method, ignoredRuntimeAnnotations)) {
-            final PsiType inferredType = getInferredType(aClass, method);
-            if (inferredType == null) {
-              return false;
-            }
-            return true;
-          }
+        if (isLambdaForm(aClass, ignoredRuntimeAnnotations)) {
+          final PsiMethod method = aClass.getMethods()[0];
+          return getInferredType(aClass, method) != null;
         }
       }
     }

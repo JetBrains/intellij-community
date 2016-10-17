@@ -39,32 +39,10 @@ abstract class BuildTasks {
   abstract void zipSourcesOfModules(Collection<String> modules, String targetFilePath)
 
   /**
-   * Updates search/searchableOptions.xml file in {@code targetModuleName} module output directory
-   * <br>
-   * todo[nik] this is temporary solution until code from layouts.gant files moved to the new builders. After that this method will
-   * be called inside {@link #buildDistributions()}
-   */
-  abstract void buildSearchableOptions(String targetModuleName, List<String> modulesToIndex, List<String> pathsToLicenses)
-
-  /**
-   * Creates a copy of *ApplicationInfo.xml file with substituted __BUILD_NUMBER__ and __BUILD_DATE__ placeholders
-   * <br>
-   * todo[nik] this is temporary solution until code from layouts.gant files moved to the new builders. After that this method will
-   * be called inside {@link #buildDistributions()}
-   * @return path to the copied file
-   */
-  abstract File patchApplicationInfo()
-
-  /**
-   * Creates distribution for all operating systems from JAR files located at {@link BuildPaths#distAll}
-   */
-  abstract void buildDistributions()
-
-  /**
    * Produces distributions for all operating systems from sources. This includes compiling required modules, packing their output into JAR
    * files accordingly to {@link ProductProperties#productLayout}, and creating distributions and installers for all OS.
    */
-  abstract void compileModulesAndBuildDistributions()
+  abstract void buildDistributions()
 
   abstract void compileProjectAndTests(List<String> includingTestsInModules)
 
@@ -97,6 +75,6 @@ abstract class BuildTasks {
     ProductProperties productProperties = (ProductProperties) Class.forName(productPropertiesClassName).constructors[0].newInstance(projectHome)
     def context = BuildContext.createContext(binding.ant, binding.projectBuilder, binding.project, binding.global,
                                              "$projectHome/$communityHomeRelativePath", projectHome, productProperties, proprietaryBuildTools)
-    create(context).compileModulesAndBuildDistributions()
+    create(context).buildDistributions()
   }
 }

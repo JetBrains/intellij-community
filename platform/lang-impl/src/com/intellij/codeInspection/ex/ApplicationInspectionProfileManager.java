@@ -60,8 +60,6 @@ import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-import static com.intellij.codeInspection.ex.InspectionProfileImpl.getDefaultProfile;
-
 @State(
   name = "InspectionProfileManager",
   storages = {
@@ -92,7 +90,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     mySchemeManager = schemeManagerFactory.create(INSPECTION_DIR, new InspectionProfileProcessor() {
       @NotNull
       @Override
-      public String getName(@NotNull Function<String, String> attributeProvider, String fileNameWithoutExtension) {
+      public String getName(@NotNull Function<String, String> attributeProvider, @NotNull String fileNameWithoutExtension) {
         return fileNameWithoutExtension;
       }
 
@@ -170,13 +168,9 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
 
     loadBundledSchemes();
     mySchemeManager.loadSchemes();
-    createDefaultProfile();
-  }
 
-  private void createDefaultProfile() {
-    final InspectionProfileImpl oldDefault = mySchemeManager.findSchemeByName(InspectionProfileImpl.DEFAULT_PROFILE_NAME);
-    if (oldDefault == null || !oldDefault.isProfileLocked()) {
-      getSchemeManager().addScheme(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile()));
+    if (mySchemeManager.isEmpty()) {
+      mySchemeManager.addScheme(createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, InspectionProfileImpl.getBaseProfile()));
     }
   }
 
@@ -237,12 +231,6 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
 
   public InspectionProfileConvertor getConverter() {
     return new InspectionProfileConvertor(this);
-  }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  public InspectionProfileImpl createProfile() {
-    return createSampleProfile(InspectionProfileImpl.DEFAULT_PROFILE_NAME, getDefaultProfile());
   }
 
   @Override

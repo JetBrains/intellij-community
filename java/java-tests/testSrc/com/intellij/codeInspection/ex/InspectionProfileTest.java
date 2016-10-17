@@ -82,7 +82,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   private static InspectionProfileImpl createProfile() {
-    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getDefaultProfile(), null);
+    return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getBaseProfile(), null);
   }
   private static InspectionProfileImpl createProfile(@NotNull InspectionProfileImpl base) {
     return new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), base, null);
@@ -98,7 +98,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
       //normally on open project profile wrappers are init for both managers
       profileManager.updateProfile(localProfile);
       InspectionProfileImpl profile = new InspectionProfileImpl(PROFILE, InspectionToolRegistrar.getInstance(), projectProfileManager,
-                                                                InspectionProfileImpl.getDefaultProfile(), null);
+                                                                InspectionProfileImpl.getBaseProfile(), null);
       projectProfileManager.updateProfile(profile);
       projectProfileManager.setRootProfile(profile.getName());
 
@@ -579,7 +579,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testDoNotInstantiateOnSave() throws Exception {
-    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getDefaultProfile(), null);
+    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance(), InspectionProfileImpl.getBaseProfile(), null);
     assertEquals(0, countInitializedTools(profile));
     InspectionToolWrapper[] toolWrappers = profile.getInspectionTools(null);
     assertTrue(toolWrappers.length > 0);

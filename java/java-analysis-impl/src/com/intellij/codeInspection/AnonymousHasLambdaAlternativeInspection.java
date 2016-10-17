@@ -66,21 +66,19 @@ public class AnonymousHasLambdaAlternativeInspection extends BaseJavaBatchLocalI
       @Override
       public void visitAnonymousClass(final PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
-        PsiMethod[] methods = aClass.getMethods();
-        if(methods.length == 1) {
-          PsiMethod method = methods[0];
-          PsiExpressionList argumentList = aClass.getArgumentList();
-          if (AnonymousCanBeLambdaInspection.isClassAndMethodSuitableForConversion(aClass, method, Collections.emptySet()) &&
-              argumentList != null && argumentList.getExpressions().length == 0) {
-            PsiClassType type = aClass.getBaseClassType();
-            AnonymousLambdaAlternative alternative = getAlternative(type.resolve(), method);
-            if(alternative != null) {
-              final PsiElement lBrace = aClass.getLBrace();
-              LOG.assertTrue(lBrace != null);
-              final TextRange rangeInElement = new TextRange(0, lBrace.getStartOffsetInParent() + aClass.getStartOffsetInParent() - 1);
-              holder.registerProblem(aClass.getParent(), "Anonymous #ref #loc can be replaced with "+alternative.myReplacementMessage,
-                                     ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithLambdaAlternativeFix(alternative));
-            }
+        PsiExpressionList argumentList = aClass.getArgumentList();
+        if (AnonymousCanBeLambdaInspection.isLambdaForm(aClass, Collections.emptySet()) &&
+            argumentList != null &&
+            argumentList.getExpressions().length == 0) {
+          PsiMethod method = aClass.getMethods()[0];
+          PsiClassType type = aClass.getBaseClassType();
+          AnonymousLambdaAlternative alternative = getAlternative(type.resolve(), method);
+          if(alternative != null) {
+            final PsiElement lBrace = aClass.getLBrace();
+            LOG.assertTrue(lBrace != null);
+            final TextRange rangeInElement = new TextRange(0, lBrace.getStartOffsetInParent() + aClass.getStartOffsetInParent() - 1);
+            holder.registerProblem(aClass.getParent(), "Anonymous #ref #loc can be replaced with "+alternative.myReplacementMessage,
+                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, rangeInElement, new ReplaceWithLambdaAlternativeFix(alternative));
           }
         }
       }
