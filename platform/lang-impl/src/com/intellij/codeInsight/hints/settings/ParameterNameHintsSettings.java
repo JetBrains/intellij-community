@@ -51,7 +51,8 @@ public class ParameterNameHintsSettings implements PersistentStateComponent<Para
     "*.indexOf(*)",
     "*.contains(*)",
     "*.startsWith(*)",
-    "*.endsWith(*)"
+    "*.endsWith(*)",
+    "java.lang.Math.*"
   );
 
   private ParameterNameHintsSettings.State state = new State();
