@@ -39,13 +39,19 @@ class OptionalWithoutIsPresent {
     }
   }
 
-  private void checkAsserts() {
+  private void checkAsserts1() {
     Optional<String> o1 = Optional.empty();
     assert o1.isPresent();
     System.out.println(o1.get());
     Optional<String> o2 = Optional.empty();
     org.junit.Assert.assertTrue(o2.isPresent());
     System.out.println(o2.get());
+    Optional<String> o3 = Optional.empty();
+    org.testng.Assert.assertTrue(o3.isPresent());
+    System.out.println(o3.get());
+  }
+
+  private void checkAsserts2() {
     Optional<String> o3 = Optional.empty();
     org.testng.Assert.assertTrue(o3.isPresent());
     System.out.println(o3.get());
@@ -95,7 +101,8 @@ class OptionalWithoutIsPresent {
     if (!o1.isPresent() && !o2.isPresent()) {
       return;
     }
-    System.out.println(o1.isPresent() ? o1.get() : o2.get());
+    // todo find some way not to warn here
+    System.out.println(o1.isPresent() ? o1.get() : o2.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>());
   }
 
   public static void two2(Optional<Object> o1,Optional<Object> o2) {
@@ -170,5 +177,9 @@ class OptionalWithoutIsPresent {
     }
     String a = aOpt.get();
     String b = bOpt.get();
+  }
+
+  String f(Optional<String> optional, Optional<String> opt2) {
+    return optional.isPresent()  ? opt2.<warning descr="'Optional.get()' without 'isPresent()' check">get</warning>() : null;
   }
 }

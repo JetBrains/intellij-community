@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.stubsHierarchy.impl;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -25,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.util.ObjectUtils;
@@ -108,9 +106,7 @@ class AnchorRepository {
 
   private static PsiElement restoreFromStubIndex(PsiFileWithStubSupport fileImpl, int index) {
     StubTree tree = fileImpl.getStubTree();
-
-    boolean foreign = tree == null;
-    if (foreign) {
+    if (tree == null) {
       if (fileImpl instanceof PsiFileImpl) {
         tree = ((PsiFileImpl)fileImpl).calcStubTree();
       }
@@ -123,16 +119,8 @@ class AnchorRepository {
     if (index >= list.size()) {
       return null;
     }
-    StubElement stub = list.get(index);
 
-    if (foreign) {
-      final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();
-      if (cachedPsi != null) return cachedPsi;
-
-      final ASTNode ast = fileImpl.findTreeForStub(tree, stub);
-      return ast != null ? ast.getPsi() : null;
-    }
-    return stub.getPsi();
+    return ((StubElement)list.get(index)).getPsi();
   }
 
 }

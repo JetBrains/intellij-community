@@ -152,11 +152,14 @@ public class JavaModuleGraphUtil {
     }
 
     public boolean reads(PsiJavaModule source, PsiJavaModule destination) {
-      Iterator<PsiJavaModule> directReaders = myGraph.getOut(destination);
-      while (directReaders.hasNext()) {
-        PsiJavaModule next = directReaders.next();
-        if (source.equals(next) || myPublicEdges.contains(key(destination, next)) && reads(source, next)) {
-          return true;
+      Collection<PsiJavaModule> nodes = myGraph.getNodes();
+      if (nodes.contains(destination) && nodes.contains(source)) {
+        Iterator<PsiJavaModule> directReaders = myGraph.getOut(destination);
+        while (directReaders.hasNext()) {
+          PsiJavaModule next = directReaders.next();
+          if (source.equals(next) || myPublicEdges.contains(key(destination, next)) && reads(source, next)) {
+            return true;
+          }
         }
       }
       return false;

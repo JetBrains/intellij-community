@@ -419,14 +419,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void showModalProgress() {
     try {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(
-        () -> ProgressManager.getInstance().run(new Task.Modal(myProject, IdeBundle.message("progress.indexing"), false) {
-
-          @Override
-          public void run(@NotNull final ProgressIndicator visibleIndicator) {
-            runBackgroundProcess(visibleIndicator, true);
-          }
-        }));
+      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IdeBundle.message("progress.indexing"), () ->
+        runBackgroundProcess(ProgressManager.getInstance().getProgressIndicator(), true));
     }
     finally {
       queueUpdateFinished(true);

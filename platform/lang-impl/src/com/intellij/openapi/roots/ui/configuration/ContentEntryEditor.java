@@ -287,21 +287,24 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     return folder != null ? folder.getRootType() : null;
   }
 
-  public boolean isExcludedOrUnderExcludedDirectory(@NotNull final VirtualFile file) {
-    Project project = getModel().getProject();
-    final ContentEntry contentEntry = getContentEntry();
+  public boolean isExcludedOrUnderExcludedDirectory(@NotNull VirtualFile file) {
+    ModifiableRootModel model = getModel();
+    Project project = model != null ? model.getProject() : null;
+    ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return false;
     }
     return isExcludedOrUnderExcludedDirectory(project, contentEntry, file);
   }
 
-  public static boolean isExcludedOrUnderExcludedDirectory(@NotNull Project project,
+  public static boolean isExcludedOrUnderExcludedDirectory(@Nullable Project project,
                                                            @NotNull ContentEntry entry,
                                                            @NotNull VirtualFile file) {
     List<VirtualFile> excludedFiles = ContainerUtil.newArrayList(entry.getExcludeFolderFiles());
-    for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
-      ContainerUtil.addAllNotNull(excludedFiles, policy.getExcludeRootsForProject());
+    if (project != null) {
+      for (DirectoryIndexExcludePolicy policy : DirectoryIndexExcludePolicy.getExtensions(project)) {
+        ContainerUtil.addAllNotNull(excludedFiles, policy.getExcludeRootsForProject());
+      }
     }
     for (VirtualFile excludedFile : excludedFiles) {
       if (VfsUtilCore.isAncestor(excludedFile, file, false)) {

@@ -106,8 +106,8 @@ public class PyStringFormatInspection extends PyInspection {
         if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (s != null) {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
-            if (rightType instanceof PySubscriptableType) {
-              final PySubscriptableType tupleType = (PySubscriptableType)rightType;
+            if (rightType instanceof PyTupleType) {
+              final PyTupleType tupleType = (PyTupleType)rightType;
               for (int i = 0; i <= tupleType.getElementCount(); i += 1) {
                 final PyType elementType = tupleType.getElementType(i);
                 if (elementType != null) {

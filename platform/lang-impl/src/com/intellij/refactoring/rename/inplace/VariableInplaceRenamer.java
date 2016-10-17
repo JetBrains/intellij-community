@@ -17,8 +17,10 @@ package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
@@ -159,13 +161,22 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   @Override
   protected void restoreSelection() {
     if (mySelectedRange != null) {
-      TemplateState state = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
+      Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+      TextRange selectedRange;
+      if (myEditor instanceof EditorWindow) {
+        PsiFile injected = ((EditorWindow)myEditor).getInjectedFile();
+        selectedRange = InjectedLanguageManager.getInstance(editor.getProject()).injectedToHost(injected, mySelectedRange);
+      } else {
+        selectedRange = mySelectedRange;
+      }
+      TemplateState state = TemplateManagerImpl.getTemplateState(editor);
+
       if (state != null) {
         for (int i = 0; i < state.getSegmentsCount(); i++) {
           final TextRange segmentRange = state.getSegmentRange(i);
-          TextRange intersection = segmentRange.intersection(mySelectedRange);
+          TextRange intersection = segmentRange.intersection(selectedRange);
           if (intersection != null) {
-            myEditor.getSelectionModel().setSelection(intersection.getStartOffset(), intersection.getEndOffset());
+            editor.getSelectionModel().setSelection(intersection.getStartOffset(), intersection.getEndOffset());
             return;
           }
         }

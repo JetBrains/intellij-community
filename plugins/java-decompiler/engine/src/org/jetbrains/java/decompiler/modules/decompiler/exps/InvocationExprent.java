@@ -306,7 +306,12 @@ public class InvocationExprent extends Exprent {
           buf.append("this(");
         }
         else {
-          throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
+          if (instance != null) {
+            buf.append(instance.toJava(indent, tracer)).append(".<init>(");
+          }
+          else {
+            throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
+          }
         }
     }
 

@@ -273,6 +273,10 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     return false;
   }
 
+  private static boolean isFocused(Window window) {
+    return window != null && (window.isFocused() || isFocused(window.getOwner()));
+  }
+
   private boolean noIntersections(Rectangle bounds) {
     Window owner = SwingUtilities.getWindowAncestor(myComponent);
     Window popup = SwingUtilities.getWindowAncestor(myTipComponent);
@@ -280,9 +284,9 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     if (focus == owner.getOwner()) {
       focus = null; // do not check intersection with parent
     }
-    boolean focused = SystemInfo.isWindows || owner.isFocused();
+    boolean focused = SystemInfo.isWindows || isFocused(owner);
     for (Window other : owner.getOwnedWindows()) {
-      if (!focused && !SystemInfo.isWindows) {
+      if (!focused) {
         focused = other.isFocused();
       }
       if (popup != other && other.isVisible() && bounds.x + 10 >= other.getX() && bounds.intersects(other.getBounds())) {

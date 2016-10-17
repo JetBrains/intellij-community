@@ -16,7 +16,6 @@
 
 package com.intellij.psi;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -407,8 +406,7 @@ public abstract class PsiAnchor {
     }
     StubTree tree = fileImpl.getStubTree();
 
-    boolean foreign = tree == null;
-    if (foreign) {
+    if (tree == null) {
       if (fileImpl instanceof PsiFileImpl) {
         // Note: as far as this is a realization of StubIndexReference fileImpl#getContentElementType() must be instance of IStubFileElementType
         tree = ((PsiFileImpl)fileImpl).calcStubTree();
@@ -431,18 +429,6 @@ public abstract class PsiAnchor {
       return null;
     }
 
-    if (foreign) {
-      final PsiElement cachedPsi = ((StubBase)stub).getCachedPsi();
-      if (cachedPsi != null) return cachedPsi;
-
-      final ASTNode ast = fileImpl.findTreeForStub(tree, stub);
-      if (ast != null) {
-        return ast.getPsi();
-      }
-
-      if (throwIfNull) throw new AssertionError("No AST for stub");
-      return null;
-    }
     return stub.getPsi();
   }
 

@@ -32,7 +32,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -69,19 +68,12 @@ public class IdeaGateway {
 
     LocalHistoryImpl.getInstanceImpl().dispatchPendingEvents();
 
-    VersionedFilterData versionedFilterData;
-    VfsEventDispatchContext vfsEventDispatchContext = ourCurrentEventDispatchContext.get();
-    if (vfsEventDispatchContext != null) {
-      versionedFilterData = vfsEventDispatchContext.myFilterData;
-      if (versionedFilterData == null) versionedFilterData = vfsEventDispatchContext.myFilterData = new VersionedFilterData();
-    } else {
-      versionedFilterData = new VersionedFilterData();
-    }
+    VersionedFilterData versionedFilterData = getVersionedFilterData();
 
     boolean isInContent = false;
     int numberOfOpenProjects = versionedFilterData.myOpenedProjects.size();
     for (int i = 0; i < numberOfOpenProjects; ++i) {
-      if (Comparing.equal(versionedFilterData.myWorkspaceFiles.get(i), f)) return false;
+      if (f.equals(versionedFilterData.myWorkspaceFiles.get(i))) return false;
       ProjectFileIndex index = versionedFilterData.myProjectFileIndices.get(i);
 
       if (index.isExcluded(f)) return false;
@@ -93,33 +85,49 @@ public class IdeaGateway {
     return numberOfOpenProjects != 0 || !FileTypeManager.getInstance().isFileIgnored(f);
   }
 
+  @NotNull
+  protected static VersionedFilterData getVersionedFilterData() {
+    VersionedFilterData versionedFilterData;
+    VfsEventDispatchContext vfsEventDispatchContext = ourCurrentEventDispatchContext.get();
+    if (vfsEventDispatchContext != null) {
+      versionedFilterData = vfsEventDispatchContext.myFilterData;
+      if (versionedFilterData == null) versionedFilterData = vfsEventDispatchContext.myFilterData = new VersionedFilterData();
+    } else {
+      versionedFilterData = new VersionedFilterData();
+    }
+    return versionedFilterData;
+  }
+
   private static final ThreadLocal<VfsEventDispatchContext> ourCurrentEventDispatchContext = new ThreadLocal<>();
 
-  private static class VfsEventDispatchContext {
+  private static class VfsEventDispatchContext implements AutoCloseable {
     final List<? extends VFileEvent> myEvents;
     final boolean myBeforeEvents;
     final VfsEventDispatchContext myPreviousContext;
 
     VersionedFilterData myFilterData;
 
-    VfsEventDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents, VfsEventDispatchContext context) {
+    VfsEventDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents) {
       myEvents = events;
       myBeforeEvents = beforeEvents;
-      myPreviousContext = context;
+      myPreviousContext = ourCurrentEventDispatchContext.get();
+      if (myPreviousContext != null) {
+        myFilterData = myPreviousContext.myFilterData;
+      }
+      ourCurrentEventDispatchContext.set(this);
     }
 
     public void close() {
       ourCurrentEventDispatchContext.set(myPreviousContext);
+      if (myPreviousContext != null && myPreviousContext.myFilterData == null && myFilterData != null) {
+        myPreviousContext.myFilterData = myFilterData;
+      }
     }
   }
 
   public void runWithVfsEventsDispatchContext(List<? extends VFileEvent> events, boolean beforeEvents, Runnable action) {
-    VfsEventDispatchContext vfsEventDispatchContext = new VfsEventDispatchContext(events, beforeEvents, ourCurrentEventDispatchContext.get());
-    ourCurrentEventDispatchContext.set(vfsEventDispatchContext);
-    try {
+    try (VfsEventDispatchContext ignored = new VfsEventDispatchContext(events, beforeEvents)) {
       action.run();
-    } finally {
-      vfsEventDispatchContext.close();
     }
   }
 

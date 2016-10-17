@@ -15,24 +15,35 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
+import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.impl.InlayModelImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 
-class ShowParameterHintsSettings : AnAction() {
 
+private fun String.capitalize() = StringUtil.capitalizeWords(this, true)  
+
+class ShowParameterHintsSettings : AnAction() {
   init {
     val presentation = templatePresentation
-    presentation.text = "Show Settings"
-    presentation.description = "Show Parameter Name Hints Settings"
+    presentation.text = CodeInsightBundle.message("inlay.hints.show.settings").capitalize()
+    presentation.description = CodeInsightBundle.message("inlay.hints.show.settings.description")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -40,43 +51,59 @@ class ShowParameterHintsSettings : AnAction() {
     val dialog = ParameterNameHintsConfigurable(project)
     dialog.show()
   }
-
 }
 
 class BlacklistCurrentMethodAction : AnAction() {
-
   init {
     val presentation = templatePresentation
-    presentation.text = "Do Not Show Hints For Current Method"
-    presentation.description = "Adds Current Method to Parameter Name Hints Blacklist"
+    presentation.text = CodeInsightBundle.message("inlay.hints.blacklist.method").capitalize()
+    presentation.description = CodeInsightBundle.message("inlay.hints.blacklist.method.description")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
-
-    val offset = editor.caretModel.offset
-
-    val element = file.findElementAt(offset)
-    val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
-
-    val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getMethodInfo(e) != null }) ?: return
-    val info = hintsProvider.getMethodInfo(method) ?: return
-
-    val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
-    ParameterNameHintsSettings.getInstance().addIgnorePattern(pattern)
     
-    refreshAllOpenEditors()
+    addMethodAtCaretToBlackList(editor, file)
   }
 }
 
+class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
+  companion object {
+    private val presentableText = CodeInsightBundle.message("inlay.hints.blacklist.method")
+    private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
+  }
+  
+  override fun getText(): String = presentableText
+  override fun getFamilyName(): String = presentableFamilyName
+
+  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
+    return InlayParameterHintsExtension.hasAnyExtensions() && hasParameterHintAtOffset(editor)
+  }
+
+  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+    addMethodAtCaretToBlackList(editor, file)
+  }
+
+  override fun startInWriteAction() = false
+}
+
 class ToggleInlineHintsAction : AnAction() {
-
+  
+  companion object {
+    private val disableText = CodeInsightBundle.message("inlay.hints.disable.action.text").capitalize()
+    private val enableText = CodeInsightBundle.message("inlay.hints.enable.action.text").capitalize()
+  }
+  
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = true
-
-    val isShow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
-    e.presentation.text = if (isShow) "Disable Parameter Name Hints" else "Enable Parameter Name Hints"
+    if (InlayParameterHintsExtension.hasAnyExtensions()) {
+      e.presentation.isEnabledAndVisible = true
+      val isShow = EditorSettingsExternalizable.getInstance().isShowParameterNameHints
+      e.presentation.text = if (isShow) disableText else enableText
+    }
+    else {
+      e.presentation.isEnabledAndVisible = false      
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -86,6 +113,13 @@ class ToggleInlineHintsAction : AnAction() {
 
     refreshAllOpenEditors()
   }
+}
+
+private fun hasParameterHintAtOffset(editor: Editor): Boolean {
+  val offset = editor.caretModel.offset
+  return editor.inlayModel is InlayModelImpl && editor.inlayModel
+      .getInlineElementsInRange(offset, offset)
+      .find { ParameterHintsPresentationManager.getInstance().isParameterHint(it) } != null
 }
 
 private fun refreshAllOpenEditors() {
@@ -98,4 +132,19 @@ private fun refreshAllOpenEditors() {
       psiManager.findFile(it)?.let { daemonCodeAnalyzer.restart(it) }
     }
   }
+}
+
+private fun addMethodAtCaretToBlackList(editor: Editor, file: PsiFile) {
+  val offset = editor.caretModel.offset
+
+  val element = file.findElementAt(offset)
+  val hintsProvider = InlayParameterHintsExtension.forLanguage(file.language) ?: return
+
+  val method = PsiTreeUtil.findFirstParent(element, { e -> hintsProvider.getMethodInfo(e) != null }) ?: return
+  val info = hintsProvider.getMethodInfo(method) ?: return
+
+  val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
+  ParameterNameHintsSettings.getInstance().addIgnorePattern(pattern)
+
+  refreshAllOpenEditors()
 }

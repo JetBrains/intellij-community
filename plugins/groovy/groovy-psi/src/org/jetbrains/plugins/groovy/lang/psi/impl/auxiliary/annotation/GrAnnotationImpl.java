@@ -134,10 +134,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     final GrAnnotationStub stub = getStub();
     if (stub != null) {
       final GrAnnotation stubbedPsi = stub.getPsiElement();
-      final PsiAnnotationMemberValue value = PsiImplUtil.findDeclaredAttributeValue(stubbedPsi, attributeName);
-      if (value == null) {
-        return null;
-      }
+      return PsiImplUtil.findDeclaredAttributeValue(stubbedPsi, attributeName);
     }
     return PsiImplUtil.findDeclaredAttributeValue(this, attributeName);
   }

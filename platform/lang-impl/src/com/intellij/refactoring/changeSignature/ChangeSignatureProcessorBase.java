@@ -93,19 +93,18 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     List<UsageInfo> infos = new ArrayList<>();
     final ChangeSignatureUsageProcessor[] processors = ChangeSignatureUsageProcessor.EP_NAME.getExtensions();
     for (ChangeSignatureUsageProcessor processor : processors) {
-      ContainerUtil.addAll(infos, processor.findUsages(changeInfo));
+      ContainerUtil.addAll(infos, filterUsages(processor.findUsages(changeInfo), processor));
     }
-    infos = filterUsages(infos);
     return infos.toArray(new UsageInfo[infos.size()]);
   }
 
-  protected static List<UsageInfo> filterUsages(List<UsageInfo> infos) {
+  protected static List<UsageInfo> filterUsages(UsageInfo[] infos, ChangeSignatureUsageProcessor processor) {
     Map<PsiElement, MoveRenameUsageInfo> moveRenameInfos = new HashMap<>();
     Set<PsiElement> usedElements = new HashSet<>();
 
-    List<UsageInfo> result = new ArrayList<>(infos.size() / 2);
+    List<UsageInfo> result = new ArrayList<>(infos.length / 2);
     for (UsageInfo info : infos) {
-      LOG.assertTrue(info != null);
+      LOG.assertTrue(info != null, processor);
       PsiElement element = info.getElement();
       if (info instanceof MoveRenameUsageInfo) {
         if (usedElements.contains(element)) continue;

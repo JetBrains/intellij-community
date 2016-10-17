@@ -24,35 +24,35 @@ class MergeResolveUtilTest : DiffTestCase() {
         "",
         "",
         ""
-    );
+    )
 
     test(
         "x x x",
         "x x x",
         "x x x",
         "x x x"
-    );
+    )
 
     test(
         "x x x",
         "x Y x",
         "x x x",
         "x Y x"
-    );
+    )
 
     test(
         "x x",
         "x x",
         "x Y x",
         "x Y x"
-    );
+    )
 
     test(
         "x X x",
         "x x",
         "x X x",
         "x x"
-    );
+    )
   }
 
   fun testSameModification() {
@@ -61,21 +61,21 @@ class MergeResolveUtilTest : DiffTestCase() {
         "x Y x",
         "x Y x",
         "x Y x"
-    );
+    )
 
     test(
         "x x",
         "x Y x",
         "x Y x",
         "x Y x"
-    );
+    )
 
     test(
         "x X x",
         "x x",
         "x x",
         "x x"
-    );
+    )
   }
 
   fun testNonConflictingChanges() {
@@ -84,21 +84,21 @@ class MergeResolveUtilTest : DiffTestCase() {
         "x Y x x",
         "x x Z x",
         "x Y x Z x"
-    );
+    )
 
     test(
         "x",
         "x Y",
         "Z x",
         "Z x Y"
-    );
+    )
 
     test(
         "x x",
         "x",
         "Z x x",
         "Z x"
-    );
+    )
   }
 
   fun testFailure() {
@@ -107,14 +107,14 @@ class MergeResolveUtilTest : DiffTestCase() {
         "x Y x",
         "x Z x",
         null
-    );
+    )
 
     test(
         "x x",
         "x Y x",
         "x Z x",
         null
-    );
+    )
   }
 
   fun testNonFailureConflicts() {
@@ -123,35 +123,35 @@ class MergeResolveUtilTest : DiffTestCase() {
         "x x",
         "x X Y x",
         "x Y x"
-    );
+    )
 
     test(
         "x X x",
         "x x",
         "x Y X x",
         "x Y x"
-    );
+    )
 
     test(
         "x X Y x",
         "x X x",
         "x Y x",
         "x x"
-    );
+    )
 
     test(
         "x X Y Z x",
         "x X x",
         "x Z x",
         "x x"
-    );
+    )
 
     test(
         "x A B C D E F G H K x",
         "x C F K x",
         "x A D H x",
         "x x"
-    );
+    )
   }
 
   fun testConfusingConflicts() {
@@ -162,21 +162,21 @@ class MergeResolveUtilTest : DiffTestCase() {
         "x x",
         "x Z x",
         "xZ x"
-    );
+    )
 
     test(
         "x X X x",
         "x X Y X x",
         "x x",
         "x Y x"
-    );
+    )
 
     test(
         "x X x",
         "x x",
         "x Y x",
         "xY x"
-    );
+    )
 
 
     test(
@@ -184,11 +184,11 @@ class MergeResolveUtilTest : DiffTestCase() {
         "x Y x",
         "x X Y x",
         "x Y x"
-    );
+    )
   }
 
   private fun test(base: String, left: String, right: String, expected: String?) {
-    val actual = MergeResolveUtil.tryResolveConflict(left, base, right);
+    val actual = MergeResolveUtil.tryResolveConflict(left, base, right)
     assertEquals(expected, actual?.toString())
   }
 }

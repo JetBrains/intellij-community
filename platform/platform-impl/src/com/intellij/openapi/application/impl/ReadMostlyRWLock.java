@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application.impl;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
 /**
@@ -41,6 +43,7 @@ class ReadMostlyRWLock {
   private final Thread writeThread;
   private volatile boolean writeRequested;  // this writer is requesting or obtained the write access
   private volatile boolean writeAcquired;   // this writer obtained the write lock
+  private volatile AtomicInteger writeSuspended = new AtomicInteger();
   // All reader threads are registered here. Dead readers are garbage collected in writeUnlock().
   private final ConcurrentList<Reader> readers = ContainerUtil.createConcurrentList();
 
@@ -53,21 +56,20 @@ class ReadMostlyRWLock {
     @NotNull private final Thread thread;   // its thread
     private volatile boolean readRequested; // this reader is requesting or obtained read access. Written by reader thread only, read by writer.
     private volatile boolean blocked;       // this reader is blocked waiting for the writer thread to release write lock. Written by reader thread only, read by writer.
+    /** >0 when this thread can start read actions during a suspended write write action */
+    private int readPrivileges;
 
     Reader(@NotNull Thread readerThread) {
       thread = readerThread;
     }
   }
 
-  private final ThreadLocal<Reader> R = new ThreadLocal<Reader>(){
-    @Override
-    protected Reader initialValue() {
-      Reader status = new Reader(Thread.currentThread());
-      boolean added = readers.addIfAbsent(status);
-      assert added : readers + "; "+Thread.currentThread();
-      return status;
-    }
-  };
+  private final ThreadLocal<Reader> R = ThreadLocal.withInitial(() -> {
+    Reader status = new Reader(Thread.currentThread());
+    boolean added = readers.addIfAbsent(status);
+    assert added : readers + "; "+Thread.currentThread();
+    return status;
+  });
 
   boolean isWriteThread() {
     return Thread.currentThread() == writeThread;
@@ -127,6 +129,9 @@ class ReadMostlyRWLock {
 
   private boolean tryReadLock(Reader status) {
     if (!writeRequested) {
+      if (writeSuspended.get() > 0 && status.readPrivileges == 0) {
+        return false;
+      }
       status.readRequested = true;
       if (!writeRequested) {
         return true;
@@ -156,6 +161,33 @@ class ReadMostlyRWLock {
         Thread.yield();
       }
     }
+  }
+
+  void writeSuspend() {
+    writeSuspended.incrementAndGet();
+    writeUnlock();
+  }
+
+  void writeResume() {
+    writeLock();
+    writeSuspended.decrementAndGet();
+  }
+
+  boolean isPrivilegedReader() {
+    return R.get().readPrivileges > 0;
+  }
+
+  AccessToken setupReadPrivilege(boolean allow) {
+    if (!allow) return AccessToken.EMPTY_ACCESS_TOKEN;
+
+    Reader reader = R.get();
+    reader.readPrivileges++;
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        reader.readPrivileges--;
+      }
+    };
   }
 
   void writeUnlock() {

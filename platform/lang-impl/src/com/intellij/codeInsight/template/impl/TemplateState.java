@@ -22,8 +22,10 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.macro.TemplateCompletionProcessor;
 import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandAdapter;
 import com.intellij.openapi.command.CommandEvent;
@@ -122,7 +124,7 @@ public class TemplateState implements Disposable {
     myLookupListener = new LookupAdapter() {
       @Override
       public void itemSelected(LookupEvent event) {
-        if (isCaretOutsideCurrentSegment()) {
+        if (isCaretOutsideCurrentSegment(null)) {
           if (isCaretInsideNextVariable()) {
             nextTab();
           }
@@ -148,7 +150,7 @@ public class TemplateState implements Disposable {
 
       @Override
       public void commandStarted(CommandEvent event) {
-        myDocumentChangesTerminateTemplate = isCaretOutsideCurrentSegment();
+        myDocumentChangesTerminateTemplate = isCaretOutsideCurrentSegment(event.getCommandName());
         started = true;
       }
 
@@ -199,10 +201,15 @@ public class TemplateState implements Disposable {
     return false;
   }
 
-  private boolean isCaretOutsideCurrentSegment() {
+  private boolean isCaretOutsideCurrentSegment(String commandName) {
     if (myEditor != null && myCurrentSegmentNumber >= 0) {
       final int offset = myEditor.getCaretModel().getOffset();
-      return offset < mySegments.getSegmentStart(myCurrentSegmentNumber) || offset > mySegments.getSegmentEnd(myCurrentSegmentNumber);
+
+      final int segmentStart = mySegments.getSegmentStart(myCurrentSegmentNumber);
+      if (offset < segmentStart || offset == segmentStart && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_BACKSPACE).equals(commandName)) return true;
+
+      final int segmentEnd = mySegments.getSegmentEnd(myCurrentSegmentNumber);
+      if (offset > segmentEnd || offset == segmentEnd && ActionsBundle.actionText(IdeActions.ACTION_EDITOR_DELETE).equals(commandName)) return true;
     }
     return false;
   }
@@ -233,7 +240,7 @@ public class TemplateState implements Disposable {
   }
 
   public boolean isToProcessTab() {
-    if (isCaretOutsideCurrentSegment()) {
+    if (isCaretOutsideCurrentSegment(null)) {
       return false;
     }
     if (ourLookupShown) {

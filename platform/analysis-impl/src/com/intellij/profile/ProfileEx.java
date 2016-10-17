@@ -15,7 +15,8 @@
  */
 package com.intellij.profile;
 
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManagerKt;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.xmlb.SmartSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class ProfileEx implements Profile {
   public static final String SCOPE = "scope";
   public static final String NAME = "name";
+  public static final String PROFILE = "profile";
 
   private final SmartSerializer mySerializer;
 
@@ -84,18 +86,12 @@ public abstract class ProfileEx implements Profile {
     myProfileManager = profileManager;
   }
 
-  @Override
   public void readExternal(Element element) {
     mySerializer.readExternal(this, element);
   }
 
-  public void serializeInto(@NotNull Element element, boolean preserveCompatibility) {
-    mySerializer.writeExternal(this, element, preserveCompatibility);
-  }
-
-  @Override
-  public final void writeExternal(Element element) {
-    serializeInto(element, true);
+  public void writeExternal(@NotNull Element element) {
+    mySerializer.writeExternal(this, element, false);
   }
 
   public boolean equals(Object o) {
@@ -114,15 +110,21 @@ public abstract class ProfileEx implements Profile {
     return 0;
   }
 
-  @Override
-  public final void copyFrom(@NotNull Profile profile) {
-    readExternal(serializeProfile(profile));
+  public final void copyFrom(@NotNull ProfileEx profile) {
+    readExternal(profile.writeScheme());
   }
 
   @NotNull
-  public static Element serializeProfile(@NotNull Profile profile) {
-    Element result = new Element(ProjectInspectionProfileManagerKt.PROFILE);
-    profile.writeExternal(result);
-    return result;
+  public Element writeScheme() {
+    Element element = new Element(PROFILE);
+    if (isProjectLevel()) {
+      element.setAttribute("version", "1.0");
+    }
+    writeExternal(element);
+
+    if (isProjectLevel() && ProjectKt.isDirectoryBased(((ProjectInspectionProfileManager)myProfileManager).getProject())) {
+      return new Element("component").setAttribute("name", "InspectionProjectProfileManager").addContent(element);
+    }
+    return element;
   }
 }

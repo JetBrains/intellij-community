@@ -91,7 +91,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         if (annotation != null || typeCommentAnnotation != null) {
           final PyExpression returnExpr = node.getExpression();
           final PyType actual = returnExpr != null ? myTypeEvalContext.getType(returnExpr) : PyNoneType.INSTANCE;
-          final PyType expected = myTypeEvalContext.getReturnType(function);
+          final PyType expected = getExpectedReturnType(function);
           if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             final String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
@@ -103,6 +103,17 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
         }
       }
+    }
+
+    @Nullable
+    private PyType getExpectedReturnType(@NotNull PyFunction function) {
+      final PyType returnType = myTypeEvalContext.getReturnType(function);
+
+      if (returnType instanceof PyCollectionType && PyNames.FAKE_COROUTINE.equals(returnType.getName())) {
+        return ((PyCollectionType)returnType).getIteratedItemType();
+      }
+
+      return returnType;
     }
 
     @Override

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -1396,12 +1395,7 @@ public class ExpressionGenerator extends Generator {
       final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
       for (PsiType conjunct : conjuncts) {
         final GenerationUtil.CheckProcessElement processor = new GenerationUtil.CheckProcessElement(method);
-        ResolveUtil.processAllDeclarationsSeparately(conjunct, processor, new BaseScopeProcessor() {
-          @Override
-          public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-            return false;
-          }
-        }, ResolveState.initial(), context);
+        ResolveUtil.processAllDeclarations(conjunct, processor, false, context);
         if (processor.isFound()) return conjunct;
       }
     }

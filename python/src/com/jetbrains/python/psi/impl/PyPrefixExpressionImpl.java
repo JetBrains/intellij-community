@@ -141,32 +141,16 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Nullable
   private static PyType getGeneratorReturnType(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    if (type instanceof PyClassLikeType) {
-      final PyClassLikeType classLikeType = (PyClassLikeType)type;
+    if (type instanceof PyClassLikeType && type instanceof PyCollectionType) {
       // TODO: Understand typing.Generator as well
-      final String classQName = classLikeType.getClassQName();
+      final String classQName = ((PyClassLikeType)type).getClassQName();
+      final PyCollectionType collectionType = (PyCollectionType)type;
       if (PyNames.FAKE_GENERATOR.equals(classQName)) {
-        if (type instanceof PyCollectionType) {
-          final PyCollectionType collectionType = (PyCollectionType)type;
-          final List<PyType> elementTypes = collectionType.getElementTypes(context);
-          if (elementTypes.size() == 3) {
-            return elementTypes.get(2);
-          }
-        }
+        return ContainerUtil.getOrElse(collectionType.getElementTypes(context), 2, null);
       }
-      else if (PyNames.FAKE_COROUTINE.equals(classQName)) {
-        if (type instanceof PyCollectionType) {
-          final PyCollectionType collectionType = (PyCollectionType)type;
-          final List<PyType> elementTypes = collectionType.getElementTypes(context);
-          if (elementTypes.size() == 1) {
-            return elementTypes.get(0);
-          }
-        }
-      }
-      else if (type instanceof PyClassType &&
-               type instanceof PyCollectionType &&
-               PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
-        return ContainerUtil.getFirstItem(((PyCollectionType)type).getElementTypes(context));
+      else if (PyNames.FAKE_COROUTINE.equals(classQName) ||
+               type instanceof PyClassType && PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
+        return collectionType.getIteratedItemType();
       }
     }
     else if (type instanceof PyUnionType) {
