@@ -682,6 +682,13 @@ class PyDB:
         self.process_internal_commands()
 
 
+    def send_process_created_message(self):
+        """Sends a message that a new process has been created.
+        """
+        cmd = self.cmd_factory.make_process_created_message()
+        self.writer.add_command(cmd)
+
+
     def do_wait_suspend(self, thread, frame, event, arg): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.

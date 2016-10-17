@@ -55,11 +55,6 @@ def _on_forked_process():
     pydevd.threadingCurrentThread().__pydevd_main_thread = True
     pydevd.settrace_forked()
 
-def _notify_process_created(dbg):
-    if dbg is not None:
-        cmd = dbg.cmd_factory.make_process_created_message()
-        dbg.writer.add_command(cmd)
-
 def _on_set_trace_for_new_thread(global_debugger):
     if global_debugger is not None:
         global_debugger.SetTrace(global_debugger.trace_dispatch)
@@ -466,7 +461,9 @@ def create_fork(original_name):
         else:
             if is_new_python_process:
                 from _pydevd_bundle.pydevd_comm import get_global_debugger
-                _notify_process_created(get_global_debugger())
+                debugger = get_global_debugger()
+                if debugger is not None:
+                    debugger.send_process_created_message()
         return child_process
     return new_fork
 
