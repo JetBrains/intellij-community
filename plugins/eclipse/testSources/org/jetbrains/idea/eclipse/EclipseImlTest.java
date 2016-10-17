@@ -79,14 +79,9 @@ public class EclipseImlTest extends IdeaTestCase {
     String communityLib = FileUtil.toSystemIndependentName(PathManagerEx.findFileUnderCommunityHome("lib").getAbsolutePath());
     fileText = fileText.replaceAll("\\$" + JUNIT + "\\$", communityLib);
     final Element classpathElement = JDOMUtil.loadDocument(fileText).getRootElement();
-    final Module module = WriteCommandAction.runWriteCommandAction(null, new Computable<Module>() {
-      @Override
-      public Module compute() {
-        return ModuleManager.getInstance(project)
-          .newModule(new File(path) + File.separator + EclipseProjectFinder
-            .findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA.getId());
-      }
-    });
+    final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> ModuleManager.getInstance(project)
+      .newModule(new File(path) + File.separator + EclipseProjectFinder
+        .findProjectName(path) + IdeaXml.IML_EXT, StdModuleTypes.JAVA.getId()));
     final ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
     EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
     classpathReader.init(rootModel);
@@ -101,7 +96,7 @@ public class EclipseImlTest extends IdeaTestCase {
     PathMacroManager.getInstance(project).collapsePaths(actualImlElement);
     PathMacros.getInstance().removeMacro(JUNIT);
 
-    assertThat(actualImlElement).isEqualTo(FileUtil.loadFile(new File(project.getBaseDir().getPath() + "/expected", "expected.iml")));
+    assertThat(actualImlElement).isEqualTo(new File(project.getBaseDir().getPath() + "/expected", "expected.iml"));
   }
 
   public void testWorkspaceOnly() throws Exception {
