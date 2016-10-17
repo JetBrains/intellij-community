@@ -24,6 +24,7 @@ import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,7 +46,7 @@ public class GuavaTypeConversionDescriptor extends TypeConversionDescriptor {
   }
 
   @Override
-  public PsiExpression replace(PsiExpression expression, TypeEvaluator evaluator) throws IncorrectOperationException {
+  public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
     setReplaceByString(myReplaceByStringSource + (isIterable(expression) ? ".collect(java.util.stream.Collectors.toList())" : ""));
     if (myConvertParameterAsLambda) {
       LOG.assertTrue(expression instanceof PsiMethodCallExpression);

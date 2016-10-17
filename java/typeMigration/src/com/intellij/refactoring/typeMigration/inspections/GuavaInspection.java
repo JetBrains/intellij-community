@@ -348,7 +348,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       throw new AssertionError();
     }
 
-    private boolean performTypeMigration(List<PsiElement> elements, List<PsiType> types) {
+    private void performTypeMigration(List<PsiElement> elements, List<PsiType> types) {
       PsiFile containingFile = null;
       for (PsiElement element : elements) {
         final PsiFile currentContainingFile = element.getContainingFile();
@@ -360,7 +360,7 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
         }
       }
       LOG.assertTrue(containingFile != null);
-      if (!FileModificationService.getInstance().prepareFileForWrite(containingFile)) return false;
+      if (!FileModificationService.getInstance().prepareFileForWrite(containingFile)) return;
       try {
         final TypeMigrationRules rules = new TypeMigrationRules();
         rules.setBoundScope(GlobalSearchScopesCore.projectProductionScope(containingFile.getProject())
@@ -377,7 +377,6 @@ public class GuavaInspection extends BaseJavaLocalInspectionTool {
       catch (IncorrectOperationException e) {
         LOG.error(e);
       }
-      return true;
     }
 
     private Function<PsiElement, PsiType> createMigrationTypeFunction(@NotNull final List<PsiElement> elements,
