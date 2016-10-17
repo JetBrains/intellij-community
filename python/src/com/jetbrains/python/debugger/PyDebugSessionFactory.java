@@ -28,9 +28,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Alexander Koshevoy
  */
-public abstract class PyRemoteDebugSessionCreator {
-  public static final ExtensionPointName<PyRemoteDebugSessionCreator> EP_NAME
-    = ExtensionPointName.create("Pythonid.pyRemoteDebugSessionCreator");
+public abstract class PyDebugSessionFactory {
+  public static final ExtensionPointName<PyDebugSessionFactory> EP_NAME
+    = ExtensionPointName.create("Pythonid.debugSessionFactory");
 
   protected abstract boolean appliesTo(@NotNull RemoteSdkAdditionalData remoteSdkAdditionalData);
 
@@ -42,11 +42,11 @@ public abstract class PyRemoteDebugSessionCreator {
 
   @Contract("null -> null")
   @Nullable
-  public static PyRemoteDebugSessionCreator findExtension(@Nullable RemoteSdkAdditionalData remoteSdkAdditionalData) {
+  public static PyDebugSessionFactory findExtension(@Nullable RemoteSdkAdditionalData remoteSdkAdditionalData) {
     if (remoteSdkAdditionalData == null) {
       return null;
     }
-    for (PyRemoteDebugSessionCreator sessionCreator : EP_NAME.getExtensions()) {
+    for (PyDebugSessionFactory sessionCreator : EP_NAME.getExtensions()) {
       if (sessionCreator.appliesTo(remoteSdkAdditionalData)) {
         return sessionCreator;
       }
