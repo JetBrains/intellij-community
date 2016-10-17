@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.PsiCallExpression
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
@@ -46,5 +48,33 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
     return MethodInfo(fullMethodName, paramNames)
   }
 
+  override val language: Language = JavaLanguage.INSTANCE
 
+  override val defaultBlackList = setOf(
+      "(begin*, end*)",
+      "(start*, end*)",
+      "(first*, last*)",
+      "(first*, second*)",
+      "(from*, to*)",
+      "(min*, max*)",
+      "(key, value)",
+      "(format, arg*)",
+      "(message)",
+      "(message, error)",
+
+      "*.set(*,*)",
+      "*.print(*)",
+      "*.println(*)",
+      "*.get(*)",
+      "*.append(*)",
+      "*.charAt(*)",
+      "*.indexOf(*)",
+      "*.contains(*)",
+      "*.startsWith(*)",
+      "*.endsWith(*)",
+      "java.lang.Math.*",
+      "*.equals(*)",
+      "*.equal(*)"
+  )
+  
 }

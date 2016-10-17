@@ -48,7 +48,9 @@ class ShowParameterHintsSettings : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
-    val dialog = ParameterNameHintsConfigurable(project)
+    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+    val hintExtension = InlayParameterHintsExtension.forLanguage(file.language) ?: return
+    val dialog = ParameterNameHintsConfigurable(project, hintExtension)
     dialog.show()
   }
 }
@@ -144,7 +146,7 @@ private fun addMethodAtCaretToBlackList(editor: Editor, file: PsiFile) {
   val info = hintsProvider.getMethodInfo(method) ?: return
 
   val pattern = info.fullyQualifiedName + '(' + info.paramNames.joinToString(",") + ')'
-  ParameterNameHintsSettings.getInstance().addIgnorePattern(pattern)
+  ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, pattern)
 
   refreshAllOpenEditors()
 }

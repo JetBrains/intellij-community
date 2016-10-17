@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.psi.PsiElement
-
 
 object InlayParameterHintsExtension: LanguageExtension<InlayParameterHintsProvider>("com.intellij.parameterHintsProvider")
 
@@ -31,4 +31,9 @@ interface InlayParameterHintsProvider {
     return null
   }
   
+  val language: Language
+  
+  val defaultBlackList: Set<String>
+  
 }
+
