@@ -355,6 +355,22 @@ def start_server(host, port, client_port):
     process_exec_queue(interpreter)
 
 
+def get_ipython_hidden_vars_dict():
+    useful_ipython_vars = ['_', '__']
+
+    try:
+        if IPYTHON and hasattr(__builtin__, 'interpreter'):
+            pydev_interpreter = get_interpreter().interpreter
+            if hasattr(pydev_interpreter, 'ipython') and hasattr(pydev_interpreter.ipython, 'user_ns_hidden'):
+                res_dict = dict([(key, val) for key, val in pydev_interpreter.ipython.user_ns_hidden.items()
+                            if key not in useful_ipython_vars])
+                return res_dict
+        return None
+    except Exception:
+        traceback.print_exc()
+        return None
+
+
 def get_interpreter():
     try:
         interpreterInterface = getattr(__builtin__, 'interpreter')

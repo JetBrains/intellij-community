@@ -162,7 +162,16 @@ def return_values_from_dict_to_xml(return_dict):
     return res
 
 
-def frame_vars_to_xml(frame_f_locals):
+def ipython_hidden_values_to_xml(key, val, hidden_ns):
+    res = ""
+    if key in hidden_ns.keys():
+        res += var_to_xml(val, str(key), ipython_hidden=True)
+    else:
+        res += var_to_xml(val, str(key))
+    return res
+
+
+def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
     """ dumps frame variables to XML
     <var name="var_name" scope="local" type="type" value="value"/>
     """
@@ -180,7 +189,10 @@ def frame_vars_to_xml(frame_f_locals):
             if k == RETURN_VALUES_DICT:
                 xml += return_values_from_dict_to_xml(v)
             else:
-                xml += var_to_xml(v, str(k))
+                if hidden_ns is not None:
+                    xml += ipython_hidden_values_to_xml(k, v, hidden_ns)
+                else:
+                    xml += var_to_xml(v, str(k))
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
@@ -191,7 +203,7 @@ def frame_vars_to_xml(frame_f_locals):
 def get_type_qualifier(type):
     return getattr(type, "__module__", "")
 
-def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False):
+def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False, ipython_hidden=False):
     """ single variable or dictionary to xml representation """
 
     is_exception_on_eval = isinstance(val, ExceptionOnEvaluate)
@@ -256,6 +268,11 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False):
     else:
         xmlRetVal = ''
 
+    if ipython_hidden:
+        xmlIPythonHidden = ' isIPythonHidden="True"'
+    else:
+        xmlIPythonHidden = ''
+
     xml = '<var name="%s" type="%s" ' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
 
     if type_qualifier:
@@ -292,5 +309,5 @@ def var_to_xml(val, name, doTrim=True, additionalInXml='', return_value=False):
         else:
             xmlCont = ''
 
-    return ''.join((xml, xmlQualifier, xmlValue, xmlCont, xmlRetVal, additionalInXml, ' />\n'))
+    return ''.join((xml, xmlQualifier, xmlValue, xmlCont, xmlRetVal, xmlIPythonHidden, additionalInXml, ' />\n'))
 

@@ -118,10 +118,11 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
 
     text = addLeadingSpacesToNormalizeSelection(project, text);
-    final String indentText = getIndentText(file, document, caretOffset, lineNumber);
+    final String fragmentIndent = PyIndentUtil.findCommonIndent(text, false);
+    final String newIndent = inferBestIndent(file, document, caretOffset, lineNumber, fragmentIndent);
 
     final String line = document.getText(TextRange.create(lineStartOffset, lineEndOffset));
-    if (StringUtil.isEmptyOrSpaces(indentText) && shouldPasteOnPreviousLine(file, text, caretOffset)) {
+    if (StringUtil.isEmptyOrSpaces(newIndent) && shouldPasteOnPreviousLine(file, text, caretOffset)) {
       caretModel.moveToOffset(lineStartOffset);
       editor.getSelectionModel().setSelection(lineStartOffset, selectionModel.getSelectionEnd());
 
@@ -131,8 +132,8 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     }
 
     String newText;
-    if (StringUtil.isEmptyOrSpaces(indentText)) {
-      newText = PyIndentUtil.changeIndent(text, false, indentText);
+    if (StringUtil.isEmptyOrSpaces(newIndent)) {
+      newText = PyIndentUtil.changeIndent(text, false, newIndent);
     }
     else {
       newText = text;
@@ -177,10 +178,11 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @NotNull
-  private static String getIndentText(@NotNull final PsiFile file,
-                                      @NotNull final Document document,
-                                      int caretOffset,
-                                      int lineNumber) {
+  private static String inferBestIndent(@NotNull PsiFile file,
+                                        @NotNull Document document,
+                                        int caretOffset,
+                                        int lineNumber,
+                                        @NotNull String fragmentIndent) {
 
     PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS != null) {
@@ -196,37 +198,44 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       return PyIndentUtil.getLineIndent(document, lineNumber);
     }
 
-    int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
+    final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
     final PsiElement ws = file.findElementAt(lineStartOffset);
     final String userIndent = document.getText(TextRange.create(lineStartOffset, caretOffset));
-    if (ws != null) {
-      PyStatementList statementList = findEmptyStatementListNearby(ws);
-      if (statementList != null) {
-        return PyIndentUtil.getElementIndent(statementList);
-      }
+    
+    final PyStatementList statementList = findEmptyStatementListNearby(file, lineStartOffset);
+    if (statementList != null) {
+      return PyIndentUtil.getElementIndent(statementList);
+    }
 
-      final String smallestIndent = PyIndentUtil.getElementIndent(ws);
-      final PyStatementListContainer parentBlock = PsiTreeUtil.getParentOfType(ws, PyStatementListContainer.class);
-      final PyStatementListContainer deepestBlock = getDeepestPossibleParentBlock(ws);
-      final String greatestIndent;
-      if (deepestBlock != null && (parentBlock == null || PsiTreeUtil.isAncestor(parentBlock, deepestBlock, true))) {
-        greatestIndent = PyIndentUtil.getElementIndent(deepestBlock.getStatementList());
-      }
-      else {
-        greatestIndent = smallestIndent;
-      }
-      if (smallestIndent.startsWith(userIndent)) {
-        return smallestIndent;
-      }
-      if (userIndent.startsWith(greatestIndent)) {
-        return greatestIndent;
-      }
+    final String smallestIndent = ws == null? "" : PyIndentUtil.getElementIndent(ws);
+    final PyStatementListContainer parentBlock = PsiTreeUtil.getParentOfType(ws, PyStatementListContainer.class);
+    final PyStatementListContainer deepestBlock = getDeepestPossibleParentBlock(file, caretOffset);
+    final String greatestIndent;
+    if (deepestBlock != null && (parentBlock == null || PsiTreeUtil.isAncestor(parentBlock, deepestBlock, true))) {
+      greatestIndent = PyIndentUtil.getElementIndent(deepestBlock.getStatementList());
+    }
+    else {
+      greatestIndent = smallestIndent;
+    }
+    if (caretOffset == lineStartOffset && fragmentIndent.startsWith(smallestIndent) && greatestIndent.startsWith(fragmentIndent)) {
+      return fragmentIndent;
+    }
+    if (smallestIndent.startsWith(userIndent)) {
+      return smallestIndent;
+    }
+    if (userIndent.startsWith(greatestIndent)) {
+      return greatestIndent;
     }
     return userIndent;
   }
 
   @Nullable
-  private static PyStatementList findEmptyStatementListNearby(@NotNull PsiElement whitespace) {
+  private static PyStatementList findEmptyStatementListNearby(@NotNull PsiFile file, int offset) {
+    final PsiWhiteSpace whitespace = findWhitespaceAtCaret(file, offset);
+    if (whitespace == null) {
+      return null;
+    }
+    
     PyStatementList statementList = ObjectUtils.chooseNotNull(as(whitespace.getNextSibling(), PyStatementList.class),
                                                               as(whitespace.getPrevSibling(), PyStatementList.class));
     if (statementList == null) {
@@ -239,7 +248,16 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @Nullable
-  private static PyStatementListContainer getDeepestPossibleParentBlock(@NotNull PsiElement whitespace) {
+  private static PsiWhiteSpace findWhitespaceAtCaret(@NotNull PsiFile file, int offset) {
+    return as(file.findElementAt(offset == file.getTextLength() && offset > 0 ? offset - 1 : offset), PsiWhiteSpace.class);
+  }
+
+  @Nullable
+  private static PyStatementListContainer getDeepestPossibleParentBlock(@NotNull PsiFile file, int offset) {
+    final PsiWhiteSpace whitespace = findWhitespaceAtCaret(file, offset);
+    if (whitespace == null) {
+      return null;
+    }
     final PsiElement prevLeaf = getPrevNonCommentLeaf(whitespace);
     return PsiTreeUtil.getParentOfType(prevLeaf, PyStatementListContainer.class);
   }

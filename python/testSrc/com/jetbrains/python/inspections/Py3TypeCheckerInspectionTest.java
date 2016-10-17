@@ -158,4 +158,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testComprehensionsOverAsyncGenerator() {
     doTest();
   }
+
+  // PY-21048
+  public void testAsyncFunctionReturnType() {
+    doTest();
+  }
 }

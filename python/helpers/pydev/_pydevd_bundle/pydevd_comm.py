@@ -792,9 +792,9 @@ class NetCommandFactory:
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
-    def make_input_requested_message(self):
+    def make_input_requested_message(self, started):
         try:
-            return NetCommand(CMD_INPUT_REQUESTED, 0, '')
+            return NetCommand(CMD_INPUT_REQUESTED, 0, started)
         except:
             return self.make_error_message(0, get_exception_traceback_str())
 
@@ -1057,8 +1057,9 @@ class InternalGetFrame(InternalThreadCommand):
         try:
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             if frame is not None:
+                hidden_ns = pydevconsole.get_ipython_hidden_vars_dict()
                 xml = "<xml>"
-                xml += pydevd_xml.frame_vars_to_xml(frame.f_locals)
+                xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns)
                 del frame
                 xml += "</xml>"
                 cmd = dbg.cmd_factory.make_get_frame_message(self.sequence, xml)
