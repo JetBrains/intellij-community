@@ -86,9 +86,7 @@ public abstract class AnnotationFieldGutter implements ActiveAnnotationGutter {
 
   @Override
   public void gutterClosed() {
-    ProjectLevelVcsManager.getInstance(myAnnotation.getProject()).getAnnotationLocalChangesListener()
-      .unregisterAnnotation(myAnnotation.getFile(), myAnnotation);
-    myAnnotation.dispose();
+    myPresentation.gutterClosed();
   }
 
   @Nullable

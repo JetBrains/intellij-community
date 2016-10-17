@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -27,12 +28,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
@@ -89,8 +92,23 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs,
                                 @Nullable final UpToDateLineNumberProvider upToDateLineNumberProvider) {
+    Disposable disposable = new Disposable() {
+      @Override
+      public void dispose() {
+        fileAnnotation.dispose();
+      }
+    };
+
     if (fileAnnotation.getFile() != null && fileAnnotation.getFile().isInLocalFileSystem()) {
-      ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
+      VcsAnnotationLocalChangesListener changesListener = ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener();
+
+      changesListener.registerAnnotation(fileAnnotation.getFile(), fileAnnotation);
+      Disposer.register(disposable, new Disposable() {
+        @Override
+        public void dispose() {
+          changesListener.unregisterAnnotation(fileAnnotation.getFile(), fileAnnotation);
+        }
+      });
     }
 
     editor.getGutter().closeAllAnnotations();
@@ -116,7 +134,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                                        upToDateLineNumberProvider :
                                                        new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
 
-    final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, getUpToDateLineNumber, switcher);
+    final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, getUpToDateLineNumber, switcher, disposable);
     if (currentFile != null && vcs.getCommittedChangesProvider() != null) {
       presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs, currentFile));
     }
