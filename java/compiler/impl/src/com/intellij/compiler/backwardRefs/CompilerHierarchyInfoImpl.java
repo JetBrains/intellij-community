@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 class CompilerHierarchyInfoImpl<T extends PsiElement> implements CompilerDirectHierarchyInfo<T> {
   private final GlobalSearchScope myDirtyScope;
   private final GlobalSearchScope mySearchScope;
-  private Couple<Map<VirtualFile, T[]>> myCandidatePerFile;
+  private final Couple<Map<VirtualFile, T[]>> myCandidatePerFile;
 
   CompilerHierarchyInfoImpl(Couple<Map<VirtualFile, T[]>> candidatePerFile,
                             GlobalSearchScope dirtyScope,
