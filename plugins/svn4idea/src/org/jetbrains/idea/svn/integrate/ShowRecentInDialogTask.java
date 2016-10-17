@@ -34,7 +34,7 @@ public class ShowRecentInDialogTask extends BaseMergeTask {
   @Override
   public void run() {
     SelectMergeItemsResult result = myInteraction
-      .selectMergeItems(myInitialChangeListsLoader.getCommittedChangeLists(), myInitialChangeListsLoader.getHelper(), false,
+      .selectMergeItems(myInitialChangeListsLoader.getChangeLists(), myInitialChangeListsLoader.getMergeChecker(), false,
                         myInitialChangeListsLoader.isLastLoaded());
     List<CommittedChangeList> lists = result.getSelectedLists();
 

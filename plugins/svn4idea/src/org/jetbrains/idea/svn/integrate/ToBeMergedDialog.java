@@ -497,7 +497,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       try {
         loader.run();
 
-        myLists = loader.getCommittedChangeLists();
+        myLists = loader.getChangeLists();
         myIsLastListLoaded = loader.isLastLoaded();
       }
       catch (VcsException e) {

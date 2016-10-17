@@ -27,29 +27,34 @@ import org.jetbrains.idea.svn.history.LogHierarchyNode;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
+import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static java.lang.Math.min;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class LoadRecentBranchRevisions extends BaseMergeTask {
   public static final String PROP_BUNCH_SIZE = "idea.svn.quick.merge.bunch.size";
   private final static int BUNCH_SIZE = 100;
-  private int myBunchSize;
-  private long myFirst;
-  private boolean myLastLoaded;
-  private OneShotMergeInfoHelper myHelper;
-  private List<CommittedChangeList> myCommittedChangeLists;
 
-  public LoadRecentBranchRevisions(@NotNull QuickMerge mergeProcess, long first) {
-    this(mergeProcess, first, -1);
+  private final int myBunchSize;
+  private final long myFirst;
+  private boolean myLastLoaded;
+  @NotNull private final OneShotMergeInfoHelper myMergeChecker;
+  @NotNull private final List<CommittedChangeList> myCommittedChangeLists;
+
+  public LoadRecentBranchRevisions(@NotNull QuickMerge mergeProcess) {
+    this(mergeProcess, -1, -1);
   }
 
   public LoadRecentBranchRevisions(@NotNull QuickMerge mergeProcess, long first, int bunchSize) {
     super(mergeProcess, "Loading recent " + mergeProcess.getMergeContext().getBranchName() + " revisions", Where.POOLED);
     myFirst = first;
+    myCommittedChangeLists = newArrayList();
+    myMergeChecker = new OneShotMergeInfoHelper(myMergeContext);
 
     Integer testBunchSize = Integer.getInteger(PROP_BUNCH_SIZE);
     myBunchSize = testBunchSize != null ? testBunchSize.intValue() : (bunchSize > 0 ? bunchSize : BUNCH_SIZE);
@@ -64,7 +69,12 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
    */
   @Override
   public void run() throws VcsException {
-    initialize(getChangeListsBefore(myFirst));
+    ProgressManager.progress2("Calculating not merged revisions");
+    myMergeChecker.prepare();
+
+    List<CommittedChangeList> notMergedChangeLists = getNotMergedChangeLists(getChangeListsBefore(myFirst));
+    myLastLoaded = notMergedChangeLists.size() < myBunchSize + 1;
+    myCommittedChangeLists.addAll(notMergedChangeLists.subList(0, min(myBunchSize, notMergedChangeLists.size())));
   }
 
   @NotNull
@@ -106,24 +116,13 @@ public class LoadRecentBranchRevisions extends BaseMergeTask {
     return result;
   }
 
-  private void initialize(@NotNull List<Pair<SvnChangeList, LogHierarchyNode>> changeLists) throws VcsException {
-    myCommittedChangeLists = getNotMergedChangeLists(changeLists);
-
-    myHelper = new OneShotMergeInfoHelper(myMergeContext);
-    ProgressManager.progress2("Calculating not merged revisions");
-    myHelper.prepare();
-
-    myLastLoaded = myCommittedChangeLists.size() < myBunchSize + 1;
-    if (myCommittedChangeLists.size() > myBunchSize) {
-      myCommittedChangeLists = myCommittedChangeLists.subList(0, myBunchSize);
-    }
+  @NotNull
+  public MergeChecker getMergeChecker() {
+    return myMergeChecker;
   }
 
-  public OneShotMergeInfoHelper getHelper() {
-    return myHelper;
-  }
-
-  public List<CommittedChangeList> getCommittedChangeLists() {
+  @NotNull
+  public List<CommittedChangeList> getChangeLists() {
     return myCommittedChangeLists;
   }
 }
