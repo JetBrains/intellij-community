@@ -146,7 +146,7 @@ public abstract class ControlFlowStatementVisitorBase extends BaseInspectionVisi
     }
     if (myKey != null) {
       final Project project = element.getProject();
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
       final HighlightDisplayLevel errorLevel = profile.getErrorLevel(myKey, element);
       return !HighlightDisplayLevel.DO_NOT_SHOW.equals(errorLevel);
     }
