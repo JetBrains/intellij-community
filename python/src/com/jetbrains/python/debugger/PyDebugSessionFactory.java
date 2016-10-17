@@ -18,7 +18,7 @@ package com.jetbrains.python.debugger;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.remote.RemoteSdkAdditionalData;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.python.run.PythonCommandLineState;
 import org.jetbrains.annotations.Contract;
@@ -32,7 +32,7 @@ public abstract class PyDebugSessionFactory {
   public static final ExtensionPointName<PyDebugSessionFactory> EP_NAME
     = ExtensionPointName.create("Pythonid.debugSessionFactory");
 
-  protected abstract boolean appliesTo(@NotNull RemoteSdkAdditionalData remoteSdkAdditionalData);
+  protected abstract boolean appliesTo(@NotNull Sdk sdk);
 
   @NotNull
   public abstract XDebugSession createSession(@NotNull PyDebugRunner runner,
@@ -42,12 +42,12 @@ public abstract class PyDebugSessionFactory {
 
   @Contract("null -> null")
   @Nullable
-  public static PyDebugSessionFactory findExtension(@Nullable RemoteSdkAdditionalData remoteSdkAdditionalData) {
-    if (remoteSdkAdditionalData == null) {
+  public static PyDebugSessionFactory findExtension(@Nullable Sdk sdk) {
+    if (sdk == null) {
       return null;
     }
     for (PyDebugSessionFactory sessionCreator : EP_NAME.getExtensions()) {
-      if (sessionCreator.appliesTo(remoteSdkAdditionalData)) {
+      if (sessionCreator.appliesTo(sdk)) {
         return sessionCreator;
       }
     }
