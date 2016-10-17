@@ -28,7 +28,7 @@ public abstract class CCTaskFileActionBase extends AnAction {
     if (file == null) {
       return;
     }
-    VirtualFile taskVF = file.getParent();
+    VirtualFile taskVF = StudyUtils.getTaskDir(file);
     if (taskVF == null) {
       return;
     }

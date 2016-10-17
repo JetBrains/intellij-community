@@ -17,7 +17,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>
-    <treeStructureProvider implementation="com.jetbrains.edu.coursecreator.projectView.CCTreeStructureProvider"/>
+    <treeStructureProvider implementation="com.jetbrains.edu.coursecreator.projectView.CCTreeStructureProvider" order="last"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.edu.coursecreator.CCRefactoringElementListenerProvider"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCLessonMoveHandlerDelegate" order="first"/>
     <refactoring.moveHandler implementation="com.jetbrains.edu.coursecreator.handlers.CCTaskMoveHandlerDelegate" order="first"/>
