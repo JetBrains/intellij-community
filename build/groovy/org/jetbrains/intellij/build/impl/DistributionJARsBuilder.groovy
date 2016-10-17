@@ -39,8 +39,10 @@ class DistributionJARsBuilder {
   private final BuildContext buildContext
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
+  private final File patchedApplicationInfo
 
-  DistributionJARsBuilder(BuildContext buildContext) {
+  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo) {
+    this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
       include(name: "**/*Bundle*.properties")
@@ -205,7 +207,7 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
 
-    def applicationInfoFile = FileUtil.toSystemIndependentName(buildTasks.patchApplicationInfo().absolutePath)
+    def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
     ant.copy(file: applicationInfoFile, todir: "$applicationInfoDir/idea")
     layoutBuilder.patchModuleOutput(buildContext.productProperties.applicationInfoModule, applicationInfoDir)

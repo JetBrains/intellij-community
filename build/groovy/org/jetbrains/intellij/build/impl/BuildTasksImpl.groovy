@@ -243,7 +243,8 @@ idea.fatal.error.notification=disabled
   void buildDistributions() {
     checkProductProperties()
 
-    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext)
+    def patchedApplicationInfo = patchApplicationInfo()
+    def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
     compileModules(buildContext.productProperties.productLayout.includedPluginModules + distributionJARsBuilder.platformModules +
                    buildContext.productProperties.additionalModulesToCompile, buildContext.productProperties.modulesToCompileTests)
     buildContext.messages.block("Build platform and plugin JARs") {
@@ -259,7 +260,7 @@ idea.fatal.error.notification=disabled
     def propertiesFile = patchIdeaPropertiesFile()
     List<BuildTaskRunnable<String>> tasks = [
       createDistributionForOsTask("win", { BuildContext context ->
-        context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile) }
+        context.windowsDistributionCustomizer?.with { new WindowsDistributionBuilder(context, it, propertiesFile, patchedApplicationInfo) }
       }),
       createDistributionForOsTask("linux", { BuildContext context ->
         context.linuxDistributionCustomizer?.with { new LinuxDistributionBuilder(context, it, propertiesFile) }
@@ -472,7 +473,7 @@ idea.fatal.error.notification=disabled
 
   @Override
   void buildUnpackedDistribution(String targetDirectory) {
-    def jarsBuilder = new DistributionJARsBuilder(buildContext)
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
     jarsBuilder.buildJARs()
     layoutShared()
 
