@@ -27,10 +27,9 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.DocumentUtil
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.PyStatementListContainer
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
@@ -40,11 +39,14 @@ import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl
 class PyConsoleEnterHandler {
   fun handleEnterPressed(editor: EditorEx): Boolean {
     val project = editor.project ?: throw IllegalArgumentException()
-    if (editor.document.lineCount != 0) { // move to end of line
+    if (editor.document.lineCount > 0) { // move to end of line
       editor.selectionModel.removeSelection()
       val caretPosition = editor.caretModel.logicalPosition
       val lineEndOffset = editor.document.getLineEndOffset(caretPosition.line)
       editor.caretModel.moveToOffset(lineEndOffset)
+    }
+    else {
+      return true;
     }
     val psiMgr = PsiDocumentManager.getInstance(project)
     psiMgr.commitDocument(editor.document)
@@ -64,24 +66,19 @@ class PyConsoleEnterHandler {
       }
     }.execute()
 
+    val firstLine = getLineAtOffset(editor.document, DocumentUtil.getFirstNonSpaceCharOffset(editor.document, 0))
+    val isCellMagic = firstLine.trim().startsWith("%%") && !firstLine.trimEnd().endsWith("?")
+    val isMultiLineCommand = PsiTreeUtil.getParentOfType(atElement, PyStatementListContainer::class.java) != null || isCellMagic
+
+    val hasCompleteStatement = atElement != null && !insideDocString && checkComplete(atElement)
     val prevLine = getLineAtOffset(editor.document, caretOffset)
-    val isCellMagic = prevLine.trim().startsWith("%%") && !prevLine.trimEnd().endsWith("?")
-    val isCellHelp = prevLine.trim().startsWith("%%") && prevLine.trimEnd().endsWith("?")
-    val isLineCellMagic = prevLine.trim().startsWith("%")
-    val hasCompleteStatement = atElement != null && !insideDocString && !isCellMagic &&
-        (isCellHelp || isLineCellMagic || checkComplete(atElement))
 
-    val currentLine = getLineAtOffset(editor.document, editor.expectedCaretOffset)
-    val indent = IndentHelperImpl.getIndent(project, PythonFileType.INSTANCE, currentLine, false)
-
-    return indent == 0 || (hasCompleteStatement && prevLine.isBlank())
+    return hasCompleteStatement && ((isMultiLineCommand && prevLine.isBlank()) || (!isMultiLineCommand))
   }
 
   private fun isElementInsideDocString(atElement: PsiElement, caretOffset: Int): Boolean {
-    return (atElement.context is PyStringLiteralExpression &&
-        (PyTokenTypes.TRIPLE_NODES.contains(atElement.node.elementType)
-            || atElement.node.elementType === PyTokenTypes.DOCSTRING)
-        && (atElement.textRange.endOffset > caretOffset || !isCompletDocString(atElement.text)))
+    return atElement.context is PyStringLiteralExpression && PyTokenTypes.TRIPLE_NODES.contains(atElement.node.elementType)
+        && (atElement.textRange.endOffset > caretOffset || !isCompleteDocString(atElement.text))
   }
 
   private fun checkComplete(el: PsiElement): Boolean {
@@ -89,8 +86,9 @@ class PyConsoleEnterHandler {
     if (compoundStatement != null) {
       return compoundStatement.statementList.statements.size != 0
     }
+    if (el.parent == null) return false
     val topLevel = PyPsiUtils.getParentRightBefore(el, el.containingFile)
-    return topLevel != null && PsiTreeUtil.hasErrorElements(topLevel)
+    return topLevel != null && !PsiTreeUtil.hasErrorElements(topLevel)
   }
 
   private fun findFirstNoneSpaceElement(psiFile: PsiFile, offset: Int): PsiElement? {
@@ -110,7 +108,7 @@ class PyConsoleEnterHandler {
     return doc.getText(TextRange(start, end))
   }
 
-  private fun isCompletDocString(str: String): Boolean {
+  private fun isCompleteDocString(str: String): Boolean {
     val prefixLen = PyStringLiteralExpressionImpl.getPrefixLength(str)
     val text = str.substring(prefixLen)
     for (token in arrayOf("\"\"\"", "'''")) {
