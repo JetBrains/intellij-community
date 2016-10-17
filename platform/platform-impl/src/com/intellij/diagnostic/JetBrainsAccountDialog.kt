@@ -49,7 +49,7 @@ fun showJetBrainsAccountDialog(parent: Component, project: Project? = null): Dia
         link("Forgot password?") { BrowserUtil.browse("https://account.jetbrains.com/forgot-password?username=${userField.text.trim().encodeUrlQueryParameter()}") }
       }
     }
-    noteRow("""Do not have an account? <a href="https://account.jetbrains.com/login">Sign Up</a>""")
+    noteRow("""Do not have an account? <a href="https://account.jetbrains.com/login?signup">Sign Up</a>""")
   }
 
   return dialog(
