@@ -40,7 +40,7 @@ fun configureInspections(tools: Array<InspectionProfileEntry>,
     Disposer.register(parentDisposable, Disposable {
       profileManager.deleteProfile(profile)
       profileManager.setCurrentProfile(null)
-      clearAllToolsIn(InspectionProfileImpl.getDefaultProfile())
+      clearAllToolsIn(InspectionProfileImpl.getBaseProfile())
     })
 
     profileManager.addProfile(profile)

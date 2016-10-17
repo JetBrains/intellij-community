@@ -101,7 +101,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public InspectionProfileImpl(@NotNull String profileName,
                                @NotNull InspectionToolRegistrar registrar,
                                @NotNull ProfileManager profileManager) {
-    this(profileName, registrar, profileManager, getDefaultProfile(), null);
+    this(profileName, registrar, profileManager, getBaseProfile(), null);
   }
 
   public InspectionProfileImpl(@NotNull @NonNls String profileName) {
@@ -125,7 +125,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
                                @NotNull InspectionToolRegistrar registrar,
                                @NotNull ProfileManager profileManager,
                                @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
-    this(profileName, registrar, profileManager, getDefaultProfile(), dataHolder);
+    this(profileName, registrar, profileManager, getBaseProfile(), dataHolder);
   }
 
   @NotNull
@@ -163,7 +163,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   @NotNull
-  public static InspectionProfileImpl getDefaultProfile() {
+  public static InspectionProfileImpl getBaseProfile() {
     return InspectionProfileImplHolder.DEFAULT_PROFILE;
   }
 

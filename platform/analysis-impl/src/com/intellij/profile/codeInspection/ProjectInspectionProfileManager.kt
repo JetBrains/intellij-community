@@ -98,7 +98,7 @@ class ProjectInspectionProfileManager(val project: Project,
                               attributeProvider: Function<String, String?>,
                               isBundled: Boolean): InspectionProfileImpl {
       val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager,
-                                          InspectionProfileImpl.getDefaultProfile(), dataHolder)
+                                          InspectionProfileImpl.getBaseProfile(), dataHolder)
       profile.isProjectLevel = true
       return profile
     }
@@ -306,7 +306,7 @@ class ProjectInspectionProfileManager(val project: Project,
       currentScheme = schemeManager.allSchemes.firstOrNull()
       if (currentScheme == null) {
         currentScheme = InspectionProfileImpl(PROJECT_DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this,
-                                              InspectionProfileImpl.getDefaultProfile(), null)
+                                              InspectionProfileImpl.getBaseProfile(), null)
         currentScheme.copyFrom(applicationProfileManager.currentProfile as ProfileEx)
         currentScheme.isProjectLevel = true
         currentScheme.name = PROJECT_DEFAULT_PROFILE_NAME

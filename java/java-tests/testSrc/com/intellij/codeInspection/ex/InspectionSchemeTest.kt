@@ -51,7 +51,7 @@ class InspectionSchemeTest {
     profileManager.forceInitProfiles(true)
     profileManager.initProfiles()
 
-    assertThat(profileManager.profiles).hasSize(2)
+    assertThat(profileManager.profiles).hasSize(1)
     val scheme = profileManager.profiles.first() as InspectionProfileImpl
     assertThat(scheme.name).isEqualTo("Bar")
 
@@ -61,5 +61,11 @@ class InspectionSchemeTest {
 
     assertThat(schemeFile.readText()).isEqualTo(schemeData)
     profileManager.profiles
+
+    schemeManagerFactory.process {
+      it.reload()
+    }
+
+    assertThat(profileManager.profiles).hasSize(1)
   }
 }
