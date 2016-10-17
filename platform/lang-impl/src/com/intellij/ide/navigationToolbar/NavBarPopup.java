@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2016 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,6 @@ public class NavBarPopup extends LightweightHint implements Disposable{
 
   @Override
   protected void onPopupCancel() {
-    myPanel.resetSelection(); // select last item if popup cancelled
     final JComponent component = getComponent();
     if (component != null) {
       Object o = component.getClientProperty(JBLIST_KEY);
